@@ -1,0 +1,89 @@
+-- ASN module extracted from ITU-T X.510 (08/2020)
+
+TrustBroker {joint-iso-itu-t ds(5) module(1) trustBroker(46) 9}
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- EXPORTS All
+
+IMPORTS
+
+  -- from Rec. ITU-T X.509 | ISO/IEC 9594-8
+/*
+  PKCertIdentifier
+    FROM AuthenticationFramework
+      {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9} WITH SUCCESSORS
+*/
+  PKCertIdentifier
+    FROM PKI-Stub
+      {joint-iso-itu-t ds(5) module(1) pki-stub(999) 9} WITH SUCCESSORS
+
+  Version
+    FROM Wrapper
+      {joint-iso-itu-t ds(5) module(1) wrapper(43) 9} WITH SUCCESSORS ;
+
+ -- PDU types
+
+TBprot ::= CHOICE {
+  initReq     [0] InitializationReq,
+  initAcc     [1] InitializationAcc,
+  initRej     [2] InitializationRej,
+  initAbt     [3] InitializationAbort,
+  tBrequest   [4] TBrequest,
+  tBresponse  [5] TBresponse,
+  ... }
+
+InitializationReq ::= SEQUENCE {
+  version    Version,
+  ... }
+
+InitializationAcc ::= SEQUENCE {
+  version    Version,
+  ... }
+
+InitializationRej ::= SEQUENCE {
+  diag        ENUMERATED {
+    unsupportedVersions     (0),
+    ... },
+  ... }
+
+InitializationAbort ::= SEQUENCE {
+  diag        ENUMERATED {
+    unsupportedVersion       (0),
+    onlySingleVersionAllowed (1),
+    ... },
+  ... }
+
+TBrequest ::= CHOICE {
+  caCert      [0] PKCertIdentifier,
+  subjectCert [1] PKCertIdentifier,
+  ... }
+
+TBresponse ::= CHOICE {
+  success [0]  TBOK,
+  failure [1]  TBerror,
+  ... }
+
+TBOK ::= SEQUENCE {
+  levelOfAssurance  [0]  INTEGER (0..100),
+  confidenceLevel   [1]  INTEGER (0..100),
+  validationTime    [2]  UTCTime,
+  info              [3]  UTF8String  OPTIONAL,
+  ... }
+
+TBerror ::= SEQUENCE {
+  code        ENUMERATED {
+    caCertInvalid        (1),
+    unknownCert          (2),
+    unknownCertStatus    (3),
+    subjectCertRevoked   (4),
+    incorrectCert        (5),
+    contractExpired      (6),
+    pathValidationFailed (7),
+    timeOut              (8),
+    other                (99),
+    ... },
+  diagnostic  UTF8String OPTIONAL,
+  ... }
+
+END -- Trustbroker

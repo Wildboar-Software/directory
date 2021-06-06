@@ -1,0 +1,74 @@
+-- ASN module extracted from ITU-T X.510 (08/2020)
+
+GenAlgo {joint-iso-itu-t ds(5) module(1) genAlgo(48) 9}
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- EXPORTS All
+
+IMPORTS
+
+  ALGORITHM, id-algo
+    FROM
+      PKI-Stub {joint-iso-itu-t ds(5) module(1) pki-stub(999) 9} WITH SUCCESSORS ;
+
+id-algo-mca  OBJECT IDENTIFIER ::= {id-algo 1} -- multiple-cryptographic algorithms
+id-algo-ska  OBJECT IDENTIFIER ::= {id-algo 2} -- symmetric-key algorithms
+id-algo-aead OBJECT IDENTIFIER ::= {id-algo 3} -- authenticated encryption with asso data
+id-algo-pka  OBJECT IDENTIFIER ::= {id-algo 4} -- public-key algorithms
+id-algo-ha   OBJECT IDENTIFIER ::= {id-algo 5} -- hash algorithms
+id-algo-dsa  OBJECT IDENTIFIER ::= {id-algo 6} -- digital dignature algorithms
+id-algo-kea  OBJECT IDENTIFIER ::= {id-algo 7} -- key establishment algorithms
+
+
+-- Key establishment algorithms
+
+dhModpGr14Hkdf256Algo ALGORITHM ::= {
+  PARMS         Group14
+  DYN-PARMS     Payload14
+  IDENTIFIED BY id-algo-dhModpGr14Hkdf256Algo }
+
+Group14 ::= INTEGER (14)
+
+Payload14 ::= SEQUENCE {
+  dhPublicKey OCTET STRING (SIZE (256)),
+  nonce       OCTET STRING (SIZE (32)),
+  ... }
+
+dhModpGr23Hkdf256Algo ALGORITHM ::= {
+  PARMS         Group23
+  DYN-PARMS     Payload23
+  IDENTIFIED BY id-algo-dhModpGr23Hkdf256Algo }
+
+Group23 ::= INTEGER (23)
+
+Payload23 ::= SEQUENCE {
+  dhPublicKey OCTET STRING (SIZE (512)),
+  nonce       OCTET STRING (SIZE (32)),
+  ... }
+
+dhModpGr28Hkdf256Algo ALGORITHM ::= {
+  PARMS         Group28
+  DYN-PARMS     Payload28
+  IDENTIFIED BY id-algo-dhModpGr28Hkdf256Algo }
+
+Group28 ::= INTEGER (28)
+
+Payload28 ::= SEQUENCE {
+  dhPublicKey OCTET STRING (SIZE (512)),
+  nonce       OCTET STRING (SIZE (32)),
+  ... }
+
+-- Object identifier allocation
+
+id-algo-dhModpGr14Hkdf256Algo       OBJECT IDENTIFIER ::= {id-algo-kea 1}
+id-algo-dhModpGr15Hkdf384Algo       OBJECT IDENTIFIER ::= {id-algo-kea 2}
+id-algo-dhModpGr16Hkdf512Algo       OBJECT IDENTIFIER ::= {id-algo-kea 3}
+id-algo-dhModpGr17Hkdf768Algo       OBJECT IDENTIFIER ::= {id-algo-kea 4}
+id-algo-dhModpGr18Hkdf1024Algo      OBJECT IDENTIFIER ::= {id-algo-kea 5}
+
+id-algo-dhModpGr23Hkdf256Algo       OBJECT IDENTIFIER ::= {id-algo-kea 10}
+
+id-algo-dhModpGr28Hkdf256Algo       OBJECT IDENTIFIER ::= {id-algo-kea 15}
+
+END -- GenAlgo

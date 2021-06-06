@@ -1,0 +1,182 @@
+-- ASN module extracted from ITU-T X.510 (08/2020)
+
+AVL-management {joint-iso-itu-t ds(5) module(1) avl-management(44) 9}
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- EXPORTS All
+
+IMPORTS
+/*
+  -- from Rec. ITU-T X.501 | ISO/IEC 9594-2
+
+  Attribute{}, SupportedAttributes
+    FROM InformationFramework
+      {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9} WITH SUCCESSORS
+
+  -- from Rec. ITU-T X.509 | ISO/IEC 9594-8
+
+  Certificate, CertAVL, AvlSerialNumber
+    FROM AuthenticationFramework
+      {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+*/
+
+  -- From x510-import
+
+  Attribute{}, AvlSerialNumber, CertAVL, Certificate, SupportedAttributes
+    FROM PKI-Stub
+      {joint-iso-itu-t ds(5) module(1) pki-stub(999) 9} WITH SUCCESSORS
+
+  Version
+    FROM Wrapper
+      {joint-iso-itu-t ds(5) module(1) wrapper(43) 9} WITH SUCCESSORS ;
+
+-- PDU types
+
+AvlProt ::= CHOICE {
+  initReq       [0]  InitializationRec,
+  initAcc       [1]  InitializationAcc,
+  initRej       [2]  InitializationRej,
+  initAbt       [3]  InitializationAbort,
+  certReq       [4]  CertReq,
+  certRsp       [5]  CertRsp,
+  addAvlReq     [6]  AddAvlReq,
+  addAvlRsp     [7]  AddAvlRsp,
+  replaceAvlReq [8]  ReplaceAvlReq,
+  replaceAvlRsp [9]  ReplaceAvlRsp,
+  deleteAvlReq  [10] DeleteAvlReq,
+  deleteAvlRsp  [11] DeleteAvlRsp,
+  abortAVL      [12] AbortAVL,
+  ... }
+
+InitializationRec ::= SEQUENCE {
+  version    Version,
+  ... }
+
+InitializationAcc ::= SEQUENCE {
+  version    Version,
+  ... }
+
+InitializationRej ::= SEQUENCE {
+  diag        ENUMERATED {
+    unsupportedVersion     (0),
+    ... },
+  ... }
+
+InitializationAbort ::= SEQUENCE {
+  diag        ENUMERATED {
+    unsupportedVersion       (0),
+    onlySingleVersionAllowed (1),
+    ... },
+  ... }
+
+CertReq ::= SEQUENCE {
+  invokeID  InvokeID,
+  ... }
+
+InvokeID ::= INTEGER (0..127)
+
+CertRsp ::= SEQUENCE {
+  invokeID     InvokeID,
+  result       CHOICE {
+    success [0]  CertOK,
+    failure [1]  CertErr,
+    ... },
+  ... }
+
+CertOK ::= SEQUENCE {
+  dhCert  Certificate,
+  ... }
+
+CertErr ::= SEQUENCE {
+  notOK  AVMP-error,
+  note   Notifications OPTIONAL,
+  ... }
+
+Notifications ::= SEQUENCE SIZE (1..MAX) OF Attribute {{SupportedAttributes}}
+
+AddAvlReq ::= SEQUENCE {
+  invokeID     InvokeID,
+  certlist     CertAVL,
+  ... }
+
+AddAvlRsp ::= SEQUENCE {
+  invokeID     InvokeID,
+  result       CHOICE {
+    success [0]  AddAvlOK,
+    failure [1]  AddAvlErr,
+    ... },
+  ... }
+
+AddAvlOK ::= SEQUENCE {
+  ok     NULL,
+  ... }
+
+AddAvlErr ::= SEQUENCE {
+  notOK  AVMP-error,
+  ... }
+
+ReplaceAvlReq ::= SEQUENCE {
+  invokeID     InvokeID,
+  old          AvlSerialNumber OPTIONAL,
+  new          CertAVL,
+  ... }
+
+ReplaceAvlRsp ::= SEQUENCE {
+  invokeID     InvokeID,
+  result       CHOICE {
+    success [0]  RepAvlOK,
+    failure [1]  RepAvlErr,
+    ... },
+  ... }
+
+RepAvlOK ::= SEQUENCE {
+  ok     NULL,
+  ... }
+
+RepAvlErr ::= SEQUENCE {
+  notOK  AVMP-error,
+  ... }
+
+DeleteAvlReq ::= SEQUENCE {
+  invokeID     InvokeID,
+  avl-Id       AvlSerialNumber OPTIONAL,
+  ... }
+
+DeleteAvlRsp ::= SEQUENCE {
+  invokeID     InvokeID,
+  result       CHOICE {
+    success [0]  DelAvlOK,
+    failure [1]  DelAvlErr,
+    ... },
+  ... }
+
+DelAvlOK ::= SEQUENCE {
+  ok     NULL,
+  ... }
+
+DelAvlErr ::= SEQUENCE {
+  notOK  AVMP-error,
+  ... }
+
+AbortAVL ::= SEQUENCE {
+  invokeID     InvokeID,
+  reason       AVMP-error,
+  ... }
+
+AVMP-error ::= ENUMERATED {
+  noReason                           (0),
+  protocolError                      (1),
+  duplicateAVL                       (2),
+  missingAvlComponent                (3),
+  invalidAvlVersion                  (4),
+  notAllowedForConstrainedAVLEntity  (5),
+  constrainedRequired                (6),
+  nonConstrainedRequired             (7),
+  unsupportedCriticalEntryExtenssion (8),
+  unsupportedCriticalExtenssion      (9),
+  maxAVLsExceeded                    (10),
+  unknownAVL                         (11),
+  ... }
+
+END -- AVL-management
