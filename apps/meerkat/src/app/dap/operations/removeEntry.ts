@@ -9,16 +9,8 @@ import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
 import {
     NameError,
     UpdateError,
+    objectDoesNotExistErrorData,
 } from "../errors";
-import {
-    NameErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
-import {
-    NameProblem_noSuchObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
-import type {
-    Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import { UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
     UpdateProblem_notAllowedOnNonLeaf,
@@ -33,42 +25,6 @@ const HAS_CHILDREN_ERROR_DATA = new UpdateErrorData(
     undefined,
     undefined,
 );
-
-function objectDoesNotExistErroData (ctx: Context, soughtName: Name): NameErrorData {
-    let match: Name = {
-        rdnSequence: [],
-    };
-    const matches: Map<string, Name> = new Map();
-    let name: Name = {
-        rdnSequence: [ ...soughtName.rdnSequence.slice(1) ],
-    };
-    const definiteParentDN = nameToString(name);
-    while (name.rdnSequence.length > 0) {
-        matches.set(nameToString(name), name);
-        name = {
-            rdnSequence: [ ...name.rdnSequence.slice(1) ],
-        };
-    }
-    for (const e of ctx.database.data.entries.values()) {
-        if (e.dn === definiteParentDN) {
-            match = matches.get(e.dn)!;
-            break;
-        }
-        const potential = matches.get(e.dn);
-        if (potential && (potential.rdnSequence.length > match.rdnSequence.length)) {
-            match = potential;
-        }
-    }
-    return new NameErrorData(
-        NameProblem_noSuchObject,
-        match,
-        [],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    );
-}
 
 export
 async function removeEntry (
@@ -93,7 +49,7 @@ async function removeEntry (
     if (!entry) {
         throw new NameError(
             "No such object.",
-            objectDoesNotExistErroData(ctx, data.object),
+            objectDoesNotExistErrorData(ctx, data.object),
         );
     }
 
