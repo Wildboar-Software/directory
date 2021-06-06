@@ -1,7 +1,7 @@
 import { Context, Entry } from "../../types";
 import type {
-    RemoveEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
+    RemoveEntryArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
 import type {
     RemoveEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
@@ -73,8 +73,11 @@ function objectDoesNotExistErroData (ctx: Context, soughtName: Name): NameErrorD
 export
 async function removeEntry (
     ctx: Context,
-    data: RemoveEntryArgumentData,
+    arg: RemoveEntryArgument,
 ): Promise<RemoveEntryResult> {
+    const data = ("signed" in arg)
+        ? arg.signed.toBeSigned
+        : arg.unsigned;
     const soughtDN = nameToString(data.object);
     let entry: Entry | undefined;
     for (const e of ctx.database.data.entries.values()) {

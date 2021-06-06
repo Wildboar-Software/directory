@@ -4,8 +4,8 @@ import type {
     DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
 import {
-  DirectoryBindResult,
-  _encode_DirectoryBindResult,
+    DirectoryBindResult,
+    _encode_DirectoryBindResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta";
 import type { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
@@ -24,14 +24,79 @@ import {
     _decode_AbandonArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
 import {
+    _decode_AdministerPasswordArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
+import {
     _decode_AddEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
 import {
+    _decode_ChangePasswordArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta";
+import {
+    _decode_CompareArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
+import {
+    _decode_ModifyDNArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
+import {
+    _decode_ModifyEntryArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
+import {
+    _decode_ListArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+import {
+    _decode_ReadArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+import {
     _decode_RemoveEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
+import {
+    _decode_SearchArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import abandon from "./operations/abandon";
+import administerPassword from "./operations/administerPassword";
 import addEntry from "./operations/addEntry";
+import changePassword from "./operations/changePassword";
+import compare from "./operations/compare";
+import modifyDN from "./operations/modifyDN";
+import modifyEntry from "./operations/modifyEntry";
+import list from "./operations/list";
+import read from "./operations/read";
 import removeEntry from "./operations/removeEntry";
+import search from "./operations/search";
+import {
+    _encode_AbandonResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonResult.ta";
+import {
+    _encode_AdministerPasswordResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordResult.ta";
+import {
+    _encode_AddEntryResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
+import {
+    _encode_ChangePasswordResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordResult.ta";
+import {
+    _encode_CompareResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
+import {
+    _encode_ModifyDNResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResult.ta";
+import {
+    _encode_ModifyEntryResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
+import {
+    _encode_ListResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+import {
+    _encode_ReadResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
+import {
+    _encode_RemoveEntryResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
+import {
+    _encode_SearchResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import {
     AbandonError,
     AbandonFailedError,
@@ -84,26 +149,108 @@ async function handleRequest (
     switch (request.opcode.local) {
     case (opcode_abandon): {
         const arg = _decode_AbandonArgument(request.argument);
-        const data = ("signed" in arg)
-            ? arg.signed.toBeSigned
-            : arg.unsigned;
-        const res = await abandon(ctx, dap, data);
+        const res = await abandon(ctx, arg);
+
+        break;
+    }
+    case (opcode_administerPassword): {
+        const arg = _decode_AdministerPasswordArgument(request.argument);
+        const res = await administerPassword(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_AdministerPasswordResult(res, BER),
+        );
         break;
     }
     case (opcode_addEntry): {
         const arg = _decode_AddEntryArgument(request.argument);
-        const data = ("signed" in arg)
-            ? arg.signed.toBeSigned
-            : arg.unsigned;
-        const res = await addEntry(ctx, data);
+        const res = await addEntry(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_AddEntryResult(res, BER),
+        );
+        break;
+    }
+    case (opcode_changePassword): {
+        const arg = _decode_ChangePasswordArgument(request.argument);
+        const res = await changePassword(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_ChangePasswordResult(res, BER),
+        );
+        break;
+    }
+    case (opcode_compare): {
+        const arg = _decode_CompareArgument(request.argument);
+        const res = await compare(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_CompareResult(res, BER),
+        );
+        break;
+    }
+    case (opcode_modifyDN): {
+        const arg = _decode_ModifyDNArgument(request.argument);
+        const res = await modifyDN(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_ModifyDNResult(res, BER),
+        );
         break;
     }
     case (opcode_modifyEntry): {
+        const arg = _decode_ModifyEntryArgument(request.argument);
+        const res = await modifyEntry(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_ModifyEntryResult(res, BER),
+        );
+        break;
+    }
+    case (opcode_list): {
+        const arg = _decode_ListArgument(request.argument);
+        const res = await list(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_ListResult(res, BER),
+        );
+        break;
+    }
+    case (opcode_read): {
+        const arg = _decode_ReadArgument(request.argument);
+        const res = await read(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_ReadResult(res, BER),
+        );
+        break;
+    }
+    case (opcode_removeEntry): {
         const arg = _decode_RemoveEntryArgument(request.argument);
-        const data = ("signed" in arg)
-            ? arg.signed.toBeSigned
-            : arg.unsigned;
-        const res = await removeEntry(ctx, data);
+        const res = await removeEntry(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_RemoveEntryResult(res, BER),
+        );
+        break;
+    }
+    case (opcode_search): {
+        const arg = _decode_SearchArgument(request.argument);
+        const res = await search(ctx, arg);
+        await dap.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_SearchResult(res, BER),
+        );
         break;
     }
     default: {

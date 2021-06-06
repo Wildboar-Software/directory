@@ -4,6 +4,7 @@ import IDMSegmentField from "./IDMSegmentField";
 import IDMSegment from "./IDMSegment";
 import { BERElement, ASN1Element, INTEGER, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
+    IdmResult,
     IDM_PDU,
     _decode_IDM_PDU,
     _encode_IDM_PDU,
@@ -17,9 +18,11 @@ import { EventEmitter } from "events";
 import type IDMEventEmitter from "./IDMEventEmitter";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
-  IdmBindResult,
-  _encode_IdmBindResult,
+    IdmBindResult,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindResult.ta";
+import type {
+    Code,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 
 // NOTE: It does not seem to clearly state what the code for version 2 is.
 // TODO: Check for reused invoke IDs.
@@ -243,6 +246,14 @@ class IDMConnection {
     public async writeAbort (abort: Abort): Promise<void> {
         const idm: IDM_PDU = {
             abort,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeResult (invokeID: INTEGER, opcode: Code, resultValue: ASN1Element): Promise<void> {
+        const result = new IdmResult(invokeID, opcode, resultValue);
+        const idm: IDM_PDU = {
+            result,
         };
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }

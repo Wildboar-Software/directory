@@ -1,15 +1,19 @@
 import { Context } from "../../types";
-import DAPConnection from "../DAPConnection";
 import type {
-    AbandonArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgumentData.ta";
+    AbandonArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
+import type {
+    AbandonResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonResult.ta";
 
 export
 async function abandon (
     ctx: Context,
-    connection: DAPConnection,
-    data: AbandonArgumentData,
-): Promise<void> {
+    arg: AbandonArgument,
+): Promise<AbandonResult> {
+    const data = ("signed" in arg)
+        ? arg.signed.toBeSigned
+        : arg.unsigned;
     if ("absent" in data.invokeID) {
         console.log("Abandoning no operation.");
     } else if ("present" in data.invokeID) {
@@ -17,6 +21,9 @@ async function abandon (
     } else {
         console.error("Unable to abandon operation indicated by unrecognized alternative of InvokeId.");
     }
+    return {
+        null_: null,
+    };
 }
 
 export default abandon;

@@ -1,7 +1,7 @@
 import { Context, IndexableOID, StoredAttributeValueWithContexts, StoredContext, Entry } from "../../types";
 import {
-    AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+    AddEntryArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
 import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
 import {
     id_at_objectClass,
@@ -177,8 +177,11 @@ function unrecognizedAttributeErrorData (
 export
 async function addEntry (
     ctx: Context,
-    data: AddEntryArgumentData,
+    arg: AddEntryArgument,
 ): Promise<AddEntryResult> {
+    const data = ("signed" in arg)
+        ? arg.signed.toBeSigned
+        : arg.unsigned;
     if (data.object.rdnSequence.length === 0) {
         throw new UpdateError(
             "An entry having zero RDNs cannot be inserted. "
