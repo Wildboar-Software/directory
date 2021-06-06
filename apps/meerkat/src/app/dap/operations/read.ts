@@ -1,4 +1,4 @@
-import type { Context, StoredAttributeValueWithContexts } from "../../types";
+import type { Context } from "../../types";
 import type {
     ReadArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
@@ -14,12 +14,8 @@ import {
 import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
 import {
     NameError,
-    UpdateError,
     objectDoesNotExistErrorData,
 } from "../errors";
-import {
-    NameErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
