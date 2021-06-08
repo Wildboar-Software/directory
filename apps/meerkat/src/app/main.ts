@@ -29,7 +29,9 @@ async function main (): Promise<void> {
     const rootID = uuid();
     const rootDSE: Entry = {
         id: rootID,
-        dn: "",
+        dn: {
+            rdnSequence: [],
+        },
     };
     const ctx: Context = {
         log: console,

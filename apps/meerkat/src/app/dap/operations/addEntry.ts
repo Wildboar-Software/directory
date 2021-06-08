@@ -191,13 +191,13 @@ async function addEntry (
     }
     const entries = Array.from(ctx.database.data.entries.values());
     const entryDN = nameToString(data.object);
-    if (entries.some((e) => e.dn === entryDN)) {
+    if (entries.some((e) => nameToString(e.dn) === entryDN)) {
         throw new UpdateError(`Entry already exists: ${entryDN}`, ENTRY_EXISTS_ERROR_DATA);
     }
     const superiorDN = nameToString({
         rdnSequence: data.object.rdnSequence.slice(1),
     });
-    const superior = entries.find((e) => e.dn === superiorDN);
+    const superior = entries.find((e) => nameToString(e.dn) === superiorDN);
     if (!superior) {
         throw new UpdateError(`No such superior: ${superiorDN}`, NO_SUCH_SUPERIOR_ERROR_DATA);
     }
@@ -442,7 +442,7 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
 
     const newEntry: Entry = {
         id: entry,
-        dn: entryDN,
+        dn: data.object,
         parent: superior.id,
     };
     ctx.database.data.entries.set(entry, newEntry);

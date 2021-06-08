@@ -4,6 +4,9 @@
 import {
     ObjectClassKind,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import type {
+    Name,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import {
     AttributeUsage,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
@@ -104,8 +107,10 @@ interface StoredAttributeValueWithContexts {
 export
 interface Entry {
     id: UUID;
-    dn: string;
+    dn: Name;
     parent?: UUID;
+    // Managed by the DSA, and based on the aliasedEntryName operational attribute.
+    aliasedEntryId?: UUID;
 }
 
 export

@@ -37,7 +37,7 @@ async function removeEntry (
     const soughtDN = nameToString(data.object);
     let entry: Entry | undefined;
     for (const e of ctx.database.data.entries.values()) {
-        if (!entry && (e.dn === soughtDN)) {
+        if (!entry && (nameToString(e.dn) === soughtDN)) {
             entry = e;
         } else if (entry && (e.parent === entry.id)) {
             throw new UpdateError(

@@ -79,7 +79,7 @@ async function read (
         : arg.unsigned;
     const dn = nameToString(data.object);
     const entry = Array.from(ctx.database.data.entries.values())
-        .find((e) => (e.dn === dn));
+        .find((e) => (nameToString(e.dn) === dn));
     if (!entry) {
         throw new NameError(
             "No such object.",

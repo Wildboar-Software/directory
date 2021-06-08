@@ -58,8 +58,6 @@ import { OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 //   ...,
 //   COMPONENTS OF        CommonResults }
 
-// TODO: Handle attribute supertype matching.
-
 // TODO: Handle fallback
 function evaluateContextAssertion (
     ctx: Context,
@@ -108,11 +106,12 @@ async function compare (
         throw CONTEXTS_NOT_ENABLED_ERROR;
     }
 
-    // TODO: Resolve aliases.
-
     const dn = nameToString(data.object);
-    const entry = Array.from(ctx.database.data.entries.values())
-        .find((e) => (e.dn === dn));
+    const namedEntry = Array.from(ctx.database.data.entries.values())
+        .find((e) => (nameToString(e.dn) === dn));
+    const entry = namedEntry?.aliasedEntryId
+        ? ctx.database.data.entries.get(namedEntry.aliasedEntryId)
+        : namedEntry;
     if (!entry) {
         throw new NameError(
             "No such object.",
@@ -194,7 +193,9 @@ async function compare (
 
     return {
         unsigned: new CompareResultData(
-            undefined, // Should only be set if an alias was resolved.
+            namedEntry?.aliasedEntryId
+                ? entry.dn
+                : undefined, // Should only be set if an alias was resolved.
             matched,
             undefined, // TODO: Needs to change when shadowing is implemented.
             matchedType,

@@ -160,11 +160,12 @@ function objectDoesNotExistErrorData (ctx: Context, soughtName: Name): NameError
         };
     }
     for (const e of ctx.database.data.entries.values()) {
-        if (e.dn === definiteParentDN) {
-            match = matches.get(e.dn)!;
+        const entryDN = nameToString(e.dn);
+        if (entryDN === definiteParentDN) {
+            match = matches.get(entryDN)!;
             break;
         }
-        const potential = matches.get(e.dn);
+        const potential = matches.get(entryDN);
         if (potential && (potential.rdnSequence.length > match.rdnSequence.length)) {
             match = potential;
         }
