@@ -32,6 +32,9 @@ async function main (): Promise<void> {
         dn: {
             rdnSequence: [],
         },
+        dseType: {
+            root: true,
+        },
     };
     const ctx: Context = {
         log: console,

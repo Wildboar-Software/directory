@@ -197,7 +197,7 @@ async function compare (
                 ? entry.dn
                 : undefined, // Should only be set if an alias was resolved.
             matched,
-            undefined, // TODO: Needs to change when shadowing is implemented.
+            !entry.dseType.shadow,
             matchedType,
             [],
             undefined,

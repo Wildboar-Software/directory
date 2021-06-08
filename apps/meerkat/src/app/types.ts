@@ -105,12 +105,35 @@ interface StoredAttributeValueWithContexts {
 }
 
 export
+interface DSEType {
+    root: boolean;
+    glue: boolean;
+    cp: boolean;
+    entry: boolean;
+    alias: boolean;
+    subr: boolean;
+    nssr: boolean;
+    supr: boolean;
+    xr: boolean;
+    admPoint: boolean;
+    subentry: boolean;
+    shadow: boolean;
+    immSupr: boolean;
+    rhob: boolean;
+    sa: boolean;
+    dsSubentry: boolean;
+    familyMember: boolean;
+    ditBridge: boolean;
+}
+
+export
 interface Entry {
     id: UUID;
     dn: Name;
     parent?: UUID;
     // Managed by the DSA, and based on the aliasedEntryName operational attribute.
     aliasedEntryId?: UUID;
+    dseType: Partial<DSEType>;
 }
 
 export
