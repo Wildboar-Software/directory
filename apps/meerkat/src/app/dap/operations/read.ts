@@ -128,10 +128,19 @@ async function read (
                         c.fallback,
                     );
                 });
-                attr.valuesWithContext.push(new Attribute_valuesWithContext_Item(
+                const vwcItem = new Attribute_valuesWithContext_Item(
                     v.value,
                     contexts,
-                ));
+                );
+                if (!attr.valuesWithContext) {
+                    attributesByType.set(TYPE_OID, new Attribute(
+                        attr.type_,
+                        attr.values,
+                        [ vwcItem ],
+                    ));
+                } else {
+                    attr.valuesWithContext.push(vwcItem);
+                }
             } else {
                 attr.values.push(v.value);
             }

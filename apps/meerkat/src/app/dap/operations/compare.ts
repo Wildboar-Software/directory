@@ -1,10 +1,30 @@
-import type { Context } from "../../types";
+import type { Context, StoredAttributeValueWithContexts } from "../../types";
 import type {
-  CompareArgument,
+    CompareArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
 import {
-  CompareResult, CompareResultData,
+    CompareResult, CompareResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
+import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
+import {
+    NameError,
+    ServiceError,
+    objectDoesNotExistErrorData,
+    CONTEXTS_NOT_ENABLED_ERROR,
+} from "../errors";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    ServiceProblem_unsupportedMatchingUse,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import type {
+    ContextAssertion,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import {
+    EXT_BIT_USE_OF_CONTEXTS,
+} from "../../x500/extensions";
+import { TRUE_BIT } from "asn1-ts";
 
 // compare OPERATION ::= {
 //   ARGUMENT  CompareArgument
@@ -37,6 +57,36 @@ import {
 //   ...,
 //   COMPONENTS OF        CommonResults }
 
+// TODO: Handle attribute supertype matching.
+
+// TODO: Handle fallback
+function evaluateContextAssertion (
+    ctx: Context,
+    assertion: ContextAssertion,
+    value: StoredAttributeValueWithContexts,
+): boolean {
+    const CONTEXT_ID: string = assertion.contextType.toString();
+    const matcher = ctx.contextMatchers.get(CONTEXT_ID);
+    if (!matcher) {
+        return true; // FIXME: What to do here?
+    }
+    const contexts = value.contexts.get(CONTEXT_ID);
+
+    // A ContextAssertion is true for a particular attribute value if:
+    // ...the attribute value contains no contexts of the asserted contextType
+    if (!contexts) {
+        return true;
+    }
+
+    return assertion.contextValues
+        // any of the stored contextValues of that context...
+        // matches with any of the asserted contextValues.
+        .some((assertion): boolean => {
+            return contexts.values
+                .some((c): boolean => matcher(assertion, c));
+        });
+}
+
 export
 async function compare (
     ctx: Context,
@@ -45,17 +95,111 @@ async function compare (
     const data = ("signed" in arg)
         ? arg.signed.toBeSigned
         : arg.unsigned;
+
+    const useOfContexts = (data.criticalExtensions?.[EXT_BIT_USE_OF_CONTEXTS] === TRUE_BIT);
+    if (
+        !useOfContexts
+        && (
+            data.purported.assertedContexts
+            || data.operationContexts
+        )
+    ) {
+        throw CONTEXTS_NOT_ENABLED_ERROR;
+    }
+
+    // TODO: Resolve aliases.
+
+    const dn = nameToString(data.object);
+    const entry = Array.from(ctx.database.data.entries.values())
+        .find((e) => (e.dn === dn));
+    if (!entry) {
+        throw new NameError(
+            "No such object.",
+            objectDoesNotExistErrorData(ctx, data.object),
+        );
+    }
+    const MR_OID: string = data.purported.type_.toString();
+    const matcher = ctx.equalityMatchingRules.get(MR_OID);
+    if (!matcher) {
+        throw new ServiceError(
+            `Matching rule identified by OID ${MR_OID} not understood.`,
+            new ServiceErrorData(
+                ServiceProblem_unsupportedMatchingUse,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+    const TYPE_OID: string = data.purported.type_.toString();
+    const acs = data.purported.assertedContexts;
+    const values = Array.from(ctx.database.data.values.values())
+        .filter((v) => {
+            if (v.entry !== entry.id) {
+                return false;
+            }
+            if (TYPE_OID !== v.id.toString()) {
+                return false;
+            }
+            if (!matcher(data.purported.assertion, v.value)) {
+                return false;
+            }
+
+            if (acs) { // If ACS is present, operationContexts are ignored.
+                if ("allContexts" in acs) {
+                    return true;
+                }
+                if (v.contexts.size === 0) {
+                    return true;
+                }
+                // The comments below quote from ITU Recommendation X.501, Section 8.9.
+                // assertedContexts is true if:
+                // each ContextAssertion in selectedContexts is true...
+                return acs.selectedContexts
+                    .every((sc): boolean => evaluateContextAssertion(ctx, sc, v));
+            // operationContexts is used if assertedContexts is not used.
+            } else if (data.operationContexts) {
+                if ("allContexts" in data.operationContexts) {
+                    return true;
+                } else if ("selectedContexts" in data.operationContexts) {
+                    // assertedContexts is true if:
+                    // each ContextAssertion in selectedContexts is true...
+                    return data
+                        .operationContexts
+                        .selectedContexts
+                        .filter((sc): boolean => (sc.type_.toString() === TYPE_OID))
+                        .every((sc): boolean => {
+                            if ("all" in sc.contextAssertions) {
+                                return sc.contextAssertions.all
+                                    .every((ca): boolean => evaluateContextAssertion(ctx, ca, v));
+                            } else if ("preference" in sc.contextAssertions) {
+                                // REVIEW: I _think_ this is fine. See X.511, Section 7.6.3.
+                                return sc.contextAssertions.preference
+                                    .some((ca): boolean => evaluateContextAssertion(ctx, ca, v));
+                            } else {
+                                return false; // FIXME: Not understood. What to do?
+                            }
+                        });
+                } else {
+                    return false; // FIXME: Not understood: what to do?
+                }
+            }
+            return true;
+        });
+
     return {
         unsigned: new CompareResultData(
-        undefined,
-        true,
-        undefined,
-        undefined,
-        [],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
+            undefined, // Should only be set if an alias was resolved.
+            Boolean(values.length),
+            undefined, // TODO: Needs to change when shadowing is implemented.
+            undefined, // TODO: Needs to change when attribute subtype checking is implemented.
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
         ),
     };
 }

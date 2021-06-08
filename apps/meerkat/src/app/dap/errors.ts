@@ -17,12 +17,15 @@ import type {
 import type {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import type {
+import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import type {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    ServiceProblem_unavailable,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -176,3 +179,16 @@ function objectDoesNotExistErrorData (ctx: Context, soughtName: Name): NameError
         undefined,
     );
 }
+
+export
+const CONTEXTS_NOT_ENABLED_ERROR = new ServiceError(
+    "Use of contexts was not enabled by the request.",
+    new ServiceErrorData(
+        ServiceProblem_unavailable,
+        [],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+    ),
+);

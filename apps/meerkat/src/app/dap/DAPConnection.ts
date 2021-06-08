@@ -331,7 +331,7 @@ class DAPConnection {
           undefined,
         );
         // Check bind credentials.
-        idm.writeBindResult(dap_ip["&id"], _encode_DirectoryBindResult(bindResult, BER));
+        idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
         idm.events.on("request", this.handleRequest.bind(this));
         idm.events.on("unbind", this.handleUnbind.bind(this));
     }

@@ -15,6 +15,9 @@ import type {
 } from "@wildboar/x500/src/lib/types/OrderingMatcher";
 // FIXME: export non-default:
 import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
+import type {
+    ContextMatcher,
+} from "@wildboar/x500/src/lib/types/ContextMatcher";
 import { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
 
 export
@@ -123,4 +126,8 @@ interface Context {
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
     attributes: Map<IndexableOID, AttributeInfo>;
+    equalityMatchingRules: Map<IndexableOID, EqualityMatcher>;
+    orderingMatchingRules: Map<IndexableOID, OrderingMatcher>;
+    substringsMatchingRules: Map<IndexableOID, SubstringsMatcher>;
+    contextMatchers: Map<IndexableOID, ContextMatcher>;
 }

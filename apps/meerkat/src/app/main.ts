@@ -48,6 +48,10 @@ async function main (): Promise<void> {
         },
         objectClasses: new Map([]),
         attributes: new Map([]),
+        equalityMatchingRules: new Map([]),
+        orderingMatchingRules: new Map([]),
+        substringsMatchingRules: new Map([]),
+        contextMatchers: new Map([]),
     };
     const server = net.createServer((c) => {
         console.log("client connected");
