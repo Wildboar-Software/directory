@@ -24,7 +24,8 @@ import type {
 import {
     EXT_BIT_USE_OF_CONTEXTS,
 } from "../../x500/extensions";
-import { TRUE_BIT } from "asn1-ts";
+import isAttributeSubtype from "../../x500/isAttributeSubtype";
+import { OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 
 // compare OPERATION ::= {
 //   ARGUMENT  CompareArgument
@@ -135,12 +136,14 @@ async function compare (
     }
     const TYPE_OID: string = data.purported.type_.toString();
     const acs = data.purported.assertedContexts;
-    const values = Array.from(ctx.database.data.values.values())
-        .filter((v) => {
+    let matchedType: OBJECT_IDENTIFIER | undefined;
+    const matched = Array.from(ctx.database.data.values.values())
+        .some((v) => {
             if (v.entry !== entry.id) {
                 return false;
             }
-            if (TYPE_OID !== v.id.toString()) {
+            matchedType = isAttributeSubtype(ctx, v.id, data.purported.type_);
+            if (!matchedType) {
                 return false;
             }
             if (!matcher(data.purported.assertion, v.value)) {
@@ -192,9 +195,9 @@ async function compare (
     return {
         unsigned: new CompareResultData(
             undefined, // Should only be set if an alias was resolved.
-            Boolean(values.length),
+            matched,
             undefined, // TODO: Needs to change when shadowing is implemented.
-            undefined, // TODO: Needs to change when attribute subtype checking is implemented.
+            matchedType,
             [],
             undefined,
             undefined,
