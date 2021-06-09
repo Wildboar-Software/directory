@@ -444,6 +444,9 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
         id: entry,
         dn: data.object,
         parent: superior.id,
+        dseType: {
+            entry: true,
+        },
     };
     ctx.database.data.entries.set(entry, newEntry);
     ctx.database.data.values.push(...attrsFromDN, ...attrs);

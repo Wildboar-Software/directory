@@ -57,6 +57,7 @@ async function main (): Promise<void> {
         orderingMatchingRules: new Map([]),
         substringsMatchingRules: new Map([]),
         contextMatchers: new Map([]),
+        pagedResultsRequests: new Map([]),
     };
     const server = net.createServer((c) => {
         console.log("client connected");

@@ -124,6 +124,10 @@ import {
     IdmReject_reason_unknownOperationRequest,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import { Abort_reasonNotSpecified } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+import type {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import { v4 as uuid } from "uuid";
 
 const BER = () => new BERElement();
 const opcode_abandon: number = (id_opcode_abandon as { local: number}).local;
@@ -215,7 +219,7 @@ async function handleRequest (
     }
     case (opcode_list): {
         const arg = _decode_ListArgument(request.argument);
-        const res = await list(ctx, arg);
+        const res = await list(ctx, this, arg);
         await dap.idm.writeResult(
             request.invokeID,
             request.opcode,
@@ -311,6 +315,9 @@ async function handleRequestAndErrors (
 
 export default
 class DAPConnection {
+    public readonly id = uuid();
+    public readonly pagedResultsRequests: Map<string, [ request: PagedResultsRequest_newRequest, pageIndex: number ]> = new Map([]);
+
     private async handleRequest (request: Request): Promise<void> {
         await handleRequestAndErrors(this.ctx, this, request);
     }
