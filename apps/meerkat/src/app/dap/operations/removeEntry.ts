@@ -5,7 +5,6 @@ import type {
 import type {
     RemoveEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
-import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
 import {
     NameError,
     UpdateError,
@@ -15,6 +14,7 @@ import { UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstrac
 import {
     UpdateProblem_notAllowedOnNonLeaf,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import findEntry from "../../x500/findEntry";
 
 const HAS_CHILDREN_ERROR_DATA = new UpdateErrorData(
     UpdateProblem_notAllowedOnNonLeaf,
@@ -34,28 +34,27 @@ async function removeEntry (
     const data = ("signed" in arg)
         ? arg.signed.toBeSigned
         : arg.unsigned;
-    const soughtDN = nameToString(data.object);
-    let entry: Entry | undefined;
-    for (const e of ctx.database.data.entries.values()) {
-        if (!entry && (nameToString(e.dn) === soughtDN)) {
-            entry = e;
-        } else if (entry && (e.parent === entry.id)) {
-            throw new UpdateError(
-                "Cannot delete an entry with children.",
-                HAS_CHILDREN_ERROR_DATA,
-            );
-        }
-    }
+    const entry: Entry | undefined = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
     if (!entry) {
         throw new NameError(
             "No such object.",
             objectDoesNotExistErrorData(ctx, data.object),
         );
     }
+    if (entry.children) {
+        throw new UpdateError(
+            "Cannot delete an entry with children.",
+            HAS_CHILDREN_ERROR_DATA,
+        );
+    }
 
     ctx.database.data.values = ctx.database.data.values
         .filter((v): boolean => (v.entry !== entry!.id));
-    ctx.database.data.entries.delete(entry.id);
+    if (entry.parent?.children.length) {
+        const entryIndex = entry.parent.children.findIndex((child) => (child.id === entry.id));
+        entry.parent.children.splice(entryIndex, 1);
+    }
+
     return {
         null_: null,
     };

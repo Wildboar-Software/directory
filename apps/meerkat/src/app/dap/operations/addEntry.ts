@@ -30,13 +30,6 @@ import {
 import {
     AttributeProblem_undefinedAttributeType,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
-import {
-    id_doa_dseType,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/id-doa-dseType.va";
-import {
-    _decode_DSEType,
-    DSEType_alias,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
 // import {
 //     id_oa_hierarchyTop,
 // } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hierarchyTop.va";
@@ -76,14 +69,9 @@ import {
 import {
     AddEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
-
-
-const FORBIDDEN_SUPERIOR_TYPES: Set<number> = new Set([
-    DSEType_alias,
-]);
+import findEntry from "../../x500/findEntry";
 
 const OBJECT_CLASS_ATTR_OID: string = id_at_objectClass.toString();
-const DSE_TYPE_ATTR_OID: string = id_doa_dseType.toString();
 // const HIERARCHY_TOP_ATTR_OID: string = id_oa_hierarchyTop.toString();
 // const HIERARCHY_BELOW_ATTR_OID: string = id_oa_hierarchyBelow.toString();
 // const HIERARCHY_LEVEL_ATTR_OID: string = id_oa_hierarchyLevel.toString();
@@ -189,33 +177,20 @@ async function addEntry (
             namingViolationErrorData([]),
         );
     }
-    const entries = Array.from(ctx.database.data.entries.values());
-    const entryDN = nameToString(data.object);
-    if (entries.some((e) => nameToString(e.dn) === entryDN)) {
-        throw new UpdateError(`Entry already exists: ${entryDN}`, ENTRY_EXISTS_ERROR_DATA);
+    if (findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence)) {
+        throw new UpdateError(`Entry already exists: ${nameToString(data.object)}`, ENTRY_EXISTS_ERROR_DATA);
     }
-    const superiorDN = nameToString({
-        rdnSequence: data.object.rdnSequence.slice(1),
-    });
-    const superior = entries.find((e) => nameToString(e.dn) === superiorDN);
+    const superiorDN = data.object.rdnSequence.slice(1);
+    const superior = findEntry(ctx, ctx.database.data.dit, superiorDN);
     if (!superior) {
-        throw new UpdateError(`No such superior: ${superiorDN}`, NO_SUCH_SUPERIOR_ERROR_DATA);
+        const superiorDNString = nameToString({ rdnSequence: superiorDN });
+        throw new UpdateError(`No such superior: ${superiorDNString}`, NO_SUCH_SUPERIOR_ERROR_DATA);
     }
-    // Using .find() is fine here, because dseType is single-valued.
-    const superiorDSETypeAttr = ctx.database.data.values.find((v) => (
-        (v.entry === superior.id) // This attribute belongs to the superior.
-        && (v.id.toString() === DSE_TYPE_ATTR_OID)
-    ));
-    if (superiorDSETypeAttr) {
-        const superiorDSEType = _decode_DSEType(superiorDSETypeAttr.value);
-        superiorDSEType.forEach((b, i) => {
-            if (FORBIDDEN_SUPERIOR_TYPES.has(i)) {
-                throw new UpdateError(
-                    "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
-                    namingViolationErrorData([]),
-                );
-            }
-        });
+    if (superior.dseType.alias) {
+        throw new UpdateError(
+            "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
+            namingViolationErrorData([]),
+        );
     }
 
     const entry = uuid();
@@ -442,15 +417,15 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
 
     const newEntry: Entry = {
         id: entry,
-        dn: data.object,
-        parent: superior.id,
+        rdn: data.object.rdnSequence[0],
+        parent: superior,
         dseType: {
             entry: true,
         },
+        children: [],
     };
-    ctx.database.data.entries.set(entry, newEntry);
+    superior.children.push(newEntry);
     ctx.database.data.values.push(...attrsFromDN, ...attrs);
-    console.log(ctx.database.data);
     return {
         null_: null,
     };

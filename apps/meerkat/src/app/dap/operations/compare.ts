@@ -5,7 +5,6 @@ import type {
 import {
     CompareResult, CompareResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
-import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
 import {
     NameError,
     ServiceError,
@@ -26,6 +25,8 @@ import {
 } from "../../x500/extensions";
 import isAttributeSubtype from "../../x500/isAttributeSubtype";
 import { OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
+import findEntry from "../../x500/findEntry";
+import getDistinguishedName from "../../x500/getDistinguishedName";
 
 // compare OPERATION ::= {
 //   ARGUMENT  CompareArgument
@@ -106,12 +107,13 @@ async function compare (
         throw CONTEXTS_NOT_ENABLED_ERROR;
     }
 
-    const dn = nameToString(data.object);
-    const namedEntry = Array.from(ctx.database.data.entries.values())
-        .find((e) => (nameToString(e.dn) === dn));
-    const entry = namedEntry?.aliasedEntryId
-        ? ctx.database.data.entries.get(namedEntry.aliasedEntryId)
-        : namedEntry;
+    // const dn = nameToString(data.object);
+    // const namedEntry = Array.from(ctx.database.data.entries.values())
+    //     .find((e) => (nameToString(e.dn) === dn));
+    // const entry = namedEntry?.aliasedEntryId
+    //     ? ctx.database.data.entries.get(namedEntry.aliasedEntryId)
+    //     : namedEntry;
+    const entry = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
     if (!entry) {
         throw new NameError(
             "No such object.",
@@ -193,9 +195,11 @@ async function compare (
 
     return {
         unsigned: new CompareResultData(
-            namedEntry?.aliasedEntryId
-                ? entry.dn
-                : undefined, // Should only be set if an alias was resolved.
+            entry.aliasedEntry // If we made it this far, it's because this resolved.
+                ? {
+                    rdnSequence: getDistinguishedName(entry.aliasedEntry),
+                }
+                : undefined,
             matched,
             !entry.dseType.shadow,
             matchedType,

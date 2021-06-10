@@ -29,20 +29,17 @@ async function main (): Promise<void> {
     const rootID = uuid();
     const rootDSE: Entry = {
         id: rootID,
-        dn: {
-            rdnSequence: [],
-        },
+        rdn: [],
         dseType: {
             root: true,
         },
+        children: [],
     };
     const ctx: Context = {
         log: console,
         database: {
             data: {
-                entries: new Map([
-                    [ rootID, rootDSE ],
-                ]),
+                dit: rootDSE,
                 values: [],
             },
         },
@@ -86,8 +83,8 @@ async function main (): Promise<void> {
     });
 
     const port = process.env.PORT
-      ? Number.parseInt(process.env.PORT, 10)
-      : DEFAULT_TCP_PORT;
+        ? Number.parseInt(process.env.PORT, 10)
+        : DEFAULT_TCP_PORT;
 
     server.listen(port, () => {
         console.log("server bound");

@@ -5,8 +5,8 @@ import {
     ObjectClassKind,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import type {
-    Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+    RelativeDistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import {
     AttributeUsage,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
@@ -34,6 +34,9 @@ type IndexableOID = string;
 
 export
 type LDAPName = string;
+
+export
+type Value = ASN1Element;
 
 export
 interface AttributeInfo {
@@ -132,16 +135,21 @@ interface DSEType {
 export
 interface Entry {
     id: UUID;
-    dn: Name;
-    parent?: UUID;
+    // dn: Name;
+    rdn: RelativeDistinguishedName;
+    parent?: Entry;
+    children: Entry[];
     // Managed by the DSA, and based on the aliasedEntryName operational attribute.
-    aliasedEntryId?: UUID;
+    aliasedEntry?: Entry;
     dseType: Partial<DSEType>;
 }
 
 export
+type DIT = Entry;
+
+export
 interface DatabaseData {
-    entries: Map<UUID, Entry>;
+    dit: DIT;
     values: StoredAttributeValueWithContexts[];
 }
 

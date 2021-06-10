@@ -11,7 +11,6 @@ import {
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
-import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
 import {
     NameError,
     objectDoesNotExistErrorData,
@@ -25,6 +24,7 @@ import {
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import findEntry from "../../x500/findEntry";
 
 // read OPERATION ::= {
 //   ARGUMENT  ReadArgument
@@ -77,9 +77,7 @@ async function read (
     const data = ("signed" in arg)
         ? arg.signed.toBeSigned
         : arg.unsigned;
-    const dn = nameToString(data.object);
-    const entry = Array.from(ctx.database.data.entries.values())
-        .find((e) => (nameToString(e.dn) === dn));
+    const entry = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
     if (!entry) {
         throw new NameError(
             "No such object.",

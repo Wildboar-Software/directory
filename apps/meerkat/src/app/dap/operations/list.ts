@@ -12,7 +12,6 @@ import {
 import {
     ListResultData_listInfo_subordinates_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
-import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
 import {
     AbandonError,
     NameError,
@@ -45,6 +44,8 @@ import {
 } from "../../x500/extensions";
 import { TRUE_BIT } from "asn1-ts";
 import * as crypto from "crypto";
+import findEntry from "../../x500/findEntry";
+import getDistinguishedName from "../../x500/getDistinguishedName";
 
 // list OPERATION ::= {
 //   ARGUMENT  ListArgument
@@ -264,43 +265,22 @@ async function list (
             );
         }
     }
-    const dn = nameToString(data.object);
-    const namedEntry = Array.from(ctx.database.data.entries.values())
-        .find((e) => (nameToString(e.dn) === dn));
-    const base = namedEntry?.aliasedEntryId
-        ? ctx.database.data.entries.get(namedEntry.aliasedEntryId)
-        : namedEntry;
+    const base = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
     if (!base) {
         throw new NameError(
             "No such object.",
             objectDoesNotExistErrorData(ctx, data.object),
         );
     }
-    const baseDN: string = nameToString(base.dn);
-    let skip: number = pagingRequest
+
+    const skip: number = pagingRequest
         ? page * pagingRequest.pageSize
         : 0;
-    const results: Entry[] = [];
-    let completeResults: boolean = true;
-    for (const entry of ctx.database.data.entries.values()) {
-        if (entry.dn.rdnSequence.length !== (base.dn.rdnSequence.length + 1)) {
-            continue;
-        }
-        const entryDN = nameToString(entry.dn);
-        if (!baseDN.endsWith(entryDN)) {
-            continue;
-        }
-        // Beyond this point, it is a match.
-        if (skip > 0) {
-            skip--;
-            continue;
-        }
-        results.push(entry);
-        if (results.length === (pagingRequest?.pageSize ?? data.serviceControls?.sizeLimit ?? Infinity)) {
-            completeResults = false;
-            break;
-        }
-    }
+    const pageSize: number = pagingRequest?.pageSize
+        ?? data.serviceControls?.sizeLimit
+        ?? Infinity;
+    const results: Entry[] = base.children;
+    const completeResults: boolean = ((skip + pageSize) < base.children.length);
     if (queryReference && pagingRequest) {
         connection.pagedResultsRequests.set(queryReference, [ pagingRequest, (page + 1) ]);
     }
@@ -331,8 +311,8 @@ async function list (
             );
         }
         results.sort((a: Entry, b: Entry): number => {
-            const ardn = a.dn.rdnSequence[0];
-            const brdn = b.dn.rdnSequence[0];
+            const ardn = a.rdn;
+            const brdn = b.rdn;
             /**
              * From ITU X.511 (2016), Section 7.9:
              *
@@ -362,12 +342,14 @@ async function list (
     return {
         unsigned: {
             listInfo: new ListResultData_listInfo(
-                namedEntry!.aliasedEntryId // If we made it this far, it's because this resolved.
-                    ? base.dn
+                base.aliasedEntry // If we made it this far, it's because this resolved.
+                    ? {
+                        rdnSequence: getDistinguishedName(base.aliasedEntry),
+                    }
                     : undefined,
-                results.map((result) => new ListResultData_listInfo_subordinates_Item(
-                    result.dn.rdnSequence[0],
-                    result.aliasedEntryId ? true : false,
+                results.slice(skip, pageSize).map((result) => new ListResultData_listInfo_subordinates_Item(
+                    result.rdn,
+                    result.aliasedEntry ? true : false,
                     false, // TODO: Will change when shadowing is implemented.
                 )),
                 (completeResults && queryReference)

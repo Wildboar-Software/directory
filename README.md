@@ -4,6 +4,8 @@
 
 - [ ] Applications
   - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)
+    - [ ] Technical Debt
+      - [ ] Use Base64 UUIDs (better performance, because fewer characters to compare)
     - [ ] Directory Access Protocol
       - [ ] Operations
         - [ ] `directoryBind`
@@ -11,11 +13,11 @@
         - [ ] `administerPassword`
         - [x] `addEntry`
         - [ ] `changePassword`
-        - [ ] `compare`
+        - [x] `compare`
         - [ ] `modifyDN`
         - [ ] `modifyEntry`
-        - [ ] `list`
-        - [ ] `read`
+        - [x] `list`
+        - [x] `read`
         - [x] `removeEntry`
         - [ ] `search`
     - [ ] Directory System Protocol
@@ -89,4 +91,6 @@
   - [ ] X500 Studio
 - [ ] Libraries
   - [ ] IDM
+  - [ ] X.500 Client
+  - [ ] X.500 Server
   - [ ] X.500 Extensions

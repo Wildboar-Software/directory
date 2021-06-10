@@ -59,7 +59,8 @@ import {
 import type {
     Name,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
-import nameToString from "@wildboar/x500/src/lib/stringifiers/nameToString";
+import findEntry from "../x500/findEntry";
+import getDistinguishedName from "../x500/getDistinguishedName";
 
 // ReferralError
 
@@ -145,34 +146,21 @@ class UnknownOperationError extends Error {
 
 export
 function objectDoesNotExistErrorData (ctx: Context, soughtName: Name): NameErrorData {
-    let match: Name = {
-        rdnSequence: [],
-    };
-    const matches: Map<string, Name> = new Map();
     let name: Name = {
         rdnSequence: [ ...soughtName.rdnSequence.slice(1) ],
     };
-    const definiteParentDN = nameToString(name);
-    while (name.rdnSequence.length > 0) {
-        matches.set(nameToString(name), name);
+    let match = findEntry(ctx, ctx.database.data.dit, name.rdnSequence);
+    while (!match) {
         name = {
             rdnSequence: [ ...name.rdnSequence.slice(1) ],
         };
-    }
-    for (const e of ctx.database.data.entries.values()) {
-        const entryDN = nameToString(e.dn);
-        if (entryDN === definiteParentDN) {
-            match = matches.get(entryDN)!;
-            break;
-        }
-        const potential = matches.get(entryDN);
-        if (potential && (potential.rdnSequence.length > match.rdnSequence.length)) {
-            match = potential;
-        }
+        match = findEntry(ctx, ctx.database.data.dit, name.rdnSequence);
     }
     return new NameErrorData(
         NameProblem_noSuchObject,
-        match,
+        {
+            rdnSequence: getDistinguishedName(match),
+        },
         [],
         undefined,
         undefined,
