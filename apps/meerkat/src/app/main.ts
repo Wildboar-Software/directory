@@ -29,6 +29,7 @@ async function main (): Promise<void> {
     const rootID = uuid();
     const rootDSE: Entry = {
         id: rootID,
+        objectClass: new Set(),
         rdn: [],
         dseType: {
             root: true,

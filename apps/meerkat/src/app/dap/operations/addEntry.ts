@@ -162,6 +162,20 @@ function unrecognizedAttributeErrorData (
     );
 }
 
+/* TODO:
+ITU Recommendation X.501:
+There shall be one value of the objectClass attribute for the entry's structural
+object class and a value for each of its superclasses. top may be omitted
+*/
+
+/* TODO:
+X.501:
+Family members are not permitted to be alias entries.
+An alias shall not point to a child family member
+*/
+
+// NOTE: X.511 seems to indicate that alias dereferencing applies to addEntry, but I don't see how...
+
 export
 async function addEntry (
     ctx: Context,
@@ -423,9 +437,11 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
             entry: true,
         },
         children: [],
+        objectClass: new Set(objectClasses.map((attr) => attr.value.objectIdentifier.toString())),
     };
     superior.children.push(newEntry);
-    ctx.database.data.values.push(...attrsFromDN, ...attrs);
+    // TODO: Filter out more operational attributes.
+    ctx.database.data.values.push(...attrsFromDN, ...attrs.filter((attr) => attr.id.toString() !== OBJECT_CLASS_ATTR_OID));
     return {
         null_: null,
     };

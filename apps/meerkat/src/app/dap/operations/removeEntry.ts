@@ -14,7 +14,14 @@ import { UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstrac
 import {
     UpdateProblem_notAllowedOnNonLeaf,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import {
+    ServiceControlOptions_dontDereferenceAliases,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import {
+    EXT_BIT_USE_ALIAS_ON_UPDATE,
+} from "../../x500/extensions";
 import findEntry from "../../x500/findEntry";
+import { TRUE_BIT } from "asn1-ts";
 
 const HAS_CHILDREN_ERROR_DATA = new UpdateErrorData(
     UpdateProblem_notAllowedOnNonLeaf,
@@ -26,6 +33,8 @@ const HAS_CHILDREN_ERROR_DATA = new UpdateErrorData(
     undefined,
 );
 
+// TODO: subentries
+
 export
 async function removeEntry (
     ctx: Context,
@@ -34,7 +43,24 @@ async function removeEntry (
     const data = ("signed" in arg)
         ? arg.signed.toBeSigned
         : arg.unsigned;
-    const entry: Entry | undefined = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
+
+    const useAliasOnUpdateExtension: boolean = (
+        data.criticalExtensions?.[EXT_BIT_USE_ALIAS_ON_UPDATE] === TRUE_BIT);
+    const dontDereferenceAliases: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
+
+    /**
+     * From ITU Recommendation X.511, Section 12.3.2:
+     *
+     * > ...aliases are dereferenced by this operation only if
+     * > dontDereferenceAlias is not set and useAliasOnUpdate is set
+     */
+    const derefAliases: boolean = (
+        !dontDereferenceAliases
+        && useAliasOnUpdateExtension
+    );
+
+    const entry: Entry | undefined = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence, derefAliases);
     if (!entry) {
         throw new NameError(
             "No such object.",

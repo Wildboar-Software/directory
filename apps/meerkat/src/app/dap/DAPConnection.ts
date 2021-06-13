@@ -111,7 +111,7 @@ import {
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { BERElement } from "asn1-ts";
+import { BERElement, TRUE_BIT } from "asn1-ts";
 import { _encode_AbandonedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
 import { _encode_AbandonFailedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonFailedData.ta";
 import { _encode_AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
@@ -127,6 +127,10 @@ import { Abort_reasonNotSpecified } from "@wildboar/x500/src/lib/modules/IDMProt
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import {
+    Versions_v1,
+    Versions_v2,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 import { v4 as uuid } from "uuid";
 
 const BER = () => new BERElement();
@@ -317,6 +321,12 @@ export default
 class DAPConnection {
     public readonly id = uuid();
     public readonly pagedResultsRequests: Map<string, [ request: PagedResultsRequest_newRequest, pageIndex: number ]> = new Map([]);
+    public get v1 (): boolean {
+        return (this.bind.versions?.[Versions_v1] === TRUE_BIT);
+    }
+    public get v2 (): boolean {
+        return (this.bind.versions?.[Versions_v2] === TRUE_BIT);
+    }
 
     private async handleRequest (request: Request): Promise<void> {
         await handleRequestAndErrors(this.ctx, this, request);
@@ -333,9 +343,9 @@ class DAPConnection {
     ) {
         console.log("DAP connection established.");
         const bindResult = new DirectoryBindResult(
-          undefined,
-          undefined,
-          undefined,
+            undefined,
+            undefined,
+            undefined,
         );
         // Check bind credentials.
         idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));

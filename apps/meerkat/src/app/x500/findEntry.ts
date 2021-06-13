@@ -2,11 +2,13 @@ import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/Informati
 import type { Context, DIT, Entry, IndexableOID, Value } from "../types";
 
 export
-function findEntry (ctx: Context, dit: DIT, dn: DistinguishedName): Entry | undefined {
-    const currentVertex = dit.aliasedEntry ?? dit;
+function findEntry (ctx: Context, dit: DIT, dn: DistinguishedName, derefAliases: boolean = true): Entry | undefined {
+    const currentVertex = derefAliases
+        ? (dit.aliasedEntry ?? dit)
+        : dit;
     if (currentVertex.rdn.length === 0) { // Root DSE, which will not match.
         return dit.children // So we start the search with its children.
-            .map((child) => findEntry(ctx, child, dn))
+            .map((child) => findEntry(ctx, child, dn, derefAliases))
             .find((e) => e);
     }
     // To minimize modification by reference.
@@ -47,7 +49,7 @@ function findEntry (ctx: Context, dit: DIT, dn: DistinguishedName): Entry | unde
      * with a distinguished name whose terminal RDN has been truncated.
      */
     return dit.children // So we start the search with its children.
-        .map((child) => findEntry(ctx, child, query))
+        .map((child) => findEntry(ctx, child, query, derefAliases))
         .find((e) => e);
 }
 

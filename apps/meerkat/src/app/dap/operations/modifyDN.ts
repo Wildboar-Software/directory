@@ -165,8 +165,7 @@ async function modifyDN (
         : arg.unsigned;
     if (data.object.length === 0) {
         throw new UpdateError(
-            "An entry having zero RDNs cannot be inserted. "
-            + "The zero-RDN entry is the automatically-managed root DSE.",
+            "The zero-RDN entry is the automatically-managed root DSE and may not be edited.",
             namingViolationErrorData([]),
         );
     }

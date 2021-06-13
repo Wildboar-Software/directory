@@ -1,4 +1,4 @@
-import type { Context, StoredAttributeValueWithContexts } from "../../types";
+import type { Context } from "../../types";
 import type {
     CompareArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
@@ -17,9 +17,6 @@ import {
 import {
     ServiceProblem_unsupportedMatchingUse,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
-import type {
-    ContextAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
 import {
     EXT_BIT_USE_OF_CONTEXTS,
 } from "../../x500/extensions";
@@ -27,6 +24,7 @@ import isAttributeSubtype from "../../x500/isAttributeSubtype";
 import { OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
+import evaluateContextAssertion from "../../x500/evaluateContextAssertion";
 
 // compare OPERATION ::= {
 //   ARGUMENT  CompareArgument
@@ -58,34 +56,6 @@ import getDistinguishedName from "../../x500/getDistinguishedName";
 //   ...,
 //   ...,
 //   COMPONENTS OF        CommonResults }
-
-// TODO: Handle fallback
-function evaluateContextAssertion (
-    ctx: Context,
-    assertion: ContextAssertion,
-    value: StoredAttributeValueWithContexts,
-): boolean {
-    const CONTEXT_ID: string = assertion.contextType.toString();
-    const matcher = ctx.contextMatchers.get(CONTEXT_ID);
-    if (!matcher) {
-        return true; // FIXME: What to do here?
-    }
-    const contexts = value.contexts.get(CONTEXT_ID);
-
-    // A ContextAssertion is true for a particular attribute value if:
-    // ...the attribute value contains no contexts of the asserted contextType
-    if (!contexts) {
-        return true;
-    }
-
-    return assertion.contextValues
-        // any of the stored contextValues of that context...
-        // matches with any of the asserted contextValues.
-        .some((assertion): boolean => {
-            return contexts.values
-                .some((c): boolean => matcher(assertion, c));
-        });
-}
 
 export
 async function compare (
@@ -172,7 +142,7 @@ async function compare (
                     // each ContextAssertion in selectedContexts is true...
                     return data
                         .operationContexts
-                        .selectedContexts
+                        .selectedContexts // FIXME: Replace with evaluateTypeAndContextAssertion
                         .filter((sc): boolean => (sc.type_.toString() === TYPE_OID))
                         .every((sc): boolean => {
                             if ("all" in sc.contextAssertions) {

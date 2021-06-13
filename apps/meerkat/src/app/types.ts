@@ -142,6 +142,7 @@ interface Entry {
     // Managed by the DSA, and based on the aliasedEntryName operational attribute.
     aliasedEntry?: Entry;
     dseType: Partial<DSEType>;
+    objectClass: Set<IndexableOID>;
 }
 
 export

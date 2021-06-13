@@ -20,7 +20,7 @@ import type {
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import type {
+import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
@@ -59,6 +59,12 @@ import {
 import type {
     Name,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+import type {
+    AttributeType,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import {
+    UpdateProblem_namingViolation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import findEntry from "../x500/findEntry";
 import getDistinguishedName from "../x500/getDistinguishedName";
 
@@ -181,3 +187,18 @@ const CONTEXTS_NOT_ENABLED_ERROR = new ServiceError(
         undefined,
     ),
 );
+
+export
+function namingViolationErrorData (attributeTypes: AttributeType[]): UpdateErrorData {
+    return new UpdateErrorData(
+        UpdateProblem_namingViolation,
+        attributeTypes.map((at) => ({
+            attributeType: at,
+        })),
+        [],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+    );
+}

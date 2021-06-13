@@ -6,6 +6,22 @@
   - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)
     - [ ] Technical Debt
       - [ ] Use Base64 UUIDs (better performance, because fewer characters to compare)
+      - [ ] Combined matching rules, per ITU Recommendation X.501 (2016), Section 13.5.2.
+      - [ ] Canonical Filtering Form, per Annex Q of X.501 (2016)
+      - [ ] According to Section 7.3.1, it sounds like all the critical extension bits must always be set...
+      - [ ] I think you can remove all of the code that checks if extension bits are set.
+      - [ ] Set `aliasDereferenced` in `CommonResults`
+      - [ ] Use `notification` in `CommonResults`
+      - [ ] Service administration
+      - [ ] Schema administration
+      - [ ] Authentication
+      - [ ] `writeAttributes(entry, attributes)` which takes care of:
+        - [ ] Operational attributes
+        - [ ] Single-valued attributes
+        - [ ] Collective attributes
+        - [ ] Compound entries (marking parents as object class `parent`)
+      - [ ] `readUserAttributes(entry)`
+      - [ ] `readAllAttributes(entry)`
     - [ ] Directory Access Protocol
       - [ ] Operations
         - [ ] `directoryBind`
@@ -14,8 +30,8 @@
         - [x] `addEntry`
         - [ ] `changePassword`
         - [x] `compare`
-        - [ ] `modifyDN`
-        - [ ] `modifyEntry`
+        - [x] `modifyDN`
+        - [x] `modifyEntry`
         - [x] `list`
         - [x] `read`
         - [x] `removeEntry`
