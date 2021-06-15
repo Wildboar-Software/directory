@@ -1,7 +1,4 @@
 import type { Context, StoredAttributeValueWithContexts, Entry, IndexableOID } from "../types";
-import type {
-    AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
@@ -12,14 +9,14 @@ import {
     EntryInformationSelection_infoTypes_attributeTypesOnly,
     EntryInformationSelection_infoTypes_attributeTypesAndValues,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+import {
+    EntryInformation_information_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import evaluateTypeAndContextAssertion from "./evaluateTypeAndContextAssertion";
-
-// Return type determined by EntryInformationSelection.infoTypes
-type SelectedInfo = {
-    attributeTypesOnly: AttributeType[];
-} | {
-    attributeTypesAndValues: StoredAttributeValueWithContexts[];
-};
+import { attributesFromStoredValues } from "./attributesFromStoredValues";
 
 export
 function selectFromEntry (
@@ -27,7 +24,7 @@ function selectFromEntry (
     eis: EntryInformationSelection,
     entry: Entry,
     attributes?: StoredAttributeValueWithContexts[],
-): SelectedInfo {
+): EntryInformation_information_Item[] {
     const attrs = attributes ?? (ctx.database.data.values.filter((v) => v.entry === entry.id));
     const selectedAttributes: Set<IndexableOID> | null = (eis.attributes && ("select" in eis.attributes))
         ? new Set(eis.attributes.select.map((a) => a.toString()))
@@ -92,19 +89,28 @@ function selectFromEntry (
         (eis.infoTypes === undefined)
         || (eis.infoTypes === EntryInformationSelection_infoTypes_attributeTypesOnly)
     ) {
-        return {
-            attributeTypesOnly: attributeTypesAndValues.map((atav) => atav.id),
-        };
+        return attributeTypesAndValues.map((atav) => ({
+            attributeType: atav.id,
+        }));
     } else if (eis.infoTypes === EntryInformationSelection_infoTypes_attributeTypesAndValues) {
-        return {
-            attributeTypesAndValues: (eis.returnContexts === true) // This _defaults_ to FALSE.
-                ? attributeTypesAndValues
-                : attributeTypesAndValues.map((attr) => ({
-                    ...attr,
-                    contexts: new Map(),
-                })),
-        };
+        const attrs = attributesFromStoredValues(attributeTypesAndValues);
+        return (eis.returnContexts === true) // This _defaults_ to FALSE.
+            ? attrs.map((attribute) => ({
+                attribute,
+            }))
+            : attrs.map((attr) => ({
+                attribute: new Attribute(
+                    attr.type_,
+                    [
+                        ...attr.values,
+                        ...attr.valuesWithContext?.map((vwc) => vwc.value) ?? [],
+                    ],
+                    undefined,
+                ),
+            }));
     } else {
         throw new Error();
     }
 }
+
+export default selectFromEntry;

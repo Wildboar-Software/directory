@@ -2,6 +2,17 @@
 
 ## Projects
 
+- [ ] X.500 Library
+  - [ ] `sort(SortKey[], EntryInformation[], orderingRules: Map<string, OrderingMatcher>)`
+  - [ ] `*getValuesFromAttribute(Attribute)`
+  - [ ] `getApplicableValues()` (see `canJoin.ts`)
+  - [ ] `isLeafEntry()`
+  - [ ] `isCompoundEntry()`
+  - [ ] `extensions`
+  - [ ] `evaluateContextAssertion()`
+  - [ ] `evaluateTypeAndContextAssertion(..., getParentAttributeType: (OID) => OID | null)`
+  - [ ] `selectFromEntry(entry: EntryInformation, eis: EntryInformationSelection): EntryInformation`
+  - [ ] `defaultEntryInformationSelection`
 - [ ] Applications
   - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)
     - [ ] Technical Debt
@@ -63,6 +74,9 @@
           - [ ] `modifyOperationalBinding`
           - [ ] `terminateOperationalBinding`
   - [ ] Wildboar Directory Server (An enterprise-grade X.500 directory server)
+    - [ ] CMIP Support
+    - [ ] SNMP Support
+    - [ ] All authentication methods
     - [ ] Directory Access Protocol
       - [ ] Operations
         - [ ] `directoryBind`

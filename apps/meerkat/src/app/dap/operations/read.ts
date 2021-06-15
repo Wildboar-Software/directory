@@ -151,13 +151,13 @@ async function read (
         unsigned: new ReadResultData(
             new EntryInformation(
                 data.object,
-                true, // TODO: This will have to change when shadow copying is implemented.
+                !entry.dseType.shadow,
                 Array.from(attributesByType.values()).map((attribute) => ({
                     attribute,
                 })),
                 false, // TODO: This will have to change when access control, shadowing, or attribute size limits are implemented.
                 false, // TODO: Change this when partial name resolution is implemented.
-                false, // TODO: Change this when joins are implemented.
+                false,
                 [],
             ),
             undefined, // TODO: Return information when access control is implemented.

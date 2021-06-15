@@ -133,6 +133,15 @@ interface DSEType {
 }
 
 export
+interface HierarchyInfo {
+    level: number; // Shall be 0 for hierarchical top.
+    // below: boolean; // Shall be computed.
+    parent?: Entry;
+    top: Entry;
+    children: Entry[];
+}
+
+export
 interface Entry {
     id: UUID;
     // dn: Name;
@@ -143,6 +152,7 @@ interface Entry {
     aliasedEntry?: Entry;
     dseType: Partial<DSEType>;
     objectClass: Set<IndexableOID>;
+    hierarchy?: HierarchyInfo;
 }
 
 export
