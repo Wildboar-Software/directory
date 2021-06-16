@@ -13,8 +13,17 @@
   - [ ] `evaluateTypeAndContextAssertion(..., getParentAttributeType: (OID) => OID | null)`
   - [ ] `selectFromEntry(entry: EntryInformation, eis: EntryInformationSelection): EntryInformation`
   - [ ] `defaultEntryInformationSelection`
+  - [ ] `internetAddressFromNAddress(Uint8Array) => [ number[], number ]` (See ITU X.519, Section 11.3)
+  - [ ] `internetAddressToNAddress(ip: [ number, number, number, number ], port: number)` (See ITU X.519, Section 11.3)
+  - [ ] `evaluateRDNAgainstNameForm(rdn: RDN, nf: NAME_FORM)`
+  - [ ] `evaluateEntryAgainstContentRule(entry: EntryInformation, cr: CONTENT_RULE)`
+  - [ ] `LDAPSyntaxEncoder: (value: ASN1Element) => Uint8Array`
+  - [ ] `LDAPSyntaxDecoder: (value: Uint8Array) => ASN1Element`
+  - [ ] Fix DN stringifier: https://datatracker.ietf.org/doc/html/rfc4514
 - [ ] Applications
   - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)
+    - [ ] Database
+      - [ ] Subentries and administrative points should cache ALL attributes.
     - [ ] Technical Debt
       - [ ] Use Base64 UUIDs (better performance, because fewer characters to compare)
       - [ ] Combined matching rules, per ITU Recommendation X.501 (2016), Section 13.5.2.

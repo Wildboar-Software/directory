@@ -253,7 +253,7 @@ async function handleRequest (
     }
     case (opcode_search): {
         const arg = _decode_SearchArgument(request.argument);
-        const res = await search(ctx, arg);
+        const res = await search(ctx, dap, arg);
         await dap.idm.writeResult(
             request.invokeID,
             request.opcode,

@@ -20,6 +20,7 @@ import objectClassFromInformationObject from "./x500/objectClassFromInformationO
 import {
     top,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+import LDAPConnection from "./ldap/LDAPConnection";
 import { v4 as uuid } from "uuid";
 
 const DEFAULT_TCP_PORT: number = 4632;
@@ -57,8 +58,8 @@ async function main (): Promise<void> {
         contextMatchers: new Map([]),
         pagedResultsRequests: new Map([]),
     };
-    const server = net.createServer((c) => {
-        console.log("client connected");
+    const idmServer = net.createServer((c) => {
+        console.log("IDM client connected.");
         const idm = new IDMConnection(c); // eslint-disable-line
         // let dap: DAPConnection | undefined;
 
@@ -79,7 +80,7 @@ async function main (): Promise<void> {
         //     dap = undefined;
         // });
     });
-    server.on("error", (err) => {
+    idmServer.on("error", (err) => {
         throw err;
     });
 
@@ -87,7 +88,17 @@ async function main (): Promise<void> {
         ? Number.parseInt(process.env.PORT, 10)
         : DEFAULT_TCP_PORT;
 
-    server.listen(port, () => {
-        console.log("server bound");
+    idmServer.listen(port, () => {
+        console.log(`IDM server listening on port ${port}`);
+    });
+
+    const ldapServer = net.createServer((c) => {
+        console.log("LDAP client connected.");
+        new LDAPConnection(ctx, c);
+    });
+
+    const LDAP_PORT = 389;
+    ldapServer.listen(LDAP_PORT, () => {
+        console.log(`LDAP server listening on port ${LDAP_PORT}`);
     });
 }

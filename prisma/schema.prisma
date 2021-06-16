@@ -1,0 +1,595 @@
+datasource db {
+    url      = env("DATABASE_URL")
+    provider = "postgresql"
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model DIT {
+    id    Int     @id @default(autoincrement())
+    name  String
+    Entry Entry[]
+}
+
+// Subentry attributes, such as those documented in X.501, Section 14.4.3,
+// shall NOT be a part of this model. They should only be kept in the subentry,
+// just like collective attributes.
+model Entry {
+    id                    Int      @id @default(autoincrement())
+    dit_id                Int
+    dit                   DIT      @relation(fields: [dit_id], references: [id])
+    rdn                   Json // { "2.5.4.3": "Jonathan Wilbur", "O": "Wildboar Software" }
+    immediate_superior_id Int?
+    immediate_superior    Entry?   @relation(fields: [immediate_superior_id], references: [id])
+    objectClass           String[]
+
+    // It seems like Prisma does not even support multiple self-references: https://github.com/prisma/prisma/issues/4657
+    // aliased_entry_id      Int?
+    // aliased_entry         Entry? @relation(name: "zxcv", fields: [aliased_entry_id], references: [id])
+    aliased_entry_dn Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+
+    // DSE Types
+    root          Boolean @default(false)
+    glue          Boolean @default(false)
+    cp            Boolean @default(false)
+    entry         Boolean @default(false)
+    alias         Boolean @default(false)
+    subr          Boolean @default(false)
+    nssr          Boolean @default(false)
+    supr          Boolean @default(false)
+    xr            Boolean @default(false)
+    admPoint      Boolean @default(false)
+    subentry      Boolean @default(false)
+    shadow        Boolean @default(false)
+    immSupr       Boolean @default(false)
+    rhob          Boolean @default(false)
+    sa            Boolean @default(false)
+    dsSubentry    Boolean @default(false)
+    familyMember  Boolean @default(false)
+    ditBridge     Boolean @default(false)
+    writeableCopy Boolean @default(false)
+
+    // Single-valued attributes
+    createdTimestamp         DateTime       @default(now())
+    modifyTimestamp          DateTime       @updatedAt
+    deleteTimestamp          DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
+    creatorsName             Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    modifiersName            Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    is_family_parent         Boolean
+    is_family_child          Boolean
+    hierarchyLevel           Int?
+    hierarchyBelow           Boolean?
+    hierarchyParent          Int? // TODO: Make this a foreign key
+    hierarchyTop             Int? // TODO: Make this a foreign key
+    password_id              Int?
+    password                 Password?      @relation(fields: [password_id], references: [id])
+    structuralObjectClass    String
+    accessControlScheme      String?
+    intEmail                 String?
+    jid                      String?
+    objectIdentifier         String?
+    countryName              String?        @db.Char(2)
+    countryCode3c            String?        @db.Char(3)
+    countryCode3n            Int?           @db.SmallInt
+    utmCoordinates_id        Int?
+    utmCoordinates           UtmCoordinate? @relation(fields: [utmCoordinates_id], references: [id])
+    organizationIdentifier   String?
+    communicationsNetwork    String? // OID
+    oidC1                    Int?           @db.SmallInt
+    oidC2                    Int?           @db.SmallInt
+    oidC                     Int?
+    urnC                     String? // TODO: Max length?
+    tagOid                   String?
+    uiiInUrn                 String?
+    epcInUrn                 String?
+    contentType              String? // From PkiPmiWrapper
+    messageDigest            Bytes? // From PkiPmiWrapper
+    attribute_integrity_info Bytes? // From EnhancedSecurity.attributeIntegrityInfo
+    // myAccessPoint
+    // superiorKnowledge
+    // specificKnowledge
+
+    // Not exactly single-valued, but do not need a separate table:
+    administrativeRole String[]
+
+    // LDAP operational attributes
+    // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
+    governingStructureRule Int?
+    entryUUID              String  @default(uuid()) @db.Uuid
+    dc                     String? // https://datatracker.ietf.org/doc/html/rfc4519
+    // preferredDeliveryMethod
+
+    // @@index([rdn])
+    // @@index([immediate_superior_id])
+    Entry                       Entry[]                       @relation("EntryToEntry")
+    ACIItem                     ACIItem[]
+    Clearance                   Clearance[]
+    DITStructureRuleUse         DITStructureRuleUse[]
+    ContentRuleUse              ContentRuleUse[]
+    ContextUseRuleUse           ContextUseRuleUse[]
+    FriendshipUse               FriendshipUse[]
+    MatchingRuleUse             MatchingRuleUse[]
+    AttributeTypeDescriptionUse AttributeTypeDescriptionUse[]
+    ObjectClassDescriptionUsage ObjectClassDescriptionUsage[]
+    AttributeValue              AttributeValue[]
+    ContextValue                ContextValue[]
+    ContextDescriptionUse       ContextDescriptionUse[]
+    SearchRuleUse               SearchRuleUse[]
+    @@unique([immediate_superior_id, rdn])
+    @@index([aliased_entry_dn])
+}
+
+model UtmCoordinate {
+    id       Int     @id @default(autoincrement())
+    zone     String
+    easting  Int
+    northing Int
+    Entry    Entry[]
+}
+
+// There may be only one password per entry
+model Password {
+    id             Int       @id @default(autoincrement())
+    encrypted      Bytes
+    algorithm_id   Int
+    algorithm      Algorithm @relation(fields: [algorithm_id], references: [id])
+    entries        Entry[]
+    pwdStartTime   DateTime  @default(now())
+    pwdExpiryTime  DateTime?
+    pwdEndTime     DateTime?
+    pwdFails       Int       @default(0)
+    pwdFailureTime DateTime?
+    pwdGracesUsed  Int       @default(0)
+
+    // Policy attributes
+    pwdModifyEntryAllowed      Boolean?
+    pwdChangeAllowed           Boolean?
+    pwdMaxAge                  Int?
+    pwdExpiryAge               Int?
+    pwdMinLength               Int?
+    noDictionaryWords          Boolean? // From pwdVocabulary
+    noPersonNames              Boolean? // From pwdVocabulary
+    noGeographicalNames        Boolean? // From pwdVocabulary
+    // pwdAlphabet NOT SUPPORTED YET
+    pwdDictionaries            String?
+    pwdExpiryWarning           Int?
+    pwdGraces                  Int?
+    pwdFailureDuration         Int?
+    pwdLockoutDuration         Int?
+    pwdMaxFailures             Int?
+    pwdMaxTimeInHistory        Int?
+    pwdMinTimeInHistory        Int?
+    pwdHistorySlots            Int?
+    pwdRecentlyExpiredDuration Int?
+    pwdEncAlg_id               Int
+    // pwdEncAlg                   Algorithm @relation(fields: [pwdEncAlg_id], references: [id])
+}
+
+model Algorithm {
+    id         Int        @id @default(autoincrement())
+    oid        String
+    parameters Bytes
+    passwords  Password[]
+}
+
+// AccessPoint ::= SET {
+//     ae-title             [0]  Name,
+//     address              [1]  PresentationAddress,
+//     protocolInformation  [2]  SET SIZE (1..MAX) OF ProtocolInformation OPTIONAL,
+//     --                   [6]  Not to be used
+//     ... }
+
+model AttributeValue {
+    id          Int     @id @default(autoincrement())
+    entry_id    Int
+    entry       Entry   @relation(fields: [entry_id], references: [id])
+    type        String // OID
+    tag_class   Int     @db.SmallInt
+    constructed Boolean
+    tag_number  Int
+    ber         Bytes
+    hint        BigInt?
+    jer         Json?
+
+    // attributeValueSecurityLabelContext
+    // At most one security label context can be assigned to an attribute value
+    security_label             Bytes?
+    security_policy_identifier String?
+    security_classification    Int     @db.SmallInt
+    privacy_mark               String?
+
+    // Not part of a specification, but still usable
+    deleteTimestamp DateTime?
+    visible_to_ldap Boolean        @default(true)
+    ContextValue    ContextValue[]
+}
+
+model ContextValue {
+    id          Int            @id @default(autoincrement())
+    entry_id    Int
+    entry       Entry          @relation(fields: [entry_id], references: [id])
+    value_id    Int
+    value       AttributeValue @relation(fields: [value_id], references: [id])
+    type        String // OID
+    tag_class   Int            @db.SmallInt
+    constructed Boolean
+    tag_number  Int
+    ber         Bytes
+    hint        BigInt?
+    jer         Json?
+}
+
+// TODO: Should there be a separate Attribute Types table?
+// TODO: Should there be a separate Context Types table?
+// TODO: Should there be a separate Object Classes table?
+// TODO: Operational binding agreements
+// TODO: ACIItems
+
+model ACIItem {
+    id                               Int    @id @default(autoincrement())
+    entry_id                         Int
+    entry                            Entry  @relation(fields: [entry_id], references: [id])
+    tag                              String
+    precedence                       Int
+    auth_level_basic_level           Int
+    auth_level_basic_local_qualifier Int?
+    auth_level_basic_signed          Int
+    // The "other" alternative shall not be supported.
+}
+
+model Clearance {
+    id                          Int     @id @default(autoincrement())
+    entry_id                    Int
+    entry                       Entry   @relation(fields: [entry_id], references: [id])
+    policy_id                   String // OID
+    // From classList
+    unmarked                    Boolean
+    unclassified                Boolean
+    restricted                  Boolean
+    confidential                Boolean
+    secret                      Boolean
+    topSecret                   Boolean
+    security_categories_covered Json // { "1.3.4.6.1.25000.2": 1 }
+    ber                         Bytes // Still necessary for securityCategories
+}
+
+enum Knowledge {
+    MY_ACCESS_POINT
+    SUPERIOR
+    SPECIFIC
+    NON_SPECIFIC
+    SUPPLIER
+    CONSUMER
+    SECONDARY_SHADOW
+    // DIT_BRIDGE
+    OTHER
+}
+
+// Abandoned for now, because (1) There is no DNS support, and (2)
+// Satisfies AccessPoint, MasterOrShadowAccessPoint, SupplierOrConsumer, and SupplierInformation
+model AccessPoint {
+    id                      Int                  @id @default(autoincrement())
+    knowledge_type          Knowledge
+    ae_title                Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    ipv4                    String               @db.Inet
+    tcp_port                Int                  @db.SmallInt
+    category                Int?
+    chainingRequired        Boolean?
+    OperationalBinding      OperationalBinding[]
+    supplier_is_master      Boolean?
+    non_supplying_master_id Int?
+    non_supplying_master    AccessPoint?         @relation(fields: [non_supplying_master_id], references: [id])
+    AccessPoint             AccessPoint[]        @relation("AccessPointToAccessPoint")
+}
+
+model OperationalBindingType {
+    id                 Int                  @id @default(autoincrement())
+    name               String
+    OperationalBinding OperationalBinding[]
+}
+
+model OperationalBinding {
+    id              Int                    @id @default(autoincrement())
+    binding_type_id Int
+    binding_type    OperationalBindingType @relation(fields: [binding_type_id], references: [id])
+    identifier      Int
+    version         Int
+    agreement_ber   Bytes
+    access_point_id Int
+    access_point    AccessPoint            @relation(fields: [access_point_id], references: [id])
+}
+
+enum ObjectClassKind {
+    ABSTRACT
+    STRUCTURAL
+    AUXILIARY
+}
+
+// TODO: SchemaAdministration
+
+// NAME-FORM ::= CLASS {
+//     &namedObjectClass     OBJECT-CLASS,
+//     &MandatoryAttributes  ATTRIBUTE,
+//     &OptionalAttributes   ATTRIBUTE OPTIONAL,
+//     &ldapName             SEQUENCE SIZE(1..MAX) OF UTF8String OPTIONAL,
+//     &ldapDesc             UTF8String OPTIONAL,
+//     &id                   OBJECT IDENTIFIER UNIQUE }
+// WITH SYNTAX {
+//     NAMES                 &namedObjectClass
+//     WITH ATTRIBUTES       &MandatoryAttributes
+//     [AND OPTIONALLY       &OptionalAttributes]
+//     [LDAP-NAME            &ldapName]
+//     [LDAP-DESC            &ldapDesc]
+//     ID                    &id }
+// Also satisfies NameFormDescription
+model NameForm {
+    id                  Int                @id @default(autoincrement())
+    oid                 String // OID
+    namedObjectClass    String // OID
+    mandatoryAttributes String[] // OIDs
+    optionalAttributes  String[] // OIDs
+    ldapName            String[]
+    ldapDesc            String?
+    DITStructureRule    DITStructureRule[]
+    name                String[]
+    description         String?
+    obsolete            Boolean            @default(false)
+}
+
+// DITStructureRule ::= SEQUENCE {
+//   ruleIdentifier          RuleIdentifier,
+//                  -- shall be unique within the scope of the subschema
+//   nameForm                NAME-FORM.&id,
+//   superiorStructureRules  SET SIZE (1..MAX) OF RuleIdentifier OPTIONAL,
+//   ... }
+// Also satisfies DITStructureRuleDescription
+model DITStructureRule {
+    id                     Int                   @id @default(autoincrement())
+    ruleIdentifier         Int
+    nameForm_id            Int
+    nameForm               NameForm              @relation(fields: [nameForm_id], references: [id])
+    superiorStructureRules String[] // OIDs
+    name                   String[]
+    description            String?
+    obsolete               Boolean               @default(false)
+    DITStructureRuleUse    DITStructureRuleUse[]
+}
+
+model DITStructureRuleUse {
+    id       Int              @id @default(autoincrement())
+    rule_id  Int
+    rule     DITStructureRule @relation(fields: [rule_id], references: [id])
+    entry_id Int
+    entry    Entry            @relation(fields: [entry_id], references: [id])
+}
+
+// CONTENT-RULE ::= CLASS {
+//   &structuralClass          OBJECT-CLASS.&id UNIQUE,
+//   &Auxiliaries              OBJECT-CLASS OPTIONAL,
+//   &Mandatory                ATTRIBUTE OPTIONAL,
+//   &Optional                 ATTRIBUTE OPTIONAL,
+//   &Precluded                ATTRIBUTE OPTIONAL }
+// WITH SYNTAX {
+//   STRUCTURAL OBJECT-CLASS   &structuralClass
+//   [AUXILIARY OBJECT-CLASSES &Auxiliaries]
+//   [MUST CONTAIN             &Mandatory]
+//   [MAY CONTAIN              &Optional]
+//   [MUST-NOT CONTAIN         &Precluded] }
+// Also satisfies DITContentRuleDescription
+model ContentRule {
+    id                   Int              @id @default(autoincrement())
+    structural_class     String // OID
+    auxiliary_classes    String[] // OIDs
+    mandatory_attributes String[] // OIDs
+    optional_attributes  String[] // OIDs
+    precluded_attributes String[] // OIDs
+    name                 String[]
+    description          String?
+    obsolete             Boolean          @default(false)
+    ContentRuleUse       ContentRuleUse[]
+}
+
+model ContentRuleUse {
+    id       Int         @id @default(autoincrement())
+    rule_id  Int
+    rule     ContentRule @relation(fields: [rule_id], references: [id])
+    entry_id Int
+    entry    Entry       @relation(fields: [entry_id], references: [id])
+}
+
+// DIT-CONTEXT-USE-RULE ::= CLASS {
+//   &attributeType      ATTRIBUTE.&id UNIQUE,
+//   &Mandatory          CONTEXT OPTIONAL,
+//   &Optional           CONTEXT OPTIONAL}
+// WITH SYNTAX {
+//   ATTRIBUTE TYPE      &attributeType
+//   [MANDATORY CONTEXTS &Mandatory]
+//   [OPTIONAL CONTEXTS  &Optional] }
+// Also satisfies DITContextUseDescription
+model ContextUseRule {
+    id                Int                 @id @default(autoincrement())
+    attributeType     String // OID
+    mandatory         String[] // OIDs
+    optional          String[] // OIDs
+    name              String[]
+    description       String?
+    obsolete          Boolean             @default(false)
+    ContextUseRuleUse ContextUseRuleUse[]
+}
+
+model ContextUseRuleUse {
+    id       Int            @id @default(autoincrement())
+    rule_id  Int
+    rule     ContextUseRule @relation(fields: [rule_id], references: [id])
+    entry_id Int
+    entry    Entry          @relation(fields: [entry_id], references: [id])
+}
+
+// FRIENDS ::= CLASS {
+//   &anchor   ATTRIBUTE.&id UNIQUE,
+//   &Friends  ATTRIBUTE }
+// WITH SYNTAX {
+//   ANCHOR    &anchor
+//   FRIENDS   &Friends }
+// Also satisfies FriendsDescription
+model Friendship {
+    id            Int             @id @default(autoincrement())
+    anchor        String // OID
+    friends       String[] // OIDs
+    name          String[]
+    description   String?
+    obsolete      Boolean         @default(false)
+    FriendshipUse FriendshipUse[]
+}
+
+model FriendshipUse {
+    id            Int        @id @default(autoincrement())
+    friendship_id Int
+    friendship    Friendship @relation(fields: [friendship_id], references: [id])
+    entry_id      Int
+    entry         Entry      @relation(fields: [entry_id], references: [id])
+}
+
+// MatchingRuleDescription ::= SEQUENCE {
+//   identifier        MATCHING-RULE.&id,
+//   name              SET SIZE (1..MAX) OF UnboundedDirectoryString OPTIONAL,
+//   description       UnboundedDirectoryString OPTIONAL,
+//   obsolete          BOOLEAN DEFAULT FALSE,
+//   information  [0]  UnboundedDirectoryString OPTIONAL,
+//                 -- describes the ASN.1 syntax
+//   ... }
+model MatchingRuleDescription {
+    id              Int               @id @default(autoincrement())
+    information     String?
+    name            String[]
+    description     String?
+    obsolete        Boolean           @default(false)
+    MatchingRuleUse MatchingRuleUse[]
+}
+
+model MatchingRuleUse {
+    id       Int                     @id @default(autoincrement())
+    rule_id  Int
+    rule     MatchingRuleDescription @relation(fields: [rule_id], references: [id])
+    entry_id Int
+    entry    Entry                   @relation(fields: [entry_id], references: [id])
+}
+
+enum AttributeUsage {
+    USER_APPLICATIONS
+    DSA_OPERATION
+    DISTRIBUTED_OPERATION
+    DIRECTORY_OPERATION
+}
+
+model AttributeTypeDescription {
+    id                          Int                           @id @default(autoincrement())
+    identifier                  String // OID
+    name                        String[]
+    description                 String?
+    obsolete                    Boolean                       @default(false)
+    derivation                  String? // OID
+    equalityMatch               String? // OID
+    orderingMatch               String? // OID
+    substringsMatch             String? // OID
+    attributeSyntax             String?
+    multiValued                 Boolean                       @default(true)
+    collective                  Boolean                       @default(false)
+    userModifiable              Boolean                       @default(true)
+    application                 AttributeUsage                @default(USER_APPLICATIONS)
+    AttributeTypeDescriptionUse AttributeTypeDescriptionUse[]
+}
+
+model AttributeTypeDescriptionUse {
+    id             Int                      @id @default(autoincrement())
+    description_id Int
+    description    AttributeTypeDescription @relation(fields: [description_id], references: [id])
+    entry_id       Int
+    entry          Entry                    @relation(fields: [entry_id], references: [id])
+}
+
+model ObjectClassDescription {
+    id                          Int                           @id @default(autoincrement())
+    identifier                  String // OID
+    name                        String[]
+    description                 String?
+    obsolete                    Boolean                       @default(false)
+    subclassOf                  String[] // OIDs
+    kind                        ObjectClassKind               @default(STRUCTURAL)
+    mandatories                 String[] // OIDs
+    optionals                   String[] // OIDs
+    ObjectClassDescriptionUsage ObjectClassDescriptionUsage[]
+}
+
+model ObjectClassDescriptionUsage {
+    id             Int                    @id @default(autoincrement())
+    description_id Int
+    description    ObjectClassDescription @relation(fields: [description_id], references: [id])
+    entry_id       Int
+    entry          Entry                  @relation(fields: [entry_id], references: [id])
+}
+
+model ContextDescription {
+    id                    Int                     @id @default(autoincrement())
+    identifier            String // OID
+    name                  String[]
+    description           String?
+    obsolete              Boolean                 @default(false)
+    syntax                String
+    assertionSyntax       String?
+    ContextDescriptionUse ContextDescriptionUse[]
+}
+
+model ContextDescriptionUse {
+    id             Int                @id @default(autoincrement())
+    description_id Int
+    description    ContextDescription @relation(fields: [description_id], references: [id])
+    entry_id       Int
+    entry          Entry              @relation(fields: [entry_id], references: [id])
+}
+
+// This also satisfies SearchRuleDescription
+model SearchRule {
+    id                          Int             @id @default(autoincrement())
+    rule_id                     Int             @unique
+    dmd_id                      String // OID
+    service_type                String? // OID
+    user_class                  Int?
+    // inputAttributeTypes
+    // attributeCombination
+    // outputAttributeTypes
+    family_grouping             Int?
+    family_return_member_select Int?
+    // relaxation
+    relaxation_minimum          Int             @default(1)
+    relaxation_maximum          Int?
+    additionalControl           String[] // OIDs
+    base_object_allowed         Boolean         @default(true)
+    one_level_allowed           Boolean         @default(true)
+    whole_subtree_allowed       Boolean         @default(true)
+    imposed_subset              Int?
+    entry_limit_default         Int?
+    entry_limit_max             Int?
+    ber                         Bytes
+    name                        String[]
+    description                 String?
+    SearchRuleUse               SearchRuleUse[]
+}
+
+model SearchRuleUse {
+    id       Int        @id @default(autoincrement())
+    rule_id  Int
+    rule     SearchRule @relation(fields: [rule_id], references: [id])
+    entry_id Int
+    entry    Entry      @relation(fields: [entry_id], references: [id])
+}
+
+// certificate (user and ca)
+// CertificateList
+// distributionpoint
+// certificate policy
+// CPS
+// pkiPath
+// attribute certificate

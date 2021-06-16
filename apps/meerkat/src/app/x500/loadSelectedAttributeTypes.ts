@@ -10,8 +10,12 @@ import {
     surname,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
 import {
+    userPwd,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import {
     caseIgnoreMatch,
 } from "@wildboar/x500/src/lib/matching/equality/caseIgnoreMatch";
+// TODO: Implement userPwdMatch
 
 export
 function loadSelectedAttributeTypes (ctx: Context): void {
@@ -19,6 +23,7 @@ function loadSelectedAttributeTypes (ctx: Context): void {
         objectClass,
         commonName,
         surname,
+        userPwd,
     ]
         .map(attributeFromInformationObject)
         .forEach((attr) => {
