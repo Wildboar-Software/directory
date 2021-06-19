@@ -25,6 +25,7 @@ import { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import type { PrismaClient } from "@prisma/client";
 
 export
 type UUID = string;
@@ -172,6 +173,7 @@ interface Database {
 export
 interface Context {
     log: typeof console;
+    db: PrismaClient;
     database: Database;
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
     objectClasses: Map<IndexableOID, ObjectClassInfo>;

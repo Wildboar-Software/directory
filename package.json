@@ -27,6 +27,7 @@
   },
   "private": true,
   "dependencies": {
+    "@prisma/client": "^2.25.0",
     "@wildboar/x500": "^1.0.1",
     "asn1-ts": "^5.0.3",
     "tslib": "^2.0.0"
@@ -49,6 +50,7 @@
     "eslint-config-prettier": "8.1.0",
     "jest": "26.2.2",
     "prettier": "2.2.1",
+    "prisma": "^2.25.0",
     "ts-jest": "26.5.5",
     "ts-node": "~9.1.1",
     "typescript": "~4.0.3"

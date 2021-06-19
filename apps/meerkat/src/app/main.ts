@@ -22,8 +22,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
 import LDAPConnection from "./ldap/LDAPConnection";
 import { v4 as uuid } from "uuid";
+import { PrismaClient } from "@prisma/client";
 
-const DEFAULT_TCP_PORT: number = 4632;
+const DEFAULT_IDM_TCP_PORT: number = 4632;
+const DEFAULT_LDAP_TCP_PORT: number = 1389;
 
 export default
 async function main (): Promise<void> {
@@ -39,6 +41,7 @@ async function main (): Promise<void> {
     };
     const ctx: Context = {
         log: console,
+        db: new PrismaClient(),
         database: {
             data: {
                 dit: rootDSE,
@@ -84,12 +87,12 @@ async function main (): Promise<void> {
         throw err;
     });
 
-    const port = process.env.PORT
-        ? Number.parseInt(process.env.PORT, 10)
-        : DEFAULT_TCP_PORT;
+    const idmPort = process.env.IDM_PORT
+        ? Number.parseInt(process.env.IDM_PORT, 10)
+        : DEFAULT_IDM_TCP_PORT;
 
-    idmServer.listen(port, () => {
-        console.log(`IDM server listening on port ${port}`);
+    idmServer.listen(idmPort, () => {
+        console.log(`IDM server listening on port ${idmPort}`);
     });
 
     const ldapServer = net.createServer((c) => {
@@ -97,8 +100,13 @@ async function main (): Promise<void> {
         new LDAPConnection(ctx, c);
     });
 
-    const LDAP_PORT = 389;
-    ldapServer.listen(LDAP_PORT, () => {
-        console.log(`LDAP server listening on port ${LDAP_PORT}`);
+    const ldapPort = process.env.LDAP_PORT
+        ? Number.parseInt(process.env.LDAP_PORT, 10)
+        : DEFAULT_LDAP_TCP_PORT;
+
+    ldapServer.listen(ldapPort, async () => {
+        console.log(`LDAP server listening on port ${ldapPort}`);
+        const acis = await ctx.db.aCIItem.findMany();
+        console.log(acis);
     });
 }

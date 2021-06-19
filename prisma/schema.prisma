@@ -586,6 +586,46 @@ model SearchRuleUse {
     entry    Entry      @relation(fields: [entry_id], references: [id])
 }
 
+model Certificate {
+    id                            Int       @id @default(autoincrement())
+    version                       Int       @db.SmallInt
+    serial_number                 Bytes
+    issuer                        Json
+    subject                       Json
+    not_before                    DateTime
+    not_after                     DateTime
+    signature_alg                 String // OID
+    spki_alg                      String // OID
+    authority_key_identifier      Bytes
+    authority_cert_serial_number  Bytes
+    subject_key_identifier        Bytes
+    ca                            Boolean?
+    path_len                      Int?
+    key_usage_digitalSignature    Boolean?
+    key_usage_contentCommitment   Boolean?
+    key_usage_keyEncipherment     Boolean?
+    key_usage_dataEncipherment    Boolean?
+    key_usage_keyAgreement        Boolean?
+    key_usage_keyCertSign         Boolean?
+    key_usage_cRLSign             Boolean?
+    key_usage_encipherOnly        Boolean?
+    key_usage_decipherOnly        Boolean?
+    ext_key_usage                 String[] // OIDs
+    private_key_usage_not_before  DateTime?
+    private_key_usage_not_after   DateTime?
+    certificate_policies          String[] // OIDs
+    crl_distribution_points_count Int
+    revoked_time                    DateTime?
+    revoked_reason                  Int?
+    signature_bytes                 Bytes
+    subject_public_key_bytes        Bytes
+    certificate_der                 Bytes
+}
+
+// model CertificateList {
+//     id                            Int       @id @default(autoincrement())
+// }
+
 // certificate (user and ca)
 // CertificateList
 // distributionpoint
