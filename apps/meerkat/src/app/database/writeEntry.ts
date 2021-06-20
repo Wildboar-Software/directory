@@ -85,11 +85,12 @@ async function writeEntry (
                             data: Array.from(attr.contexts.values())
                                 .flatMap((context) => context.values.map((cv) => ({
                                     entry_id: writtenEntry.id,
-                                    type: context.id.toString(),
+                                    type: context.id.nodes,
                                     tag_class: cv.tagClass,
                                     constructed: (cv.construction === ASN1Construction.constructed),
                                     tag_number: cv.tagNumber,
                                     ber: Buffer.from(cv.toBytes()),
+                                    fallback: context.fallback,
                                     // hint
                                     // jer
                                 }))),

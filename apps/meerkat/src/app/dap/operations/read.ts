@@ -25,6 +25,7 @@ import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import findEntry from "../../x500/findEntry";
+import readEntry from "../../database/readEntry";
 
 // read OPERATION ::= {
 //   ARGUMENT  ReadArgument
@@ -86,8 +87,7 @@ async function read (
     }
 
     const attributesByType: Map<string, Attribute> = new Map();
-    const values = Array.from(ctx.database.data.values.values())
-        .filter((v) => (v.entry === entry.uuid));
+    const values = await readEntry(ctx, entry);
     values.forEach((v) => {
         const TYPE_OID: string = v.id.toString();
         const attr = attributesByType.get(TYPE_OID);

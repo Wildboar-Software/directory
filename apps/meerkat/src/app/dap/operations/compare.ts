@@ -78,12 +78,6 @@ async function compare (
         throw CONTEXTS_NOT_ENABLED_ERROR;
     }
 
-    // const dn = nameToString(data.object);
-    // const namedEntry = Array.from(ctx.database.data.entries.values())
-    //     .find((e) => (nameToString(e.dn) === dn));
-    // const entry = namedEntry?.aliasedEntryId
-    //     ? ctx.database.data.entries.get(namedEntry.aliasedEntryId)
-    //     : namedEntry;
     const entry = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
     if (!entry) {
         throw new NameError(

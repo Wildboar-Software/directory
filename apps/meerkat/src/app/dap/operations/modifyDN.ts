@@ -60,6 +60,7 @@ import {
 import findEntry from "../../x500/findEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import nonAdminUserCanManageEntry from "../../x500/nonAdminUserCanManageEntry";
+import readEntry from "../../database/readEntry";
 
 // modifyDN OPERATION ::= {
 //   ARGUMENT  ModifyDNArgument
@@ -245,9 +246,7 @@ async function modifyDN (
         throw new UpdateError(`Entry already exists: ${potentialDN}`, ENTRY_EXISTS_ERROR_DATA);
     }
 
-    const attrs = Array.from(ctx.database.data.values.values())
-        .filter((attr) => (attr.entry === entry.uuid));
-
+    const attrs = await readEntry(ctx, entry);
     const rdnAttributeTypes: Set<IndexableOID> = new Set();
     data.newRDN.forEach((atav) => {
         const TYPE: string = atav.type_.toString();
