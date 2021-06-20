@@ -25,6 +25,7 @@ import { OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import evaluateContextAssertion from "../../x500/evaluateContextAssertion";
+import readEntry from "../../database/readEntry";
 
 // compare OPERATION ::= {
 //   ARGUMENT  CompareArgument
@@ -108,11 +109,8 @@ async function compare (
     const TYPE_OID: string = data.purported.type_.toString();
     const acs = data.purported.assertedContexts;
     let matchedType: OBJECT_IDENTIFIER | undefined;
-    const matched = Array.from(ctx.database.data.values.values())
+    const matched = (await readEntry(ctx, entry))
         .some((v) => {
-            if (v.entry !== entry.uuid) {
-                return false;
-            }
             matchedType = isAttributeSubtype(ctx, v.id, data.purported.type_);
             if (!matchedType) {
                 return false;

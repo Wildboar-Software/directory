@@ -216,13 +216,14 @@ model ContextValue {
     entry       Entry          @relation(fields: [entry_id], references: [id])
     value_id    Int
     value       AttributeValue @relation(fields: [value_id], references: [id])
-    type        String // OID
+    type        Int[] // OID
     tag_class   Int            @db.SmallInt
     constructed Boolean
     tag_number  Int
     ber         Bytes
     hint        BigInt?
     jer         Json?
+    fallback    Boolean
 }
 
 // TODO: Should there be a separate Attribute Types table?
