@@ -51,7 +51,7 @@ import {
 import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
-import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import { ASN1Construction, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import { v4 as uuid } from "uuid";
 import {
     EXT_BIT_MANAGE_DSA_IT,
@@ -70,6 +70,7 @@ import {
     AddEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
 import findEntry from "../../x500/findEntry";
+import writeEntry from "../../database/writeEntry";
 
 const OBJECT_CLASS_ATTR_OID: string = id_at_objectClass.toString();
 // const HIERARCHY_TOP_ATTR_OID: string = id_oa_hierarchyTop.toString();
@@ -430,7 +431,8 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
     }
 
     const newEntry: Entry = {
-        id: entry,
+        id: -1,
+        uuid: entry,
         rdn: data.object.rdnSequence[0],
         parent: superior,
         dseType: {
@@ -438,10 +440,18 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
         },
         children: [],
         objectClass: new Set(objectClasses.map((attr) => attr.value.objectIdentifier.toString())),
+        creatorsName: {
+            rdnSequence: [], // FIXME:
+        },
+        modifiersName: {
+            rdnSequence: [], // FIXME:
+        },
+        createdTimestamp: new Date(),
+        modifyTimestamp: new Date(),
     };
+    await writeEntry(ctx, newEntry, [ ...attrsFromDN, ...attrs ]);
     superior.children.push(newEntry);
     // TODO: Filter out more operational attributes.
-    ctx.database.data.values.push(...attrsFromDN, ...attrs.filter((attr) => attr.id.toString() !== OBJECT_CLASS_ATTR_OID));
     return {
         null_: null,
     };

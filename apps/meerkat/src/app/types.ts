@@ -5,6 +5,9 @@ import {
     ObjectClassKind,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import type {
+    Name,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+import type {
     RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import {
@@ -144,7 +147,8 @@ interface HierarchyInfo {
 
 export
 interface Entry {
-    id: UUID;
+    id: number; // Database primary key ID.
+    uuid: UUID;
     // dn: Name;
     rdn: RelativeDistinguishedName;
     parent?: Entry;
@@ -154,6 +158,10 @@ interface Entry {
     dseType: Partial<DSEType>;
     objectClass: Set<IndexableOID>;
     hierarchy?: HierarchyInfo;
+    creatorsName: Name,
+    modifiersName: Name,
+    createdTimestamp: Date,
+    modifyTimestamp: Date,
 }
 
 export
@@ -172,6 +180,10 @@ interface Database {
 
 export
 interface Context {
+    dit: {
+        id: number,
+        uuid: UUID,
+    },
     log: typeof console;
     db: PrismaClient;
     database: Database;

@@ -74,10 +74,26 @@ async function removeEntry (
         );
     }
 
-    ctx.database.data.values = ctx.database.data.values
-        .filter((v): boolean => (v.entry !== entry!.id));
+    await ctx.db.$transaction([
+        ctx.db.contextValue.deleteMany({
+            where: {
+                entry_id: entry.id,
+            },
+        }),
+        ctx.db.attributeValue.deleteMany({
+            where: {
+                entry_id: entry.id,
+            },
+        }),
+        ctx.db.entry.delete({
+            where: {
+                id: entry.id,
+            },
+        }),
+    ]);
+
     if (entry.parent?.children.length) {
-        const entryIndex = entry.parent.children.findIndex((child) => (child.id === entry.id));
+        const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
         entry.parent.children.splice(entryIndex, 1);
     }
 

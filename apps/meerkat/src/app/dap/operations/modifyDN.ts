@@ -246,7 +246,7 @@ async function modifyDN (
     }
 
     const attrs = Array.from(ctx.database.data.values.values())
-        .filter((attr) => (attr.entry === entry.id));
+        .filter((attr) => (attr.entry === entry.uuid));
 
     const rdnAttributeTypes: Set<IndexableOID> = new Set();
     data.newRDN.forEach((atav) => {
@@ -292,7 +292,7 @@ async function modifyDN (
     });
 
     if (entry.parent?.children.length && (entry.parent !== superior)) {
-        const entryIndex = entry.parent.children.findIndex((child) => (child.id === entry.id));
+        const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
         entry.parent.children.splice(entryIndex, 1); // Remove from the current parent.
         superior?.children.push(entry); // Move to the new parent.
     }
@@ -302,7 +302,7 @@ async function modifyDN (
     if (data.deleteOldRDN) {
         ctx.database.data.values = ctx.database.data.values
             .filter((v) => {
-                if (v.entry !== entry.id) {
+                if (v.entry !== entry.uuid) {
                     return true;
                 }
                 const matches: boolean = oldRDN.some((atav) => {

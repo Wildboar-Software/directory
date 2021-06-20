@@ -490,7 +490,7 @@ async function search (
                     );
                 }
                 if (!self) {
-                    ret = ret.filter(([e]) => (e.id !== entry.id));
+                    ret = ret.filter(([e]) => (e.uuid !== entry.uuid));
                 }
                 return ret;
             });
@@ -498,7 +498,7 @@ async function search (
 
     // Deduplicates entries.
     candidates = Array.from(
-        (new Map(candidates.map((e) => [ e[0].id, e ]))).values()
+        (new Map(candidates.map((e) => [ e[0].uuid, e ]))).values()
     );
 
     // const rightOuter: EntryInformation[] = [];

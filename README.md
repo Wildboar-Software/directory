@@ -19,6 +19,9 @@
   - [ ] `evaluateEntryAgainstContentRule(entry: EntryInformation, cr: CONTENT_RULE)`
   - [ ] `LDAPSyntaxEncoder: (value: ASN1Element) => Uint8Array`
   - [ ] `LDAPSyntaxDecoder: (value: Uint8Array) => ASN1Element`
+  - [ ] `loopDetected (trace: TraceInformation): boolean`
+  - [ ] `dnToJson()`
+  - [ ] `jsonToDN()`
   - [ ] Fix DN stringifier: https://datatracker.ietf.org/doc/html/rfc4514
 - [ ] Applications
   - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)

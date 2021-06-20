@@ -181,7 +181,7 @@ function executeEntryModification (
          */
         if (newAttributes.length === lengthBefore) {
             throw new AttributeError(
-                `Attribute with OID ${mod.removeAttribute.toString()} not found in entry with ID ${entry.id}.`,
+                `Attribute with OID ${mod.removeAttribute.toString()} not found in entry with ID ${entry.uuid}.`,
                 new AttributeErrorData(
                     {
                         rdnSequence: getDistinguishedName(entry),
@@ -372,7 +372,7 @@ async function modifyEntry (
         );
     }
 
-    const entryAttributes = ctx.database.data.values.filter((v) => (v.entry === entry.id));
+    const entryAttributes = ctx.database.data.values.filter((v) => (v.entry === entry.uuid));
     let newAttributes = entryAttributes;
     for (const mod of data.changes) {
         // replaceValues could be checked here.
@@ -380,7 +380,7 @@ async function modifyEntry (
     }
 
     ctx.database.data.values = [
-        ...ctx.database.data.values.filter((v) => (v.entry !== entry.id)),
+        ...ctx.database.data.values.filter((v) => (v.entry !== entry.uuid)),
         ...newAttributes,
     ];
 

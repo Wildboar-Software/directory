@@ -9,8 +9,10 @@ generator client {
 
 model DIT {
     id    Int     @id @default(autoincrement())
+    uuid  String  @default(uuid()) @db.Uuid
     name  String
     Entry Entry[]
+    @@unique([uuid])
 }
 
 // Subentry attributes, such as those documented in X.501, Section 14.4.3,
@@ -28,7 +30,7 @@ model Entry {
     // It seems like Prisma does not even support multiple self-references: https://github.com/prisma/prisma/issues/4657
     // aliased_entry_id      Int?
     // aliased_entry         Entry? @relation(name: "zxcv", fields: [aliased_entry_id], references: [id])
-    aliased_entry_dn Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    aliased_entry_dn Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
 
     // DSE Types
     root          Boolean @default(false)
@@ -119,6 +121,8 @@ model Entry {
     SearchRuleUse               SearchRuleUse[]
     @@unique([immediate_superior_id, rdn])
     @@index([aliased_entry_dn])
+    @@unique([entryUUID])
+    @@index([dit_id])
 }
 
 model UtmCoordinate {
@@ -197,7 +201,7 @@ model AttributeValue {
     // At most one security label context can be assigned to an attribute value
     security_label             Bytes?
     security_policy_identifier String?
-    security_classification    Int     @db.SmallInt
+    security_classification    Int?     @db.SmallInt
     privacy_mark               String?
 
     // Not part of a specification, but still usable

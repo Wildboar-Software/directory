@@ -25,7 +25,7 @@ function selectFromEntry (
     entry: Entry,
     attributes?: StoredAttributeValueWithContexts[],
 ): EntryInformation_information_Item[] {
-    const attrs = attributes ?? (ctx.database.data.values.filter((v) => v.entry === entry.id));
+    const attrs = attributes ?? (ctx.database.data.values.filter((v) => v.entry === entry.uuid));
     const selectedAttributes: Set<IndexableOID> | null = (eis.attributes && ("select" in eis.attributes))
         ? new Set(eis.attributes.select.map((a) => a.toString()))
         : null;

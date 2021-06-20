@@ -87,7 +87,7 @@ async function read (
 
     const attributesByType: Map<string, Attribute> = new Map();
     const values = Array.from(ctx.database.data.values.values())
-        .filter((v) => (v.entry === entry.id));
+        .filter((v) => (v.entry === entry.uuid));
     values.forEach((v) => {
         const TYPE_OID: string = v.id.toString();
         const attr = attributesByType.get(TYPE_OID);

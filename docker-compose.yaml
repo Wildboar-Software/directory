@@ -1,29 +1,29 @@
 version: '3.7'
 
 services:
-  meerkat:
-    command: '/usr/local/bin/node --inspect=0.0.0.0:5858 /srv/dist/apps/meerkat/main.js'
-    working_dir: /srv
-    container_name: 'meerkat'
-    depends_on:
-      - postgres
-    environment:
-      # https://www.gnu.org/software/libc/manual/html_node/Locale-Categories.html#Locale-Categories
-      # LC_COLLATE: ""
-      # LC_CTYPE: ""
-      # LC_MONETARY: ""
-      # LC_NUMERIC: ""
-      # LC_TIME: ""
-      LC_MESSAGES: en_US.utf8
-      LC_ALL: en_US.utf8
-      LANG: en_US.utf8
-    hostname: 'meerkat'
-    image: 'node:stretch'
-    ports:
-      - '1389:389/tcp'
-      - '4632:4632/tcp'
-    volumes:
-      - '.:/srv:ro'
+  # meerkat:
+  #   command: '/usr/local/bin/node --inspect=0.0.0.0:5858 /srv/dist/apps/meerkat/main.js'
+  #   working_dir: /srv
+  #   container_name: 'meerkat'
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     # https://www.gnu.org/software/libc/manual/html_node/Locale-Categories.html#Locale-Categories
+  #     # LC_COLLATE: ""
+  #     # LC_CTYPE: ""
+  #     # LC_MONETARY: ""
+  #     # LC_NUMERIC: ""
+  #     # LC_TIME: ""
+  #     LC_MESSAGES: en_US.utf8
+  #     LC_ALL: en_US.utf8
+  #     LANG: en_US.utf8
+  #   hostname: 'meerkat'
+  #   image: 'node:stretch'
+  #   ports:
+  #     - '1389:389/tcp'
+  #     - '4632:4632/tcp'
+  #   volumes:
+  #     - '.:/srv:ro'
   postgres:
     image: postgres
     restart: always
@@ -35,11 +35,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   adminer:
+    network_mode: host
     depends_on:
       - postgres
     image: adminer
     restart: always
-    ports:
-      - '15432:8080/tcp'
+    # ports:
+    #   - '15432:8080/tcp'
 volumes:
   postgres_data: {}

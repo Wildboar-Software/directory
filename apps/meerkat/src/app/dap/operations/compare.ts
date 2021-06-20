@@ -110,7 +110,7 @@ async function compare (
     let matchedType: OBJECT_IDENTIFIER | undefined;
     const matched = Array.from(ctx.database.data.values.values())
         .some((v) => {
-            if (v.entry !== entry.id) {
+            if (v.entry !== entry.uuid) {
                 return false;
             }
             matchedType = isAttributeSubtype(ctx, v.id, data.purported.type_);
