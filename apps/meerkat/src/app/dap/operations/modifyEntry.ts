@@ -35,7 +35,7 @@ import { AttributeErrorData, AttributeErrorData_problems_Item } from "@wildboar/
 import { AttributeProblem_noSuchAttributeOrValue, AttributeProblem_undefinedAttributeType } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import { SecurityErrorData, SecurityProblem_insufficientAccessRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-
+import readEntry from "../../database/readEntry";
 
 // modifyEntry OPERATION ::= {
 //   ARGUMENT  ModifyEntryArgument
@@ -372,17 +372,46 @@ async function modifyEntry (
         );
     }
 
-    const entryAttributes = ctx.database.data.values.filter((v) => (v.entry === entry.uuid));
+    const entryAttributes = await readEntry(ctx, entry);
     let newAttributes = entryAttributes;
     for (const mod of data.changes) {
         // replaceValues could be checked here.
         newAttributes = executeEntryModification(ctx, entry, newAttributes, mod);
     }
 
-    ctx.database.data.values = [
-        ...ctx.database.data.values.filter((v) => (v.entry !== entry.uuid)),
-        ...newAttributes,
-    ];
+    // Modify all of the attributes in memory, then replace them all.
+    await ctx.db.$transaction([
+        ctx.db.attributeValue.deleteMany({
+            where: {
+                entry_id: entry.id,
+            },
+        }),
+        ctx.db.attributeValue.createMany({
+            data: newAttributes.map((attr) => ({
+                entry_id: entry.id,
+                type: attr.id.toString(),
+                tag_class: attr.value.tagClass,
+                constructed: (attr.value.construction === ASN1Construction.constructed),
+                tag_number: attr.value.tagNumber,
+                ber: Buffer.from(attr.value.value),
+                ContextValue: Array.from(attr.contexts.values())
+                    .flatMap((context) => context.values
+                        .map((cv) => ({
+                            entry_id: entry.id,
+                            type: context.id.nodes,
+                            tag_class: cv.tagClass,
+                            constructed: (cv.construction === ASN1Construction.constructed),
+                            tag_number: cv.tagNumber,
+                            ber: Buffer.from(cv.value),
+                            // hint
+                            // jer
+                            fallback: context.fallback,
+                        }))),
+                // hint
+                // jer
+            }))
+        }),
+    ]);
 
     /**
      * From ITU X.511, Section 12.3.3:
