@@ -6,6 +6,8 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+import type { Entry as DatabaseEntry } from "@prisma/client";
+import rdnToJson from "../x500/rdnToJson";
 
 const PARENT_OID: string = id_oc_parent.toString();
 const CHILD_OID: string = id_oc_child.toString();
@@ -25,14 +27,18 @@ const CHILD_OID: string = id_oc_child.toString();
 export
 async function writeEntry (
     ctx: Context,
+    superior: Entry,
     entry: Entry,
     attributes: StoredAttributeValueWithContexts[],
-): Promise<void> {
+): Promise<DatabaseEntry> {
     const writtenEntry = await ctx.db.entry.create({
         data: {
+            immediate_superior_id: superior.id,
             dit_id: ctx.dit.id,
-            rdn: [{}], // FIXME:
-            aliased_entry_dn: [{}], // FIXME: Should be optional
+            rdn: rdnToJson(entry.rdn),
+            aliased_entry_dn: entry.aliasedEntry
+                ? rdnToJson(entry.aliasedEntry.rdn)
+                : undefined,
             root: entry.dseType.root,
             glue: entry.dseType.glue,
             cp: entry.dseType.cp,
@@ -99,6 +105,7 @@ async function writeEntry (
                 },
             })),
     );
+    return writtenEntry;
 }
 
 export default writeEntry;

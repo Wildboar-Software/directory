@@ -17,6 +17,9 @@ import { v4 as uuid } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { strict as assert } from "assert";
 import initDIT from "./database/initDIT";
+import loadSelectedAttributeTypes from "./x500/loadSelectedAttributeTypes";
+import loadSelectedObjectClasses from "./x500/loadSelectedObjectClasses";
+import loadLDAPSyntaxes from "./x500/loadLDAPSyntaxes";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;
 const DEFAULT_LDAP_TCP_PORT: number = 1389;
@@ -67,6 +70,7 @@ async function main (): Promise<void> {
         substringsMatchingRules: new Map([]),
         contextMatchers: new Map([]),
         pagedResultsRequests: new Map([]),
+        ldapSyntaxes: new Map([]),
     };
 
     ctx.log.info(`Loading DIT with UUID ${ctx.dit.uuid} into memory. This could take a while.`);
@@ -83,6 +87,15 @@ async function main (): Promise<void> {
     assert(dit);
     ctx.log.info(`DIT with UUID ${ctx.dit.uuid} loaded into memory.`);
     ctx.database.data.dit = dit;
+
+    // The ordering of these is important.
+    // Loading LDAP syntaxes before attribute types allows us to use the names instead of OIDs.
+    loadSelectedObjectClasses(ctx);
+    ctx.log.debug(`Loaded ${ctx.objectClasses.size} object classes.`);
+    loadLDAPSyntaxes(ctx);
+    ctx.log.debug(`Loaded ${ctx.ldapSyntaxes.size} LDAP syntaxes.`);
+    loadSelectedAttributeTypes(ctx);
+    ctx.log.debug(`Loaded ${ctx.attributes.size} attribute types.`);
 
     const idmServer = net.createServer((c) => {
         console.log("IDM client connected.");

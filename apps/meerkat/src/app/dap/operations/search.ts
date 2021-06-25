@@ -76,6 +76,7 @@ import { TRUE_BIT } from "asn1-ts";
 import { EntryInformation_information_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import { ServiceErrorData, ServiceProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import * as crypto from "crypto";
+import getSubset from "../../x500/getSubset";
 
 // search OPERATION ::= {
 //   ARGUMENT  SearchArgument
@@ -204,31 +205,6 @@ import * as crypto from "crypto";
 //     oldMatchingRule  [0]  MATCHING-RULE.&id OPTIONAL,
 //     newMatchingRule  [1]  MATCHING-RULE.&id OPTIONAL,
 //     ... }
-
-function getSubset (entry: Entry, subset: SearchArgumentData_subset, derefAliases: boolean = true): Entry[] {
-    const base = derefAliases
-        ? entry.aliasedEntry ?? entry
-        : entry;
-    switch (subset) {
-        case (SearchArgumentData_subset_baseObject): {
-            return [ base ];
-        }
-        case (SearchArgumentData_subset_oneLevel): {
-            return base.children
-                .map((child) => (derefAliases ? (child.aliasedEntry ?? child) : child));
-        }
-        case (SearchArgumentData_subset_wholeSubtree): {
-            return base.children
-                .flatMap((child) => getSubset(
-                    derefAliases ? (child.aliasedEntry ?? child) : child,
-                    SearchArgumentData_subset_wholeSubtree)
-                );
-        }
-        default: {
-            return [];
-        }
-    }
-}
 
 // This might seem petty, but it deduplicates a lot of code.
 function toEntryAndInfo (ctx: Context, entry: Entry): [ Entry, EntryInformation ] {

@@ -39,3 +39,5 @@ function attributesFromStoredValues (values: StoredAttributeValueWithContexts[])
         );
     });
 }
+
+export default attributesFromStoredValues;

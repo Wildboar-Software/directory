@@ -6,22 +6,19 @@ import {
     LDAPMessage,
     _decode_LDAPMessage,
     _encode_LDAPMessage,
-} from "@wildboar/x500/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
-import {
-    SearchResultDone,
-} from "@wildboar/x500/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultDone.ta";
-import {
-    LDAPResult,
-} from "@wildboar/x500/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
 import {
     SearchResultEntry,
-} from "@wildboar/x500/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
-import {
-    PartialAttribute,
-} from "@wildboar/x500/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
 import {
     BindResponse,
-} from "@wildboar/x500/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindResponse.ta";
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindResponse.ta";
+import add from "./operations/add";
+import compare from "./operations/compare";
+import del from "./operations/del";
+import modDN from "./operations/modDN";
+import modify from "./operations/modify";
+import search from "./operations/search";
 
 /**
  * How this will work:
@@ -38,7 +35,7 @@ export class LDAPConnection {
         readonly ctx: Context,
         readonly c: net.Socket,
     ) {
-        c.on("data", (data: Buffer): void => {
+        c.on("data", async (data: Buffer): Promise<void> => {
             this.buffer = Buffer.concat([
                 this.buffer,
                 data,
@@ -63,9 +60,8 @@ export class LDAPConnection {
                 return;
             }
 
-            console.log(message.protocolOp);
             if ("bindRequest" in message.protocolOp) {
-                const req = message.protocolOp.bindRequest;
+                // const req = message.protocolOp.bindRequest;
                 const res = new LDAPMessage(
                     message.messageID,
                     {
@@ -80,85 +76,83 @@ export class LDAPConnection {
                     undefined,
                 );
                 this.c.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else if ("addRequest" in message.protocolOp) {
+                const req = message.protocolOp.addRequest;
+                const result = await add(ctx, req);
+                ctx.log.info(`Created entry ${Buffer.from(req.entry).toString("utf-8")}.`);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        addResponse: result,
+                    },
+                    undefined,
+                );
+                this.c.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else if ("compareRequest" in message.protocolOp) {
+                const req = message.protocolOp.compareRequest;
+                const result = await compare(ctx, req);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        compareResponse: result,
+                    },
+                    undefined,
+                );
+                this.c.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else if ("delRequest" in message.protocolOp) {
+                const req = message.protocolOp.delRequest;
+                const result = await del(ctx, req);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        delResponse: result,
+                    },
+                    undefined,
+                );
+                this.c.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else if ("modDNRequest" in message.protocolOp) {
+                const req = message.protocolOp.modDNRequest;
+                const result = await modDN(ctx, req);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        modDNResponse: result,
+                    },
+                    undefined,
+                );
+                this.c.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else if ("modifyRequest" in message.protocolOp) {
+                const req = message.protocolOp.modifyRequest;
+                const result = await modify(ctx, req);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        modifyResponse: result,
+                    },
+                    undefined,
+                );
+                this.c.write(_encode_LDAPMessage(res, BER).toBytes());
             } else if ("searchRequest" in message.protocolOp) {
                 const req = message.protocolOp.searchRequest;
-                if (req.baseObject.length === 0) {
-                    const rootDSERes = new LDAPMessage(
-                        message.messageID,
-                        {
-                            searchResEntry: new SearchResultEntry(
-                                Buffer.from("cn=Jonathan Wilbur", "utf-8"),
-                                [
-                                    new PartialAttribute(
-                                        Buffer.from("supportedLDAPVersion", "utf-8"),
-                                        [
-                                            Buffer.from([ 0x03 ]),
-                                        ],
-                                    ),
-                                ],
-                            ),
-                        },
-                        undefined,
-                    );
-                    this.c.write(_encode_LDAPMessage(rootDSERes, BER).toBytes());
-                    const doneRes = new LDAPMessage(
-                        message.messageID,
-                        {
-                            searchResDone: new LDAPResult(
-                                0, // Success
-                                Buffer.from("cn=Jonathan Wilbur", "utf-8"),
-                                Buffer.from("Success", "utf-8"),
-                                undefined,
-                            ),
-                        },
-                        undefined,
-                    );
-                    this.c.write(_encode_LDAPMessage(doneRes, BER).toBytes());
-                } else {
+                const onEntry = async (entry: SearchResultEntry): Promise<void> => {
                     const entryRes = new LDAPMessage(
                         message.messageID,
                         {
-                            searchResEntry: new SearchResultEntry(
-                                Buffer.from("cn=Jonathan Wilbur", "utf-8"),
-                                [
-                                    new PartialAttribute(
-                                        Buffer.from("cn", "utf-8"),
-                                        [
-                                            Buffer.from("Jonathan Wilbur", "utf-8"),
-                                        ],
-                                    ),
-                                    new PartialAttribute(
-                                        Buffer.from("gn", "utf-8"),
-                                        [
-                                            Buffer.from("Jonathan", "utf-8"),
-                                        ],
-                                    ),
-                                    new PartialAttribute(
-                                        Buffer.from("sn", "utf-8"),
-                                        [
-                                            Buffer.from("Wilbur", "utf-8"),
-                                        ],
-                                    ),
-                                ],
-                            ),
+                            searchResEntry: entry,
                         },
                         undefined,
                     );
                     this.c.write(_encode_LDAPMessage(entryRes, BER).toBytes());
-                    const doneRes = new LDAPMessage(
-                        message.messageID,
-                        {
-                            searchResDone: new LDAPResult(
-                                0, // Success
-                                Buffer.from("cn=Jonathan Wilbur", "utf-8"),
-                                Buffer.from("Success", "utf-8"),
-                                undefined,
-                            ),
-                        },
-                        undefined,
-                    );
-                    this.c.write(_encode_LDAPMessage(doneRes, BER).toBytes());
-                }
+                };
+                const result = await search(ctx, req, onEntry);
+                const doneRes = new LDAPMessage(
+                    message.messageID,
+                    {
+                        searchResDone: result,
+                    },
+                    undefined,
+                );
+                this.c.write(_encode_LDAPMessage(doneRes, BER).toBytes());
             } else if ("abandonRequest" in message.protocolOp) {
                 console.log(`Abandon operation ${message.messageID}`);
             } else {

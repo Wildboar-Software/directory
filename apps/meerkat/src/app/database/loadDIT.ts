@@ -23,7 +23,7 @@ async function loadDIT (
         ctx.log.warn(`No root DSE found for DIT with UUID ${ctx.dit.uuid}.`);
         return null;
     }
-    return entryFromDatabaseEntry(ctx, rootDSE);
+    return entryFromDatabaseEntry(ctx, undefined, rootDSE);
 }
 
 export default loadDIT;

@@ -28,6 +28,8 @@ import { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
+import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import type { PrismaClient } from "@prisma/client";
 
 export
@@ -41,6 +43,14 @@ type LDAPName = string;
 
 export
 type Value = ASN1Element;
+
+export
+interface LDAPSyntaxInfo {
+    id: OBJECT_IDENTIFIER;
+    description?: string;
+    decoder?: LDAPSyntaxDecoder;
+    encoder?: LDAPSyntaxEncoder;
+}
 
 export
 interface AttributeInfo {
@@ -190,6 +200,7 @@ interface Context {
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
     attributes: Map<IndexableOID, AttributeInfo>;
+    ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
     equalityMatchingRules: Map<IndexableOID, EqualityMatcher>;
     orderingMatchingRules: Map<IndexableOID, OrderingMatcher>;
     substringsMatchingRules: Map<IndexableOID, SubstringsMatcher>;

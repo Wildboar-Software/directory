@@ -26,10 +26,34 @@ function loadSelectedAttributeTypes (ctx: Context): void {
         userPwd,
     ]
         .map(attributeFromInformationObject)
-        .forEach((attr) => {
+        .forEach((attr) => { // FIXME: All attributes do not have their LDAP syntax names...
             ctx.attributes.set(attr.id, attr);
+            if (attr.id === "2.5.4.3") {
+                ctx.attributes.set("cn", attr);
+                ctx.attributes.set("commonName", attr);
+            }
+            if (attr.id === "2.5.4.4") {
+                ctx.attributes.set("sn", attr);
+                ctx.attributes.set("surname", attr);
+            }
+            attr.ldapNames?.forEach((ldapName: string): void => {
+                ctx.attributes.set(ldapName.trim().toLowerCase(), attr);
+                if (!attr.ldapSyntax) {
+                    return;
+                }
+                const oidSyntax = ctx.ldapSyntaxes.get(attr.ldapSyntax);
+                if (!oidSyntax) {
+                    return;
+                }
+                ctx.ldapSyntaxes.set(ldapName, oidSyntax);
+            });
         });
 
     ctx.attributes.get(commonName["&id"]!.toString())!.namingMatcher = caseIgnoreMatch;
     ctx.attributes.get(surname["&id"]!.toString())!.namingMatcher = caseIgnoreMatch;
+
+    // ctx.attributes.get(commonName["&id"]!.toString())!.namingMatcher = caseIgnoreMatch;
+    // ctx.attributes.get(surname["&id"]!.toString())!.namingMatcher = caseIgnoreMatch;
 }
+
+export default loadSelectedAttributeTypes;

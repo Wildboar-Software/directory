@@ -49,8 +49,10 @@ import {
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import {
     SecurityErrorData,
-    SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
@@ -220,7 +222,7 @@ async function modifyDN (
 
     if (!superior) {
         // This should always throw, because you cant meaningfully move a root DSE.
-        // And if you found an entry
+        // And if you found an entry without a parent, that's a critical problem, too.
         throw new Error();
     }
 

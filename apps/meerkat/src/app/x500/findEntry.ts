@@ -6,6 +6,9 @@ function findEntry (ctx: Context, dit: DIT, dn: DistinguishedName, derefAliases:
     const currentVertex = derefAliases
         ? (dit.aliasedEntry ?? dit)
         : dit;
+    if ((currentVertex.rdn.length === 0) && (dn.length === 0)) {
+        return currentVertex;
+    }
     if (currentVertex.rdn.length === 0) { // Root DSE, which will not match.
         return dit.children // So we start the search with its children.
             .map((child) => findEntry(ctx, child, dn, derefAliases))
@@ -27,7 +30,7 @@ function findEntry (ctx: Context, dit: DIT, dn: DistinguishedName, derefAliases:
         if (!spec) {
             return false;
         }
-        const matcher = spec.equalityMatcher;
+        const matcher = spec.namingMatcher;
         if (!matcher) {
             return false;
         }

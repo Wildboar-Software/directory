@@ -1,26 +1,23 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
-import type { Context, Entry } from "../types";
+import type { Context, Entry as MemoryEntry } from "../types";
+import rdnFromJson from "../x500/rdnFromJson";
 
 export
 async function entryFromDatabaseEntry (
     ctx: Context,
+    superior: MemoryEntry | undefined,
     dbe: DatabaseEntry,
     oneLevel: boolean = false,
-): Promise<Entry> {
+): Promise<MemoryEntry> {
     // hierarchy?: HierarchyInfo;
-    return {
+    const ret: MemoryEntry = {
         ...dbe,
+        parent: superior,
         uuid: dbe.entryUUID,
-        rdn: [], // FIXME: dependent on X.500's jsonToDN
-        children: oneLevel
-            ? []
-            : await Promise.all(
-                (await ctx.db.entry.findMany({
-                    where: {
-                        immediate_superior_id: dbe.id,
-                    },
-                })).map((child) => entryFromDatabaseEntry(ctx, child)),
-            ),
+        rdn: (dbe.rdn && (typeof dbe.rdn === "object") && !(Array.isArray(dbe.rdn)))
+            ? rdnFromJson(dbe.rdn as Record<string, string>)
+            : [],
+        children: [],
         dseType: {
             root: dbe.root ?? false,
             glue: dbe.glue ?? false,
@@ -59,6 +56,17 @@ async function entryFromDatabaseEntry (
         //     }
         //     : undefined,
     };
+
+    ret.children = oneLevel
+        ? []
+        : await Promise.all(
+            (await ctx.db.entry.findMany({
+                where: {
+                    immediate_superior_id: dbe.id,
+                },
+            })).map((child) => entryFromDatabaseEntry(ctx, ret, child)),
+        );
+    return ret;
 }
 
 export default entryFromDatabaseEntry;

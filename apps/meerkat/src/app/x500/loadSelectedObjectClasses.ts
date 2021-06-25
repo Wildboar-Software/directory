@@ -16,3 +16,5 @@ function loadSelectedObjectClasses (ctx: Context): void {
         children: [],
     });
 }
+
+export default loadSelectedObjectClasses;

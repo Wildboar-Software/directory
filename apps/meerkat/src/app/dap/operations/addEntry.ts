@@ -60,8 +60,10 @@ import {
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import {
     SecurityErrorData,
-    SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
     ServiceErrorData,
     ServiceProblem_unavailable,
@@ -307,7 +309,7 @@ async function addEntry (
                 .from(oc.mandatoryAttributes.values())
                 .filter((mandate): boolean => !attributesByType.has(mandate))
                 .map((mandate: string) => new ObjectIdentifier(
-                    mandate.split(".").map(Number.parseInt),
+                    mandate.split(".").map((node) => Number.parseInt(node)),
                 ));
             if (missingMandatoryAttributes.length > 0) {
                 throw new UpdateError(
@@ -449,7 +451,7 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
         createdTimestamp: new Date(),
         modifyTimestamp: new Date(),
     };
-    await writeEntry(ctx, newEntry, [ ...attrsFromDN, ...attrs ]);
+    await writeEntry(ctx, superior, newEntry, [ ...attrsFromDN, ...attrs ]);
     superior.children.push(newEntry);
     // TODO: Filter out more operational attributes.
     return {

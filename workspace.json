@@ -24,6 +24,12 @@
               "optimization": true,
               "extractLicenses": true,
               "inspect": false
+            },
+            "dev": {
+                "optimization": false,
+                "extractLicenses": false,
+                "inspect": true,
+                "inspectPort": 24010
             }
           }
         },

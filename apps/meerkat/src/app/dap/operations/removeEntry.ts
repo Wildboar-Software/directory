@@ -22,6 +22,7 @@ import {
 } from "../../x500/extensions";
 import findEntry from "../../x500/findEntry";
 import { TRUE_BIT } from "asn1-ts";
+import deleteEntry from "../../database/deleteEntry";
 
 const HAS_CHILDREN_ERROR_DATA = new UpdateErrorData(
     UpdateProblem_notAllowedOnNonLeaf,
@@ -74,24 +75,7 @@ async function removeEntry (
         );
     }
 
-    await ctx.db.$transaction([
-        ctx.db.contextValue.deleteMany({
-            where: {
-                entry_id: entry.id,
-            },
-        }),
-        ctx.db.attributeValue.deleteMany({
-            where: {
-                entry_id: entry.id,
-            },
-        }),
-        ctx.db.entry.delete({
-            where: {
-                id: entry.id,
-            },
-        }),
-    ]);
-
+    await deleteEntry(ctx, entry);
     if (entry.parent?.children.length) {
         const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
         entry.parent.children.splice(entryIndex, 1);

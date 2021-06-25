@@ -19,7 +19,7 @@ function isAttributeSubtype (
             return undefined;
         }
         crit = attrInfo.parent
-            ? new ObjectIdentifier(attrInfo.parent.id.split(".").map(Number.parseInt))
+            ? new ObjectIdentifier(attrInfo.parent.id.split(".").map((node) => Number.parseInt(node)))
             : null;
     } while (crit);
     return undefined;

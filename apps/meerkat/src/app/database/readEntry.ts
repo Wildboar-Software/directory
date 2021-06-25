@@ -1,6 +1,7 @@
 import type { Context, Entry, StoredAttributeValueWithContexts } from "../types";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 
+
 export
 async function readEntry (
     ctx: Context,
