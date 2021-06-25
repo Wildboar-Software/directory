@@ -1,6 +1,12 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { Context, DIT, Entry, IndexableOID, Value } from "../types";
 
+// TODO: Return the number of RDNs that matched, whether aliases were derefed.
+// TODO: Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
+// TODO: Drill into database if entries are not in memory.
+// TODO: Ignore entries whose deletionTimestamp is set.
+// TODO: Return referrals / continuation references.
+
 export
 function findEntry (ctx: Context, dit: DIT, dn: DistinguishedName, derefAliases: boolean = true): Entry | undefined {
     const currentVertex = derefAliases

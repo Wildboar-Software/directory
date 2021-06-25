@@ -14,6 +14,7 @@ import {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
 import decodeLDAPDN from "../decodeLDAPDN";
 import findEntry from "../../x500/findEntry";
+import { objectNotFound } from "../results";
 
 export
 async function compare (
@@ -23,7 +24,7 @@ async function compare (
     const dn = decodeLDAPDN(ctx, req.entry);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
-        throw new Error(); // FIXME:
+        return objectNotFound;
     }
 
     const match = true;

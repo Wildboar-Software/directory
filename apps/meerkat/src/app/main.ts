@@ -1,5 +1,7 @@
 import { Context, Entry } from "./types";
 import * as net from "net";
+import * as tls from "tls";
+import * as fs from "fs";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
 import { IDMConnection } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
@@ -23,6 +25,7 @@ import loadLDAPSyntaxes from "./x500/loadLDAPSyntaxes";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;
 const DEFAULT_LDAP_TCP_PORT: number = 1389;
+const DEFAULT_LDAPS_TCP_PORT: number = 1636;
 
 export default
 async function main (): Promise<void> {
@@ -143,4 +146,20 @@ async function main (): Promise<void> {
     ldapServer.listen(ldapPort, async () => {
         console.log(`LDAP server listening on port ${ldapPort}`);
     });
+
+    if (process.env.SERVER_TLS_CERT && process.env.SERVER_TLS_KEY) {
+        const ldapsServer = tls.createServer({
+            cert: fs.readFileSync(process.env.SERVER_TLS_CERT),
+            key: fs.readFileSync(process.env.SERVER_TLS_KEY),
+        }, (c) => {
+            console.log("LDAPS client connected.");
+            new LDAPConnection(ctx, c);
+        });
+        const ldapsPort = process.env.LDAPS_PORT
+            ? Number.parseInt(process.env.LDAPS_PORT, 10)
+            : DEFAULT_LDAPS_TCP_PORT;
+        ldapsServer.listen(ldapsPort, async () => {
+            console.log(`LDAPS server listening on port ${ldapsPort}`);
+        });
+    }
 }

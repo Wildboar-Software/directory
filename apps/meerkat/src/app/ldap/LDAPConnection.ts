@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context, Entry } from "../types";
 import * as net from "net";
 import { BERElement, ASN1TruncationError } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
@@ -13,23 +13,28 @@ import {
 import {
     BindResponse,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindResponse.ta";
+import {
+    ExtendedResponse,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
+import {
+    LDAPResult_resultCode_success,
+    LDAPResult_resultCode_protocolError,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
 import add from "./operations/add";
+import bind from "./operations/bind";
 import compare from "./operations/compare";
 import del from "./operations/del";
 import modDN from "./operations/modDN";
 import modify from "./operations/modify";
 import search from "./operations/search";
+import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
+import decodeLDAPDN from "./decodeLDAPDN";
+import findEntry from "../x500/findEntry";
 
-/**
- * How this will work:
- * convert DN to string
- * findEntry
- * for each attribute, look up the spec.
- * If an LDAP syntax is present, convert that type to LDAP output
- */
 export class LDAPConnection {
 
     private buffer: Buffer = Buffer.alloc(0);
+    private boundEntry: Entry | undefined;
 
     constructor (
         readonly ctx: Context,
@@ -61,7 +66,12 @@ export class LDAPConnection {
             }
 
             if ("bindRequest" in message.protocolOp) {
-                // const req = message.protocolOp.bindRequest;
+                const req = message.protocolOp.bindRequest;
+                const result = await bind(ctx, req);
+                if (result.resultCode === LDAPResult_resultCode_success) {
+                    const dn = decodeLDAPDN(ctx, req.name);
+                    this.boundEntry = findEntry(ctx, ctx.database.data.dit, dn, true);
+                }
                 const res = new LDAPMessage(
                     message.messageID,
                     {
@@ -76,6 +86,8 @@ export class LDAPConnection {
                     undefined,
                 );
                 this.c.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else if ("unbindRequest" in message.protocolOp) {
+                this.boundEntry = undefined;
             } else if ("addRequest" in message.protocolOp) {
                 const req = message.protocolOp.addRequest;
                 const result = await add(ctx, req);
@@ -155,6 +167,28 @@ export class LDAPConnection {
                 this.c.write(_encode_LDAPMessage(doneRes, BER).toBytes());
             } else if ("abandonRequest" in message.protocolOp) {
                 console.log(`Abandon operation ${message.messageID}`);
+            } else if ("extendedReq" in message.protocolOp) {
+                const req = message.protocolOp.extendedReq;
+                const oid = decodeLDAPOID(req.requestName);
+                if (oid.toString() === "1.3.6.1.4.1.1466.20037") { // StartTLS
+                    // TODO: StartTLS
+                } else {
+                    const res = new LDAPMessage(
+                        message.messageID,
+                        {
+                            extendedResp: new ExtendedResponse(
+                                LDAPResult_resultCode_protocolError,
+                                Buffer.alloc(0),
+                                Buffer.from("Extended operation not understood.", "utf-8"),
+                                undefined,
+                                undefined,
+                                undefined,
+                            ),
+                        },
+                        undefined,
+                    );
+                    this.c.write(_encode_LDAPMessage(res, BER).toBytes());
+                }
             } else {
                 throw new Error(JSON.stringify(message.protocolOp));
             }

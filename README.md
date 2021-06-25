@@ -51,6 +51,7 @@
       - [ ] `compare`
       - [ ] `abandon`
       - [ ] `extendedReq`
+      - [ ] `startTLS`
     - [ ] Directory Access Protocol
       - [ ] Operations
         - [ ] `directoryBind`

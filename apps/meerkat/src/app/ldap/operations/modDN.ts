@@ -11,6 +11,7 @@ import {
 import findEntry from "../../x500/findEntry";
 import decodeLDAPDN from "../decodeLDAPDN";
 import rdnToJson from "../../x500/rdnToJson";
+import { objectNotFound } from "../results";
 
 // ModifyDNRequest ::= [APPLICATION 12] SEQUENCE {
 //     entry           LDAPDN,
@@ -26,7 +27,7 @@ async function modDN (
     const dn = decodeLDAPDN(ctx, req.entry);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
-        throw new Error(); // FIXME:
+        return objectNotFound;
     }
     const newrdn = decodeLDAPDN(ctx, req.newrdn)[0];
     if (req.newSuperior) {

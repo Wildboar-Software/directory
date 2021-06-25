@@ -11,6 +11,7 @@ import {
 import decodeLDAPDN from "../decodeLDAPDN";
 import findEntry from "../../x500/findEntry";
 import deleteEntry from "../../database/deleteEntry";
+import { objectNotFound } from "../results";
 
 export
 async function del (
@@ -20,7 +21,7 @@ async function del (
     const dn = decodeLDAPDN(ctx, req);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
-        throw new Error(); // FIXME:
+        return objectNotFound;
     }
     await deleteEntry(ctx, entry);
     if (entry.parent?.children.length) {

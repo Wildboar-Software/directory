@@ -14,6 +14,7 @@ import writeEntry from "../../database/writeEntry";
 import findEntry from "../../x500/findEntry";
 import { ObjectIdentifier } from "asn1-ts";
 import decodeLDAPDN from "../decodeLDAPDN";
+import { objectNotFound } from "../results";
 
 export
 async function add (
@@ -24,7 +25,7 @@ async function add (
     ctx.log.info(`Creating entry ${Buffer.from(req.entry).toString("utf-8")}...`);
     const superior = findEntry(ctx, ctx.database.data.dit, dn.slice(1), true);
     if (!superior) {
-        throw new Error();
+        return objectNotFound;
     }
     const entryUUID = uuid();
     const newEntry: Entry = {

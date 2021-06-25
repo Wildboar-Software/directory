@@ -21,6 +21,7 @@ import readEntry from "../../database/readEntry";
 import findEntry from "../../x500/findEntry";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import { ASN1Element, ObjectIdentifier, ASN1Construction } from "asn1-ts";
+import { objectNotFound } from "../results";
 
 // ModifyRequest ::= [APPLICATION 6] SEQUENCE {
 //     object          LDAPDN,
@@ -130,7 +131,7 @@ async function modify (
     const dn = decodeLDAPDN(ctx, req.object);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
-        throw new Error(); // FIXME:
+        return objectNotFound;
     }
 
     const entryAttributes = await readEntry(ctx, entry);

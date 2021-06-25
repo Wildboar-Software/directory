@@ -33,6 +33,7 @@ import {
     ObjectClassKind_auxiliary,
     ObjectClassKind_structural,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import { objectNotFound } from "../results";
 
 function usageToString (usage: AttributeUsage): string | undefined {
     return {
@@ -139,12 +140,7 @@ async function search (
     const entry = findEntry(ctx, ctx.database.data.dit, dn, req.derefAliases !== 0); // FIXME
     if (!entry) {
         ctx.log.warn(`Entry ${Buffer.from(req.baseObject).toString("utf-8")} not found.`);
-        return new LDAPResult(
-            32, // No such object
-            req.baseObject,
-            Buffer.from("No such object", "utf-8"),
-            undefined,
-        );
+        return objectNotFound;
     }
     ctx.log.info(`Searching for ${Buffer.from(req.baseObject).toString("utf-8")} with scope ${req.scope}.`);
     const results = getSubset(entry, req.scope);
