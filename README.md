@@ -2,6 +2,19 @@
 
 ## Projects
 
+- [ ] `readEntry()` refactor
+  - [ ] Arguments
+    - [ ] Attribute size limit
+    - [ ] Specific attributes
+    - [ ] Operational attributes
+  - [ ] Split attributes into operational and user.
+  - [ ] Indicate whether the attributes were complete.
+- [ ] `findEntry()` refactor
+  - [ ] Return the number of RDNs that matched, whether aliases were derefed.
+  - [ ] Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
+  - [ ] Drill into database if entries are not in memory.
+  - [ ] Ignore entries whose deletionTimestamp is set.
+  - [ ] Return referrals / continuation references.
 - [ ] X.500 Library
   - [ ] `sort(SortKey[], EntryInformation[], orderingRules: Map<string, OrderingMatcher>)`
   - [ ] `*getValuesFromAttribute(Attribute)`

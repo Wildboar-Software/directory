@@ -1,4 +1,4 @@
-import type { Context, AttributeInfo, ObjectClassInfo, LDAPSyntaxInfo } from "../../types";
+import type { Context, AttributeInfo, ObjectClassInfo, LDAPSyntaxInfo, IndexableOID, StoredAttributeValueWithContexts } from "../../types";
 import type {
     SearchRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest.ta";
@@ -34,6 +34,7 @@ import {
     ObjectClassKind_structural,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import { objectNotFound } from "../results";
+import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 
 function usageToString (usage: AttributeUsage): string | undefined {
     return {
@@ -144,10 +145,67 @@ async function search (
     }
     ctx.log.info(`Searching for ${Buffer.from(req.baseObject).toString("utf-8")} with scope ${req.scope}.`);
     const results = getSubset(entry, req.scope);
+    /**
+     * These three variables correspond to the three cases defined in
+     * IETF RFC 4511, Section 4.5.1.8.
+     */
+    const returnAllUserAttributesExclusively: boolean = (req.attributes.length === 0); // Case #1
+    const returnAllUserAttributesInclusively: boolean = req.attributes.some((attr) => attr[0] === 0x2A); // Case #2
+    const returnNoAttributes: boolean = (
+        (req.attributes.length === 1)
+        && (req.attributes[0].length === 3)
+        && (req.attributes[0][0] === 0x31) // 1
+        && (req.attributes[0][1] === 0x2E) // .
+        && (req.attributes[0][2] === 0x31) // 1
+    ); // Case #3
+    const selectedAttributes: Set<IndexableOID> | null =
+        (req.attributes.length) // Zero attributes means return all user attributes.
+            ? new Set(
+                req.attributes
+                    .map((desc: Uint8Array) => normalizeAttributeDescription(desc))
+                    .map((attr: string): string | undefined => {
+                        if (attr === "1.1") {
+                            return undefined;
+                        }
+                        const attrSpec = ctx.attributes.get(attr);
+                        /**
+                         * From IETF RFC 4511:
+                         * > If an attribute description in the list is not recognized,
+                         * > it is ignored by the server.
+                         */
+                        if (!attrSpec) {
+                            return undefined;
+                        }
+                        return attrSpec.id.toString();
+                    })
+                    .filter((oid: string | undefined): oid is string => !!oid),
+            )
+            : null;
     await Promise.all(
         results.map(async (result) => {
             const attrs = await readEntry(ctx, result);
-            const groupedByType = groupByOID(attrs, (attr) => attr.id);
+            let attrsToReturn = attrs;
+            if (returnAllUserAttributesExclusively) {
+                attrsToReturn = attrsToReturn
+                    .filter((attr) => {
+                        const ATTR_TYPE: string = attr.id.toString();
+                        const attrSpec = ctx.attributes.get(ATTR_TYPE);
+                        if (!attrSpec) {
+                            return undefined;
+                        }
+                        return (attrSpec.usage === AttributeUsage_userApplications);
+                    })
+                    .filter((attr): attr is StoredAttributeValueWithContexts => !!attr);
+            } else if (returnAllUserAttributesInclusively) {
+                // FIXME: To be implemented.
+            } else if (returnNoAttributes) {
+                attrsToReturn = [];
+            } else {
+                attrsToReturn = attrsToReturn
+                    .filter((attr) => !selectedAttributes || selectedAttributes.has(attr.id.toString()));
+            }
+
+            const groupedByType = groupByOID(attrsToReturn, (attr) => attr.id);
             const dn = getDistinguishedName(result);
             const entryRes = new SearchResultEntry(
                 encodeLDAPDN(ctx, dn),
