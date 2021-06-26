@@ -315,7 +315,17 @@ async function search (
                             ),
                         ]
                         : [],
-                ],
+                ]
+                    .map((pa) => {
+                        if (req.typesOnly) {
+                            return new PartialAttribute(
+                                pa.type_,
+                                [],
+                            );
+                        } else {
+                            return pa;
+                        }
+                    }),
             );
             await onEntry(entryRes);
         }),
