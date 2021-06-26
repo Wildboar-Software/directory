@@ -17,7 +17,7 @@ import encodeLDAPDN from "../encodeLDAPDN";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import getSubset from "../../x500/getSubset";
-import readEntry from "../../database/readEntry";
+import readEntryAttributes from "../../database/readEntryAttributes";
 import { PartialAttribute } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
 import groupByOID from "../../utils/groupByOID";
 import {
@@ -35,6 +35,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import { objectNotFound } from "../results";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 
 function usageToString (usage: AttributeUsage): string | undefined {
     return {
@@ -159,7 +160,9 @@ async function search (
         && (req.attributes[0][2] === 0x31) // 1
     ); // Case #3
     const selectedAttributes: Set<IndexableOID> | null =
-        (req.attributes.length) // Zero attributes means return all user attributes.
+        // Zero attributes means return all user attributes.
+        // We also skip this step if we are returning no attributes anyway.
+        (req.attributes.length && !returnNoAttributes)
             ? new Set(
                 req.attributes
                     .map((desc: Uint8Array) => normalizeAttributeDescription(desc))
@@ -183,21 +186,37 @@ async function search (
             : null;
     await Promise.all(
         results.map(async (result) => {
-            const attrs = await readEntry(ctx, result);
-            let attrsToReturn = attrs;
-            if (returnAllUserAttributesExclusively) {
-                attrsToReturn = attrsToReturn
-                    .filter((attr) => {
-                        const ATTR_TYPE: string = attr.id.toString();
-                        const attrSpec = ctx.attributes.get(ATTR_TYPE);
-                        if (!attrSpec) {
+            const {
+                userAttributes,
+                operationalAttributes,
+            } = await readEntryAttributes(ctx, entry, {
+                attributesSelect: (
+                    returnAllUserAttributesExclusively
+                    || returnAllUserAttributesInclusively
+                )
+                    ? undefined
+                    : req.attributes
+                    .map((desc: Uint8Array): OBJECT_IDENTIFIER | undefined => {
+                        const attributeType = normalizeAttributeDescription(desc);
+                        const spec = ctx.attributes.get(attributeType);
+                        if (!spec) {
                             return undefined;
                         }
-                        return (attrSpec.usage === AttributeUsage_userApplications);
+                        return new ObjectIdentifier(spec.id.split(".").map((node) => Number.parseInt(node)));
                     })
-                    .filter((attr): attr is StoredAttributeValueWithContexts => !!attr);
-            } else if (returnAllUserAttributesInclusively) {
-                // FIXME: To be implemented.
+                    .filter((oid: OBJECT_IDENTIFIER | undefined): oid is OBJECT_IDENTIFIER => !!oid),
+                contextSelection: undefined,
+                returnContexts: false,
+            });
+            let attrsToReturn: StoredAttributeValueWithContexts[] = [];
+            if (returnAllUserAttributesExclusively) {
+                attrsToReturn = userAttributes;
+            } else if (returnAllUserAttributesInclusively && selectedAttributes) {
+                attrsToReturn = [
+                    ...userAttributes,
+                    ...operationalAttributes
+                        .filter((oa) => (selectedAttributes.has(oa.id.toString())))
+                ];
             } else if (returnNoAttributes) {
                 attrsToReturn = [];
             } else {

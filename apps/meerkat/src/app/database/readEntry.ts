@@ -1,7 +1,14 @@
 import type { Context, Entry, StoredAttributeValueWithContexts } from "../types";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 
-
+/**
+ * Use {@link readEntryAttributes}() instead.
+ *
+ * @param ctx
+ * @param entry
+ * @returns
+ * @deprecated
+ */
 export
 async function readEntry (
     ctx: Context,
