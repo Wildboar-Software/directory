@@ -27,7 +27,7 @@ function attributeFromInformationObject (io: ATTRIBUTE): AttributeInfo {
         throw new Error();
     }
     return {
-        id: io["&id"].toString(),
+        id: io["&id"],
         // parent:
         value: {
             write: DEFAULT_WRITER,
@@ -42,7 +42,7 @@ function attributeFromInformationObject (io: ATTRIBUTE): AttributeInfo {
         noUserModification: io["&no-user-modification"] ?? false,
         obsolete: io["&obsolete"] ?? false,
         usage: io["&usage"] ?? AttributeUsage_userApplications,
-        ldapSyntax: io["&ldapSyntax"]?.toString(),
+        ldapSyntax: io["&ldapSyntax"],
         ldapNames: io["&ldapName"],
         ldapDescription: io["&ldapDesc"],
     };

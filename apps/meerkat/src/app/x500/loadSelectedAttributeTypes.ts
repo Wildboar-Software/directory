@@ -32,16 +32,16 @@ function loadSelectedAttributeTypes (ctx: Context): void {
     ]
         .map(attributeFromInformationObject)
         .forEach((attr) => { // FIXME: All attributes do not have their LDAP syntax names...
-            ctx.attributes.set(attr.id, attr);
-            if (attr.id === "2.5.4.3") {
+            ctx.attributes.set(attr.id.toString(), attr);
+            if (attr.id.toString() === "2.5.4.3") {
                 ctx.attributes.set("cn", attr);
                 ctx.attributes.set("commonName", attr);
             }
-            if (attr.id === "2.5.4.4") {
+            if (attr.id.toString() === "2.5.4.4") {
                 ctx.attributes.set("sn", attr);
                 ctx.attributes.set("surname", attr);
             }
-            if (attr.id === "2.5.4.35") {
+            if (attr.id.toString() === "2.5.4.35") {
                 ctx.attributes.set("userPassword", attr);
             }
             attr.ldapNames?.forEach((ldapName: string): void => {
@@ -49,7 +49,7 @@ function loadSelectedAttributeTypes (ctx: Context): void {
                 if (!attr.ldapSyntax) {
                     return;
                 }
-                const oidSyntax = ctx.ldapSyntaxes.get(attr.ldapSyntax);
+                const oidSyntax = ctx.ldapSyntaxes.get(attr.ldapSyntax.toString());
                 if (!oidSyntax) {
                     return;
                 }

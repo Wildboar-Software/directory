@@ -13,7 +13,7 @@ import {
 export
 function objectClassFromInformationObject (io: OBJECT_CLASS): ObjectClassInfo {
     return {
-        id: io["&id"]?.toString(),
+        id: io["&id"],
         kind: io["&kind"] ?? ObjectClassKind_structural,
         mandatoryAttributes: new Set(
             io["&MandatoryAttributes"]

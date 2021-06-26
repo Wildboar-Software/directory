@@ -12,7 +12,6 @@ import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttri
 import { v4 as uuid } from "uuid";
 import writeEntry from "../../database/writeEntry";
 import findEntry from "../../x500/findEntry";
-import { ObjectIdentifier } from "asn1-ts";
 import decodeLDAPDN from "../decodeLDAPDN";
 import { objectNotFound } from "../results";
 
@@ -55,8 +54,7 @@ async function add (
             return []; // FIXME:
         }
         return attr.vals.map((val) => ({
-            entry: entryUUID,
-            id: new ObjectIdentifier(attrType.id.split(".").map((num) => Number.parseInt(num))), // TODO: Make this an OID.
+            id: attrType.id,
             value: syntax.decoder!(val),
             contexts: new Map(),
         }));

@@ -20,7 +20,7 @@ import decodeLDAPDN from "../decodeLDAPDN";
 import readEntry from "../../database/readEntry";
 import findEntry from "../../x500/findEntry";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
-import { ASN1Element, ObjectIdentifier, ASN1Construction } from "asn1-ts";
+import { ASN1Element, ASN1Construction } from "asn1-ts";
 import { objectNotFound } from "../results";
 import {
     id_at_userPwd,
@@ -62,7 +62,7 @@ function executeEntryModification (
     if (!attrSpec?.ldapSyntax) {
         throw new Error();
     }
-    const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax);
+    const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
     if (!ldapSyntax?.decoder) {
         throw new Error();
     }
@@ -73,7 +73,7 @@ function executeEntryModification (
                 ...change.modification.vals
                     .map((val: Uint8Array) => ldapSyntax.decoder!(val))
                     .map((val: ASN1Element): StoredAttributeValueWithContexts => ({
-                        id: new ObjectIdentifier(attrSpec.id.split(".").map((node) => Number.parseInt(node))),
+                        id: attrSpec.id,
                         value: val,
                         contexts: new Map(),
                     })),
@@ -88,7 +88,7 @@ function executeEntryModification (
                 .map((val) => ldapSyntax.decoder!(val));
             return attributes
                 .filter((attr) => {
-                    if (attr.id.toString() !== attrSpec.id) {
+                    if (attr.id.toString() !== attrSpec.id.toString()) {
                         return true;
                     }
                     /**
@@ -118,7 +118,7 @@ function executeEntryModification (
                 return [
                     ...attributes,
                     ...newValues.map((nv): StoredAttributeValueWithContexts => ({
-                        id: new ObjectIdentifier(attrSpec.id.split(".").map((node) => Number.parseInt(node))),
+                        id: attrSpec.id,
                         value: nv,
                         contexts: new Map(),
                     })),
@@ -127,7 +127,7 @@ function executeEntryModification (
                 return [
                     ...attributes.filter((attr) => attr.id.toString() !== attrType),
                     ...newValues.map((nv): StoredAttributeValueWithContexts => ({
-                        id: new ObjectIdentifier(attrSpec.id.split(".").map((node) => Number.parseInt(node))),
+                        id: attrSpec.id,
                         value: nv,
                         contexts: new Map(),
                     })),

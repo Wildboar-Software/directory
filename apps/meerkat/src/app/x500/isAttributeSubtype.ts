@@ -1,5 +1,5 @@
 import type { Context } from "../types";
-import { ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 
 export
 function isAttributeSubtype (
@@ -19,7 +19,7 @@ function isAttributeSubtype (
             return undefined;
         }
         crit = attrInfo.parent
-            ? new ObjectIdentifier(attrInfo.parent.id.split(".").map((node) => Number.parseInt(node)))
+            ? attrInfo.parent.id
             : null;
     } while (crit);
     return undefined;

@@ -33,7 +33,7 @@ async function compare (
     if (!attrSpec?.ldapSyntax || !attrSpec.equalityMatcher) {
         throw new Error();
     }
-    const syntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax);
+    const syntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
     if (!syntax?.decoder) {
         throw new Error();
     }

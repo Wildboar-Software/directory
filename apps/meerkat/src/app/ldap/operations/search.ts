@@ -35,7 +35,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import { objectNotFound } from "../results";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 
 function usageToString (usage: AttributeUsage): string | undefined {
     return {
@@ -202,7 +202,7 @@ async function search (
                         if (!spec) {
                             return undefined;
                         }
-                        return new ObjectIdentifier(spec.id.split(".").map((node) => Number.parseInt(node)));
+                        return spec.id;
                     })
                     .filter((oid: OBJECT_IDENTIFIER | undefined): oid is OBJECT_IDENTIFIER => !!oid),
                 contextSelection: undefined,
@@ -236,7 +236,7 @@ async function search (
                             ctx.log.warn(`No LDAP syntax defined for attribute ${attrType.toString()}.`);
                             return undefined;
                         }
-                        const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax);
+                        const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
                         if (!ldapSyntax?.encoder) {
                             ctx.log.warn(`LDAP Syntax ${attrSpec.ldapSyntax} not understood or had no encoder.`);
                             return undefined;

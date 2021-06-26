@@ -3,7 +3,6 @@ import type { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFram
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import destringifyRDNSequence from "@wildboar/ldap/src/lib/destringifiers/RDNSequence";
-import { ObjectIdentifier } from "asn1-ts";
 
 export
 function decodeLDAPDN (ctx: Context, dn: Uint8Array): RDNSequence {
@@ -18,12 +17,12 @@ function decodeLDAPDN (ctx: Context, dn: Uint8Array): RDNSequence {
             if (!attr?.ldapSyntax) {
                 throw new Error(attrDesc.toString());
             }
-            const syntax_ = ctx.ldapSyntaxes.get(attr.ldapSyntax);
+            const syntax_ = ctx.ldapSyntaxes.get(attr.ldapSyntax.toString());
             if (!syntax_ || !syntax_.decoder) {
-                throw new Error(attr.ldapSyntax);
+                throw new Error(attr.ldapSyntax.toString());
             }
             return [
-                new ObjectIdentifier(attr.id.split(".").map((node) => Number.parseInt(node))),
+                attr.id,
                 (value: string) => syntax_.decoder!(Buffer.from(value)),
             ];
         },

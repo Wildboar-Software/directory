@@ -12,7 +12,7 @@ function encodeLDAPDN (ctx: Context, dn: RDNSequence): Uint8Array {
             if (!attr?.ldapSyntax) {
                 throw new Error(attrType.toString());
             }
-            const syntax_ = ctx.ldapSyntaxes.get(attr?.ldapSyntax);
+            const syntax_ = ctx.ldapSyntaxes.get(attr?.ldapSyntax.toString());
             if (!syntax_ || !syntax_.encoder) {
                 throw new Error(attrType.toString());
             }

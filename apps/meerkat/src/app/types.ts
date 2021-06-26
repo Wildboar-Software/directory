@@ -54,7 +54,7 @@ interface LDAPSyntaxInfo {
 
 export
 interface AttributeInfo {
-    id: IndexableOID;
+    id: OBJECT_IDENTIFIER;
     parent?: AttributeInfo;
     value: {
         write: (ctx: Context, value: ASN1Element) => Promise<void>; // eslint-disable-line
@@ -85,7 +85,7 @@ interface AttributeInfo {
     dummy: boolean;
     noUserModification: boolean;
     usage: AttributeUsage;
-    ldapSyntax?: IndexableOID;
+    ldapSyntax?: OBJECT_IDENTIFIER;
     ldapNames?: LDAPName[];
     ldapDescription?: string;
     obsolete: boolean;
@@ -93,7 +93,7 @@ interface AttributeInfo {
 
 export
 interface ObjectClassInfo {
-    id?: IndexableOID;
+    id?: OBJECT_IDENTIFIER;
     kind: ObjectClassKind;
     mandatoryAttributes: Set<IndexableOID>;
     optionalAttributes: Set<IndexableOID>;
