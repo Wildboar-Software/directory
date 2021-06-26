@@ -301,25 +301,7 @@ async function modifyDN (
     const oldRDN = entry.rdn;
 
     if (data.deleteOldRDN) {
-        ctx.database.data.values = ctx.database.data.values
-            .filter((v) => {
-                if (v.entry !== entry.uuid) {
-                    return true;
-                }
-                const matches: boolean = oldRDN.some((atav) => {
-                    const TYPE_OID: string = atav.type_.toString();
-                    const spec = ctx.attributes.get(TYPE_OID);
-                    if (!spec) {
-                        return;
-                    }
-                    const matcher = spec.equalityMatcher;
-                    if (!matcher) {
-                        return;
-                    }
-                    return matcher(v.value, atav.value);
-                });
-                return !matches; // We want to _keep_ the ones that _do not_ belong to the old RDN.
-            });
+        // FIXME:
     }
 
     entry.rdn = data.newRDN; // Update the RDN.

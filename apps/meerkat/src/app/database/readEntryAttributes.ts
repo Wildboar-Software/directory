@@ -74,13 +74,11 @@ async function readEntryAttributes (
     const operationalAttributes: StoredAttributeValueWithContexts[] = [];
     if (options?.includeOperationalAttributes) {
         operationalAttributes.push({
-            entry: entry.uuid,
             id: createTimestamp["&id"]!,
             value: _encodeGeneralizedTime(entry.createdTimestamp, DER),
             contexts: new Map(),
         });
         operationalAttributes.push({
-            entry: entry.uuid,
             id: modifyTimestamp["&id"]!,
             value: _encodeGeneralizedTime(entry.modifyTimestamp, DER),
             contexts: new Map(),

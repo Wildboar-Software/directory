@@ -32,7 +32,6 @@ import {
     UserPwd, _decode_UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import setEntryPassword from "../../database/setEntryPassword";
-import { ContextValue } from "@prisma/client";
 
 const USER_PASSWORD_OID: string = id_at_userPassword.toString();
 const USER_PWD_OID: string = id_at_userPwd.toString();
@@ -74,7 +73,6 @@ function executeEntryModification (
                 ...change.modification.vals
                     .map((val: Uint8Array) => ldapSyntax.decoder!(val))
                     .map((val: ASN1Element): StoredAttributeValueWithContexts => ({
-                        entry: entry.uuid,
                         id: new ObjectIdentifier(attrSpec.id.split(".").map((node) => Number.parseInt(node))),
                         value: val,
                         contexts: new Map(),
@@ -120,7 +118,6 @@ function executeEntryModification (
                 return [
                     ...attributes,
                     ...newValues.map((nv): StoredAttributeValueWithContexts => ({
-                        entry: entry.uuid,
                         id: new ObjectIdentifier(attrSpec.id.split(".").map((node) => Number.parseInt(node))),
                         value: nv,
                         contexts: new Map(),
@@ -130,7 +127,6 @@ function executeEntryModification (
                 return [
                     ...attributes.filter((attr) => attr.id.toString() !== attrType),
                     ...newValues.map((nv): StoredAttributeValueWithContexts => ({
-                        entry: entry.uuid,
                         id: new ObjectIdentifier(attrSpec.id.split(".").map((node) => Number.parseInt(node))),
                         value: nv,
                         contexts: new Map(),

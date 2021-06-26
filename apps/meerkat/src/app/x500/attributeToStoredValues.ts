@@ -7,13 +7,11 @@ export
 function attributeToStoredValues (entry: Entry, attribute: Attribute): StoredAttributeValueWithContexts[] {
     return [
         ...attribute.values.map((value): StoredAttributeValueWithContexts => ({
-            entry: entry.uuid,
             id: attribute.type_,
             value,
             contexts: new Map(),
         })),
         ...attribute.valuesWithContext?.map((vwc): StoredAttributeValueWithContexts => ({
-            entry: entry.uuid,
             id: attribute.type_,
             value: vwc.value,
             contexts: new Map(

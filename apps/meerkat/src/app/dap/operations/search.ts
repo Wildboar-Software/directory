@@ -77,6 +77,7 @@ import { EntryInformation_information_Item } from "@wildboar/x500/src/lib/module
 import { ServiceErrorData, ServiceProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import * as crypto from "crypto";
 import getSubset from "../../x500/getSubset";
+import readEntry from "../../database/readEntry";
 
 // search OPERATION ::= {
 //   ARGUMENT  SearchArgument
@@ -655,10 +656,11 @@ async function search (
     // Apply selections from selection
     if (data.selection) {
         const eis = data.selection;
+        const attrs = await readEntry(ctx, entry);
         const selectedInfos = candidates
             .map(([ entry, einfo ]): [ EntryInformation, EntryInformation_information_Item[] ] => [
                 einfo,
-                selectFromEntry(ctx, eis, entry),
+                selectFromEntry(ctx, eis, entry, attrs),
             ])
             .slice(skip, pageSize);
         return {

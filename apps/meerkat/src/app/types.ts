@@ -118,7 +118,6 @@ interface StoredContext {
 
 export
 interface StoredAttributeValueWithContexts {
-    entry: UUID; // TODO: This may be unnecessary after the move to the database.
     id: OBJECT_IDENTIFIER;
     value: ASN1Element;
     contexts: Map<IndexableOID, StoredContext>;

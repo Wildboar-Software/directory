@@ -214,7 +214,6 @@ async function addEntry (
     const attrsFromDN: StoredAttributeValueWithContexts[] = data.object
         .rdnSequence[0]
         .map((atav): StoredAttributeValueWithContexts => ({
-            entry,
             id: atav.type_,
             value: atav.value,
             contexts: new Map([]),
@@ -222,13 +221,11 @@ async function addEntry (
 
     const attrs: StoredAttributeValueWithContexts[] = data.entry.flatMap((attr) => [
         ...attr.values.map((value): StoredAttributeValueWithContexts => ({
-            entry,
             id: attr.type_,
             value,
             contexts: new Map([]),
         })),
         ...attr.valuesWithContext?.map((vwc): StoredAttributeValueWithContexts => ({
-            entry,
             id: attr.type_,
             value: vwc.value,
             contexts: new Map(
