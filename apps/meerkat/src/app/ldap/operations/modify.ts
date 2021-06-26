@@ -1,4 +1,4 @@
-import type { Context, Entry, StoredAttributeValueWithContexts } from "../../types";
+import type { Context, Entry, StoredAttributeValueWithContexts, IndexableOID } from "../../types";
 import type {
     ModifyRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyRequest.ta";
@@ -22,6 +22,20 @@ import findEntry from "../../x500/findEntry";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import { ASN1Element, ObjectIdentifier, ASN1Construction } from "asn1-ts";
 import { objectNotFound } from "../results";
+import {
+    id_at_userPwd,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/id-at-userPwd.va";
+import {
+    id_at_userPassword,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/id-at-userPassword.va";
+import {
+    UserPwd, _decode_UserPwd,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+import setEntryPassword from "../../database/setEntryPassword";
+import { ContextValue } from "@prisma/client";
+
+const USER_PASSWORD_OID: string = id_at_userPassword.toString();
+const USER_PWD_OID: string = id_at_userPwd.toString();
 
 // ModifyRequest ::= [APPLICATION 6] SEQUENCE {
 //     object          LDAPDN,
@@ -32,6 +46,11 @@ import { objectNotFound } from "../results";
 //             replace (2),
 //             ...  },
 //         modification    PartialAttribute } }
+
+const doNotStore: Set<IndexableOID> = new Set([
+    id_at_userPwd,
+    id_at_userPassword,
+].map((oid) => oid.toString()));
 
 function executeEntryModification (
     ctx: Context,
@@ -141,6 +160,24 @@ async function modify (
         newAttributes = executeEntryModification(ctx, entry, newAttributes, mod);
     }
 
+    const userPassword = newAttributes.find((attr) => (
+        (attr.id.toString() === USER_PASSWORD_OID)
+        || (attr.id.toString() === USER_PWD_OID)
+    ));
+    if (userPassword) {
+        const passwordAttributeType: string = userPassword.id.toString();
+        if (passwordAttributeType === USER_PASSWORD_OID) {
+            const pwd: UserPwd = {
+                clear: Buffer.from(userPassword.value.octetString).toString("utf-8"),
+            };
+            await setEntryPassword(ctx, entry, pwd);
+        } else if (passwordAttributeType === USER_PWD_OID) {
+            const pwd: UserPwd = _decode_UserPwd(userPassword.value);
+            await setEntryPassword(ctx, entry, pwd);
+        }
+    }
+
+    // See: https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#create-multiple-records-and-multiple-related-records
     // Modify all of the attributes in memory, then replace them all.
     await ctx.db.$transaction([
         ctx.db.attributeValue.deleteMany({
@@ -148,31 +185,37 @@ async function modify (
                 entry_id: entry.id,
             },
         }),
-        ctx.db.attributeValue.createMany({
-            data: newAttributes.map((attr) => ({
-                entry_id: entry.id,
-                type: attr.id.toString(),
-                tag_class: attr.value.tagClass,
-                constructed: (attr.value.construction === ASN1Construction.constructed),
-                tag_number: attr.value.tagNumber,
-                ber: Buffer.from(attr.value.value),
-                ContextValue: Array.from(attr.contexts.values())
-                    .flatMap((context) => context.values
-                        .map((cv) => ({
-                            entry_id: entry.id,
-                            type: context.id.nodes,
-                            tag_class: cv.tagClass,
-                            constructed: (cv.construction === ASN1Construction.constructed),
-                            tag_number: cv.tagNumber,
-                            ber: Buffer.from(cv.value),
-                            // hint
-                            // jer
-                            fallback: context.fallback,
-                        }))),
-                // hint
-                // jer
-            }))
-        }),
+        ...newAttributes
+            .filter((attr) => !doNotStore.has(attr.id.toString()))
+            .map((attr) => ctx.db.attributeValue.create({
+                data: {
+                    entry_id: entry.id,
+                    type: attr.id.toString(),
+                    tag_class: attr.value.tagClass,
+                    constructed: (attr.value.construction === ASN1Construction.constructed),
+                    tag_number: attr.value.tagNumber,
+                    ber: Buffer.from(attr.value.toBytes()),
+                    ContextValue: {
+                        createMany: {
+                            data: Array.from(attr.contexts.values())
+                                .flatMap((context) => context.values
+                                    .map((cv) => ({
+                                        // id: null,
+                                        // value_id: null,
+                                        entry_id: entry.id,
+                                        type: context.id.nodes,
+                                        tag_class: cv.tagClass,
+                                        constructed: (cv.construction === ASN1Construction.constructed),
+                                        tag_number: cv.tagNumber,
+                                        ber: Buffer.from(cv.toBytes()),
+                                        // hint: null,
+                                        // jer: null,
+                                        fallback: context.fallback,
+                                    }))),
+                        }
+                    }
+                },
+            })),
     ]);
 
     return new LDAPResult(

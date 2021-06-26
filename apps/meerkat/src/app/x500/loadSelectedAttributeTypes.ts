@@ -13,6 +13,9 @@ import {
     userPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import {
+    userPassword,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import {
     caseIgnoreMatch,
 } from "@wildboar/x500/src/lib/matching/equality/caseIgnoreMatch";
 // TODO: Implement userPwdMatch
@@ -24,6 +27,8 @@ function loadSelectedAttributeTypes (ctx: Context): void {
         commonName,
         surname,
         userPwd,
+        userPwd,
+        userPassword,
     ]
         .map(attributeFromInformationObject)
         .forEach((attr) => { // FIXME: All attributes do not have their LDAP syntax names...
@@ -35,6 +40,9 @@ function loadSelectedAttributeTypes (ctx: Context): void {
             if (attr.id === "2.5.4.4") {
                 ctx.attributes.set("sn", attr);
                 ctx.attributes.set("surname", attr);
+            }
+            if (attr.id === "2.5.4.35") {
+                ctx.attributes.set("userPassword", attr);
             }
             attr.ldapNames?.forEach((ldapName: string): void => {
                 ctx.attributes.set(ldapName.trim().toLowerCase(), attr);

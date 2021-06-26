@@ -120,8 +120,8 @@ model Entry {
     ContextDescriptionUse       ContextDescriptionUse[]
     SearchRuleUse               SearchRuleUse[]
     @@unique([immediate_superior_id, rdn])
-    @@index([aliased_entry_dn])
     @@unique([entryUUID])
+    @@index([aliased_entry_dn])
     @@index([dit_id])
 }
 
@@ -135,19 +135,16 @@ model UtmCoordinate {
 
 // There may be only one password per entry
 model Password {
-    id             Int       @id @default(autoincrement())
-    encrypted      Bytes
-    algorithm_id   Int
-    algorithm      Algorithm @relation(fields: [algorithm_id], references: [id])
-    entries        Entry[]
-    pwdStartTime   DateTime  @default(now())
-    pwdExpiryTime  DateTime?
-    pwdEndTime     DateTime?
-    pwdFails       Int       @default(0)
-    pwdFailureTime DateTime?
-    pwdGracesUsed  Int       @default(0)
-
-    // Policy attributes
+    id                         Int       @id @default(autoincrement())
+    encrypted                  Bytes
+    algorithm_oid              Int[]
+    algorithm_parameters_der   Bytes?
+    pwdStartTime               DateTime  @default(now())
+    pwdExpiryTime              DateTime?
+    pwdEndTime                 DateTime?
+    pwdFails                   Int       @default(0)
+    pwdFailureTime             DateTime?
+    pwdGracesUsed              Int       @default(0)
     pwdModifyEntryAllowed      Boolean?
     pwdChangeAllowed           Boolean?
     pwdMaxAge                  Int?
@@ -167,15 +164,7 @@ model Password {
     pwdMinTimeInHistory        Int?
     pwdHistorySlots            Int?
     pwdRecentlyExpiredDuration Int?
-    pwdEncAlg_id               Int
-    // pwdEncAlg                   Algorithm @relation(fields: [pwdEncAlg_id], references: [id])
-}
-
-model Algorithm {
-    id         Int        @id @default(autoincrement())
-    oid        String
-    parameters Bytes
-    passwords  Password[]
+    entries                    Entry[]
 }
 
 // AccessPoint ::= SET {
@@ -201,7 +190,7 @@ model AttributeValue {
     // At most one security label context can be assigned to an attribute value
     security_label             Bytes?
     security_policy_identifier String?
-    security_classification    Int?     @db.SmallInt
+    security_classification    Int?    @db.SmallInt
     privacy_mark               String?
 
     // Not part of a specification, but still usable
@@ -620,11 +609,11 @@ model Certificate {
     private_key_usage_not_after   DateTime?
     certificate_policies          String[] // OIDs
     crl_distribution_points_count Int
-    revoked_time                    DateTime?
-    revoked_reason                  Int?
-    signature_bytes                 Bytes
-    subject_public_key_bytes        Bytes
-    certificate_der                 Bytes
+    revoked_time                  DateTime?
+    revoked_reason                Int?
+    signature_bytes               Bytes
+    subject_public_key_bytes      Bytes
+    certificate_der               Bytes
 }
 
 // model CertificateList {

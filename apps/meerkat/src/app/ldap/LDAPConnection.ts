@@ -75,13 +75,7 @@ export class LDAPConnection {
                 const res = new LDAPMessage(
                     message.messageID,
                     {
-                        bindResponse: new BindResponse(
-                            0, // Success
-                            Buffer.from("cn=Jonathan Wilbur", "utf-8"),
-                            Buffer.from("Success", "utf-8"),
-                            undefined,
-                            undefined,
-                        ),
+                        bindResponse: result,
                     },
                     undefined,
                 );

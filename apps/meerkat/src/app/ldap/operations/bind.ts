@@ -5,7 +5,6 @@ import type {
 import {
     BindResponse,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindResponse.ta";
-import readEntry from "../../database/readEntry";
 import findEntry from "../../x500/findEntry";
 import decodeLDAPDN from "../decodeLDAPDN";
 import encodeLDAPDN from "../encodeLDAPDN";
@@ -16,17 +15,10 @@ import {
     LDAPResult_resultCode_invalidCredentials,
     LDAPResult_resultCode_authMethodNotSupported,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
-import {
-    id_at_userPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/id-at-userPwd.va";
-import {
-    UserPwd,
-    _decode_UserPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import * as crypto from "crypto";
 import attemptPassword from "../../x500/attemptPassword";
+import readEntryPassword from "../../database/readEntryPassword";
 
-const USER_PWD_OID: string = id_at_userPwd.toString();
 const INVALID_CREDENTIALS_MESSAGE: string = "Invalid credentials or no such object.";
 
 function sleep (ms: number): Promise<void> {
@@ -87,6 +79,7 @@ async function bind (
         return invalidCredentialsError(req.name);
     }
     const encodedDN = encodeLDAPDN(ctx, getDistinguishedName(entry));
+    const pwd = await readEntryPassword(ctx, entry);
     if ("simple" in req.authentication) {
         const suppliedPassword = Buffer.from(req.authentication.simple);
         if (dn.length === 0) { // Provides Root DSE (super-administrator) authentication.
@@ -100,12 +93,12 @@ async function bind (
                 return invalidCredentialsError(req.name);
             }
         }
-        const attrs = await readEntry(ctx, entry);
-        const userPwdAttribute = attrs.find((attr) => (attr.id.toString() === USER_PWD_OID));
-        if (!userPwdAttribute) {
+        // const attrs = await readEntry(ctx, entry);
+        // const pwd = await readEntryPassword(ctx, entry);
+            // attrs.find((attr) => (attr.id.toString() === USER_PWD_OID));
+        if (!pwd) {
             return invalidCredentialsError(req.name);
         }
-        const pwd: UserPwd = _decode_UserPwd(userPwdAttribute.value);
         const authenticated = attemptPassword(suppliedPassword, pwd);
         if (authenticated) {
             return simpleSuccess(encodedDN);
@@ -126,12 +119,9 @@ async function bind (
                     return invalidCredentialsError(req.name);
                 }
                 const [ , , passwd ] = creds; // We ignore the authzid and authcid.
-                const attrs = await readEntry(ctx, entry);
-                const userPwdAttribute = attrs.find((attr) => (attr.id.toString() === USER_PWD_OID));
-                if (!userPwdAttribute) {
+                if (!pwd) {
                     return invalidCredentialsError(req.name);
                 }
-                const pwd: UserPwd = _decode_UserPwd(userPwdAttribute.value);
                 const authenticated = attemptPassword(Buffer.from(passwd), pwd);
                 if (authenticated) {
                     return simpleSuccess(encodedDN);
