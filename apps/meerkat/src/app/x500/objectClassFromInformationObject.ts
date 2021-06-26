@@ -8,8 +8,6 @@ import {
     ObjectClassInfo,
 } from "../types";
 
-// TODO: Make ATTRIBUTE.&id non-optional.
-
 export
 function objectClassFromInformationObject (io: OBJECT_CLASS): ObjectClassInfo {
     return {

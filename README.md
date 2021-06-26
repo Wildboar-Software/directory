@@ -2,13 +2,10 @@
 
 ## Projects
 
-- [ ] `readEntry()` refactor
-  - [ ] Arguments
-    - [ ] Attribute size limit
-    - [ ] Specific attributes
-    - [ ] Operational attributes
-  - [ ] Split attributes into operational and user.
-  - [ ] Indicate whether the attributes were complete.
+- [ ] Put object classes in the database
+- [ ] Put name forms in the database
+- [ ] Put friends in the database
+- [ ] `readEntry()` deprecation
 - [ ] `findEntry()` refactor
   - [ ] Return the number of RDNs that matched, whether aliases were derefed.
   - [ ] Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways

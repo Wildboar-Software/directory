@@ -19,8 +19,8 @@ import { v4 as uuid } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { strict as assert } from "assert";
 import initDIT from "./database/initDIT";
-import loadSelectedAttributeTypes from "./x500/loadSelectedAttributeTypes";
-import loadSelectedObjectClasses from "./x500/loadSelectedObjectClasses";
+import loadAttributeTypes from "./x500/loadAttributeTypes";
+import loadObjectClasses from "./x500/loadObjectClasses";
 import loadLDAPSyntaxes from "./x500/loadLDAPSyntaxes";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;
@@ -93,12 +93,12 @@ async function main (): Promise<void> {
 
     // The ordering of these is important.
     // Loading LDAP syntaxes before attribute types allows us to use the names instead of OIDs.
-    loadSelectedObjectClasses(ctx);
-    ctx.log.debug(`Loaded ${ctx.objectClasses.size} object classes.`);
+    loadObjectClasses(ctx);
+    ctx.log.debug("Loaded object classes.");
     loadLDAPSyntaxes(ctx);
-    ctx.log.debug(`Loaded ${ctx.ldapSyntaxes.size} LDAP syntaxes.`);
-    loadSelectedAttributeTypes(ctx);
-    ctx.log.debug(`Loaded ${ctx.attributes.size} attribute types.`);
+    ctx.log.debug("Loaded LDAP syntaxes.");
+    loadAttributeTypes(ctx);
+    ctx.log.debug("Loaded attribute types.");
 
     const idmServer = net.createServer((c) => {
         console.log("IDM client connected.");

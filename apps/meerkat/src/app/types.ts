@@ -93,7 +93,7 @@ interface AttributeInfo {
 
 export
 interface ObjectClassInfo {
-    id?: OBJECT_IDENTIFIER;
+    id: OBJECT_IDENTIFIER;
     kind: ObjectClassKind;
     mandatoryAttributes: Set<IndexableOID>;
     optionalAttributes: Set<IndexableOID>;
