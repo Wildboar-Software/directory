@@ -57,7 +57,6 @@ import type {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPString.ta";
 import LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import isAttributeSubtype from "../../x500/isAttributeSubtype";
-import { info } from "node:console";
 
 type EntryInfo = [
     entry: Entry,
