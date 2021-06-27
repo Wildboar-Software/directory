@@ -19,8 +19,9 @@ import type {
 import type {
     OrderingMatcher,
 } from "@wildboar/x500/src/lib/types/OrderingMatcher";
-// FIXME: export non-default:
-import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
+import type {
+    SubstringsMatcher,
+} from "@wildboar/x500/src/lib/types/SubstringsMatcher";
 import type {
     ContextMatcher,
 } from "@wildboar/x500/src/lib/types/ContextMatcher";
@@ -80,6 +81,7 @@ interface AttributeInfo {
     equalityMatcher?: EqualityMatcher;
     orderingMatcher?: OrderingMatcher;
     substringsMatcher?: SubstringsMatcher;
+    approxMatcher?: EqualityMatcher;
     singleValued: boolean;
     collective: boolean;
     dummy: boolean;
@@ -89,6 +91,7 @@ interface AttributeInfo {
     ldapNames?: LDAPName[];
     ldapDescription?: string;
     obsolete: boolean;
+    compatibleMatchingRules: Set<IndexableOID>;
 }
 
 export
@@ -198,11 +201,14 @@ interface Context {
     database: Database;
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
+    /* Note that there cannot be a single attributes hierarchy like there is
+    with structural classes. */
     attributes: Map<IndexableOID, AttributeInfo>;
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
     equalityMatchingRules: Map<IndexableOID, EqualityMatcher>;
     orderingMatchingRules: Map<IndexableOID, OrderingMatcher>;
     substringsMatchingRules: Map<IndexableOID, SubstringsMatcher>;
+    approxMatchingRules: Map<IndexableOID, EqualityMatcher>;
     contextMatchers: Map<IndexableOID, ContextMatcher>;
     /**
      * A map of connection UUIDs to a map of query references to paged results

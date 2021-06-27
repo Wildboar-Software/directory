@@ -7,6 +7,7 @@ import type {
     IndexableOID,
     StoredAttributeValueWithContexts
 } from "../../types";
+import { ASN1Element } from "asn1-ts";
 import type {
     SearchRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest.ta";
@@ -45,6 +46,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import { objectNotFound } from "../results";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import compareAttributeDescription from "@wildboar/ldap/src/lib/compareAttributeDescription";
 import evaluateFilter from "@wildboar/ldap/src/lib/evaluateFilter";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type EqualityMatcher from "@wildboar/ldap/src/lib/types/EqualityMatcher";
@@ -54,9 +56,11 @@ import type ApproxMatcher from "@wildboar/ldap/src/lib/types/ApproxMatcher";
 import type {
     LDAPString,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPString.ta";
-import type {
-    AttributeValue,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeValue.ta";
+import LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
+import isAttributeSubtype from "../../x500/isAttributeSubtype";
+// import type {
+//     AttributeValue,
+// } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeValue.ta";
 
 type EntryInfo = [
     entry: Entry,
@@ -159,12 +163,23 @@ function ldapSyntaxToLDAPSyntax (info: LDAPSyntaxInfo): string {
     return ret;
 }
 
+
+
+// function isSubtype (ad: LDAPString, parent: LDAPString): boolean {
+//     const parentDesc = normalizeAttributeDescription(parent);
+//     const childDesc = normalizeAttributeDescription(ad);
+//     const
+
+//     return isAttributeSubtype(ctx)
+// };
+
 export
 async function search (
     ctx: Context,
     req: SearchRequest,
     onEntry: (entry: SearchResultEntry) => Promise<void>,
 ): Promise<SearchResultDone> {
+    const startTime = new Date();
     const dn = decodeLDAPDN(ctx, req.baseObject);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, req.derefAliases !== 0); // FIXME
     if (!entry) {
@@ -212,12 +227,9 @@ async function search (
             )
             : null;
 
-    const sizeLimit = (req.sizeLimit > 0)
-        ? req.sizeLimit
-        : Number.MAX_SAFE_INTEGER;
     const candidates: EntryInfo[] = await Promise.all(
         subset
-            .slice(0, sizeLimit)
+            // .slice(0, sizeLimit) // FIXME: This is not the right place for this.
             .map(async (subsetMember): Promise<EntryInfo> => {
                 const {
                     userAttributes,
@@ -245,11 +257,17 @@ async function search (
             }),
     );
 
-    const results = candidates
-        .filter(([ candidate, userAttrs, opAttrs ]: EntryInfo): boolean => {
-            if (!req.filter) {
-                return true;
-            }
+    // TODO: Filter attributes by permission before they are used for filtering!
+
+    const sizeLimit = (req.sizeLimit > 0)
+        ? req.sizeLimit
+        : Number.MAX_SAFE_INTEGER;
+    const timeLimit = (req.timeLimit > 0)
+        ? req.timeLimit
+        : 3600; // We automatically restrict the run-time of the query to one hour.
+    let returnedResults: number = 0;
+    for (const [ candidate, userAttrs, opAttrs ] of candidates) {
+        if (req.filter) {
             const dn = getDistinguishedName(candidate);
             const groupedByType = groupByOID([
                 ...userAttrs,
@@ -272,165 +290,176 @@ async function search (
                     );
                 })
                 .filter((attr): attr is PartialAttribute => !!attr);
-
             const matched: boolean | undefined = evaluateFilter(
                 req.filter,
                 dn.map((rdn) => rdn.map((atav) => [ atav.type_, atav.value ])),
                 attrs,
-                // FIXME: I need to radically change how evaluateFilter() works.
-                // I think just passing in a (value: Uint8Array) => ASN1Element should be enough.
                 {
+                    getLDAPSyntaxDecoder: (ad: LDAPString): LDAPSyntaxDecoder | undefined => {
+                        const desc = normalizeAttributeDescription(ad);
+                        return ctx.ldapSyntaxes.get(desc)?.decoder;
+                    },
                     getEqualityMatcher: (ad: LDAPString): EqualityMatcher | undefined => {
-                        return (a: AttributeValue, b: AttributeValue): boolean => { // FIXME:
-                            if (a.length !== b.length) {
-                                return false;
-                            }
-                            return (a.toString() === b.toString());
-                        };
+                        const desc = normalizeAttributeDescription(ad);
+                        return ctx.attributes.get(desc)?.equalityMatcher;
                     },
                     getSubstringsMatcher: (ad: LDAPString): SubstringsMatcher | undefined => {
-                        return undefined;
+                        const desc = normalizeAttributeDescription(ad);
+                        return ctx.attributes.get(desc)?.substringsMatcher;
                     },
                     getOrderingMatcher: (ad: LDAPString): OrderingMatcher | undefined => {
-                        return undefined;
+                        const desc = normalizeAttributeDescription(ad);
+                        return ctx.attributes.get(desc)?.orderingMatcher;
                     },
                     getApproxMatcher: (ad: LDAPString): ApproxMatcher | undefined => {
-                        return undefined;
+                        const desc = normalizeAttributeDescription(ad);
+                        return ctx.attributes.get(desc)?.approxMatcher;
                     },
                     isSubtype: (ad: LDAPString, parent: LDAPString): boolean => {
-                        return true;
+                        const parentDesc = normalizeAttributeDescription(parent);
+                        const childDesc = normalizeAttributeDescription(ad);
+                        const parentSpec = ctx.attributes.get(parentDesc);
+                        const childSpec = ctx.attributes.get(childDesc);
+                        if (!parentSpec || !childSpec) {
+                            return compareAttributeDescription(ad, parent);
+                        }
+                        return Boolean(isAttributeSubtype(ctx, childSpec.id, parentSpec.id));
                     },
                 },
             );
-            return (matched || (matched === undefined));
-        });
-
-    // Select
-
-    await Promise.all(
-        results.map(async ([ result, userAttrs, opAttrs ]) => {
-            let attrsToReturn: StoredAttributeValueWithContexts[] = [];
-            if (returnAllUserAttributesExclusively) {
-                attrsToReturn = userAttrs;
-            } else if (returnAllUserAttributesInclusively && selectedAttributes) {
-                attrsToReturn = [
-                    ...userAttrs,
-                    ...opAttrs
-                        .filter((oa) => (selectedAttributes.has(oa.id.toString())))
-                ];
-            } else if (returnNoAttributes) {
-                attrsToReturn = [];
-            } else {
-                attrsToReturn = attrsToReturn
-                    .filter((attr) => !selectedAttributes || selectedAttributes.has(attr.id.toString()));
+            if (matched === false) {
+                break;
             }
+        }
 
-            const groupedByType = groupByOID(attrsToReturn, (attr) => attr.id);
-            const dn = getDistinguishedName(result);
-            const entryRes = new SearchResultEntry(
-                encodeLDAPDN(ctx, dn),
-                [
-                    ...Object.entries(groupedByType).map(([ , vals ]) => {
-                        const attrType = vals[0].id;
-                        const attrSpec = ctx.attributes.get(attrType.toString());
-                        if (!attrSpec?.ldapSyntax) {
-                            ctx.log.warn(`No LDAP syntax defined for attribute ${attrType.toString()}.`);
-                            return undefined;
-                        }
-                        const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
-                        if (!ldapSyntax?.encoder) {
-                            ctx.log.warn(`LDAP Syntax ${attrSpec.ldapSyntax} not understood or had no encoder.`);
-                            return undefined;
-                        }
-                        // Note: some LDAP programs will not display the value if the attribute description is an OID.
+        let attrsToReturn: StoredAttributeValueWithContexts[] = [];
+        if (returnAllUserAttributesExclusively) {
+            attrsToReturn = userAttrs;
+        } else if (returnAllUserAttributesInclusively && selectedAttributes) {
+            attrsToReturn = [
+                ...userAttrs,
+                ...opAttrs
+                    .filter((oa) => (selectedAttributes.has(oa.id.toString())))
+            ];
+        } else if (returnNoAttributes) {
+            attrsToReturn = [];
+        } else {
+            attrsToReturn = attrsToReturn
+                .filter((attr) => !selectedAttributes || selectedAttributes.has(attr.id.toString()));
+        }
+
+        const groupedByType = groupByOID(attrsToReturn, (attr) => attr.id);
+        const dn = getDistinguishedName(candidate);
+        const entryRes = new SearchResultEntry(
+            encodeLDAPDN(ctx, dn),
+            [
+                ...Object.entries(groupedByType).map(([ , vals ]) => {
+                    const attrType = vals[0].id;
+                    const attrSpec = ctx.attributes.get(attrType.toString());
+                    if (!attrSpec?.ldapSyntax) {
+                        ctx.log.warn(`No LDAP syntax defined for attribute ${attrType.toString()}.`);
+                        return undefined;
+                    }
+                    const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
+                    if (!ldapSyntax?.encoder) {
+                        ctx.log.warn(`LDAP Syntax ${attrSpec.ldapSyntax} not understood or had no encoder.`);
+                        return undefined;
+                    }
+                    // Note: some LDAP programs will not display the value if the attribute description is an OID.
+                    return new PartialAttribute(
+                        (attrSpec.ldapNames && attrSpec.ldapNames.length > 0)
+                            ? Buffer.from(attrSpec.ldapNames[0], "utf-8")
+                            : encodeLDAPOID(attrType),
+                        vals.map((val) => ldapSyntax.encoder!(val.value)),
+                    );
+                }).filter((attr): attr is PartialAttribute => !!attr),
+                new PartialAttribute(
+                    Buffer.from("subschemaSubentry", "utf-8"),
+                    [Buffer.from([])], // The RootDSE is always the schema subentry.
+                ),
+                ...(dn.length === 0) // This is a Root DSE.
+                    ? [
+                        new PartialAttribute(
+                            Buffer.from("1.3.6.1.4.1.1466.115.121.1.3", "utf-8"), // Attribute Types
+                            (Array.from(new Set(ctx.attributes.values()))
+                                .filter((attrSpec) => (
+                                    attrSpec.ldapSyntax
+                                ))
+                                .map((attrSpec) => Buffer.from(
+                                    attributeInfoToLDAPAttributeType(attrSpec),
+                                    "utf-8",
+                                ))
+                            ),
+                        ),
+                        new PartialAttribute(
+                            Buffer.from("1.3.6.1.4.1.1466.115.121.1.37", "utf-8"), // Object Classes
+                            (Array.from(new Set(ctx.objectClasses.values()))
+                                .map((oc) => Buffer.from(
+                                    objectClassInfoToLDAPObjectClass(oc),
+                                    "utf-8",
+                                ))
+                            ),
+                        ),
+                        new PartialAttribute(
+                            Buffer.from("1.3.6.1.4.1.1466.115.121.1.54", "utf-8"), // LDAP Syntaxes
+                            (Array.from(new Set(ctx.ldapSyntaxes.values()))
+                                .map((ls) => Buffer.from(
+                                    ldapSyntaxToLDAPSyntax(ls),
+                                    "utf-8",
+                                ))
+                            ),
+                        ),
+                        new PartialAttribute(
+                            Buffer.from("supportedLDAPVersion", "utf-8"),
+                            [Buffer.from("3", "utf-8")],
+                        ),
+                        new PartialAttribute(
+                            Buffer.from("namingContexts", "utf-8"),
+                            [Buffer.from("", "utf-8")], // Indicates this is a root-level directory.
+                        ),
+                        // new PartialAttribute(
+                        //     Buffer.from("supportedControl", "utf-8"),
+                        //     [], // No controls supported.
+                        // ),
+                        // new PartialAttribute(
+                        //     Buffer.from("supportedExtension", "utf-8"),
+                        //     [], // No extensions supported.
+                        // ),
+                        // new PartialAttribute(
+                        //     Buffer.from("supportedFeatures", "utf-8"),
+                        //     [], // No features supported.
+                        // ),
+                        new PartialAttribute(
+                            Buffer.from("supportedSASLMechanisms", "utf-8"),
+                            [
+                                Buffer.from("PLAIN"),
+                            ],
+                        ),
+                    ]
+                    : [],
+            ]
+                .map((pa) => {
+                    if (req.typesOnly) {
                         return new PartialAttribute(
-                            (attrSpec.ldapNames && attrSpec.ldapNames.length > 0)
-                                ? Buffer.from(attrSpec.ldapNames[0], "utf-8")
-                                : encodeLDAPOID(attrType),
-                            vals.map((val) => ldapSyntax.encoder!(val.value)),
+                            pa.type_,
+                            [],
                         );
-                    }).filter((attr): attr is PartialAttribute => !!attr),
-                    new PartialAttribute(
-                        Buffer.from("subschemaSubentry", "utf-8"),
-                        [Buffer.from([])], // The RootDSE is always the schema subentry.
-                    ),
-                    ...(dn.length === 0) // This is a Root DSE.
-                        ? [
-                            new PartialAttribute(
-                                Buffer.from("1.3.6.1.4.1.1466.115.121.1.3", "utf-8"), // Attribute Types
-                                (Array.from(new Set(ctx.attributes.values()))
-                                    .filter((attrSpec) => (
-                                        attrSpec.ldapSyntax
-                                        // && attrSpec.ldapNames
-                                        // &&
-                                    ))
-                                    .map((attrSpec) => Buffer.from(
-                                        attributeInfoToLDAPAttributeType(attrSpec),
-                                        "utf-8",
-                                    ))
-                                ),
-                            ),
-                            new PartialAttribute(
-                                Buffer.from("1.3.6.1.4.1.1466.115.121.1.37", "utf-8"), // Object Classes
-                                (Array.from(new Set(ctx.objectClasses.values()))
-                                    .map((oc) => Buffer.from(
-                                        objectClassInfoToLDAPObjectClass(oc),
-                                        "utf-8",
-                                    ))
-                                ),
-                            ),
-                            new PartialAttribute(
-                                Buffer.from("1.3.6.1.4.1.1466.115.121.1.54", "utf-8"), // LDAP Syntaxes
-                                (Array.from(new Set(ctx.ldapSyntaxes.values()))
-                                    .map((ls) => Buffer.from(
-                                        ldapSyntaxToLDAPSyntax(ls),
-                                        "utf-8",
-                                    ))
-                                ),
-                            ),
-                            new PartialAttribute(
-                                Buffer.from("supportedLDAPVersion", "utf-8"),
-                                [Buffer.from("3", "utf-8")],
-                            ),
-                            new PartialAttribute(
-                                Buffer.from("namingContexts", "utf-8"),
-                                [Buffer.from("", "utf-8")], // Indicates this is a root-level directory.
-                            ),
-                            // new PartialAttribute(
-                            //     Buffer.from("supportedControl", "utf-8"),
-                            //     [], // No controls supported.
-                            // ),
-                            // new PartialAttribute(
-                            //     Buffer.from("supportedExtension", "utf-8"),
-                            //     [], // No extensions supported.
-                            // ),
-                            // new PartialAttribute(
-                            //     Buffer.from("supportedFeatures", "utf-8"),
-                            //     [], // No features supported.
-                            // ),
-                            new PartialAttribute(
-                                Buffer.from("supportedSASLMechanisms", "utf-8"),
-                                [
-                                    Buffer.from("PLAIN"),
-                                ],
-                            ),
-                        ]
-                        : [],
-                ]
-                    .map((pa) => {
-                        if (req.typesOnly) {
-                            return new PartialAttribute(
-                                pa.type_,
-                                [],
-                            );
-                        } else {
-                            return pa;
-                        }
-                    }),
-            );
-            await onEntry(entryRes);
-        }),
-    );
+                    } else {
+                        return pa;
+                    }
+                }),
+        );
+        await onEntry(entryRes);
+        returnedResults++;
+        if (returnedResults >= sizeLimit) {
+            break;
+        }
+        const entryTime = new Date();
+        if ((entryTime.valueOf() - startTime.valueOf()) > (timeLimit * 1000)) {
+            break;
+        }
+    }
+
     return new LDAPResult(
         0, // Success
         req.baseObject,

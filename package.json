@@ -28,7 +28,7 @@
   "private": true,
   "dependencies": {
     "@prisma/client": "^2.25.0",
-    "@wildboar/ldap": "^1.1.0",
+    "@wildboar/ldap": "^1.1.2",
     "@wildboar/scrypt-0": "^1.0.0",
     "@wildboar/x500": "^1.0.1",
     "asn1-ts": "^5.0.3",
