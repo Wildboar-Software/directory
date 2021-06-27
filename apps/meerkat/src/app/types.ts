@@ -56,7 +56,7 @@ interface LDAPSyntaxInfo {
 export
 interface AttributeInfo {
     id: OBJECT_IDENTIFIER;
-    parent?: AttributeInfo;
+    parent?: OBJECT_IDENTIFIER;
     value: {
         write: (ctx: Context, value: ASN1Element) => Promise<void>; // eslint-disable-line
         read: (ctx: Context) => Promise<ASN1Element>; // eslint-disable-line
@@ -97,11 +97,14 @@ interface AttributeInfo {
 export
 interface ObjectClassInfo {
     id: OBJECT_IDENTIFIER;
+    superclasses: Set<IndexableOID>;
     kind: ObjectClassKind;
     mandatoryAttributes: Set<IndexableOID>;
     optionalAttributes: Set<IndexableOID>;
     ldapNames?: LDAPName[];
     ldapDescription?: string;
+    // The X.500 specifications do not define this field. IETF RFC 4512, Section 4.1.1 does.
+    obsolete?: boolean;
 }
 
 // Still necessary, because not all object classes have OIDs.

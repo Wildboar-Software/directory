@@ -7,7 +7,6 @@ import type {
     IndexableOID,
     StoredAttributeValueWithContexts
 } from "../../types";
-import { ASN1Element } from "asn1-ts";
 import type {
     SearchRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest.ta";
@@ -58,9 +57,7 @@ import type {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPString.ta";
 import LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import isAttributeSubtype from "../../x500/isAttributeSubtype";
-// import type {
-//     AttributeValue,
-// } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeValue.ta";
+import { info } from "node:console";
 
 type EntryInfo = [
     entry: Entry,
@@ -93,7 +90,7 @@ function attributeInfoToLDAPAttributeType (attrSpec: AttributeInfo): string {
         ret += " OBSOLETE";
     }
     if (attrSpec.parent) {
-        ret += ` SUP ${attrSpec.parent.id.toString()}`;
+        ret += ` SUP ${attrSpec.parent.toString()}`;
     }
     if (attrSpec.ldapSyntax) {
         ret += ` SYNTAX ${attrSpec.ldapSyntax}`;
@@ -137,8 +134,16 @@ function objectClassInfoToLDAPObjectClass (info: ObjectClassInfo): string {
     if (info.ldapDescription) {
         ret += ` DESC '${info.ldapDescription.replace(/'/, "")}'`;
     }
-    // TODO: OBSOLETE
-    // TODO: SUP
+    if (info.obsolete) {
+        ret += " OBSOLETE";
+    }
+    if (info.superclasses.size === 1) {
+        const oids = Array.from(info.superclasses);
+        ret += ` SUP ${oids[0]}`;
+    } else if (info.superclasses.size > 1) {
+        const oids = Array.from(info.superclasses);
+        ret += ` SUP ( ${oids.join(" $ ")} )`;
+    }
     if (info.kind !== undefined) {
         ret += ` ${objectClassKindToString(info.kind)}`;
     }
@@ -229,7 +234,6 @@ async function search (
 
     const candidates: EntryInfo[] = await Promise.all(
         subset
-            // .slice(0, sizeLimit) // FIXME: This is not the right place for this.
             .map(async (subsetMember): Promise<EntryInfo> => {
                 const {
                     userAttributes,

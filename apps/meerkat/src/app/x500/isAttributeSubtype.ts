@@ -19,7 +19,7 @@ function isAttributeSubtype (
             return undefined;
         }
         crit = attrInfo.parent
-            ? attrInfo.parent.id
+            ? attrInfo.parent
             : null;
     } while (crit);
     return undefined;

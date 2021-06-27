@@ -38,6 +38,7 @@
   - [ ] `evaluateRDNAgainstNameForm(rdn: RDN, nf: NAME_FORM)`
   - [ ] `evaluateEntryAgainstContentRule(entry: EntryInformation, cr: CONTENT_RULE)`
   - [ ] `loopDetected (trace: TraceInformation): boolean`
+  - [ ] `validateObjectClasses()`
 - [ ] Applications
   - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)
     - [ ] Database
@@ -64,10 +65,10 @@
       - [x] `bind`
       - [x] `unbind`
       - [ ] `search`
-      - [ ] `modify`
+      - [x] `modify`
       - [x] `add`
       - [x] `del`
-      - [ ] `modDN`
+      - [x] `modDN`
       - [x] `compare`
       - [ ] `abandon`
       - [x] `extendedReq`

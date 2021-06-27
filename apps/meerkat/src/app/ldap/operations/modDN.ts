@@ -130,7 +130,6 @@ async function modDN (
 
     entry.rdn = newrdn;
 
-    // TODO: If deleteoldrn, delete the matching attribute values.
     return new LDAPResult(
         0, // Success
         req.entry,

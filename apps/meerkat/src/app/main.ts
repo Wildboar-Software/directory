@@ -71,6 +71,7 @@ async function main (): Promise<void> {
         equalityMatchingRules: new Map([]),
         orderingMatchingRules: new Map([]),
         substringsMatchingRules: new Map([]),
+        approxMatchingRules: new Map([]),
         contextMatchers: new Map([]),
         pagedResultsRequests: new Map([]),
         ldapSyntaxes: new Map([]),

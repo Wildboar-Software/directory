@@ -23,12 +23,9 @@ const DEFAULT_READER = async (ctx: Context): Promise<ASN1Element> => {
 
 export
 function attributeFromInformationObject (io: ATTRIBUTE): AttributeInfo {
-    if (!io["&id"]) {
-        throw new Error();
-    }
     return {
         id: io["&id"],
-        // parent:
+        parent: io["&derivation"]?.["&id"],
         value: {
             write: DEFAULT_WRITER,
             read: DEFAULT_READER,
@@ -45,6 +42,7 @@ function attributeFromInformationObject (io: ATTRIBUTE): AttributeInfo {
         ldapSyntax: io["&ldapSyntax"],
         ldapNames: io["&ldapName"],
         ldapDescription: io["&ldapDesc"],
+        compatibleMatchingRules: new Set(),
     };
 }
 
