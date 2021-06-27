@@ -1,4 +1,12 @@
-import type { Context, AttributeInfo, ObjectClassInfo, LDAPSyntaxInfo, IndexableOID, StoredAttributeValueWithContexts } from "../../types";
+import type {
+    Context,
+    Entry,
+    AttributeInfo,
+    ObjectClassInfo,
+    LDAPSyntaxInfo,
+    IndexableOID,
+    StoredAttributeValueWithContexts
+} from "../../types";
 import type {
     SearchRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest.ta";
@@ -18,7 +26,9 @@ import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import getSubset from "../../x500/getSubset";
 import readEntryAttributes from "../../database/readEntryAttributes";
-import { PartialAttribute } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+import {
+    PartialAttribute,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
 import groupByOID from "../../utils/groupByOID";
 import {
     AttributeUsage,
@@ -35,7 +45,24 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import { objectNotFound } from "../results";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import evaluateFilter from "@wildboar/ldap/src/lib/evaluateFilter";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import type EqualityMatcher from "@wildboar/ldap/src/lib/types/EqualityMatcher";
+import type SubstringsMatcher from "@wildboar/ldap/src/lib/types/SubstringsMatcher";
+import type OrderingMatcher from "@wildboar/ldap/src/lib/types/OrderingMatcher";
+import type ApproxMatcher from "@wildboar/ldap/src/lib/types/ApproxMatcher";
+import type {
+    LDAPString,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPString.ta";
+import type {
+    AttributeValue,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeValue.ta";
+
+type EntryInfo = [
+    entry: Entry,
+    user: StoredAttributeValueWithContexts[],
+    operational: StoredAttributeValueWithContexts[],
+];
 
 function usageToString (usage: AttributeUsage): string | undefined {
     return {
@@ -145,7 +172,7 @@ async function search (
         return objectNotFound;
     }
     ctx.log.info(`Searching for ${Buffer.from(req.baseObject).toString("utf-8")} with scope ${req.scope}.`);
-    const results = getSubset(entry, req.scope);
+    const subset = getSubset(entry, req.scope);
     /**
      * These three variables correspond to the three cases defined in
      * IETF RFC 4511, Section 4.5.1.8.
@@ -184,37 +211,111 @@ async function search (
                     .filter((oid: string | undefined): oid is string => !!oid),
             )
             : null;
+
+    const sizeLimit = (req.sizeLimit > 0)
+        ? req.sizeLimit
+        : Number.MAX_SAFE_INTEGER;
+    const candidates: EntryInfo[] = await Promise.all(
+        subset
+            .slice(0, sizeLimit)
+            .map(async (subsetMember): Promise<EntryInfo> => {
+                const {
+                    userAttributes,
+                    operationalAttributes,
+                } = await readEntryAttributes(ctx, subsetMember, {
+                    attributesSelect: (
+                        returnAllUserAttributesExclusively
+                        || returnAllUserAttributesInclusively
+                    )
+                        ? undefined
+                        : req.attributes
+                        .map((desc: Uint8Array): OBJECT_IDENTIFIER | undefined => {
+                            const attributeType = normalizeAttributeDescription(desc);
+                            const spec = ctx.attributes.get(attributeType);
+                            if (!spec) {
+                                return undefined;
+                            }
+                            return spec.id;
+                        })
+                        .filter((oid: OBJECT_IDENTIFIER | undefined): oid is OBJECT_IDENTIFIER => !!oid),
+                    contextSelection: undefined,
+                    returnContexts: false,
+                });
+                return [ subsetMember, userAttributes, operationalAttributes ];
+            }),
+    );
+
+    const results = candidates
+        .filter(([ candidate, userAttrs, opAttrs ]: EntryInfo): boolean => {
+            if (!req.filter) {
+                return true;
+            }
+            const dn = getDistinguishedName(candidate);
+            const groupedByType = groupByOID([
+                ...userAttrs,
+                ...opAttrs,
+            ], (attr) => attr.id);
+            const attrs = Object.values(groupedByType)
+                .map((attrsOfSameType): PartialAttribute | undefined => {
+                    const attrSpec = ctx.attributes.get(attrsOfSameType[0].id.toString());
+                    if (!attrSpec?.ldapSyntax) {
+                        return undefined;
+                    }
+                    const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
+                    if (!ldapSyntax?.encoder) {
+                        return undefined;
+                    }
+                    const encode = ldapSyntax.encoder;
+                    return new PartialAttribute(
+                        Buffer.from(attrsOfSameType[0].id.toString(), "utf-8"),
+                        attrsOfSameType.map((attr) => encode(attr.value)),
+                    );
+                })
+                .filter((attr): attr is PartialAttribute => !!attr);
+
+            const matched: boolean | undefined = evaluateFilter(
+                req.filter,
+                dn.map((rdn) => rdn.map((atav) => [ atav.type_, atav.value ])),
+                attrs,
+                // FIXME: I need to radically change how evaluateFilter() works.
+                // I think just passing in a (value: Uint8Array) => ASN1Element should be enough.
+                {
+                    getEqualityMatcher: (ad: LDAPString): EqualityMatcher | undefined => {
+                        return (a: AttributeValue, b: AttributeValue): boolean => { // FIXME:
+                            if (a.length !== b.length) {
+                                return false;
+                            }
+                            return (a.toString() === b.toString());
+                        };
+                    },
+                    getSubstringsMatcher: (ad: LDAPString): SubstringsMatcher | undefined => {
+                        return undefined;
+                    },
+                    getOrderingMatcher: (ad: LDAPString): OrderingMatcher | undefined => {
+                        return undefined;
+                    },
+                    getApproxMatcher: (ad: LDAPString): ApproxMatcher | undefined => {
+                        return undefined;
+                    },
+                    isSubtype: (ad: LDAPString, parent: LDAPString): boolean => {
+                        return true;
+                    },
+                },
+            );
+            return (matched || (matched === undefined));
+        });
+
+    // Select
+
     await Promise.all(
-        results.map(async (result) => {
-            const {
-                userAttributes,
-                operationalAttributes,
-            } = await readEntryAttributes(ctx, entry, {
-                attributesSelect: (
-                    returnAllUserAttributesExclusively
-                    || returnAllUserAttributesInclusively
-                )
-                    ? undefined
-                    : req.attributes
-                    .map((desc: Uint8Array): OBJECT_IDENTIFIER | undefined => {
-                        const attributeType = normalizeAttributeDescription(desc);
-                        const spec = ctx.attributes.get(attributeType);
-                        if (!spec) {
-                            return undefined;
-                        }
-                        return spec.id;
-                    })
-                    .filter((oid: OBJECT_IDENTIFIER | undefined): oid is OBJECT_IDENTIFIER => !!oid),
-                contextSelection: undefined,
-                returnContexts: false,
-            });
+        results.map(async ([ result, userAttrs, opAttrs ]) => {
             let attrsToReturn: StoredAttributeValueWithContexts[] = [];
             if (returnAllUserAttributesExclusively) {
-                attrsToReturn = userAttributes;
+                attrsToReturn = userAttrs;
             } else if (returnAllUserAttributesInclusively && selectedAttributes) {
                 attrsToReturn = [
-                    ...userAttributes,
-                    ...operationalAttributes
+                    ...userAttrs,
+                    ...opAttrs
                         .filter((oa) => (selectedAttributes.has(oa.id.toString())))
                 ];
             } else if (returnNoAttributes) {
