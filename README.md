@@ -2,16 +2,7 @@
 
 ## Projects
 
-- [ ] Init:
-  - [ ] Set up Autonomous Administrative Point
-    - [ ] Read `AAP` environment variable (a distinguished name)
-    - [ ] Create glue entries until the `AAP`
-    - [ ] Create the administrative point
-    - [ ] Read `SUPERIOR_KNOWLEDGE` environment variable and create the operational attributes on the AAP
-  - [ ] Create subentries under the AAP
-  - [ ] Create temporary admin user entry under the AAP
-  - [ ] Create temporary admin user password (Randomly generate, rather than )
-- [ ] Architecture decision: each meerkat directory will house one single autonomous administrative point (AAP).
+<!-- - [ ] Architecture decision: each meerkat directory will house one single naming context -->
 - [ ] Put object classes in the database
 - [ ] Put name forms in the database
 - [ ] Put friends in the database

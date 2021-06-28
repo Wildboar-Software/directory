@@ -167,16 +167,6 @@ function ldapSyntaxToLDAPSyntax (info: LDAPSyntaxInfo): string {
     return ret;
 }
 
-
-
-// function isSubtype (ad: LDAPString, parent: LDAPString): boolean {
-//     const parentDesc = normalizeAttributeDescription(parent);
-//     const childDesc = normalizeAttributeDescription(ad);
-//     const
-
-//     return isAttributeSubtype(ctx)
-// };
-
 export
 async function search (
     ctx: Context,

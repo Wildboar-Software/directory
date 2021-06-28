@@ -18,6 +18,11 @@ import {
     LDAPResult_resultCode_success,
     LDAPResult_resultCode_protocolError,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+import {
+    AuthenticationLevel_basicLevels_level,
+    AuthenticationLevel_basicLevels_level_none,
+    AuthenticationLevel_basicLevels_level_simple,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import add from "./operations/add";
 import bind from "./operations/bind";
 import compare from "./operations/compare";
@@ -33,7 +38,8 @@ import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 export class LDAPConnection {
 
     private buffer: Buffer = Buffer.alloc(0);
-    private boundEntry: Entry | undefined;
+    public boundEntry: Entry | undefined;
+    public authLevel: AuthenticationLevel_basicLevels_level = AuthenticationLevel_basicLevels_level_none;
     private connection!: net.Socket;
 
     private async handleData (ctx: Context, data: Buffer): Promise<void> {
@@ -67,6 +73,8 @@ export class LDAPConnection {
             if (result.resultCode === LDAPResult_resultCode_success) {
                 const dn = decodeLDAPDN(ctx, req.name);
                 this.boundEntry = findEntry(ctx, ctx.database.data.dit, dn, true);
+                // Currently, there is no way to achieve strong auth using LDAP.
+                this.authLevel = AuthenticationLevel_basicLevels_level_simple;
             }
             const res = new LDAPMessage(
                 message.messageID,
@@ -78,6 +86,7 @@ export class LDAPConnection {
             this.c.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("unbindRequest" in message.protocolOp) {
             this.boundEntry = undefined;
+            this.authLevel = AuthenticationLevel_basicLevels_level_none;
         } else if ("addRequest" in message.protocolOp) {
             const req = message.protocolOp.addRequest;
             const result = await add(ctx, req);

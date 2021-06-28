@@ -1,6 +1,6 @@
 import type { Context, Entry, StoredAttributeValueWithContexts } from "../types";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+import { DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import { _encodeGeneralizedTime, DER } from "asn1-ts/dist/node/functional";
 import {
     createTimestamp,
@@ -8,6 +8,20 @@ import {
 import {
     modifyTimestamp,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/modifyTimestamp.oa";
+import {
+    entryACI,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
+import {
+    prescriptiveACI,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
+import {
+    subentryACI,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
+import {
+    ACIItem,
+    _decode_ACIItem,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+import { ACIScope } from "@prisma/client";
 
 // Should this just be an EntryInformationSelection?
 export
@@ -35,6 +49,7 @@ interface ReadEntryAttributesReturn {
     operationalAttributes: StoredAttributeValueWithContexts[];
     incompleteEntry: boolean;
     derivedEntry: boolean; // If joins or families are used.
+    applicableACIItems: ACIItem[];
 };
 
 // TODO: Document why I separate userAttributes and operationalAttributes.
@@ -71,6 +86,14 @@ async function readEntryAttributes (
         }))
             .map((a) => attributeFromDatabaseAttribute(ctx, a)),
     );
+    const aciItems = await ctx.db.aCIItem.findMany({
+        where: {
+            entry_id: entry.id,
+        },
+    });
+    const entryACIItems = aciItems.filter((aci) => aci.scope === ACIScope.ENTRY);
+    const prescriptiveACIItems = aciItems.filter((aci) => aci.scope === ACIScope.PRESCRIPTIVE);
+    const subentryACIItems = aciItems.filter((aci) => aci.scope === ACIScope.SUBENTRY);
     const operationalAttributes: StoredAttributeValueWithContexts[] = [];
     if (options?.includeOperationalAttributes) {
         operationalAttributes.push({
@@ -83,6 +106,35 @@ async function readEntryAttributes (
             value: _encodeGeneralizedTime(entry.modifyTimestamp, DER),
             contexts: new Map(),
         });
+        operationalAttributes.push(
+            ...entryACIItems.map((aci): StoredAttributeValueWithContexts => ({
+                id: entryACI["&id"],
+                value: (() => {
+                    const el = new DERElement();
+                    el.fromBytes(aci.ber);
+                    return el;
+                })(),
+                contexts: new Map(),
+            })),
+            ...prescriptiveACIItems.map((aci): StoredAttributeValueWithContexts => ({
+                id: prescriptiveACI["&id"],
+                value: (() => {
+                    const el = new DERElement();
+                    el.fromBytes(aci.ber);
+                    return el;
+                })(),
+                contexts: new Map(),
+            })),
+            ...subentryACIItems.map((aci): StoredAttributeValueWithContexts => ({
+                id: subentryACI["&id"],
+                value: (() => {
+                    const el = new DERElement();
+                    el.fromBytes(aci.ber);
+                    return el;
+                })(),
+                contexts: new Map(),
+            })),
+        );
         // TODO: Process more operational attributes.
     }
     // const incompleteEntry: boolean = (
@@ -100,6 +152,15 @@ async function readEntryAttributes (
         operationalAttributes,
         incompleteEntry: false,
         derivedEntry: false,
+        applicableACIItems: [
+            ...entryACIItems.map((aci) => {
+                const el = new DERElement();
+                el.fromBytes(aci.ber);
+                return _decode_ACIItem(el);
+            }),
+            // TODO: Obtain prescriptive ACIs if it is not type subentry.
+            // TODO: Obtain subentry ACIs if it is type administrative point
+        ]
     };
 }
 

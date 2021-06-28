@@ -12,6 +12,7 @@ model DIT {
     uuid  String  @default(uuid()) @db.Uuid
     name  String
     Entry Entry[]
+
     @@unique([uuid])
 }
 
@@ -215,22 +216,29 @@ model ContextValue {
     fallback    Boolean
 }
 
-// TODO: Should there be a separate Attribute Types table?
-// TODO: Should there be a separate Context Types table?
-// TODO: Should there be a separate Object Classes table?
+// Should there be a separate Attribute Types table? No, because these have a functional aspect.
+// Should there be a separate Context Types table? No, because these have a functional aspect.
+
 // TODO: Operational binding agreements
-// TODO: ACIItems
+
+enum ACIScope {
+    PRESCRIPTIVE
+    ENTRY
+    SUBENTRY
+}
 
 model ACIItem {
-    id                               Int    @id @default(autoincrement())
+    id                               Int      @id @default(autoincrement())
     entry_id                         Int
-    entry                            Entry  @relation(fields: [entry_id], references: [id])
+    entry                            Entry    @relation(fields: [entry_id], references: [id])
     tag                              String
     precedence                       Int
-    auth_level_basic_level           Int
+    auth_level_basic_level           Int?
     auth_level_basic_local_qualifier Int?
-    auth_level_basic_signed          Int
+    auth_level_basic_signed          Boolean?
+    ber                              Bytes
     // The "other" alternative shall not be supported.
+    scope                            ACIScope
 }
 
 model Clearance {

@@ -1,4 +1,4 @@
-import type { Context, Entry, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Entry, IndexableOID, StoredAttributeValueWithContexts } from "../types";
 import { ASN1Construction } from "asn1-ts";
 import {
     id_oc_parent,
@@ -6,11 +6,67 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
-import type { Entry as DatabaseEntry } from "@prisma/client";
+import { id_aca_entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
+import { id_aca_prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-prescriptiveACI.va";
+import { id_aca_subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-subentryACI.va";
+import {
+    ACIItem,
+    _decode_ACIItem,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+// import {
+//     id_aca_accessControlScheme,
+// } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-accessControlScheme.va";
+import { Entry as DatabaseEntry, ACIScope, PrismaPromise } from "@prisma/client";
 import rdnToJson from "../x500/rdnToJson";
 
 const PARENT_OID: string = id_oc_parent.toString();
 const CHILD_OID: string = id_oc_child.toString();
+
+type SpecialAttributeHandler = (
+    ctx: Readonly<Context>,
+    entry: Entry,
+    attribute: StoredAttributeValueWithContexts,
+) => PrismaPromise<void>;
+
+const writeSomeACI: (scope: ACIScope) => SpecialAttributeHandler = (scope: ACIScope) => {
+    return (
+        ctx: Readonly<Context>,
+        entry: Entry,
+        attribute: StoredAttributeValueWithContexts,
+    ): PrismaPromise<any> => {
+        // We ignore contexts for this.
+        const aci: ACIItem = _decode_ACIItem(attribute.value);
+        return ctx.db.aCIItem.create({
+            data: {
+                entry_id: entry.id,
+                tag: directoryStringToString(aci.identificationTag),
+                precedence: aci.precedence,
+                auth_level_basic_level: ("basicLevels" in aci.authenticationLevel)
+                    ? aci.authenticationLevel.basicLevels.level
+                    : undefined,
+                auth_level_basic_local_qualifier: ("basicLevels" in aci.authenticationLevel)
+                    ? aci.authenticationLevel.basicLevels.localQualifier
+                    : undefined,
+                auth_level_basic_signed: ("basicLevels" in aci.authenticationLevel)
+                    ? aci.authenticationLevel.basicLevels.signed
+                    : undefined,
+                ber: Buffer.from(attribute.value.toBytes()),
+                scope,
+            },
+        });
+    };
+}
+
+const writeEntryACI = writeSomeACI(ACIScope.ENTRY);
+const writePrescriptiveACI = writeSomeACI(ACIScope.PRESCRIPTIVE);
+const writeSubentryACI = writeSomeACI(ACIScope.SUBENTRY);
+
+const speciallyHandledAttributes: Map<IndexableOID, SpecialAttributeHandler> = new Map([
+    [ id_aca_entryACI.toString(), writeEntryACI ],
+    [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
+    [ id_aca_subentryACI.toString(), writeSubentryACI ],
+]);
 
 /**
  * Prisma does not allow you to recurse three levels deep in a call to
@@ -73,8 +129,19 @@ async function writeEntry (
             structuralObjectClass: "", // FIXME:
         },
     });
-    await ctx.db.$transaction(
-        attributes
+
+    await ctx.db.$transaction([
+        ...attributes
+            .filter((attr) => speciallyHandledAttributes.has(attr.id.toString()))
+            .map((attr) => {
+                const handler = speciallyHandledAttributes.get(attr.id.toString());
+                if (!handler) { // Should never happen.
+                    throw new Error();
+                }
+                return handler(ctx, entry, attr);
+            }),
+        ...attributes
+            .filter((attr) => !speciallyHandledAttributes.has(attr.id.toString()))
             .map((attr) => ctx.db.attributeValue.create({
                 data: {
                     entry_id: writtenEntry.id,
@@ -104,8 +171,9 @@ async function writeEntry (
                     },
                 },
             })),
-    );
+    ]);
     return writtenEntry;
 }
 
 export default writeEntry;
+
