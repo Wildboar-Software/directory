@@ -14,24 +14,15 @@
   - [ ] Ignore entries whose deletionTimestamp is set.
   - [ ] Return referrals / continuation references.
 - [ ] X.500 Library
-  - [ ] `sort(SortKey[], EntryInformation[], orderingRules: Map<string, OrderingMatcher>)`
-  - [ ] `*getValuesFromAttribute(Attribute)`
   - [ ] `getApplicableValues()` (see `canJoin.ts`)
   - [ ] `isLeafEntry()`
   - [ ] `isCompoundEntry()`
-  - [ ] `extensions`
-  - [ ] `evaluateContextAssertion()`
-  - [ ] `evaluateTypeAndContextAssertion(..., getParentAttributeType: (OID) => OID | null)`
-  - [ ] `selectFromEntry(entry: EntryInformation, eis: EntryInformationSelection): EntryInformation`
-  - [ ] `defaultEntryInformationSelection`
-  - [ ] `internetAddressFromNAddress(Uint8Array) => [ number[], number ]` (See ITU X.519, Section 11.3)
-  - [ ] `internetAddressToNAddress(ip: [ number, number, number, number ], port: number)` (See ITU X.519, Section 11.3)
   - [ ] `evaluateRDNAgainstNameForm(rdn: RDN, nf: NAME_FORM)`
   - [ ] `evaluateEntryAgainstContentRule(entry: EntryInformation, cr: CONTENT_RULE)`
-  - [ ] `loopDetected (trace: TraceInformation): boolean`
   - [ ] `validateObjectClasses()`
 - [ ] Applications
   - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)
+    - [ ] Add a `subordinatesReader` string to entries that allows them to lookup a callback for reading subordinates.
     - [ ] Database
       - [ ] Subentries and administrative points should cache ALL attributes.
     - [ ] Technical Debt
@@ -64,6 +55,17 @@
       - [ ] `abandon`
       - [x] `extendedReq`
       - [x] `startTLS`
+    - [ ] Administration Portal
+      - [ ] DIT View
+      - [ ] View Entry
+        - [ ] Human View
+        - [ ] XML View
+        - [ ] JSON View
+        - [ ] LDIF View
+        - [ ] VCF View
+      - [ ] Hierarchical Operational Binding Management
+      - [ ] Shadow Operational Binding Management
+    - [ ] gRPC API
     - [ ] Directory Access Protocol
       - [ ] Operations
         - [ ] `directoryBind`

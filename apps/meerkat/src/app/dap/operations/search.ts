@@ -61,7 +61,7 @@ import {
 import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
-import { evaluateFilter } from "@wildboar/x500/src/lib/evaluateFilter";
+import { evaluateFilter, FilterEntryOptions } from "@wildboar/x500/src/lib/evaluateFilter";
 import {
     AbandonError,
     NameError,
@@ -72,12 +72,18 @@ import findEntry from "../../x500/findEntry";
 // import canJoin from "../../x500/canJoin";
 import entryInformationFromEntry from "../../x500/entryInformationFromEntry";
 import selectFromEntry from "../../x500/selectFromEntry";
-import { TRUE_BIT } from "asn1-ts";
+import { TRUE_BIT, OBJECT_IDENTIFIER } from "asn1-ts";
 import { EntryInformation_information_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import { ServiceErrorData, ServiceProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import * as crypto from "crypto";
 import getSubset from "../../x500/getSubset";
 import readEntry from "../../database/readEntry";
+import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
+import SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
+import ApproxMatcher from "@wildboar/x500/src/lib/types/ApproxMatcher";
+import ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
+// import sort from "@wildboar/x500/src/lib/dap/sort";
 
 // search OPERATION ::= {
 //   ARGUMENT  SearchArgument
@@ -363,16 +369,33 @@ async function search (
 
     const applicableFilter = data.filter ?? data.extendedFilter;
 
-    const filterOptions = {
-        equalityMatchingRuleMatchers: Object.fromEntries(ctx.equalityMatchingRules.entries()),
-        orderingMatchingRuleMatchers: Object.fromEntries(ctx.orderingMatchingRules.entries()),
-        substringsMatchingRuleMatchers: Object.fromEntries(ctx.substringsMatchingRules.entries()),
-        contextMatchers: Object.fromEntries(ctx.contextMatchers.entries()),
-        dnAttributes: false,
-        noSubtypeMatch: false,
+    const filterOptions: FilterEntryOptions = {
+        getEqualityMatcher: (attributeType: OBJECT_IDENTIFIER): EqualityMatcher | undefined => {
+            const spec = ctx.attributes.get(attributeType.toString());
+            return spec?.equalityMatcher;
+        },
+        getOrderingMatcher: (attributeType: OBJECT_IDENTIFIER): OrderingMatcher | undefined => {
+            const spec = ctx.attributes.get(attributeType.toString());
+            return spec?.orderingMatcher;
+        },
+        getSubstringsMatcher: (attributeType: OBJECT_IDENTIFIER): SubstringsMatcher | undefined => {
+            const spec = ctx.attributes.get(attributeType.toString());
+            return spec?.substringsMatcher;
+        },
+        getApproximateMatcher: (attributeType: OBJECT_IDENTIFIER): ApproxMatcher | undefined => {
+            const spec = ctx.attributes.get(attributeType.toString());
+            return spec?.approxMatcher;
+        },
+        getContextMatcher: (contextType: OBJECT_IDENTIFIER): ContextMatcher | undefined => {
+            return ctx.contextMatchers.get(contextType.toString());
+        },
+        isMatchingRuleCompatibleWithAttributeType: (mr: OBJECT_IDENTIFIER, at: OBJECT_IDENTIFIER): boolean => {
+            return true; // FIXME:
+        },
+        isAttributeSubtype: (attributeType: OBJECT_IDENTIFIER, parentType: OBJECT_IDENTIFIER): boolean => {
+            return false; // FIXME:
+        },
         performExactly: false,
-        recognizedAttributes: [], // FIXME:
-        // FIXME: Implement appliedRelaxation: MRMapping
     };
 
     // FIXME: evaluateFilter is incomplete still. No support for dnAttributes, noSubtypeMatch, performExactly, etc.
