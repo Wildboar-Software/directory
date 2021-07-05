@@ -1,5 +1,5 @@
 import type { Context, Entry, IndexableOID, StoredAttributeValueWithContexts } from "../types";
-import { ASN1Construction } from "asn1-ts";
+import { ASN1Construction, BERElement } from "asn1-ts";
 import {
     id_oc_parent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
@@ -13,15 +13,19 @@ import {
     ACIItem,
     _decode_ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+import {
+    _encode_SubtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+import {
+    id_oa_subtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-subtreeSpecification.va";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
-// import {
-//     id_aca_accessControlScheme,
-// } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-accessControlScheme.va";
 import { Entry as DatabaseEntry, ACIScope, PrismaPromise } from "@prisma/client";
 import rdnToJson from "../x500/rdnToJson";
 
 const PARENT_OID: string = id_oc_parent.toString();
 const CHILD_OID: string = id_oc_child.toString();
+const SUBTREE_SPEC_OID: string = id_oa_subtreeSpecification.toString();
 
 type SpecialAttributeHandler = (
     ctx: Readonly<Context>,
@@ -127,6 +131,10 @@ async function writeEntry (
             // hierarchyTop?: number | null
             // structuralObjectClass: string
             structuralObjectClass: "", // FIXME:
+            administrativeRole: entry.administrativeRoles
+                ? Array.from(entry.administrativeRoles)
+                : undefined,
+            accessControlScheme: entry.accessControlScheme?.toString(),
         },
     });
 
@@ -171,6 +179,23 @@ async function writeEntry (
                     },
                 },
             })),
+        ...(entry.subtrees ?? [])
+            .map((subtree) => {
+                const value = _encode_SubtreeSpecification(subtree, () => new BERElement());
+                return ctx.db.attributeValue.create({
+                    data: {
+                        entry_id: writtenEntry.id,
+                        type: SUBTREE_SPEC_OID,
+                        tag_class: value.tagClass,
+                        constructed: (value.construction === ASN1Construction.constructed),
+                        tag_number: value.tagNumber,
+                        ber: Buffer.from(value.toBytes()),
+                        hint: undefined,
+                        jer: undefined,
+                        visible_to_ldap: true,
+                    },
+                });
+            }),
     ]);
     return writtenEntry;
 }

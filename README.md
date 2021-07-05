@@ -23,8 +23,6 @@
 - [ ] Applications
   - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)
     - [ ] Add a `subordinatesReader` string to entries that allows them to lookup a callback for reading subordinates.
-    - [ ] Database
-      - [ ] Subentries and administrative points should cache ALL attributes.
     - [ ] Technical Debt
       - [ ] Reverse the distinguished names (I think I got it completely backwards.)
       - [ ] Use Base64 UUIDs (better performance, because fewer characters to compare)
@@ -37,13 +35,14 @@
       - [ ] Service administration
       - [ ] Schema administration
       - [ ] Authentication
+      - [ ] `readChildren(entry)` which can read either the children in memory, or those in the database.
       - [ ] `writeAttributes(entry, attributes)` which takes care of:
         - [ ] Operational attributes
         - [ ] Single-valued attributes
         - [ ] Collective attributes
         - [ ] Compound entries (marking parents as object class `parent`)
-      - [ ] `readUserAttributes(entry)`
-      - [ ] `readAllAttributes(entry)`
+      - [x] `readUserAttributes(entry)`
+      - [x] `readAllAttributes(entry)`
     - [ ] Lightweight Directory Access Protocol
       - [x] `bind`
       - [x] `unbind`

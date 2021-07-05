@@ -29,6 +29,12 @@ import { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import type {
+    SubtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";3
+import type {
+    ACIItem,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import type { PrismaClient } from "@prisma/client";
@@ -160,6 +166,7 @@ interface HierarchyInfo {
     children: Entry[];
 }
 
+// TODO: Use a discriminated union to differentiate DSE types.
 export
 interface Entry {
     id: number; // Database primary key ID.
@@ -177,6 +184,13 @@ interface Entry {
     modifiersName?: Name,
     createdTimestamp: Date,
     modifyTimestamp: Date,
+    // These attributes will be so frequently accessed, they MUST be cached.
+    administrativeRoles?: Set<IndexableOID>;
+    accessControlScheme?: OBJECT_IDENTIFIER; // TODO: Make this a string to make comparison faster.
+    subtrees?: SubtreeSpecification[];
+    entryACI?: ACIItem[];
+    prescriptiveACI?: ACIItem[];
+    subentryACI?: ACIItem[];
 }
 
 export

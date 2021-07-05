@@ -51,7 +51,7 @@ async function add (
     ctx.log.info(`Creating entry ${Buffer.from(req.entry).toString("utf-8")}...`);
     const superior = findEntry(ctx, ctx.database.data.dit, dn.slice(1), true);
     if (!superior) {
-        return objectNotFound;
+        return objectNotFound; // FIXME: If not authorized...
     }
     if (superior.dseType.alias || superior.aliasedEntry) {
         return new LDAPResult(
@@ -113,6 +113,8 @@ async function add (
             undefined,
         );
     }
+
+    // TODO: Validate parent and child classes.
 
     const newEntry: Entry = {
         id: -1,
