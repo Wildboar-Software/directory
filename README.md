@@ -26,6 +26,7 @@
     - [ ] Database
       - [ ] Subentries and administrative points should cache ALL attributes.
     - [ ] Technical Debt
+      - [ ] Reverse the distinguished names (I think I got it completely backwards.)
       - [ ] Use Base64 UUIDs (better performance, because fewer characters to compare)
       - [ ] Combined matching rules, per ITU Recommendation X.501 (2016), Section 13.5.2.
       - [ ] Canonical Filtering Form, per Annex Q of X.501 (2016)

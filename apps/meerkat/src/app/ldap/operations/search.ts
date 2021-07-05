@@ -7,6 +7,7 @@ import type {
     IndexableOID,
     StoredAttributeValueWithContexts
 } from "../../types";
+import type LDAPConnection from "../LDAPConnection";
 import type {
     SearchRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest.ta";
@@ -170,6 +171,7 @@ function ldapSyntaxToLDAPSyntax (info: LDAPSyntaxInfo): string {
 export
 async function search (
     ctx: Context,
+    conn: LDAPConnection,
     req: SearchRequest,
     onEntry: (entry: SearchResultEntry) => Promise<void>,
 ): Promise<SearchResultDone> {

@@ -89,7 +89,7 @@ export class LDAPConnection {
             this.authLevel = AuthenticationLevel_basicLevels_level_none;
         } else if ("addRequest" in message.protocolOp) {
             const req = message.protocolOp.addRequest;
-            const result = await add(ctx, req);
+            const result = await add(ctx, this, req);
             ctx.log.info(`Created entry ${Buffer.from(req.entry).toString("utf-8")}.`);
             const res = new LDAPMessage(
                 message.messageID,
@@ -101,7 +101,7 @@ export class LDAPConnection {
             this.c.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("compareRequest" in message.protocolOp) {
             const req = message.protocolOp.compareRequest;
-            const result = await compare(ctx, req);
+            const result = await compare(ctx, this, req);
             const res = new LDAPMessage(
                 message.messageID,
                 {
@@ -112,7 +112,7 @@ export class LDAPConnection {
             this.c.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("delRequest" in message.protocolOp) {
             const req = message.protocolOp.delRequest;
-            const result = await del(ctx, req);
+            const result = await del(ctx, this, req);
             const res = new LDAPMessage(
                 message.messageID,
                 {
@@ -123,7 +123,7 @@ export class LDAPConnection {
             this.c.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("modDNRequest" in message.protocolOp) {
             const req = message.protocolOp.modDNRequest;
-            const result = await modDN(ctx, req);
+            const result = await modDN(ctx, this, req);
             const res = new LDAPMessage(
                 message.messageID,
                 {
@@ -134,7 +134,7 @@ export class LDAPConnection {
             this.c.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("modifyRequest" in message.protocolOp) {
             const req = message.protocolOp.modifyRequest;
-            const result = await modify(ctx, req);
+            const result = await modify(ctx, this, req);
             const res = new LDAPMessage(
                 message.messageID,
                 {
@@ -155,7 +155,7 @@ export class LDAPConnection {
                 );
                 this.c.write(_encode_LDAPMessage(entryRes, BER).toBytes());
             };
-            const result = await search(ctx, req, onEntry);
+            const result = await search(ctx, this, req, onEntry);
             const doneRes = new LDAPMessage(
                 message.messageID,
                 {

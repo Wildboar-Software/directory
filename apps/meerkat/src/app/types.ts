@@ -173,8 +173,8 @@ interface Entry {
     dseType: Partial<DSEType>;
     objectClass: Set<IndexableOID>;
     hierarchy?: HierarchyInfo;
-    creatorsName: Name,
-    modifiersName: Name,
+    creatorsName?: Name,
+    modifiersName?: Name,
     createdTimestamp: Date,
     modifyTimestamp: Date,
 }

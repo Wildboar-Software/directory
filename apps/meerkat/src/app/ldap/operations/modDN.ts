@@ -1,4 +1,5 @@
 import { Context, IndexableOID } from "../../types";
+import type LDAPConnection from "../LDAPConnection";
 import type {
     ModifyDNRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyDNRequest.ta";
@@ -24,6 +25,7 @@ import { ASN1Construction } from "asn1-ts";
 export
 async function modDN (
     ctx: Context,
+    conn: LDAPConnection,
     req: ModifyDNRequest,
 ): Promise<ModifyDNResponse> {
     const dn = decodeLDAPDN(ctx, req.entry);

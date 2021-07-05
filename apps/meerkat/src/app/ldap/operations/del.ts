@@ -1,4 +1,5 @@
 import type { Context } from "../../types";
+import type LDAPConnection from "../LDAPConnection";
 import type {
     DelRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/DelRequest.ta";
@@ -16,6 +17,7 @@ import { objectNotFound } from "../results";
 export
 async function del (
     ctx: Context,
+    conn: LDAPConnection,
     req: DelRequest,
 ): Promise<DelResponse> {
     const dn = decodeLDAPDN(ctx, req);

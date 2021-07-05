@@ -1,4 +1,5 @@
 import type { Context, Entry, StoredAttributeValueWithContexts, IndexableOID } from "../../types";
+import type LDAPConnection from "../LDAPConnection";
 import type {
     ModifyRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyRequest.ta";
@@ -141,6 +142,7 @@ function executeEntryModification (
 export
 async function modify (
     ctx: Context,
+    conn: LDAPConnection,
     req: ModifyRequest,
 ): Promise<ModifyResponse> {
     const dn = decodeLDAPDN(ctx, req.object);

@@ -1,4 +1,5 @@
 import type { Context } from "../../types";
+import type LDAPConnection from "../LDAPConnection";
 import type {
     CompareRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/CompareRequest.ta";
@@ -21,6 +22,7 @@ import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttri
 export
 async function compare (
     ctx: Context,
+    conn: LDAPConnection,
     req: CompareRequest,
 ): Promise<CompareResponse> {
     const dn = decodeLDAPDN(ctx, req.entry);
