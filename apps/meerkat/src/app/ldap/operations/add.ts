@@ -53,6 +53,14 @@ async function add (
     if (!superior) {
         return objectNotFound;
     }
+    if (superior.dseType.alias || superior.aliasedEntry) {
+        return new LDAPResult(
+            LDAPResult_resultCode_constraintViolation,
+            req.entry,
+            Buffer.from(`Parent of ${Buffer.from(req.entry).toString("utf-8")} is an alias.`),
+            undefined,
+        );
+    }
     const creatorsName: Name | undefined = conn.boundEntry
         ? {
             rdnSequence: getDistinguishedName(conn.boundEntry),
