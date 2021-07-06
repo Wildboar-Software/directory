@@ -127,31 +127,12 @@ async function compare (
             [
                 PERMISSION_CATEGORY_BROWSE,
                 PERMISSION_CATEGORY_RETURN_DN,
-                PERMISSION_CATEGORY_READ,
             ],
             EQUALITY_MATCHER,
             IS_MEMBER,
             false,
         );
         if (!authorizedToKnowAboutEntry) {
-            /**
-             * NOTE: For security purposes, this MUST be the same exact error
-             * that is disclosed if the superior entry is not found, otherwise
-             * a nefarious user could attempt to add entries to reveal which
-             * entries already exist by observing which attempts do _not_ return
-             * the object-not-found error.
-             *
-             * Also note that this behavior is not imposed by the X.500
-             * standards, which specifically states that:
-             *
-             * > No specific permission is required to the immediate superior
-             * > of the entry identified by the object argument.
-             *
-             * Knowingly deviating from the standard, this implementation
-             * requires Browse and ReturnDN permissions, which are the same
-             * permissions that are required for an entry to appear in a list
-             * operation.
-             */
             return objectNotFound;
         }
     }
