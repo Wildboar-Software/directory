@@ -55,7 +55,6 @@ import getACIItems from "../../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import bacACDF, {
-    PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
@@ -78,6 +77,7 @@ import dsaManagedAttributes from "../../dsaManagedAttributes";
 import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
 
 
 const PARENT_OID: string = id_oc_parent.toString();
@@ -97,7 +97,7 @@ async function add (
     ctx: Context,
     conn: LDAPConnection,
     req: AddRequest,
-    controls: OBJECT_IDENTIFIER[] = [],
+    controls: Control[] = [],
 ): Promise<AddResponse> {
 
     const EQUALITY_MATCHER = (
@@ -443,7 +443,7 @@ async function add (
         );
     }
 
-    const manageDSAIT: boolean = controls.some((control) => control.toString() === MANAGE_DSAIT.toString());
+    const manageDSAIT: boolean = controls.some((control) => control.controlType.toString() === MANAGE_DSAIT.toString());
     const attrs: StoredAttributeValueWithContexts[] = [];
     for (const attr of req.attributes) {
         const type_ = normalizeAttributeDescription(attr.type_);

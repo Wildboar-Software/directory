@@ -58,6 +58,7 @@ import type {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPString.ta";
 import LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import isAttributeSubtype from "../../x500/isAttributeSubtype";
+import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
 
 type EntryInfo = [
     entry: Entry,
@@ -174,7 +175,7 @@ async function search (
     conn: LDAPConnection,
     req: SearchRequest,
     onEntry: (entry: SearchResultEntry) => Promise<void>,
-    controls: OBJECT_IDENTIFIER[] = [],
+    controls: Control[] = [],
 ): Promise<SearchResultDone> {
     const startTime = new Date();
     const dn = decodeLDAPDN(ctx, req.baseObject);

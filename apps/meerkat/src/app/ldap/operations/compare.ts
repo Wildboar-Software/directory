@@ -12,26 +12,150 @@ import {
 import {
     LDAPResult_resultCode_compareFalse,
     LDAPResult_resultCode_compareTrue,
+    LDAPResult_resultCode_insufficientAccessRights,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
 import decodeLDAPDN from "../decodeLDAPDN";
 import findEntry from "../../x500/findEntry";
-import readEntry from "../../database/readEntry";
+import readEntryAttributes from "../../database/readEntryAttributes";
 import { objectNotFound } from "../results";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import getDistinguishedName from "../../x500/getDistinguishedName";
+import getACIItems from "../../dit/getACIItems";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import bacACDF, {
+    PERMISSION_CATEGORY_READ,
+    PERMISSION_CATEGORY_BROWSE,
+    PERMISSION_CATEGORY_RETURN_DN,
+    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+    PERMISSION_CATEGORY_COMPARE,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getAdministrativePoint from "../../dit/getAdministrativePoint";
+import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import type {
+    AuthenticationLevel,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import {
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import { strict as assert } from "assert";
+import { ObjectIdentifier } from "asn1-ts";
+import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
+
+const LDAP_CONTROL_SUBENTRIES: ObjectIdentifier = new ObjectIdentifier([ 1,3, 6, 1, 4, 1, 4203, 1, 10, 1 ]);
+// FIXME: Needs an isMemberOfGroup implementation.
+const IS_MEMBER = () => false;
 
 export
 async function compare (
     ctx: Context,
     conn: LDAPConnection,
     req: CompareRequest,
-    controls: OBJECT_IDENTIFIER[] = [],
+    controls: Control[] = [],
 ): Promise<CompareResponse> {
+    const subentries: boolean = controls
+        .some((control) => (
+            (control.controlType.toString() === LDAP_CONTROL_SUBENTRIES.toString())
+            && (control.controlValue?.[0] === 0xFF) // BOOLEAN TRUE
+        ));
+    const EQUALITY_MATCHER = (
+        attributeType: OBJECT_IDENTIFIER,
+    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const authLevel: AuthenticationLevel = {
+        basicLevels: new AuthenticationLevel_basicLevels(
+            conn.authLevel,
+            undefined,
+            undefined,
+        ),
+    };
+    const userDN = conn.boundEntry
+        ? getDistinguishedName(conn.boundEntry)
+        : undefined;
+    const userName = userDN
+        ? new NameAndOptionalUID(userDN, undefined)
+        : undefined;
+
     const dn = decodeLDAPDN(ctx, req.entry);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
-    if (!entry) {
+    if (!entry || (entry.dseType.subentry && !subentries)) {
         return objectNotFound;
     }
+    const admPoint = getAdministrativePoint(entry);
+    const admPointDN = admPoint
+        ? getDistinguishedName(admPoint)
+        : undefined;
+    const entryACIs = await getACIItems(ctx, entry);
+    const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci))
+        .filter((tuple) => userWithinACIUserClass(
+            admPointDN!,
+            tuple[0],
+            userName!,
+            dn,
+            EQUALITY_MATCHER,
+            IS_MEMBER,
+        ) > -1);
+    const accessControlled: boolean = Boolean(entryACDFTuples);
+    if (accessControlled && !userName) {
+        return new LDAPResult(
+            LDAPResult_resultCode_insufficientAccessRights,
+            req.entry,
+            Buffer.from("Anonymous users not permitted. Please authenticate first."),
+            undefined,
+        );
+    }
+
+    if (accessControlled) {
+        assert(admPoint);
+        assert(admPointDN);
+        const { authorized: authorizedToKnowAboutEntry } = bacACDF(
+            admPointDN!,
+            entryACDFTuples,
+            authLevel,
+            userName!,
+            dn,
+            {
+                entry: Array.from(entry.objectClass)
+                    .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
+            },
+            [
+                PERMISSION_CATEGORY_BROWSE,
+                PERMISSION_CATEGORY_RETURN_DN,
+                PERMISSION_CATEGORY_READ,
+            ],
+            EQUALITY_MATCHER,
+            IS_MEMBER,
+            false,
+        );
+        if (!authorizedToKnowAboutEntry) {
+            /**
+             * NOTE: For security purposes, this MUST be the same exact error
+             * that is disclosed if the superior entry is not found, otherwise
+             * a nefarious user could attempt to add entries to reveal which
+             * entries already exist by observing which attempts do _not_ return
+             * the object-not-found error.
+             *
+             * Also note that this behavior is not imposed by the X.500
+             * standards, which specifically states that:
+             *
+             * > No specific permission is required to the immediate superior
+             * > of the entry identified by the object argument.
+             *
+             * Knowingly deviating from the standard, this implementation
+             * requires Browse and ReturnDN permissions, which are the same
+             * permissions that are required for an entry to appear in a list
+             * operation.
+             */
+            return objectNotFound;
+        }
+    }
+
     const desc = normalizeAttributeDescription(req.ava.attributeDesc);
     const attrSpec = ctx.attributes.get(desc);
     if (!attrSpec?.ldapSyntax || !attrSpec.equalityMatcher) {
@@ -42,10 +166,68 @@ async function compare (
         throw new Error();
     }
     const assertedValue = syntax.decoder(req.ava.assertionValue);
+
+    if (accessControlled) {
+        const { authorized: authorizedToAccessAttributeValue } = bacACDF(
+            admPointDN!,
+            entryACDFTuples,
+            authLevel,
+            userName!,
+            dn,
+            {
+                value: new AttributeTypeAndValue(
+                    attrSpec.id,
+                    assertedValue,
+                ),
+            },
+            [PERMISSION_CATEGORY_COMPARE],
+            EQUALITY_MATCHER,
+            IS_MEMBER,
+            false,
+        );
+        const { authorized: authorizedToErrorDisclosure } = bacACDF(
+            admPointDN!,
+            entryACDFTuples,
+            authLevel,
+            userName!,
+            dn,
+            {
+                value: new AttributeTypeAndValue(
+                    attrSpec.id,
+                    assertedValue,
+                ),
+            },
+            [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
+            EQUALITY_MATCHER,
+            IS_MEMBER,
+            false,
+        );
+        if (!authorizedToAccessAttributeValue) {
+            if (authorizedToErrorDisclosure) {
+                return new LDAPResult(
+                    LDAPResult_resultCode_insufficientAccessRights,
+                    req.entry,
+                    Buffer.from("Access denied."),
+                    undefined,
+                );
+            } else {
+                return new LDAPResult(
+                    LDAPResult_resultCode_compareFalse,
+                    req.entry,
+                    Buffer.from("Non-Match", "utf-8"),
+                    undefined,
+                );
+            }
+        }
+    }
+
     const matcher = attrSpec.equalityMatcher;
-    const attrs = await readEntry(ctx, entry);
+    const {
+        userAttributes,
+        operationalAttributes,
+    } = await readEntryAttributes(ctx, entry);
     const ATTR_TYPE_OID: string = attrSpec.id.toString();
-    const match = attrs
+    const match = [ ...userAttributes, ...operationalAttributes ]
         .filter((attr) => attr.id.toString() === ATTR_TYPE_OID)
         .some((attr) => matcher(assertedValue, attr.value));
     return new LDAPResult(

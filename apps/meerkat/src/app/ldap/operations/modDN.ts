@@ -14,7 +14,8 @@ import readEntry from "../../database/readEntry";
 import decodeLDAPDN from "../decodeLDAPDN";
 import rdnToJson from "../../x500/rdnToJson";
 import { objectNotFound } from "../results";
-import { ASN1Construction, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Construction } from "asn1-ts";
+import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
 
 // ModifyDNRequest ::= [APPLICATION 12] SEQUENCE {
 //     entry           LDAPDN,
@@ -27,7 +28,7 @@ async function modDN (
     ctx: Context,
     conn: LDAPConnection,
     req: ModifyDNRequest,
-    controls: OBJECT_IDENTIFIER[] = [],
+    controls: Control[] = [],
 ): Promise<ModifyDNResponse> {
     const dn = decodeLDAPDN(ctx, req.entry);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
