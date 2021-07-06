@@ -174,6 +174,7 @@ async function search (
     conn: LDAPConnection,
     req: SearchRequest,
     onEntry: (entry: SearchResultEntry) => Promise<void>,
+    controls: OBJECT_IDENTIFIER[] = [],
 ): Promise<SearchResultDone> {
     const startTime = new Date();
     const dn = decodeLDAPDN(ctx, req.baseObject);

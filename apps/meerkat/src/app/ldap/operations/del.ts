@@ -13,12 +13,14 @@ import decodeLDAPDN from "../decodeLDAPDN";
 import findEntry from "../../x500/findEntry";
 import deleteEntry from "../../database/deleteEntry";
 import { objectNotFound } from "../results";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 
 export
 async function del (
     ctx: Context,
     conn: LDAPConnection,
     req: DelRequest,
+    controls: OBJECT_IDENTIFIER[] = [],
 ): Promise<DelResponse> {
     const dn = decodeLDAPDN(ctx, req);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);

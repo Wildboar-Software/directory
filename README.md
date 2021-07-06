@@ -109,6 +109,7 @@
   - [ ] Wildboar Directory Server (An enterprise-grade X.500 directory server)
     - [ ] CMIP Support
     - [ ] SNMP Support
+    - [ ] Webhooks Support
     - [ ] All authentication methods
     - [ ] Directory Access Protocol
       - [ ] Operations

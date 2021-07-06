@@ -33,6 +33,7 @@ import {
     UserPwd, _decode_UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import setEntryPassword from "../../database/setEntryPassword";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 
 const USER_PASSWORD_OID: string = id_at_userPassword.toString();
 const USER_PWD_OID: string = id_at_userPwd.toString();
@@ -144,6 +145,7 @@ async function modify (
     ctx: Context,
     conn: LDAPConnection,
     req: ModifyRequest,
+    controls: OBJECT_IDENTIFIER[] = [],
 ): Promise<ModifyResponse> {
     const dn = decodeLDAPDN(ctx, req.object);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);

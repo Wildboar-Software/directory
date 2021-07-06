@@ -18,12 +18,14 @@ import findEntry from "../../x500/findEntry";
 import readEntry from "../../database/readEntry";
 import { objectNotFound } from "../results";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 
 export
 async function compare (
     ctx: Context,
     conn: LDAPConnection,
     req: CompareRequest,
+    controls: OBJECT_IDENTIFIER[] = [],
 ): Promise<CompareResponse> {
     const dn = decodeLDAPDN(ctx, req.entry);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
