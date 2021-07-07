@@ -32,7 +32,7 @@ import bacACDF, {
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getAdministrativePoint from "../../dit/getAdministrativePoint";
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type {
     AuthenticationLevel,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
@@ -83,7 +83,7 @@ async function del (
     const entryACIs = await getACIItems(ctx, entry);
     const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const accessControlled: boolean = Boolean(entryACDFTuples);
+    const accessControlled: boolean = Boolean(entryACDFTuples);
     if (accessControlled && !userName) {
         return new LDAPResult(
             LDAPResult_resultCode_insufficientAccessRights,
