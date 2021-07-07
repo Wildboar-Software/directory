@@ -130,7 +130,8 @@ interface StoredContext {
 
 export
 interface StoredAttributeValueWithContexts {
-    id: OBJECT_IDENTIFIER;
+    // TODO: Add id field to enhance performance of deletion and replacement.
+    id: OBJECT_IDENTIFIER; // TODO: Rename to "type"
     value: ASN1Element;
     contexts: Map<IndexableOID, StoredContext>;
 }

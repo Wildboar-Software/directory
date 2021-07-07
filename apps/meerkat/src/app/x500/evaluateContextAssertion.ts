@@ -3,7 +3,9 @@ import type {
     ContextAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
 
-// TODO: Handle fallback
+/**
+ * @deprecated
+ */
 export
 function evaluateContextAssertion (
     ctx: Context,

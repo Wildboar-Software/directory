@@ -18,6 +18,9 @@ import {
 import evaluateTypeAndContextAssertion from "./evaluateTypeAndContextAssertion";
 import { attributesFromStoredValues } from "./attributesFromStoredValues";
 
+/**
+ * @deprecated
+ */
 export
 function selectFromEntry (
     ctx: Context,

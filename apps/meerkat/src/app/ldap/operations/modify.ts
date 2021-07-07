@@ -9,6 +9,9 @@ import type {
 import {
     LDAPResult,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+import {
+    LDAPResult_resultCode_insufficientAccessRights,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
 import type {
     ModifyRequest_changes_change,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyRequest-changes-change.ta";
@@ -21,7 +24,7 @@ import decodeLDAPDN from "../decodeLDAPDN";
 import readEntry from "../../database/readEntry";
 import findEntry from "../../x500/findEntry";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
-import { ASN1Element, ASN1Construction } from "asn1-ts";
+import { ASN1Element, ASN1Construction, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import { objectNotFound } from "../results";
 import {
     id_at_userPwd,
@@ -34,6 +37,30 @@ import {
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import setEntryPassword from "../../database/setEntryPassword";
 import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import getDistinguishedName from "../../x500/getDistinguishedName";
+import getACIItems from "../../dit/getACIItems";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import bacACDF, {
+    PERMISSION_CATEGORY_READ,
+    PERMISSION_CATEGORY_BROWSE,
+    PERMISSION_CATEGORY_RETURN_DN,
+    PERMISSION_CATEGORY_REMOVE,
+    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getAdministrativePoint from "../../dit/getAdministrativePoint";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import type {
+    AuthenticationLevel,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import {
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import { strict as assert } from "assert";
 
 const USER_PASSWORD_OID: string = id_at_userPassword.toString();
 const USER_PWD_OID: string = id_at_userPwd.toString();
@@ -52,6 +79,9 @@ const doNotStore: Set<IndexableOID> = new Set([
     id_at_userPwd,
     id_at_userPassword,
 ].map((oid) => oid.toString()));
+
+// FIXME: Needs an isMemberOfGroup implementation.
+const IS_MEMBER = () => false;
 
 function executeEntryModification (
     ctx: Context,
@@ -147,10 +177,67 @@ async function modify (
     req: ModifyRequest,
     controls: Control[] = [],
 ): Promise<ModifyResponse> {
+
+    const EQUALITY_MATCHER = (
+        attributeType: OBJECT_IDENTIFIER,
+    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const authLevel: AuthenticationLevel = {
+        basicLevels: new AuthenticationLevel_basicLevels(
+            conn.authLevel,
+            undefined,
+            undefined,
+        ),
+    };
+    const userDN = conn.boundEntry
+        ? getDistinguishedName(conn.boundEntry)
+        : undefined;
+    const userName = userDN
+        ? new NameAndOptionalUID(userDN, undefined)
+        : undefined;
+
     const dn = decodeLDAPDN(ctx, req.object);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
         return objectNotFound;
+    }
+
+    const admPoint = getAdministrativePoint(entry);
+    const admPointDN = admPoint
+        ? getDistinguishedName(admPoint)
+        : undefined;
+    const entryACIs = await getACIItems(ctx, entry);
+    const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+        const accessControlled: boolean = Boolean(entryACDFTuples);
+    if (accessControlled && !userName) {
+        return new LDAPResult(
+            LDAPResult_resultCode_insufficientAccessRights,
+            req.object,
+            Buffer.from("Anonymous users not permitted. Please authenticate first."),
+            undefined,
+        );
+    }
+
+    function checkPermissionsOnOldEntry (permissions: number[]): boolean {
+        if (!accessControlled) {
+            return false;
+        }
+        const { authorized } = bacACDF(
+            admPointDN!,
+            entryACDFTuples,
+            authLevel,
+            userName!,
+            dn,
+            {
+                entry: Array.from(entry!.objectClass)
+                    .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
+            },
+            permissions,
+            EQUALITY_MATCHER,
+            IS_MEMBER,
+            false,
+        );
+        return authorized;
     }
 
     const entryAttributes = await readEntry(ctx, entry);

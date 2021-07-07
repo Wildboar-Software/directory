@@ -10,6 +10,9 @@ import isAttributeSubtype from "./isAttributeSubtype";
 
 const ALL_ATTR_TYPES: string = id_oa_allAttributeTypes.toString();
 
+/**
+ * @deprecated
+ */
 export
 function evaluateTypeAndContextAssertion (
     ctx: Context,

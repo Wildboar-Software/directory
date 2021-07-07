@@ -63,7 +63,7 @@ import bacACDF, {
 import getAdministrativePoint from "../../dit/getAdministrativePoint";
 import { strict as assert } from "assert";
 import { ASN1Element, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type {
     AuthenticationLevel,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";

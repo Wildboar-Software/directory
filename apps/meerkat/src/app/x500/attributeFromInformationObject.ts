@@ -10,8 +10,6 @@ import {
     AttributeInfo,
 } from "../types";
 
-// TODO: Make ATTRIBUTE.&id non-optional.
-
 const DEFAULT_WRITER = async (ctx: Context, value: ASN1Element): Promise<void> => {
     ctx.log.info(value.value.toString());
 };

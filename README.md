@@ -152,6 +152,36 @@
           - [ ] `modifyOperationalBinding`
           - [ ] `terminateOperationalBinding`
   - [ ] X500 Command Line Interface
+    - [ ] `x500 dap add`
+      - [ ] `x500 dap add entry`
+      - [ ] `x500 dap add subentry`
+      - [ ] `x500 dap add alias`
+      - [ ] `x500 dap add glue`
+      - [ ] `x500 dap add subr`
+      - [ ] `x500 dap add user`
+      - [ ] `x500 dap add device`
+      - [ ] `x500 dap add orgrole`
+    - [ ] `x500 dap apwd`
+    - [ ] `x500 dap cpwd`
+    - [ ] `x500 dap compare`
+    - [ ] `x500 dap list`
+    - [ ] `x500 dap moddn`
+    - [ ] `x500 dap mod`
+      - [ ] `x500 dap mod admpoint set role=accesscontrol`
+      - [ ] `x500 dap mod subtree`
+      - [ ] `x500 dap mod add aci`
+      - [ ] `x500 dap mod rm aci`
+      - [ ] `x500 dap mod hierarchy add parent`
+      - [ ] `x500 dap mod hierarchy emancipate`
+      - [ ] `x500 dap mod family makechild`
+      - [ ] `x500 dap mod group add`
+      - [ ] `x500 dap mod group rm
+      - [ ] `x500 dap mod add pkc`
+      - [ ] `x500 dap mod add ac`
+      - [ ] `x500 dap mod add crl`
+    - [ ] `x500 dap read`
+    - [ ] `x500 dap rm`
+    - [ ] `x500 dap search`
   - [ ] X500 Studio
 - [ ] Libraries
   - [ ] IDM

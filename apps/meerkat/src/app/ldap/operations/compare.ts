@@ -28,14 +28,13 @@ import getACIItems from "../../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import bacACDF, {
-    PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
     PERMISSION_CATEGORY_COMPARE,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getAdministrativePoint from "../../dit/getAdministrativePoint";
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type {
     AuthenticationLevel,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
