@@ -11,6 +11,8 @@ import {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
 import {
     LDAPResult_resultCode_insufficientAccessRights,
+    LDAPResult_resultCode_undefinedAttributeType,
+    LDAPResult_resultCode_other,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
 import type {
     ModifyRequest_changes_change,
@@ -21,7 +23,7 @@ import {
     ModifyRequest_changes_change_operation_replace,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyRequest-changes-change-operation.ta";
 import decodeLDAPDN from "../decodeLDAPDN";
-import readEntry from "../../database/readEntry";
+import readEntryAttributes from "../../database/readEntryAttributes";
 import findEntry from "../../x500/findEntry";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import { ASN1Element, ASN1Construction, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
@@ -45,12 +47,11 @@ import getACIItems from "../../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import bacACDF, {
-    PERMISSION_CATEGORY_READ,
-    PERMISSION_CATEGORY_BROWSE,
-    PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_MODIFY,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
+import type ProtectedItem from "@wildboar/x500/src/lib/types/ProtectedItem";
 import getAdministrativePoint from "../../dit/getAdministrativePoint";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type {
@@ -60,7 +61,9 @@ import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
-import { strict as assert } from "assert";
+import checkDiscoverabilityOfEntry from "../../bac/checkDiscoverabilityOfEntry";
+import type { LDAPDN } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPDN.ta";
+import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 
 const USER_PASSWORD_OID: string = id_at_userPassword.toString();
 const USER_PWD_OID: string = id_at_userPwd.toString();
@@ -86,24 +89,56 @@ const IS_MEMBER = () => false;
 function executeEntryModification (
     ctx: Context,
     entry: Entry,
+    dn: LDAPDN,
     attributes: StoredAttributeValueWithContexts[],
     change: ModifyRequest_changes_change,
-): StoredAttributeValueWithContexts[] {
+    checkPermissionsOnEntry: (request: ProtectedItem, permissions: number[]) => boolean,
+): StoredAttributeValueWithContexts[] | LDAPResult {
     const attrType = normalizeAttributeDescription(change.modification.type_);
     const attrSpec = ctx.attributes.get(attrType);
     if (!attrSpec?.ldapSyntax) {
-        throw new Error();
+        return new LDAPResult(
+            LDAPResult_resultCode_undefinedAttributeType,
+            dn,
+            Buffer.from(`Attribute type ${attrType} is not recognized by this server.`, "utf-8"),
+            undefined,
+        );
     }
     const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
     if (!ldapSyntax?.decoder) {
-        throw new Error();
+        return new LDAPResult(
+            LDAPResult_resultCode_undefinedAttributeType,
+            dn,
+            Buffer.from(`Attribute type ${attrType} is not recognized by this server.`, "utf-8"),
+            undefined,
+        );
     }
     switch (change.operation) {
         case (ModifyRequest_changes_change_operation_add): {
+            const values = change.modification.vals
+                .map((val: Uint8Array) => ldapSyntax.decoder!(val));
+            for (const value of values) {
+                const canAdd: boolean = checkPermissionsOnEntry(
+                    {
+                        value: new AttributeTypeAndValue(
+                            attrSpec.id,
+                            value,
+                        ),
+                    },
+                    [PERMISSION_CATEGORY_ADD],
+                );
+                if (!canAdd) {
+                    return new LDAPResult(
+                        LDAPResult_resultCode_insufficientAccessRights,
+                        dn,
+                        Buffer.from(`Access denied: Add not permitted for attribute type ${attrType}.`, "utf-8"),
+                        undefined,
+                    );
+                }
+            }
             return [
                 ...attributes,
-                ...change.modification.vals
-                    .map((val: Uint8Array) => ldapSyntax.decoder!(val))
+                ...values
                     .map((val: ASN1Element): StoredAttributeValueWithContexts => ({
                         id: attrSpec.id,
                         value: val,
@@ -118,6 +153,25 @@ function executeEntryModification (
             }
             const blacklistedValues = change.modification.vals
                 .map((val) => ldapSyntax.decoder!(val));
+            for (const value of blacklistedValues) {
+                const canRemove: boolean = checkPermissionsOnEntry(
+                    {
+                        value: new AttributeTypeAndValue(
+                            attrSpec.id,
+                            value,
+                        ),
+                    },
+                    [PERMISSION_CATEGORY_REMOVE],
+                );
+                if (!canRemove) {
+                    return new LDAPResult(
+                        LDAPResult_resultCode_insufficientAccessRights,
+                        dn,
+                        Buffer.from(`Access denied: Add not permitted for attribute type ${attrType}.`, "utf-8"),
+                        undefined,
+                    );
+                }
+            }
             return attributes
                 .filter((attr) => {
                     if (attr.id.toString() !== attrSpec.id.toString()) {
@@ -144,6 +198,28 @@ function executeEntryModification (
             }
             const newValues = change.modification.vals
                 .map((val) => ldapSyntax.decoder!(val));
+            for (const value of newValues) {
+                const canReplace: boolean = checkPermissionsOnEntry(
+                    {
+                        value: new AttributeTypeAndValue(
+                            attrSpec.id,
+                            value,
+                        ),
+                    },
+                    [
+                        PERMISSION_CATEGORY_ADD,
+                        PERMISSION_CATEGORY_REMOVE,
+                    ],
+                );
+                if (!canReplace) {
+                    return new LDAPResult(
+                        LDAPResult_resultCode_insufficientAccessRights,
+                        dn,
+                        Buffer.from(`Access denied: Add not permitted for attribute type ${attrType}.`, "utf-8"),
+                        undefined,
+                    );
+                }
+            }
             const relevantAttributes = attributes.filter((attr) => attr.id.toString() === attrType);
             // creating the attribute if it did not already exist.
             if (relevantAttributes.length === 0) {
@@ -166,7 +242,14 @@ function executeEntryModification (
                 ];
             }
         }
-        default: throw new Error();
+        default: {
+            return new LDAPResult(
+                LDAPResult_resultCode_other,
+                dn,
+                Buffer.from(`Modification type ${change.operation} not recognized by this server.`, "utf-8"),
+                undefined,
+            );
+        }
     }
 }
 
@@ -207,20 +290,33 @@ async function modify (
         : undefined;
     const entryACIs = await getACIItems(ctx, entry);
     const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const accessControlled: boolean = Boolean(entryACDFTuples);
-    if (accessControlled && !userName) {
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci))
+        .filter((tuple) => userWithinACIUserClass(
+            admPointDN!,
+            tuple[0],
+            userName!,
+            dn,
+            EQUALITY_MATCHER,
+            IS_MEMBER,
+        ) > -1);
+    if (entryACDFTuples && !userName) {
         return new LDAPResult(
             LDAPResult_resultCode_insufficientAccessRights,
             req.object,
-            Buffer.from("Anonymous users not permitted. Please authenticate first."),
+            Buffer.from("Anonymous users not permitted. Please authenticate first.", "utf-8"),
             undefined,
         );
     }
+    if (entryACDFTuples) {
+        const permittedToDiscoverEntry = await checkDiscoverabilityOfEntry(ctx, userName!, authLevel, entry);
+        if (!permittedToDiscoverEntry) {
+            return objectNotFound;
+        }
+    }
 
-    function checkPermissionsOnOldEntry (permissions: number[]): boolean {
-        if (!accessControlled) {
-            return false;
+    function checkPermissionsOnEntry (request: ProtectedItem, permissions: number[]): boolean {
+        if (!entryACDFTuples) {
+            return true;
         }
         const { authorized } = bacACDF(
             admPointDN!,
@@ -228,23 +324,40 @@ async function modify (
             authLevel,
             userName!,
             dn,
-            {
-                entry: Array.from(entry!.objectClass)
-                    .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
-            },
+            request,
             permissions,
             EQUALITY_MATCHER,
             IS_MEMBER,
-            false,
+            true,
         );
         return authorized;
     }
 
-    const entryAttributes = await readEntry(ctx, entry);
+    const canModifyEntry: boolean = checkPermissionsOnEntry({
+        entry: Array.from(entry.objectClass)
+            .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
+    }, [PERMISSION_CATEGORY_MODIFY]);
+    if (!canModifyEntry) {
+        return new LDAPResult(
+            LDAPResult_resultCode_insufficientAccessRights,
+            req.object,
+            Buffer.from("Access denied: you are not permitted to modify this entry.", "utf-8"),
+            undefined,
+        );
+    }
+
+    const {
+        userAttributes,
+        operationalAttributes,
+    } = await readEntryAttributes(ctx, entry);
+    const entryAttributes = [ ...userAttributes, ...operationalAttributes ];
     let newAttributes = entryAttributes;
     for (const mod of req.changes) {
-        // replaceValues could be checked here.
-        newAttributes = executeEntryModification(ctx, entry, newAttributes, mod);
+        const result = executeEntryModification(ctx, entry, req.object, newAttributes, mod, checkPermissionsOnEntry);
+        if (result instanceof LDAPResult) {
+            return result;
+        }
+        newAttributes = result;
     }
 
     const userPassword = newAttributes.find((attr) => (
