@@ -78,11 +78,11 @@ async function compare (
         throw CONTEXTS_NOT_ENABLED_ERROR;
     }
 
-    const entry = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
+    const entry = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
     if (!entry) {
         throw new NameError(
             "No such object.",
-            objectDoesNotExistErrorData(ctx, data.object),
+            await objectDoesNotExistErrorData(ctx, data.object),
         );
     }
     const MR_OID: string = data.purported.type_.toString();

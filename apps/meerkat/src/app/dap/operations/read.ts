@@ -78,11 +78,11 @@ async function read (
     const data = ("signed" in arg)
         ? arg.signed.toBeSigned
         : arg.unsigned;
-    const entry = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
+    const entry = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
     if (!entry) {
         throw new NameError(
             "No such object.",
-            objectDoesNotExistErrorData(ctx, data.object),
+            await objectDoesNotExistErrorData(ctx, data.object),
         );
     }
 

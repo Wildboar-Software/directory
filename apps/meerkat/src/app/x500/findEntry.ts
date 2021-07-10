@@ -1,5 +1,6 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { Context, DIT, Entry, IndexableOID, Value } from "../types";
+import readChildren from "../dit/readChildren";
 
 // TODO: Return the number of RDNs that matched, whether aliases were derefed.
 // TODO: Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
@@ -8,15 +9,21 @@ import type { Context, DIT, Entry, IndexableOID, Value } from "../types";
 // TODO: Return referrals / continuation references.
 
 export
-function findEntry (ctx: Context, dit: DIT, dn: DistinguishedName, derefAliases: boolean = true): Entry | undefined {
+async function findEntry (
+    ctx: Context,
+    dit: DIT,
+    dn: DistinguishedName,
+    derefAliases: boolean = true,
+): Promise<Entry | undefined> {
     const currentVertex = derefAliases
         ? (dit.aliasedEntry ?? dit)
         : dit;
+    const children = await readChildren(ctx, dit);
     if ((currentVertex.rdn.length === 0) && (dn.length === 0)) {
         return currentVertex;
     }
     if (currentVertex.rdn.length === 0) { // Root DSE, which will not match.
-        return dit.children // So we start the search with its children.
+        return children // So we start the search with its children.
             .map((child) => findEntry(ctx, child, dn, derefAliases))
             .find((e) => e);
     }
@@ -57,7 +64,7 @@ function findEntry (ctx: Context, dit: DIT, dn: DistinguishedName, derefAliases:
      * Otherwise, we repeat the process by querying each child vertex of the DIT
      * with a distinguished name whose terminal RDN has been truncated.
      */
-    return dit.children // So we start the search with its children.
+    return children // So we start the search with its children.
         .map((child) => findEntry(ctx, child, query, derefAliases))
         .find((e) => e);
 }

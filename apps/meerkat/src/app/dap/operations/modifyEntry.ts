@@ -337,11 +337,11 @@ async function modifyEntry (
         !dontDereferenceAliases
         && useAliasOnUpdateExtension
     );
-    const entry = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence, derefAliases);
+    const entry = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence, derefAliases);
     if (!entry) {
         throw new NameError(
             "No such object.",
-            objectDoesNotExistErrorData(ctx, data.object),
+            await objectDoesNotExistErrorData(ctx, data.object),
         );
     }
 

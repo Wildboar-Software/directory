@@ -78,6 +78,7 @@ import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
+import readChildren from "../../dit/readChildren";
 
 
 const PARENT_OID: string = id_oc_parent.toString();
@@ -106,7 +107,7 @@ async function add (
 
     const dn = decodeLDAPDN(ctx, req.entry);
     ctx.log.info(`Creating entry ${Buffer.from(req.entry).toString("utf-8")}...`);
-    const superior = findEntry(ctx, ctx.database.data.dit, dn.slice(1), true);
+    const superior = await findEntry(ctx, ctx.database.data.dit, dn.slice(1), true);
     if (!superior) {
         return objectNotFound;
     }
@@ -383,7 +384,8 @@ async function add (
     }
 
     // Check if the entry already exists.
-    for (const child of superior.children) {
+    const superiorChildren = await readChildren(ctx, superior);
+    for (const child of superiorChildren) {
         const childDN = [ child.rdn, ...superiorDN ]; // FIXME: Reverse.
         if (!compareRDNSequence(childDN, dn, EQUALITY_MATCHER)) {
             continue;
@@ -598,7 +600,7 @@ async function add (
 
     const result = await writeEntry(ctx, superior, newEntry, [ ...attrs ]);
     newEntry.id = result.id;
-    superior.children.push(newEntry);
+    superior.children?.push(newEntry);
     ctx.log.info(`Created entry ${Buffer.from(req.entry).toString("utf-8")}.`);
     return new LDAPResult(
         LDAPResult_resultCode_success,

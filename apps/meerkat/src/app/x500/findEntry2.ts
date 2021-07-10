@@ -6,6 +6,7 @@ import type { Context, DIT, Entry } from "../types";
 import getDistinguishedName from "./getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import { OBJECT_IDENTIFIER } from "asn1-ts";
+import readChildren from "../dit/readChildren";
 
 // TODO: Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
 // TODO: Drill into database if entries are not in memory.
@@ -94,7 +95,8 @@ async function _findEntry (state: FindEntryState): Promise<FindEntryState> {
             const derefedHaystackRoot = haystackRoot.aliasedEntry
                 ? haystackRoot.aliasedEntry
                 : haystackRoot;
-            for (const child of derefedHaystackRoot.children) {
+            const derefedHaystackRootChildren = await readChildren(ctx, derefedHaystackRoot);
+            for (const child of derefedHaystackRootChildren) {
                 const childResult = await _findEntry({
                     ...state,
                     needleDN: needleDN.slice(1),

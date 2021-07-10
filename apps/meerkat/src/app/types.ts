@@ -175,7 +175,7 @@ interface Entry {
     // dn: Name;
     rdn: RelativeDistinguishedName;
     parent?: Entry;
-    children: Entry[];
+    children: Entry[] | null; // null means the children are stored in the database.
     // Managed by the DSA, and based on the aliasedEntryName operational attribute.
     aliasedEntry?: Entry;
     dseType: Partial<DSEType>;

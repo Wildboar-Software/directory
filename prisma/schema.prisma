@@ -104,6 +104,9 @@ model Entry {
     dc                     String? // https://datatracker.ietf.org/doc/html/rfc4519
     // preferredDeliveryMethod
 
+    // Storage parameters
+    keep_children_in_database Boolean @default(false)
+
     // @@index([rdn])
     // @@index([immediate_superior_id])
     Entry                       Entry[]                       @relation("EntryToEntry")

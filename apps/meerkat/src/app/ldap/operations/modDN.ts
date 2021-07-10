@@ -79,7 +79,7 @@ async function modDN (
         : undefined;
 
     const dn = decodeLDAPDN(ctx, req.entry);
-    const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
         return objectNotFound;
     }
@@ -124,7 +124,7 @@ async function modDN (
 
     if (req.newSuperior) {
         const newSuperiorDN = decodeLDAPDN(ctx, req.newSuperior);
-        newSuperior = findEntry(ctx, ctx.database.data.dit, newSuperiorDN, true);
+        newSuperior = await findEntry(ctx, ctx.database.data.dit, newSuperiorDN, true);
         if (!newSuperior) {
             return objectNotFound;
         }
@@ -286,10 +286,10 @@ async function modDN (
         await ctx.db.entry.update(updateEntryArguments);
     }
 
-    if (entry.parent?.children.length && (entry.parent !== newSuperior)) {
+    if (entry.parent?.children?.length && (entry.parent !== newSuperior)) {
         const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
         entry.parent.children.splice(entryIndex, 1); // Remove from the current parent.
-        newSuperior?.children.push(entry); // Move to the new parent.
+        newSuperior?.children?.push(entry); // Move to the new parent.
     }
 
     entry.rdn = newrdn;

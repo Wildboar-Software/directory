@@ -279,7 +279,7 @@ async function modify (
         : undefined;
 
     const dn = decodeLDAPDN(ctx, req.object);
-    const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
         return objectNotFound;
     }

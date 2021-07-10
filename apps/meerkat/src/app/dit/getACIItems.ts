@@ -34,6 +34,7 @@ import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import readChildren from "./readChildren";
 
 const SUBENTRY: string = id_sc_subentry.toString();
 const AC_SUBENTRY: string = id_sc_accessControlSubentry.toString();
@@ -45,13 +46,14 @@ const SAC: string = simplifiedAccessControlScheme.toString();
 const RBAC: string = rule_and_simple_access_control.toString();
 const RSAC: string = rule_and_basic_access_control.toString();
 
-function getRelevantSubentries (
+async function getRelevantSubentries (
     ctx: Context,
     entry: Entry,
     entryDN: DistinguishedName,
     admPoint: Entry,
-): Entry[] {
-    return admPoint.children
+): Promise<Entry[]> {
+    const children = await readChildren(ctx, admPoint);
+    return children
         .filter((child) => (
             child.dseType.subentry
             && child.objectClass.has(SUBENTRY)
@@ -75,8 +77,9 @@ async function getACIItems (ctx: Context, entry: Entry): Promise<ACIItem[] | nul
     const entryACI: ACIItem[] = entry.entryACI ?? []; // Still applies for subentries
     // If the entry is itself an admin point, we have to get the prescriptive
     // ACI from its children; after that, we can treat it like a normal entry.
+    const children = await readChildren(ctx, entry);
     const prescriptiveACI: ACIItem[] = (entry.dseType.admPoint)
-        ? entry.children
+        ? children
             .filter((child) => (
                 child.dseType.subentry
                 && child.objectClass.has(SUBENTRY)
@@ -108,7 +111,7 @@ async function getACIItems (ctx: Context, entry: Entry): Promise<ACIItem[] | nul
             // Prescriptive ACI of subentries do not apply to subentries in the
             // same scope, but those from superior subentries can.
             if (!entry.dseType.subentry || (entry.parent !== current)) {
-                const relevantSubentries = getRelevantSubentries(ctx, entry, entryDN, current);
+                const relevantSubentries = await getRelevantSubentries(ctx, entry, entryDN, current);
                 prescriptiveACI.push(...relevantSubentries.flatMap((subentry) => subentry.prescriptiveACI ?? []));
             }
             subentryACI.push(...current.subentryACI ?? []);

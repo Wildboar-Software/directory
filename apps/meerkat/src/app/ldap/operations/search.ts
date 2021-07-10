@@ -286,7 +286,7 @@ async function search (
 
     const startTime = new Date();
     const dn = decodeLDAPDN(ctx, req.baseObject);
-    const entry = findEntry(ctx, ctx.database.data.dit, dn, req.derefAliases !== 0); // FIXME
+    const entry = await findEntry(ctx, ctx.database.data.dit, dn, req.derefAliases !== 0); // FIXME
     if (!entry) {
         ctx.log.warn(`Entry ${Buffer.from(req.baseObject).toString("utf-8")} not found.`);
         return objectNotFound;
@@ -314,7 +314,7 @@ async function search (
         }
     }
 
-    const subset = getSubset(entry, req.scope);
+    const subset = await getSubset(ctx, entry, req.scope);
     const permittedSubset: Entry[] = [];
     for (const result of subset) {
         if (entryACDFTuples) {

@@ -86,7 +86,7 @@ async function compare (
         : undefined;
 
     const dn = decodeLDAPDN(ctx, req.entry);
-    const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry || (entry.dseType.subentry && !useSubentries)) {
         return objectNotFound;
     }

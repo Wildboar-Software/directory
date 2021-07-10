@@ -46,6 +46,7 @@ import { TRUE_BIT } from "asn1-ts";
 import * as crypto from "crypto";
 import findEntry from "../../x500/findEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
+import readChildren from "../../dit/readChildren";
 
 // list OPERATION ::= {
 //   ARGUMENT  ListArgument
@@ -265,11 +266,11 @@ async function list (
             );
         }
     }
-    const base = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
+    const base = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
     if (!base) {
         throw new NameError(
             "No such object.",
-            objectDoesNotExistErrorData(ctx, data.object),
+            await objectDoesNotExistErrorData(ctx, data.object),
         );
     }
 
@@ -279,8 +280,8 @@ async function list (
     const pageSize: number = pagingRequest?.pageSize
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
-    const results: Entry[] = base.children;
-    const completeResults: boolean = ((skip + pageSize) < base.children.length);
+    const results: Entry[] = await readChildren(ctx, base);
+    const completeResults: boolean = ((skip + pageSize) < results.length);
     if (queryReference && pagingRequest) {
         connection.pagedResultsRequests.set(queryReference, [ pagingRequest, (page + 1) ]);
     }

@@ -72,7 +72,7 @@ async function del (
         : undefined;
 
     const dn = decodeLDAPDN(ctx, req);
-    const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
         return objectNotFound;
     }
@@ -140,7 +140,7 @@ async function del (
     }
 
     await deleteEntry(ctx, entry);
-    if (entry.parent?.children.length) {
+    if (entry.parent?.children?.length) {
         const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
         entry.parent.children.splice(entryIndex, 1);
     }

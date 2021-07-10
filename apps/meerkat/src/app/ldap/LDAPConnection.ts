@@ -75,7 +75,7 @@ export class LDAPConnection {
             const result = await bind(ctx, req);
             if (result.resultCode === LDAPResult_resultCode_success) {
                 const dn = decodeLDAPDN(ctx, req.name);
-                this.boundEntry = findEntry(ctx, ctx.database.data.dit, dn, true);
+                this.boundEntry = await findEntry(ctx, ctx.database.data.dit, dn, true);
                 // Currently, there is no way to achieve strong auth using LDAP.
                 this.authLevel = AuthenticationLevel_basicLevels_level_simple;
             }

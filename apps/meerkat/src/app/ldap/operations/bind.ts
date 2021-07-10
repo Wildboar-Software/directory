@@ -74,7 +74,7 @@ async function bind (
     // Wait a random amount of time to prevent timing attacks.
     sleep(crypto.randomInt(10000) + 10000);
     const dn = decodeLDAPDN(ctx, req.name);
-    const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
     if (!entry) {
         return invalidCredentialsError(req.name);
     }

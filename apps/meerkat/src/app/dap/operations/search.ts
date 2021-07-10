@@ -343,7 +343,7 @@ async function search (
         ? pagingRequest.sortKeys[0]
         : undefined;
 
-    const entry: Entry | undefined = findEntry(
+    const entry: Entry | undefined = await findEntry(
         ctx,
         ctx.database.data.dit,
         data.baseObject.rdnSequence,
@@ -352,11 +352,12 @@ async function search (
     if (!entry) {
         throw new NameError(
             "No such object.",
-            objectDoesNotExistErrorData(ctx, data.baseObject),
+            await objectDoesNotExistErrorData(ctx, data.baseObject),
         );
     }
 
-    const intialCandidates = getSubset(
+    const intialCandidates = await getSubset(
+        ctx,
         entry,
         data.subset ?? SearchArgumentData_subset_baseObject,
         data.searchAliases,

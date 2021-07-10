@@ -61,11 +61,11 @@ async function removeEntry (
         && useAliasOnUpdateExtension
     );
 
-    const entry: Entry | undefined = findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence, derefAliases);
+    const entry: Entry | undefined = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence, derefAliases);
     if (!entry) {
         throw new NameError(
             "No such object.",
-            objectDoesNotExistErrorData(ctx, data.object),
+            await objectDoesNotExistErrorData(ctx, data.object),
         );
     }
     if (entry.children) {
@@ -76,7 +76,7 @@ async function removeEntry (
     }
 
     await deleteEntry(ctx, entry);
-    if (entry.parent?.children.length) {
+    if (entry.parent?.children?.length) {
         const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
         entry.parent.children.splice(entryIndex, 1);
     }

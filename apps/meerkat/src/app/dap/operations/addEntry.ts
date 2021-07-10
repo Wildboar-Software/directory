@@ -197,7 +197,7 @@ async function addEntry (
         throw new UpdateError(`Entry already exists: ${nameToString(data.object)}`, ENTRY_EXISTS_ERROR_DATA);
     }
     const superiorDN = data.object.rdnSequence.slice(1);
-    const superior = findEntry(ctx, ctx.database.data.dit, superiorDN);
+    const superior = await findEntry(ctx, ctx.database.data.dit, superiorDN);
     if (!superior) {
         const superiorDNString = nameToString({ rdnSequence: superiorDN });
         throw new UpdateError(`No such superior: ${superiorDNString}`, NO_SUCH_SUPERIOR_ERROR_DATA);
@@ -441,7 +441,7 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
         modifyTimestamp: new Date(),
     };
     await writeEntry(ctx, superior, newEntry, [ ...attrsFromDN, ...attrs ]);
-    superior.children.push(newEntry);
+    superior.children?.push(newEntry);
     // TODO: Filter out more operational attributes.
     return {
         null_: null,

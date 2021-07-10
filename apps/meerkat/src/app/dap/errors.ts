@@ -151,16 +151,16 @@ class UnknownOperationError extends Error {
 }
 
 export
-function objectDoesNotExistErrorData (ctx: Context, soughtName: Name): NameErrorData {
+async function objectDoesNotExistErrorData (ctx: Context, soughtName: Name): Promise<NameErrorData> {
     let name: Name = {
         rdnSequence: [ ...soughtName.rdnSequence.slice(1) ],
     };
-    let match = findEntry(ctx, ctx.database.data.dit, name.rdnSequence);
+    let match = await findEntry(ctx, ctx.database.data.dit, name.rdnSequence);
     while (!match) {
         name = {
             rdnSequence: [ ...name.rdnSequence.slice(1) ],
         };
-        match = findEntry(ctx, ctx.database.data.dit, name.rdnSequence);
+        match = await findEntry(ctx, ctx.database.data.dit, name.rdnSequence);
     }
     return new NameErrorData(
         NameProblem_noSuchObject,

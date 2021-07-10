@@ -172,11 +172,11 @@ async function modifyDN (
             namingViolationErrorData([]),
         );
     }
-    const entry = findEntry(ctx, ctx.database.data.dit, data.object);
+    const entry = await findEntry(ctx, ctx.database.data.dit, data.object);
     if (!entry) {
         throw new NameError(
             "No such object.",
-            objectDoesNotExistErrorData(ctx, {
+            await objectDoesNotExistErrorData(ctx, {
                 rdnSequence: data.object,
             }),
         );
@@ -210,7 +210,7 @@ async function modifyDN (
     }
 
     const newSuperior = data.newSuperior
-        ? findEntry(ctx, ctx.database.data.dit, data.newSuperior)
+        ? await findEntry(ctx, ctx.database.data.dit, data.newSuperior)
         : null; // `null` means we did not try.
     if (newSuperior === undefined) { // `undefined` means we tried and failed.
         throw new Error();
@@ -242,7 +242,7 @@ async function modifyDN (
     const potentialNewName: Name = {
         rdnSequence: [ data.newRDN, ...(superior ? getDistinguishedName(superior) : []) ],
     };
-    const potentialEntry = findEntry(ctx, ctx.database.data.dit, potentialNewName.rdnSequence);
+    const potentialEntry = await findEntry(ctx, ctx.database.data.dit, potentialNewName.rdnSequence);
     if (potentialEntry) {
         const potentialDN = nameToString(potentialNewName);
         throw new UpdateError(`Entry already exists: ${potentialDN}`, ENTRY_EXISTS_ERROR_DATA);
@@ -292,10 +292,10 @@ async function modifyDN (
         }
     });
 
-    if (entry.parent?.children.length && (entry.parent !== superior)) {
+    if (entry.parent?.children?.length && (entry.parent !== superior)) {
         const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
         entry.parent.children.splice(entryIndex, 1); // Remove from the current parent.
-        superior?.children.push(entry); // Move to the new parent.
+        superior?.children?.push(entry); // Move to the new parent.
     }
 
     const oldRDN = entry.rdn;

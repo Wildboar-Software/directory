@@ -17,6 +17,7 @@ async function loadDIT (
     const rootDSE = await ctx.db.entry.findFirst({
         where: {
             dit_id: dit.id,
+            root: true,
         },
     });
     if (!rootDSE) {
