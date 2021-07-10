@@ -42,9 +42,7 @@ function canJoin (
     joinEntry: EntryInformation,
     jap: JoinAttPair,
 ): boolean {
-    const BASE_OID: string = jap.baseAtt.toString();
-    const JOIN_OID: string = jap.joinAtt.toString();
-    const baseSpec = ctx.attributes.get(BASE_OID);
+    const baseSpec = ctx.attributes.get(jap.baseAtt.toString());
     if (!baseSpec) {
         return false;
     }
@@ -56,13 +54,13 @@ function canJoin (
         .information
         ?.find((info) => (
             ("attribute" in info)
-            && (info.attribute.type_.toString() === BASE_OID)
+            && info.attribute.type_.isEqualTo(jap.baseAtt)
         ));
     const soughtJoinAttribute: EntryInformation_information_Item | undefined = joinEntry
         .information
         ?.find((info) => (
             ("attribute" in info)
-            && (info.attribute.type_.toString() === JOIN_OID)
+            && info.attribute.type_.isEqualTo(jap.joinAtt)
         ));
     if (
         !soughtBaseAttribute

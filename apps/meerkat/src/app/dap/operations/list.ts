@@ -289,6 +289,7 @@ async function list (
         ? pagingRequest.sortKeys[0]
         : undefined;
 
+    // TODO: Replace this with @wildboar/x500's sort()
     if (sortKey) {
         const A_IS_GREATER: number = 1;
         const B_IS_GREATER: number = -1;

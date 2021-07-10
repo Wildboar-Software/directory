@@ -51,7 +51,7 @@ import {
 import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
-import { ASN1Construction, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import { v4 as uuid } from "uuid";
 import {
     EXT_BIT_MANAGE_DSA_IT,
@@ -74,7 +74,6 @@ import {
 import findEntry from "../../x500/findEntry";
 import writeEntry from "../../database/writeEntry";
 
-const OBJECT_CLASS_ATTR_OID: string = id_at_objectClass.toString();
 // const HIERARCHY_TOP_ATTR_OID: string = id_oa_hierarchyTop.toString();
 // const HIERARCHY_BELOW_ATTR_OID: string = id_oa_hierarchyBelow.toString();
 // const HIERARCHY_LEVEL_ATTR_OID: string = id_oa_hierarchyLevel.toString();
@@ -288,7 +287,7 @@ async function addEntry (
         );
     }
 
-    const objectClasses = attrs.filter((attr) => attr.id.toString() === OBJECT_CLASS_ATTR_OID);
+    const objectClasses = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
     if (objectClasses.length === 0) {
         throw new UpdateError("Object class attribute not found.", OBJECT_CLASS_ERROR_DATA);
     }
@@ -344,7 +343,7 @@ async function addEntry (
             }
             const someAttributeMatched = attrs.some((attr) => (
                 (attr.contexts.size === 0)
-                && (attr.id.toString() === afdn.id.toString())
+                && attr.id.isEqualTo(afdn.id)
                 && matcher(attr.value, afdn.value)
             ));
             if (!someAttributeMatched) {
@@ -400,14 +399,7 @@ X.501, Section 14.10:
 If the immediately hierarchical parent is a compound entry, the value shall be the distinguished name
 of the ancestor. Otherwise, the Directory shall return an Update Error with problem parentNotAncestor .
      */
-    // const hierarchyLevelAttr = attrs.find((attr) => (attr.id.toString() === HIERARCHY_LEVEL_ATTR_OID));
-    // const hierarchyTopAttr = attrs.find((attr) => (attr.id.toString() === HIERARCHY_TOP_ATTR_OID));
-    // const hierarchyBelowAttr = attrs.find((attr) => (attr.id.toString() === HIERARCHY_BELOW_ATTR_OID));
-    // const hierarchyParentAttr = attrs.find((attr) => (attr.id.toString() === HIERARCHY_PARENT_ATTR_OID));
-
-
     // How do you insert DSEs of any non-entry type if dseType is an operational attribute?
-    // const dseTypeAttr = attrs.find((v) => (v.id.toString() === DSE_TYPE_ATTR_OID));
     // X.511, Section 7.12 specifies this exactly:
     // – the manageDSAIT extension bit shall be set;
     // – the manageDSAIT option shall be set;

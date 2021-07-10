@@ -23,6 +23,9 @@ import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import {
+    startTLS,
+} from "@wildboar/ldap/src/lib/extensions";
 import add from "./operations/add";
 import bind from "./operations/bind";
 import compare from "./operations/compare";
@@ -169,7 +172,7 @@ export class LDAPConnection {
         } else if ("extendedReq" in message.protocolOp) {
             const req = message.protocolOp.extendedReq;
             const oid = decodeLDAPOID(req.requestName);
-            if (oid.toString() === "1.3.6.1.4.1.1466.20037") { // StartTLS
+            if (oid.isEqualTo(startTLS)) {
                 this.connection.removeAllListeners("data");
                 this.buffer = Buffer.alloc(0);
                 this.connection = new tls.TLSSocket(this.connection);

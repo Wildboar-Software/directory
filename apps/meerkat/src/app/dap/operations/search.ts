@@ -61,7 +61,7 @@ import {
 import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
-import { evaluateFilter, FilterEntryOptions } from "@wildboar/x500/src/lib/evaluateFilter";
+import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500/src/lib/evaluateFilter";
 import {
     AbandonError,
     NameError,
@@ -72,7 +72,7 @@ import findEntry from "../../x500/findEntry";
 // import canJoin from "../../x500/canJoin";
 import entryInformationFromEntry from "../../x500/entryInformationFromEntry";
 import selectFromEntry from "../../x500/selectFromEntry";
-import { TRUE_BIT, OBJECT_IDENTIFIER } from "asn1-ts";
+import { TRUE_BIT, OBJECT_IDENTIFIER, ASN1Element } from "asn1-ts";
 import { EntryInformation_information_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import { ServiceErrorData, ServiceProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import * as crypto from "crypto";
@@ -369,7 +369,7 @@ async function search (
 
     const applicableFilter = data.filter ?? data.extendedFilter;
 
-    const filterOptions: FilterEntryOptions = {
+    const filterOptions: EvaluateFilterSettings = {
         getEqualityMatcher: (attributeType: OBJECT_IDENTIFIER): EqualityMatcher | undefined => {
             const spec = ctx.attributes.get(attributeType.toString());
             return spec?.equalityMatcher;
@@ -393,7 +393,10 @@ async function search (
             return true; // FIXME:
         },
         isAttributeSubtype: (attributeType: OBJECT_IDENTIFIER, parentType: OBJECT_IDENTIFIER): boolean => {
-            return false; // FIXME:
+            return true; // FIXME:
+        },
+        permittedToMatch: (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
+            return true; // FIXME:
         },
         performExactly: false,
     };

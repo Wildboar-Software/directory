@@ -281,7 +281,7 @@ async function modifyDN (
             );
         }
         const relevantAttrs = attrs
-            .filter((attr) => ((attr.id.toString() === TYPE) && (attr.contexts.size === 0)));
+            .filter((attr) => (attr.id.isEqualTo(atav.type_) && (attr.contexts.size === 0)));
 
         if (!relevantAttrs.some((ra) => matcher(ra.value, atav.value))) {
             throw new UpdateError(

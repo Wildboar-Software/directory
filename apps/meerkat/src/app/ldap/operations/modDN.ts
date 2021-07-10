@@ -237,7 +237,7 @@ async function modDN (
                     return true;
                 }
                 const matcher = attrSpec.equalityMatcher;
-                const relevantRDNValue = oldrdn.find((atav) => atav.type_.toString() === ATTR_TYPE);
+                const relevantRDNValue = oldrdn.find((atav) => atav.type_.isEqualTo(attr.id));
                 if (!relevantRDNValue) {
                     return true;
                 }

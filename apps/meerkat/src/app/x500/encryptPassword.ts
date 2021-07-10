@@ -16,7 +16,7 @@ import * as crypto from "crypto";
  */
 export
 function encryptPassword (algId: AlgorithmIdentifier, password: Uint8Array): Uint8Array | null {
-    if ((algId.algorithm.toString() === scrypt["&id"]!.toString()) && algId.parameters) {
+    if (algId.algorithm.isEqualTo(scrypt["&id"]!) && algId.parameters) {
         const parameters: typeof scrypt["&Type"] = scrypt.decoderFor["&Type"]!(algId.parameters);
         return crypto.scryptSync(password, parameters.salt, parameters.keyLength ?? 128, {
             cost: parameters.costParameter,

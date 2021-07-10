@@ -100,7 +100,6 @@ async function compare (
             ),
         );
     }
-    const TYPE_OID: string = data.purported.type_.toString();
     const acs = data.purported.assertedContexts;
     let matchedType: OBJECT_IDENTIFIER | undefined;
     const matched = (await readEntry(ctx, entry))
@@ -135,7 +134,7 @@ async function compare (
                     return data
                         .operationContexts
                         .selectedContexts // FIXME: Replace with evaluateTypeAndContextAssertion
-                        .filter((sc): boolean => (sc.type_.toString() === TYPE_OID))
+                        .filter((sc): boolean => (sc.type_.isEqualTo(data.purported.type_)))
                         .every((sc): boolean => {
                             if ("all" in sc.contextAssertions) {
                                 return sc.contextAssertions.all

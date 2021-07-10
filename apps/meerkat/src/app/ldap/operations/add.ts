@@ -228,7 +228,7 @@ async function add (
         .filter((attr) => {
             const normed = normalizeAttributeDescription(attr.type_);
             const spec = ctx.attributes.get(normed);
-            return (spec?.id.toString() === objectClass["&id"].toString());
+            return spec?.id.isEqualTo(objectClass["&id"]);
         })
         .flatMap((attr) => attr.vals.map((val) => objectClassSyntax.decoder!(val)))
         .map((val) => val.objectIdentifier);
@@ -237,7 +237,7 @@ async function add (
         .filter((attr) => {
             const normed = normalizeAttributeDescription(attr.type_);
             const spec = ctx.attributes.get(normed);
-            return (spec?.id.toString() === aliasedEntryName["&id"].toString());
+            return spec?.id.isEqualTo(aliasedEntryName["&id"]);
         })
         .flatMap((attr) => attr.vals.map((val) => aliasedEntryNameSyntax.decoder!(val)))
         .map((val) => _decode_DistinguishedName(val));
@@ -432,7 +432,7 @@ async function add (
     }
 
     if (
-        objectClasses.some((oc) => oc.toString() === CHILD_OID)
+        objectClasses.some((oc) => oc.isEqualTo(id_oc_child))
         && !superior.objectClass.has(PARENT_OID)
     ) {
         return new LDAPResult(
@@ -507,7 +507,7 @@ async function add (
         const matcher = attrType.namingMatcher;
         const alreadyPresentInList: boolean = attrs
             .some((attr) => {
-                if (attr.id.toString() === TYPE_OID) {
+                if (attr.id.isEqualTo(atav.type_)) {
                     return false;
                 }
                 return matcher(attr.value, atav.value);

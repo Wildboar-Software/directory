@@ -114,6 +114,10 @@
     - [ ] Directory Access Protocol
       - [ ] Operations
         - [ ] `directoryBind`
+          - [ ] SASL
+            - [ ] `PLAIN`
+            - [ ] `EXTERNAL`?
+            - [ ] `ANONYMOUS`?
         - [x] `abandon`
         - [ ] `administerPassword`
         - [x] `addEntry`

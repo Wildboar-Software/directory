@@ -107,7 +107,7 @@ async function main (): Promise<void> {
         // let dap: DAPConnection | undefined;
 
         idm.events.on("bind", (idmBind: IdmBind) => {
-            if (idmBind.protocolID.toString() === dap_ip["&id"]?.toString()) {
+            if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
                 const dba = _decode_DirectoryBindArgument(idmBind.argument);
                 new DAPConnection(ctx, idm, dba); // eslint-disable-line
             } else {

@@ -74,6 +74,7 @@ import bacACDF, {
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+    PERMISSION_CATEGORY_FILTER_MATCH,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getAdministrativePoint from "../../dit/getAdministrativePoint";
 import type {
@@ -84,6 +85,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import { strict as assert } from "assert";
+import checkDiscoverabilityOfEntry from "../../bac/checkDiscoverabilityOfEntry";
+import {
+    AttributeValue,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeValue.ta";
 
 // FIXME: Needs an isMemberOfGroup implementation.
 const IS_MEMBER = () => false;
@@ -231,46 +236,41 @@ async function search (
         return objectNotFound;
     }
 
-    const admPoint = getAdministrativePoint(entry);
-    const admPointDN = admPoint
-        ? getDistinguishedName(admPoint)
-        : undefined;
+    // const admPoint = getAdministrativePoint(entry);
+    // const admPointDN = admPoint
+    //     ? getDistinguishedName(admPoint)
+    //     : undefined;
     const entryACIs = await getACIItems(ctx, entry);
     const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const accessControlled: boolean = Boolean(entryACDFTuples);
-    if (accessControlled && !userName) {
-        return new LDAPResult(
-            LDAPResult_resultCode_insufficientAccessRights,
-            req.baseObject,
-            Buffer.from("Anonymous users not permitted. Please authenticate first."),
-            undefined,
-        );
-    }
-
-    function checkPermissionsOnOldEntry (permissions: number[]): boolean {
-        if (!accessControlled) {
-            return false;
+    if (entryACDFTuples) {
+        if (!userName) {
+            return new LDAPResult(
+                LDAPResult_resultCode_insufficientAccessRights,
+                req.baseObject,
+                Buffer.from("Anonymous users not permitted. Please authenticate first."),
+                undefined,
+            );
         }
-        const { authorized } = bacACDF(
-            admPointDN!,
-            entryACDFTuples,
-            authLevel,
-            userName!,
-            dn,
-            {
-                entry: Array.from(entry!.objectClass)
-                    .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
-            },
-            permissions,
-            EQUALITY_MATCHER,
-            IS_MEMBER,
-            false,
-        );
-        return authorized;
+        const canDiscoverBaseObject: boolean = await checkDiscoverabilityOfEntry(ctx, userName, authLevel, entry);
+        if (!canDiscoverBaseObject) {
+            return objectNotFound;
+        }
     }
 
     const subset = getSubset(entry, req.scope);
+    const permittedSubset: Entry[] = [];
+    for (const result of subset) {
+        if (entryACDFTuples) {
+            const canDiscover: boolean = await checkDiscoverabilityOfEntry(ctx, userName!, authLevel, result);
+            if (canDiscover) {
+                permittedSubset.push(result);
+            }
+        } else {
+            permittedSubset.push(result);
+        }
+    }
+
     /**
      * These three variables correspond to the three cases defined in
      * IETF RFC 4511, Section 4.5.1.8.
@@ -311,7 +311,7 @@ async function search (
             : null;
 
     const candidates: EntryInfo[] = await Promise.all(
-        subset
+        permittedSubset
             .map(async (subsetMember): Promise<EntryInfo> => {
                 const {
                     userAttributes,
@@ -323,15 +323,15 @@ async function search (
                     )
                         ? undefined
                         : req.attributes
-                        .map((desc: Uint8Array): OBJECT_IDENTIFIER | undefined => {
-                            const attributeType = normalizeAttributeDescription(desc);
-                            const spec = ctx.attributes.get(attributeType);
-                            if (!spec) {
-                                return undefined;
-                            }
-                            return spec.id;
-                        })
-                        .filter((oid: OBJECT_IDENTIFIER | undefined): oid is OBJECT_IDENTIFIER => !!oid),
+                            .map((desc: Uint8Array): OBJECT_IDENTIFIER | undefined => {
+                                const attributeType = normalizeAttributeDescription(desc);
+                                const spec = ctx.attributes.get(attributeType);
+                                if (!spec) {
+                                    return undefined;
+                                }
+                                return spec.id;
+                            })
+                            .filter((oid: OBJECT_IDENTIFIER | undefined): oid is OBJECT_IDENTIFIER => !!oid),
                     contextSelection: undefined,
                     returnContexts: false,
                 });
@@ -349,6 +349,57 @@ async function search (
         : 3600; // We automatically restrict the run-time of the query to one hour.
     let returnedResults: number = 0;
     for (const [ candidate, userAttrs, opAttrs ] of candidates) {
+
+        const admPoint = getAdministrativePoint(entry);
+        const admPointDN = admPoint
+            ? getDistinguishedName(admPoint)
+            : undefined;
+        const resultACIs = await getACIItems(ctx, entry);
+        const resultACDFTuples: ACDFTuple[] = (resultACIs ?? [])
+            .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+
+        // const canEvaluateAttributeType = (attributeType: OBJECT_IDENTIFIER): boolean => {
+        //     if (!resultACDFTuples) {
+        //         return true;
+        //     }
+        //     const { authorized } = bacACDF(
+        //         admPointDN!,
+        //         entryACDFTuples,
+        //         authLevel,
+        //         userName!,
+        //         dn,
+        //         {
+        //             attributeType,
+        //         },
+        //         [PERMISSION_CATEGORY_FILTER_MATCH],
+        //         EQUALITY_MATCHER,
+        //         IS_MEMBER,
+        //         true,
+        //     );
+        //     return authorized;
+        // };
+
+        // const canEvaluateValue = (attributeType: OBJECT_IDENTIFIER, ): boolean => {
+        //     if (!resultACDFTuples) {
+        //         return true;
+        //     }
+        //     const { authorized } = bacACDF(
+        //         admPointDN!,
+        //         entryACDFTuples,
+        //         authLevel,
+        //         userName!,
+        //         dn,
+        //         {
+        //             attributeType,
+        //         },
+        //         [PERMISSION_CATEGORY_FILTER_MATCH],
+        //         EQUALITY_MATCHER,
+        //         IS_MEMBER,
+        //         true,
+        //     );
+        //     return authorized;
+        // };
+
         if (req.filter) {
             const dn = getDistinguishedName(candidate);
             const groupedByType = groupByOID([
@@ -406,6 +457,9 @@ async function search (
                             return compareAttributeDescription(ad, parent);
                         }
                         return Boolean(isAttributeSubtype(ctx, childSpec.id, parentSpec.id));
+                    },
+                    permittedToMatch: (ad: LDAPString, value?: AttributeValue): boolean => {
+                        return true; // FIXME:
                     },
                 },
             );

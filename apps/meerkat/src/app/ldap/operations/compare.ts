@@ -46,8 +46,13 @@ import { strict as assert } from "assert";
 import { ObjectIdentifier } from "asn1-ts";
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
+import {
+    subentries,
+} from "@wildboar/ldap/src/lib/controls";
+import {
+    decodeLDAPOID,
+} from "@wildboar/ldap/src/lib/decodeLDAPOID"
 
-const LDAP_CONTROL_SUBENTRIES: ObjectIdentifier = new ObjectIdentifier([ 1,3, 6, 1, 4, 1, 4203, 1, 10, 1 ]);
 // FIXME: Needs an isMemberOfGroup implementation.
 const IS_MEMBER = () => false;
 
@@ -58,9 +63,9 @@ async function compare (
     req: CompareRequest,
     controls: Control[] = [],
 ): Promise<CompareResponse> {
-    const subentries: boolean = controls
+    const useSubentries: boolean = controls
         .some((control) => (
-            (control.controlType.toString() === LDAP_CONTROL_SUBENTRIES.toString())
+            decodeLDAPOID(control.controlType).isEqualTo(subentries)
             && (control.controlValue?.[0] === 0xFF) // BOOLEAN TRUE
         ));
     const EQUALITY_MATCHER = (
@@ -82,7 +87,7 @@ async function compare (
 
     const dn = decodeLDAPDN(ctx, req.entry);
     const entry = findEntry(ctx, ctx.database.data.dit, dn, true);
-    if (!entry || (entry.dseType.subentry && !subentries)) {
+    if (!entry || (entry.dseType.subentry && !useSubentries)) {
         return objectNotFound;
     }
     const admPoint = getAdministrativePoint(entry);
@@ -206,9 +211,8 @@ async function compare (
         userAttributes,
         operationalAttributes,
     } = await readEntryAttributes(ctx, entry);
-    const ATTR_TYPE_OID: string = attrSpec.id.toString();
     const match = [ ...userAttributes, ...operationalAttributes ]
-        .filter((attr) => attr.id.toString() === ATTR_TYPE_OID)
+        .filter((attr) => attr.id.isEqualTo(attrSpec.id))
         .some((attr) => matcher(assertedValue, attr.value));
     return new LDAPResult(
         match

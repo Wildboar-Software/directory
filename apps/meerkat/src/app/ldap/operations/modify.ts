@@ -220,7 +220,7 @@ function executeEntryModification (
                     );
                 }
             }
-            const relevantAttributes = attributes.filter((attr) => attr.id.toString() === attrType);
+            const relevantAttributes = attributes.filter((attr) => attr.id.isEqualTo(attrSpec.id));
             // creating the attribute if it did not already exist.
             if (relevantAttributes.length === 0) {
                 return [
@@ -361,8 +361,8 @@ async function modify (
     }
 
     const userPassword = newAttributes.find((attr) => (
-        (attr.id.toString() === USER_PASSWORD_OID)
-        || (attr.id.toString() === USER_PWD_OID)
+        attr.id.isEqualTo(id_at_userPassword)
+        || attr.id.isEqualTo(id_at_userPwd)
     ));
     if (userPassword) {
         const passwordAttributeType: string = userPassword.id.toString();
