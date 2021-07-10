@@ -51,7 +51,7 @@ import { objectNotFound } from "../results";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import compareAttributeDescription from "@wildboar/ldap/src/lib/compareAttributeDescription";
 import evaluateFilter from "@wildboar/ldap/src/lib/evaluateFilter";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ASN1Element } from "asn1-ts";
 import type EqualityMatcher from "@wildboar/ldap/src/lib/types/EqualityMatcher";
 import type SubstringsMatcher from "@wildboar/ldap/src/lib/types/SubstringsMatcher";
 import type OrderingMatcher from "@wildboar/ldap/src/lib/types/OrderingMatcher";
@@ -70,10 +70,6 @@ import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFr
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import bacACDF, {
     PERMISSION_CATEGORY_READ,
-    PERMISSION_CATEGORY_BROWSE,
-    PERMISSION_CATEGORY_RETURN_DN,
-    PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
     PERMISSION_CATEGORY_FILTER_MATCH,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getAdministrativePoint from "../../dit/getAdministrativePoint";
@@ -83,12 +79,11 @@ import type {
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
-import { strict as assert } from "assert";
 import checkDiscoverabilityOfEntry from "../../bac/checkDiscoverabilityOfEntry";
 import {
     AttributeValue,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeValue.ta";
+import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 
 // FIXME: Needs an isMemberOfGroup implementation.
 const IS_MEMBER = () => false;
@@ -200,6 +195,67 @@ function ldapSyntaxToLDAPSyntax (info: LDAPSyntaxInfo): string {
     }
     ret += " )";
     return ret;
+}
+
+function rootDSEAttributes (ctx: Context): PartialAttribute[] {
+    return [
+        new PartialAttribute(
+            Buffer.from("1.3.6.1.4.1.1466.115.121.1.3", "utf-8"), // Attribute Types
+            (Array.from(new Set(ctx.attributes.values()))
+                .filter((attrSpec) => (
+                    attrSpec.ldapSyntax
+                ))
+                .map((attrSpec) => Buffer.from(
+                    attributeInfoToLDAPAttributeType(attrSpec),
+                    "utf-8",
+                ))
+            ),
+        ),
+        new PartialAttribute(
+            Buffer.from("1.3.6.1.4.1.1466.115.121.1.37", "utf-8"), // Object Classes
+            (Array.from(new Set(ctx.objectClasses.values()))
+                .map((oc) => Buffer.from(
+                    objectClassInfoToLDAPObjectClass(oc),
+                    "utf-8",
+                ))
+            ),
+        ),
+        new PartialAttribute(
+            Buffer.from("1.3.6.1.4.1.1466.115.121.1.54", "utf-8"), // LDAP Syntaxes
+            (Array.from(new Set(ctx.ldapSyntaxes.values()))
+                .map((ls) => Buffer.from(
+                    ldapSyntaxToLDAPSyntax(ls),
+                    "utf-8",
+                ))
+            ),
+        ),
+        new PartialAttribute(
+            Buffer.from("supportedLDAPVersion", "utf-8"),
+            [Buffer.from("3", "utf-8")],
+        ),
+        new PartialAttribute(
+            Buffer.from("namingContexts", "utf-8"),
+            [Buffer.from("", "utf-8")], // Indicates this is a root-level directory.
+        ),
+        // new PartialAttribute(
+        //     Buffer.from("supportedControl", "utf-8"),
+        //     [], // No controls supported.
+        // ),
+        // new PartialAttribute(
+        //     Buffer.from("supportedExtension", "utf-8"),
+        //     [], // No extensions supported.
+        // ),
+        // new PartialAttribute(
+        //     Buffer.from("supportedFeatures", "utf-8"),
+        //     [], // No features supported.
+        // ),
+        new PartialAttribute(
+            Buffer.from("supportedSASLMechanisms", "utf-8"),
+            [
+                Buffer.from("PLAIN"),
+            ],
+        ),
+    ];
 }
 
 export
@@ -339,8 +395,6 @@ async function search (
             }),
     );
 
-    // TODO: Filter attributes by permission before they are used for filtering!
-
     const sizeLimit = (req.sizeLimit > 0)
         ? req.sizeLimit
         : Number.MAX_SAFE_INTEGER;
@@ -358,47 +412,37 @@ async function search (
         const resultACDFTuples: ACDFTuple[] = (resultACIs ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
 
-        // const canEvaluateAttributeType = (attributeType: OBJECT_IDENTIFIER): boolean => {
-        //     if (!resultACDFTuples) {
-        //         return true;
-        //     }
-        //     const { authorized } = bacACDF(
-        //         admPointDN!,
-        //         entryACDFTuples,
-        //         authLevel,
-        //         userName!,
-        //         dn,
-        //         {
-        //             attributeType,
-        //         },
-        //         [PERMISSION_CATEGORY_FILTER_MATCH],
-        //         EQUALITY_MATCHER,
-        //         IS_MEMBER,
-        //         true,
-        //     );
-        //     return authorized;
-        // };
-
-        // const canEvaluateValue = (attributeType: OBJECT_IDENTIFIER, ): boolean => {
-        //     if (!resultACDFTuples) {
-        //         return true;
-        //     }
-        //     const { authorized } = bacACDF(
-        //         admPointDN!,
-        //         entryACDFTuples,
-        //         authLevel,
-        //         userName!,
-        //         dn,
-        //         {
-        //             attributeType,
-        //         },
-        //         [PERMISSION_CATEGORY_FILTER_MATCH],
-        //         EQUALITY_MATCHER,
-        //         IS_MEMBER,
-        //         true,
-        //     );
-        //     return authorized;
-        // };
+        const canDoOnAttributeTypeOrValue = (permissions: number[]) => {
+            return (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
+                if (!resultACDFTuples) {
+                    return true;
+                }
+                const { authorized } = bacACDF(
+                    admPointDN!,
+                    entryACDFTuples,
+                    authLevel,
+                    userName!,
+                    dn,
+                    value
+                        ? {
+                            value: new AttributeTypeAndValue(
+                                attributeType,
+                                value,
+                            ),
+                        }
+                        : {
+                            attributeType,
+                        },
+                    permissions,
+                    EQUALITY_MATCHER,
+                    IS_MEMBER,
+                    true,
+                );
+                return authorized;
+            };
+        };
+        const canMatchAttributeTypeOrValue = canDoOnAttributeTypeOrValue([PERMISSION_CATEGORY_FILTER_MATCH]);
+        const canReadAttributeTypeOrValue = canDoOnAttributeTypeOrValue([PERMISSION_CATEGORY_READ]);
 
         if (req.filter) {
             const dn = getDistinguishedName(candidate);
@@ -459,7 +503,21 @@ async function search (
                         return Boolean(isAttributeSubtype(ctx, childSpec.id, parentSpec.id));
                     },
                     permittedToMatch: (ad: LDAPString, value?: AttributeValue): boolean => {
-                        return true; // FIXME:
+                        const desc = normalizeAttributeDescription(ad);
+                        const spec = ctx.attributes.get(desc);
+                        if (!spec) {
+                            return false;
+                        }
+                        if (value) {
+                            const ldapSyntaxDecoder = ctx.ldapSyntaxes.get(desc)?.decoder;
+                            if (!ldapSyntaxDecoder) {
+                                return false;
+                            }
+                            const decodedValue = ldapSyntaxDecoder(value);
+                            return canMatchAttributeTypeOrValue(spec.id, decodedValue);
+                        } else {
+                            return canMatchAttributeTypeOrValue(spec.id);
+                        }
                     },
                 },
             );
@@ -486,10 +544,10 @@ async function search (
 
         const groupedByType = groupByOID(attrsToReturn, (attr) => attr.id);
         const dn = getDistinguishedName(candidate);
-        const entryRes = new SearchResultEntry(
-            encodeLDAPDN(ctx, dn),
-            [
-                ...Object.entries(groupedByType).map(([ , vals ]) => {
+        const attributesToReturn = [
+            ...Object.entries(groupedByType)
+                .filter(([ , vals ]) => canReadAttributeTypeOrValue(vals[0].id))
+                .map(([ , vals ]) => {
                     const attrType = vals[0].id;
                     const attrSpec = ctx.attributes.get(attrType.toString());
                     if (!attrSpec?.ldapSyntax) {
@@ -506,84 +564,32 @@ async function search (
                         (attrSpec.ldapNames && attrSpec.ldapNames.length > 0)
                             ? Buffer.from(attrSpec.ldapNames[0], "utf-8")
                             : encodeLDAPOID(attrType),
-                        vals.map((val) => ldapSyntax.encoder!(val.value)),
+                        vals
+                            .filter((val) => canReadAttributeTypeOrValue(val.id, val.value))
+                            .map((val) => ldapSyntax.encoder!(val.value)),
                     );
                 }).filter((attr): attr is PartialAttribute => !!attr),
-                new PartialAttribute(
-                    Buffer.from("subschemaSubentry", "utf-8"),
-                    [Buffer.from([])], // The RootDSE is always the schema subentry.
-                ),
-                ...(dn.length === 0) // This is a Root DSE.
-                    ? [
-                        new PartialAttribute(
-                            Buffer.from("1.3.6.1.4.1.1466.115.121.1.3", "utf-8"), // Attribute Types
-                            (Array.from(new Set(ctx.attributes.values()))
-                                .filter((attrSpec) => (
-                                    attrSpec.ldapSyntax
-                                ))
-                                .map((attrSpec) => Buffer.from(
-                                    attributeInfoToLDAPAttributeType(attrSpec),
-                                    "utf-8",
-                                ))
-                            ),
-                        ),
-                        new PartialAttribute(
-                            Buffer.from("1.3.6.1.4.1.1466.115.121.1.37", "utf-8"), // Object Classes
-                            (Array.from(new Set(ctx.objectClasses.values()))
-                                .map((oc) => Buffer.from(
-                                    objectClassInfoToLDAPObjectClass(oc),
-                                    "utf-8",
-                                ))
-                            ),
-                        ),
-                        new PartialAttribute(
-                            Buffer.from("1.3.6.1.4.1.1466.115.121.1.54", "utf-8"), // LDAP Syntaxes
-                            (Array.from(new Set(ctx.ldapSyntaxes.values()))
-                                .map((ls) => Buffer.from(
-                                    ldapSyntaxToLDAPSyntax(ls),
-                                    "utf-8",
-                                ))
-                            ),
-                        ),
-                        new PartialAttribute(
-                            Buffer.from("supportedLDAPVersion", "utf-8"),
-                            [Buffer.from("3", "utf-8")],
-                        ),
-                        new PartialAttribute(
-                            Buffer.from("namingContexts", "utf-8"),
-                            [Buffer.from("", "utf-8")], // Indicates this is a root-level directory.
-                        ),
-                        // new PartialAttribute(
-                        //     Buffer.from("supportedControl", "utf-8"),
-                        //     [], // No controls supported.
-                        // ),
-                        // new PartialAttribute(
-                        //     Buffer.from("supportedExtension", "utf-8"),
-                        //     [], // No extensions supported.
-                        // ),
-                        // new PartialAttribute(
-                        //     Buffer.from("supportedFeatures", "utf-8"),
-                        //     [], // No features supported.
-                        // ),
-                        new PartialAttribute(
-                            Buffer.from("supportedSASLMechanisms", "utf-8"),
-                            [
-                                Buffer.from("PLAIN"),
-                            ],
-                        ),
-                    ]
-                    : [],
-            ]
-                .map((pa) => {
-                    if (req.typesOnly) {
-                        return new PartialAttribute(
-                            pa.type_,
-                            [],
-                        );
-                    } else {
-                        return pa;
-                    }
-                }),
+            new PartialAttribute(
+                Buffer.from("subschemaSubentry", "utf-8"),
+                [Buffer.from([])], // The RootDSE is always the schema subentry.
+            ),
+            ...(dn.length === 0) // This is a Root DSE.
+                ? rootDSEAttributes(ctx)
+                : [],
+        ]
+            .map((pa) => {
+                if (req.typesOnly) {
+                    return new PartialAttribute(
+                        pa.type_,
+                        [],
+                    );
+                } else {
+                    return pa;
+                }
+            });
+        const entryRes = new SearchResultEntry(
+            encodeLDAPDN(ctx, dn),
+            attributesToReturn,
         );
         await onEntry(entryRes);
         returnedResults++;
