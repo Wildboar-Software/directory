@@ -110,6 +110,9 @@ async function entryFromDatabaseEntry (
         //     : undefined,
     };
 
+    if (dbe.keep_children_in_database) {
+        return ret;
+    }
     ret.children = oneLevel
         ? []
         : await Promise.all(
