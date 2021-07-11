@@ -25,7 +25,9 @@ import {
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import getACIItems from "../../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_RENAME,
@@ -43,15 +45,13 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
 import checkPermissionsOnEntry from "../../bac/checkPermissionsOnEntry";
 import checkDiscoverabilityOfEntry from "../../bac/checkDiscoverabilityOfEntry";
+import getIsGroupMember from "../../bac/getIsGroupMember";
 
 // ModifyDNRequest ::= [APPLICATION 12] SEQUENCE {
 //     entry           LDAPDN,
 //     newrdn          RelativeLDAPDN,
 //     deleteoldrdn    BOOLEAN,
 //     newSuperior     [0] LDAPDN OPTIONAL }
-
-// FIXME: Needs an isMemberOfGroup implementation.
-const IS_MEMBER = () => false;
 
 export
 async function modDN (
@@ -64,6 +64,7 @@ async function modDN (
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     const authLevel: AuthenticationLevel = {
         basicLevels: new AuthenticationLevel_basicLevels(
             conn.authLevel,
@@ -87,9 +88,20 @@ async function modDN (
     let newSuperior: Entry | undefined = oldSuperior;
     const oldrdn = entry.rdn;
     const newrdn = decodeLDAPDN(ctx, req.newrdn)[0];
+    const oldAdmPoint = getAdministrativePoint(entry);
+    const oldAdmPointDN = oldAdmPoint
+        ? getDistinguishedName(oldAdmPoint)
+        : undefined;
     const oldEntryACIs = await getACIItems(ctx, entry);
-    const oldEntryACDFTuples: ACDFTuple[] = (oldEntryACIs ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const oldEntryACDFTuples: ACDFTuple[] = (oldEntryACIs ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    // const relevantOldEntryTuples: ACDFTupleExtended[] = (oldAdmPointDN && userName)
+    //     ? (await Promise.all(
+    //         oldEntryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+    //             ...tuple,
+    //             await userWithinACIUserClass(oldAdmPointDN, tuple[0], userName, dn, EQUALITY_MATCHER, isMemberOfGroup),
+    //         ]),
+    //     )).filter((tuple) => (tuple[5] > 0))
+    //     : [];
     if (oldEntryACDFTuples && !userName) {
         return new LDAPResult(
             LDAPResult_resultCode_insufficientAccessRights,
@@ -136,8 +148,15 @@ async function modDN (
         ? getDistinguishedName(admPoint)
         : undefined;
     const newEntryACIs = await getACIItems(ctx, entry);
-    const newEntryACDFTuples: ACDFTuple[] = (newEntryACIs ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const newEntryACDFTuples: ACDFTuple[] = (newEntryACIs ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const relevantNewEntryTuples: ACDFTupleExtended[] = (admPointDN && userName)
+        ? (await Promise.all(
+            newEntryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(admPointDN, tuple[0], userName, dn, EQUALITY_MATCHER, isMemberOfGroup),
+            ]),
+        )).filter((tuple) => (tuple[5] > 0))
+        : [];
     if (newEntryACDFTuples) {
         const permittedToDiscoverNewEntry: boolean = await checkDiscoverabilityOfEntry(
             ctx,
@@ -162,16 +181,11 @@ async function modDN (
         }
         for (const atav of newrdn) {
             const { authorized } = bacACDF(
-                admPointDN!,
-                newEntryACDFTuples,
+                relevantNewEntryTuples,
                 authLevel,
-                userName!,
-                dn,
                 { value: atav },
                 [ PERMISSION_CATEGORY_ADD ],
                 EQUALITY_MATCHER,
-                IS_MEMBER,
-                false,
             );
             if (!authorized) {
                 return new LDAPResult(
@@ -185,16 +199,11 @@ async function modDN (
         if (req.deleteoldrdn) {
             for (const atav of oldrdn) {
                 const { authorized } = bacACDF(
-                    admPointDN!,
-                    newEntryACDFTuples,
+                    relevantNewEntryTuples,
                     authLevel,
-                    userName!,
-                    dn,
                     { value: atav },
                     [ PERMISSION_CATEGORY_REMOVE ],
                     EQUALITY_MATCHER,
-                    IS_MEMBER,
-                    false,
                 );
                 if (!authorized) {
                     return new LDAPResult(

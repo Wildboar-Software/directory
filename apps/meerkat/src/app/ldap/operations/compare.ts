@@ -27,6 +27,7 @@ import getDistinguishedName from "../../x500/getDistinguishedName";
 import getACIItems from "../../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
@@ -51,10 +52,8 @@ import {
 } from "@wildboar/ldap/src/lib/controls";
 import {
     decodeLDAPOID,
-} from "@wildboar/ldap/src/lib/decodeLDAPOID"
-
-// FIXME: Needs an isMemberOfGroup implementation.
-const IS_MEMBER = () => false;
+} from "@wildboar/ldap/src/lib/decodeLDAPOID";
+import getIsGroupMember from "../../bac/getIsGroupMember";
 
 export
 async function compare (
@@ -71,6 +70,7 @@ async function compare (
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     const authLevel: AuthenticationLevel = {
         basicLevels: new AuthenticationLevel_basicLevels(
             conn.authLevel,
@@ -95,16 +95,15 @@ async function compare (
         ? getDistinguishedName(admPoint)
         : undefined;
     const entryACIs = await getACIItems(ctx, entry);
-    const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci))
-        .filter((tuple) => userWithinACIUserClass(
-            admPointDN!,
-            tuple[0],
-            userName!,
-            dn,
-            EQUALITY_MATCHER,
-            IS_MEMBER,
-        ) > -1);
+    const entryACDFTuples: ACDFTuple[] = (entryACIs ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const relevantTuples: ACDFTupleExtended[] = (admPointDN && userName)
+        ? (await Promise.all(
+            entryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(admPointDN, tuple[0], userName, dn, EQUALITY_MATCHER, isMemberOfGroup),
+            ]),
+        )).filter((tuple) => (tuple[5] > 0))
+        : [];
     const accessControlled: boolean = Boolean(entryACDFTuples);
     if (accessControlled && !userName) {
         return new LDAPResult(
@@ -119,11 +118,8 @@ async function compare (
         assert(admPoint);
         assert(admPointDN);
         const { authorized: authorizedToKnowAboutEntry } = bacACDF(
-            admPointDN!,
-            entryACDFTuples,
+            relevantTuples,
             authLevel,
-            userName!,
-            dn,
             {
                 entry: Array.from(entry.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
@@ -133,8 +129,6 @@ async function compare (
                 PERMISSION_CATEGORY_RETURN_DN,
             ],
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            false,
         );
         if (!authorizedToKnowAboutEntry) {
             return objectNotFound;
@@ -154,11 +148,8 @@ async function compare (
 
     if (accessControlled) {
         const { authorized: authorizedToAccessAttributeValue } = bacACDF(
-            admPointDN!,
-            entryACDFTuples,
+            relevantTuples,
             authLevel,
-            userName!,
-            dn,
             {
                 value: new AttributeTypeAndValue(
                     attrSpec.id,
@@ -167,15 +158,10 @@ async function compare (
             },
             [PERMISSION_CATEGORY_COMPARE],
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            false,
         );
         const { authorized: authorizedToErrorDisclosure } = bacACDF(
-            admPointDN!,
-            entryACDFTuples,
+            relevantTuples,
             authLevel,
-            userName!,
-            dn,
             {
                 value: new AttributeTypeAndValue(
                     attrSpec.id,
@@ -184,8 +170,6 @@ async function compare (
             },
             [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            false,
         );
         if (!authorizedToAccessAttributeValue) {
             if (authorizedToErrorDisclosure) {

@@ -6,6 +6,8 @@
 - [ ] Put object classes in the database
 - [ ] Put name forms in the database
 - [ ] Put friends in the database
+- [ ] Lock down control over the `uniqueIdentifier` attribute
+  - [ ] This is a "user" attribute, but the unique identifier must be totally unique for security purposes!
 - [ ] `readEntry()` deprecation
 - [ ] `findEntry()` refactor
   - [ ] Return the number of RDNs that matched, whether aliases were derefed.
@@ -13,6 +15,8 @@
   - [ ] Drill into database if entries are not in memory.
   - [ ] Ignore entries whose deletionTimestamp is set.
   - [ ] Return referrals / continuation references.
+  - [ ] Rename to `findEntryLocally()`
+- [ ] If an entry cannot be found locally, perform distributed procedures.
 - [ ] X.500 Library
   - [ ] `getApplicableValues()` (see `canJoin.ts`)
   - [ ] `isLeafEntry()`

@@ -54,6 +54,7 @@ import getDistinguishedName from "../../x500/getDistinguishedName";
 import getACIItems from "../../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
@@ -79,15 +80,13 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
 import readChildren from "../../dit/readChildren";
+import getIsGroupMember from "../../bac/getIsGroupMember";
 
 
 const PARENT_OID: string = id_oc_parent.toString();
 const CHILD_OID: string = id_oc_child.toString();
 const ALIAS_OID: string = id_oc_alias.toString();
 const MANAGE_DSAIT: OBJECT_IDENTIFIER = new ObjectIdentifier([ 2, 16, 840, 1, 113730, 3, 4, 2 ]);
-
-// FIXME: Needs an isMemberOfGroup implementation.
-const IS_MEMBER = () => false;
 
 // TODO: Limit number of ATAVs in RDN.
 // TODO: Creation of subentries
@@ -125,6 +124,7 @@ async function add (
     const userName = userDN
         ? new NameAndOptionalUID(userDN, undefined)
         : undefined;
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     const admPoint = getAdministrativePoint(superior);
     const superiorACIs = await getACIItems(ctx, superior);
     const superiorACDFTuples: ACDFTuple[] = (superiorACIs ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
@@ -140,22 +140,25 @@ async function add (
     if (accessControlled) {
         assert(admPoint);
         const admPointDN = getDistinguishedName(admPoint);
-        const relevantTuples = superiorACDFTuples.filter((tuple) => userWithinACIUserClass(
-            admPointDN,
-            tuple[0],
-            userName!,
-            superiorDN,
-            EQUALITY_MATCHER,
-            IS_MEMBER,
-        ) > -1);
+        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+            superiorACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    admPointDN,
+                    tuple[0],
+                    userName!,
+                    superiorDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        ))
+            .filter((tuple) => (tuple[5] > 0));
         const {
             authorized: authorizedToKnowAboutSuperiorEntry,
         } = bacACDF(
-            admPointDN,
             relevantTuples,
             authLevel,
-            userName!,
-            dn,
             {
                 entry: Array.from(superior.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
@@ -165,8 +168,6 @@ async function add (
                 PERMISSION_CATEGORY_RETURN_DN,
             ],
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            true,
         );
         if (!authorizedToKnowAboutSuperiorEntry) {
             /**
@@ -273,15 +274,22 @@ async function add (
     const admPointDN = admPoint
         ? getDistinguishedName(admPoint)
         : undefined;
-    const relevantNewEntryACDFTuples = admPointDN
-        ? newEntryACDFTuples.filter((tuple) => userWithinACIUserClass(
-            admPointDN,
-            tuple[0],
-            userName!,
-            dn,
-            EQUALITY_MATCHER,
-            IS_MEMBER,
-        ) > -1)
+
+    const relevantNewEntryACDFTuples: ACDFTupleExtended[] = admPointDN
+        ? (await Promise.all(
+            newEntryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    admPointDN,
+                    tuple[0],
+                    userName!,
+                    superiorDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        ))
+            .filter((tuple) => (tuple[5] > 0))
         : [];
 
     function checkEntryPermissionsOnNewEntry (grants: number[]): boolean {
@@ -291,21 +299,13 @@ async function add (
         const {
             authorized,
         } = bacACDF(
-            // It is not possible to create an administrative point through LDAP
-            // currently, but if it were, this admPointDN would need to be set
-            // to the new entry's DN.
-            admPointDN,
             relevantNewEntryACDFTuples,
             authLevel,
-            userName!,
-            dn,
             {
                 entry: objectClasses,
             },
             grants,
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            true,
         );
         return authorized;
     }
@@ -317,14 +317,8 @@ async function add (
         const {
             authorized,
         } = bacACDF(
-            // It is not possible to create an administrative point through LDAP
-            // currently, but if it were, this admPointDN would need to be set
-            // to the new entry's DN.
-            admPointDN,
             relevantNewEntryACDFTuples,
             authLevel,
-            userName!,
-            dn,
             {
                 value: new AttributeTypeAndValue(
                     attributeType,
@@ -333,8 +327,6 @@ async function add (
             },
             [PERMISSION_CATEGORY_ADD],
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            true,
         );
         return authorized;
     }
@@ -363,22 +355,30 @@ async function add (
         assert(admPoint);
         const admPointDN = getDistinguishedName(admPoint);
         const name = new NameAndOptionalUID(existingDN, undefined);
+        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+            existingACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    admPointDN,
+                    tuple[0],
+                    name,
+                    existingDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        )).filter((tuple) => (tuple[5] > 0));
         const {
             authorized,
         } = bacACDF(
-            admPointDN,
-            existingACDFTuples,
+            relevantTuples,
             authLevel,
-            name,
-            existingDN,
             {
                 entry: Array.from(entry.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
             },
             grants,
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            false,
         );
         return authorized;
     }

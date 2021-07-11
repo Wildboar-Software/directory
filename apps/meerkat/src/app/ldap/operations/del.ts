@@ -24,6 +24,7 @@ import getDistinguishedName from "../../x500/getDistinguishedName";
 import getACIItems from "../../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_BROWSE,
@@ -43,9 +44,7 @@ import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUser
 import { strict as assert } from "assert";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
-
-// FIXME: Needs an isMemberOfGroup implementation.
-const IS_MEMBER = () => false;
+import getIsGroupMember from "../../bac/getIsGroupMember";
 
 export
 async function del (
@@ -57,6 +56,7 @@ async function del (
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     const authLevel: AuthenticationLevel = {
         basicLevels: new AuthenticationLevel_basicLevels(
             conn.authLevel,
@@ -81,8 +81,15 @@ async function del (
         ? getDistinguishedName(admPoint)
         : undefined;
     const entryACIs = await getACIItems(ctx, entry);
-    const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const entryACDFTuples: ACDFTuple[] = (entryACIs ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const relevantTuples: ACDFTupleExtended[] = (admPointDN && userName)
+        ? (await Promise.all(
+            entryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(admPointDN, tuple[0], userName, dn, EQUALITY_MATCHER, isMemberOfGroup),
+            ]),
+        )).filter((tuple) => (tuple[5] > 0))
+        : [];
     const accessControlled: boolean = Boolean(entryACDFTuples);
     if (accessControlled && !userName) {
         return new LDAPResult(
@@ -98,19 +105,14 @@ async function del (
             return false;
         }
         const { authorized } = bacACDF(
-            admPointDN!,
-            entryACDFTuples,
+            relevantTuples,
             authLevel,
-            userName!,
-            dn,
             {
                 entry: Array.from(entry!.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
             },
             permissions,
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            false,
         );
         return authorized;
     }

@@ -46,6 +46,7 @@ import getDistinguishedName from "../../x500/getDistinguishedName";
 import getACIItems from "../../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_ADD,
@@ -64,6 +65,7 @@ import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUser
 import checkDiscoverabilityOfEntry from "../../bac/checkDiscoverabilityOfEntry";
 import type { LDAPDN } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPDN.ta";
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import getIsGroupMember from "../../bac/getIsGroupMember";
 
 const USER_PASSWORD_OID: string = id_at_userPassword.toString();
 const USER_PWD_OID: string = id_at_userPwd.toString();
@@ -82,9 +84,6 @@ const doNotStore: Set<IndexableOID> = new Set([
     id_at_userPwd,
     id_at_userPassword,
 ].map((oid) => oid.toString()));
-
-// FIXME: Needs an isMemberOfGroup implementation.
-const IS_MEMBER = () => false;
 
 function executeEntryModification (
     ctx: Context,
@@ -264,6 +263,7 @@ async function modify (
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     const authLevel: AuthenticationLevel = {
         basicLevels: new AuthenticationLevel_basicLevels(
             conn.authLevel,
@@ -289,16 +289,15 @@ async function modify (
         ? getDistinguishedName(admPoint)
         : undefined;
     const entryACIs = await getACIItems(ctx, entry);
-    const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci))
-        .filter((tuple) => userWithinACIUserClass(
-            admPointDN!,
-            tuple[0],
-            userName!,
-            dn,
-            EQUALITY_MATCHER,
-            IS_MEMBER,
-        ) > -1);
+    const entryACDFTuples: ACDFTuple[] = (entryACIs ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const relevantTuples: ACDFTupleExtended[] = (admPointDN && userName)
+        ? (await Promise.all(
+            entryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(admPointDN, tuple[0], userName, dn, EQUALITY_MATCHER, isMemberOfGroup),
+            ]),
+        )).filter((tuple) => (tuple[5] > 0))
+        : [];
     if (entryACDFTuples && !userName) {
         return new LDAPResult(
             LDAPResult_resultCode_insufficientAccessRights,
@@ -319,16 +318,11 @@ async function modify (
             return true;
         }
         const { authorized } = bacACDF(
-            admPointDN!,
-            entryACDFTuples,
+            relevantTuples,
             authLevel,
-            userName!,
-            dn,
             request,
             permissions,
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            true,
         );
         return authorized;
     }

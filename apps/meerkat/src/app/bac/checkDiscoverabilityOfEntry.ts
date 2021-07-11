@@ -4,6 +4,7 @@ import getAdministrativePoint from "../dit/getAdministrativePoint";
 import getACIItems from "../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF from "@wildboar/x500/src/lib/bac/bacACDF";
 import type {
     AuthenticationLevel,
@@ -14,9 +15,8 @@ import type {
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type EqualityMatcher from "@wildboar/ldap/src/lib/types/EqualityMatcher";
 import permissionsNeededToDiscover from "./permissionsNeededToDiscover";
-
-// FIXME: Needs an isMemberOfGroup implementation.
-const IS_MEMBER = () => false;
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import getIsGroupMember from "./getIsGroupMember";
 
 /**
  * @summary Check if an entry and all of it's superiors would be discoverable by a list operation.
@@ -58,11 +58,10 @@ async function checkDiscoverabilityOfEntry (
     authLevel: AuthenticationLevel,
     entry: Entry,
 ): Promise<boolean> {
-
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
-
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     let current: Entry | undefined = entry;
     while (current) {
         const admPoint = getAdministrativePoint(entry);
@@ -72,22 +71,24 @@ async function checkDiscoverabilityOfEntry (
         const admPointDN = getDistinguishedName(admPoint);
         const dn = getDistinguishedName(entry);
         const entryACIs = await getACIItems(ctx, entry);
-        const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
-            .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+        const entryACDFTuples: ACDFTuple[] = (entryACIs ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
+        const relevantTuples: ACDFTupleExtended[] = admPointDN
+            ? (await Promise.all(
+                entryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                    ...tuple,
+                    await userWithinACIUserClass(admPointDN, tuple[0], user, dn, EQUALITY_MATCHER, isMemberOfGroup),
+                ]),
+            )).filter((tuple) => (tuple[5] > 0))
+            : [];
         const { authorized } = bacACDF(
-            admPointDN,
-            entryACDFTuples,
+            relevantTuples,
             authLevel,
-            user,
-            dn,
             {
                 entry: Array.from(entry!.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
             },
             permissionsNeededToDiscover,
             EQUALITY_MATCHER,
-            IS_MEMBER,
-            false,
         );
         if (!authorized) {
             return false;

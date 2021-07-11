@@ -4,6 +4,7 @@ import getAdministrativePoint from "../dit/getAdministrativePoint";
 import getACIItems from "../dit/getACIItems";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF from "@wildboar/x500/src/lib/bac/bacACDF";
 import type {
     AuthenticationLevel,
@@ -13,9 +14,8 @@ import type {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type EqualityMatcher from "@wildboar/ldap/src/lib/types/EqualityMatcher";
-
-// FIXME: Needs an isMemberOfGroup implementation.
-const IS_MEMBER = () => false;
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import getIsGroupMember from "./getIsGroupMember";
 
 /**
  * @summary Convenience function to check the permissions on an entry.
@@ -42,11 +42,10 @@ async function checkPermissionsOnEntry (
     entry: Entry,
     permissions: number[],
 ): Promise<boolean> {
-
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
-
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     const admPoint = getAdministrativePoint(entry);
     if (!admPoint) {
         return true;
@@ -56,21 +55,23 @@ async function checkPermissionsOnEntry (
     const entryACIs = await getACIItems(ctx, entry);
     const entryACDFTuples: ACDFTuple[] = (entryACIs ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-
+    const relevantTuples: ACDFTupleExtended[] = admPointDN
+        ? (await Promise.all(
+            entryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(admPointDN, tuple[0], user, dn, EQUALITY_MATCHER, isMemberOfGroup),
+            ]),
+        )).filter((tuple) => (tuple[5] > 0))
+        : [];
     const { authorized } = bacACDF(
-        admPointDN,
-        entryACDFTuples,
+        relevantTuples,
         authLevel,
-        user,
-        dn,
         {
             entry: Array.from(entry!.objectClass)
                 .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
         },
         permissions,
         EQUALITY_MATCHER,
-        IS_MEMBER,
-        false,
     );
     return authorized;
 }
