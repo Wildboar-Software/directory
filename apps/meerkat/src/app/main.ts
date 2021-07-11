@@ -5,7 +5,9 @@ import * as fs from "fs";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
 import { IDMConnection } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import DAPConnection from "./dap/DAPConnection";
+import DSPConnection from "./dsp/DSPConnection";
 import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
@@ -110,6 +112,9 @@ async function main (): Promise<void> {
             if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
                 const dba = _decode_DirectoryBindArgument(idmBind.argument);
                 new DAPConnection(ctx, idm, dba); // eslint-disable-line
+            } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
+                const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
+                new DSPConnection(ctx, idm, dba);
             } else {
                 console.log(`Unsupported protocol: ${idmBind.protocolID.toString()}.`);
             }
