@@ -47,12 +47,6 @@ import { strict as assert } from "assert";
 import { ObjectIdentifier } from "asn1-ts";
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
-import {
-    subentries,
-} from "@wildboar/ldap/src/lib/controls";
-import {
-    decodeLDAPOID,
-} from "@wildboar/ldap/src/lib/decodeLDAPOID";
 import getIsGroupMember from "../../bac/getIsGroupMember";
 
 export
@@ -62,11 +56,6 @@ async function compare (
     req: CompareRequest,
     controls: Control[] = [],
 ): Promise<CompareResponse> {
-    const useSubentries: boolean = controls
-        .some((control) => (
-            decodeLDAPOID(control.controlType).isEqualTo(subentries)
-            && (control.controlValue?.[0] === 0xFF) // BOOLEAN TRUE
-        ));
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
@@ -87,7 +76,7 @@ async function compare (
 
     const dn = decodeLDAPDN(ctx, req.entry);
     const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
-    if (!entry || (entry.dseType.subentry && !useSubentries)) {
+    if (!entry) {
         return objectNotFound;
     }
     const admPoint = getAdministrativePoint(entry);

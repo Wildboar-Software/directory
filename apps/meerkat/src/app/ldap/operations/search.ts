@@ -87,6 +87,11 @@ import {
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import getIsGroupMember from "../../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import { subentries } from "@wildboar/ldap/src/lib/controls";
+import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
+import {
+    SearchRequest_scope_baseObject,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta"
 
 type EntryInfo = [
     entry: Entry,
@@ -266,7 +271,11 @@ async function search (
     onEntry: (entry: SearchResultEntry) => Promise<void>,
     controls: Control[] = [],
 ): Promise<SearchResultDone> {
-
+    const useSubentries: boolean = controls
+        .some((control) => (
+            decodeLDAPOID(control.controlType).isEqualTo(subentries)
+            && (control.controlValue?.[2] === 0xFF) // BOOLEAN TRUE
+        ));
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
@@ -318,6 +327,12 @@ async function search (
     const subset = await getSubset(ctx, entry, req.scope);
     const permittedSubset: Entry[] = [];
     for (const result of subset) {
+        if (
+            result.dseType.subentry
+            && !(useSubentries || (req.scope === SearchRequest_scope_baseObject))
+        ) {
+            continue;
+        }
         if (entryACDFTuples) {
             const canDiscover: boolean = await checkDiscoverabilityOfEntry(ctx, userName!, authLevel, result);
             if (canDiscover) {
