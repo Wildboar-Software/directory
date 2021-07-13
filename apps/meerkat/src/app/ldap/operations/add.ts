@@ -116,7 +116,7 @@ async function add (
         );
     }
     ctx.log.info(`Creating entry ${Buffer.from(req.entry).toString("utf-8")}...`);
-    const superior = await findEntry(ctx, ctx.database.data.dit, dn.slice(1), true);
+    const superior = await findEntry(ctx, ctx.database.data.dit, dn.slice(0, -1), true);
     if (!superior) {
         return objectNotFound;
     }

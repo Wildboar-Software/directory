@@ -22,8 +22,7 @@ interface FindEntryReturn {
     readonly matchedPrefix: DistinguishedName;
     readonly aliasDereferenced: boolean;
     readonly fallsWithinLocalContextPrefix: boolean;
-    readonly verticesVisitedById: Set<number>;
-    // loopDetected: boolean;
+    readonly loopDetected: boolean;
     // cacheMiss: boolean;
     // readonly continuationReferences: ContinuationReference[];
 }
@@ -34,6 +33,7 @@ interface FindEntryState extends FindEntryReturn {
     readonly needleDN: DistinguishedName,
     readonly haystackRoot: DIT,
     readonly options?: Readonly<FindEntryOptions>;
+    readonly verticesVisitedById: Set<number>;
 }
 
 // TODO: Loop detection
@@ -100,7 +100,7 @@ async function _findEntry (state: FindEntryState): Promise<FindEntryState> {
             for (const child of derefedHaystackRootChildren) {
                 const childResult = await _findEntry({
                     ...state,
-                    needleDN: needleDN.slice(1),
+                    needleDN: needleDN.slice(1), // Yes, we remove the FIRST RDN, because we DESCEND the DIT.
                     haystackRoot: child,
                     aliasDereferenced: state.aliasDereferenced || Boolean(haystackRoot.aliasedEntry),
                 });
@@ -140,6 +140,7 @@ async function findEntry2 (
         matchedPrefix: [],
         verticesVisitedById: new Set(),
         fallsWithinLocalContextPrefix: false,
+        loopDetected: false,
     });
 }
 
