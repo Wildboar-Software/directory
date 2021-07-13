@@ -81,6 +81,7 @@ import {
 import type { Control } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
 import readChildren from "../../dit/readChildren";
 import getIsGroupMember from "../../bac/getIsGroupMember";
+import getRDN from "../../x500/getRDN";
 
 
 const PARENT_OID: string = id_oc_parent.toString();
@@ -105,6 +106,15 @@ async function add (
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
 
     const dn = decodeLDAPDN(ctx, req.entry);
+    const rdn = getRDN(dn);
+    if (!rdn) {
+        return new LDAPResult(
+            LDAPResult_resultCode_unwillingToPerform,
+            req.entry,
+            Buffer.from("Root DSE may not be added."),
+            undefined,
+        );
+    }
     ctx.log.info(`Creating entry ${Buffer.from(req.entry).toString("utf-8")}...`);
     const superior = await findEntry(ctx, ctx.database.data.dit, dn.slice(1), true);
     if (!superior) {
@@ -255,7 +265,7 @@ async function add (
     const newEntry: Entry = {
         id: -1,
         uuid: entryUUID,
-        rdn: dn[0],
+        rdn,
         parent: superior,
         dseType: {
             entry: true, // TODO: Should this be false if alias is true?
@@ -478,7 +488,8 @@ async function add (
             }));
         }
     }
-    for (const atav of dn[0]) {
+
+    for (const atav of rdn) {
         const TYPE_OID: string = atav.type_.toString();
         const userIsAuthorizedToAddThisValue = userCanAddValueOnNewEntry(atav.type_, atav.value);
         if (!userIsAuthorizedToAddThisValue) {

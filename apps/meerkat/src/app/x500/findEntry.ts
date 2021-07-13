@@ -29,7 +29,7 @@ async function findEntry (
     }
     // To minimize modification by reference.
     const query: DistinguishedName = [ ...dn ];
-    const queriedRDN = query.pop();
+    const queriedRDN = query.shift();
     if (!queriedRDN) {
         return undefined;
     }

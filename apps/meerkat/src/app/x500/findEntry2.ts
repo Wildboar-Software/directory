@@ -7,10 +7,9 @@ import getDistinguishedName from "./getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import { OBJECT_IDENTIFIER } from "asn1-ts";
 import readChildren from "../dit/readChildren";
+import getRDN from "./getRDN";
 
 // TODO: Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
-// TODO: Drill into database if entries are not in memory.
-// TODO: Ignore entries whose deletionTimestamp is set.
 
 export
 interface FindEntryOptions {
@@ -22,6 +21,8 @@ interface FindEntryReturn {
     readonly result?: Entry;
     readonly matchedPrefix: DistinguishedName;
     readonly aliasDereferenced: boolean;
+    readonly fallsWithinLocalContextPrefix: boolean;
+    readonly verticesVisitedById: Set<number>;
     // loopDetected: boolean;
     // cacheMiss: boolean;
     // readonly continuationReferences: ContinuationReference[];
@@ -47,7 +48,7 @@ async function _findEntry (state: FindEntryState): Promise<FindEntryState> {
     } = state;
     const derefAliases = options?.derefAliases ?? true;
     // To minimize modification by reference.
-    const needleRDN = needleDN[0];
+    const needleRDN = getRDN(needleDN);
     if (!needleRDN) {
         return {
             ...state,
@@ -137,6 +138,8 @@ async function findEntry2 (
         options,
         aliasDereferenced: false,
         matchedPrefix: [],
+        verticesVisitedById: new Set(),
+        fallsWithinLocalContextPrefix: false,
     });
 }
 

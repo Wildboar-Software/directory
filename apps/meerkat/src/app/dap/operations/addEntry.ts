@@ -73,6 +73,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
 import findEntry from "../../x500/findEntry";
 import writeEntry from "../../database/writeEntry";
+import getRDN from "../../x500/getRDN";
 
 // const HIERARCHY_TOP_ATTR_OID: string = id_oa_hierarchyTop.toString();
 // const HIERARCHY_BELOW_ATTR_OID: string = id_oa_hierarchyBelow.toString();
@@ -196,7 +197,7 @@ async function addEntry (
     if (findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence)) {
         throw new UpdateError(`Entry already exists: ${nameToString(data.object)}`, ENTRY_EXISTS_ERROR_DATA);
     }
-    const superiorDN = data.object.rdnSequence.slice(1);
+    const superiorDN = data.object.rdnSequence.slice(0, -1);
     const superior = await findEntry(ctx, ctx.database.data.dit, superiorDN);
     if (!superior) {
         const superiorDNString = nameToString({ rdnSequence: superiorDN });
@@ -210,8 +211,14 @@ async function addEntry (
     }
 
     const entry = uuid();
-    const attrsFromDN: StoredAttributeValueWithContexts[] = data.object
-        .rdnSequence[0]
+    const rdn = getRDN(data.object.rdnSequence);
+    if (!rdn) {
+        throw new UpdateError(
+            "The Root DSE may not be added.",
+            namingViolationErrorData([]),
+        );
+    }
+    const attrsFromDN: StoredAttributeValueWithContexts[] = rdn
         .map((atav): StoredAttributeValueWithContexts => ({
             id: atav.type_,
             value: atav.value,
@@ -424,7 +431,7 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
     const newEntry: Entry = {
         id: -1,
         uuid: entry,
-        rdn: data.object.rdnSequence[0],
+        rdn,
         parent: superior,
         dseType: {
             entry: true,

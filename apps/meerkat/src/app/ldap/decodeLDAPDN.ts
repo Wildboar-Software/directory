@@ -4,6 +4,18 @@ import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/Informatio
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import destringifyRDNSequence from "@wildboar/ldap/src/lib/destringifiers/RDNSequence";
 
+/**
+ * @summary Decode an LDAP distinguished name and reverse it.
+ * @description
+ *
+ * This function not only decodes an LDAP distinguished name, but also reverses
+ * it so that the ordering of RDNs matches that of the X.500 specifications'
+ * `RDNSequence` production.
+ *
+ * @param ctx
+ * @param dn
+ * @returns
+ */
 export
 function decodeLDAPDN (ctx: Context, dn: Uint8Array): RDNSequence {
     if (dn.length === 0) {
@@ -26,10 +38,12 @@ function decodeLDAPDN (ctx: Context, dn: Uint8Array): RDNSequence {
                 (value: string) => syntax_.decoder!(Buffer.from(value)),
             ];
         },
-    )).map((rdn) => rdn.map(([ type_, value ]) => new AttributeTypeAndValue(
-        type_,
-        value,
-    )));
+    ))
+        .map((rdn) => rdn.map(([ type_, value ]) => new AttributeTypeAndValue(
+            type_,
+            value,
+        )))
+        .reverse();
 }
 
 export default decodeLDAPDN;

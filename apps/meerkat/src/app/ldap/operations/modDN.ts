@@ -10,7 +10,9 @@ import {
     LDAPResult,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AddResponse.ta";
 import {
+    LDAPResult_resultCode_success,
     LDAPResult_resultCode_insufficientAccessRights,
+    LDAPResult_resultCode_unwillingToPerform,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
 import findEntry from "../../x500/findEntry";
 import readEntryAttributes from "../../database/readEntryAttributes";
@@ -46,6 +48,7 @@ import {
 import checkPermissionsOnEntry from "../../bac/checkPermissionsOnEntry";
 import checkDiscoverabilityOfEntry from "../../bac/checkDiscoverabilityOfEntry";
 import getIsGroupMember from "../../bac/getIsGroupMember";
+import getRDN from "../../x500/getRDN";
 
 // ModifyDNRequest ::= [APPLICATION 12] SEQUENCE {
 //     entry           LDAPDN,
@@ -87,7 +90,15 @@ async function modDN (
     const oldSuperior: Entry | undefined = entry.parent;
     let newSuperior: Entry | undefined = oldSuperior;
     const oldrdn = entry.rdn;
-    const newrdn = decodeLDAPDN(ctx, req.newrdn)[0];
+    const newrdn = getRDN(decodeLDAPDN(ctx, req.newrdn));
+    if (!newrdn) {
+        return new LDAPResult(
+            LDAPResult_resultCode_unwillingToPerform,
+            req.entry,
+            Buffer.from("Root DSE may not be moved."),
+            undefined,
+        );
+    }
     const oldAdmPoint = getAdministrativePoint(entry);
     const oldAdmPointDN = oldAdmPoint
         ? getDistinguishedName(oldAdmPoint)
@@ -304,7 +315,7 @@ async function modDN (
     entry.rdn = newrdn;
 
     return new LDAPResult(
-        0, // Success
+        LDAPResult_resultCode_success,
         req.entry,
         Buffer.from("Success", "utf-8"),
         undefined,

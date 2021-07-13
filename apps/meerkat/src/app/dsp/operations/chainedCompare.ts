@@ -22,6 +22,22 @@ import {
     ServiceProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import * as errors from "../../dap/errors";
+import {
+    CompareArgument,
+    _decode_CompareArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
+import {
+    OperationProgress,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
+import {
+    OperationProgress_nameResolutionPhase_notStarted,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+import findEntry from "../../x500/findEntry";
+
+const defaultOperationProgres: OperationProgress = new OperationProgress(
+    OperationProgress_nameResolutionPhase_notStarted,
+    undefined,
+);
 
 export
 async function chainedCompare (
@@ -64,6 +80,21 @@ async function chainedCompare (
             );
         }
     }
+    const operationProgress: OperationProgress = data.chainedArgument.operationProgress
+        ?? defaultOperationProgres;
+
+
+
+    const dapArg: CompareArgument = _decode_CompareArgument(data.argument);
+    const dapData = ("signed" in dapArg)
+        ? dapArg.signed.toBeSigned
+        : dapArg.unsigned;
+
+    const entry = await findEntry(ctx, ctx.database.data.dit, dapData.object.rdnSequence, true /* FIXME: */);
+
+    data.chainedArgument.operationProgress
+    // Check if the object falls beneath the local context prefix and chain the request elsewhere if so.
+
     return {
         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
             new ChainingResults(
