@@ -8,6 +8,7 @@ import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistin
 import { OBJECT_IDENTIFIER } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import getRDN from "./getRDN";
+import isLocalContextPrefix from "../dit/isLocalContextPrefix";
 
 // TODO: Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
 
@@ -25,6 +26,7 @@ interface FindEntryReturn {
     readonly loopDetected: boolean;
     // cacheMiss: boolean;
     // readonly continuationReferences: ContinuationReference[];
+    // TODO: ACI items
 }
 
 export
@@ -36,8 +38,6 @@ interface FindEntryState extends FindEntryReturn {
     readonly verticesVisitedById: Set<number>;
 }
 
-// TODO: Loop detection
-
 export
 async function _findEntry (state: FindEntryState): Promise<FindEntryState> {
     const {
@@ -46,6 +46,15 @@ async function _findEntry (state: FindEntryState): Promise<FindEntryState> {
         haystackRoot,
         options,
     } = state;
+    // TODO: Check root DSE
+    if (state.verticesVisitedById.has(haystackRoot.id) || state.loopDetected) {
+        return {
+            ...state,
+            result: undefined,
+            loopDetected: true,
+        };
+    }
+    state.verticesVisitedById.add(haystackRoot.id);
     const derefAliases = options?.derefAliases ?? true;
     // To minimize modification by reference.
     const needleRDN = getRDN(needleDN);
@@ -91,6 +100,10 @@ async function _findEntry (state: FindEntryState): Promise<FindEntryState> {
                 return {
                     ...state,
                     matchedPrefix: getDistinguishedName(haystackRoot),
+                    fallsWithinLocalContextPrefix: (
+                        state.fallsWithinLocalContextPrefix
+                        || isLocalContextPrefix(haystackRoot)
+                    ),
                 };
             }
             const derefedHaystackRoot = haystackRoot.aliasedEntry
@@ -112,6 +125,10 @@ async function _findEntry (state: FindEntryState): Promise<FindEntryState> {
                 ...state,
                 matchedPrefix: getDistinguishedName(derefedHaystackRoot),
                 aliasDereferenced: state.aliasDereferenced || Boolean(haystackRoot.aliasedEntry),
+                fallsWithinLocalContextPrefix: (
+                    state.fallsWithinLocalContextPrefix
+                    || isLocalContextPrefix(haystackRoot)
+                ),
             };
         }
     } else { // It did not match.
