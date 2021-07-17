@@ -1,4 +1,4 @@
-import type { Context, Entry } from "../types";
+import type { Context, Vertex } from "../types";
 import {
     SearchArgumentData_subset,
     SearchArgumentData_subset_baseObject,
@@ -6,40 +6,48 @@ import {
     SearchArgumentData_subset_wholeSubtree,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import readChildren from "../dit/readChildren";
+import findEntry from "./findEntry";
 
 export
 async function getSubset (
     ctx: Context,
-    entry: Entry,
+    entry: Vertex,
     subset: SearchArgumentData_subset,
     derefAliases: boolean = true,
-): Promise<Entry[]> {
-    const base = derefAliases
-        ? entry.aliasedEntry ?? entry
+): Promise<Vertex[]> {
+    const base = (derefAliases && entry.dse.alias?.aliasedEntryName)
+        ? await findEntry(ctx, ctx.dit.root, entry.dse.alias.aliasedEntryName, derefAliases)
         : entry;
+    if (!base) {
+        return []; // TODO: What to do here?
+    }
+    if (subset === SearchArgumentData_subset_baseObject) {
+        return [ base ];
+    }
     const children = await readChildren(ctx, entry);
-    switch (subset) {
-        case (SearchArgumentData_subset_baseObject): {
-            return [ base ];
-        }
-        case (SearchArgumentData_subset_oneLevel): {
-            return children
-                .map((child) => (derefAliases ? (child.aliasedEntry ?? child) : child));
-        }
-        case (SearchArgumentData_subset_wholeSubtree): {
-            const descendantPromises = await Promise.all(
-                children
+    const derefedChildren = (await Promise.all(
+        children
+            .map((child) => (
+                (derefAliases && child.dse.alias?.aliasedEntryName)
+                    ? findEntry(ctx, ctx.dit.root, child.dse.alias.aliasedEntryName)
+                    : child
+            )),
+    ))
+        .filter((child): child is Vertex => !!child);
+    if (subset === SearchArgumentData_subset_baseObject) {
+        return derefedChildren;
+    } else if (subset === SearchArgumentData_subset_wholeSubtree) {
+        const descendantPromises = await Promise.all(
+            derefedChildren
                 .flatMap((child) => getSubset(
                     ctx,
-                    derefAliases ? (child.aliasedEntry ?? child) : child,
+                    child,
                     SearchArgumentData_subset_wholeSubtree)
                 ),
-            );
-            return descendantPromises.flat();
-        }
-        default: {
-            return [];
-        }
+        );
+        return descendantPromises.flat();
+    } else {
+        return [];
     }
 }
 

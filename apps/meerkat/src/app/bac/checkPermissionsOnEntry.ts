@@ -1,4 +1,4 @@
-import type { Context, Entry } from "../types";
+import type { Context, Vertex } from "../types";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getAdministrativePoint from "../dit/getAdministrativePoint";
 import getACIItems from "../dit/getACIItems";
@@ -39,7 +39,7 @@ async function checkPermissionsOnEntry (
     ctx: Context,
     user: NameAndOptionalUID,
     authLevel: AuthenticationLevel,
-    entry: Entry,
+    entry: Vertex,
     permissions: number[],
 ): Promise<boolean> {
     const EQUALITY_MATCHER = (
@@ -67,7 +67,7 @@ async function checkPermissionsOnEntry (
         relevantTuples,
         authLevel,
         {
-            entry: Array.from(entry!.objectClass)
+            entry: Array.from(entry.dse.objectClass)
                 .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
         },
         permissions,

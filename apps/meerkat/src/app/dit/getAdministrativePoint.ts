@@ -1,21 +1,21 @@
-import type { Entry } from "../types";
+import type { Vertex } from "../types";
 
 const MAX_TRAVERSAL: number = 100000;
 
 export
 function getAdministrativePoint (
-    entry: Entry,
-): Entry | undefined {
+    entry: Vertex,
+): Vertex | undefined {
     let current = entry;
     let i: number = 0;
     while (i < MAX_TRAVERSAL) {
-        if (current.dseType.admPoint) {
+        if (current.dse.admPoint) {
             return current;
         }
-        if (!current.parent) {
+        if (!current.immediateSuperior) {
             return undefined;
         }
-        current = current.parent;
+        current = current.immediateSuperior;
         i++;
     }
     return undefined;

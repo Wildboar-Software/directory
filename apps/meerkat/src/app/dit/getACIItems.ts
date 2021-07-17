@@ -1,4 +1,4 @@
-import type { Context, Entry } from "../types";
+import type { Context, Vertex } from "../types";
 import {
     ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
@@ -48,19 +48,19 @@ const RSAC: string = rule_and_basic_access_control.toString();
 
 async function getRelevantSubentries (
     ctx: Context,
-    entry: Entry,
+    entry: Vertex,
     entryDN: DistinguishedName,
-    admPoint: Entry,
-): Promise<Entry[]> {
+    admPoint: Vertex,
+): Promise<Vertex[]> {
     const children = await readChildren(ctx, admPoint);
     return children
         .filter((child) => (
-            child.dseType.subentry
-            && child.objectClass.has(SUBENTRY)
-            && child.objectClass.has(AC_SUBENTRY)
-            && child.subtrees?.some((subtree) => dnWithinSubtreeSpecification(
+            child.dse.subentry
+            && child.dse.objectClass.has(SUBENTRY)
+            && child.dse.objectClass.has(AC_SUBENTRY)
+            && child.dse.subentry.subtreeSpecification.some((subtree) => dnWithinSubtreeSpecification(
                 entryDN,
-                Array.from(entry.objectClass).map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
+                Array.from(entry.dse.objectClass).map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
                 subtree,
                 getDistinguishedName(child),
                 (attributeType: OBJECT_IDENTIFIER): EqualityMatcher | undefined => ctx
@@ -71,59 +71,59 @@ async function getRelevantSubentries (
 }
 
 export
-async function getACIItems (ctx: Context, entry: Entry): Promise<ACIItem[] | null> {
+async function getACIItems (ctx: Context, entry: Vertex): Promise<ACIItem[] | null> {
     const entryDN = getDistinguishedName(entry);
     let current = entry;
-    const entryACI: ACIItem[] = entry.entryACI ?? []; // Still applies for subentries
+    const entryACI: ACIItem[] = entry.dse.entryACI ?? []; // Still applies for subentries
     // If the entry is itself an admin point, we have to get the prescriptive
     // ACI from its children; after that, we can treat it like a normal entry.
     const children = await readChildren(ctx, entry);
-    const prescriptiveACI: ACIItem[] = (entry.dseType.admPoint)
+    const prescriptiveACI: ACIItem[] = (entry.dse.admPoint)
         ? children
             .filter((child) => (
-                child.dseType.subentry
-                && child.objectClass.has(SUBENTRY)
-                && child.objectClass.has(AC_SUBENTRY)
-                && child.subtrees?.some((subtree) => dnWithinSubtreeSpecification(
+                child.dse.subentry
+                && child.dse.objectClass.has(SUBENTRY)
+                && child.dse.objectClass.has(AC_SUBENTRY)
+                && child.dse.subentry.subtreeSpecification.some((subtree) => dnWithinSubtreeSpecification(
                     entryDN,
-                    Array.from(entry.objectClass).map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
+                    Array.from(entry.dse.objectClass).map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
                     subtree,
                     getDistinguishedName(child),
                     (attributeType: OBJECT_IDENTIFIER): EqualityMatcher | undefined => ctx
                         .attributes
                         .get(attributeType.toString())?.equalityMatcher,
                 ))
-            )).flatMap((subentry) => subentry.prescriptiveACI ?? [])
+            )).flatMap((subentry) => subentry.dse.subentry?.prescriptiveACI ?? [])
         : [];
     const subentryACI: ACIItem[] = [];
     while (
-        current.parent
+        current.immediateSuperior
         && (
-            !current.dseType.admPoint
+            !current.dse.admPoint
             || !(
-                current.administrativeRoles?.has(ACCESS_CONTROL_SPECIFIC_AREA)
-                || current.administrativeRoles?.has(AUTONOMOUS_AREA)
+                current.dse.admPoint.administrativeRole?.has(ACCESS_CONTROL_SPECIFIC_AREA)
+                || current.dse.admPoint.administrativeRole?.has(AUTONOMOUS_AREA)
             )
         )
     ) {
-        current = current.parent;
-        if (current.dseType.admPoint && current.administrativeRoles?.has(ACCESS_CONTROL_INNER_AREA)) {
+        current = current.immediateSuperior;
+        if (current.dse.admPoint && current.dse.admPoint.administrativeRole.has(ACCESS_CONTROL_INNER_AREA)) {
             // Prescriptive ACI of subentries do not apply to subentries in the
             // same scope, but those from superior subentries can.
-            if (!entry.dseType.subentry || (entry.parent !== current)) {
+            if (!entry.dse.subentry || (entry.immediateSuperior !== current)) {
                 const relevantSubentries = await getRelevantSubentries(ctx, entry, entryDN, current);
-                prescriptiveACI.push(...relevantSubentries.flatMap((subentry) => subentry.prescriptiveACI ?? []));
+                prescriptiveACI.push(...relevantSubentries.flatMap((subentry) => subentry.dse.subentry?.prescriptiveACI ?? []));
             }
-            subentryACI.push(...current.subentryACI ?? []);
+            subentryACI.push(...current.dse.admPoint?.subentryACI ?? []);
         }
     }
-    if (!current.dseType.admPoint) { // If there is no administrative point, no ACI items apply.
+    if (!current.dse.admPoint) { // If there is no administrative point, no ACI items apply.
         return null;
     }
-    if (!current.administrativeRoles?.has(ACCESS_CONTROL_SPECIFIC_AREA)) {
+    if (!current.dse.admPoint.administrativeRole.has(ACCESS_CONTROL_SPECIFIC_AREA)) {
         return null;
     }
-    switch (current.accessControlScheme?.toString()) {
+    switch (current.dse.admPoint.accessControlScheme?.toString()) {
         case (BAC):
         case (RBAC): {
             return [

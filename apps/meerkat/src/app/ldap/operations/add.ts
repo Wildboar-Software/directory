@@ -1,4 +1,4 @@
-import type { Context, Entry, IndexableOID, StoredAttributeValueWithContexts } from "../../types";
+import type { Context, Vertex, IndexableOID, StoredAttributeValueWithContexts } from "../../types";
 import type LDAPConnection from "../LDAPConnection";
 import type {
     AddRequest,
@@ -116,7 +116,7 @@ async function add (
         );
     }
     ctx.log.info(`Creating entry ${Buffer.from(req.entry).toString("utf-8")}...`);
-    const superior = await findEntry(ctx, ctx.database.data.dit, dn.slice(0, -1), true);
+    const superior = await findEntry(ctx, ctx.dit.root, dn.slice(0, -1), true);
     if (!superior) {
         return objectNotFound;
     }
@@ -170,7 +170,7 @@ async function add (
             relevantTuples,
             authLevel,
             {
-                entry: Array.from(superior.objectClass)
+                entry: Array.from(superior.dse.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
             },
             [
@@ -201,7 +201,7 @@ async function add (
             return objectNotFound;
         }
     }
-    if (superior.dseType.alias || superior.aliasedEntry) {
+    if (superior.dse.alias) {
         return new LDAPResult(
             LDAPResult_resultCode_constraintViolation,
             req.entry,
@@ -262,21 +262,19 @@ async function add (
         );
     }
 
-    const newEntry: Entry = {
-        id: -1,
-        uuid: entryUUID,
-        rdn,
-        parent: superior,
-        dseType: {
-            entry: true, // TODO: Should this be false if alias is true?
-            alias: (aliasedEntries.length > 0),
+    const newEntry: Vertex = {
+        immediateSuperior: superior,
+        subordinates: [],
+        dse: {
+            id: -1,
+            uuid: entryUUID,
+            rdn,
+            objectClass: new Set(objectClasses.map((oc) => oc.toString())),
+            creatorsName,
+            modifiersName: creatorsName,
+            createdTimestamp: now,
+            modifyTimestamp: now,
         },
-        children: [],
-        objectClass: new Set(objectClasses.map((oc) => oc.toString())),
-        creatorsName,
-        modifiersName: creatorsName,
-        createdTimestamp: now,
-        modifyTimestamp: now,
     };
 
     const newEntryACIs = await getACIItems(ctx, newEntry);
@@ -352,13 +350,13 @@ async function add (
     }
 
     async function checkPermissionsOnAlreadyExistingEntry (
-        entry: Entry,
+        entry: Vertex,
         grants: number[],
     ): Promise<boolean> {
         if (!accessControlled) {
             return true;
         }
-        const existingDN = [ entry.rdn, ...superiorDN ];
+        const existingDN = [ ...superiorDN, entry.dse.rdn ];
         const existingACIs = await getACIItems(ctx, entry);
         const existingACDFTuples: ACDFTuple[] = (existingACIs ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
@@ -384,7 +382,7 @@ async function add (
             relevantTuples,
             authLevel,
             {
-                entry: Array.from(entry.objectClass)
+                entry: Array.from(entry.dse.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
             },
             grants,
@@ -396,7 +394,7 @@ async function add (
     // Check if the entry already exists.
     const superiorChildren = await readChildren(ctx, superior);
     for (const child of superiorChildren) {
-        const childDN = [ child.rdn, ...superiorDN ]; // FIXME: Reverse.
+        const childDN = [ ...superiorDN, child.dse.rdn ];
         if (!compareRDNSequence(childDN, dn, EQUALITY_MATCHER)) {
             continue;
         }
@@ -445,7 +443,7 @@ async function add (
 
     if (
         objectClasses.some((oc) => oc.isEqualTo(id_oc_child))
-        && !superior.objectClass.has(PARENT_OID)
+        && !superior.dse.objectClass.has(PARENT_OID)
     ) {
         return new LDAPResult(
             LDAPResult_resultCode_other,
@@ -610,8 +608,8 @@ async function add (
     }
 
     const result = await writeEntry(ctx, superior, newEntry, [ ...attrs ]);
-    newEntry.id = result.id;
-    superior.children?.push(newEntry);
+    newEntry.dse.id = result.id;
+    superior.subordinates?.push(newEntry);
     ctx.log.info(`Created entry ${Buffer.from(req.entry).toString("utf-8")}.`);
     return new LDAPResult(
         LDAPResult_resultCode_success,

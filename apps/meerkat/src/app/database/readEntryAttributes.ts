@@ -1,4 +1,4 @@
-import type { Context, Entry, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Vertex, StoredAttributeValueWithContexts } from "../types";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 import { DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import { _encodeGeneralizedTime, DER } from "asn1-ts/dist/node/functional";
@@ -56,13 +56,13 @@ interface ReadEntryAttributesReturn {
 export
 async function readEntryAttributes (
     ctx: Context,
-    entry: Entry,
+    entry: Vertex,
     options?: ReadEntryAttributesOptions,
 ): Promise<ReadEntryAttributesReturn> {
     const userAttributes: StoredAttributeValueWithContexts[] = await Promise.all(
         (await ctx.db.attributeValue.findMany({
             where: {
-                entry_id: entry.id,
+                entry_id: entry.dse.id,
                 type: (options?.attributesSelect && options.attributesSelect.length > 0)
                     ? {
                         in: options.attributesSelect.map((as) => as.toString())
@@ -88,7 +88,7 @@ async function readEntryAttributes (
     );
     const aciItems = await ctx.db.aCIItem.findMany({
         where: {
-            entry_id: entry.id,
+            entry_id: entry.dse.id,
         },
     });
     const entryACIItems = aciItems.filter((aci) => aci.scope === ACIScope.ENTRY);
@@ -98,12 +98,12 @@ async function readEntryAttributes (
     if (options?.includeOperationalAttributes) {
         operationalAttributes.push({
             id: createTimestamp["&id"]!,
-            value: _encodeGeneralizedTime(entry.createdTimestamp, DER),
+            value: _encodeGeneralizedTime(entry.dse.createdTimestamp, DER),
             contexts: new Map(),
         });
         operationalAttributes.push({
             id: modifyTimestamp["&id"]!,
-            value: _encodeGeneralizedTime(entry.modifyTimestamp, DER),
+            value: _encodeGeneralizedTime(entry.dse.modifyTimestamp, DER),
             contexts: new Map(),
         });
         operationalAttributes.push(

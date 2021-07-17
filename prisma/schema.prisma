@@ -27,11 +27,8 @@ model Entry {
     immediate_superior_id Int?
     immediate_superior    Entry?   @relation(fields: [immediate_superior_id], references: [id])
     objectClass           String[]
-
-    // It seems like Prisma does not even support multiple self-references: https://github.com/prisma/prisma/issues/4657
-    // aliased_entry_id      Int?
-    // aliased_entry         Entry? @relation(name: "zxcv", fields: [aliased_entry_id], references: [id])
-    aliased_entry_dn Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    commonName            String? // Multi-valued, but here just for subentries.
+    aliased_entry_dn      Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
 
     // DSE Types
     root          Boolean @default(false)
@@ -90,9 +87,6 @@ model Entry {
     contentType              String? // From PkiPmiWrapper
     messageDigest            Bytes? // From PkiPmiWrapper
     attribute_integrity_info Bytes? // From EnhancedSecurity.attributeIntegrityInfo
-    // myAccessPoint
-    // superiorKnowledge
-    // specificKnowledge
 
     // Not exactly single-valued, but do not need a separate table:
     administrativeRole String[]
@@ -103,6 +97,11 @@ model Entry {
     entryUUID              String  @default(uuid()) @db.Uuid
     dc                     String? // https://datatracker.ietf.org/doc/html/rfc4519
     // preferredDeliveryMethod
+
+    // Shadowing flags. See ITU Recommendation X.525 (2016), Section 7.2.1.
+    subordinate_completeness    Boolean?
+    attribute_completeness      Boolean?
+    attribute_values_incomplete Boolean?
 
     // Storage parameters
     keep_children_in_database Boolean @default(false)
@@ -123,10 +122,14 @@ model Entry {
     ContextValue                ContextValue[]
     ContextDescriptionUse       ContextDescriptionUse[]
     SearchRuleUse               SearchRuleUse[]
+    AccessPoint                 AccessPoint[]
+    SubtreeSpecification        SubtreeSpecification[]
+    DitBridgeKnowledge          DitBridgeKnowledge[]
     @@unique([immediate_superior_id, rdn])
     @@unique([entryUUID])
     @@index([aliased_entry_dn])
     @@index([dit_id])
+    NonSpecificKnowledge NonSpecificKnowledge[]
 }
 
 model UtmCoordinate {
@@ -272,21 +275,55 @@ enum Knowledge {
     OTHER
 }
 
-// Abandoned for now, because (1) There is no DNS support, and (2)
-// Satisfies AccessPoint, MasterOrShadowAccessPoint, SupplierOrConsumer, and SupplierInformation
+// Type: MY, supr, supplier, consumer, secondary consumer, xr, immSupr, subr, nssr?
+// Satisfies AccessPoint, MasterOrShadowAccessPoint, SupplierOrConsumer, ConsumerInformation, and SupplierInformation
 model AccessPoint {
-    id                      Int                  @id @default(autoincrement())
-    knowledge_type          Knowledge
-    ae_title                Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    ipv4                    String               @db.Inet
-    tcp_port                Int                  @db.SmallInt
-    category                Int?
-    chainingRequired        Boolean?
-    OperationalBinding      OperationalBinding[]
-    supplier_is_master      Boolean?
-    non_supplying_master_id Int?
-    non_supplying_master    AccessPoint?         @relation(fields: [non_supplying_master_id], references: [id])
-    AccessPoint             AccessPoint[]        @relation("AccessPointToAccessPoint")
+    id                       Int                  @id @default(autoincrement())
+    knowledge_type           Knowledge
+    ae_title                 Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    ipv4                     String?              @db.Inet
+    tcp_port                 Int?                 @db.SmallInt
+    url                      String?
+    category                 Int?
+    chainingRequired         Boolean?
+    OperationalBinding       OperationalBinding[]
+    supplier_is_master       Boolean?
+    non_supplying_master_id  Int?
+    non_supplying_master     AccessPoint?         @relation("non_supplying_master", fields: [non_supplying_master_id], references: [id])
+    is_consumer_of_id        Int?
+    is_consumer_of           AccessPoint?         @relation("is_consumer_of", fields: [is_consumer_of_id], references: [id])
+    entry_id                 Int
+    entry                    Entry                @relation(fields: [entry_id], references: [id])
+    non_supplying_master_for AccessPoint[]        @relation("non_supplying_master")
+    consumers                AccessPoint[]        @relation("is_consumer_of")
+    ber                      Bytes
+}
+
+model NonSpecificKnowledge {
+    id       Int   @id @default(autoincrement())
+    ber      Bytes
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+}
+
+model SubtreeSpecification {
+    id                   Int   @id @default(autoincrement())
+    base                 Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    specific_exclusions  Json // [{"chopBefore": [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]}]
+    minimum              Int   @default(0)
+    maximum              Int?
+    specification_filter Json // {"and": [{"item": "2.5.4.10"}]}
+    ber                  Bytes
+    entry_id             Int
+    entry                Entry @relation(fields: [entry_id], references: [id])
+}
+
+model DitBridgeKnowledge {
+    id              Int    @id @default(autoincrement())
+    domain_local_id String
+    ber             Bytes
+    entry_id        Int
+    entry           Entry  @relation(fields: [entry_id], references: [id])
 }
 
 model OperationalBindingType {

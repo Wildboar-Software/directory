@@ -67,7 +67,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import findEntry from "../x500/findEntry";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import getRDN from "../x500/getRDN";
 
 // ReferralError
 
@@ -156,12 +155,12 @@ async function objectDoesNotExistErrorData (ctx: Context, soughtName: Name): Pro
     let name: Name = {
         rdnSequence: [ ...soughtName.rdnSequence.slice(0, -1) ],
     };
-    let match = await findEntry(ctx, ctx.database.data.dit, name.rdnSequence);
+    let match = await findEntry(ctx, ctx.dit.root, name.rdnSequence);
     while (!match) {
         name = {
             rdnSequence: [ ...name.rdnSequence.slice(0, -1) ],
         };
-        match = await findEntry(ctx, ctx.database.data.dit, name.rdnSequence);
+        match = await findEntry(ctx, ctx.dit.root, name.rdnSequence);
     }
     return new NameErrorData(
         NameProblem_noSuchObject,

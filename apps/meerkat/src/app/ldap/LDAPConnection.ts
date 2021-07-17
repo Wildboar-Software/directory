@@ -1,4 +1,4 @@
-import type { Context, Entry } from "../types";
+import type { Context, Vertex } from "../types";
 import * as net from "net";
 import * as tls from "tls";
 import { BERElement, ASN1TruncationError, ObjectIdentifier } from "asn1-ts";
@@ -41,7 +41,7 @@ import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 export class LDAPConnection {
 
     private buffer: Buffer = Buffer.alloc(0);
-    public boundEntry: Entry | undefined;
+    public boundEntry: Vertex | undefined;
     public authLevel: AuthenticationLevel_basicLevels_level = AuthenticationLevel_basicLevels_level_none;
     private connection!: net.Socket;
 
@@ -75,7 +75,7 @@ export class LDAPConnection {
             const result = await bind(ctx, req);
             if (result.resultCode === LDAPResult_resultCode_success) {
                 const dn = decodeLDAPDN(ctx, req.name);
-                this.boundEntry = await findEntry(ctx, ctx.database.data.dit, dn, true);
+                this.boundEntry = await findEntry(ctx, ctx.dit.root, dn, true);
                 // Currently, there is no way to achieve strong auth using LDAP.
                 this.authLevel = AuthenticationLevel_basicLevels_level_simple;
             }

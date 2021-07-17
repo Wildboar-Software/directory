@@ -1,4 +1,4 @@
-import type { Context, Entry } from "../types";
+import type { Context, Vertex } from "../types";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getAdministrativePoint from "../dit/getAdministrativePoint";
 import getACIItems from "../dit/getACIItems";
@@ -56,13 +56,13 @@ async function checkDiscoverabilityOfEntry (
     ctx: Context,
     user: NameAndOptionalUID,
     authLevel: AuthenticationLevel,
-    entry: Entry,
+    entry: Vertex,
 ): Promise<boolean> {
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
-    let current: Entry | undefined = entry;
+    let current: Vertex | undefined = entry;
     while (current) {
         const admPoint = getAdministrativePoint(entry);
         if (!admPoint) {
@@ -84,7 +84,7 @@ async function checkDiscoverabilityOfEntry (
             relevantTuples,
             authLevel,
             {
-                entry: Array.from(entry!.objectClass)
+                entry: Array.from(entry!.dse.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
             },
             permissionsNeededToDiscover,
@@ -93,10 +93,10 @@ async function checkDiscoverabilityOfEntry (
         if (!authorized) {
             return false;
         }
-        if (current.dseType.root) { // The root is always known to exist.
+        if (current.dse.root) { // The root is always known to exist.
             return true;
         }
-        current = current.parent;
+        current = current.immediateSuperior;
     }
     return true;
 }

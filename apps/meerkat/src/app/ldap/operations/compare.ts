@@ -75,7 +75,7 @@ async function compare (
         : undefined;
 
     const dn = decodeLDAPDN(ctx, req.entry);
-    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.dit.root, dn, true);
     if (!entry) {
         return objectNotFound;
     }
@@ -110,7 +110,7 @@ async function compare (
             relevantTuples,
             authLevel,
             {
-                entry: Array.from(entry.objectClass)
+                entry: Array.from(entry.dse.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
             },
             [

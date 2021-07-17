@@ -1,4 +1,4 @@
-import { Context, Entry, IndexableOID } from "../../types";
+import { Context, Vertex, IndexableOID } from "../../types";
 import type LDAPConnection from "../LDAPConnection";
 import type {
     ModifyDNRequest,
@@ -83,13 +83,13 @@ async function modDN (
         : undefined;
 
     const dn = decodeLDAPDN(ctx, req.entry);
-    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.dit.root, dn, true);
     if (!entry) {
         return objectNotFound;
     }
-    const oldSuperior: Entry | undefined = entry.parent;
-    let newSuperior: Entry | undefined = oldSuperior;
-    const oldrdn = entry.rdn;
+    const oldSuperior: Vertex | undefined = entry.immediateSuperior;
+    let newSuperior: Vertex | undefined = oldSuperior;
+    const oldrdn = entry.dse.rdn;
     const newrdn = getRDN(decodeLDAPDN(ctx, req.newrdn));
     if (!newrdn) {
         return new LDAPResult(
@@ -147,11 +147,11 @@ async function modDN (
 
     if (req.newSuperior) {
         const newSuperiorDN = decodeLDAPDN(ctx, req.newSuperior);
-        newSuperior = await findEntry(ctx, ctx.database.data.dit, newSuperiorDN, true);
+        newSuperior = await findEntry(ctx, ctx.dit.root, newSuperiorDN, true);
         if (!newSuperior) {
             return objectNotFound;
         }
-        entry.parent = newSuperior;
+        entry.immediateSuperior = newSuperior;
     }
 
     const admPoint = getAdministrativePoint(entry);
@@ -176,7 +176,7 @@ async function modDN (
             entry,
         );
         if (!permittedToDiscoverNewEntry) {
-            entry.parent = oldSuperior;
+            entry.immediateSuperior = oldSuperior;
             return objectNotFound;
         }
         const permittedToNewEntry: boolean = await checkPermissionsOnEntry(ctx, userName!, authLevel, entry, [
@@ -230,11 +230,11 @@ async function modDN (
 
     const updateEntryArguments = {
         where: {
-            id: entry.id,
+            id: entry.dse.id,
         },
         data: {
             rdn: rdnToJson(newrdn),
-            immediate_superior_id: newSuperior?.id,
+            immediate_superior_id: newSuperior?.dse.id,
         },
     };
     if (req.deleteoldrdn) {
@@ -269,12 +269,12 @@ async function modDN (
             ctx.db.entry.update(updateEntryArguments),
             ctx.db.attributeValue.deleteMany({
                 where: {
-                    entry_id: entry.id,
+                    entry_id: entry.dse.id,
                 },
             }),
             ...attrsToBeKept.map((attr) => ctx.db.attributeValue.create({
                     data: {
-                        entry_id: entry.id,
+                        entry_id: entry.dse.id,
                         type: attr.id.toString(),
                         tag_class: attr.value.tagClass,
                         constructed: (attr.value.construction === ASN1Construction.constructed),
@@ -287,7 +287,7 @@ async function modDN (
                                         .map((cv) => ({
                                             // id: null,
                                             // value_id: null,
-                                            entry_id: entry.id,
+                                            entry_id: entry.dse.id,
                                             type: context.id.nodes,
                                             tag_class: cv.tagClass,
                                             constructed: (cv.construction === ASN1Construction.constructed),
@@ -306,13 +306,14 @@ async function modDN (
         await ctx.db.entry.update(updateEntryArguments);
     }
 
-    if (entry.parent?.children?.length && (entry.parent !== newSuperior)) {
-        const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
-        entry.parent.children.splice(entryIndex, 1); // Remove from the current parent.
-        newSuperior?.children?.push(entry); // Move to the new parent.
+    if (entry.immediateSuperior?.subordinates?.length && (entry.immediateSuperior !== newSuperior)) {
+        const entryIndex = entry.immediateSuperior.subordinates
+            .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
+        entry.immediateSuperior.subordinates.splice(entryIndex, 1); // Remove from the current parent.
+        newSuperior?.subordinates?.push(entry); // Move to the new parent.
     }
 
-    entry.rdn = newrdn;
+    entry.dse.rdn = newrdn;
 
     return new LDAPResult(
         LDAPResult_resultCode_success,

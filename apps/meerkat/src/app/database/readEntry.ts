@@ -1,4 +1,4 @@
-import type { Context, Entry, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Vertex, StoredAttributeValueWithContexts } from "../types";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 
 /**
@@ -12,12 +12,12 @@ import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 export
 async function readEntry (
     ctx: Context,
-    entry: Entry,
+    entry: Vertex,
 ): Promise<StoredAttributeValueWithContexts[]> {
     return Promise.all(
         (await ctx.db.attributeValue.findMany({
             where: {
-                entry_id: entry.id,
+                entry_id: entry.dse.id,
             },
             include: {
                 ContextValue: true,

@@ -1,6 +1,6 @@
 import type {
     Context,
-    Entry,
+    Vertex,
     AttributeInfo,
     ObjectClassInfo,
     LDAPSyntaxInfo,
@@ -94,7 +94,7 @@ import {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta"
 
 type EntryInfo = [
-    entry: Entry,
+    entry: Vertex,
     user: StoredAttributeValueWithContexts[],
     operational: StoredAttributeValueWithContexts[],
 ];
@@ -296,7 +296,7 @@ async function search (
 
     const startTime = new Date();
     const dn = decodeLDAPDN(ctx, req.baseObject);
-    const entry = await findEntry(ctx, ctx.database.data.dit, dn, req.derefAliases !== 0); // FIXME
+    const entry = await findEntry(ctx, ctx.dit.root, dn, req.derefAliases !== 0); // FIXME
     if (!entry) {
         ctx.log.warn(`Entry ${Buffer.from(req.baseObject).toString("utf-8")} not found.`);
         return objectNotFound;
@@ -325,10 +325,10 @@ async function search (
     }
 
     const subset = await getSubset(ctx, entry, req.scope);
-    const permittedSubset: Entry[] = [];
+    const permittedSubset: Vertex[] = [];
     for (const result of subset) {
         if (
-            result.dseType.subentry
+            result.dse.subentry
             && !(useSubentries || (req.scope === SearchRequest_scope_baseObject))
         ) {
             continue;

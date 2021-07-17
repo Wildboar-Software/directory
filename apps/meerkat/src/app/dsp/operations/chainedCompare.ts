@@ -90,8 +90,6 @@ async function chainedCompare (
         ? dapArg.signed.toBeSigned
         : dapArg.unsigned;
 
-    const entry = await findEntry(ctx, ctx.database.data.dit, dapData.object.rdnSequence, true /* FIXME: */);
-
     data.chainedArgument.operationProgress
     // Check if the object falls beneath the local context prefix and chain the request elsewhere if so.
 

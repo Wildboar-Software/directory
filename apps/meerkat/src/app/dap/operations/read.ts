@@ -78,7 +78,7 @@ async function read (
     const data = ("signed" in arg)
         ? arg.signed.toBeSigned
         : arg.unsigned;
-    const entry = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
+    const entry = await findEntry(ctx, ctx.dit.root, data.object.rdnSequence);
     if (!entry) {
         throw new NameError(
             "No such object.",
@@ -151,7 +151,7 @@ async function read (
         unsigned: new ReadResultData(
             new EntryInformation(
                 data.object,
-                !entry.dseType.shadow,
+                !entry.dse.shadow,
                 Array.from(attributesByType.values()).map((attribute) => ({
                     attribute,
                 })),

@@ -1,4 +1,4 @@
-import type { Context, Entry, StoredAttributeValueWithContexts } from "../../types";
+import type { Context, Vertex, StoredAttributeValueWithContexts } from "../../types";
 import type {
     ModifyEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
@@ -112,7 +112,7 @@ function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
  */
 function executeEntryModification (
     ctx: Context,
-    entry: Entry,
+    entry: Vertex,
     attributes: StoredAttributeValueWithContexts[],
     mod: EntryModification,
 ): StoredAttributeValueWithContexts[] {
@@ -167,7 +167,7 @@ function executeEntryModification (
         check(mod.addAttribute.type_);
         return [
             ...attributes,
-            ...attributeToStoredValues(entry, mod.addAttribute),
+            ...attributeToStoredValues(mod.addAttribute),
         ];
     }
     else if ("removeAttribute" in mod) {
@@ -185,7 +185,7 @@ function executeEntryModification (
          */
         if (newAttributes.length === lengthBefore) {
             throw new AttributeError(
-                `Attribute with OID ${mod.removeAttribute.toString()} not found in entry with ID ${entry.uuid}.`,
+                `Attribute with OID ${mod.removeAttribute.toString()} not found in entry with ID ${entry.dse.uuid}.`,
                 new AttributeErrorData(
                     {
                         rdnSequence: getDistinguishedName(entry),
@@ -211,7 +211,7 @@ function executeEntryModification (
         check(mod.addValues.type_);
         return [
             ...attributes,
-            ...attributeToStoredValues(entry, mod.addValues),
+            ...attributeToStoredValues(mod.addValues),
         ];
     }
     else if ("removeValues" in mod) {
@@ -292,7 +292,7 @@ function executeEntryModification (
         const TYPE_OID: string = mod.replaceValues.type_.toString();
         return [
             ...attributes.filter((attr) => attr.id.toString() !== TYPE_OID),
-            ...attributeToStoredValues(entry, mod.replaceValues),
+            ...attributeToStoredValues(mod.replaceValues),
         ];
     }
     else {
@@ -337,7 +337,7 @@ async function modifyEntry (
         !dontDereferenceAliases
         && useAliasOnUpdateExtension
     );
-    const entry = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence, derefAliases);
+    const entry = await findEntry(ctx, ctx.dit.root, data.object.rdnSequence, derefAliases);
     if (!entry) {
         throw new NameError(
             "No such object.",
@@ -345,7 +345,7 @@ async function modifyEntry (
         );
     }
 
-    const objectIsSubentry: boolean = Boolean(entry.dseType.subentry || entry.dseType.dsSubentry);
+    const objectIsSubentry: boolean = Boolean(entry.dse.subentry || entry.dse.dsSubentry);
     const useSubentries: boolean = (data.serviceControls?.options?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
     if (objectIsSubentry && !useSubentries) {
@@ -387,12 +387,12 @@ async function modifyEntry (
     await ctx.db.$transaction([
         ctx.db.attributeValue.deleteMany({
             where: {
-                entry_id: entry.id,
+                entry_id: entry.dse.id,
             },
         }),
         ctx.db.attributeValue.createMany({
             data: newAttributes.map((attr) => ({
-                entry_id: entry.id,
+                entry_id: entry.dse.id,
                 type: attr.id.toString(),
                 tag_class: attr.value.tagClass,
                 constructed: (attr.value.construction === ASN1Construction.constructed),
@@ -401,7 +401,7 @@ async function modifyEntry (
                 ContextValue: Array.from(attr.contexts.values())
                     .flatMap((context) => context.values
                         .map((cv) => ({
-                            entry_id: entry.id,
+                            entry_id: entry.dse.id,
                             type: context.id.nodes,
                             tag_class: cv.tagClass,
                             constructed: (cv.construction === ASN1Construction.constructed),

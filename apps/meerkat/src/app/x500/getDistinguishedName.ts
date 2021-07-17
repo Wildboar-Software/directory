@@ -1,14 +1,14 @@
-import type { Entry } from "../types";
+import type { Vertex } from "../types";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 export
-function getDistinguishedName (entry: Entry): DistinguishedName {
-    if (entry.rdn.length === 0 || !entry.parent) {
+function getDistinguishedName (entry: Vertex): DistinguishedName {
+    if (entry.dse.rdn.length === 0 || !entry.immediateSuperior) {
         return [];
     }
-    return [ entry.rdn, ...getDistinguishedName(entry.parent) ];
+    return [ ...getDistinguishedName(entry.immediateSuperior), entry.dse.rdn ];
 }
 
 export default getDistinguishedName;

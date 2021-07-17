@@ -72,7 +72,7 @@ async function del (
         : undefined;
 
     const dn = decodeLDAPDN(ctx, req);
-    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.dit.root, dn, true);
     if (!entry) {
         return objectNotFound;
     }
@@ -108,7 +108,7 @@ async function del (
             relevantTuples,
             authLevel,
             {
-                entry: Array.from(entry!.objectClass)
+                entry: Array.from(entry!.dse.objectClass)
                     .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
             },
             permissions,
@@ -142,9 +142,10 @@ async function del (
     }
 
     await deleteEntry(ctx, entry);
-    if (entry.parent?.children?.length) {
-        const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
-        entry.parent.children.splice(entryIndex, 1);
+    if (entry.immediateSuperior?.subordinates?.length) {
+        const entryIndex = entry.immediateSuperior.subordinates
+            .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
+        entry.immediateSuperior.subordinates.splice(entryIndex, 1);
     }
     return new LDAPResult(
         LDAPResult_resultCode_success, // Success

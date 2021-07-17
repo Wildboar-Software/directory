@@ -1,11 +1,11 @@
-import type { Entry } from "../types";
+import type { Vertex } from "../types";
 
 export
-function isLocalContextPrefix (entry: Entry): boolean {
+function isLocalContextPrefix (entry: Vertex): boolean {
     return Boolean(
-        entry.dseType.cp
-        && entry.dseType.entry
-        && !entry.dseType.shadow
+        entry.dse.cp
+        && entry.dse.entry
+        && !entry.dse.shadow
     );
 }
 

@@ -1,4 +1,4 @@
-import type { Context, Entry } from "../../types";
+import type { Context, Vertex } from "../../types";
 import type {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
@@ -214,7 +214,7 @@ import ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
 //     ... }
 
 // This might seem petty, but it deduplicates a lot of code.
-function toEntryAndInfo (ctx: Context, entry: Entry): [ Entry, EntryInformation ] {
+function toEntryAndInfo (ctx: Context, entry: Vertex): [ Vertex, EntryInformation ] {
     return [
         entry,
         entryInformationFromEntry(ctx, entry),
@@ -343,9 +343,9 @@ async function search (
         ? pagingRequest.sortKeys[0]
         : undefined;
 
-    const entry: Entry | undefined = await findEntry(
+    const entry: Vertex | undefined = await findEntry(
         ctx,
-        ctx.database.data.dit,
+        ctx.dit.root,
         data.baseObject.rdnSequence,
         !dontDereferenceAliases,
     );
@@ -363,7 +363,7 @@ async function search (
         data.searchAliases,
     );
 
-    const filterableCandidates: [ Entry, EntryInformation ][] = intialCandidates.map((candidate) => [
+    const filterableCandidates: [ Vertex, EntryInformation ][] = intialCandidates.map((candidate) => [
         candidate,
         entryInformationFromEntry(ctx, candidate),
     ]);
@@ -439,62 +439,62 @@ async function search (
         const siblingChildren: boolean = (data.hierarchySelections[HierarchySelections_siblingChildren] === TRUE_BIT) || all;
         const siblingSubtree: boolean = (data.hierarchySelections[HierarchySelections_siblingSubtree] === TRUE_BIT) || all;
 
-        const getHierarchicalSubtree = (e: Entry): Entry[] => e.hierarchy?.children
+        const getHierarchicalSubtree = (e: Vertex): Vertex[] => e.dse.hierarchy?.children
             .flatMap((c) => getHierarchicalSubtree(c)) ?? [];
         // Add non-self hierarchy selections
         candidates = candidates
             .flatMap(([entry]) => {
-                if (!entry.hierarchy) {
+                if (!entry.dse.hierarchy) {
                     return [[ entry, entryInformationFromEntry(ctx, entry) ]];
                 }
 
-                let ret: [ Entry, EntryInformation ][] = [];
+                let ret: [ Vertex, EntryInformation ][] = [];
                 if (children) {
-                    ret.push(...entry.hierarchy.children
-                        .map((child): [ Entry, EntryInformation ] => toEntryAndInfo(ctx, child)));
+                    ret.push(...entry.dse.hierarchy.children
+                        .map((child): [ Vertex, EntryInformation ] => toEntryAndInfo(ctx, child)));
                 }
-                if (parent && entry.hierarchy.parent) {
-                    ret.push(toEntryAndInfo(ctx, entry.hierarchy.parent));
+                if (parent && entry.dse.hierarchy.parent) {
+                    ret.push(toEntryAndInfo(ctx, entry.dse.hierarchy.parent));
                 }
                 if (hierarchy) {
-                    let current: Entry | undefined = entry.parent;
+                    let current: Vertex | undefined = entry.immediateSuperior;
                     while (current) {
                         ret.push(toEntryAndInfo(ctx, current));
-                        current = current.parent;
+                        current = current.immediateSuperior;
                     }
                 }
                 if (top) {
-                    ret.push(toEntryAndInfo(ctx, entry.hierarchy.top));
+                    ret.push(toEntryAndInfo(ctx, entry.dse.hierarchy.top));
                 }
                 if (subtree) {
                     ret.push(...getHierarchicalSubtree(entry)
-                        .map((e): [ Entry, EntryInformation ] => toEntryAndInfo(ctx, e)));
+                        .map((e): [ Vertex, EntryInformation ] => toEntryAndInfo(ctx, e)));
                 }
-                if (siblings && entry.hierarchy.parent) {
+                if (siblings && entry.dse.hierarchy.parent) {
                     // Yes, this will include the current entry.
                     ret.push(
-                        ...entry.hierarchy.parent.hierarchy?.children
-                            .map((sibling): [ Entry, EntryInformation ] => toEntryAndInfo(ctx, sibling)) ?? [],
+                        ...entry.dse.hierarchy.parent.dse.hierarchy?.children
+                            .map((sibling): [ Vertex, EntryInformation ] => toEntryAndInfo(ctx, sibling)) ?? [],
                     );
                 }
-                if (siblingChildren && entry.hierarchy.parent) {
+                if (siblingChildren && entry.dse.hierarchy.parent) {
                     // Yes, this will include the current entry.
                     ret.push(
-                        ...entry.hierarchy.parent.hierarchy?.children
-                            .flatMap((sibling): [ Entry, EntryInformation ][] => sibling.hierarchy?.children
+                        ...entry.dse.hierarchy.parent.dse.hierarchy?.children
+                            .flatMap((sibling): [ Vertex, EntryInformation ][] => sibling.dse.hierarchy?.children
                                 .map((child) => toEntryAndInfo(ctx, child)) ?? []) ?? [],
                     );
                 }
-                if (siblingSubtree && entry.hierarchy.parent) {
+                if (siblingSubtree && entry.dse.hierarchy.parent) {
                     // Yes, this will include the current entry.
                     ret.push(
-                        ...entry.hierarchy.parent.hierarchy?.children
-                            .flatMap((sibling): [ Entry, EntryInformation ][] => getHierarchicalSubtree(sibling)
+                        ...entry.dse.hierarchy.parent.dse.hierarchy?.children
+                            .flatMap((sibling): [ Vertex, EntryInformation ][] => getHierarchicalSubtree(sibling)
                                 .map((e) => toEntryAndInfo(ctx, e))) ?? [],
                     );
                 }
                 if (!self) {
-                    ret = ret.filter(([e]) => (e.uuid !== entry.uuid));
+                    ret = ret.filter(([e]) => (e.dse.uuid !== entry.dse.uuid));
                 }
                 return ret;
             });
@@ -502,7 +502,7 @@ async function search (
 
     // Deduplicates entries.
     candidates = Array.from(
-        (new Map(candidates.map((e) => [ e[0].uuid, e ]))).values()
+        (new Map(candidates.map((e) => [ e[0].dse.uuid, e ]))).values()
     );
 
     // const rightOuter: EntryInformation[] = [];

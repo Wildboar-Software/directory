@@ -1,4 +1,4 @@
-import type { Context, Entry } from "../../types";
+import type { Context, Vertex } from "../../types";
 import type {
     ListArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
@@ -266,7 +266,7 @@ async function list (
             );
         }
     }
-    const base = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
+    const base = await findEntry(ctx, ctx.dit.root, data.object.rdnSequence);
     if (!base) {
         throw new NameError(
             "No such object.",
@@ -280,7 +280,7 @@ async function list (
     const pageSize: number = pagingRequest?.pageSize
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
-    const results: Entry[] = await readChildren(ctx, base);
+    const results: Vertex[] = await readChildren(ctx, base);
     const completeResults: boolean = ((skip + pageSize) < results.length);
     if (queryReference && pagingRequest) {
         connection.pagedResultsRequests.set(queryReference, [ pagingRequest, (page + 1) ]);
@@ -312,9 +312,9 @@ async function list (
                 ),
             );
         }
-        results.sort((a: Entry, b: Entry): number => {
-            const ardn = a.rdn;
-            const brdn = b.rdn;
+        results.sort((a: Vertex, b: Vertex): number => {
+            const ardn = a.dse.rdn;
+            const brdn = b.dse.rdn;
             /**
              * From ITU X.511 (2016), Section 7.9:
              *
@@ -344,14 +344,10 @@ async function list (
     return {
         unsigned: {
             listInfo: new ListResultData_listInfo(
-                base.aliasedEntry // If we made it this far, it's because this resolved.
-                    ? {
-                        rdnSequence: getDistinguishedName(base.aliasedEntry),
-                    }
-                    : undefined,
+                undefined, // FIXME:
                 results.slice(skip, pageSize).map((result) => new ListResultData_listInfo_subordinates_Item(
-                    result.rdn,
-                    result.aliasedEntry ? true : false,
+                    result.dse.rdn,
+                    result.dse.alias?.aliasedEntryName ? true : false,
                     false, // TODO: Will change when shadowing is implemented.
                 )),
                 (completeResults && queryReference)

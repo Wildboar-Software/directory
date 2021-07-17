@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Entry } from "../types";
+import type { Context, DIT, Vertex } from "../types";
 import type {
     CommonArguments,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
@@ -94,21 +94,21 @@ async function findDSE <T extends CommonArguments> (
     operationType: Code,
 ): Promise<boolean> {
     let i: number = 0;
-    let dse_i: Entry = haystackVertex;
+    let dse_i: Vertex = haystackVertex;
     let aliasDereferenced: boolean = false;
     let nssrEncountered: boolean = false;
     let nameResolutionPhase: OperationProgress_nameResolutionPhase | undefined = args
         .operationProgress?.nameResolutionPhase;
     const m: number = needleDN.length;
     let lastEntryFound: number = 0; // The last RDN whose DSE was of type entry.
-    let lastCP: Entry | undefined;
+    let lastCP: Vertex | undefined;
     let aliasedRDNs: number = 0;
     const candidateRefs: ContinuationReference[] = [];
 
     // Operation Dispatcher variables
     const NRcontinuationList: ContinuationReference[] = [];
     const SRcontinuationList: ContinuationReference[] = [];
-    const admPoints: Entry[] = [];
+    const admPoints: Vertex[] = [];
     const referralRequests: TraceItem[] = [];
     const emptyHierarchySelect: boolean = false;
 
@@ -162,9 +162,9 @@ async function findDSE <T extends CommonArguments> (
 
     const targetNotFoundSubprocedure_notStarted_branch = async (): Promise<boolean> => {
         if (lastEntryFound === 0) {
-            if (ctx.database.data.dit.dseType.supr) {
+            if (ctx.dit.root.dse.supr) {
                 // Make continuation reference
-                const { operationalAttributes } = await readEntryAttributes(ctx, ctx.database.data.dit, {
+                const { operationalAttributes } = await readEntryAttributes(ctx, ctx.dit.root, {
                     attributesSelect: [ superiorKnowledge["&id"] ],
                     contextSelection: undefined,
                     returnContexts: false,
@@ -229,7 +229,7 @@ async function findDSE <T extends CommonArguments> (
                             ),
                         );
                     }
-                } else if (!ctx.database.data.dit.dseType.nssr) { // It seems to be assumed by the spec that the root DSE is of type nssr at this point.
+                } else if (!ctx.dit.root.dse.nssr) { // It seems to be assumed by the spec that the root DSE is of type nssr at this point.
                     throw new Error(); // FIXME:
                 } else { // m !== 0
                     const { operationalAttributes } = await readEntryAttributes(ctx, dse_i, {
@@ -321,13 +321,13 @@ async function findDSE <T extends CommonArguments> (
                 return false; // TODO: Continue at Target Not Found.
             }
             // I don't understand why we do this.
-            return (children.some((child) => child.dseType.cp));
+            return (children.some((child) => child.dse.cp));
         }
         const needleRDN = needleDN[i];
         for (const child of children) {
             const rdnMatched: boolean = compareRDN(
                 needleRDN,
-                child.rdn,
+                child.dse.rdn,
                 (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
             );
             if (rdnMatched) {
@@ -340,13 +340,13 @@ async function findDSE <T extends CommonArguments> (
          * This is not explicitly required by the specification, but it seems to
          * be implicitly required for the formation of continuation references.
          */
-        if (dse_i.dseType.nssr) {
+        if (dse_i.dse.nssr) {
             nssrEncountered = true;
         }
         if (
             (i === args.operationProgress?.nextRDNToBeResolved)
             // Is checking for shadow enough to determine if !master?
-            || (args.nameResolveOnMaster && dse_i.dseType.shadow)
+            || (args.nameResolveOnMaster && dse_i.dse.shadow)
         ) {
             throw new errors.ServiceError(
                 "Could not resolve name on master.",
@@ -360,7 +360,7 @@ async function findDSE <T extends CommonArguments> (
                 ),
             );
         }
-        if (dse_i.dseType.alias) {
+        if (dse_i.dse.alias) {
             if (dontDereferenceAliases) {
                 if (i === m) {
                     return true; // TODO: Target Found
@@ -384,7 +384,7 @@ async function findDSE <T extends CommonArguments> (
                 aliasDereferenced = true;
                 nameResolutionPhase = OperationProgress_nameResolutionPhase_notStarted;
                 const newN = [
-                    ...(dse_i.aliasedEntry ? getDistinguishedName(dse_i.aliasedEntry) : []),
+                    // ...(dse_i.aliasedEntry ? getDistinguishedName(dse_i.aliasedEntry) : []), // FIXME:
                     ...needleDN.slice(i), // RDNs N(i + 1) to N(m)
                 ];
                 aliasedRDNs = 1;
@@ -398,14 +398,14 @@ async function findDSE <T extends CommonArguments> (
                 );
             }
         }
-        if (dse_i.dseType.subentry) {
+        if (dse_i.dse.subentry) {
             if (i === m) {
                 return true; // TODO: TargetFound
             } else {
                 return false; // TODO: Throw NameError.noSuchObject
             }
         }
-        if (dse_i.dseType.entry) {
+        if (dse_i.dse.entry) {
             if (i === m) {
                 if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
                     return true; // TargetFound
@@ -419,7 +419,7 @@ async function findDSE <T extends CommonArguments> (
                 ) {
                     return true;
                 }
-                const someSubordinatesAreCP = children.some((child) => child.dseType.cp);
+                const someSubordinatesAreCP = children.some((child) => child.dse.cp);
                 if (!someSubordinatesAreCP) {
                     return false; // TODO: throw ServiceError.invalidReference
                 }
@@ -429,9 +429,9 @@ async function findDSE <T extends CommonArguments> (
             }
         }
         if (
-            dse_i.dseType.subr
-            || dse_i.dseType.xr
-            || dse_i.dseType.immSupr
+            dse_i.dse.subr
+            || dse_i.dse.xr
+            || dse_i.dse.immSupr
         ) {
             const { operationalAttributes } = await readEntryAttributes(ctx, dse_i, {
                 attributesSelect: [ specificKnowledge["&id"] ],
@@ -446,10 +446,10 @@ async function findDSE <T extends CommonArguments> (
             knowledges
                 .forEach((k): void => {
                     const referenceType: ReferenceType = ((): ReferenceType => {
-                        if (dse_i.dseType.subr) {
+                        if (dse_i.dse.subr) {
                             return ReferenceType_subordinate;
                         }
-                        if (dse_i.dseType.immSupr) {
+                        if (dse_i.dse.immSupr) {
                             return ReferenceType_immediateSuperior;
                         }
                         return ReferenceType_cross;
@@ -503,10 +503,10 @@ async function findDSE <T extends CommonArguments> (
                     candidateRefs.push(cr);
                 });
         }
-        if (dse_i.dseType.admPoint) {
+        if (dse_i.dse.admPoint) {
             admPoints.push(dse_i);
         }
-        if (dse_i.dseType.cp && dse_i.dseType.shadow) {
+        if (dse_i.dse.cp && dse_i.dse.shadow) {
             lastCP = dse_i;
         }
     }

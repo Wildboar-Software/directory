@@ -1,10 +1,10 @@
-import type { Entry, StoredAttributeValueWithContexts, StoredContext } from "../types";
+import type { StoredAttributeValueWithContexts, StoredContext } from "../types";
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 
 export
-function attributeToStoredValues (entry: Entry, attribute: Attribute): StoredAttributeValueWithContexts[] {
+function attributeToStoredValues (attribute: Attribute): StoredAttributeValueWithContexts[] {
     return [
         ...attribute.values.map((value): StoredAttributeValueWithContexts => ({
             id: attribute.type_,

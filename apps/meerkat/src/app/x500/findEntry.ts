@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Entry, IndexableOID, Value } from "../types";
+import type { Context, DIT, Vertex, IndexableOID, Value } from "../types";
 import readChildren from "../dit/readChildren";
 
 // TODO: Return the number of RDNs that matched, whether aliases were derefed.
@@ -14,15 +14,20 @@ async function findEntry (
     dit: DIT,
     dn: DistinguishedName,
     derefAliases: boolean = true,
-): Promise<Entry | undefined> {
+): Promise<Vertex | undefined> {
     const currentVertex = derefAliases
-        ? (dit.aliasedEntry ?? dit)
+        ? (dit.dse.alias
+            ? await findEntry(ctx, dit, dit.dse.alias.aliasedEntryName, derefAliases)
+            : dit)
         : dit;
+    if (!currentVertex) {
+        return undefined;
+    }
     const children = await readChildren(ctx, dit);
-    if ((currentVertex.rdn.length === 0) && (dn.length === 0)) {
+    if ((currentVertex.dse.rdn.length === 0) && (dn.length === 0)) {
         return currentVertex;
     }
-    if (currentVertex.rdn.length === 0) { // Root DSE, which will not match.
+    if (currentVertex.dse.rdn.length === 0) { // Root DSE, which will not match.
         return children // So we start the search with its children.
             .map((child) => findEntry(ctx, child, dn, derefAliases))
             .find((e) => e);
@@ -33,10 +38,10 @@ async function findEntry (
     if (!queriedRDN) {
         return undefined;
     }
-    if (queriedRDN.length !== dit.rdn.length) {
+    if (queriedRDN.length !== dit.dse.rdn.length) {
         return undefined;
     }
-    const ditRDN: Map<IndexableOID, Value> = new Map(dit.rdn.map((atav) => [ atav.type_.toString(), atav.value ]));
+    const ditRDN: Map<IndexableOID, Value> = new Map(dit.dse.rdn.map((atav) => [ atav.type_.toString(), atav.value ]));
     const everyATAVMatched: boolean = queriedRDN.every((atav) => {
         const TYPE_OID: string = atav.type_.toString();
         const spec = ctx.attributes.get(TYPE_OID);

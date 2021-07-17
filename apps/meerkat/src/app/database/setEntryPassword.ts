@@ -1,6 +1,6 @@
 
 
-import type { Context, Entry, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Vertex, StoredAttributeValueWithContexts } from "../types";
 import type { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import encryptPassword from "../x500/encryptPassword";
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
@@ -22,7 +22,7 @@ const scryptAlgId = new AlgorithmIdentifier(
 export
 async function setEntryPassword (
     ctx: Context,
-    entry: Entry,
+    entry: Vertex,
     pwd: UserPwd,
 ): Promise<void> {
     if ("clear" in pwd) {
@@ -32,7 +32,7 @@ async function setEntryPassword (
         }
         await ctx.db.entry.update({
             where: {
-                id: entry.id,
+                id: entry.dse.id,
             },
             data: {
                 password: {
@@ -50,7 +50,7 @@ async function setEntryPassword (
         const alg = pwd.encrypted.algorithmIdentifier;
         await ctx.db.entry.update({
             where: {
-                id: entry.id,
+                id: entry.dse.id,
             },
             data: {
                 password: {

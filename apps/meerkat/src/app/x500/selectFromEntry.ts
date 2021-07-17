@@ -1,4 +1,4 @@
-import type { Context, StoredAttributeValueWithContexts, Entry, IndexableOID } from "../types";
+import type { Context, StoredAttributeValueWithContexts, Vertex, IndexableOID } from "../types";
 import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
@@ -25,7 +25,7 @@ export
 function selectFromEntry (
     ctx: Context,
     eis: EntryInformationSelection,
-    entry: Entry,
+    entry: Vertex,
     attributes: StoredAttributeValueWithContexts[],
 ): EntryInformation_information_Item[] {
     const attrs = attributes;

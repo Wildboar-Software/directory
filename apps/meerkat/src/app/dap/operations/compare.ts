@@ -78,7 +78,7 @@ async function compare (
         throw CONTEXTS_NOT_ENABLED_ERROR;
     }
 
-    const entry = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence);
+    const entry = await findEntry(ctx, ctx.dit.root, data.object.rdnSequence);
     if (!entry) {
         throw new NameError(
             "No such object.",
@@ -156,13 +156,9 @@ async function compare (
 
     return {
         unsigned: new CompareResultData(
-            entry.aliasedEntry // If we made it this far, it's because this resolved.
-                ? {
-                    rdnSequence: getDistinguishedName(entry.aliasedEntry),
-                }
-                : undefined,
+            undefined, // FIXME:
             matched,
-            !entry.dseType.shadow,
+            !entry.dse.shadow,
             matchedType,
             [],
             undefined,

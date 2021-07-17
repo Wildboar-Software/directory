@@ -1,6 +1,3 @@
-// import {
-//     Attribute,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import {
     ObjectClassKind,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
@@ -35,9 +32,18 @@ import type {
 import type {
     ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+import type {
+    AccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import type { PrismaClient } from "@prisma/client";
+import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { SupplierInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
+import { ConsumerInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
+import { SupplierAndConsumers } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
+import { MasterAndShadowAccessPoints } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
+import { DitBridgeKnowledge } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
 
 export
 type UUID = string;
@@ -162,61 +168,169 @@ export
 interface HierarchyInfo {
     level: number; // Shall be 0 for hierarchical top.
     // below: boolean; // Shall be computed.
-    parent?: Entry;
-    top: Entry;
-    children: Entry[];
+    parent?: Vertex;
+    top: Vertex;
+    children: Vertex[];
 }
 
-// TODO: Use a discriminated union to differentiate DSE types.
 export
-interface Entry {
-    id: number; // Database primary key ID.
-    uuid: UUID;
-    // dn: Name;
-    rdn: RelativeDistinguishedName;
-    parent?: Entry;
-    children: Entry[] | null; // null means the children are stored in the database.
-    // Managed by the DSA, and based on the aliasedEntryName operational attribute.
-    aliasedEntry?: Entry;
-    dseType: Partial<DSEType>;
-    objectClass: Set<IndexableOID>;
-    hierarchy?: HierarchyInfo;
-    creatorsName?: Name,
-    modifiersName?: Name,
-    createdTimestamp: Date,
-    modifyTimestamp: Date,
-    // These attributes will be so frequently accessed, they MUST be cached.
-    administrativeRoles?: Set<IndexableOID>;
-    accessControlScheme?: OBJECT_IDENTIFIER; // TODO: Make this a string to make comparison faster.
-    subtrees?: SubtreeSpecification[];
-    entryACI?: ACIItem[];
-    prescriptiveACI?: ACIItem[];
+interface RootDSE {
+    myAccessPoint: AccessPoint;
+    // These are hard-coded:
+    // supportedControl
+    // supportedExtension
+    // supportedFeatures
+}
+
+export
+interface GlueDSE {
+    // Intentionally empty.
+}
+
+export
+interface ContextPrefixDSE {
+    supplierKnowledge?: SupplierInformation[];
+    consumerKnowledge?: ConsumerInformation[];
+    secondaryShadows?: SupplierAndConsumers[];
+}
+
+export
+interface EntryDSE {
+
+}
+
+export
+interface AliasDSE {
+    aliasedEntryName: DistinguishedName;
+    // Implied to be of objectClass "alias"
+}
+
+export
+interface SubordinateReferenceDSE {
+    specificKnowledge: MasterAndShadowAccessPoints;
+}
+
+export
+interface NonSpecificSubordinateReferenceDSE {
+    nonSpecificKnowledge: MasterAndShadowAccessPoints[];
+}
+
+export
+interface SuperiorReferenceDSE {
+    superiorKnowledge: AccessPoint[];
+}
+
+export
+interface CrossReferenceDSE {
+    specificKnowledge: MasterAndShadowAccessPoints;
+}
+
+export
+interface AdministrativePointDSE {
+    administrativeRole: Set<IndexableOID>;
+    accessControlScheme?: OBJECT_IDENTIFIER;
     subentryACI?: ACIItem[];
 }
 
 export
-type DIT = Entry;
-
-export
-interface DatabaseData {
-    dit: DIT;
-    values: StoredAttributeValueWithContexts[];
+interface SubentryDSE {
+    commonName: string;
+    subtreeSpecification: SubtreeSpecification[];
+    prescriptiveACI?: ACIItem[];
 }
 
 export
-interface Database {
-    data: DatabaseData;
+interface ShadowDSE {
+    subordinateCompleteness: boolean;
+    attributeCompleteness: boolean;
+    attributeValuesIncomplete: boolean;
+}
+
+export
+interface ImmediateSuperiorReferenceDSE {
+    specificKnowledge: MasterAndShadowAccessPoints;
+}
+
+export
+interface RelevantHierarchicalOperationalBindingDSE {
+    // bindingID: number; // The specification says to store this with the DSE.
+}
+
+// sa is just a boolean
+// dsSubentry is just a boolean
+
+export
+interface FamilyMemberDSE {
+    parent: boolean;
+    child: boolean;
+}
+
+export
+interface DITBridgeDSE {
+    ditBridgeKnowledge: DitBridgeKnowledge[];
+}
+
+export
+interface DSE {
+    id: number; // Database primary key ID.
+    uuid: UUID;
+    rdn: RelativeDistinguishedName;
+    objectClass: Set<IndexableOID>;
+    hierarchy?: HierarchyInfo;
+    creatorsName?: Name;
+    modifiersName?: Name;
+    createdTimestamp: Date;
+    modifyTimestamp: Date;
+    entryACI?: ACIItem[];
+
+    // DSE type-specific data
+    root?: RootDSE;
+    glue?: GlueDSE;
+    cp?: ContextPrefixDSE;
+    entry?: EntryDSE;
+    alias?: AliasDSE;
+    subr?: SubordinateReferenceDSE;
+    nssr?: NonSpecificSubordinateReferenceDSE;
+    supr?: SuperiorReferenceDSE;
+    xr?: CrossReferenceDSE;
+    admPoint?: AdministrativePointDSE;
+    subentry?: SubentryDSE;
+    shadow?: ShadowDSE;
+    immSupr?: ImmediateSuperiorReferenceDSE;
+    rhob?: RelevantHierarchicalOperationalBindingDSE;
+    sa?: boolean;
+    dsSubentry?: boolean;
+    familyMember?: FamilyMemberDSE;
+    ditBridge?: DITBridgeDSE;
+}
+
+export
+interface Vertex {
+    immediateSuperior?: Vertex;
+    subordinates: Vertex[] | null; // null means the subordinates are stored in the database.
+    /**
+     * The actual contents of the DSE are very purposefully stored in a nested
+     * object: it is so we can modify it by reference while still maintaining
+     * the integrity of the DIT.
+     */
+    dse: DSE;
+}
+
+export
+type DIT = Vertex;
+
+export
+interface DITInfo {
+    id: number;
+    uuid: UUID;
+    root: DIT;
 }
 
 export
 interface Context {
-    dit: {
-        id: number,
-        uuid: UUID,
-    },
+    dit: DITInfo;
     log: typeof console;
     db: PrismaClient;
-    database: Database;
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
     /* Note that there cannot be a single attributes hierarchy like there is

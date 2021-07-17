@@ -1,4 +1,4 @@
-import type { Context, Entry, IndexableOID, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Vertex, IndexableOID, StoredAttributeValueWithContexts } from "../types";
 import { ASN1Construction, BERElement } from "asn1-ts";
 import {
     id_oc_parent,
@@ -29,21 +29,21 @@ const SUBTREE_SPEC_OID: string = id_oa_subtreeSpecification.toString();
 
 type SpecialAttributeHandler = (
     ctx: Readonly<Context>,
-    entry: Entry,
+    entry: Vertex,
     attribute: StoredAttributeValueWithContexts,
 ) => PrismaPromise<void>;
 
 const writeSomeACI: (scope: ACIScope) => SpecialAttributeHandler = (scope: ACIScope) => {
     return (
         ctx: Readonly<Context>,
-        entry: Entry,
+        entry: Vertex,
         attribute: StoredAttributeValueWithContexts,
     ): PrismaPromise<any> => {
         // We ignore contexts for this.
         const aci: ACIItem = _decode_ACIItem(attribute.value);
         return ctx.db.aCIItem.create({
             data: {
-                entry_id: entry.id,
+                entry_id: entry.dse.id,
                 tag: directoryStringToString(aci.identificationTag),
                 precedence: aci.precedence,
                 auth_level_basic_level: ("basicLevels" in aci.authenticationLevel)
@@ -87,54 +87,54 @@ const speciallyHandledAttributes: Map<IndexableOID, SpecialAttributeHandler> = n
 export
 async function writeEntry (
     ctx: Context,
-    superior: Entry,
-    entry: Entry,
+    superior: Vertex,
+    entry: Vertex,
     attributes: StoredAttributeValueWithContexts[],
 ): Promise<DatabaseEntry> {
     const writtenEntry = await ctx.db.entry.create({
         data: {
-            immediate_superior_id: superior.id,
+            immediate_superior_id: superior.dse.id,
             dit_id: ctx.dit.id,
-            rdn: rdnToJson(entry.rdn),
-            aliased_entry_dn: entry.aliasedEntry
-                ? rdnToJson(entry.aliasedEntry.rdn)
+            rdn: rdnToJson(entry.dse.rdn),
+            aliased_entry_dn: entry.dse.alias?.aliasedEntryName
+                ? entry.dse.alias?.aliasedEntryName.map((rdn) => rdnToJson(rdn))
                 : undefined,
-            root: entry.dseType.root,
-            glue: entry.dseType.glue,
-            cp: entry.dseType.cp,
-            entry: entry.dseType.entry,
-            alias: entry.dseType.alias,
-            subr: entry.dseType.subr,
-            nssr: entry.dseType.nssr,
-            supr: entry.dseType.supr,
-            xr: entry.dseType.xr,
-            admPoint: entry.dseType.admPoint,
-            subentry: entry.dseType.subentry,
-            shadow: entry.dseType.shadow,
-            immSupr: entry.dseType.immSupr,
-            rhob: entry.dseType.rhob,
-            sa: entry.dseType.sa,
-            dsSubentry: entry.dseType.dsSubentry,
-            familyMember: entry.dseType.familyMember,
-            ditBridge: entry.dseType.ditBridge,
+            root: Boolean(entry.dse.root),
+            glue: Boolean(entry.dse.glue),
+            cp: Boolean(entry.dse.cp),
+            entry: Boolean(entry.dse.entry),
+            alias: Boolean(entry.dse.alias),
+            subr: Boolean(entry.dse.subr),
+            nssr: Boolean(entry.dse.nssr),
+            supr: Boolean(entry.dse.supr),
+            xr: Boolean(entry.dse.xr),
+            admPoint: Boolean(entry.dse.admPoint),
+            subentry: Boolean(entry.dse.subentry),
+            shadow: Boolean(entry.dse.shadow),
+            immSupr: Boolean(entry.dse.immSupr),
+            rhob: Boolean(entry.dse.rhob),
+            sa: Boolean(entry.dse.sa),
+            dsSubentry: Boolean(entry.dse.dsSubentry),
+            familyMember: Boolean(entry.dse.familyMember),
+            ditBridge: Boolean(entry.dse.ditBridge),
             writeableCopy: false, // entry.dseType.writeableCopy,
             creatorsName: [{}],
             modifiersName: [{}],
-            createdTimestamp: entry.createdTimestamp,
-            modifyTimestamp: entry.modifyTimestamp,
+            createdTimestamp: entry.dse.createdTimestamp,
+            modifyTimestamp: entry.dse.modifyTimestamp,
             // deleteTimestamp: entry.deleteTimestamp, // Omitted
-            is_family_parent: entry.objectClass.has(PARENT_OID),
-            is_family_child: entry.objectClass.has(CHILD_OID),
+            is_family_parent: entry.dse.objectClass.has(PARENT_OID),
+            is_family_child: entry.dse.objectClass.has(CHILD_OID),
             // hierarchyLevel?: number | null
             // hierarchyBelow?: boolean | null
             // hierarchyParent?: number | null
             // hierarchyTop?: number | null
             // structuralObjectClass: string
             structuralObjectClass: "", // FIXME:
-            administrativeRole: entry.administrativeRoles
-                ? Array.from(entry.administrativeRoles)
+            administrativeRole: entry.dse.admPoint?.administrativeRole
+                ? Array.from(entry.dse.admPoint.administrativeRole)
                 : undefined,
-            accessControlScheme: entry.accessControlScheme?.toString(),
+            accessControlScheme: entry.dse.admPoint?.accessControlScheme?.toString(),
         },
     });
 
@@ -179,7 +179,7 @@ async function writeEntry (
                     },
                 },
             })),
-        ...(entry.subtrees ?? [])
+        ...(entry.dse.subentry?.subtreeSpecification ?? [])
             .map((subtree) => {
                 const value = _encode_SubtreeSpecification(subtree, () => new BERElement());
                 return ctx.db.attributeValue.create({

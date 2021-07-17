@@ -30,10 +30,10 @@ function getIsGroupMember (
         userGroup: NameAndOptionalUID,
         user: NameAndOptionalUID,
     ): Promise<boolean | undefined> {
-        const groupEntry = await findEntry(ctx, ctx.database.data.dit, userGroup.dn);
+        const groupEntry = await findEntry(ctx, ctx.dit.root, userGroup.dn);
         if (
-            !groupEntry?.objectClass.has(GROUP_OF_NAMES)
-            && !groupEntry?.objectClass.has(GROUP_OF_UNIQUE_NAMES)
+            !groupEntry?.dse.objectClass.has(GROUP_OF_NAMES)
+            && !groupEntry?.dse.objectClass.has(GROUP_OF_UNIQUE_NAMES)
         ) {
             return undefined;
         }

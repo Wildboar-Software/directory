@@ -1,4 +1,4 @@
-import { Context, Entry } from "./types";
+import { Context, Vertex } from "./types";
 import * as net from "net";
 import * as tls from "tls";
 import * as fs from "fs";
@@ -32,37 +32,25 @@ const DEFAULT_LDAPS_TCP_PORT: number = 1636;
 export default
 async function main (): Promise<void> {
     const rootID = uuid();
-    const rootDSE: Entry = {
-        id: 0,
-        uuid: rootID,
-        objectClass: new Set(),
-        rdn: [],
-        dseType: {
-            root: true,
+    const root: Vertex = {
+        subordinates: [],
+        dse: {
+            id: 0,
+            uuid: rootID,
+            rdn: [],
+            objectClass: new Set(),
+            createdTimestamp: new Date(),
+            modifyTimestamp: new Date(),
         },
-        children: [],
-        creatorsName: {
-            rdnSequence: [],
-        },
-        modifiersName: {
-            rdnSequence: [],
-        },
-        createdTimestamp: new Date(),
-        modifyTimestamp: new Date(),
     };
     const ctx: Context = {
         dit: {
             id: 1,
             uuid: "b47a393d-f561-4020-b8e8-324ae3391e98",
+            root,
         },
         log: console,
         db: new PrismaClient(),
-        database: {
-            data: {
-                dit: rootDSE,
-                values: [],
-            },
-        },
         structuralObjectClassHierarchy: {
             ...objectClassFromInformationObject(top),
             parent: undefined,
@@ -92,7 +80,6 @@ async function main (): Promise<void> {
     }
     assert(dit);
     ctx.log.info(`DIT with UUID ${ctx.dit.uuid} loaded into memory.`);
-    ctx.database.data.dit = dit;
 
     // The ordering of these is important.
     // Loading LDAP syntaxes before attribute types allows us to use the names instead of OIDs.

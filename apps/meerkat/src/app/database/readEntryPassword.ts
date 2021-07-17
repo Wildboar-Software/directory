@@ -1,6 +1,6 @@
 
 
-import type { Context, Entry } from "../types";
+import type { Context, Vertex } from "../types";
 import type { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { UserPwd_encrypted } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd-encrypted.ta";
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
@@ -9,11 +9,11 @@ import { DERElement, ObjectIdentifier } from "asn1-ts";
 export
 async function readEntryPassword (
     ctx: Context,
-    entry: Entry,
+    entry: Vertex,
 ): Promise<UserPwd | null> {
     const storedEntry = await ctx.db.entry.findFirst({
         where: {
-            id: entry.id,
+            id: entry.dse.id,
         },
         include: {
             password: true,

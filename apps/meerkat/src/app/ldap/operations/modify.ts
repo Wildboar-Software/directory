@@ -1,4 +1,4 @@
-import type { Context, Entry, StoredAttributeValueWithContexts, IndexableOID } from "../../types";
+import type { Context, Vertex, StoredAttributeValueWithContexts, IndexableOID } from "../../types";
 import type LDAPConnection from "../LDAPConnection";
 import type {
     ModifyRequest,
@@ -87,7 +87,7 @@ const doNotStore: Set<IndexableOID> = new Set([
 
 function executeEntryModification (
     ctx: Context,
-    entry: Entry,
+    entry: Vertex,
     dn: LDAPDN,
     attributes: StoredAttributeValueWithContexts[],
     change: ModifyRequest_changes_change,
@@ -279,7 +279,7 @@ async function modify (
         : undefined;
 
     const dn = decodeLDAPDN(ctx, req.object);
-    const entry = await findEntry(ctx, ctx.database.data.dit, dn, true);
+    const entry = await findEntry(ctx, ctx.dit.root, dn, true);
     if (!entry) {
         return objectNotFound;
     }
@@ -328,7 +328,7 @@ async function modify (
     }
 
     const canModifyEntry: boolean = checkPermissionsOnEntry({
-        entry: Array.from(entry.objectClass)
+        entry: Array.from(entry.dse.objectClass)
             .map((oc) => new ObjectIdentifier(oc.split(".").map((arc) => Number.parseInt(arc)))),
     }, [PERMISSION_CATEGORY_MODIFY]);
     if (!canModifyEntry) {
@@ -376,14 +376,14 @@ async function modify (
     await ctx.db.$transaction([
         ctx.db.attributeValue.deleteMany({
             where: {
-                entry_id: entry.id,
+                entry_id: entry.dse.id,
             },
         }),
         ...newAttributes
             .filter((attr) => !doNotStore.has(attr.id.toString()))
             .map((attr) => ctx.db.attributeValue.create({
                 data: {
-                    entry_id: entry.id,
+                    entry_id: entry.dse.id,
                     type: attr.id.toString(),
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
@@ -396,7 +396,7 @@ async function modify (
                                     .map((cv) => ({
                                         // id: null,
                                         // value_id: null,
-                                        entry_id: entry.id,
+                                        entry_id: entry.dse.id,
                                         type: context.id.nodes,
                                         tag_class: cv.tagClass,
                                         constructed: (cv.construction === ASN1Construction.constructed),

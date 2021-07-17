@@ -1,4 +1,4 @@
-import { Context, Entry } from "../../types";
+import { Context, Vertex } from "../../types";
 import type {
     RemoveEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
@@ -61,14 +61,14 @@ async function removeEntry (
         && useAliasOnUpdateExtension
     );
 
-    const entry: Entry | undefined = await findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence, derefAliases);
+    const entry: Vertex | undefined = await findEntry(ctx, ctx.dit.root, data.object.rdnSequence, derefAliases);
     if (!entry) {
         throw new NameError(
             "No such object.",
             await objectDoesNotExistErrorData(ctx, data.object),
         );
     }
-    if (entry.children) {
+    if (entry.subordinates) {
         throw new UpdateError(
             "Cannot delete an entry with children.",
             HAS_CHILDREN_ERROR_DATA,
@@ -76,9 +76,10 @@ async function removeEntry (
     }
 
     await deleteEntry(ctx, entry);
-    if (entry.parent?.children?.length) {
-        const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
-        entry.parent.children.splice(entryIndex, 1);
+    if (entry.immediateSuperior?.subordinates?.length) {
+        const entryIndex = entry.immediateSuperior.subordinates
+            .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
+        entry.immediateSuperior.subordinates.splice(entryIndex, 1);
     }
 
     return {

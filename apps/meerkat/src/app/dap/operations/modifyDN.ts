@@ -172,7 +172,7 @@ async function modifyDN (
             namingViolationErrorData([]),
         );
     }
-    const entry = await findEntry(ctx, ctx.database.data.dit, data.object);
+    const entry = await findEntry(ctx, ctx.dit.root, data.object);
     if (!entry) {
         throw new NameError(
             "No such object.",
@@ -182,17 +182,17 @@ async function modifyDN (
         );
     }
 
-    const manageDSAITExtension: boolean = (data.criticalExtensions?.[EXT_BIT_MANAGE_DSA_IT] === TRUE_BIT);
-    const manageDSAITSCO: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+    // const manageDSAITExtension: boolean = (data.criticalExtensions?.[EXT_BIT_MANAGE_DSA_IT] === TRUE_BIT);
+    // const manageDSAITSCO: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     // Only necessary if a specific DSA IT is to be managed.
     // const manageDSAITPlaneRef = data.serviceControls?.manageDSAITPlaneRef;
-    const requestedToManageDSA: boolean = (manageDSAITExtension && manageDSAITSCO);
-    if (!requestedToManageDSA && !nonAdminUserCanManageEntry(entry.dseType)) {
-        throw new SecurityError(
-            "Entries other than type 'entry' may not be managed by users without manageDSAIT service control.",
-            CANNOT_MOVE_NON_ENTRY_ERROR_DATA,
-        );
-    }
+    // const requestedToManageDSA: boolean = (manageDSAITExtension && manageDSAITSCO);
+    // if (!requestedToManageDSA && !nonAdminUserCanManageEntry(entry.)) {
+    //     throw new SecurityError(
+    //         "Entries other than type 'entry' may not be managed by users without manageDSAIT service control.",
+    //         CANNOT_MOVE_NON_ENTRY_ERROR_DATA,
+    //     );
+    // }
 
     const newSuperiorExtension: boolean = (data.criticalExtensions?.[EXT_BIT_NEW_SUPERIOR] === TRUE_BIT);
     if (!newSuperiorExtension && data.newSuperior) {
@@ -210,7 +210,7 @@ async function modifyDN (
     }
 
     const newSuperior = data.newSuperior
-        ? await findEntry(ctx, ctx.database.data.dit, data.newSuperior)
+        ? await findEntry(ctx, ctx.dit.root, data.newSuperior)
         : null; // `null` means we did not try.
     if (newSuperior === undefined) { // `undefined` means we tried and failed.
         throw new Error();
@@ -218,7 +218,7 @@ async function modifyDN (
 
     const superior = data.newSuperior
         ? newSuperior
-        : entry.parent;
+        : entry.immediateSuperior;
 
     if (!superior) {
         // This should always throw, because you cant meaningfully move a root DSE.
@@ -231,7 +231,7 @@ async function modifyDN (
             const newSuperiorDN: string = distinguishedNameToString(data.newSuperior);
             throw new UpdateError(`No such superior: ${newSuperiorDN}`, NO_SUCH_SUPERIOR_ERROR_DATA);
         }
-        if (superior.dseType.alias) {
+        if (superior.dse.alias) {
             throw new UpdateError(
                 "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
                 namingViolationErrorData([]),
@@ -242,7 +242,7 @@ async function modifyDN (
     const potentialNewName: Name = {
         rdnSequence: [ data.newRDN, ...(superior ? getDistinguishedName(superior) : []) ],
     };
-    const potentialEntry = await findEntry(ctx, ctx.database.data.dit, potentialNewName.rdnSequence);
+    const potentialEntry = await findEntry(ctx, ctx.dit.root, potentialNewName.rdnSequence);
     if (potentialEntry) {
         const potentialDN = nameToString(potentialNewName);
         throw new UpdateError(`Entry already exists: ${potentialDN}`, ENTRY_EXISTS_ERROR_DATA);
@@ -292,19 +292,20 @@ async function modifyDN (
         }
     });
 
-    if (entry.parent?.children?.length && (entry.parent !== superior)) {
-        const entryIndex = entry.parent.children.findIndex((child) => (child.uuid === entry.uuid));
-        entry.parent.children.splice(entryIndex, 1); // Remove from the current parent.
-        superior?.children?.push(entry); // Move to the new parent.
+    if (entry.immediateSuperior?.subordinates?.length && (entry.immediateSuperior !== superior)) {
+        const entryIndex = entry.immediateSuperior.subordinates
+            .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
+        entry.immediateSuperior.subordinates.splice(entryIndex, 1); // Remove from the current parent.
+        superior?.subordinates?.push(entry); // Move to the new parent.
     }
 
-    const oldRDN = entry.rdn;
+    const oldRDN = entry.dse.rdn;
 
     if (data.deleteOldRDN) {
         // FIXME:
     }
 
-    entry.rdn = data.newRDN; // Update the RDN.
+    entry.dse.rdn = data.newRDN; // Update the RDN.
 
     return {
         null_: null,

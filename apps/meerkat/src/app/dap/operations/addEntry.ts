@@ -1,4 +1,4 @@
-import { Context, IndexableOID, StoredAttributeValueWithContexts, StoredContext, Entry } from "../../types";
+import { Context, IndexableOID, StoredAttributeValueWithContexts, StoredContext, Vertex } from "../../types";
 import {
     AddEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
@@ -194,16 +194,16 @@ async function addEntry (
             namingViolationErrorData([]),
         );
     }
-    if (findEntry(ctx, ctx.database.data.dit, data.object.rdnSequence)) {
+    if (findEntry(ctx, ctx.dit.root, data.object.rdnSequence)) {
         throw new UpdateError(`Entry already exists: ${nameToString(data.object)}`, ENTRY_EXISTS_ERROR_DATA);
     }
     const superiorDN = data.object.rdnSequence.slice(0, -1);
-    const superior = await findEntry(ctx, ctx.database.data.dit, superiorDN);
+    const superior = await findEntry(ctx, ctx.dit.root, superiorDN);
     if (!superior) {
         const superiorDNString = nameToString({ rdnSequence: superiorDN });
         throw new UpdateError(`No such superior: ${superiorDNString}`, NO_SUCH_SUPERIOR_ERROR_DATA);
     }
-    if (superior.dseType.alias) {
+    if (superior.dse.alias) {
         throw new UpdateError(
             "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
             namingViolationErrorData([]),
@@ -428,27 +428,27 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
         );
     }
 
-    const newEntry: Entry = {
-        id: -1,
-        uuid: entry,
-        rdn,
-        parent: superior,
-        dseType: {
-            entry: true,
+    const newEntry: Vertex = {
+        immediateSuperior: superior,
+        subordinates: [],
+        dse: {
+            id: -1,
+            uuid: entry,
+            rdn,
+            entry: {},
+            createdTimestamp: new Date(),
+            modifyTimestamp: new Date(),
+            creatorsName: {
+                rdnSequence: [], // FIXME:
+            },
+            modifiersName: {
+                rdnSequence: [], // FIXME:
+            },
+            objectClass: new Set(objectClasses.map((attr) => attr.value.objectIdentifier.toString())),
         },
-        children: [],
-        objectClass: new Set(objectClasses.map((attr) => attr.value.objectIdentifier.toString())),
-        creatorsName: {
-            rdnSequence: [], // FIXME:
-        },
-        modifiersName: {
-            rdnSequence: [], // FIXME:
-        },
-        createdTimestamp: new Date(),
-        modifyTimestamp: new Date(),
     };
     await writeEntry(ctx, superior, newEntry, [ ...attrsFromDN, ...attrs ]);
-    superior.children?.push(newEntry);
+    superior.subordinates?.push(newEntry);
     // TODO: Filter out more operational attributes.
     return {
         null_: null,
