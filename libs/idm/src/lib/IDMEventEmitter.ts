@@ -9,20 +9,11 @@ import type { Unbind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecifica
 import type { Abort } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import type { StartTLS } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/StartTLS.ta";
 import type { TLSResponse } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
+// import type { ASN1Element } from "asn1-ts";
 
-type EventMap = Record<string, any>;
+type ErrorOrResult = [ Error, undefined ] | [ undefined, IdmResult ];
 
-type EventKey<T extends EventMap> = string & keyof T;
-type EventReceiver<T> = (params: T) => void;
-
-// export default
-interface Emitter<T extends EventMap> {
-    on <K extends EventKey<T>> (eventName: K, fn: EventReceiver<T[K]>): void;
-    off <K extends EventKey<T>> (eventName: K, fn: EventReceiver<T[K]>): void;
-    emit <K extends EventKey<T>> (eventName: K, params: T[K]): void;
-}
-
-type IDMEventEmitter = Emitter<{
+interface EventMap {
     bind: IdmBind;
     bindResult: IdmBindResult;
     bindError: IdmBindError;
@@ -34,6 +25,23 @@ type IDMEventEmitter = Emitter<{
     abort: Abort;
     startTLS: StartTLS;
     tLSResponse: TLSResponse;
-}>;
+    [other: number]: ErrorOrResult; // The opcode is the event type.
+};
+
+type EventKey<T extends EventMap> = string & keyof T;
+type EventReceiver<T> = (params: T) => void;
+
+// export default
+interface Emitter<T extends EventMap> {
+    on <K extends EventKey<T>> (eventName: K, fn: EventReceiver<T[K]>): void;
+    on (eventName: string, fn: EventReceiver<ErrorOrResult>): void;
+    once <K extends EventKey<T>> (eventName: K, fn: EventReceiver<T[K]>): void;
+    once (eventName: string, fn: EventReceiver<ErrorOrResult>): void;
+    off <K extends EventKey<T>> (eventName: K, fn: EventReceiver<T[K]>): void;
+    emit <K extends EventKey<T>> (eventName: K, params: T[K]): void;
+    emit (eventName: string, params: ErrorOrResult): void;
+}
+
+type IDMEventEmitter = Emitter<EventMap>;
 
 export default IDMEventEmitter;

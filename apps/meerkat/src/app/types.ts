@@ -22,7 +22,7 @@ import type {
 import type {
     ContextMatcher,
 } from "@wildboar/x500/src/lib/types/ContextMatcher";
-import { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Element, OBJECT_IDENTIFIER, BIT_STRING, INTEGER, BOOLEAN } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
@@ -35,6 +35,18 @@ import type {
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import type {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import type {
+    TypeAndContextAssertion,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+import type {
+    SearchRuleDescription,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
+import type {
+    PwdEncAlg,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdEncAlg.ta";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import type { PrismaClient } from "@prisma/client";
@@ -237,6 +249,30 @@ interface SubentryDSE {
     commonName: string;
     subtreeSpecification: SubtreeSpecification[];
     prescriptiveACI?: ACIItem[];
+    collectiveAttributes?: Attribute[];
+    contextAssertionDefaults?: TypeAndContextAssertion[];
+    searchRules?: SearchRuleDescription[];
+
+    // Password admin
+    pwdAttribute?: OBJECT_IDENTIFIER;
+    pwdModifyEntryAllowed?: BOOLEAN;
+    pwdChangeAllowed?: BOOLEAN;
+    pwdMaxAge?: INTEGER;
+    pwdExpiryAge?: INTEGER;
+    pwdMinLength?: INTEGER;
+    pwdVocabulary?: BIT_STRING;
+    pwdAlphabet?: string[];
+    pwdDictionaries?: string[];
+    pwdExpiryWarning?: INTEGER;
+    pwdGraces?: INTEGER;
+    pwdFailureDuration?: INTEGER;
+    pwdLockoutDuration?: INTEGER;
+    pwdMaxFailures?: INTEGER;
+    pwdMaxTimeInHistory?: INTEGER;
+    pwdMinTimeInHistory?: INTEGER;
+    pwdHistorySlots?: INTEGER;
+    pwdRecentlyExpiredDuration?: INTEGER;
+    pwdEncAlg?: PwdEncAlg;
 }
 
 export
@@ -327,8 +363,14 @@ interface DITInfo {
 }
 
 export
+interface DSAInfo {
+    accessPoint: AccessPoint;
+}
+
+export
 interface Context {
     dit: DITInfo;
+    dsa: DSAInfo;
     log: typeof console;
     db: PrismaClient;
     structuralObjectClassHierarchy: StructuralObjectClassInfo;

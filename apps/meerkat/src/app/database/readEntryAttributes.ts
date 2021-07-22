@@ -160,7 +160,7 @@ async function readEntryAttributes (
             }),
             // TODO: Obtain prescriptive ACIs if it is not type subentry.
             // TODO: Obtain subentry ACIs if it is type administrative point
-        ]
+        ],
     };
 }
 

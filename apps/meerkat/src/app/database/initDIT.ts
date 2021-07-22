@@ -68,8 +68,6 @@ async function initDIT (
             // deleteTimestamp
             creatorsName: ROOT_DSE_NAME,
             modifiersName: ROOT_DSE_NAME,
-            is_family_parent: false,
-            is_family_child: false,
             // hierarchyLevel
             // hierarchyBelow
             // hierarchyParent

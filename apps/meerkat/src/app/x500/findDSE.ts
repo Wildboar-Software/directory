@@ -833,5 +833,5 @@ async function findDSE (
             aliasDereferenced,
             undefined,
         ),
-    )
+    );
 }

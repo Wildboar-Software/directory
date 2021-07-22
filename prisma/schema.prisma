@@ -57,15 +57,13 @@ model Entry {
     deleteTimestamp          DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
     creatorsName             Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
     modifiersName            Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    is_family_parent         Boolean
-    is_family_child          Boolean
     hierarchyLevel           Int?
     hierarchyBelow           Boolean?
     hierarchyParent          Int? // TODO: Make this a foreign key
     hierarchyTop             Int? // TODO: Make this a foreign key
     password_id              Int?
     password                 Password?      @relation(fields: [password_id], references: [id])
-    structuralObjectClass    String
+    structuralObjectClass    String?
     accessControlScheme      String?
     intEmail                 String?
     jid                      String?
@@ -125,11 +123,11 @@ model Entry {
     AccessPoint                 AccessPoint[]
     SubtreeSpecification        SubtreeSpecification[]
     DitBridgeKnowledge          DitBridgeKnowledge[]
+    NonSpecificKnowledge        NonSpecificKnowledge[]
     @@unique([immediate_superior_id, rdn])
     @@unique([entryUUID])
     @@index([aliased_entry_dn])
     @@index([dit_id])
-    NonSpecificKnowledge NonSpecificKnowledge[]
 }
 
 model UtmCoordinate {
@@ -273,6 +271,8 @@ enum Knowledge {
     SECONDARY_SHADOW
     // DIT_BRIDGE
     OTHER
+    OB_REQUEST
+    OB_SHADOW_MASTER // Purely informational. From ShadowingAgreementInfo.master.
 }
 
 // Type: MY, supr, supplier, consumer, secondary consumer, xr, immSupr, subr, nssr?
@@ -286,17 +286,18 @@ model AccessPoint {
     url                      String?
     category                 Int?
     chainingRequired         Boolean?
-    OperationalBinding       OperationalBinding[]
     supplier_is_master       Boolean?
     non_supplying_master_id  Int?
     non_supplying_master     AccessPoint?         @relation("non_supplying_master", fields: [non_supplying_master_id], references: [id])
     is_consumer_of_id        Int?
     is_consumer_of           AccessPoint?         @relation("is_consumer_of", fields: [is_consumer_of_id], references: [id])
-    entry_id                 Int
-    entry                    Entry                @relation(fields: [entry_id], references: [id])
+    entry_id                 Int?
+    entry                    Entry?                @relation(fields: [entry_id], references: [id])
     non_supplying_master_for AccessPoint[]        @relation("non_supplying_master")
     consumers                AccessPoint[]        @relation("is_consumer_of")
     ber                      Bytes
+    operational_bindings     OperationalBinding[] @relation("ob_access_point")
+    is_master_for            OperationalBinding[] @relation("ob_master")
 }
 
 model NonSpecificKnowledge {
@@ -324,23 +325,6 @@ model DitBridgeKnowledge {
     ber             Bytes
     entry_id        Int
     entry           Entry  @relation(fields: [entry_id], references: [id])
-}
-
-model OperationalBindingType {
-    id                 Int                  @id @default(autoincrement())
-    name               String
-    OperationalBinding OperationalBinding[]
-}
-
-model OperationalBinding {
-    id              Int                    @id @default(autoincrement())
-    binding_type_id Int
-    binding_type    OperationalBindingType @relation(fields: [binding_type_id], references: [id])
-    identifier      Int
-    version         Int
-    agreement_ber   Bytes
-    access_point_id Int
-    access_point    AccessPoint            @relation(fields: [access_point_id], references: [id])
 }
 
 enum ObjectClassKind {
@@ -675,3 +659,94 @@ model Certificate {
 // CPS
 // pkiPath
 // attribute certificate
+
+enum OperationalBindingInitiator {
+    SYMMETRIC
+    ROLE_A
+    ROLE_B
+}
+
+enum ShadowedKnowledgeType {
+    MASTER
+    SHADOW
+    BOTH
+}
+
+model OperationalBinding {
+    id                 Int                         @id @default(autoincrement())
+    binding_type       Int[] // OID
+    binding_identifier Int?
+    binding_version    Int?                        @db.SmallInt
+    agreement_ber      Bytes
+    access_point_id    Int
+    access_point       AccessPoint                 @relation("ob_access_point", fields: [access_point_id], references: [id])
+    initiator          OperationalBindingInitiator
+    initiator_ber      Bytes
+    validity_start     DateTime
+    validity_end       DateTime? // NULL means "until explicitly requested"
+
+    // Security parameters
+    security_certification_path Bytes?
+    security_name               Json?
+    security_time               DateTime?
+    security_random             Bytes?
+    security_target             Int?      @db.SmallInt
+    security_operationCode      String?
+    security_errorProtection    Int?      @db.SmallInt
+    security_errorCode          String?
+
+    // Hierarchical Operation Binding
+    new_context_prefix_rdn Json?
+    immediate_superior     Json?
+
+    // Shadowing Operational Binding
+    shadowed_context_prefix Json?
+    knowledge_type          ShadowedKnowledgeType?
+    subordinates            Boolean?
+    supply_contexts         String[] // length of 0 means "allContexts"
+    supplier_initiated      Boolean?
+    periodic_beginTime      DateTime?
+    periodic_windowSize     Int?
+    periodic_updateInterval Int?
+    othertimes              Boolean?
+    master_access_point_id  Int?
+    master_access_point     AccessPoint?           @relation("ob_master", fields: [master_access_point_id], references: [id])
+    secondary_shadows       Boolean?
+
+    // Source information
+    // This should be separate from the access point, because the IP used to
+    // send the request or proxy the request could differ from the access point
+    // of the originating DSA.
+    source_ip               String? @db.Inet
+    source_tcp_port         Int?    @db.SmallInt
+    source_ae_title         Json?
+    source_credentials_type Int?    @db.SmallInt // 0 = simple, 1 = strong, 2 = external, 3 = spkm
+    source_certificate_path Bytes?
+    source_bind_token       Bytes?
+    source_strong_name      Json?
+    source_attr_cert_path   Bytes?
+
+    // Status
+    requested_time      DateTime  @default(now())
+    responded_time      DateTime?
+    terminated_time     DateTime?
+    accepted            Boolean?
+    last_update         DateTime?
+    last_ob_problem     Int?      @db.SmallInt
+    last_shadow_problem Int?      @db.SmallInt
+}
+
+// Only accept OB requests from DSAs that can be verified by:
+// 1. DNS + TLS
+// 2. Signed requests
+//
+model WhitelistedOperationalBinding {
+    id                 Int                         @id @default(autoincrement())
+    binding_type       Int[] // OID
+    initiator          OperationalBindingInitiator?
+    min_validity_start     DateTime?
+    max_validity_end       DateTime?
+    hostnames           String[]
+    subnet              String? @db.Inet
+    permitted           Boolean // if true, it is whitelisted. If false, it is blacklisted.
+}

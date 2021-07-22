@@ -15,6 +15,12 @@ import objectClassFromInformationObject from "./x500/objectClassFromInformationO
 import {
     top,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+import {
+    AccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import {
+    PresentationAddress,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import LDAPConnection from "./ldap/LDAPConnection";
 import loadDIT from "./database/loadDIT";
 import { v4 as uuid } from "uuid";
@@ -44,6 +50,20 @@ async function main (): Promise<void> {
         },
     };
     const ctx: Context = {
+        dsa: {
+            accessPoint: new AccessPoint(
+                {
+                    rdnSequence: [],
+                },
+                new PresentationAddress(
+                    undefined,
+                    undefined,
+                    undefined,
+                    [], // FIXME:
+                ),
+                undefined,
+            ),
+        },
         dit: {
             id: 1,
             uuid: "b47a393d-f561-4020-b8e8-324ae3391e98",

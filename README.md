@@ -1,8 +1,18 @@
 # Wildboar X.500 Directory Applications
 
+## Rules
+
+- When anything writes to the database, the verb used to describe it shall be "save."
+- When anything reads from the database, the verb used to describe it shall be "load."
+- When anything reads from an entry or attribute in memory, the verb used to describe it shall be "read."
+- When anything writes to an entry or attribute in memory, the verb used to describe it shall be "write."
+
+This is not to imply that these rules are current adhered to.
+
 ## Projects
 
 <!-- - [ ] Architecture decision: each meerkat directory will house one single naming context -->
+
 - [ ] Put object classes in the database
 - [ ] Put name forms in the database
 - [ ] Put friends in the database

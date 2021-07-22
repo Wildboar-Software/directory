@@ -314,13 +314,6 @@ async function entryFromDatabaseEntry (
         ret.dse.dsSubentry = true;
     }
 
-    if (dbe.familyMember) {
-        ret.dse.familyMember = {
-            parent: dbe.is_family_parent,
-            child: dbe.is_family_child,
-        };
-    }
-
     if (dbe.ditBridge) {
         const bridges = await ctx.db.ditBridgeKnowledge.findMany({
             where: {
@@ -342,7 +335,7 @@ async function entryFromDatabaseEntry (
         return ret;
     }
     ret.subordinates = oneLevel
-        ? []
+        ? null
         : await Promise.all(
             (await ctx.db.entry.findMany({
                 where: {

@@ -1,4 +1,5 @@
 import * as net from "net";
+import * as tls from "tls";
 import IDMVersion from "./IDMVersion";
 import IDMSegmentField from "./IDMSegmentField";
 import IDMSegment from "./IDMSegment";
@@ -45,10 +46,12 @@ class IDMConnection {
 
     // Event emitter
     public readonly events: IDMEventEmitter = new EventEmitter();
+    private socket!: net.Socket;
 
     constructor (
-        readonly socket: net.Socket,
+        readonly s: net.Socket,
     ) {
+        this.socket = s;
         this.socket.on("error", (e: Error) => {
             console.error(e.message);
             this.socket.removeAllListeners();
@@ -140,6 +143,11 @@ class IDMConnection {
         });
     }
 
+    public close (): void {
+        this.buffer = Buffer.alloc(0);
+        this.socket.end();
+    }
+
     private handlePDU (pdu: IDM_PDU): void {
         if ("bind" in pdu) {
             this.events.emit("bind", pdu.bind);
@@ -150,8 +158,10 @@ class IDMConnection {
         } else if ("request" in pdu) {
             this.events.emit("request", pdu.request);
         } else if ("result" in pdu) {
+            this.events.emit(pdu.result.invokeID.toString(), [ undefined, pdu.result ]);
             this.events.emit("result", pdu.result);
         } else if ("error" in pdu) {
+            this.events.emit(pdu.error.invokeID.toString(), [ pdu.error, undefined ]);
             this.events.emit("error_", pdu.error);
         } else if ("reject" in pdu) {
             this.events.emit("reject", pdu.reject);
@@ -163,23 +173,12 @@ class IDMConnection {
             this.events.emit("startTLS", pdu.startTLS);
         } else if ("tLSResponse" in pdu) {
             this.events.emit("tLSResponse", pdu.tLSResponse);
+            if (pdu.tLSResponse === 0) { // Success
+                this.socket = new tls.TLSSocket(this.socket);
+            }
         } else {
             console.log("Unrecognized IDM PDU.");
         }
-        // if ("bind" in pdu) {
-        //     if (pdu.bind.protocolID.toString() === dap_ip["&id"]?.toString()) {
-        //         console.log("DAP detected.");
-        //     }
-        //     this.events.emit("bind", pdu.bind);
-        // } else if ("unbind" in pdu) {
-        //     this.events.emit("unbind", pdu.unbind);
-        // } else if ("request" in pdu) {
-        //     // call protocol.request
-        // } else if ("startTLS" in pdu) {
-        //     // upgrade to TLS.
-        // } else {
-        //     console.log("Unrecognized IDM packet type.");
-        // }
     }
 
     public write (data: Uint8Array, encodings: number): void {
@@ -216,15 +215,15 @@ class IDMConnection {
     }
 
     public async writeBindResult (
-      protocolID: OBJECT_IDENTIFIER,
-      result: ASN1Element,
-      respondingAETitle?: GeneralName,
+        protocolID: OBJECT_IDENTIFIER,
+        result: ASN1Element,
+        respondingAETitle?: GeneralName,
     ): Promise<void> {
-      const bindResult = new IdmBindResult(protocolID, respondingAETitle, result);
-      const idm: IDM_PDU = {
-        bindResult,
-      };
-      this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        const bindResult = new IdmBindResult(protocolID, respondingAETitle, result);
+        const idm: IDM_PDU = {
+            bindResult,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }
 
     public async writeError (invokeId: INTEGER, errcode: ASN1Element, data: ASN1Element): Promise<void> {
