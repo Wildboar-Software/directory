@@ -57,6 +57,14 @@ import { SupplierAndConsumers } from "@wildboar/x500/src/lib/modules/DSAOperatio
 import { MasterAndShadowAccessPoints } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
 import { DitBridgeKnowledge } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
 
+type EventReceiver<T> = (params: T) => void;
+
+interface OperationalBindingControlEvents {
+    on (eventName: string, fn: EventReceiver<boolean>): void;
+    once (eventName: string, fn: EventReceiver<boolean>): void;
+    emit (eventName: string, params: boolean): void;
+}
+
 export
 type UUID = string;
 
@@ -395,4 +403,5 @@ interface Context {
      * apply limits to the number of outstanding query references per client.
      */
     pagedResultsRequests: Map<UUID, Map<string, PagedResultsRequest_newRequest>>;
+    operationalBindingControlEvents: OperationalBindingControlEvents;
 }

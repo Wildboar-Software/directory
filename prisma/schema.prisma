@@ -674,6 +674,7 @@ enum ShadowedKnowledgeType {
 
 model OperationalBinding {
     id                 Int                         @id @default(autoincrement())
+    uuid  String  @default(uuid()) @db.Uuid
     binding_type       Int[] // OID
     binding_identifier Int?
     binding_version    Int?                        @db.SmallInt
@@ -734,6 +735,8 @@ model OperationalBinding {
     last_update         DateTime?
     last_ob_problem     Int?      @db.SmallInt
     last_shadow_problem Int?      @db.SmallInt
+
+    @@unique([uuid])
 }
 
 // Only accept OB requests from DSAs that can be verified by:

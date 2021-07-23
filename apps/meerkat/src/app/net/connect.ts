@@ -84,12 +84,12 @@ async function connect (
                         idm.events.once("bindResult", (result) => {
                             resolve(result);
                         });
-                        socket.write(encoded.toBytes());
+                        idm.write(encoded.toBytes(), 0);
                     });
                 }
                 const ret: Connection = {
                     writeOperation: async (code: Code, parameters: ASN1Element): Promise<ASN1Element> => {
-                        const invokeID: number = crypto.randomInt(4294967295);
+                        const invokeID: number = crypto.randomInt(2147483648);
                         const pdu: IDM_PDU = {
                             request: new Request(invokeID, code, parameters),
                         };
@@ -102,7 +102,7 @@ async function connect (
                                     resolve(result!.result);
                                 }
                             });
-                            socket.write(encoded.toBytes());
+                            idm.write(encoded.toBytes(), 0);
                         });
                     },
                     close: async (): Promise<void> => {
@@ -149,7 +149,7 @@ async function connect (
                                             resolve(result!.result);
                                         }
                                     });
-                                    socket.write(encoded.toBytes());
+                                    idm.write(encoded.toBytes(), 0);
                                 });
                             },
                             close: async (): Promise<void> => {

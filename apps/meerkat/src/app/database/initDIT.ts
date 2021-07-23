@@ -28,10 +28,10 @@ async function initDIT (
     ctx: Context,
     name: string,
 ): Promise<void> {
-    const aapDN = process.env.AAP;
-    if (!aapDN || (aapDN.trim().length === 0)) {
-        throw new Error("Environment variable AAP is required and must be set to a valid distinguished name.");
-    }
+    // const aapDN = process.env.AAP;
+    // if (!aapDN || (aapDN.trim().length === 0)) {
+    //     throw new Error("Environment variable AAP is required and must be set to a valid distinguished name.");
+    // }
 
     const dit = await ctx.db.dIT.create({
         data: {

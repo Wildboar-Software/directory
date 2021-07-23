@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>App</title>
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            @media screen and (prefers-color-scheme: light) {
+                body {
+                    background-color: white;
+                    color: black;
+                }
+            }
+            td {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Operational Binding Details</h1>
+        <hr />
+        <nav><a href="/">Back to Home</a></nav>
+        <hr />
+        <h2>Actions</h2>
+        <div>
+            <form action="/ob/{{uuid}}/accept" method="POST" >
+                <button type="submit">Accept</button>
+            </form>
+            <form action="/ob/{{uuid}}/reject" method="POST" >
+                <button type="submit">Reject</button>
+            </form>
+        </div>
+        <hr />
+        <h2>Details</h2>
+        <div>
+            <span>Status: </span>
+            {{#if this.accepted}}
+                <span style="color: green;">ACCEPTED</span>
+            {{else if this.waiting}}
+                <span style="color: grey;">WAITING</span>
+            {{else}}
+                <span style="color: red;">REJECTED</span>
+            {{/if}}
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>UUID</td>
+                    <td>{{uuid}}</td>
+                </tr>
+                <tr>
+                    <td>Binding Type</td>
+                    <td>{{binding_type}}</td>
+                </tr>
+                <tr>
+                    <td>Binding Identifier</td>
+                    <td>{{binding_identifier}}</td>
+                </tr>
+                <tr>
+                    <td>Binding Version</td>
+                    <td>{{binding_version}}</td>
+                </tr>
+                <tr>
+                    <td>Initiator</td>
+                    <td>{{initiator}}</td>
+                </tr>
+                <tr>
+                    <td>Validity Start</td>
+                    <td>{{validity_start}}</td>
+                </tr>
+                <tr>
+                    <td>Validity End</td>
+                    <td>{{validity_end}}</td>
+                </tr>
+            </tbody>
+        </table>
+
+    {{!-- id                 Int                         @id @default(autoincrement())
+    uuid  String  @default(uuid()) @db.Uuid
+    binding_type       Int[] // OID
+    binding_identifier Int?
+    binding_version    Int?                        @db.SmallInt
+    agreement_ber      Bytes
+    access_point_id    Int
+    access_point       AccessPoint                 @relation("ob_access_point", fields: [access_point_id], references: [id])
+    initiator          OperationalBindingInitiator
+    initiator_ber      Bytes
+    validity_start     DateTime
+    validity_end       DateTime? // NULL means "until explicitly requested"
+
+    // Security parameters
+    security_certification_path Bytes?
+    security_name               Json?
+    security_time               DateTime?
+    security_random             Bytes?
+    security_target             Int?      @db.SmallInt
+    security_operationCode      String?
+    security_errorProtection    Int?      @db.SmallInt
+    security_errorCode          String?
+
+    // Hierarchical Operation Binding
+    new_context_prefix_rdn Json?
+    immediate_superior     Json?
+
+    // Shadowing Operational Binding
+    shadowed_context_prefix Json?
+    knowledge_type          ShadowedKnowledgeType?
+    subordinates            Boolean?
+    supply_contexts         String[] // length of 0 means "allContexts"
+    supplier_initiated      Boolean?
+    periodic_beginTime      DateTime?
+    periodic_windowSize     Int?
+    periodic_updateInterval Int?
+    othertimes              Boolean?
+    master_access_point_id  Int?
+    master_access_point     AccessPoint?           @relation("ob_master", fields: [master_access_point_id], references: [id])
+    secondary_shadows       Boolean?
+
+    // Source information
+    // This should be separate from the access point, because the IP used to
+    // send the request or proxy the request could differ from the access point
+    // of the originating DSA.
+    source_ip               String? @db.Inet
+    source_tcp_port         Int?    @db.SmallInt
+    source_ae_title         Json?
+    source_credentials_type Int?    @db.SmallInt // 0 = simple, 1 = strong, 2 = external, 3 = spkm
+    source_certificate_path Bytes?
+    source_bind_token       Bytes?
+    source_strong_name      Json?
+    source_attr_cert_path   Bytes?
+
+    // Status
+    requested_time      DateTime  @default(now())
+    responded_time      DateTime?
+    terminated_time     DateTime?
+    accepted            Boolean?
+    last_update         DateTime?
+    last_ob_problem     Int?      @db.SmallInt
+    last_shadow_problem Int?      @db.SmallInt --}}
+
+    </body>
+</html>

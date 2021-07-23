@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Meerkat DSA Web Admin</title>
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            @media screen and (prefers-color-scheme: light) {
+                body {
+                    background-color: white;
+                    color: black;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Meerkat DSA Web Administration Portal</h1>
+        <nav>
+            <ul>
+                <li>
+                    <a href="/schema">Schema</a>
+                </li>
+                <li>
+                    <a href="/ob">Operational Bindings</a>
+                </li>
+                <li>
+                    System
+                    <ul>
+                        <li><a href="/about">About</a></li>
+                    </ul>
+                </li>
+            <ul>
+        </nav>
+        {{ message }}
+    </body>
+</html>

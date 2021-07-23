@@ -93,7 +93,14 @@ async function establishOperationalBinding (
         ? arg.signed.toBeSigned
         : arg.unsigned;
 
-    // TODO: Wait for approval.
+    const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
+        new Promise<boolean>((resolve) => {
+            ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
+                resolve(approved);
+            });
+        }),
+        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 30000)),
+    ]);
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,
@@ -193,7 +200,7 @@ async function establishOperationalBinding (
             }
             const reply = await becomeSubordinate(ctx, agreement, init);
             const sp = data.securityParameters;
-            await ctx.db.operationalBinding.create({
+            const created = await ctx.db.operationalBinding.create({
                 data: {
                     binding_type: data.bindingType.nodes,
                     binding_identifier: data.bindingID?.identifier,
@@ -233,6 +240,25 @@ async function establishOperationalBinding (
                     requested_time: new Date(),
                 },
             });
+            const approved: boolean = await getApproval(created.uuid);
+            if (!approved) {
+                throw new errors.OperationalBindingError(
+                    "Operational binding rejected.",
+                    {
+                        unsigned: new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_invalidAgreement,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                );
+            }
             return {
                 unsigned: new EstablishOperationalBindingResultData(
                     data.bindingType,

@@ -37,7 +37,7 @@ class IDMConnection {
     private bufferIndex: number = 0;
 
     // IDM Segments
-    private version: IDMVersion | undefined = undefined;
+    private version: IDMVersion | undefined = IDMVersion.v1;
     private currentSegments: IDMSegment[] = [];
     private currentSegment: Partial<IDMSegment> = {};
 

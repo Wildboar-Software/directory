@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>App</title>
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            @media screen and (prefers-color-scheme: light) {
+                body {
+                    background-color: white;
+                    color: black;
+                }
+            }
+            td {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Operational Bindings</h1>
+        <hr />
+        <nav><a href="/">Back to Home</a></nav>
+        <hr />
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Binding Type</th>
+                    <th scope="col">Binding Identifier</th>
+                    <th scope="col">Binding Version</th>
+                    <th scope="col">Validity Start</th>
+                    <th scope="col">Validity End</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each obs}}
+                    <tr>
+                        <td>
+                            <a href="/ob/{{this.uuid}}">Details</a>
+                        </td>
+                        {{#if this.accepted}}
+                            <td style="color: green;">ACCEPTED</td>
+                        {{else if this.waiting}}
+                            <td style="color: grey;">WAITING</td>
+                        {{else}}
+                            <td style="color: red;">REJECTED</td>
+                        {{/if}}
+                        <td>{{this.binding_type}}</td>
+                        <td>{{this.binding_identifier}}</td>
+                        <td>{{this.binding_version}}</td>
+                        <td>{{this.validity_start}}</td>
+                        <td>{{this.validity_end}}</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+            <tfoot></tfoot>
+        </table>
+    </body>
+</html>
