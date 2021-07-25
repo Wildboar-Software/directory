@@ -202,6 +202,7 @@ async function establishOperationalBinding (
             const sp = data.securityParameters;
             const created = await ctx.db.operationalBinding.create({
                 data: {
+                    outbound: false,
                     binding_type: data.bindingType.nodes,
                     binding_identifier: data.bindingID?.identifier,
                     binding_version: data.bindingID?.version,

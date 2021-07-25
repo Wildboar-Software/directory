@@ -674,6 +674,7 @@ enum ShadowedKnowledgeType {
 
 model OperationalBinding {
     id                 Int                         @id @default(autoincrement())
+    outbound           Boolean
     uuid  String  @default(uuid()) @db.Uuid
     binding_type       Int[] // OID
     binding_identifier Int?

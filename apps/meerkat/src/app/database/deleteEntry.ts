@@ -16,9 +16,12 @@ async function deleteEntry (
                 entry_id: entry.dse.id,
             },
         }),
-        ctx.db.entry.delete({
+        ctx.db.entry.updateMany({
             where: {
                 id: entry.dse.id,
+            },
+            data: {
+                deleteTimestamp: new Date(),
             },
         }),
     ]);

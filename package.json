@@ -41,6 +41,7 @@
     "@wildboar/scrypt-0": "^1.0.0",
     "@wildboar/x500": "^1.0.8",
     "asn1-ts": "^5.3.2",
+    "date-fns": "^2.23.0",
     "escape-html": "^1.0.3",
     "hbs": "^4.1.2",
     "i18next": "^20.3.4",
