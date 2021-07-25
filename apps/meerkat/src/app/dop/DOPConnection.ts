@@ -19,7 +19,7 @@ import {
     ServiceError,
     UpdateError,
     UnknownOperationError,
-} from "../dap/errors";
+} from "../errors";
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";

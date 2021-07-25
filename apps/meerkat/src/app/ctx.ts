@@ -39,6 +39,7 @@ const ctx: Context = {
             ),
             undefined,
         ),
+        hibernatingSince: undefined,
     },
     dit: {
         id: 1,

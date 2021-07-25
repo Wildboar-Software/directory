@@ -1,28 +1,29 @@
 import { Context, Vertex } from "../types";
-import type {
-    RemoveEntryArgument,
+import {
+    _decode_RemoveEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
-import type {
-    RemoveEntryResult,
+import {
+    _encode_RemoveEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
 import {
-    NameError,
     UpdateError,
-    objectDoesNotExistErrorData,
-} from "../dap/errors";
+} from "../errors";
 import { UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
     UpdateProblem_notAllowedOnNonLeaf,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import {
-    ServiceControlOptions_dontDereferenceAliases,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import {
-    EXT_BIT_USE_ALIAS_ON_UPDATE,
-} from "../x500/extensions";
-import findEntry from "../x500/findEntry";
-import { TRUE_BIT } from "asn1-ts";
+import readChildren from "../dit/readChildren";
 import deleteEntry from "../database/deleteEntry";
+import {
+    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    ChainingResults,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
+import { DERElement } from "asn1-ts";
 
 const HAS_CHILDREN_ERROR_DATA = new UpdateErrorData(
     UpdateProblem_notAllowedOnNonLeaf,
@@ -39,52 +40,48 @@ const HAS_CHILDREN_ERROR_DATA = new UpdateErrorData(
 export
 async function removeEntry (
     ctx: Context,
-    arg: RemoveEntryArgument,
-): Promise<RemoveEntryResult> {
-    const data = ("signed" in arg)
-        ? arg.signed.toBeSigned
-        : arg.unsigned;
-
-    const useAliasOnUpdateExtension: boolean = (
-        data.criticalExtensions?.[EXT_BIT_USE_ALIAS_ON_UPDATE] === TRUE_BIT);
-    const dontDereferenceAliases: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
-
-    /**
-     * From ITU Recommendation X.511, Section 12.3.2:
-     *
-     * > ...aliases are dereferenced by this operation only if
-     * > dontDereferenceAlias is not set and useAliasOnUpdate is set
-     */
-    const derefAliases: boolean = (
-        !dontDereferenceAliases
-        && useAliasOnUpdateExtension
-    );
-
-    const entry: Vertex | undefined = await findEntry(ctx, ctx.dit.root, data.object.rdnSequence, derefAliases);
-    if (!entry) {
-        throw new NameError(
-            "No such object.",
-            await objectDoesNotExistErrorData(ctx, data.object),
-        );
-    }
-    if (entry.subordinates) {
+    vertex: Vertex,
+    admPoints: Vertex[],
+    request: ChainedArgument,
+): Promise<ChainedResult> {
+    // TODO: Check Access Control
+    const argument = _decode_RemoveEntryArgument(request.argument);
+    const data = ("signed" in argument)
+        ? argument.signed.toBeSigned
+        : argument.unsigned;
+    const subordinates = await readChildren(ctx, vertex);
+    if (subordinates.length > 0) {
         throw new UpdateError(
             "Cannot delete an entry with children.",
             HAS_CHILDREN_ERROR_DATA,
         );
     }
+    if (vertex.dse.subentry) { // Go to step 5.
+        // 1. Remove the subentry.
+        // 2. Modify the operational bindings of all relevant subordinate DSAs.
+        // 3. Continue at step 7.
+    } else if (vertex.dse.cp) { // Go to step 6.
+        // 1. Remove the naming context.
+        // 2. Terminate the HOB, if applicable.
+    } else if (vertex.dse.entry || vertex.dse.alias) { // Go to step 4.
+        // 1. Remove the entry or alias entry.
+        // 2. Continue at step 7.
+    } else { // See Section 6.
 
-    await deleteEntry(ctx, entry);
-    if (entry.immediateSuperior?.subordinates?.length) {
-        const entryIndex = entry.immediateSuperior.subordinates
-            .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
-        entry.immediateSuperior.subordinates.splice(entryIndex, 1);
     }
-
-    return {
-        null_: null,
-    };
+    // TODO: Step 7: Update shadows.
+    await deleteEntry(ctx, vertex);
+    return new ChainedResult(
+        new ChainingResults(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        ),
+        _encode_RemoveEntryResult({
+            null_: null,
+        }, () => new DERElement()),
+    );
 }
 
 export default removeEntry;

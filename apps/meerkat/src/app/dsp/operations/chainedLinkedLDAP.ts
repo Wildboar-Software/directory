@@ -21,7 +21,7 @@ import {
     ServiceProblem_loopDetected,
     ServiceProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
-import * as errors from "../../dap/errors";
+import * as errors from "../../errors";
 
 export
 async function chainedLinkedLDAP (

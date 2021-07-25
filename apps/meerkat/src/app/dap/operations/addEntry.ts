@@ -14,7 +14,7 @@ import {
     SecurityError,
     ServiceError,
     UpdateError,
-} from "../errors";
+} from "../../errors";
 import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";

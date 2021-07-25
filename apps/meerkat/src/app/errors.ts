@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "./types";
 import type {
     AbandonedData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
@@ -65,8 +65,11 @@ import type {
 import {
     UpdateProblem_namingViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import findEntry from "../x500/findEntry";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import {
+    operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+import findEntry from "./x500/findEntry";
+import getDistinguishedName from "./x500/getDistinguishedName";
 
 // ReferralError
 
@@ -139,6 +142,15 @@ class UpdateError extends Error {
     constructor (readonly message: string, readonly data: UpdateErrorData) {
         super(message);
         Object.setPrototypeOf(this, UpdateError.prototype);
+    }
+}
+
+export
+class OperationalBindingError extends Error {
+    public static readonly errcode: Code = operationalBindingError["&errorCode"]!;
+    constructor (readonly message: string, readonly data: typeof operationalBindingError["&ParameterType"]) {
+        super(message);
+        Object.setPrototypeOf(this, OperationalBindingError.prototype);
     }
 }
 

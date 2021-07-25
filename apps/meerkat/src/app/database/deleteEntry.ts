@@ -22,6 +22,11 @@ async function deleteEntry (
             },
         }),
     ]);
+    if (entry.immediateSuperior?.subordinates?.length) {
+        const entryIndex = entry.immediateSuperior.subordinates
+            .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
+        entry.immediateSuperior.subordinates.splice(entryIndex, 1);
+    }
 }
 
 export default deleteEntry;

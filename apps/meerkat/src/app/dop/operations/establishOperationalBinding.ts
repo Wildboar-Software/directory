@@ -1,5 +1,5 @@
 import type { Context } from "../../types";
-import * as errors from "../errors";
+import * as errors from "../../errors";
 import type {
     EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";

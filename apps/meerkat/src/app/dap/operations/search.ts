@@ -67,7 +67,7 @@ import {
     NameError,
     ServiceError,
     objectDoesNotExistErrorData,
-} from "../errors";
+} from "../../errors";
 import findEntry from "../../x500/findEntry";
 // import canJoin from "../../x500/canJoin";
 import entryInformationFromEntry from "../../x500/entryInformationFromEntry";

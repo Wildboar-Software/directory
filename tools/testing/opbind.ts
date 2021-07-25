@@ -23,7 +23,7 @@ import {
     _encode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import * as crypto from "crypto";
-import { DERElement } from "asn1-ts";
+import { ASN1Construction, ObjectIdentifier, ASN1TagClass, ASN1UniversalType, DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
@@ -41,11 +41,68 @@ import {
 import {
     SimpleCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+import {
+    administrativeRole,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+import {
+    accessControlScheme,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
+import {
+    id_ar_autonomousArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import {
+    basicAccessControlScheme,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/basicAccessControlScheme.va";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import {
+    commonName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import {
+    countryName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa";
+import {
+    SubentryInfo,
+    Vertex,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import * as net from "net";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 const { IDMConnection } = require("../../dist/libs/idm/src/index");
 
 const DER = () => new DERElement();
+
+const US = new AttributeTypeAndValue(
+    countryName["&id"],
+    new DERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.printableString,
+        "US",
+    ),
+);
+
+const utf = (str: string) => new DERElement(
+    ASN1TagClass.universal,
+    ASN1Construction.primitive,
+    ASN1UniversalType.utf8String,
+    str,
+);
+
+const oid = (oid: OBJECT_IDENTIFIER) => new DERElement(
+    ASN1TagClass.universal,
+    ASN1Construction.primitive,
+    ASN1UniversalType.objectIdentifier,
+    oid,
+);
+
+const cn = (str: string) => new AttributeTypeAndValue(
+    commonName["&id"],
+    utf(str),
+);
 
 /**
  * Create an operational binding (for testing purposes.)
@@ -54,13 +111,66 @@ async function main() {
     const bindingIdentifier: number = crypto.randomInt(2147483648);
     const invokeID: number = crypto.randomInt(2147483648);
     const sup2sub = new SuperiorToSubordinate(
-        [],
-        undefined,
+        [
+            new Vertex(
+                [US],
+                [
+                    new Attribute(
+                        administrativeRole["&id"],
+                        [
+                            oid(id_ar_autonomousArea),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        accessControlScheme["&id"],
+                        [
+                            oid(basicAccessControlScheme),
+                        ],
+                        undefined,
+                    ),
+                ],
+                [
+                    new SubentryInfo(
+                        [cn("asdf")],
+                        [
+                            new Attribute(
+                                commonName["&id"],
+                                [utf("zxcv")],
+                                undefined,
+                            ),
+                        ],
+                    ),
+                ],
+                undefined,
+            ),
+        ],
+        [
+            new Attribute(
+                commonName["&id"],
+                [utf("qwerty")],
+                undefined,
+            ),
+        ],
         undefined,
     );
     const agreement = new HierarchicalAgreement(
-        [],
-        [],
+        [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                new DERElement(
+                    ASN1TagClass.universal,
+                    ASN1Construction.primitive,
+                    ASN1UniversalType.utf8String,
+                    "bigboi",
+                ),
+            ),
+        ],
+        [
+            [
+                US,
+            ],
+        ],
     );
     const arg: EstablishOperationalBindingArgument = {
         unsigned: new EstablishOperationalBindingArgumentData(

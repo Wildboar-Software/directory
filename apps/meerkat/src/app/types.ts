@@ -373,6 +373,7 @@ interface DITInfo {
 export
 interface DSAInfo {
     accessPoint: AccessPoint;
+    hibernatingSince?: Date;
 }
 
 export

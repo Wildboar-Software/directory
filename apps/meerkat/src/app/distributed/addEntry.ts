@@ -13,7 +13,7 @@ import {
     SecurityError,
     ServiceError,
     UpdateError,
-} from "../dap/errors";
+} from "../errors";
 import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";

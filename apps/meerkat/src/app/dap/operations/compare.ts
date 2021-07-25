@@ -10,7 +10,7 @@ import {
     ServiceError,
     objectDoesNotExistErrorData,
     CONTEXTS_NOT_ENABLED_ERROR,
-} from "../errors";
+} from "../../errors";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";

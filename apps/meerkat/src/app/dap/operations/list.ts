@@ -17,7 +17,7 @@ import {
     NameError,
     ServiceError,
     objectDoesNotExistErrorData,
-} from "../errors";
+} from "../../errors";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";

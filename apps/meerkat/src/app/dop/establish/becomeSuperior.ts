@@ -24,10 +24,7 @@ import writeEntryAttributes from "../../database/writeEntryAttributes";
 import entryFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
 import valuesFromAttribute from "../../memory/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
-import * as errors from "../errors";
-import {
-    SecurityError, // TODO: Move all errors to a root-level "errors" folder or library
-} from "../../dap/errors";
+import * as errors from "../../errors";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
@@ -57,7 +54,7 @@ async function becomeSubordinate (
 ): Promise<SuperiorToSubordinate> {
     const superior = await findEntry(ctx, ctx.dit.root, agreement.immediateSuperior, false);
     if (!superior) {
-        throw new SecurityError(
+        throw new errors.SecurityError(
             "No such superior or not authorized to know about it.",
             new SecurityErrorData(
                 SecurityProblem_insufficientAccessRights,
@@ -92,7 +89,7 @@ async function becomeSubordinate (
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
     const existing = await findEntry(ctx, ctx.dit.root, itinerantDN, false);
     if (existing) {
-        throw new SecurityError(
+        throw new errors.SecurityError(
             "Entry already exists.",
             new SecurityErrorData(
                 SecurityProblem_insufficientAccessRights,
@@ -116,8 +113,8 @@ async function becomeSubordinate (
             dit_id: ctx.dit.id,
             immediate_superior_id: superior.dse.id,
             rdn: rdnToJson(agreement.rdn),
-            creatorsName: [], // TODO:
-            modifiersName: [], // TODO:
+            creatorsName: [],
+            modifiersName: [],
             subr: true,
             alias: sub2sup.alias,
             sa: sub2sup.alias,
@@ -137,7 +134,6 @@ async function becomeSubordinate (
         },
     });
     const subr = await entryFromDatabaseEntry(ctx, superior, createdEntry, true);
-    // TODO: Filter attributes?
     const values = sub2sup.entryInfo?.flatMap((attr) => valuesFromAttribute(attr)) ?? [];
     await writeEntryAttributes(ctx, subr, values);
 

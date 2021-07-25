@@ -25,7 +25,7 @@ import {
     UpdateError,
     objectDoesNotExistErrorData,
     namingViolationErrorData,
-} from "../errors";
+} from "../../errors";
 import { UpdateProblem_namingViolation } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import { UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";

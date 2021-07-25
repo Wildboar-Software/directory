@@ -46,6 +46,7 @@ async function main (): Promise<void> {
         }
     }
     assert(dit);
+    ctx.dit.root = dit;
     ctx.log.info(`DIT with UUID ${ctx.dit.uuid} loaded into memory.`);
 
     // The ordering of these is important.

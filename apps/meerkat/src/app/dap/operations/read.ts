@@ -14,7 +14,7 @@ import {
 import {
     NameError,
     objectDoesNotExistErrorData,
-} from "../errors";
+} from "../../errors";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
