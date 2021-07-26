@@ -1,4 +1,5 @@
 // import type { Context } from "../../types";
+// import type DOPConnection from "../DOPConnection";
 // import * as errors from "../errors";
 // import type {
 //     ModifyOperationalBindingArgument,

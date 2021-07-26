@@ -19,6 +19,7 @@ export
 async function seed () {
     await prisma.operationalBinding.create({
         data: {
+            outbound: false,
             binding_type: id_op_binding_hierarchical.nodes,
             binding_identifier: 1,
             binding_version: 1,

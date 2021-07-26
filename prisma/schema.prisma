@@ -273,31 +273,40 @@ enum Knowledge {
     OTHER
     OB_REQUEST
     OB_SHADOW_MASTER // Purely informational. From ShadowingAgreementInfo.master.
+    NON_SUPPLYING_MASTER
 }
 
 // Type: MY, supr, supplier, consumer, secondary consumer, xr, immSupr, subr, nssr?
 // Satisfies AccessPoint, MasterOrShadowAccessPoint, SupplierOrConsumer, ConsumerInformation, and SupplierInformation
 model AccessPoint {
-    id                       Int                  @id @default(autoincrement())
+    id                       Int                         @id @default(autoincrement())
+    ber                      Bytes
     knowledge_type           Knowledge
     ae_title                 Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    ipv4                     String?              @db.Inet
-    tcp_port                 Int?                 @db.SmallInt
-    url                      String?
     category                 Int?
     chainingRequired         Boolean?
     supplier_is_master       Boolean?
     non_supplying_master_id  Int?
-    non_supplying_master     AccessPoint?         @relation("non_supplying_master", fields: [non_supplying_master_id], references: [id])
-    is_consumer_of_id        Int?
-    is_consumer_of           AccessPoint?         @relation("is_consumer_of", fields: [is_consumer_of_id], references: [id])
+    non_supplying_master     AccessPoint?                @relation("non_supplying_master", fields: [non_supplying_master_id], references: [id])
+    is_consumer_of_id        Int? // This comes from SupplierAndConsumers.consumers
+    is_consumer_of           AccessPoint?                @relation("is_consumer_of", fields: [is_consumer_of_id], references: [id])
     entry_id                 Int?
-    entry                    Entry?                @relation(fields: [entry_id], references: [id])
-    non_supplying_master_for AccessPoint[]        @relation("non_supplying_master")
-    consumers                AccessPoint[]        @relation("is_consumer_of")
-    ber                      Bytes
-    operational_bindings     OperationalBinding[] @relation("ob_access_point")
-    is_master_for            OperationalBinding[] @relation("ob_master")
+    entry                    Entry?                      @relation(fields: [entry_id], references: [id])
+    non_supplying_master_for AccessPoint[]               @relation("non_supplying_master")
+    consumers                AccessPoint[]               @relation("is_consumer_of")
+    operational_bindings     OperationalBinding[]        @relation("ob_access_point")
+    is_master_for            OperationalBinding[]        @relation("ob_master")
+    NSAP                     NetworkServiceAccessPoint[]
+}
+
+model NetworkServiceAccessPoint {
+    id              Int         @id @default(autoincrement())
+    ipv4            String?     @db.Inet
+    tcp_port        Int?        @db.SmallInt
+    url             String?
+    bytes           Bytes
+    access_point_id Int
+    access_point    AccessPoint @relation(fields: [access_point_id], references: [id])
 }
 
 model NonSpecificKnowledge {
@@ -675,7 +684,7 @@ enum ShadowedKnowledgeType {
 model OperationalBinding {
     id                 Int                         @id @default(autoincrement())
     outbound           Boolean
-    uuid  String  @default(uuid()) @db.Uuid
+    uuid               String                      @default(uuid()) @db.Uuid
     binding_type       Int[] // OID
     binding_identifier Int?
     binding_version    Int?                        @db.SmallInt
@@ -745,12 +754,12 @@ model OperationalBinding {
 // 2. Signed requests
 //
 model WhitelistedOperationalBinding {
-    id                 Int                         @id @default(autoincrement())
+    id                 Int                          @id @default(autoincrement())
     binding_type       Int[] // OID
     initiator          OperationalBindingInitiator?
-    min_validity_start     DateTime?
-    max_validity_end       DateTime?
-    hostnames           String[]
-    subnet              String? @db.Inet
-    permitted           Boolean // if true, it is whitelisted. If false, it is blacklisted.
+    min_validity_start DateTime?
+    max_validity_end   DateTime?
+    hostnames          String[]
+    subnet             String?                      @db.Inet
+    permitted          Boolean // if true, it is whitelisted. If false, it is blacklisted.
 }

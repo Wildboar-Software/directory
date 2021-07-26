@@ -26,6 +26,8 @@ import loadAttributeTypes from "./x500/loadAttributeTypes";
 import loadObjectClasses from "./x500/loadObjectClasses";
 import loadLDAPSyntaxes from "./x500/loadLDAPSyntaxes";
 import ctx from "./ctx";
+import terminate from "./dop/terminate";
+import { differenceInMilliseconds } from "date-fns";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;
 const DEFAULT_LDAP_TCP_PORT: number = 1389;
@@ -156,4 +158,24 @@ async function main (): Promise<void> {
             Logger.log('Listening at http://localhost:' + port);
         });
     }
+
+    /**
+     * This section handles the delayed termination of operational bindings that
+     * were not terminated before the DSA shut down.
+     */
+    const now = new Date();
+    const obsToExpire = await ctx.db.operationalBinding.findMany({
+        where: {
+            terminated_time: {
+                gte: new Date(),
+            },
+        },
+    });
+    obsToExpire.forEach((ob) => {
+        if (!ob.terminated_time) {
+            return;
+        }
+        setTimeout(() => terminate(ctx, ob.id), Math.max(differenceInMilliseconds(ob.terminated_time, now), 1000));
+        ctx.log.warn(`Terminating operational binding ${ob.id} at ${ob.terminated_time.toISOString()}.`);
+    });
 }

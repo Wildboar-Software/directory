@@ -45,12 +45,19 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 import { v4 as uuid } from "uuid";
 import establishOperationalBinding from "./operations/establishOperationalBinding";
+import terminateOperationalBinding from "./operations/terminateOperationalBinding";
 import {
     _decode_EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
 import {
     _encode_EstablishOperationalBindingResult,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
+import {
+    _decode_TerminateOperationalBindingArgument,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
+import {
+    _encode_TerminateOperationalBindingResult,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
 
 const BER = () => new BERElement();
 
@@ -70,6 +77,16 @@ async function handleRequest (
             request.invokeID,
             request.opcode,
             _encode_EstablishOperationalBindingResult(result, BER),
+        );
+        break;
+    }
+    case (101): { // terminate
+        const arg = _decode_TerminateOperationalBindingArgument(request.argument);
+        const result = await terminateOperationalBinding(ctx, this, arg);
+        await dop.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_TerminateOperationalBindingResult(result, BER),
         );
         break;
     }

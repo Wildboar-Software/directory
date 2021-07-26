@@ -1,4 +1,5 @@
 import type { Context } from "../../types";
+import type DOPConnection from "../DOPConnection";
 import * as errors from "../../errors";
 import type {
     EstablishOperationalBindingArgument,
@@ -211,6 +212,7 @@ async function establishOperationalBinding (
                         create: {
                             knowledge_type: Knowledge.OB_REQUEST,
                             ae_title: data.accessPoint.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
+                            // ipv4: ipv4FromNSAP(data.accessPoint.address.nAddresses[0])
                             // TODO: ipv4
                             // TODO: tcp_port
                             // TODO: url
