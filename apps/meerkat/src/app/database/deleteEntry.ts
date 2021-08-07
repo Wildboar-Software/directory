@@ -5,6 +5,9 @@ async function deleteEntry (
     ctx: Context,
     entry: Vertex,
 ): Promise<void> {
+    if (entry.dse.root && !entry.immediateSuperior) {
+        return; // Protects us from accidentally deleting the Root DSE.
+    }
     await ctx.db.$transaction([
         ctx.db.contextValue.deleteMany({
             where: {

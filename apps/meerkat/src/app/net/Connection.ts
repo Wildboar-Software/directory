@@ -1,5 +1,7 @@
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import type { ASN1Element } from "asn1-ts";
+import type { Request } from "@wildboar/x500/src/lib/types/Request";
+import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 
 // type ErrorOrResult = [ Error, undefined ] | [ undefined, IdmResult ];
 
@@ -26,7 +28,7 @@ type ConnectionEventEmitter = Emitter<EventMap>;
 
 export
 interface Connection {
-    writeOperation: (code: Code, parameters: ASN1Element) => Promise<ASN1Element>;
+    writeOperation: (req: Omit<Request, "invokeId">) => Promise<ResultOrError>;
     close: () => Promise<void>;
     events: ConnectionEventEmitter;
 }

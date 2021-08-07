@@ -1,6 +1,11 @@
 # Blueprint for a global DIT
 
 ```
+O=Wildboar Software
+DC=com
+URBIT
+IPNS
+CA
 C=US
     ST=FL+O=State of Florida
         L=Jacksonville

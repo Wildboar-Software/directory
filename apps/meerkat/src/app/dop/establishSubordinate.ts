@@ -55,8 +55,10 @@ import {
 import getDistinguishedName from "../x500/getDistinguishedName";
 import readChildren from "../dit/readChildren";
 import * as crypto from "crypto";
-import { ASN1Element, DERElement, ObjectIdentifier } from "asn1-ts";
+import { DERElement, ObjectIdentifier } from "asn1-ts";
 import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
+import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -167,8 +169,8 @@ async function establishSubordinate (
     newEntryInfo: Attribute[] | undefined,
     targetSystem: AccessPoint,
     endTime?: Date,
-): Promise<ASN1Element> {
-    const conn = await connect(ctx, targetSystem);
+): Promise<ResultOrError> {
+    const conn = await connect(ctx, targetSystem, dop_ip["&id"]!);
     if (!conn) {
         throw new Error();
     }
@@ -278,8 +280,9 @@ async function establishSubordinate (
             undefined,
         ),
     };
-    return conn.writeOperation(
-        establishOperationalBinding["&operationCode"]!,
-        _encode_EstablishOperationalBindingArgument(arg, () => new DERElement()),
-    );
+    return conn.writeOperation({
+        opCode: establishOperationalBinding["&operationCode"]!,
+        argument: _encode_EstablishOperationalBindingArgument(arg, () => new DERElement()),
+        // _encode_EstablishOperationalBindingArgument(arg, () => new DERElement()),
+    });
 }

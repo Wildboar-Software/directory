@@ -120,3 +120,5 @@ async function saveAccessPoint (
     });
     return created.id;
 }
+
+export default saveAccessPoint;

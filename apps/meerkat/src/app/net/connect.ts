@@ -19,8 +19,11 @@ import {
 import type {
     DSACredentials,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
-import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { ASN1Element, DERElement } from "asn1-ts";
+import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
+import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
+import type { ChainedResultOrError } from "@wildboar/x500/src/lib/types/ChainedResultOrError";
+import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import { DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
 import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import * as net from "net";
@@ -29,7 +32,11 @@ import { EventEmitter } from "stream";
 import { IDMConnection } from "@wildboar/idm";
 import * as url from "url";
 import * as crypto from "crypto";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import { Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    chainedRead,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 const DER = () => new DERElement();
 
@@ -37,6 +44,7 @@ export
 async function connect (
     ctx: Context,
     targetSystem: AccessPoint,
+    protocolID: OBJECT_IDENTIFIER,
     credentials?: DSACredentials,
 ): Promise<Connection | undefined> {
     for (const naddr of targetSystem.address.nAddresses) {
@@ -63,7 +71,7 @@ async function connect (
                 { // Bind
                     const pdu: IDM_PDU = {
                         bind: new IdmBind(
-                            dop_ip["&id"]!,
+                            protocolID,
                             {
                                 directoryName: ctx.dsa.accessPoint.ae_title,
                             },
@@ -88,18 +96,35 @@ async function connect (
                     });
                 }
                 const ret: Connection = {
-                    writeOperation: async (code: Code, parameters: ASN1Element): Promise<ASN1Element> => {
+                    writeOperation: async (req: ChainedRequest): Promise<ChainedResultOrError> => {
                         const invokeID: number = crypto.randomInt(2147483648);
+                        const param: Chained = {
+                            unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                                req.chaining,
+                                req.argument!,
+                            ),
+                        };
+                        const encodedParam = chainedRead.encoderFor["&ArgumentType"]!(param, DER);
                         const pdu: IDM_PDU = {
-                            request: new Request(invokeID, code, parameters),
+                            request: new Request(invokeID, req.opCode, encodedParam),
                         };
                         const encoded = _encode_IDM_PDU(pdu, DER);
-                        return new Promise((resolve, reject) => {
-                            idm.events.on(invokeID.toString(), ([ error, result ]) => {
-                                if (error) {
-                                    reject([ error.errcode, error.error ]);
+                        return new Promise((resolve) => {
+                            idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
+                                if ("error" in roe) {
+                                    resolve(roe);
                                 } else {
-                                    resolve(result!.result);
+                                    const result = chainedRead.decoderFor["&ResultType"]!(roe.result!);
+                                    // TODO: Verify signature.
+                                    const resultData = getOptionallyProtectedValue(result);
+                                    resolve({
+                                        invokeId: {
+                                            present: invokeID,
+                                        },
+                                        opCode: req.opCode,
+                                        chaining: resultData.chainedResult,
+                                        result: resultData.result,
+                                    });
                                 }
                             });
                             idm.write(encoded.toBytes(), 0);
@@ -135,18 +160,35 @@ async function connect (
                         });
                         const idm = new IDMConnection(socket);
                         const ret: Connection = {
-                            writeOperation: async (code: Code, parameters: ASN1Element): Promise<ASN1Element> => {
+                            writeOperation: async (req: ChainedRequest): Promise<ChainedResultOrError> => {
                                 const invokeID: number = crypto.randomInt(4294967296);
+                                const param: Chained = {
+                                    unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                                        req.chaining,
+                                        req.argument!,
+                                    ),
+                                };
+                                const encodedParam = chainedRead.encoderFor["&ArgumentType"]!(param, DER);
                                 const pdu: IDM_PDU = {
-                                    request: new Request(invokeID, code, parameters),
+                                    request: new Request(invokeID, req.opCode, encodedParam),
                                 };
                                 const encoded = _encode_IDM_PDU(pdu, () => new DERElement());
-                                return new Promise((resolve, reject) => {
-                                    idm.events.on(invokeID.toString(), ([ error, result ]) => {
-                                        if (error) {
-                                            reject([ error.errcode, error.error ]);
+                                return new Promise((resolve) => {
+                                    idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
+                                        if ("error" in roe) {
+                                            resolve(roe);
                                         } else {
-                                            resolve(result!.result);
+                                            const result = chainedRead.decoderFor["&ResultType"]!(roe.result!);
+                                            // TODO: Verify signature.
+                                            const resultData = getOptionallyProtectedValue(result);
+                                            resolve({
+                                                invokeId: {
+                                                    present: invokeID,
+                                                },
+                                                opCode: req.opCode,
+                                                chaining: resultData.chainedResult,
+                                                result: resultData.result,
+                                            });
                                         }
                                     });
                                     idm.write(encoded.toBytes(), 0);

@@ -158,10 +158,22 @@ class IDMConnection {
         } else if ("request" in pdu) {
             this.events.emit("request", pdu.request);
         } else if ("result" in pdu) {
-            this.events.emit(pdu.result.invokeID.toString(), [ undefined, pdu.result ]);
+            this.events.emit(pdu.result.invokeID.toString(), {
+                invokeId: {
+                    present: pdu.result.invokeID,
+                },
+                opCode: pdu.result.opcode,
+                result: pdu.result.result,
+            });
             this.events.emit("result", pdu.result);
         } else if ("error" in pdu) {
-            this.events.emit(pdu.error.invokeID.toString(), [ pdu.error, undefined ]);
+            this.events.emit(pdu.error.invokeID.toString(), {
+                invokeId: {
+                    present: pdu.error.invokeID,
+                },
+                errcode: pdu.error.errcode,
+                error: pdu.error.error,
+            });
             this.events.emit("error_", pdu.error);
         } else if ("reject" in pdu) {
             this.events.emit("reject", pdu.reject);

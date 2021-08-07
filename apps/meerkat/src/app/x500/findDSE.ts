@@ -78,53 +78,13 @@ import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpe
 import { id_opcode_read } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va";
 import { id_opcode_removeEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-removeEntry.va";
 import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
+import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
+import getMatchingRulesFromFilter from "@wildboar/x500/src/lib/utils/getMatchingRulesFromFilter";
 
 const MAX_DEPTH: number = 10000;
 
-function getMatchingRulesFromFilter (ctx: Context, filter: Filter): OBJECT_IDENTIFIER[] {
-    if ("and" in filter) {
-        return filter.and.flatMap((sub) => getMatchingRulesFromFilter(ctx, sub));
-    } else if ("or" in filter) {
-        return filter.or.flatMap((sub) => getMatchingRulesFromFilter(ctx, sub));
-    } else if ("not" in filter) {
-        return getMatchingRulesFromFilter(ctx, filter.not);
-    } else if ("item" in filter) {
-        if ("extensibleMatch" in filter.item) {
-            const item = filter.item.extensibleMatch;
-            return item.matchingRule ?? [];
-        } else {
-            return [];
-        }
-    } else {
-        return [];
-    }
-}
-
-function compareCode (a: Code, b: Code): boolean {
-    if (("local" in a) && ("local" in b)) {
-        return a.local === b.local;
-    } else if (("global" in a) && ("global" in b)) {
-        return a.global.isEqualTo(b.global);
-    } else {
-        return false;
-    }
-}
-
-function splitIntoMastersAndShadows (
-    mosaps: MasterOrShadowAccessPoint[],
-): [ masters: MasterOrShadowAccessPoint[], shadows: MasterOrShadowAccessPoint[] ] {
-    const masters: MasterOrShadowAccessPoint[] = [];
-    const shadows: MasterOrShadowAccessPoint[] = [];
-    for (const mosap of mosaps) {
-        if (mosap.category === MasterOrShadowAccessPoint_category_master) {
-            masters.push(mosap);
-        } else if (mosap.category === MasterOrShadowAccessPoint_category_shadow) {
-            shadows.push(mosap);
-        }
-    }
-    return [ masters, shadows ];
-}
-
+// TODO: X.500
 function isModificationOperation (operationType: Code): boolean {
     return (
         compareCode(id_opcode_administerPassword, operationType)
@@ -540,7 +500,7 @@ async function findDSE (
                 return !chainArgs.excludeShadows;
             }
             const mrs = searchArgData.filter
-                ? getMatchingRulesFromFilter(ctx, searchArgData.filter)
+                ? getMatchingRulesFromFilter(searchArgData.filter)
                 : [];
             if (mrs.map((mr) => mr.toString()).some((mr) => !(
                 ctx.equalityMatchingRules.get(mr)

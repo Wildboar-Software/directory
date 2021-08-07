@@ -28,9 +28,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import { BERElement } from "asn1-ts";
 import { differenceInMilliseconds } from "date-fns";
-import compareSocketToNSAP from "../../net/compareSocketToNSAP";
+import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import { Knowledge } from "@prisma/client";
 import terminate from "../terminate";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -46,10 +47,7 @@ async function terminateOperationalBinding (
     conn: DOPConnection,
     arg: TerminateOperationalBindingArgument,
 ): Promise<TerminateOperationalBindingResult> {
-    const data: TerminateOperationalBindingArgumentData = ("signed" in arg)
-        ? arg.signed.toBeSigned
-        : arg.unsigned;
-
+    const data: TerminateOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,
         {
