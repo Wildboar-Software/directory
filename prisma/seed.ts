@@ -17,6 +17,20 @@ const prisma = new PrismaClient();
 
 export
 async function seed () {
+    // await prisma.dIT.create({
+    //     data: {
+    //         id: 1,
+    //         name: "Default DIT",
+    //         uuid: ""
+    //     }
+    // })
+    // await prisma.entry.create({
+    //     data: {
+    //         rdn: [],
+    //         root: true,
+    //         dit_id: 1,
+    //     },
+    // })
     await prisma.operationalBinding.create({
         data: {
             outbound: false,

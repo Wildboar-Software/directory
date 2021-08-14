@@ -122,7 +122,6 @@ class IDMConnection {
                     this.currentSegments.push(this.currentSegment as IDMSegment);
                     if (this.currentSegment.final) {
                         const pduBytes = Buffer.concat(this.currentSegments.map((s) => s.data));
-                        console.log(pduBytes);
                         const ber = new BERElement();
                         ber.fromBytes(pduBytes);
                         this.handlePDU(_decode_IDM_PDU(ber));

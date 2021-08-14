@@ -170,8 +170,30 @@ This is not to imply that these rules are current adhered to.
           - [ ] `modifyOperationalBinding`
           - [ ] `terminateOperationalBinding`
   - [ ] X500 Command Line Interface
-    - [ ] `x500 dap add`
+    - [ ] `x500 dap add` (Basically, a subcommand for every structural class)
       - [ ] `x500 dap add entry`
+        - [ ] `x500 dap add entry cRLDistributionPoint`
+        - [ ] `x500 dap add entry country`
+        - [ ] `x500 dap add entry locality`
+        - [ ] `x500 dap add entry organization`
+        - [ ] `x500 dap add entry organizationalUnit`
+        - [ ] `x500 dap add entry person`
+        - [ ] `x500 dap add entry organizationalPerson`
+        - [ ] `x500 dap add entry organizationalRole`
+        - [ ] `x500 dap add entry groupOfNames`
+        - [ ] `x500 dap add entry groupOfUniqueNames`
+        - [ ] `x500 dap add entry residentialPerson`
+        - [ ] `x500 dap add entry applicationProcess`
+        - [ ] `x500 dap add entry applicationEntity`
+        - [ ] `x500 dap add entry dSA`
+        - [ ] `x500 dap add entry device`
+        - [ ] `x500 dap add entry dMD`
+        - [ ] `x500 dap add entry oidC1obj`
+        - [ ] `x500 dap add entry oidC2obj`
+        - [ ] `x500 dap add entry oidCobj`
+        - [ ] `x500 dap add entry oidRoot`
+        - [ ] `x500 dap add entry oidArc`
+        - [ ] `x500 dap add entry urnCobj`
       - [ ] `x500 dap add subentry`
       - [ ] `x500 dap add alias`
       - [ ] `x500 dap add glue`
@@ -179,12 +201,38 @@ This is not to imply that these rules are current adhered to.
       - [ ] `x500 dap add user`
       - [ ] `x500 dap add device`
       - [ ] `x500 dap add orgrole`
-    - [ ] `x500 dap apwd`
-    - [ ] `x500 dap cpwd`
-    - [ ] `x500 dap compare`
-    - [ ] `x500 dap list`
-    - [ ] `x500 dap moddn`
-    - [ ] `x500 dap mod`
+    - [x] `x500 dap apwd`
+    - [x] `x500 dap cpwd`
+    - [x] `x500 dap compare`
+    - [x] `x500 dap list`
+    - [x] `x500 dap moddn`
+    - [ ] `x500 dap mod` (Basically, a subcommand for every auxiliary class)
+      - [ ] `x500 dap mod become accessControlSubentry`
+      - [ ] `x500 dap mod become collectiveAttributeSubentry`
+      - [ ] `x500 dap mod become contextAssertionSubentry`
+      - [ ] `x500 dap mod become serviceAdminSubentry`
+      - [ ] `x500 dap mod become pwdAdminSubentry`
+      - [ ] `x500 dap mod become subschema`
+      - [ ] `x500 dap mod become pmiUser`
+      - [ ] `x500 dap mod become pmiAA`
+      - [ ] `x500 dap mod become pmiSOA`
+      - [ ] `x500 dap mod become attCertCRLDistributionPt`
+      - [ ] `x500 dap mod become pmiDelegationPath`
+      - [ ] `x500 dap mod become privilegePolicy`
+      - [ ] `x500 dap mod become protectedPrivilegePolicy`
+      - [ ] `x500 dap mod become pkiUser`
+      - [ ] `x500 dap mod become pkiCA`
+      - [ ] `x500 dap mod become deltaCRL`
+      - [ ] `x500 dap mod become cpCps`
+      - [ ] `x500 dap mod become pkiCertPath`
+      - [ ] `x500 dap mod become strongAuthenticationUser`
+      - [ ] `x500 dap mod become userSecurityInformation`
+      - [ ] `x500 dap mod become userPwdClass`
+      - [ ] `x500 dap mod become certificationAuthority`
+      - [ ] `x500 dap mod become isoTagInfo`
+      - [ ] `x500 dap mod become isoTagType`
+      - [ ] `x500 dap mod become epcTagInfoObj`
+      - [ ] `x500 dap mod become epcTagTypeObj`
       - [ ] `x500 dap mod admpoint set role=accesscontrol`
       - [ ] `x500 dap mod subtree`
       - [ ] `x500 dap mod add aci`
@@ -193,12 +241,12 @@ This is not to imply that these rules are current adhered to.
       - [ ] `x500 dap mod hierarchy emancipate`
       - [ ] `x500 dap mod family makechild`
       - [ ] `x500 dap mod group add`
-      - [ ] `x500 dap mod group rm
+      - [ ] `x500 dap mod group rm`
       - [ ] `x500 dap mod add pkc`
       - [ ] `x500 dap mod add ac`
       - [ ] `x500 dap mod add crl`
-    - [ ] `x500 dap read`
-    - [ ] `x500 dap rm`
+    - [x] `x500 dap read`
+    - [x] `x500 dap rm`
     - [ ] `x500 dap search`
   - [ ] X500 Studio
 - [ ] Libraries

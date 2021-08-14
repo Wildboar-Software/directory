@@ -7,7 +7,7 @@
         {
             "type": "pwa-node",
             "request": "attach",
-            "port": 16860,
+            "port": 24010,
             "name": "Attach",
             "skipFiles": [
                 "<node_internals>/**"

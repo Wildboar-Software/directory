@@ -26,17 +26,17 @@
               "inspect": false
             },
             "dev": {
-                "optimization": false,
-                "extractLicenses": false,
-                "inspect": true,
-                "inspectPort": 24010
+              "optimization": false,
+              "extractLicenses": false
             }
           }
         },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
-            "buildTarget": "meerkat:build"
+            "buildTarget": "meerkat:build",
+            "inspect": "inspect",
+            "port": 24010
           }
         },
         "lint": {
@@ -82,6 +82,56 @@
           "outputs": ["coverage/libs/idm"],
           "options": {
             "jestConfig": "libs/idm/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "x500-cli": {
+      "root": "apps/x500-cli",
+      "sourceRoot": "apps/x500-cli/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/x500-cli",
+            "main": "apps/x500-cli/src/main.ts",
+            "tsConfig": "apps/x500-cli/tsconfig.app.json",
+            "assets": ["apps/x500-cli/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/x500-cli/src/environments/environment.ts",
+                  "with": "apps/x500-cli/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "x500-cli:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/x500-cli/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/x500-cli"],
+          "options": {
+            "jestConfig": "apps/x500-cli/jest.config.js",
             "passWithNoTests": true
           }
         }

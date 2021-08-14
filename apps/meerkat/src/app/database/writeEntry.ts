@@ -66,6 +66,7 @@ async function writeEntry (
             accessControlScheme: entry.dse.admPoint?.accessControlScheme?.toString(),
         },
     });
+    entry.dse.id = writtenEntry.id;
     await writeEntryAttributes(ctx, entry, attributes);
     return writtenEntry;
 }

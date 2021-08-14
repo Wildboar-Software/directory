@@ -194,7 +194,7 @@ async function addEntry (
             namingViolationErrorData([]),
         );
     }
-    if (findEntry(ctx, ctx.dit.root, data.object.rdnSequence)) {
+    if (await findEntry(ctx, ctx.dit.root, data.object.rdnSequence)) {
         throw new UpdateError(`Entry already exists: ${nameToString(data.object)}`, ENTRY_EXISTS_ERROR_DATA);
     }
     const superiorDN = data.object.rdnSequence.slice(0, -1);
@@ -300,11 +300,11 @@ async function addEntry (
     }
 
     objectClasses
-        .map((oc) => ctx.objectClasses.get(oc.id.toString()))
+        .map((oc) => ctx.objectClasses.get(oc.value.objectIdentifier.toString()))
         .forEach((oc, i) => {
             if (!oc) {
                 ctx.log.warn(
-                    `Object class ${objectClasses[i]?.id?.toString()} not understood.`,
+                    `Object class ${objectClasses[i]?.value.objectIdentifier} not understood.`,
                 );
                 return;
             }
@@ -411,13 +411,11 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
     // – the manageDSAIT extension bit shall be set;
     // – the manageDSAIT option shall be set;
     // – the manageDSAITPlaneRef option shall be included if a specific replication plane is to be managed.
-    const manageDSAITExtension: boolean = (data.criticalExtensions?.[EXT_BIT_MANAGE_DSA_IT] === TRUE_BIT);
-    const manageDSAITSCO: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+    const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     // Only necessary if a specific DSA IT is to be managed.
     // const manageDSAITPlaneRef = data.serviceControls?.manageDSAITPlaneRef;
-    const requestedToManageDSA: boolean = (manageDSAITExtension && manageDSAITSCO);
 
-    if (requestedToManageDSA) {
+    if (manageDSAIT) {
     // TODO: aliases contain aliasedEntryName
     // TODO: aliased entry exists
     // TODO: aliases are not allowed to point to other aliases
@@ -432,7 +430,7 @@ of the ancestor. Otherwise, the Directory shall return an Update Error with prob
         immediateSuperior: superior,
         subordinates: [],
         dse: {
-            id: -1,
+            id: undefined!,
             uuid: entry,
             rdn,
             entry: {},

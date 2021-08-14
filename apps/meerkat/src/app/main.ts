@@ -20,8 +20,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
 import LDAPConnection from "./ldap/LDAPConnection";
 import loadDIT from "./database/loadDIT";
-import { strict as assert } from "assert";
-import initDIT from "./database/initDIT";
 import loadAttributeTypes from "./x500/loadAttributeTypes";
 import loadObjectClasses from "./x500/loadObjectClasses";
 import loadLDAPSyntaxes from "./x500/loadLDAPSyntaxes";
@@ -36,21 +34,7 @@ const DEFAULT_WEB_ADMIN_PORT: number = 18080;
 
 export default
 async function main (): Promise<void> {
-    ctx.log.info(`Loading DIT with UUID ${ctx.dit.uuid} into memory. This could take a while.`);
-    let dit = await loadDIT(ctx);
-    if (!dit) {
-        const ditsCount: number = await ctx.db.dIT.count();
-        if (ditsCount === 0) {
-            await initDIT(ctx, "Default DIT");
-            dit = await loadDIT(ctx);
-        } else {
-            throw new Error(`DIT with UUID ${ctx.dit.uuid} not found.`);
-        }
-    }
-    assert(dit);
-    ctx.dit.root = dit;
-    ctx.log.info(`DIT with UUID ${ctx.dit.uuid} loaded into memory.`);
-
+    await loadDIT(ctx);
     // The ordering of these is important.
     // Loading LDAP syntaxes before attribute types allows us to use the names instead of OIDs.
     loadObjectClasses(ctx);
