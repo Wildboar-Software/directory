@@ -12,14 +12,15 @@ import do_administerPassword from "./app/commands/dap/apw";
 import do_changePassword from "./app/commands/dap/cpw";
 import do_removeEntry from "./app/commands/dap/remove";
 import do_modifyDN from "./app/commands/dap/moddn";
+import do_addEntry_country from "./app/commands/dap/add/country";
+import do_addEntry_locality from "./app/commands/dap/add/locality";
+import do_addEntry_organization from "./app/commands/dap/add/organization";
 import do_seedCountries from "./app/commands/util/seed-countries";
 import { Context, Connection } from "./types";
 import MutableWriteable from "./utils/MutableWriteable";
 
 loadLDAPSyntaxes(ctx);
-ctx.log.debug("Loaded LDAP syntaxes.");
 loadAttributeTypes(ctx);
-ctx.log.debug("Loaded attribute types.");
 
 const mutedOut = new MutableWriteable();
 
@@ -59,11 +60,7 @@ async function createConnection (
 }
 
 yargs(process.argv.slice(2))
-    .command("test", "test", (yargs) => {
-        return yargs;
-    }, (argv) => {
-        console.log(argv);
-    })
+    .scriptName("x500")
     .command("seed-countries [base]", "seed directory with countries", (yargs) => {
         return yargs
             .positional("base", {
@@ -149,6 +146,155 @@ yargs(process.argv.slice(2))
         const connection = await createConnection(ctx, argv);
         await do_compare(ctx, connection, argv);
     })
+    // .command("dap add locality", "add a locality", (y) => y, async (argv) => {
+
+    // })
+    .command({
+        command: "dap add locality",
+        describe: "Add a locality",
+        builder: (y) => {
+            return y
+                .option("localityName", {
+                    alias: "l",
+                    type: "string",
+                    description: "The name of the locality"
+                })
+                .option("stateOrProvinceName", {
+                    alias: "s",
+                    type: "string",
+                    description: "The name of the state or province",
+                })
+                .option("description", {
+                    alias: "d",
+                    type: "string",
+                    description: "An arbitrary description",
+                })
+                .option("seeAlso", {
+                    alias: "a",
+                    type: "string",
+                    description: "The distinguished name of another related entry",
+                })
+                .option("streetAddress", {
+                    alias: "a",
+                    type: "string",
+                    description: "The street address",
+                })
+                .array("localityName")
+                .array("stateOrProvinceName")
+                .array("description")
+                .array("seeAlso")
+                .array("streetAddress")
+                ;
+        },
+        handler: async (argv: Record<string, any>): Promise<void> => {
+            const connection = await createConnection(ctx, argv);
+            await do_addEntry_locality(ctx, connection, argv);
+        },
+    })
+    .command({
+        command: "dap add country",
+        describe: "Add a country",
+        builder: (yargs) => {
+            return yargs
+                .option("countryName", {
+                    alias: "c",
+                    type: "string",
+                    description: "The ISO-3166 2-letter country code",
+                })
+                .option("description", {
+                    alias: "d",
+                    type: "string",
+                    description: "An arbitrary description",
+                })
+                .array("description")
+                .demandOption("countryName")
+                .help()
+                ;
+        },
+        handler: async (argv) => {
+            const connection = await createConnection(ctx, argv);
+            await do_addEntry_country(ctx, connection, argv);
+        },
+    })
+    .command({
+        command: "dap add organization",
+        describe: "Add an organization",
+        builder: (yargs) => {
+            return yargs
+                .option("organizationName", {
+                    alias: "o",
+                    type: "array",
+                    description: "The organization name",
+                })
+                .option("description", {
+                    alias: "d",
+                    type: "array",
+                    description: "An arbitrary description",
+                })
+                .option("seeAlso", {
+                    alias: "a",
+                    type: "array",
+                    description: "The distinguished name of another related entry",
+                })
+                .option("businessCategory", {
+                    alias: "b",
+                    type: "array",
+                    description: "A string identifying the category of the organization",
+                })
+                .option("localityName", {
+                    alias: "l",
+                    type: "array",
+                    description: "The name of the locality"
+                })
+                .option("stateOrProvinceName", {
+                    alias: "s",
+                    type: "array",
+                    description: "The name of the state or province",
+                })
+                .option("streetAddress", {
+                    alias: "a",
+                    type: "array",
+                    description: "The street address",
+                })
+                .option("physicalDeliveryOfficeName", {
+                    alias: "d",
+                    type: "array",
+                    description: "The name of the physical delivery office",
+                })
+                .option("postalAddress", {
+                    alias: "p",
+                    type: "array",
+                    description: "The full, multi-line postal address",
+                })
+                .option("postalCode", {
+                    alias: "c",
+                    type: "array",
+                    description: "The postal code",
+                })
+                .option("postOfficeBox", {
+                    alias: "q",
+                    type: "array",
+                    description: "The post office box identifier",
+                })
+                .option("telephoneNumber", {
+                    alias: "t",
+                    type: "array",
+                    description: "The telephone number",
+                })
+                .option("facsimileTelephoneNumber", {
+                    alias: "f",
+                    type: "array",
+                    description: "The fax number",
+                })
+                .demandOption("organizationName")
+                .help()
+                ;
+        },
+        handler: async (argv) => {
+            const connection = await createConnection(ctx, argv);
+            await do_addEntry_organization(ctx, connection, argv);
+        },
+    })
     .option("bindDN", {
         alias: "D",
         type: "string",
@@ -189,6 +335,6 @@ yargs(process.argv.slice(2))
     .demandCommand()
     .demandOption("bindDN")
     .help()
-    .wrap(120)
+    .wrap(80)
     .argv // This is a getter, and calling it is necessary to get yargs to run.
     ;

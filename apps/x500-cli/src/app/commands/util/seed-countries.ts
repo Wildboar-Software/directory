@@ -1,16 +1,10 @@
 import type { Connection, Context } from "../../../types";
 import {
-    DERElement,
-    ASN1TagClass,
-    ASN1Construction,
-    ASN1UniversalType,
     TRUE_BIT,
     FALSE_BIT,
-    OBJECT_IDENTIFIER,
     unpackBits,
 } from "asn1-ts";
 import { randomBytes } from "crypto";
-import { DER } from "asn1-ts/dist/node/functional";
 import {
     addEntry,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
@@ -21,10 +15,6 @@ import {
 import {
     AddEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
-import {
-    AddEntryResult,
-    _decode_AddEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -72,57 +62,13 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import printCode from "../../../printers/Code";
 import countries from "i18n-iso-countries";
-
-
-interface Country {
-    c2: string;
-    c3: string;
-    n: number;
-}
-
-function printableString (str: string): DERElement {
-    return new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.printableString,
-        str,
-    );
-}
-
-function utf8String (str: string): DERElement {
-    return new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.utf8String,
-        str,
-    );
-}
-
-function numString (str: string): DERElement {
-    return new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.numericString,
-        str,
-    );
-}
-
-function oid (o: OBJECT_IDENTIFIER): DERElement {
-    return new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.objectIdentifier,
-        o,
-    );
-}
-
-// const countries: Country[] = [
-//     {
-//         c2: "US",
-//         c3: "USA",
-//         n: 840,
-//     },
-// ];
+import {
+    DER,
+    _encodeObjectIdentifier,
+    _encodePrintableString,
+    _encodeUTF8String,
+    _encodeNumericString,
+} from "asn1-ts/dist/node/functional";
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
     Array(9).fill(FALSE_BIT));
@@ -159,9 +105,9 @@ function addCountryArgument (
     baseObject: DistinguishedName,
     iso2c: string,
 ): AddEntryArgument {
-    const c2 = printableString(iso2c);
-    const c3 = printableString(countries.alpha2ToAlpha3(iso2c));
-    const n = numString(countries.alpha2ToNumeric(iso2c));
+    const c2 = _encodePrintableString(iso2c, DER);
+    const c3 = _encodePrintableString(countries.alpha2ToAlpha3(iso2c), DER);
+    const n = _encodeNumericString(countries.alpha2ToNumeric(iso2c), DER);
     const dn: DistinguishedName = [
         ...baseObject,
         [
@@ -183,21 +129,21 @@ function addCountryArgument (
         new Attribute(
             selat.administrativeRole["&id"]!,
             [
-                oid(id_ar_collectiveAttributeSpecificArea),
+                _encodeObjectIdentifier(id_ar_collectiveAttributeSpecificArea, DER),
             ],
             undefined,
         ),
         new Attribute(
             selat.objectClass["&id"],
             [
-                oid(seloc.country["&id"]!),
-                oid(seloc.organization["&id"]!),
+                _encodeObjectIdentifier(seloc.country["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.organization["&id"]!, DER),
             ],
             undefined,
         ),
         new Attribute(
             selat.organizationName["&id"]!,
-            [utf8String(iso2c + " Government")],
+            [_encodeUTF8String(iso2c + " Government", DER)],
             undefined,
         ),
         new Attribute(
@@ -244,8 +190,8 @@ function addCountrySubentryArgument (
     baseObject: DistinguishedName,
     iso2c: string,
 ): AddEntryArgument {
-    const c2 = printableString(iso2c);
-    const cn = utf8String(`${iso2c} Country Collective Attributes`);
+    const c2 = _encodePrintableString(iso2c, DER);
+    const cn = _encodeUTF8String(`${iso2c} Country Collective Attributes`, DER);
     const dn: DistinguishedName = [
         ...baseObject,
         [
@@ -272,8 +218,8 @@ function addCountrySubentryArgument (
         new Attribute(
             selat.objectClass["&id"],
             [
-                oid(subentry["&id"]),
-                oid(collectiveAttributeSubentry["&id"]),
+                _encodeObjectIdentifier(subentry["&id"], DER),
+                _encodeObjectIdentifier(collectiveAttributeSubentry["&id"], DER),
             ],
             undefined,
         ),
