@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../types";
+import type { Connection, Context } from "../../types";
 import {
     TRUE_BIT,
     FALSE_BIT,
@@ -18,7 +18,7 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import destringifyDN from "../../../utils/destringifyDN";
+import destringifyDN from "../../utils/destringifyDN";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -60,7 +60,7 @@ import {
 import {
     ErrorProtectionRequest_none,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
-import printCode from "../../../printers/Code";
+import printCode from "../../printers/Code";
 import countries from "i18n-iso-countries";
 import {
     DER,

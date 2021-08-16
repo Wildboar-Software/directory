@@ -1,32 +1,38 @@
-import type { Connection, Context } from "../../../types";
-import { DER } from "asn1-ts/dist/node/functional";
+import type { Connection, Context } from "../../types";
 import {
-    removeEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
+    addEntry,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
 import {
-    RemoveEntryArgument,
-    _encode_RemoveEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
+    AddEntryArgument,
+    _encode_AddEntryArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
 import {
-    RemoveEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
+    AddEntryArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import printCode from "../../../printers/Code";
-import destringifyDN from "../../../utils/destringifyDN";
+import type {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import { DER } from "asn1-ts/dist/node/functional";
+import printCode from "../../printers/Code";
+import destringifyDN from "../../utils/destringifyDN";
 
 export
-async function do_removeEntry (
+async function do_addEntry (
     ctx: Context,
     conn: Connection,
     argv: any,
+    attributes: Attribute[],
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);
-    const reqData: RemoveEntryArgumentData = new RemoveEntryArgumentData(
+    const reqData = new AddEntryArgumentData(
         {
             rdnSequence: objectName,
         },
+        attributes,
+        undefined,
         [],
         undefined,
         undefined,
@@ -41,12 +47,12 @@ async function do_removeEntry (
         undefined,
         undefined,
     );
-    const arg: RemoveEntryArgument = {
+    const arg: AddEntryArgument = {
         unsigned: reqData,
     };
     const outcome = await conn.writeOperation({
-        opCode: removeEntry["&operationCode"]!,
-        argument: _encode_RemoveEntryArgument(arg, DER),
+        opCode: addEntry["&operationCode"]!,
+        argument: _encode_AddEntryArgument(arg, DER),
     });
     if ("error" in outcome) {
         if (outcome.errcode) {
@@ -60,7 +66,7 @@ async function do_removeEntry (
         ctx.log.error("Invalid server response: no result data.");
         return;
     }
-    ctx.log.info("Entry removed.");
+    ctx.log.info("Country created.");
 }
 
-export default do_removeEntry;
+export default do_addEntry;

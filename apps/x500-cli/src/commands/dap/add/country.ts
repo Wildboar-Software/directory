@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../../types";
+import type { Connection, Context } from "../../../types";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";

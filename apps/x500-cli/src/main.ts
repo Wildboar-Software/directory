@@ -1,63 +1,25 @@
-import * as fs from "fs";
-import * as readline from "readline";
 import yargs from "yargs/yargs";
 import ctx from "./ctx";
 import loadAttributeTypes from "./utils/loadAttributeTypes";
 import loadLDAPSyntaxes from "./utils/loadLDAPSyntaxes";
-import connect from "./net/connect";
-import do_read from "./app/commands/dap/read";
-import do_list from "./app/commands/dap/list";
-import do_compare from "./app/commands/dap/compare";
-import do_administerPassword from "./app/commands/dap/apw";
-import do_changePassword from "./app/commands/dap/cpw";
-import do_removeEntry from "./app/commands/dap/remove";
-import do_modifyDN from "./app/commands/dap/moddn";
-import do_addEntry_country from "./app/commands/dap/add/country";
-import do_addEntry_locality from "./app/commands/dap/add/locality";
-import do_addEntry_organization from "./app/commands/dap/add/organization";
-import do_seedCountries from "./app/commands/util/seed-countries";
-import { Context, Connection } from "./types";
-import MutableWriteable from "./utils/MutableWriteable";
+import do_read from "./commands/dap/read";
+import do_list from "./commands/dap/list";
+import do_compare from "./commands/dap/compare";
+import do_administerPassword from "./commands/dap/apw";
+import do_changePassword from "./commands/dap/cpw";
+import do_removeEntry from "./commands/dap/remove";
+import do_modifyDN from "./commands/dap/moddn";
+import dap_add_country from "./yargs/dap_add_country";
+import dap_add_organization from "./yargs/dap_add_organization";
+import dap_add_organizationalUnit from "./yargs/dap_add_organizationalUnit";
+import dap_add_organizationalPerson from "./yargs/dap_add_organizationalPerson";
+import dap_add_locality from "./yargs/dap_add_locality";
+import dap_add_person from "./yargs/dap_add_person";
+import do_seedCountries from "./commands/util/seed-countries";
+import bind from "./net/bind";
 
 loadLDAPSyntaxes(ctx);
 loadAttributeTypes(ctx);
-
-const mutedOut = new MutableWriteable();
-
-async function createConnection (
-    ctx: Context,
-    argv: Record<string, any>,
-): Promise<Connection> {
-    let password: Buffer | undefined;
-    if (argv.password) {
-        password = Buffer.from(argv.password as string);
-    } else if (argv.passwordFile) {
-        password = fs.readFileSync(argv.passwordFile as string);
-    } else if (argv.promptPassword) {
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: mutedOut,
-            terminal: true,
-        });
-        rl.question("Password: ", (answer: string): void => {
-            password = Buffer.from(answer, "utf-8");
-            rl.close();
-        });
-        mutedOut.muted = true;
-    }
-    if (!argv.accessPoint) {
-        ctx.log.warn("hostURL not set. Defaulting to idm://localhost:102.");
-    }
-    const hostURL = argv.accessPoint ?? "idm://localhost:102";
-    const bindDN = argv.bindDN ?? "";
-    const connection = await connect(ctx, hostURL as string, bindDN as string, password);
-    if (!connection) {
-        ctx.log.error("Could not create connection.");
-        process.exit(1);
-    }
-    ctx.log.info("Connected.");
-    return connection;
-}
 
 yargs(process.argv.slice(2))
     .scriptName("x500")
@@ -67,7 +29,7 @@ yargs(process.argv.slice(2))
                 describe: "The base object under which to place the countries.",
             });
     }, async (argv) => {
-        const connection = await createConnection(ctx, argv);
+        const connection = await bind(ctx, argv);
         await do_seedCountries(ctx, connection, argv);
     })
     .command("dap read [object]", "read entry", (yargs) => {
@@ -76,7 +38,7 @@ yargs(process.argv.slice(2))
                 describe: "The object to read",
             });
     }, async (argv) => {
-        const connection = await createConnection(ctx, argv);
+        const connection = await bind(ctx, argv);
         await do_read(ctx, connection, argv);
     })
     .command("dap remove [object]", "remove entry", (yargs) => {
@@ -85,7 +47,7 @@ yargs(process.argv.slice(2))
                 describe: "The object to be removed",
             });
     }, async (argv) => {
-        const connection = await createConnection(ctx, argv);
+        const connection = await bind(ctx, argv);
         await do_removeEntry(ctx, connection, argv);
     })
     .command("dap moddn [object] [newObject]", "move entry", (yargs) => {
@@ -97,7 +59,7 @@ yargs(process.argv.slice(2))
                 describe: "The new distinguished name of the object (the destination)",
             });
     }, async (argv) => {
-        const connection = await createConnection(ctx, argv);
+        const connection = await bind(ctx, argv);
         await do_modifyDN(ctx, connection, argv);
     })
     .command("dap list [object]", "list entries", (yargs) => {
@@ -106,7 +68,7 @@ yargs(process.argv.slice(2))
                 describe: "The object whose subordinates are to be read.",
             });
     }, async (argv) => {
-        const connection = await createConnection(ctx, argv);
+        const connection = await bind(ctx, argv);
         await do_list(ctx, connection, argv);
     })
     .command("dap apw [object]", "administer password", (yargs) => {
@@ -115,7 +77,7 @@ yargs(process.argv.slice(2))
                 describe: "The object whose password is to be changed.",
             });
     }, async (argv) => {
-        const connection = await createConnection(ctx, argv);
+        const connection = await bind(ctx, argv);
         await do_administerPassword(ctx, connection, argv);
     })
     .command("dap cpw [object]", "change password", (yargs) => {
@@ -124,7 +86,7 @@ yargs(process.argv.slice(2))
                 describe: "The object whose password is to be changed.",
             });
     }, async (argv) => {
-        const connection = await createConnection(ctx, argv);
+        const connection = await bind(ctx, argv);
         await do_changePassword(ctx, connection, argv);
     })
     .command(
@@ -143,158 +105,15 @@ yargs(process.argv.slice(2))
             })
             ;
     }, async (argv) => {
-        const connection = await createConnection(ctx, argv);
+        const connection = await bind(ctx, argv);
         await do_compare(ctx, connection, argv);
     })
-    // .command("dap add locality", "add a locality", (y) => y, async (argv) => {
-
-    // })
-    .command({
-        command: "dap add locality",
-        describe: "Add a locality",
-        builder: (y) => {
-            return y
-                .option("localityName", {
-                    alias: "l",
-                    type: "string",
-                    description: "The name of the locality"
-                })
-                .option("stateOrProvinceName", {
-                    alias: "s",
-                    type: "string",
-                    description: "The name of the state or province",
-                })
-                .option("description", {
-                    alias: "d",
-                    type: "string",
-                    description: "An arbitrary description",
-                })
-                .option("seeAlso", {
-                    alias: "a",
-                    type: "string",
-                    description: "The distinguished name of another related entry",
-                })
-                .option("streetAddress", {
-                    alias: "a",
-                    type: "string",
-                    description: "The street address",
-                })
-                .array("localityName")
-                .array("stateOrProvinceName")
-                .array("description")
-                .array("seeAlso")
-                .array("streetAddress")
-                ;
-        },
-        handler: async (argv: Record<string, any>): Promise<void> => {
-            const connection = await createConnection(ctx, argv);
-            await do_addEntry_locality(ctx, connection, argv);
-        },
-    })
-    .command({
-        command: "dap add country",
-        describe: "Add a country",
-        builder: (yargs) => {
-            return yargs
-                .option("countryName", {
-                    alias: "c",
-                    type: "string",
-                    description: "The ISO-3166 2-letter country code",
-                })
-                .option("description", {
-                    alias: "d",
-                    type: "string",
-                    description: "An arbitrary description",
-                })
-                .array("description")
-                .demandOption("countryName")
-                .help()
-                ;
-        },
-        handler: async (argv) => {
-            const connection = await createConnection(ctx, argv);
-            await do_addEntry_country(ctx, connection, argv);
-        },
-    })
-    .command({
-        command: "dap add organization",
-        describe: "Add an organization",
-        builder: (yargs) => {
-            return yargs
-                .option("organizationName", {
-                    alias: "o",
-                    type: "array",
-                    description: "The organization name",
-                })
-                .option("description", {
-                    alias: "d",
-                    type: "array",
-                    description: "An arbitrary description",
-                })
-                .option("seeAlso", {
-                    alias: "a",
-                    type: "array",
-                    description: "The distinguished name of another related entry",
-                })
-                .option("businessCategory", {
-                    alias: "b",
-                    type: "array",
-                    description: "A string identifying the category of the organization",
-                })
-                .option("localityName", {
-                    alias: "l",
-                    type: "array",
-                    description: "The name of the locality"
-                })
-                .option("stateOrProvinceName", {
-                    alias: "s",
-                    type: "array",
-                    description: "The name of the state or province",
-                })
-                .option("streetAddress", {
-                    alias: "a",
-                    type: "array",
-                    description: "The street address",
-                })
-                .option("physicalDeliveryOfficeName", {
-                    alias: "d",
-                    type: "array",
-                    description: "The name of the physical delivery office",
-                })
-                .option("postalAddress", {
-                    alias: "p",
-                    type: "array",
-                    description: "The full, multi-line postal address",
-                })
-                .option("postalCode", {
-                    alias: "c",
-                    type: "array",
-                    description: "The postal code",
-                })
-                .option("postOfficeBox", {
-                    alias: "q",
-                    type: "array",
-                    description: "The post office box identifier",
-                })
-                .option("telephoneNumber", {
-                    alias: "t",
-                    type: "array",
-                    description: "The telephone number",
-                })
-                .option("facsimileTelephoneNumber", {
-                    alias: "f",
-                    type: "array",
-                    description: "The fax number",
-                })
-                .demandOption("organizationName")
-                .help()
-                ;
-        },
-        handler: async (argv) => {
-            const connection = await createConnection(ctx, argv);
-            await do_addEntry_organization(ctx, connection, argv);
-        },
-    })
+    .command(dap_add_country(ctx))
+    .command(dap_add_locality(ctx))
+    .command(dap_add_person(ctx))
+    .command(dap_add_organization(ctx))
+    .command(dap_add_organizationalUnit(ctx))
+    .command(dap_add_organizationalPerson(ctx))
     .option("bindDN", {
         alias: "D",
         type: "string",

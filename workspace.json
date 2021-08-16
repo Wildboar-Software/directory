@@ -105,13 +105,7 @@
             "production": {
               "optimization": true,
               "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": [
-                {
-                  "replace": "apps/x500-cli/src/environments/environment.ts",
-                  "with": "apps/x500-cli/src/environments/environment.prod.ts"
-                }
-              ]
+              "inspect": false
             }
           }
         },

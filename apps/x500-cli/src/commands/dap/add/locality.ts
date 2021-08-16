@@ -1,5 +1,5 @@
-import type { Connection, Context } from "../../../../types";
-import destringifyDN from "../../../../utils/destringifyDN";
+import type { Connection, Context } from "../../../types";
+import destringifyDN from "../../../utils/destringifyDN";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";

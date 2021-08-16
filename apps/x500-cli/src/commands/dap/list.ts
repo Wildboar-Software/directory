@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../types";
+import type { Connection, Context } from "../../types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     list,
@@ -17,10 +17,10 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import printCode from "../../../printers/Code";
+import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import destringifyDN from "../../../utils/destringifyDN";
-import stringifyDN from "../../../utils/stringifyDN";
+import destringifyDN from "../../utils/destringifyDN";
+import stringifyDN from "../../utils/stringifyDN";
 
 export
 async function do_list (

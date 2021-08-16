@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../types";
+import type { Connection, Context } from "../../types";
 import { ObjectIdentifier } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -18,13 +18,9 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
-import {
-    AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import printCode from "../../../printers/Code";
+import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import destringifyDN from "../../../utils/destringifyDN";
+import destringifyDN from "../../utils/destringifyDN";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";

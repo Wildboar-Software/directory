@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../types";
+import type { Connection, Context } from "../../types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     modifyDN,
@@ -13,8 +13,8 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import printCode from "../../../printers/Code";
-import destringifyDN from "../../../utils/destringifyDN";
+import printCode from "../../printers/Code";
+import destringifyDN from "../../utils/destringifyDN";
 
 export
 async function do_modifyDN (

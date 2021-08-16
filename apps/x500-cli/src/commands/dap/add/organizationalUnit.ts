@@ -1,5 +1,5 @@
-import type { Connection, Context } from "../../../../types";
-import destringifyDN from "../../../../utils/destringifyDN";
+import type { Connection, Context } from "../../../types";
+import destringifyDN from "../../../utils/destringifyDN";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -10,6 +10,7 @@ import {
     _encodeObjectIdentifier,
     _encodeUTF8String,
     _encodePrintableString,
+    _encodeOctetString,
 } from "asn1-ts/dist/node/functional";
 import {
     _encode_RDNSequence,
@@ -25,7 +26,7 @@ import {
 import do_addEntry from "../add";
 
 export
-async function do_addEntry_organization (
+async function do_addEntry_organizationalUnit (
     ctx: Context,
     conn: Connection,
     argv: any,
@@ -34,14 +35,14 @@ async function do_addEntry_organization (
         new Attribute(
             selat.objectClass["&id"]!,
             [
-                _encodeObjectIdentifier(seloc.organization["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.organizationalUnit["&id"]!, DER),
             ],
             undefined,
         ),
-        ...[ argv.organizationName ]
+        ...[ argv.organizationalUnitName ]
             .flat()
             .map((value: string) => new Attribute(
-                selat.organizationName["&id"]!,
+                selat.organizationalUnitName["&id"]!,
                 [
                     _encodeUTF8String(value, DER),
                 ],
@@ -184,8 +185,16 @@ async function do_addEntry_organization (
             );
         }));
     }
-    // FIXME: Support multiple values. See: https://yargs.js.org/docs/#api-reference-arraykey.
+    if (typeof argv.userPassword === "string") {
+        attributes.push(new Attribute(
+            selat.userPassword["&id"]!,
+            [
+                _encodeOctetString(Buffer.from(argv.userPassword, "utf-8"), DER),
+            ],
+            undefined,
+        ));
+    }
     return do_addEntry(ctx, conn, argv, attributes);
 }
 
-export default do_addEntry_organization;
+export default do_addEntry_organizationalUnit;

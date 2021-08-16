@@ -173,9 +173,9 @@ This is not to imply that these rules are current adhered to.
     - [ ] `x500 dap add` (Basically, a subcommand for every structural class)
       - [ ] `x500 dap add entry`
         - [ ] `x500 dap add entry cRLDistributionPoint`
-        - [ ] `x500 dap add entry country`
-        - [ ] `x500 dap add entry locality`
-        - [ ] `x500 dap add entry organization`
+        - [x] `x500 dap add entry country`
+        - [x] `x500 dap add entry locality`
+        - [x] `x500 dap add entry organization`
         - [ ] `x500 dap add entry organizationalUnit`
         - [ ] `x500 dap add entry person`
         - [ ] `x500 dap add entry organizationalPerson`
