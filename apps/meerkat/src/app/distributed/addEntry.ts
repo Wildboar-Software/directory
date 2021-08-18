@@ -286,11 +286,11 @@ async function addEntry (
     }
 
     objectClasses
-        .map((oc) => ctx.objectClasses.get(oc.id.toString()))
+        .map((oc) => ctx.objectClasses.get(oc.value.objectIdentifier.toString()))
         .forEach((oc, i) => {
             if (!oc) {
                 ctx.log.warn(
-                    `Object class ${objectClasses[i]?.id?.toString()} not understood.`,
+                    `Object class ${objectClasses[i]?.value.objectIdentifier} not understood.`,
                 );
                 return;
             }
@@ -314,6 +314,8 @@ async function addEntry (
     const unrecognizedAFDNs: AttributeType[] = [];
     const cannotBeUsedInNameAFDNs: AttributeType[] = [];
     const unmatchedAFDNs: AttributeType[] = [];
+
+    console.log(attrs);
 
     attrsFromDN
         .forEach((afdn): void => {
