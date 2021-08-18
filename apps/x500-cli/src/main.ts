@@ -132,7 +132,7 @@ yargs(process.argv.slice(2))
         description: "The path to a file containing the clear-text bind password, which does not have to be UTF-8 encoded.",
     })
     .option("promptPassword", {
-        alias: "W",
+        alias: "P",
         type: "boolean",
         description: "Whether to interactively prompt for the bind password.",
     })
