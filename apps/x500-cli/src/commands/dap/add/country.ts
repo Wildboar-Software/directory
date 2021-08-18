@@ -8,6 +8,7 @@ import {
     DER,
     _encodeObjectIdentifier,
     _encodeUTF8String,
+    _encodePrintableString,
 } from "asn1-ts/dist/node/functional";
 import do_addEntry from "../add";
 
@@ -28,7 +29,7 @@ async function do_addEntry_country (
         new Attribute(
             selat.countryName["&id"]!,
             [
-                _encodeUTF8String(argv.countryName, DER),
+                _encodePrintableString(argv.countryName, DER),
             ],
             undefined,
         ),
