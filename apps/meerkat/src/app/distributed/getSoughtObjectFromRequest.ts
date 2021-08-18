@@ -43,7 +43,7 @@ function getSoughtObjectFromRequest (
     else if (compareCode(addEntry["&operationCode"]!, req.opCode)) {
         const arg = addEntry.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
-        return data.object.rdnSequence;
+        return data.object.rdnSequence.slice(0, -1);
     }
     else if (compareCode(changePassword["&operationCode"]!, req.opCode)) {
         const arg = changePassword.decoderFor["&ArgumentType"]!(req.argument);
