@@ -13,6 +13,7 @@ import dap_add_country from "./yargs/dap_add_country";
 import dap_add_organization from "./yargs/dap_add_organization";
 import dap_add_organizationalUnit from "./yargs/dap_add_organizationalUnit";
 import dap_add_organizationalPerson from "./yargs/dap_add_organizationalPerson";
+import dap_add_organizationalRole from "./yargs/dap_add_organizationalRole";
 import dap_add_locality from "./yargs/dap_add_locality";
 import dap_add_person from "./yargs/dap_add_person";
 import do_seedCountries from "./commands/util/seed-countries";
@@ -114,18 +115,19 @@ yargs(process.argv.slice(2))
     .command(dap_add_organization(ctx))
     .command(dap_add_organizationalUnit(ctx))
     .command(dap_add_organizationalPerson(ctx))
+    .command(dap_add_organizationalRole(ctx))
     .option("bindDN", {
         alias: "D",
         type: "string",
         description: "The distinguished name with which to bind.",
     })
     .option("password", {
-        alias: "w",
+        alias: "W",
         type: "string",
         description: "The clear-text password. (Be careful. Your command history may be saved or logged.)",
     })
     .option("passwordFile", {
-        alias: "y",
+        alias: "Y",
         type: "string",
         description: "The path to a file containing the clear-text bind password, which does not have to be UTF-8 encoded.",
     })
@@ -141,13 +143,13 @@ yargs(process.argv.slice(2))
         default: "idm://localhost:102",
     })
     .option("noTLS", {
-        alias: "z",
+        alias: "Z",
         type: "boolean",
         description: "If TRUE, fails if TLS URL is used and prevents automatic StartTLS.",
         default: false,
     })
     .option("verbose", {
-        alias: "v",
+        alias: "V",
         type: "boolean",
         description: "Verbose output",
     })

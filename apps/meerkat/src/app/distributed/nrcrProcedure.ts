@@ -1,11 +1,6 @@
 import type { Context } from "../types";
 import * as errors from "../errors";
 import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
-import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
-import { TRUE_BIT } from "asn1-ts";
-import {
-    ServiceControlOptions_chainingProhibited as SCO_chainingProhibited,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     OperationProgress_nameResolutionPhase_completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
@@ -19,7 +14,7 @@ import ChainedResultOrError from "@wildboar/x500/src/lib/types/ChainedResultOrEr
 export
 interface NRCRProcedureReturn {
     readonly continuationList: ContinuationReference[];
-    readonly responses?: ChainedResultOrError[];
+    readonly responses: ChainedResultOrError[];
 }
 
 export
@@ -27,11 +22,10 @@ async function nrcrProcedure (
     ctx: Context,
     crefs: ContinuationReference[],
     req: ChainedRequest,
-    common: CommonArguments,
+    chainingProhibited: boolean,
 ): Promise<NRCRProcedureReturn> {
     assert(req.chaining.operationProgress?.nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed);
     assert(crefs.length); // This procedure should not be called if there are no refs.
-    const chainingProhibited = (common.serviceControls?.options?.[SCO_chainingProhibited] === TRUE_BIT);
     if (chainingProhibited) { // TODO: Permit local DSA policy to prohibit chaining.
         // TODO: Permit configuration of what to do here.
         throw new errors.ReferralError(
@@ -85,6 +79,7 @@ async function nrcrProcedure (
             undefined,
         ),
     );
+    // TODO: This procedure is not actually done.
 }
 
 export default nrcrProcedure;

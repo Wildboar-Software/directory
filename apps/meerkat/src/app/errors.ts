@@ -14,7 +14,7 @@ import {
 import type {
     ReferralData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReferralData.ta";
-import type {
+import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
@@ -70,6 +70,14 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import findEntry from "./x500/findEntry";
 import getDistinguishedName from "./x500/getDistinguishedName";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
+    SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import { unpackBits } from "asn1-ts";
+import { randomBytes } from "crypto";
 
 // ReferralError
 
@@ -212,5 +220,62 @@ function namingViolationErrorData (attributeTypes: AttributeType[]): UpdateError
         undefined,
         undefined,
         undefined,
+    );
+}
+
+function securityParameters (): SecurityParameters {
+    return new SecurityParameters(
+        undefined,
+        undefined, // DSA name
+        {
+            generalizedTime: new Date(),
+        },
+        unpackBits(randomBytes(16)),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+    );
+}
+
+
+export
+function invalidRequestErrorData (): SecurityErrorData {
+    return new SecurityErrorData(
+        SecurityProblem_noInformation,
+        undefined,
+        undefined,
+        [],
+        new SecurityParameters(
+            undefined,
+            undefined, // DSA name
+            {
+                generalizedTime: new Date(),
+            },
+            unpackBits(randomBytes(16)),
+            undefined,
+            undefined,
+            undefined,
+            SecurityError.errcode,
+        ),
+        undefined,
+        undefined,
+        undefined,
+    );
+}
+
+/**
+ * This is implemented because the X.500 specifications do not seem to specify
+ * a general-purpose "invalid request" error. For a lack thereof, we use a
+ * no-information security error.
+ *
+ * @param message The error message
+ * @returns A security error, which is not thrown.
+ */
+export
+function invalidRequestError (message: string): SecurityError {
+    return new SecurityError(
+        message,
+        invalidRequestErrorData(),
     );
 }

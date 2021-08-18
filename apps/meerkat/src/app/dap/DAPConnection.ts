@@ -132,6 +132,13 @@ import {
     Versions_v2,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 import { v4 as uuid } from "uuid";
+import OperationDispatcher from "../distributed/OperationDispatcher";
+import {
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import {
+    AuthenticationLevel_basicLevels_level_none,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 
 const BER = () => new BERElement();
 const opcode_abandon: number = (id_opcode_abandon as { local: number}).local;
@@ -154,113 +161,135 @@ async function handleRequest (
     if (!("local" in request.opcode)) {
         throw new Error();
     }
+    // if (!("present" in request.invokeID)) {
+    //     throw new Error();
+    // }
     switch (request.opcode.local) {
-    case (opcode_abandon): {
-        const arg = _decode_AbandonArgument(request.argument);
-        const res = await abandon(ctx, arg);
-
-        break;
-    }
-    case (opcode_administerPassword): {
-        const arg = _decode_AdministerPasswordArgument(request.argument);
-        const res = await administerPassword(ctx, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_AdministerPasswordResult(res, BER),
-        );
-        break;
-    }
+    // case (opcode_abandon): {
+    //     const arg = _decode_AbandonArgument(request.argument);
+    //     const res = await abandon(ctx, arg);
+    //     break;
+    // }
+    // case (opcode_administerPassword): {
+    //     const arg = _decode_AdministerPasswordArgument(request.argument);
+    //     const res = await administerPassword(ctx, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_AdministerPasswordResult(res, BER),
+    //     );
+    //     break;
+    // }
     case (opcode_addEntry): {
-        const arg = _decode_AddEntryArgument(request.argument);
-        const res = await addEntry(ctx, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_AddEntryResult(res, BER),
+        const result = await OperationDispatcher.dispatchDAPRequest(
+            ctx,
+            {
+                invokeId: {
+                    present: request.invokeID,
+                },
+                opCode: request.opcode,
+                argument: request.argument,
+            },
+            {
+                basicLevels: new AuthenticationLevel_basicLevels(
+                    AuthenticationLevel_basicLevels_level_none,
+                    undefined,
+                    undefined,
+                ),
+            },
+            undefined,
         );
+        if ("error" in result) {
+            await dap.idm.writeError(
+                request.invokeID,
+                _encode_Code(result.errcode!, BER),
+                result.error,
+            );
+        } else {
+            await dap.idm.writeResult(request.invokeID, result.opCode, result.result!);
+        }
         break;
     }
-    case (opcode_changePassword): {
-        const arg = _decode_ChangePasswordArgument(request.argument);
-        const res = await changePassword(ctx, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_ChangePasswordResult(res, BER),
-        );
-        break;
-    }
-    case (opcode_compare): {
-        const arg = _decode_CompareArgument(request.argument);
-        const res = await compare(ctx, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_CompareResult(res, BER),
-        );
-        break;
-    }
-    case (opcode_modifyDN): {
-        const arg = _decode_ModifyDNArgument(request.argument);
-        const res = await modifyDN(ctx, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_ModifyDNResult(res, BER),
-        );
-        break;
-    }
-    case (opcode_modifyEntry): {
-        const arg = _decode_ModifyEntryArgument(request.argument);
-        const res = await modifyEntry(ctx, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_ModifyEntryResult(res, BER),
-        );
-        break;
-    }
-    case (opcode_list): {
-        const arg = _decode_ListArgument(request.argument);
-        const res = await list(ctx, this, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_ListResult(res, BER),
-        );
-        break;
-    }
-    case (opcode_read): {
-        const arg = _decode_ReadArgument(request.argument);
-        const res = await read(ctx, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_ReadResult(res, BER),
-        );
-        break;
-    }
-    case (opcode_removeEntry): {
-        const arg = _decode_RemoveEntryArgument(request.argument);
-        const res = await removeEntry(ctx, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_RemoveEntryResult(res, BER),
-        );
-        break;
-    }
-    case (opcode_search): {
-        const arg = _decode_SearchArgument(request.argument);
-        const res = await search(ctx, dap, arg);
-        await dap.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_SearchResult(res, BER),
-        );
-        break;
-    }
+    // case (opcode_changePassword): {
+    //     const arg = _decode_ChangePasswordArgument(request.argument);
+    //     const res = await changePassword(ctx, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_ChangePasswordResult(res, BER),
+    //     );
+    //     break;
+    // }
+    // case (opcode_compare): {
+    //     const arg = _decode_CompareArgument(request.argument);
+    //     const res = await compare(ctx, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_CompareResult(res, BER),
+    //     );
+    //     break;
+    // }
+    // case (opcode_modifyDN): {
+    //     const arg = _decode_ModifyDNArgument(request.argument);
+    //     const res = await modifyDN(ctx, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_ModifyDNResult(res, BER),
+    //     );
+    //     break;
+    // }
+    // case (opcode_modifyEntry): {
+    //     const arg = _decode_ModifyEntryArgument(request.argument);
+    //     const res = await modifyEntry(ctx, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_ModifyEntryResult(res, BER),
+    //     );
+    //     break;
+    // }
+    // case (opcode_list): {
+    //     const arg = _decode_ListArgument(request.argument);
+    //     const res = await list(ctx, this, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_ListResult(res, BER),
+    //     );
+    //     break;
+    // }
+    // case (opcode_read): {
+    //     const arg = _decode_ReadArgument(request.argument);
+    //     const res = await read(ctx, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_ReadResult(res, BER),
+    //     );
+    //     break;
+    // }
+    // case (opcode_removeEntry): {
+    //     const arg = _decode_RemoveEntryArgument(request.argument);
+    //     const res = await removeEntry(ctx, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_RemoveEntryResult(res, BER),
+    //     );
+    //     break;
+    // }
+    // case (opcode_search): {
+    //     const arg = _decode_SearchArgument(request.argument);
+    //     const res = await search(ctx, dap, arg);
+    //     await dap.idm.writeResult(
+    //         request.invokeID,
+    //         request.opcode,
+    //         _encode_SearchResult(res, BER),
+    //     );
+    //     break;
+    // }
     default: {
         throw new UnknownOperationError();
     }

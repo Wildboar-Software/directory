@@ -3,22 +3,31 @@ import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import addEntry from "../commands/dap/add/country";
 
+// organizationalRole OBJECT-CLASS ::= {
+//     SUBCLASS OF   {top}
+//     MUST CONTAIN  {commonName}
+//     MAY CONTAIN   {description |
+//                    LocaleAttributeSet |
+//                    organizationalUnitName |
+//                    PostalAttributeSet |
+//                    preferredDeliveryMethod |
+//                    roleOccupant |
+//                    seeAlso |
+//                    TelecommunicationAttributeSet}
+//     LDAP-NAME      {"organizationalRole"}  -- RFC 4519
+//     ID            id-oc-organizationalRole }
+
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "dap add op",
-        describe: "Add an organizational person",
+        command: "dap add or",
+        describe: "Add an organizational role",
         builder: (yargs) => {
             return yargs
                 .option("commonName", {
                     alias: "c",
                     type: "array",
                     description: "The common name",
-                })
-                .option("surname", {
-                    alias: "s",
-                    type: "array",
-                    description: "The last name of the person",
                 })
                 .option("userPassword", {
                     alias: "u",
@@ -80,16 +89,12 @@ function create (ctx: Context): CommandModule {
                     type: "array",
                     description: "The fax number",
                 })
-                .option("userPassword", {
-                    alias: "u",
-                    type: "string",
-                    description: "The password for the organization",
-                })
-                .option("title", {
+                .option("roleOccupant", {
+                    alias: "r",
                     type: "array",
-                    description: "The title of the person within the organization",
+                    description: "The distinguished name of a member of this role",
                 })
-                .demandOption("countryName")
+                .demandOption("commonName")
                 .help()
                 ;
         },

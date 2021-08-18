@@ -12,7 +12,7 @@ import type {
 import {
     ServiceControlOptions_manageDSAIT,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { ASN1Element, BOOLEAN, INTEGER, OPTIONAL, OBJECT_IDENTIFIER, TRUE_BIT, FALSE } from "asn1-ts";
+import { ASN1Element, BOOLEAN, INTEGER, OPTIONAL, TRUE_BIT, FALSE } from "asn1-ts";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     ServiceProblem_loopDetected,
@@ -31,8 +31,6 @@ import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/re
 import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
-import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
-import { directorySystemAC } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/directorySystemAC.oa";
 import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
 
 import { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
@@ -53,16 +51,11 @@ import { SearchRuleId } from "@wildboar/x500/src/lib/modules/ServiceAdministrati
 import { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import type { Request } from "@wildboar/x500/src/lib/types/Request";
+import { assert } from "console";
 
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
-
-function pdusAreAlreadyChained (protocolID: OBJECT_IDENTIFIER): boolean {
-    return (
-        protocolID.isEqualTo(dsp_ip["&id"]!)
-        || protocolID.isEqualTo(directorySystemAC["&applicationContextName"]!)
-    );
-}
 
 // ChainingArguments ::= SET {
 //     originator                 [0]  DistinguishedName OPTIONAL,
@@ -124,9 +117,7 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, administerPassword["&operationCode"]!)) {
         // const arg = administerPassword.decoderFor["&ArgumentType"]!(operationArgument);
-        // const data = ("signed" in arg)
-        //     ? arg.signed.toBeSigned
-        //     : arg.unsigned;
+        // const data = getOptionallyProtectedValue(arg);
         // TODO: operationProgress?
     }
     else if (compareCode(operationCode, addEntry["&operationCode"]!)) {
@@ -162,9 +153,7 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, changePassword["&operationCode"]!)) {
         // const arg = changePassword.decoderFor["&ArgumentType"]!(operationArgument);
-        // const data = ("signed" in arg)
-        //     ? arg.signed.toBeSigned
-        //     : arg.unsigned;
+        // const data = getOptionallyProtectedValue(arg);
         // TODO: operationProgress?
     }
     else if (compareCode(operationCode, compare["&operationCode"]!)) {
@@ -438,12 +427,13 @@ function createChainingArgumentsFromDUA (
 export
 async function requestValidationProcedure (
     ctx: Context,
-    applicationContextOrProtocolID: OBJECT_IDENTIFIER,
-    operationCode: Code,
-    operationArgument: ASN1Element,
+    req: Request,
+    alreadyChained: boolean,
     authenticationLevel: AuthenticationLevel,
     uniqueIdentifier?: UniqueIdentifier,
 ): Promise<Chain> {
+    assert(req.opCode);
+    assert(req.argument);
     if (ctx.dsa.hibernatingSince) {
         throw new errors.ServiceError(
             "Request denied. Hibernating.",
@@ -457,27 +447,24 @@ async function requestValidationProcedure (
             ),
         );
     }
-    const alreadyChained: boolean = pdusAreAlreadyChained(applicationContextOrProtocolID);
     const hydratedArgument: Chain = alreadyChained
-        ? chainedRead.decoderFor["&ArgumentType"]!(operationArgument) // NOTE: chainedRead has the same decoder as every other chained operation.
+        ? chainedRead.decoderFor["&ArgumentType"]!(req.argument!) // NOTE: chainedRead has the same decoder as every other chained operation.
         : ((): Chain => {
             const chainingArguments = createChainingArgumentsFromDUA(
                 ctx,
-                operationCode,
-                operationArgument,
+                req.opCode!,
+                req.argument!,
                 authenticationLevel,
                 uniqueIdentifier,
             );
             return {
                 unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                     chainingArguments,
-                    operationArgument,
+                    req.argument!,
                 ),
             };
         })();
-    const unsigned = ("signed" in hydratedArgument)
-        ? hydratedArgument.signed.toBeSigned
-        : hydratedArgument.unsigned;
+    const unsigned = getOptionallyProtectedValue(hydratedArgument);
     const {
         chainedArgument,
         // argument,

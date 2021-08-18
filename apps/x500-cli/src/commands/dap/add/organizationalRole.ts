@@ -1,4 +1,5 @@
 import type { Connection, Context } from "../../../types";
+import destringifyDN from "../../../utils/destringifyDN";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -8,14 +9,12 @@ import {
     DER,
     _encodeObjectIdentifier,
     _encodeUTF8String,
-    _encodeOctetString,
     _encodePrintableString,
+    _encodeOctetString,
 } from "asn1-ts/dist/node/functional";
-import do_addEntry from "../add";
 import {
     _encode_RDNSequence,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
-import destringifyDN from "../../../utils/destringifyDN";
 import {
     PostalAddress,
     _encode_PostalAddress,
@@ -24,19 +23,24 @@ import {
     FacsimileTelephoneNumber,
     _encode_FacsimileTelephoneNumber,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/FacsimileTelephoneNumber.ta";
+import do_addEntry from "../add";
 
-// organizationalPerson OBJECT-CLASS ::= {
-//     SUBCLASS OF  {person}
-//     MAY CONTAIN  {LocaleAttributeSet |
-//                   PostalAttributeSet |
-//                   TelecommunicationAttributeSet |
-//                   organizationalUnitName |
-//                   title}
-//     LDAP-NAME    {"organizationalPerson"}  -- RFC 4519
-//     ID           id-oc-organizationalPerson }
+// organizationalRole OBJECT-CLASS ::= {
+//     SUBCLASS OF   {top}
+//     MUST CONTAIN  {commonName}
+//     MAY CONTAIN   {description |
+//                    LocaleAttributeSet |
+//                    organizationalUnitName |
+//                    PostalAttributeSet |
+//                    preferredDeliveryMethod |
+//                    roleOccupant |
+//                    seeAlso |
+//                    TelecommunicationAttributeSet}
+//     LDAP-NAME      {"organizationalRole"}  -- RFC 4519
+//     ID            id-oc-organizationalRole }
 
 export
-async function do_addEntry_organizationalPerson (
+async function do_addEntry_organizationalRole (
     ctx: Context,
     conn: Connection,
     argv: any,
@@ -45,8 +49,7 @@ async function do_addEntry_organizationalPerson (
         new Attribute(
             selat.objectClass["&id"]!,
             [
-                _encodeObjectIdentifier(seloc.person["&id"]!, DER),
-                _encodeObjectIdentifier(seloc.organizationalPerson["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.organization["&id"]!, DER),
             ],
             undefined,
         ),
@@ -54,15 +57,6 @@ async function do_addEntry_organizationalPerson (
             .flat()
             .map((value: string) => new Attribute(
                 selat.commonName["&id"]!,
-                [
-                    _encodeUTF8String(value, DER),
-                ],
-                undefined,
-            )),
-        ...[ argv.surname ]
-            .flat()
-            .map((value: string) => new Attribute(
-                selat.surname["&id"]!,
                 [
                     _encodeUTF8String(value, DER),
                 ],
@@ -92,14 +86,25 @@ async function do_addEntry_organizationalPerson (
             );
         }));
     }
-    if (typeof argv.userPassword === "string") {
-        attributes.push(new Attribute(
-            selat.userPassword["&id"]!,
+    if (argv.organizationalUnitName?.length) {
+        const values = [ argv.organizationalUnitName ].flat();
+        attributes.push(...values.map((value: string) => new Attribute(
+            selat.organizationalUnitName["&id"]!,
             [
-                _encodeOctetString(Buffer.from(argv.userPassword, "utf-8"), DER),
+                _encodeUTF8String(value, DER),
             ],
             undefined,
-        ));
+        )));
+    }
+    if (argv.businessCategory?.length) {
+        const values = [ argv.businessCategory ].flat();
+        attributes.push(...values.map((value: string) => new Attribute(
+            selat.businessCategory["&id"]!,
+            [
+                _encodeUTF8String(value, DER),
+            ],
+            undefined,
+        )));
     }
     if (argv.stateOrProvinceName?.length) {
         const values = [ argv.stateOrProvinceName ].flat();
@@ -204,27 +209,29 @@ async function do_addEntry_organizationalPerson (
             );
         }));
     }
-    if (argv.organizationalUnitName?.length) {
-        const values = [ argv.organizationalUnitName ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
-            selat.organizationalUnitName["&id"]!,
+    if (typeof argv.userPassword === "string") {
+        attributes.push(new Attribute(
+            selat.userPassword["&id"]!,
             [
-                _encodeUTF8String(value, DER),
+                _encodeOctetString(Buffer.from(argv.userPassword, "utf-8"), DER),
             ],
             undefined,
-        )));
+        ));
     }
-    if (argv.title?.length) {
-        const values = [ argv.title ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
-            selat.title["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+    if (argv.roleOccupant?.length) {
+        const values = [ argv.roleOccupant ].flat();
+        attributes.push(...values.map((value: string) => {
+            const roleOccupant = destringifyDN(ctx, value);
+            return new Attribute(
+                selat.roleOccupant["&id"]!,
+                [
+                    _encode_RDNSequence(roleOccupant, DER),
+                ],
+                undefined,
+            );
+        }));
     }
     return do_addEntry(ctx, conn, argv, attributes);
 }
 
-export default do_addEntry_organizationalPerson;
+export default do_addEntry_organizationalRole;

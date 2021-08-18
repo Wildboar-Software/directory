@@ -51,7 +51,7 @@ import {
 import type {
     Filter,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import getDistinguishedName from "./getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element } from "asn1-ts";
 import readChildren from "../dit/readChildren";
@@ -81,8 +81,13 @@ import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolS
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
 import getMatchingRulesFromFilter from "@wildboar/x500/src/lib/utils/getMatchingRulesFromFilter";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 const MAX_DEPTH: number = 10000;
+
+interface FindDSEReturn {
+
+}
 
 // TODO: X.500
 function isModificationOperation (operationType: Code): boolean {
@@ -153,7 +158,9 @@ async function findDSE (
     commonArgs: CommonArguments | undefined, // This won't be present with LDAP Requests
     argument: ASN1Element,
     operationType: Code,
-): Promise<boolean> {
+    NRcontinuationList: ContinuationReference[],
+    admPoints: Vertex[],
+): Promise<Vertex | undefined> {
     let i: number = 0;
     let dse_i: Vertex = haystackVertex;
     let aliasDereferenced: boolean = false;
@@ -167,13 +174,6 @@ async function findDSE (
     let lastCP: Vertex | undefined;
     let aliasedRDNs: number = 0;
     const candidateRefs: ContinuationReference[] = [];
-
-    // Operation Dispatcher variables
-    const NRcontinuationList: ContinuationReference[] = [];
-    const SRcontinuationList: ContinuationReference[] = [];
-    const admPoints: Vertex[] = [];
-    const referralRequests: TraceItem[] = [];
-    const emptyHierarchySelect: boolean = false;
 
     // Service controls
     const manageDSAIT: boolean = (
@@ -190,27 +190,27 @@ async function findDSE (
     // Variables not defined explicitly, but still referenced by the specification:
     let partialNameResolved: boolean = false;
 
-    const node_candidateRefs_empty_2 = async (): Promise<boolean> => {
+    const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             NRcontinuationList.push(...candidateRefs);
-            return false; // entry unsuitable
+            return undefined; // entry unsuitable
         } else {
             return candidateRefsEmpty_yes_branch();
         }
     };
 
-    const node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false = async (): Promise<boolean> => {
+    const node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false = async (): Promise<Vertex | undefined> => {
         if (dse_i.dse.shadow?.subordinateCompleteness === false) {
             if (!lastCP) {
                 ctx.log.warn("DIT invalid: shadow copy not under a context prefix.");
-                return false;
+                return undefined;
             }
             const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, aliasedRDNs, nextRDNToBeResolved);
             candidateRefs.push(cr);
             nextRDNToBeResolved = i;
-            return false; // Entry unsuitable.
+            return undefined; // Entry unsuitable.
         }
         if (dse_lastEntryFound?.dse.nssr) {
             const cr = new ContinuationReference(
@@ -249,12 +249,12 @@ async function findDSE (
             candidateRefs.push(cr);
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             NRcontinuationList.push(...candidateRefs);
-            return false;
+            return undefined;
         }
         return node_candidateRefs_empty_2();
     };
 
-    const candidateRefsEmpty_yes_branch = async (): Promise<boolean> => {
+    const candidateRefsEmpty_yes_branch = async (): Promise<Vertex | undefined> => {
         if (partialNameResolution) {
             throw new errors.NameError(
                 "",
@@ -273,22 +273,22 @@ async function findDSE (
         } else {
             partialNameResolved = true;
             nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
-            return true;
+            return dse_i;
         }
     };
 
-    const candidateRefsEmpty1_Branch = async (): Promise<boolean> => {
+    const candidateRefsEmpty1_Branch = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             NRcontinuationList.push(...candidateRefs);
-            return false; // entry unsuitable
+            return undefined; // entry unsuitable
         } else {
             return candidateRefsEmpty_yes_branch();
         }
     };
 
-    const targetNotFoundSubprocedure_notStarted_branch = async (): Promise<boolean> => {
+    const targetNotFoundSubprocedure_notStarted_branch = async (): Promise<Vertex | undefined> => {
         if (lastEntryFound === 0) {
             if (ctx.dit.root.dse.supr) {
                 // Make continuation reference
@@ -340,7 +340,7 @@ async function findDSE (
                         || compareCode(operationType, search["&operationCode"]!)
                     ) {
                         nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
-                        return true; // Entry suitable.
+                        return dse_i; // Entry suitable.
                     } else {
                         throw new errors.NameError(
                             "",
@@ -493,9 +493,7 @@ async function findDSE (
             // that are present in the master, or if there are no such attributes at all.
         } else if (compareCode(operationType, id_opcode_search)) {
             const searchArgs = _decode_SearchArgument(argument);
-            const searchArgData = ("signed" in searchArgs)
-                ? searchArgs.signed.toBeSigned
-                : searchArgs.unsigned;
+            const searchArgData = getOptionallyProtectedValue(searchArgs);
             if (searchArgData.searchAliases && dse.dse.alias) {
                 return !chainArgs.excludeShadows;
             }
@@ -533,17 +531,17 @@ async function findDSE (
         }
     };
 
-    const targetFoundSubprocedure = async (): Promise<boolean> => {
+    const targetFoundSubprocedure = async (): Promise<Vertex | undefined> => {
         if (await checkSuitabilityProcedure()) {
             nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
-            return true;
+            return dse_i;
         } else {
             nameResolutionPhase = OperationProgress_nameResolutionPhase_proceeding;
             nextRDNToBeResolved = i;
             assert(lastCP);
             const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, aliasedRDNs, nextRDNToBeResolved);
             candidateRefs.push(cr);
-            return false;
+            return undefined;
         }
     };
 
@@ -557,7 +555,7 @@ async function findDSE (
                 return targetNotFoundSubprocedure();
             }
             if (commonArgs?.serviceControls?.manageDSAITPlaneRef || manageDSAIT) {
-                return true;
+                return dse_i;
             }
             if (
                 (chainArgs.referenceType === ReferenceType_supplier)
@@ -568,7 +566,7 @@ async function findDSE (
             // I don't understand why we do this.
             const someChildrenAreCP: boolean = (children.some((child) => child.dse.cp));
             return someChildrenAreCP
-                ? true
+                ? dse_i
                 : targetNotFoundSubprocedure();
         }
         const needleRDN = needleDN[i];
@@ -644,6 +642,8 @@ async function findDSE (
                     commonArgs,
                     argument,
                     operationType,
+                    NRcontinuationList,
+                    admPoints,
                 );
             }
         }
@@ -673,7 +673,7 @@ async function findDSE (
                     return targetFoundSubprocedure();
                 }
                 if (commonArgs?.serviceControls?.manageDSAITPlaneRef || manageDSAIT) {
-                    return true;
+                    return dse_i;
                 }
                 if (
                     (chainArgs.referenceType === ReferenceType_supplier)
@@ -695,7 +695,7 @@ async function findDSE (
                         ),
                     );
                 }
-                return true; // Entry suitable
+                return dse_i; // Entry suitable
             } else {
                 lastEntryFound = i;
                 dse_lastEntryFound = dse_i;
@@ -795,3 +795,5 @@ async function findDSE (
         ),
     );
 }
+
+export default findDSE;

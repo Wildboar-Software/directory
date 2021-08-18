@@ -176,10 +176,10 @@ This is not to imply that these rules are current adhered to.
         - [x] `x500 dap add entry country`
         - [x] `x500 dap add entry locality`
         - [x] `x500 dap add entry organization`
-        - [ ] `x500 dap add entry organizationalUnit`
-        - [ ] `x500 dap add entry person`
-        - [ ] `x500 dap add entry organizationalPerson`
-        - [ ] `x500 dap add entry organizationalRole`
+        - [x] `x500 dap add entry organizationalUnit`
+        - [x] `x500 dap add entry person`
+        - [x] `x500 dap add entry organizationalPerson`
+        - [x] `x500 dap add entry organizationalRole`
         - [ ] `x500 dap add entry groupOfNames`
         - [ ] `x500 dap add entry groupOfUniqueNames`
         - [ ] `x500 dap add entry residentialPerson`
@@ -198,9 +198,6 @@ This is not to imply that these rules are current adhered to.
       - [ ] `x500 dap add alias`
       - [ ] `x500 dap add glue`
       - [ ] `x500 dap add subr`
-      - [ ] `x500 dap add user`
-      - [ ] `x500 dap add device`
-      - [ ] `x500 dap add orgrole`
     - [x] `x500 dap apwd`
     - [x] `x500 dap cpwd`
     - [x] `x500 dap compare`

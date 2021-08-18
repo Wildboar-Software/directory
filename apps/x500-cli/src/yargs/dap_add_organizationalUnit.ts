@@ -56,9 +56,9 @@ function create (ctx: Context): CommandModule {
                     description: "The full, multi-line postal address",
                 })
                 .option("postalCode", {
-                    alias: "c",
+                    alias: "z",
                     type: "array",
-                    description: "The postal code",
+                    description: "The postal code / ZIP code",
                 })
                 .option("postOfficeBox", {
                     alias: "q",

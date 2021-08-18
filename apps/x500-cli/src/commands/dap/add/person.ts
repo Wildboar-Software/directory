@@ -42,20 +42,24 @@ async function do_addEntry_person (
             ],
             undefined,
         ),
-        new Attribute(
-            selat.commonName["&id"]!,
-            [
-                _encodeUTF8String(argv.commonName, DER),
-            ],
-            undefined,
-        ),
-        new Attribute(
-            selat.surname["&id"]!,
-            [
-                _encodeUTF8String(argv.surname, DER),
-            ],
-            undefined,
-        ),
+        ...[ argv.commonName ]
+            .flat()
+            .map((value: string) => new Attribute(
+                selat.commonName["&id"]!,
+                [
+                    _encodeUTF8String(value, DER),
+                ],
+                undefined,
+            )),
+        ...[ argv.surname ]
+            .flat()
+            .map((value: string) => new Attribute(
+                selat.surname["&id"]!,
+                [
+                    _encodeUTF8String(value, DER),
+                ],
+                undefined,
+            )),
     ];
     if (argv.description?.length) {
         const values = [ argv.description ].flat();
