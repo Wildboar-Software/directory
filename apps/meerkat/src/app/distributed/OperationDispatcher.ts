@@ -62,7 +62,7 @@ class OperationDispatcher {
         const preparedRequest = await requestValidationProcedure(
             ctx,
             req,
-            true,
+            false,
             authLevel,
             uniqueIdentifier,
         );
