@@ -24,6 +24,7 @@ async function writeEntry (
 ): Promise<DatabaseEntry> {
     const writtenEntry = await ctx.db.entry.create({
         data: {
+            entryUUID: entry.dse.uuid,
             immediate_superior_id: superior.dse.id,
             dit_id: ctx.dit.id,
             rdn: rdnToJson(entry.dse.rdn),
