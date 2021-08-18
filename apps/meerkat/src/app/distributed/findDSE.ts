@@ -161,6 +161,13 @@ async function findDSE (
     NRcontinuationList: ContinuationReference[],
     admPoints: Vertex[],
 ): Promise<Vertex | undefined> {
+    /**
+     * This procedural deviation is needed. Without it, the subordinates of the
+     * root DSE will be searched for an entry with a zero-length RDN!
+     */
+    if (needleDN.length === 0) {
+        return ctx.dit.root;
+    }
     let i: number = 0;
     let dse_i: Vertex = haystackVertex;
     let aliasDereferenced: boolean = false;
@@ -570,8 +577,9 @@ async function findDSE (
                 : targetNotFoundSubprocedure();
         }
         const needleRDN = needleDN[i];
+        let rdnMatched: boolean = false
         for (const child of children) {
-            const rdnMatched: boolean = compareRDN(
+            rdnMatched = compareRDN(
                 needleRDN,
                 child.dse.rdn,
                 (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
@@ -581,6 +589,9 @@ async function findDSE (
                 dse_i = child;
                 break;
             }
+        }
+        if (!rdnMatched) {
+            return targetNotFoundSubprocedure();
         }
         /**
          * This is not explicitly required by the specification, but it seems to
