@@ -6,7 +6,7 @@ import addEntry from "../commands/dap/add/country";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "dap add op",
+        command: "dap add orgperson",
         describe: "Add an organizational person",
         builder: (yargs) => {
             return yargs

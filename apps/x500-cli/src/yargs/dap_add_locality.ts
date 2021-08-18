@@ -6,7 +6,7 @@ import addEntry from "../commands/dap/add/locality";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "dap add l",
+        command: "dap add locality",
         describe: "Add a locality",
         builder: (y) => {
             return y
