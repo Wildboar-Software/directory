@@ -315,8 +315,6 @@ async function addEntry (
     const cannotBeUsedInNameAFDNs: AttributeType[] = [];
     const unmatchedAFDNs: AttributeType[] = [];
 
-    console.log(attrs);
-
     attrsFromDN
         .forEach((afdn): void => {
             const oid: string = afdn.id.toString();

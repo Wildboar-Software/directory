@@ -17,7 +17,9 @@
             "outputPath": "dist/apps/meerkat",
             "main": "apps/meerkat/src/main.ts",
             "tsConfig": "apps/meerkat/tsconfig.app.json",
-            "assets": ["apps/meerkat/src/assets"]
+            "assets": ["apps/meerkat/src/assets"],
+            "memoryLimit": 1024,
+            "maxWorkers": 1
           },
           "configurations": {
             "production": {
@@ -99,7 +101,9 @@
             "outputPath": "dist/apps/x500-cli",
             "main": "apps/x500-cli/src/main.ts",
             "tsConfig": "apps/x500-cli/tsconfig.app.json",
-            "assets": ["apps/x500-cli/src/assets"]
+            "assets": ["apps/x500-cli/src/assets"],
+            "memoryLimit": 1024,
+            "maxWorkers": 1
           },
           "configurations": {
             "production": {

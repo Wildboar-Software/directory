@@ -6,7 +6,8 @@ import {
 import {
     ServiceControlOptions_subentries as subentriesBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { TRUE_BIT, BOOLEAN } from "asn1-ts";
+import { TRUE_BIT } from "asn1-ts";
+import { DER } from "asn1-ts/dist/node/functional";
 import readChildren from "../dit/readChildren";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
@@ -25,16 +26,22 @@ import {
     ReferenceType_subordinate,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
-
-export
-type ListItem = [ vertex: Vertex, aliasEntry?: BOOLEAN, fromEntry?: BOOLEAN ];
-
-export
-interface ListIReturn {
-    listInfoSubordinates: ListItem[];
-    // PartialOutcomeQualifier
-    SRcontinuationList: ContinuationReference[];
-}
+import {
+    ListResult,
+    _encode_ListResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+import {
+    ListResultData_listInfo,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
+import {
+    ListResultData_listInfo_subordinates_Item as ListItem,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
+import {
+    Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    ChainingResults,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 
 export
 async function list_i (
@@ -42,21 +49,44 @@ async function list_i (
     admPoints: Vertex[],
     target: Vertex,
     request: ChainedArgument,
-): Promise<ListIReturn> {
+): Promise<ChainedResult> {
     const arg: ListArgument = _decode_ListArgument(request.argument);
     const data = getOptionallyProtectedValue(arg);
     const targetDN = getDistinguishedName(target);
     const subordinates = await readChildren(ctx, target);
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const SRcontinuationList: ContinuationReference[] = [];
+    const listItems: ListItem[] = [];
     if (subentries) {
         // TODO: Check ACI
-        return {
-            listInfoSubordinates: subordinates
-                .filter((sub) => sub.dse.subentry)
-                .map((sub) => [ sub, ]),
-            SRcontinuationList,
+        const result: ListResult = {
+            unsigned: {
+                listInfo: new ListResultData_listInfo(
+                    // {
+                    //     rdnSequence: targetDN,
+                    // },
+                    undefined,
+                    subordinates
+                        .filter((sub) => sub.dse.subentry)
+                        .map((sub) => new ListItem(sub.dse.rdn, undefined, undefined)),
+                    undefined,
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            },
         };
+        return new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            ),
+            _encode_ListResult(result, DER),
+        );
     }
     if (target.dse.nssr) {
         SRcontinuationList.push(new ContinuationReference(
@@ -146,27 +176,49 @@ async function list_i (
                 undefined,
                 undefined,
                 undefined,
-            ))
+            ));
         }
         if (subordinate.dse.entry || subordinate.dse.glue) {
-            listInfoSubordinates.push([
-                subordinate,
+            listItems.push(new ListItem(
+                subordinate.dse.rdn,
                 false,
                 Boolean(subordinate.dse.shadow),
-            ]);
+            ));
         } else if (subordinate.dse.alias) {
-            listInfoSubordinates.push([
-                subordinate,
+            listItems.push(new ListItem(
+                subordinate.dse.rdn,
                 true,
                 Boolean(subordinate.dse.shadow),
-            ]);
+            ));
         }
         // TODO: Check if limit is exceeded.
     }
-    return {
-        listInfoSubordinates,
-        SRcontinuationList,
+    const result: ListResult = {
+        unsigned: {
+            listInfo: new ListResultData_listInfo(
+                // {
+                //     rdnSequence: targetDN,
+                // },
+                undefined,
+                listItems,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            ),
+        },
     };
+    return new ChainedResult(
+        new ChainingResults(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        ),
+        _encode_ListResult(result, DER),
+    );
 }
 
 export default list_i;

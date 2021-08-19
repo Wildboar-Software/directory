@@ -39,6 +39,18 @@ import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSer
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import { strict as assert } from "assert";
 import { addEntry as doAddEntry } from "./addEntry";
+import list_i from "./list_i";
+import list_ii from "./list_ii";
+import resultsMergingProcedureForList from "./resultsMergingProcedureForList";
+import {
+    OperationProgress_nameResolutionPhase_completed as completed,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+import {
+    ListResult,
+    _decode_ListResult,
+    _encode_ListResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+import { DER } from "asn1-ts/dist/node/functional";
 
 interface OperationDispatcherState {
     NRcontinuationList: ContinuationReference[];
@@ -115,7 +127,13 @@ class OperationDispatcher {
             // because only one response can be returned when the strategy is serial.
             return nrcrResult.responses[0];
         }
-        if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
+        if (compareCode(req.opCode, abandon["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
+        }
+        else if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
+        }
+        else if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
             const result = await doAddEntry(ctx, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
@@ -123,6 +141,60 @@ class OperationDispatcher {
                 result: result.result,
                 chaining: result.chainedResult,
             };
+        }
+        else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
+        }
+        else if (compareCode(req.opCode, compare["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
+        }
+        else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
+        }
+        else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
+        }
+        else if (compareCode(req.opCode, list["&operationCode"]!)) {
+            const op = reqData.chainedArgument.operationProgress;
+            if (op?.nameResolutionPhase === completed) { // List (II)
+                const result = await list_ii(ctx, state.admPoints, foundDSE, reqData, true);
+                return {
+                    invokeId: req.invokeId,
+                    opCode: req.opCode,
+                    result: result.result,
+                    chaining: result.chainedResult,
+                };
+            } else { // List (I)
+                // Only List (I) results in results merging.
+                const response = await list_i(ctx, state.admPoints, foundDSE, reqData);
+                const result = _decode_ListResult(response.result);
+                const data = getOptionallyProtectedValue(result);
+                const newData = await resultsMergingProcedureForList(
+                    ctx,
+                    data,
+                    false, // FIXME:
+                    state.NRcontinuationList,
+                    state.SRcontinuationList,
+                );
+                const newResult: ListResult = {
+                    unsigned: newData,
+                };
+                return {
+                    invokeId: req.invokeId,
+                    opCode: req.opCode,
+                    result: _encode_ListResult(newResult, DER),
+                    chaining: response.chainedResult,
+                };
+            }
+        }
+        else if (compareCode(req.opCode, read["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
+        }
+        else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
+        }
+        else if (compareCode(req.opCode, search["&operationCode"]!)) {
+            throw new errors.UnknownOperationError();
         }
         throw new Error();
     }
