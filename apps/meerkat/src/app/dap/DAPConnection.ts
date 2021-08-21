@@ -9,94 +9,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta";
 import type { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
-import { id_opcode_abandon } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-abandon.va";
-import { id_opcode_administerPassword } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-administerPassword.va";
-import { id_opcode_addEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
-import { id_opcode_changePassword } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-changePassword.va";
-import { id_opcode_compare } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
-import { id_opcode_modifyDN } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-modifyDN.va";
-import { id_opcode_modifyEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-modifyEntry.va";
-import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
-import { id_opcode_read } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va";
-import { id_opcode_removeEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-removeEntry.va";
-import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
-import {
-    _decode_AbandonArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
-import {
-    _decode_AdministerPasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
-import {
-    _decode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
-import {
-    _decode_ChangePasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta";
-import {
-    _decode_CompareArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
-import {
-    _decode_ModifyDNArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
-import {
-    _decode_ModifyEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
-import {
-    _decode_ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
-import {
-    _decode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
-import {
-    _decode_RemoveEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
-import {
-    _decode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-import abandon from "./operations/abandon";
-import administerPassword from "./operations/administerPassword";
-import addEntry from "./operations/addEntry";
-import changePassword from "./operations/changePassword";
-import compare from "./operations/compare";
-import modifyDN from "./operations/modifyDN";
-import modifyEntry from "./operations/modifyEntry";
-import list from "./operations/list";
-import read from "./operations/read";
-import removeEntry from "./operations/removeEntry";
-import search from "./operations/search";
-import {
-    _encode_AbandonResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonResult.ta";
-import {
-    _encode_AdministerPasswordResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordResult.ta";
-import {
-    _encode_AddEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
-import {
-    _encode_ChangePasswordResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordResult.ta";
-import {
-    _encode_CompareResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
-import {
-    _encode_ModifyDNResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResult.ta";
-import {
-    _encode_ModifyEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
-import {
-    _encode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
-import {
-    _encode_ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
-import {
-    _encode_RemoveEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
-import {
-    _encode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import {
     AbandonError,
     AbandonFailedError,
@@ -141,17 +53,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 
 const BER = () => new BERElement();
-const opcode_abandon: number = (id_opcode_abandon as { local: number}).local;
-const opcode_administerPassword: number = (id_opcode_administerPassword as { local: number}).local;
-const opcode_addEntry: number = (id_opcode_addEntry as { local: number}).local;
-const opcode_changePassword: number = (id_opcode_changePassword as { local: number}).local;
-const opcode_compare: number = (id_opcode_compare as { local: number}).local;
-const opcode_modifyDN: number = (id_opcode_modifyDN as { local: number}).local;
-const opcode_modifyEntry: number = (id_opcode_modifyEntry as { local: number}).local;
-const opcode_list: number = (id_opcode_list as { local: number}).local;
-const opcode_read: number = (id_opcode_read as { local: number}).local;
-const opcode_removeEntry: number = (id_opcode_removeEntry as { local: number}).local;
-const opcode_search: number = (id_opcode_search as { local: number}).local;
 
 async function handleRequest (
     ctx: Context,
@@ -161,138 +62,32 @@ async function handleRequest (
     if (!("local" in request.opcode)) {
         throw new Error();
     }
-    // if (!("present" in request.invokeID)) {
-    //     throw new Error();
-    // }
-    switch (request.opcode.local) {
-    // case (opcode_abandon): {
-    //     const arg = _decode_AbandonArgument(request.argument);
-    //     const res = await abandon(ctx, arg);
-    //     break;
-    // }
-    // case (opcode_administerPassword): {
-    //     const arg = _decode_AdministerPasswordArgument(request.argument);
-    //     const res = await administerPassword(ctx, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_AdministerPasswordResult(res, BER),
-    //     );
-    //     break;
-    // }
-    case (opcode_addEntry): {
-        const result = await OperationDispatcher.dispatchDAPRequest(
-            ctx,
-            {
-                invokeId: {
-                    present: request.invokeID,
-                },
-                opCode: request.opcode,
-                argument: request.argument,
+    const result = await OperationDispatcher.dispatchDAPRequest(
+        ctx,
+        {
+            invokeId: {
+                present: request.invokeID,
             },
-            {
-                basicLevels: new AuthenticationLevel_basicLevels(
-                    AuthenticationLevel_basicLevels_level_none,
-                    undefined,
-                    undefined,
-                ),
-            },
-            undefined,
+            opCode: request.opcode,
+            argument: request.argument,
+        },
+        {
+            basicLevels: new AuthenticationLevel_basicLevels(
+                AuthenticationLevel_basicLevels_level_none,
+                undefined,
+                undefined,
+            ),
+        },
+        undefined,
+    );
+    if ("error" in result) {
+        await dap.idm.writeError(
+            request.invokeID,
+            _encode_Code(result.errcode!, BER),
+            result.error,
         );
-        if ("error" in result) {
-            await dap.idm.writeError(
-                request.invokeID,
-                _encode_Code(result.errcode!, BER),
-                result.error,
-            );
-        } else {
-            await dap.idm.writeResult(request.invokeID, result.opCode, result.result!);
-        }
-        break;
-    }
-    // case (opcode_changePassword): {
-    //     const arg = _decode_ChangePasswordArgument(request.argument);
-    //     const res = await changePassword(ctx, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_ChangePasswordResult(res, BER),
-    //     );
-    //     break;
-    // }
-    // case (opcode_compare): {
-    //     const arg = _decode_CompareArgument(request.argument);
-    //     const res = await compare(ctx, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_CompareResult(res, BER),
-    //     );
-    //     break;
-    // }
-    // case (opcode_modifyDN): {
-    //     const arg = _decode_ModifyDNArgument(request.argument);
-    //     const res = await modifyDN(ctx, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_ModifyDNResult(res, BER),
-    //     );
-    //     break;
-    // }
-    // case (opcode_modifyEntry): {
-    //     const arg = _decode_ModifyEntryArgument(request.argument);
-    //     const res = await modifyEntry(ctx, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_ModifyEntryResult(res, BER),
-    //     );
-    //     break;
-    // }
-    // case (opcode_list): {
-    //     const arg = _decode_ListArgument(request.argument);
-    //     const res = await list(ctx, this, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_ListResult(res, BER),
-    //     );
-    //     break;
-    // }
-    // case (opcode_read): {
-    //     const arg = _decode_ReadArgument(request.argument);
-    //     const res = await read(ctx, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_ReadResult(res, BER),
-    //     );
-    //     break;
-    // }
-    // case (opcode_removeEntry): {
-    //     const arg = _decode_RemoveEntryArgument(request.argument);
-    //     const res = await removeEntry(ctx, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_RemoveEntryResult(res, BER),
-    //     );
-    //     break;
-    // }
-    // case (opcode_search): {
-    //     const arg = _decode_SearchArgument(request.argument);
-    //     const res = await search(ctx, dap, arg);
-    //     await dap.idm.writeResult(
-    //         request.invokeID,
-    //         request.opcode,
-    //         _encode_SearchResult(res, BER),
-    //     );
-    //     break;
-    // }
-    default: {
-        throw new UnknownOperationError();
-    }
+    } else {
+        await dap.idm.writeResult(request.invokeID, result.opCode, result.result!);
     }
 }
 

@@ -5,10 +5,10 @@ import bind from "../net/bind";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "dap search [object] [subset]",
+        command: "new <object> <subset>",
         describe: "Search",
-        builder: (yargs) => {
-            return yargs
+        builder: (y) => {
+            return y
                 .positional("object", {
                     type: "string",
                     describe: "The base object of the search",

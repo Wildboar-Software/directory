@@ -6,7 +6,7 @@ import addEntry from "../commands/dap/add/country";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "dap add country <object>",
+        command: "country <object>",
         describe: "Add a country",
         builder: (y) => {
             return y
@@ -31,7 +31,6 @@ function create (ctx: Context): CommandModule {
                 ;
         },
         handler: async (argv) => {
-            console.log(argv);
             const connection = await bind(ctx, argv);
             await addEntry(ctx, connection, argv);
         },

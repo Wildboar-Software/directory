@@ -180,14 +180,14 @@ This is not to imply that these rules are current adhered to.
         - [x] `x500 dap add entry person`
         - [x] `x500 dap add entry organizationalPerson`
         - [x] `x500 dap add entry organizationalRole`
-        - [ ] `x500 dap add entry groupOfNames`
-        - [ ] `x500 dap add entry groupOfUniqueNames`
-        - [ ] `x500 dap add entry residentialPerson`
-        - [ ] `x500 dap add entry applicationProcess`
-        - [ ] `x500 dap add entry applicationEntity`
-        - [ ] `x500 dap add entry dSA`
-        - [ ] `x500 dap add entry device`
-        - [ ] `x500 dap add entry dMD`
+        - [x] `x500 dap add entry group`
+          - Creates a `groupOfNames` or `groupOfUniqueNames` depending on options
+        - [x] `x500 dap add entry residentialPerson`
+        - [x] `x500 dap add entry applicationProcess`
+        - [x] ~~`x500 dap add entry applicationEntity`~~ (`PresentationAddress` difficulties.)
+        - [x] ~~`x500 dap add entry dSA`~~ (Inherits from `applicationEntity`.)
+        - [x] `x500 dap add entry device`
+        - [x] `x500 dap add entry dMD`
         - [ ] `x500 dap add entry oidC1obj`
         - [ ] `x500 dap add entry oidC2obj`
         - [ ] `x500 dap add entry oidCobj`

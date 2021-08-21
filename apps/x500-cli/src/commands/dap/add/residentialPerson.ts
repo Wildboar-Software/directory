@@ -25,22 +25,19 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/FacsimileTelephoneNumber.ta";
 import do_addEntry from "../add";
 
-// organizationalRole OBJECT-CLASS ::= {
-//     SUBCLASS OF   {top}
-//     MUST CONTAIN  {commonName}
-//     MAY CONTAIN   {description |
-//                    LocaleAttributeSet |
-//                    organizationalUnitName |
+// residentialPerson OBJECT-CLASS ::= {
+//     SUBCLASS OF   {person}
+//     MUST CONTAIN  {localityName}
+//     MAY CONTAIN   {LocaleAttributeSet |
 //                    PostalAttributeSet |
 //                    preferredDeliveryMethod |
-//                    roleOccupant |
-//                    seeAlso |
-//                    TelecommunicationAttributeSet}
-//     LDAP-NAME      {"organizationalRole"}  -- RFC 4519
-//     ID            id-oc-organizationalRole }
+//                    TelecommunicationAttributeSet |
+//                    businessCategory}
+//     LDAP-NAME     {"residentialPerson"}  -- RFC 4519
+//     ID            id-oc-residentialPerson }
 
 export
-async function do_addEntry_organizationalRole (
+async function do_addEntry_residentialPerson (
     ctx: Context,
     conn: Connection,
     argv: any,
@@ -49,7 +46,8 @@ async function do_addEntry_organizationalRole (
         new Attribute(
             selat.objectClass["&id"]!,
             [
-                _encodeObjectIdentifier(seloc.organizationalRole["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.person["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.residentialPerson["&id"]!, DER),
             ],
             undefined,
         ),
@@ -57,6 +55,24 @@ async function do_addEntry_organizationalRole (
             .flat()
             .map((value: string) => new Attribute(
                 selat.commonName["&id"]!,
+                [
+                    _encodeUTF8String(value, DER),
+                ],
+                undefined,
+            )),
+        ...[ argv.surname ]
+            .flat()
+            .map((value: string) => new Attribute(
+                selat.surname["&id"]!,
+                [
+                    _encodeUTF8String(value, DER),
+                ],
+                undefined,
+            )),
+        ...[ argv.localityName ]
+            .flat()
+            .map((value: string) => new Attribute(
+                selat.localityName["&id"]!,
                 [
                     _encodeUTF8String(value, DER),
                 ],
@@ -86,16 +102,6 @@ async function do_addEntry_organizationalRole (
             );
         }));
     }
-    if (argv.organizationalUnitName?.length) {
-        const values = [ argv.organizationalUnitName ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
-            selat.organizationalUnitName["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
-    }
     if (argv.businessCategory?.length) {
         const values = [ argv.businessCategory ].flat();
         attributes.push(...values.map((value: string) => new Attribute(
@@ -110,16 +116,6 @@ async function do_addEntry_organizationalRole (
         const values = [ argv.stateOrProvinceName ].flat();
         attributes.push(...values.map((value: string) => new Attribute(
             selat.stateOrProvinceName["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
-    }
-    if (argv.localityName?.length) {
-        const values = [ argv.localityName ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
-            selat.localityName["&id"]!,
             [
                 _encodeUTF8String(value, DER),
             ],
@@ -218,20 +214,7 @@ async function do_addEntry_organizationalRole (
             undefined,
         ));
     }
-    if (argv.roleOccupant?.length) {
-        const values = [ argv.roleOccupant ].flat();
-        attributes.push(...values.map((value: string) => {
-            const roleOccupant = destringifyDN(ctx, value);
-            return new Attribute(
-                selat.roleOccupant["&id"]!,
-                [
-                    _encode_RDNSequence(roleOccupant, DER),
-                ],
-                undefined,
-            );
-        }));
-    }
     return do_addEntry(ctx, conn, argv, attributes);
 }
 
-export default do_addEntry_organizationalRole;
+export default do_addEntry_residentialPerson;

@@ -6,10 +6,14 @@ import addEntry from "../commands/dap/add/country";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "dap add person",
+        command: "person <object>",
         describe: "Add a person",
         builder: (yargs) => {
             return yargs
+                .positional("object", {
+                    type: "string",
+                    description: "The object",
+                })
                 .option("commonName", {
                     alias: "c",
                     type: "array",

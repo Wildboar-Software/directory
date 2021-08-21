@@ -25,22 +25,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/FacsimileTelephoneNumber.ta";
 import do_addEntry from "../add";
 
-// organizationalRole OBJECT-CLASS ::= {
-//     SUBCLASS OF   {top}
-//     MUST CONTAIN  {commonName}
-//     MAY CONTAIN   {description |
-//                    LocaleAttributeSet |
-//                    organizationalUnitName |
-//                    PostalAttributeSet |
-//                    preferredDeliveryMethod |
-//                    roleOccupant |
-//                    seeAlso |
-//                    TelecommunicationAttributeSet}
-//     LDAP-NAME      {"organizationalRole"}  -- RFC 4519
-//     ID            id-oc-organizationalRole }
-
 export
-async function do_addEntry_organizationalRole (
+async function do_addEntry_dmd (
     ctx: Context,
     conn: Connection,
     argv: any,
@@ -49,14 +35,14 @@ async function do_addEntry_organizationalRole (
         new Attribute(
             selat.objectClass["&id"]!,
             [
-                _encodeObjectIdentifier(seloc.organizationalRole["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.dMD["&id"]!, DER),
             ],
             undefined,
         ),
-        ...[ argv.commonName ]
+        ...[ argv.dmdName ]
             .flat()
             .map((value: string) => new Attribute(
-                selat.commonName["&id"]!,
+                selat.dmdName["&id"]!,
                 [
                     _encodeUTF8String(value, DER),
                 ],
@@ -85,16 +71,6 @@ async function do_addEntry_organizationalRole (
                 undefined,
             );
         }));
-    }
-    if (argv.organizationalUnitName?.length) {
-        const values = [ argv.organizationalUnitName ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
-            selat.organizationalUnitName["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
     }
     if (argv.businessCategory?.length) {
         const values = [ argv.businessCategory ].flat();
@@ -218,20 +194,7 @@ async function do_addEntry_organizationalRole (
             undefined,
         ));
     }
-    if (argv.roleOccupant?.length) {
-        const values = [ argv.roleOccupant ].flat();
-        attributes.push(...values.map((value: string) => {
-            const roleOccupant = destringifyDN(ctx, value);
-            return new Attribute(
-                selat.roleOccupant["&id"]!,
-                [
-                    _encode_RDNSequence(roleOccupant, DER),
-                ],
-                undefined,
-            );
-        }));
-    }
     return do_addEntry(ctx, conn, argv, attributes);
 }
 
-export default do_addEntry_organizationalRole;
+export default do_addEntry_dmd;

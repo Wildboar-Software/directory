@@ -1,15 +1,19 @@
 import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
-import addEntry from "../commands/dap/add/country";
+import addEntry from "../commands/dap/add/organizationalPerson";
 
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "dap add orgperson",
+        command: "orgperson <object>",
         describe: "Add an organizational person",
         builder: (yargs) => {
             return yargs
+                .positional("object", {
+                    type: "string",
+                    description: "The object",
+                })
                 .option("commonName", {
                     alias: "c",
                     type: "array",
@@ -51,7 +55,6 @@ function create (ctx: Context): CommandModule {
                     description: "The street address",
                 })
                 .option("physicalDeliveryOfficeName", {
-                    alias: "o",
                     type: "array",
                     description: "The name of the physical delivery office",
                 })
@@ -84,6 +87,11 @@ function create (ctx: Context): CommandModule {
                     alias: "u",
                     type: "string",
                     description: "The password for the organization",
+                })
+                .option("organizationUnitName", {
+                    alias: "o",
+                    type: "array",
+                    description: "The organizational unit name",
                 })
                 .option("title", {
                     type: "array",

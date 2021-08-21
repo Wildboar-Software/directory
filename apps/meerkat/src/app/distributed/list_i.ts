@@ -125,7 +125,6 @@ async function list_i (
             undefined,
         ));
     }
-    const listInfoSubordinates: ListItem[] = [];
     for (const subordinate of subordinates) {
         // TODO: Check ACI
         if (subordinate.dse.subr) {
@@ -196,10 +195,11 @@ async function list_i (
     const result: ListResult = {
         unsigned: {
             listInfo: new ListResultData_listInfo(
-                // {
-                //     rdnSequence: targetDN,
-                // },
-                undefined,
+                // FIXME: Change this back to `undefined` when you fix the X.500 library issues.
+                {
+                    rdnSequence: targetDN,
+                },
+                // undefined,
                 listItems,
                 undefined,
                 [],

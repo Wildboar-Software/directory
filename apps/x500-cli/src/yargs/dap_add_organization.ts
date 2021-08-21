@@ -6,10 +6,14 @@ import addEntry from "../commands/dap/add/organization";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "dap add org",
+        command: "org <object>",
         describe: "Add an organization",
         builder: (yargs) => {
             return yargs
+                .positional("object", {
+                    type: "string",
+                    description: "The object",
+                })
                 .option("organizationName", {
                     alias: "o",
                     type: "array",

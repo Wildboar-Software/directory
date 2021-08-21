@@ -1,23 +1,39 @@
 import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
-import addEntry from "../commands/dap/add/organization";
+import addEntry from "../commands/dap/add/residentialPerson";
+
+// residentialPerson OBJECT-CLASS ::= {
+//     SUBCLASS OF   {person}
+//     MUST CONTAIN  {localityName}
+//     MAY CONTAIN   {LocaleAttributeSet |
+//                    PostalAttributeSet |
+//                    preferredDeliveryMethod |
+//                    TelecommunicationAttributeSet |
+//                    businessCategory}
+//     LDAP-NAME     {"residentialPerson"}  -- RFC 4519
+//     ID            id-oc-residentialPerson }
 
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "ou <object>",
-        describe: "Add an organizational unit",
+        command: "resperson <object>",
+        describe: "Add a residential person",
         builder: (yargs) => {
             return yargs
                 .positional("object", {
                     type: "string",
                     description: "The object",
                 })
-                .option("organizationUnitName", {
-                    alias: "o",
+                .option("commonName", {
+                    alias: "c",
                     type: "array",
-                    description: "The organizational unit name",
+                    description: "The common name",
+                })
+                .option("surname", {
+                    alias: "s",
+                    type: "array",
+                    description: "The last name of the person",
                 })
                 .option("description", {
                     alias: "d",
@@ -29,10 +45,10 @@ function create (ctx: Context): CommandModule {
                     type: "array",
                     description: "The distinguished name of another related entry",
                 })
-                .option("businessCategory", {
-                    alias: "b",
-                    type: "array",
-                    description: "A string identifying the category of the organization",
+                .option("userPassword", {
+                    alias: "u",
+                    type: "string",
+                    description: "The password for the organization",
                 })
                 .option("localityName", {
                     alias: "l",
@@ -40,17 +56,17 @@ function create (ctx: Context): CommandModule {
                     description: "The name of the locality"
                 })
                 .option("stateOrProvinceName", {
-                    alias: "s",
+                    alias: "state",
                     type: "array",
                     description: "The name of the state or province",
                 })
                 .option("streetAddress", {
-                    alias: "a",
+                    alias: "e",
                     type: "array",
                     description: "The street address",
                 })
                 .option("physicalDeliveryOfficeName", {
-                    alias: "d",
+                    alias: "o",
                     type: "array",
                     description: "The name of the physical delivery office",
                 })
@@ -79,12 +95,14 @@ function create (ctx: Context): CommandModule {
                     type: "array",
                     description: "The fax number",
                 })
-                .option("userPassword", {
-                    alias: "u",
-                    type: "string",
-                    description: "The password for the organization",
+                .option("businessCategory", {
+                    alias: "b",
+                    type: "array",
+                    description: "A string identifying the category of the organization",
                 })
-                .demandOption("organizationName")
+                .demandOption("commonName")
+                .demandOption("surname")
+                .demandOption("localityName")
                 .help()
                 ;
         },

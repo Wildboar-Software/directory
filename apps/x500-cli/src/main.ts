@@ -16,6 +16,12 @@ import dap_add_organizationalPerson from "./yargs/dap_add_organizationalPerson";
 import dap_add_organizationalRole from "./yargs/dap_add_organizationalRole";
 import dap_add_locality from "./yargs/dap_add_locality";
 import dap_add_person from "./yargs/dap_add_person";
+import dap_add_group from "./yargs/dap_add_group";
+import dap_add_residentialPerson from "./yargs/dap_add_residentialPerson";
+import dap_add_process from "./yargs/dap_add_process";
+import dap_add_device from "./yargs/dap_add_device";
+import dap_add_dmd from "./yargs/dap_add_dmd";
+import dap_search_new from "./yargs/dap_search_new";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
 
@@ -24,98 +30,128 @@ loadAttributeTypes(ctx);
 
 yargs(process.argv.slice(2))
     .scriptName("x500")
-    .command("seed-countries [base]", "seed directory with countries", (yargs) => {
-        return yargs
+    .command("seed-countries <base>", "seed directory with countries", (seedYargs) => {
+        return seedYargs
             .positional("base", {
                 describe: "The base object under which to place the countries.",
-            });
-    }, async (argv) => {
-        const connection = await bind(ctx, argv);
-        await do_seedCountries(ctx, connection, argv);
-    })
-    .command("dap read [object]", "read entry", (yargs) => {
-        return yargs
-            .positional("object", {
-                describe: "The object to read",
-            });
-    }, async (argv) => {
-        const connection = await bind(ctx, argv);
-        await do_read(ctx, connection, argv);
-    })
-    .command("dap remove [object]", "remove entry", (yargs) => {
-        return yargs
-            .positional("object", {
-                describe: "The object to be removed",
-            });
-    }, async (argv) => {
-        const connection = await bind(ctx, argv);
-        await do_removeEntry(ctx, connection, argv);
-    })
-    .command("dap moddn [object] [newObject]", "move entry", (yargs) => {
-        return yargs
-            .positional("object", {
-                describe: "The object to be moved (the source)",
-            })
-            .positional("newObject", {
-                describe: "The new distinguished name of the object (the destination)",
-            });
-    }, async (argv) => {
-        const connection = await bind(ctx, argv);
-        await do_modifyDN(ctx, connection, argv);
-    })
-    .command("dap list [object]", "list entries", (yargs) => {
-        return yargs
-            .positional("object", {
-                describe: "The object whose subordinates are to be read.",
-            });
-    }, async (argv) => {
-        const connection = await bind(ctx, argv);
-        await do_list(ctx, connection, argv);
-    })
-    .command("dap apw [object]", "administer password", (yargs) => {
-        return yargs
-            .positional("object", {
-                describe: "The object whose password is to be changed.",
-            });
-    }, async (argv) => {
-        const connection = await bind(ctx, argv);
-        await do_administerPassword(ctx, connection, argv);
-    })
-    .command("dap cpw [object]", "change password", (yargs) => {
-        return yargs
-            .positional("object", {
-                describe: "The object whose password is to be changed.",
-            });
-    }, async (argv) => {
-        const connection = await bind(ctx, argv);
-        await do_changePassword(ctx, connection, argv);
-    })
-    .command(
-        "dap compare [object] [type] [value]",
-        "compare an entry against an assertion",
-        (yargs) => {
-        return yargs
-            .positional("object", {
-                describe: "The object whose subordinates are to be read.",
-            })
-            .positional("type", {
-                describe: "The attribute type of the purported value.",
-            })
-            .positional("value", {
-                describe: "The purported value.",
             })
             ;
     }, async (argv) => {
         const connection = await bind(ctx, argv);
-        await do_compare(ctx, connection, argv);
+        await do_seedCountries(ctx, connection, argv);
     })
-    .command(dap_add_country(ctx))
-    .command(dap_add_locality(ctx))
-    .command(dap_add_person(ctx))
-    .command(dap_add_organization(ctx))
-    .command(dap_add_organizationalUnit(ctx))
-    .command(dap_add_organizationalPerson(ctx))
-    .command(dap_add_organizationalRole(ctx))
+    .command("dap", "Directory Access Protocol", (dapYargs) => {
+        dapYargs
+            .command("add", "Add an entry", (addYargs) => {
+                addYargs
+                    .command(dap_add_country(ctx))
+                    .command(dap_add_locality(ctx))
+                    .command(dap_add_person(ctx))
+                    .command(dap_add_organization(ctx))
+                    .command(dap_add_organizationalUnit(ctx))
+                    .command(dap_add_organizationalPerson(ctx))
+                    .command(dap_add_organizationalRole(ctx))
+                    .command(dap_add_group(ctx))
+                    .command(dap_add_residentialPerson(ctx))
+                    .command(dap_add_process(ctx))
+                    .command(dap_add_device(ctx))
+                    .command(dap_add_dmd(ctx))
+                    .demandCommand()
+                    ;
+            })
+            .command("apw <object>", "Administer password", (apwYargs) => {
+                return apwYargs
+                    .positional("object", {
+                        describe: "The object whose password is to be changed.",
+                    })
+                    ;
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_administerPassword(ctx, connection, argv);
+            })
+            .command("cpw <object>", "Change password", (cpwYargs) => {
+                return cpwYargs
+                    .positional("object", {
+                        describe: "The object whose password is to be changed.",
+                    })
+                    ;
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_changePassword(ctx, connection, argv);
+            })
+            .command(
+                "compare <object> <type> <value>",
+                "Compare an entry against an assertion",
+                (compareYargs) => {
+                return compareYargs
+                    .positional("object", {
+                        describe: "The object whose subordinates are to be read.",
+                    })
+                    .positional("type", {
+                        describe: "The attribute type of the purported value.",
+                    })
+                    .positional("value", {
+                        describe: "The purported value.",
+                    })
+                    ;
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_compare(ctx, connection, argv);
+            })
+            .command("list <object>", "List entries", (listYargs) => {
+                listYargs
+                    .positional("object", {
+                        describe: "The object whose subordinates are to be read.",
+                    })
+                    // TODO: list new
+                    // TODO: list continue
+                    // TODO: list abandon
+                    ;
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_list(ctx, connection, argv);
+            })
+            .command("moddn <src> <dest>", "Move/Rename an entry", (modDNYargs) => {
+                return modDNYargs
+                    .positional("src", {
+                        describe: "The object to be moved (the source)",
+                    })
+                    .positional("dest", {
+                        describe: "The new distinguished name of the object (the destination)",
+                    })
+                    ;
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_modifyDN(ctx, connection, argv);
+            })
+            .command("read <object>", "Read an entry", (readYargs) => {
+                return readYargs
+                    .positional("object", {
+                        describe: "The object to read",
+                    });
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_read(ctx, connection, argv);
+            })
+            .command("remove <object>", "Remove an entry", (removeYargs) => {
+                return removeYargs
+                    .positional("object", {
+                        describe: "The object to be removed",
+                    });
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_removeEntry(ctx, connection, argv);
+            })
+            .command("search", "Search entries", (searchYargs) => {
+                searchYargs
+                    .command(dap_search_new(ctx))
+                    // TODO: search continue
+                    // TODO: search abandon
+                    .demandCommand()
+                    ;
+            })
+            .demandCommand()
+    })
     .option("bindDN", {
         alias: "D",
         type: "string",
@@ -156,6 +192,19 @@ yargs(process.argv.slice(2))
     .demandCommand()
     .demandOption("bindDN")
     .help()
-    .wrap(80)
+    .wrap(100)
+    // .completion("completion", (current: string, argv: any) => {
+    //     return [
+    //         "add",
+    //         "apw",
+    //         "cpw",
+    //         "compare",
+    //         "list",
+    //         "mod",
+    //         "moddn",
+    //         "read",
+    //         "search",
+    //     ];
+    // })
     .argv // This is a getter, and calling it is necessary to get yargs to run.
     ;
