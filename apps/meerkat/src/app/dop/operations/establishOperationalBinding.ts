@@ -204,7 +204,7 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     outbound: false,
-                    binding_type: data.bindingType.nodes,
+                    binding_type: data.bindingType.toString(),
                     binding_identifier: data.bindingID?.identifier,
                     binding_version: data.bindingID?.version,
                     agreement_ber: Buffer.from(data.agreement.toBytes()),
@@ -240,6 +240,7 @@ async function establishOperationalBinding (
                     new_context_prefix_rdn: rdnToJson(agreement.rdn),
                     immediate_superior: agreement.immediateSuperior.map((rdn) => rdnToJson(rdn)),
                     // TODO: Source
+                    supply_contexts: "",
                     requested_time: new Date(),
                 },
             });

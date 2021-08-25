@@ -24,11 +24,18 @@
                 <li>
                     <a href="/">Back to Home</a>
                 </li>
-                <li>
-                    <a href="/dit/dse/{{superiorUUID}}">Go to Immediate Superior</a>
-                </li>
+                {{#if superiorUUID}}
+                    <li>
+                        <a href="/dit/dse/{{superiorUUID}}">Go to Immediate Superior</a>
+                    </li>
+                {{/if}}
             </ul>
         </nav>
+        <hr />
+        <h2>Actions</h2>
+        <form action="/dit/dse/{{entryUUID}}/delete" method="POST" >
+            <button type="submit">Delete</button>
+        </form>
         <hr />
         <h2>Details</h2>
         <hr />

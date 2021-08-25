@@ -26,7 +26,7 @@ async function readEntryPassword (
     return {
         encrypted: new UserPwd_encrypted(
             new AlgorithmIdentifier(
-                new ObjectIdentifier(pwd.algorithm_oid),
+                ObjectIdentifier.fromString(pwd.algorithm_oid),
                 pwd.algorithm_parameters_der
                     ? ((): DERElement => {
                         const el = new DERElement();

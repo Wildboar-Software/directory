@@ -109,7 +109,7 @@ async function writeEntryAttributes (
                             data: Array.from(attr.contexts.values())
                                 .flatMap((context) => context.values.map((cv) => ({
                                     entry_id: entry.dse.id,
-                                    type: context.id.nodes,
+                                    type: context.id.toString(),
                                     tag_class: cv.tagClass,
                                     constructed: (cv.construction === ASN1Construction.constructed),
                                     tag_number: cv.tagNumber,

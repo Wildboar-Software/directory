@@ -184,7 +184,7 @@ async function modifyOperationalBinding (
         where: {
             binding_identifier: data.bindingID.identifier,
             binding_type: {
-                equals: data.bindingType.nodes,
+                equals: data.bindingType.toString(),
             },
             access_point_id: {
                 in: permittedAPs,
@@ -244,9 +244,10 @@ async function modifyOperationalBinding (
     const sp = data.securityParameters;
     const created = await ctx.db.operationalBinding.create({
         data: {
+            supply_contexts: "", // FIXME: Make this null.
             previous_id: opBinding.id as unknown as undefined, // FIXME: WTF is going on here?
             outbound: false,
-            binding_type: data.bindingType.nodes,
+            binding_type: data.bindingType.toString(),
             binding_identifier: data.newBindingID.identifier,
             binding_version: data.newBindingID.version,
             agreement_ber: data.newAgreement

@@ -73,7 +73,7 @@ async function readEntryAttributes (
                         some: {
                             OR: options.contextSelection.map((cs) => ({
                                 type: {
-                                    equals: cs.nodes,
+                                    equals: cs.toString(),
                                 },
                             })),
                         },

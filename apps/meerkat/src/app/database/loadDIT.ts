@@ -38,8 +38,7 @@ async function loadDIT (
     }
     let rootDSE = await ctx.db.entry.findFirst({
         where: {
-            dit_id: dit.id,
-            root: true,
+            immediate_superior_id: null,
         },
     });
     if (!rootDSE) {
@@ -47,25 +46,24 @@ async function loadDIT (
         rootDSE = await ctx.db.entry.create({
             data: {
                 rdn: ROOT_DSE_NAME,
-                root: true,
                 glue: false,
                 cp: false,
                 entry: false,
-                alias: false,
+                // alias: false,
                 subr: false,
                 nssr: false,
-                supr: false,
+                // supr: false,
                 xr: false,
-                admPoint: false,
+                // admPoint: false,
                 subentry: false,
                 shadow: false,
                 immSupr: false,
                 rhob: false,
                 sa: false,
                 dsSubentry: false,
-                familyMember: false,
-                ditBridge: false,
-                writeableCopy: false,
+                // familyMember: false,
+                // ditBridge: false,
+                // writeableCopy: false,
                 createdTimestamp: now,
                 modifyTimestamp: now,
                 // deleteTimestamp
@@ -80,8 +78,6 @@ async function loadDIT (
                 // entryUUID
                 objectClass: top["&id"].toString(),
                 // administrativeRole
-                dit_id: dit.id,
-                // immediate_superior
             },
         });
         ctx.log.warn(`Created Root DSE ${rootDSE.entryUUID}.`);

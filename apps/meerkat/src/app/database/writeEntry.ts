@@ -26,30 +26,30 @@ async function writeEntry (
         data: {
             entryUUID: entry.dse.uuid,
             immediate_superior_id: superior.dse.id,
-            dit_id: ctx.dit.id,
+            objectClass: Array.from(entry.dse.objectClass).join(" "),
             rdn: rdnToJson(entry.dse.rdn),
             aliased_entry_dn: entry.dse.alias?.aliasedEntryName
                 ? entry.dse.alias?.aliasedEntryName.map((rdn) => rdnToJson(rdn))
                 : undefined,
-            root: Boolean(entry.dse.root),
+            // root: Boolean(entry.dse.root),
             glue: Boolean(entry.dse.glue),
             cp: Boolean(entry.dse.cp),
             entry: Boolean(entry.dse.entry),
-            alias: Boolean(entry.dse.alias),
+            // alias: Boolean(entry.dse.alias),
             subr: Boolean(entry.dse.subr),
             nssr: Boolean(entry.dse.nssr),
-            supr: Boolean(entry.dse.supr),
+            // supr: Boolean(entry.dse.supr),
             xr: Boolean(entry.dse.xr),
-            admPoint: Boolean(entry.dse.admPoint),
+            // admPoint: Boolean(entry.dse.admPoint),
             subentry: Boolean(entry.dse.subentry),
             shadow: Boolean(entry.dse.shadow),
             immSupr: Boolean(entry.dse.immSupr),
             rhob: Boolean(entry.dse.rhob),
             sa: Boolean(entry.dse.sa),
             dsSubentry: Boolean(entry.dse.dsSubentry),
-            familyMember: Boolean(entry.dse.familyMember),
-            ditBridge: Boolean(entry.dse.ditBridge),
-            writeableCopy: false, // entry.dseType.writeableCopy,
+            // familyMember: Boolean(entry.dse.familyMember),
+            // ditBridge: Boolean(entry.dse.ditBridge),
+            // writeableCopy: false, // entry.dseType.writeableCopy,
             creatorsName: [{}],
             modifiersName: [{}],
             createdTimestamp: entry.dse.createdTimestamp,
@@ -62,7 +62,7 @@ async function writeEntry (
             // structuralObjectClass: string
             structuralObjectClass: "", // FIXME:
             administrativeRole: entry.dse.admPoint?.administrativeRole
-                ? Array.from(entry.dse.admPoint.administrativeRole)
+                ? Array.from(entry.dse.admPoint.administrativeRole).join(" ")
                 : undefined,
             accessControlScheme: entry.dse.admPoint?.accessControlScheme?.toString(),
         },

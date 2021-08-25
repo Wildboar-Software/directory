@@ -112,7 +112,7 @@ async function terminateOperationalBinding (
     const opBindingWhere = {
         binding_identifier: data.bindingID.identifier,
         binding_type: {
-            equals: data.bindingType.nodes,
+            equals: data.bindingType.toString(),
         },
         access_point_id: {
             in: permittedAPs,

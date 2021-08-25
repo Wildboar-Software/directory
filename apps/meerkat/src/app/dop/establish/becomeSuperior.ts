@@ -110,14 +110,14 @@ async function becomeSubordinate (
 
     const createdEntry = await ctx.db.entry.create({
         data: {
-            dit_id: ctx.dit.id,
             immediate_superior_id: superior.dse.id,
+            objectClass: "", // FIXME:
             rdn: rdnToJson(agreement.rdn),
             creatorsName: [],
             modifiersName: [],
             subr: true,
-            alias: sub2sup.alias,
-            sa: sub2sup.alias,
+            // alias: sub2sup.alias, // REVIEW:
+            // sa: sub2sup.alias, // REVIEW:
             AccessPoint: {
                 createMany: {
                     data: sub2sup.accessPoints

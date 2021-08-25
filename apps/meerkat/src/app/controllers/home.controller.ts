@@ -31,7 +31,7 @@ export class HomeController {
                     waiting: (ob.accepted === undefined || ob.accepted === null),
                     rejected: (ob.accepted === false),
 
-                    binding_type: ob.binding_type.join("."),
+                    binding_type: ob.binding_type,
                     validity_start: ob.validity_start.toISOString(),
                     validity_end: ob.validity_end
                         ? ob.validity_end.toISOString()
@@ -56,7 +56,7 @@ export class HomeController {
         }
         const templateVariables = {
             ...ob,
-            binding_type: ob.binding_type.join("."),
+            binding_type: ob.binding_type,
             validity_start: ob.validity_start.toISOString(),
             validity_end: ob.validity_end?.toISOString(),
         };

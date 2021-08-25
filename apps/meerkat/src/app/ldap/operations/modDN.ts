@@ -288,7 +288,7 @@ async function modDN (
                                             // id: null,
                                             // value_id: null,
                                             entry_id: entry.dse.id,
-                                            type: context.id.nodes,
+                                            type: context.id.toString(),
                                             tag_class: cv.tagClass,
                                             constructed: (cv.construction === ASN1Construction.constructed),
                                             tag_number: cv.tagNumber,
@@ -297,8 +297,8 @@ async function modDN (
                                             // jer: null,
                                             fallback: context.fallback,
                                         }))),
-                            }
-                        }
+                            },
+                        },
                     },
                 })),
         ]);

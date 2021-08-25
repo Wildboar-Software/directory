@@ -1,8 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { Context, DIT, Vertex } from "../types";
-import type {
-    CommonArguments,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
@@ -48,17 +45,17 @@ import {
 import {
     _decode_SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-import type {
-    Filter,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
+// import type {
+//     Filter,
+// } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element, ASN1TagClass } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import readEntryAttributes from "../database/readEntryAttributes";
 import { specificKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/specificKnowledge.oa";
 import { superiorKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
-import { nonSpecificKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/nonSpecificKnowledge.oa";
+// import { nonSpecificKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/nonSpecificKnowledge.oa";
 import * as errors from "../errors";
 import { ServiceErrorData, ServiceProblem_invalidReference, ServiceProblem_loopDetected, ServiceProblem_unableToProceed } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { NameProblem_aliasDereferencingProblem, NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
@@ -66,7 +63,7 @@ import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractS
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import type { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
+// import type { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import { strict as assert } from "assert";
 import { id_opcode_administerPassword } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-administerPassword.va";
 import { id_opcode_addEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
@@ -84,10 +81,6 @@ import getMatchingRulesFromFilter from "@wildboar/x500/src/lib/utils/getMatching
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 const MAX_DEPTH: number = 10000;
-
-interface FindDSEReturn {
-
-}
 
 // TODO: X.500
 function isModificationOperation (operationType: Code): boolean {
@@ -155,7 +148,6 @@ async function findDSE (
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
     chainArgs: ChainingArguments,
-    commonArgs: CommonArguments | undefined, // This won't be present with LDAP Requests
     argument: ASN1Element,
     operationType: Code,
     NRcontinuationList: ContinuationReference[],
@@ -182,17 +174,34 @@ async function findDSE (
     let aliasedRDNs: number = 0;
     const candidateRefs: ContinuationReference[] = [];
 
+    const serviceControls = argument.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 30)
+        ));
+    const serviceControlOptions = serviceControls?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 0)
+        ));
+    // You don't even need to decode this. Just determining that it exists is sufficient.
+    const manageDSAITPlaneRefElement = serviceControls?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 6)
+        ));
+
     // Service controls
     const manageDSAIT: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const dontDereferenceAliases: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
     const partialNameResolution: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_partialNameResolution] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_partialNameResolution] === TRUE_BIT);
     const dontUseCopy: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
 
     // Variables not defined explicitly, but still referenced by the specification:
     let partialNameResolved: boolean = false;
@@ -365,18 +374,19 @@ async function findDSE (
                         );
                     }
                 } else { // m !== 0
-                    assert(ctx.dit.root.dse.nssr); // Seems to be assumed at this point.
-                    const { operationalAttributes } = await readEntryAttributes(ctx, dse_i, {
-                        attributesSelect: [ specificKnowledge["&id"] ],
-                        contextSelection: undefined,
-                        returnContexts: false,
-                        includeOperationalAttributes: true,
-                    });
-                    const nonSpecificKnowledgeAttributes = operationalAttributes
-                        .filter((oa) => oa.id.isEqualTo(nonSpecificKnowledge["&id"]));
-                    const knowledges = nonSpecificKnowledgeAttributes
-                        .map((sk) => nonSpecificKnowledge.decoderFor["&Type"]!(sk.value));
-                    knowledges.forEach((knowledge): void => {
+                    // assert(ctx.dit.root.dse.nssr); // Seems to be assumed at this point.
+                    // const { operationalAttributes } = await readEntryAttributes(ctx, dse_i, {
+                    //     attributesSelect: [ specificKnowledge["&id"] ],
+                    //     contextSelection: undefined,
+                    //     returnContexts: false,
+                    //     includeOperationalAttributes: true,
+                    // });
+                    // ctx.dit.root.dse.nssr?.nonSpecificKnowledge
+                    // const nonSpecificKnowledgeAttributes = operationalAttributes
+                    //     .filter((oa) => oa.id.isEqualTo(nonSpecificKnowledge["&id"]));
+                    // const knowledges = nonSpecificKnowledgeAttributes
+                    //     .map((sk) => nonSpecificKnowledge.decoderFor["&Type"]!(sk.value));
+                    (ctx.dit.root.dse.nssr?.nonSpecificKnowledge ?? []).forEach((knowledge): void => {
                         const [ masters, shadows ] = splitIntoMastersAndShadows(knowledge);
                         const recommendedAP = shadows[0] ?? masters[0];
                         if (!recommendedAP) {
@@ -561,7 +571,7 @@ async function findDSE (
             if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
                 return targetNotFoundSubprocedure();
             }
-            if (commonArgs?.serviceControls?.manageDSAITPlaneRef || manageDSAIT) {
+            if (manageDSAITPlaneRefElement || manageDSAIT) {
                 return dse_i;
             }
             if (
@@ -650,7 +660,6 @@ async function findDSE (
                     haystackVertex,
                     newN,
                     chainArgs,
-                    commonArgs,
                     argument,
                     operationType,
                     NRcontinuationList,
@@ -683,7 +692,7 @@ async function findDSE (
                 if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
                     return targetFoundSubprocedure();
                 }
-                if (commonArgs?.serviceControls?.manageDSAITPlaneRef || manageDSAIT) {
+                if (manageDSAITPlaneRefElement || manageDSAIT) {
                     return dse_i;
                 }
                 if (

@@ -58,9 +58,7 @@ async function entryFromDatabaseEntry (
     const prescriptiveACI = dbe.subentry
         ? acis.filter((aci) => aci.scope === ACIScope.PRESCRIPTIVE).map(toACIItem)
         : [];
-    const subentryACI = dbe.admPoint
-        ? acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem)
-        : [];
+    const subentryACI = acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem);
     const ret: Vertex = {
         immediateSuperior: superior,
         subordinates: [],
@@ -95,7 +93,7 @@ async function entryFromDatabaseEntry (
         //     : undefined,
     };
 
-    if (dbe.root) {
+    if (dbe.immediate_superior_id === null) { // root and possibly supr
         ret.dse.root = {
             myAccessPoint: new AccessPoint(
                 {
@@ -111,6 +109,37 @@ async function entryFromDatabaseEntry (
                 ),
                 undefined,
             )
+        };
+
+        const subordinateKnowledgeRows = await ctx.db.accessPoint.findMany({
+            where: {
+                entry_id: dbe.id,
+                knowledge_type: Knowledge.SUPERIOR,
+            },
+        });
+        const superiorKnowledge = subordinateKnowledgeRows
+            .map((sk) => {
+                const el = new BERElement();
+                el.fromBytes(sk.ber);
+                return _decode_AccessPoint(el);
+            });
+        ret.dse.supr = {
+            superiorKnowledge,
+        };
+
+        const bridges = await ctx.db.ditBridgeKnowledge.findMany({
+            where: {
+                entry_id: dbe.id,
+            },
+        });
+        const ditBridgeKnowledge = bridges
+            .map((b) => {
+                const el = new BERElement();
+                el.fromBytes(b.ber);
+                return _decode_DitBridgeKnowledge(el);
+            });
+        ret.dse.ditBridge = {
+            ditBridgeKnowledge,
         };
     }
 
@@ -169,7 +198,7 @@ async function entryFromDatabaseEntry (
         ret.dse.entry = {};
     }
 
-    if (dbe.alias && dbe.aliased_entry_dn && Array.isArray(dbe.aliased_entry_dn)) {
+    if (Array.isArray(dbe.aliased_entry_dn)) {
         ret.dse.alias = {
             aliasedEntryName: dbe.aliased_entry_dn
                 .map((rdn: Record<string, string>) => rdnFromJson(rdn)),
@@ -211,24 +240,6 @@ async function entryFromDatabaseEntry (
         };
     }
 
-    if (dbe.supr) {
-        const subordinateKnowledgeRows = await ctx.db.accessPoint.findMany({
-            where: {
-                entry_id: dbe.id,
-                knowledge_type: Knowledge.SUPERIOR,
-            },
-        });
-        const superiorKnowledge = subordinateKnowledgeRows
-            .map((sk) => {
-                const el = new BERElement();
-                el.fromBytes(sk.ber);
-                return _decode_AccessPoint(el);
-            });
-        ret.dse.supr = {
-            superiorKnowledge,
-        };
-    }
-
     if (dbe.xr) {
         const subordinateKnowledgeRows = await ctx.db.accessPoint.findMany({
             where: {
@@ -247,7 +258,7 @@ async function entryFromDatabaseEntry (
         };
     }
 
-    if (dbe.admPoint) {
+    if (dbe.administrativeRole?.length) {
         ret.dse.admPoint = {
             administrativeRole: new Set(dbe.administrativeRole),
             accessControlScheme: dbe.accessControlScheme
@@ -312,23 +323,6 @@ async function entryFromDatabaseEntry (
 
     if (dbe.dsSubentry) {
         ret.dse.dsSubentry = true;
-    }
-
-    if (dbe.ditBridge) {
-        const bridges = await ctx.db.ditBridgeKnowledge.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-        });
-        const ditBridgeKnowledge = bridges
-            .map((b) => {
-                const el = new BERElement();
-                el.fromBytes(b.ber);
-                return _decode_DitBridgeKnowledge(el);
-            });
-        ret.dse.ditBridge = {
-            ditBridgeKnowledge,
-        };
     }
 
     if (dbe.keep_children_in_database) {

@@ -397,13 +397,11 @@ async function addEntry (
     // – the manageDSAIT extension bit shall be set;
     // – the manageDSAIT option shall be set;
     // – the manageDSAITPlaneRef option shall be included if a specific replication plane is to be managed.
-    const manageDSAITExtension: boolean = (data.criticalExtensions?.[EXT_BIT_MANAGE_DSA_IT] === TRUE_BIT);
-    const manageDSAITSCO: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+    const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     // Only necessary if a specific DSA IT is to be managed.
     // const manageDSAITPlaneRef = data.serviceControls?.manageDSAITPlaneRef;
-    const requestedToManageDSA: boolean = (manageDSAITExtension && manageDSAITSCO);
 
-    if (requestedToManageDSA) {
+    if (manageDSAIT) {
     // TODO: aliases contain aliasedEntryName
     // TODO: aliased entry exists
     // TODO: aliases are not allowed to point to other aliases

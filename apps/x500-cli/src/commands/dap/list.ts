@@ -77,6 +77,7 @@ async function do_list (
         resData.listInfo.subordinates
             .map((sub) => stringifyDN(ctx, [ sub.rdn ]))
             .forEach((str) => ctx.log.info(str));
+        ctx.log.info("End of list.");
     } else if ("uncorrelatedListInfo" in resData) {
         ctx.log.warn("Uncorrelated info."); // FIXME:
     } else {

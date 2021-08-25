@@ -17,24 +17,11 @@ const prisma = new PrismaClient();
 
 export
 async function seed () {
-    // await prisma.dIT.create({
-    //     data: {
-    //         id: 1,
-    //         name: "Default DIT",
-    //         uuid: ""
-    //     }
-    // })
-    // await prisma.entry.create({
-    //     data: {
-    //         rdn: [],
-    //         root: true,
-    //         dit_id: 1,
-    //     },
-    // })
     await prisma.operationalBinding.create({
         data: {
             outbound: false,
-            binding_type: id_op_binding_hierarchical.nodes,
+            binding_type: id_op_binding_hierarchical.toString(),
+            supply_contexts: "",
             binding_identifier: 1,
             binding_version: 1,
             agreement_ber: Buffer.from([ 0 ]), // FIXME:

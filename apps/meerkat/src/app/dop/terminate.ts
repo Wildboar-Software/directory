@@ -2,7 +2,7 @@ import type { Context } from "../types";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import { BERElement, DERElement } from "asn1-ts";
+import { DERElement } from "asn1-ts";
 import {
     _decode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -23,7 +23,7 @@ async function terminate (
     if (!ob) {
         return;
     }
-    switch (ob.binding_type.join(".")) {
+    switch (ob.binding_type.toString()) {
         case (id_op_binding_hierarchical.toString()): {
             const el = new DERElement();
             el.fromBytes(ob.agreement_ber);

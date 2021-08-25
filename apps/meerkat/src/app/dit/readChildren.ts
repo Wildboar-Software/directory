@@ -13,7 +13,6 @@ async function readChildren (
         return await Promise.all(
             (await ctx.db.entry.findMany({
                 where: {
-                    dit_id: ctx.dit.id,
                     immediate_superior_id: entry.dse.id,
                     deleteTimestamp: null,
                 },

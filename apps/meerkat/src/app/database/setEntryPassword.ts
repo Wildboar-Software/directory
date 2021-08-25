@@ -1,6 +1,6 @@
 
 
-import type { Context, Vertex, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Vertex } from "../types";
 import type { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import encryptPassword from "../x500/encryptPassword";
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
@@ -38,7 +38,7 @@ async function setEntryPassword (
                 password: {
                     create: {
                         encrypted: Buffer.from(encryptedPassword),
-                        algorithm_oid: scryptAlgId.algorithm.nodes,
+                        algorithm_oid: scryptAlgId.algorithm.toString(),
                         algorithm_parameters_der: scryptAlgId.parameters
                             ? Buffer.from(scryptAlgId.parameters.toBytes())
                             : undefined,
@@ -56,7 +56,7 @@ async function setEntryPassword (
                 password: {
                     create: {
                         encrypted: Buffer.from(pwd.encrypted.encryptedString),
-                        algorithm_oid: alg.algorithm.nodes,
+                        algorithm_oid: alg.algorithm.toString(),
                         algorithm_parameters_der: alg.parameters
                             ? Buffer.from(alg.parameters.toBytes())
                             : undefined,

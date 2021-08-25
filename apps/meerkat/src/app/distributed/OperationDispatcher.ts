@@ -95,7 +95,6 @@ class OperationDispatcher {
             ctx.dit.root,
             targetObject,
             reqData.chainedArgument,
-            undefined,
             reqData.argument,
             req.opCode!,
             state.NRcontinuationList,

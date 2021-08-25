@@ -45,35 +45,40 @@ async function main (): Promise<void> {
     ctx.log.debug("Loaded attribute types.");
 
     const idmServer = net.createServer((c) => {
-        console.log("IDM client connected.");
-        const idm = new IDMConnection(c); // eslint-disable-line
-        // let dap: DAPConnection | undefined;
+        try {
+            console.log("IDM client connected.");
+            const idm = new IDMConnection(c); // eslint-disable-line
+            // let dap: DAPConnection | undefined;
 
-        idm.events.on("bind", (idmBind: IdmBind) => {
-            if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
-                const dba = _decode_DirectoryBindArgument(idmBind.argument);
-                new DAPConnection(ctx, idm, dba); // eslint-disable-line
-            } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
-                const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
-                new DSPConnection(ctx, idm, dba);
-            } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
-                const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
-                new DOPConnection(ctx, idm, dba);
-            } else {
-                console.log(`Unsupported protocol: ${idmBind.protocolID.toString()}.`);
-            }
-        });
+            idm.events.on("bind", (idmBind: IdmBind) => {
+                if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
+                    const dba = _decode_DirectoryBindArgument(idmBind.argument);
+                    new DAPConnection(ctx, idm, dba); // eslint-disable-line
+                } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
+                    const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
+                    new DSPConnection(ctx, idm, dba);
+                } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
+                    const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
+                    new DOPConnection(ctx, idm, dba);
+                } else {
+                    console.log(`Unsupported protocol: ${idmBind.protocolID.toString()}.`);
+                }
+            });
 
-        idm.events.on("unbind", () => {
-            c.end();
-        });
+            idm.events.on("unbind", () => {
+                c.end();
+            });
 
-        // idm.events.on("unbind", () => {
-        //     dap = undefined;
-        // });
+            // idm.events.on("unbind", () => {
+            //     dap = undefined;
+            // });
+        } catch (e) {
+            console.error(e);
+        }
     });
     idmServer.on("error", (err) => {
-        throw err;
+        // throw err;
+        console.error(err);
     });
 
     const idmPort = process.env.IDM_PORT

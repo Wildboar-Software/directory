@@ -1,9 +1,11 @@
 import type { Context, Vertex } from "../types";
-import { Controller, Get, Render, Inject, Param, NotFoundException } from "@nestjs/common";
+import type { Entry } from "@prisma/client";
+import { Controller, Get, Post, Render, Inject, Param, NotFoundException, Res } from "@nestjs/common";
+import type { Response } from "express";
 import rdnToString from "@wildboar/ldap/src/lib/stringifiers/RelativeDistinguishedName";
 import type StringEncoderGetter from "@wildboar/ldap/src/lib/types/StringEncoderGetter";
 import type StringEncoder from "@wildboar/ldap/src/lib/types/StringEncoder";
-import type { OBJECT_IDENTIFIER, ASN1Element } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ASN1Element, ASN1TagClass, ASN1UniversalType } from "asn1-ts";
 import type {
     RelativeDistinguishedName
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
@@ -26,7 +28,10 @@ import { id_oc_child } from "@wildboar/x500/src/lib/modules/InformationFramework
 import rdnFromJson from "../x500/rdnFromJson";
 import entryFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import readEntryAttributes from "../database/readEntryAttributes";
+import deleteEntry from "../database/deleteEntry";
 import escape from "escape-html";
+import type { DistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/DistinguishedName.ta";
+import findEntry from "../x500/findEntry";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
@@ -214,6 +219,17 @@ function hexEncode (value: ASN1Element): string {
     return `#${Buffer.from(value.toBytes()).toString("hex")}`;
 }
 
+function defaultEncoder (value: ASN1Element): string {
+    if (
+        (value.tagClass !== ASN1TagClass.universal)
+        || (value.tagNumber === ASN1UniversalType.sequence)
+        || (value.tagNumber === ASN1UniversalType.set)
+    ) {
+        return hexEncode(value);
+    }
+    return value.toString();
+}
+
 @Controller()
 export class DitController {
 
@@ -271,11 +287,11 @@ export class DitController {
                 ((): string => {
                     const spec = this.ctx.attributes.get(attr.id.toString());
                     if (!spec?.ldapSyntax) {
-                        return hexEncode(attr.value);
+                        return defaultEncoder(attr.value);
                     }
                     const ldapSyntax = this.ctx.ldapSyntaxes.get(spec?.ldapSyntax.toString());
                     if (!ldapSyntax?.encoder) {
-                        return hexEncode(attr.value);
+                        return defaultEncoder(attr.value);
                     }
                     const encoder = ldapSyntax.encoder;
                     return Buffer.from(encoder(attr.value)).toString("utf-8");
@@ -292,7 +308,7 @@ export class DitController {
                 ? "(Empty RDN)"
                 : escape(encodeRDN(this.ctx, rdn)),
             flags: printFlags(vertex),
-            objectClasses: entry.objectClass.map((oc) => ({
+            objectClasses: entry.objectClass.split(" ").map((oc) => ({
                 oid: oc,
                 name: this.ctx.objectClasses.get(oc)?.ldapNames?.[0],
             })),
@@ -307,4 +323,33 @@ export class DitController {
         };
     }
 
+    @Post("/dit/dse/:id/delete")
+    async delete_dse_id (
+        @Param("id") id: string,
+        @Res() res: Response,
+    ) {
+        const soughtEntry = await this.ctx.db.entry.findUnique({
+            where: {
+                entryUUID: id,
+            },
+        });
+        if (!soughtEntry) {
+            throw new NotFoundException();
+        }
+        let current: Entry | null = soughtEntry;
+        const currentDN: DistinguishedName = [];
+        while (current?.immediate_superior_id) {
+            currentDN.unshift(rdnFromJson(current.rdn as Record<string, string>));
+            current = await this.ctx.db.entry.findUnique({
+                where: {
+                    id: current.immediate_superior_id,
+                },
+            });
+        }
+        const entry = await findEntry(this.ctx, this.ctx.dit.root, currentDN, false);
+        if (entry) {
+            await deleteEntry(this.ctx, entry);
+        }
+        res.redirect("/dit/tree");
+    }
 }

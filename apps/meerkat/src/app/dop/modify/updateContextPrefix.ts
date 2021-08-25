@@ -147,17 +147,17 @@ async function updateContextPrefix (
         const immSupr: boolean = Boolean(immSuprAccessPoints && last);
         const createdEntry = await ctx.db.entry.create({
             data: {
-                dit_id: ctx.dit.id,
                 rdn: rdnToJson(vertex.rdn),
+                objectClass: "", // FIXME:
                 immediate_superior_id: currentRoot.dse.id,
                 glue: (!vertex.admPointInfo && !vertex.accessPoints),
                 rhob: Boolean(vertex.admPointInfo),
-                admPoint: Boolean(vertex.admPointInfo),
+                // admPoint: Boolean(vertex.admPointInfo),
                 immSupr,
                 creatorsName: [],
                 modifiersName: [],
                 administrativeRole: administrativeRoles.length
-                    ? administrativeRoles.map((ar) => ar.toString())
+                    ? administrativeRoles.map((ar) => ar.toString()).join(" ")
                     : undefined,
                 accessControlScheme: (accessControlSchemeOIDs.length === 1)
                     ? accessControlSchemeOIDs.toString()
@@ -207,8 +207,8 @@ async function updateContextPrefix (
                 .map((value) => _decode_ACIItem(value)) ?? [];
             const createdSubentry = await ctx.db.entry.create({
                 data: {
-                    dit_id: ctx.dit.id,
                     rdn: rdnToJson(subentry.rdn),
+                    objectClass: "", // FIXME:
                     immediate_superior_id: createdEntry.id,
                     subentry: true,
                     creatorsName: [],
@@ -225,14 +225,14 @@ async function updateContextPrefix (
     }
     const createdCP = await ctx.db.entry.create({
         data: {
-            dit_id: ctx.dit.id,
             rdn: rdnToJson(newAgreement.rdn),
+            objectClass: "", // FIXME:
             immediate_superior_id: currentRoot.dse.id,
             cp: true,
             immSupr: false, // This is supposed to be on the superior of this entry.
-            supr: false, // This is supposed to be on the Root DSE.
+            // supr: false, // This is supposed to be on the Root DSE.
             entry: true,
-            alias: false, // This should be flipped by `writeEntryAttributes()`, if applicable.
+            // alias: false, // This should be flipped by `writeEntryAttributes()`, if applicable.
             creatorsName: [],
             modifiersName: [],
         },
