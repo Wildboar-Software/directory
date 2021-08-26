@@ -82,6 +82,8 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 
 const MAX_DEPTH: number = 10000;
 
+// FIXME: If you read the verbal instructions, you'll see that many steps of findDSE are only for List(II) and Search(II)
+
 // TODO: X.500
 function isModificationOperation (operationType: Code): boolean {
     return (
@@ -702,19 +704,20 @@ async function findDSE (
                     return targetFoundSubprocedure();
                 }
                 const someSubordinatesAreCP = children.some((child) => child.dse.cp);
-                if (!someSubordinatesAreCP) {
-                    throw new errors.ServiceError(
-                        "",
-                        new ServiceErrorData(
-                            ServiceProblem_invalidReference,
-                            [],
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                        ),
-                    );
-                }
+                // FIXME: This is only for List(II) and Search(II)
+                // if (!someSubordinatesAreCP) {
+                //     throw new errors.ServiceError(
+                //         "",
+                //         new ServiceErrorData(
+                //             ServiceProblem_invalidReference,
+                //             [],
+                //             undefined,
+                //             undefined,
+                //             undefined,
+                //             undefined,
+                //         ),
+                //     );
+                // }
                 return dse_i; // Entry suitable
             } else {
                 lastEntryFound = i;

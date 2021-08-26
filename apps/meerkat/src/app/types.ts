@@ -365,8 +365,6 @@ type DIT = Vertex;
 
 export
 interface DITInfo {
-    id: number;
-    uuid: UUID;
     root: DIT;
 }
 

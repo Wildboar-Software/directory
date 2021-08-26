@@ -1,7 +1,7 @@
 datasource db {
     url      = env("DATABASE_URL")
-    provider = "postgresql"
-    // provider = "mysql"
+    // provider = "postgresql"
+    provider = "mysql"
 }
 
 generator client {
@@ -117,9 +117,7 @@ model Entry {
     AccessPoint                 AccessPoint[]
     SubtreeSpecification        SubtreeSpecification[]
     NonSpecificKnowledge        NonSpecificKnowledge[]
-    @@unique([immediate_superior_id, rdn, deleteTimestamp])
     @@unique([entryUUID])
-    @@index([aliased_entry_dn])
 }
 
 model UtmCoordinate {

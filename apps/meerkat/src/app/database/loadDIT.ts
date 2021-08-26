@@ -9,42 +9,19 @@ const ROOT_DSE_NAME = [];
 export
 async function loadDIT (
     ctx: Context,
-): Promise<DIT | null> {
+): Promise<DIT> {
     const now = new Date();
-    ctx.log.info(`Loading DIT with UUID ${ctx.dit.uuid} into memory. This could take a while.`);
-    const ditsCount: number = await ctx.db.dIT.count();
-    let dit = await ctx.db.dIT.findUnique({
-        where: {
-            uuid: ctx.dit.uuid,
-        },
-    });
-    if (!dit) {
-        // If there are DITs defined, and we can't find the sought after one, bail.
-        if (ditsCount > 0) {
-            ctx.log.error(`DIT with UUID ${ctx.dit.uuid} not defined.`);
-            process.exit(1);
-        }
-        // If there are no existing DITs, it is fine to create one.
-        ctx.log.warn(`DIT with UUID ${ctx.dit.uuid} not defined.`);
-        const name = `DIT ${ctx.dit.uuid}`;
-        dit = await ctx.db.dIT.create({
-            data: {
-                uuid: ctx.dit.uuid,
-                name,
-            },
-        });
-        ctx.log.warn(`Created DIT '${name}'.`);
-        return null;
-    }
+    ctx.log.info("Loading DIT into memory. This could take a while.");
     let rootDSE = await ctx.db.entry.findFirst({
         where: {
             immediate_superior_id: null,
         },
     });
     if (!rootDSE) {
-        ctx.log.warn(`No root DSE found for DIT with UUID ${ctx.dit.uuid}.`);
+        ctx.log.warn("No root DSE found. Creating it.");
         rootDSE = await ctx.db.entry.create({
             data: {
+                immediate_superior_id: null,
                 rdn: ROOT_DSE_NAME,
                 glue: false,
                 cp: false,
@@ -81,11 +58,9 @@ async function loadDIT (
             },
         });
         ctx.log.warn(`Created Root DSE ${rootDSE.entryUUID}.`);
-        return null;
     }
-    ctx.dit.id = dit.id;
     ctx.dit.root = await entryFromDatabaseEntry(ctx, undefined, rootDSE);
-    ctx.log.info(`DIT with UUID ${ctx.dit.uuid} loaded into memory.`);
+    ctx.log.info("DIT loaded into memory.");
     return ctx.dit.root;
 }
 

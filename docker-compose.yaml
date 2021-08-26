@@ -24,24 +24,43 @@ services:
   #     - '4632:4632/tcp'
   #   volumes:
   #     - '.:/srv:ro'
-  postgres:
-    image: postgres
+  # postgres:
+  #   image: postgres
+  #   restart: always
+  #   environment:
+  #     POSTGRES_PASSWORD: example
+  #   ports:
+  #     - '5432:5432/tcp'
+  #   volumes:
+  #     - data:/var/lib/mysql
+
+  # db:
+  #   image: mariadb
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: example
+  #   ports:
+  #     - '3306:3306/tcp'
+  #   volumes:
+  #     - data:/var/lib/mysql
+
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
-      POSTGRES_PASSWORD: example
-    # network_mode: host
+      MYSQL_ROOT_PASSWORD: example
     ports:
-      - '5432:5432/tcp'
+      - '3306:3306/tcp'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - data:/var/lib/mysql
 
-  adminer:
-    network_mode: host
-    depends_on:
-      - postgres
-    image: adminer
-    restart: always
-    # ports:
-    #   - '15432:8080/tcp'
+  # adminer:
+  #   depends_on:
+  #     - db
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - '15432:8080/tcp'
 volumes:
-  postgres_data: {}
+  data: {}

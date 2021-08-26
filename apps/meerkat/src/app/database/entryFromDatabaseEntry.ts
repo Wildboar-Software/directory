@@ -111,36 +111,37 @@ async function entryFromDatabaseEntry (
             )
         };
 
-        const subordinateKnowledgeRows = await ctx.db.accessPoint.findMany({
+        const superiorKnowledgeRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SUPERIOR,
             },
         });
-        const superiorKnowledge = subordinateKnowledgeRows
+        const superiorKnowledge = superiorKnowledgeRows
             .map((sk) => {
                 const el = new BERElement();
                 el.fromBytes(sk.ber);
                 return _decode_AccessPoint(el);
             });
-        ret.dse.supr = {
-            superiorKnowledge,
-        };
+        if (superiorKnowledge.length) {
+            ret.dse.supr = {
+                superiorKnowledge,
+            };
+        }
 
-        const bridges = await ctx.db.ditBridgeKnowledge.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-        });
+        const bridges = await ctx.db.ditBridgeKnowledge.findMany();
         const ditBridgeKnowledge = bridges
             .map((b) => {
                 const el = new BERElement();
                 el.fromBytes(b.ber);
                 return _decode_DitBridgeKnowledge(el);
             });
-        ret.dse.ditBridge = {
-            ditBridgeKnowledge,
-        };
+
+        if (ditBridgeKnowledge.length) {
+            ret.dse.ditBridge = {
+                ditBridgeKnowledge,
+            };
+        }
     }
 
     if (dbe.glue) {

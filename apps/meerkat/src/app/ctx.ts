@@ -17,7 +17,7 @@ const rootID = uuid();
 const root: Vertex = {
     subordinates: [],
     dse: {
-        id: 0,
+        id: 1,
         uuid: rootID,
         rdn: [],
         objectClass: new Set(),
@@ -42,8 +42,6 @@ const ctx: Context = {
         hibernatingSince: undefined,
     },
     dit: {
-        id: 1,
-        uuid: "b47a393d-f561-4020-b8e8-324ae3391e98",
         root,
     },
     log: console,

@@ -1,5 +1,7 @@
 import type { Context, Vertex, IndexableOID, StoredAttributeValueWithContexts } from "../types";
 import { ASN1Construction, BERElement } from "asn1-ts";
+import {
+} from "asn1-ts/dist/node/functional";
 import { id_aca_entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
 import { id_aca_prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-prescriptiveACI.va";
 import { id_aca_subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-subentryACI.va";
@@ -18,13 +20,19 @@ import { ACIScope, PrismaPromise } from "@prisma/client";
 
 const SUBTREE_SPEC_OID: string = id_oa_subtreeSpecification.toString();
 
-type SpecialAttributeHandler = (
+type SpecialAttributeEntryWriter = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    attribute: StoredAttributeValueWithContexts,
+) => Promise<void>;
+
+type SpecialAttributeDatabaseWriter = (
     ctx: Readonly<Context>,
     entry: Vertex,
     attribute: StoredAttributeValueWithContexts,
 ) => PrismaPromise<void>;
 
-const writeSomeACI: (scope: ACIScope) => SpecialAttributeHandler = (scope: ACIScope) => {
+const writeSomeACI: (scope: ACIScope) => SpecialAttributeDatabaseWriter = (scope: ACIScope) => {
     return (
         ctx: Readonly<Context>,
         entry: Vertex,
@@ -57,7 +65,15 @@ const writeEntryACI = writeSomeACI(ACIScope.ENTRY);
 const writePrescriptiveACI = writeSomeACI(ACIScope.PRESCRIPTIVE);
 const writeSubentryACI = writeSomeACI(ACIScope.SUBENTRY);
 
-const speciallyHandledAttributes: Map<IndexableOID, SpecialAttributeHandler> = new Map([
+const writeObjectClass: SpecialAttributeEntryWriter = async (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    attribute: StoredAttributeValueWithContexts,
+): Promise<void> => {
+    entry.dse.objectClass.add(attribute.value.objectIdentifier.toString());
+};
+
+const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabaseWriter> = new Map([
     [ id_aca_entryACI.toString(), writeEntryACI ],
     [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
     [ id_aca_subentryACI.toString(), writeSubentryACI ],
@@ -83,16 +99,16 @@ async function writeEntryAttributes (
 ): Promise<any> {
     return ctx.db.$transaction([
         ...attributes
-            .filter((attr) => speciallyHandledAttributes.has(attr.id.toString()))
+            .filter((attr) => specialAttributeDatabaseWriters.has(attr.id.toString()))
             .map((attr) => {
-                const handler = speciallyHandledAttributes.get(attr.id.toString());
+                const handler = specialAttributeDatabaseWriters.get(attr.id.toString());
                 if (!handler) { // Should never happen.
                     throw new Error();
                 }
                 return handler(ctx, entry, attr);
             }),
         ...attributes
-            .filter((attr) => !speciallyHandledAttributes.has(attr.id.toString()))
+            .filter((attr) => !specialAttributeDatabaseWriters.has(attr.id.toString()))
             .map((attr) => ctx.db.attributeValue.create({
                 data: {
                     entry_id: entry.dse.id,

@@ -14,7 +14,7 @@ export class HomeController {
     @Get("/home")
     @Render('index')
     index () {
-        return { message: this.ctx.dit.uuid };
+        return {};
     }
 
     @Get("/ob")
