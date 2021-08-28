@@ -51,6 +51,7 @@ function create (ctx: Context): CommandModule {
         handler: async (argv) => {
             const connection = await bind(ctx, argv);
             await addEntry(ctx, connection, argv);
+            await connection.close();
         },
     };
 }

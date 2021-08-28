@@ -205,7 +205,7 @@ async function convertVertexToHTML (ctx: Context, vertex: Vertex): Promise<strin
     return (
         "<li>"
         + "<span>"
-        + `<a href="/dit/dse/${vertex.dse.uuid}">${stringifiedRDN}</a>`
+        + `<a href="/dit/dse/${vertex.dse.uuid}">${stringifiedRDN}</a>&nbsp;`
         + printFlags(vertex)
         + "</span>"
         + "<ul>"

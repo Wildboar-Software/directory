@@ -583,10 +583,12 @@ async function findDSE (
                 return targetNotFoundSubprocedure();
             }
             // I don't understand why we do this.
-            const someChildrenAreCP: boolean = (children.some((child) => child.dse.cp));
-            return someChildrenAreCP
-                ? dse_i
-                : targetNotFoundSubprocedure();
+            // const someChildrenAreCP: boolean = (children.some((child) => child.dse.cp));
+            // return someChildrenAreCP
+            //     ? dse_i
+            //     : targetNotFoundSubprocedure();
+            // This is for List(II) and Search(II)
+            return dse_i;
         }
         const needleRDN = needleDN[i];
         let rdnMatched: boolean = false

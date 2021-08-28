@@ -56,6 +56,7 @@ import { ConsumerInformation } from "@wildboar/x500/src/lib/modules/DSAOperation
 import { SupplierAndConsumers } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
 import { MasterAndShadowAccessPoints } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
 import { DitBridgeKnowledge } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
+import type { PrismaPromise, Prisma } from "@prisma/client";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -186,10 +187,10 @@ interface DSEType {
 
 export
 interface HierarchyInfo {
-    level: number; // Shall be 0 for hierarchical top.
+    // level: number; // Shall be 0 for hierarchical top.
     // below: boolean; // Shall be computed.
     parent?: Vertex;
-    top: Vertex;
+    // top: Vertex;
     children: Vertex[];
 }
 
@@ -404,3 +405,24 @@ interface Context {
     pagedResultsRequests: Map<UUID, Map<string, PagedResultsRequest_newRequest>>;
     operationalBindingControlEvents: OperationalBindingControlEvents;
 }
+
+export
+interface PendingUpdates {
+    readonly entryUpdate: Prisma.EntryUpdateInput,
+    readonly otherWrites: PrismaPromise<any>[],
+}
+
+export
+type SpecialAttributeMemoryEditor = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    attribute: StoredAttributeValueWithContexts,
+) => Promise<void>;
+
+export
+type SpecialAttributeDatabaseEditor = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    attribute: StoredAttributeValueWithContexts,
+    pendingUpdates: PendingUpdates,
+) => Promise<void>;

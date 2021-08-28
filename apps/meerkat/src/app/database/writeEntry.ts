@@ -28,9 +28,7 @@ async function writeEntry (
             immediate_superior_id: superior.dse.id,
             objectClass: Array.from(entry.dse.objectClass).join(" "),
             rdn: rdnToJson(entry.dse.rdn),
-            aliased_entry_dn: entry.dse.alias?.aliasedEntryName
-                ? entry.dse.alias?.aliasedEntryName.map((rdn) => rdnToJson(rdn))
-                : undefined,
+            aliased_entry_dn: entry.dse.alias?.aliasedEntryName?.map((rdn) => rdnToJson(rdn)),
             // root: Boolean(entry.dse.root),
             glue: Boolean(entry.dse.glue),
             cp: Boolean(entry.dse.cp),

@@ -463,9 +463,9 @@ async function search (
                         current = current.immediateSuperior;
                     }
                 }
-                if (top) {
-                    ret.push(toEntryAndInfo(ctx, entry.dse.hierarchy.top));
-                }
+                // if (top) {
+                //     ret.push(toEntryAndInfo(ctx, entry.dse.hierarchy.top));
+                // }
                 if (subtree) {
                     ret.push(...getHierarchicalSubtree(entry)
                         .map((e): [ Vertex, EntryInformation ] => toEntryAndInfo(ctx, e)));

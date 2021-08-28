@@ -61,35 +61,38 @@ model Entry {
     password                 Password?      @relation(fields: [password_id], references: [id])
     structuralObjectClass    String?
     accessControlScheme      String?
-    intEmail                 String?
-    jid                      String?
-    objectIdentifier         String?
-    countryName              String?        @db.Char(2)
-    countryCode3c            String?        @db.Char(3)
-    countryCode3n            Int?           @db.SmallInt
-    utmCoordinates_id        Int?
-    utmCoordinates           UtmCoordinate? @relation(fields: [utmCoordinates_id], references: [id])
-    organizationIdentifier   String?
-    communicationsNetwork    OID? // OID
-    oidC1                    Int?           @db.SmallInt
-    oidC2                    Int?           @db.SmallInt
-    oidC                     Int?
-    urnC                     String? // TODO: Max length?
-    tagOid                   String?
-    uiiInUrn                 String?
-    epcInUrn                 String?
-    contentType              String? // From PkiPmiWrapper
-    messageDigest            Bytes? // From PkiPmiWrapper
+    // intEmail                 String?
+    // jid                      String?
+    // objectIdentifier         String?
+    // countryName              String?        @db.Char(2)
+    // countryCode3c            String?        @db.Char(3)
+    // countryCode3n            Int?           @db.SmallInt
+    // utmCoordinates_id        Int?
+    // utmCoordinates           UtmCoordinate? @relation(fields: [utmCoordinates_id], references: [id])
+    // organizationIdentifier   String?
+    // communicationsNetwork    OID? // OID
+    // oidC1                    Int?           @db.SmallInt
+    // oidC2                    Int?           @db.SmallInt
+    // oidC                     Int?
+    // urnC                     String? // TODO: Max length?
+    // tagOid                   OID?
+    // uiiInUrn                 String?
+    // epcInUrn                 String?
+    // contentType              OID? // From PkiPmiWrapper
+    // messageDigest            Bytes? // From PkiPmiWrapper
     attribute_integrity_info Bytes? // From EnhancedSecurity.attributeIntegrityInfo
 
     // Not exactly single-valued, but do not need a separate table:
-    administrativeRole String? // OIDs
+    administrativeRole OIDs?
+
+    // Technically a userApplications attribute, but still has operational uses.
+    uniqueIdentifier        Bytes? // DER-encoded bitstring value (not tag and length bytes)
 
     // LDAP operational attributes
     // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
     governingStructureRule Int?
     entryUUID              String  @default(uuid()) // @db.Uuid
-    dc                     String? // https://datatracker.ietf.org/doc/html/rfc4519
+    // dc                     String? // https://datatracker.ietf.org/doc/html/rfc4519
     // preferredDeliveryMethod
 
     // Shadowing flags. See ITU Recommendation X.525 (2016), Section 7.2.1.
@@ -120,13 +123,13 @@ model Entry {
     @@unique([entryUUID])
 }
 
-model UtmCoordinate {
-    id       Int     @id @default(autoincrement())
-    zone     String
-    easting  Int
-    northing Int
-    Entry    Entry[]
-}
+// model UtmCoordinate {
+//     id       Int     @id @default(autoincrement())
+//     zone     String
+//     easting  Int
+//     northing Int
+//     Entry    Entry[]
+// }
 
 // There may be only one password per entry
 model Password {
@@ -308,11 +311,11 @@ model NonSpecificKnowledge {
 
 model SubtreeSpecification {
     id                   Int   @id @default(autoincrement())
-    base                 Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    specific_exclusions  Json // [{"chopBefore": [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]}]
+    base                 Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    specific_exclusions  Json? // [{"chopBefore": [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]}]
     minimum              Int   @default(0)
     maximum              Int?
-    specification_filter Json // {"and": [{"item": "2.5.4.10"}]}
+    specification_filter Json? // {"and": [{"item": "2.5.4.10"}]}
     ber                  Bytes
     entry_id             Int
     entry                Entry @relation(fields: [entry_id], references: [id])

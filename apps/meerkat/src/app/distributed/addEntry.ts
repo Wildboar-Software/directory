@@ -52,7 +52,6 @@ import {
 import { DERElement, ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 import { v4 as uuid } from "uuid";
 import {
-    EXT_BIT_MANAGE_DSA_IT,
     EXT_BIT_USE_OF_CONTEXTS,
 } from "../x500/extensions";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
@@ -69,7 +68,6 @@ import {
 import {
     _encode_AddEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
-import writeEntry from "../database/writeEntry";
 import readChildren from "../dit/readChildren";
 import getRDN from "../x500/getRDN";
 import {
@@ -82,6 +80,7 @@ import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
+import createEntry from "../database/createEntry";
 
 const OBJECT_CLASS_ERROR_DATA = new UpdateErrorData(
     UpdateProblem_objectClassViolation,
@@ -183,7 +182,8 @@ async function addEntry (
         attributeType: OBJECT_IDENTIFIER,
     ) => ctx.attributes.get(attributeType.toString())?.namingMatcher;
 
-    const rdn = getRDN(request.chainedArgument.targetObject ?? data.object.rdnSequence);
+    // const rdn = getRDN(request.chainedArgument.targetObject ?? data.object.rdnSequence);
+    const rdn = getRDN(data.object.rdnSequence);
     if (!rdn) {
         throw new UpdateError(
             "The Root DSE may not be added.",
@@ -411,28 +411,7 @@ async function addEntry (
             CANNOT_MANAGE_OPERATIONAL_ATTRIBUTES_ERROR_DATA,
         );
     }
-
-    const now = new Date();
-    const newEntry: Vertex = {
-        immediateSuperior,
-        subordinates: [],
-        dse: {
-            id: -1,
-            uuid: entry,
-            rdn,
-            entry: {},
-            createdTimestamp: now,
-            modifyTimestamp: now,
-            creatorsName: {
-                rdnSequence: [], // FIXME:
-            },
-            modifiersName: {
-                rdnSequence: [], // FIXME:
-            },
-            objectClass: new Set(objectClasses.map((attr) => attr.value.objectIdentifier.toString())),
-        },
-    };
-    await writeEntry(ctx, immediateSuperior, newEntry, [ ...attrsFromDN, ...attrs ]);
+    const newEntry = await createEntry(ctx, immediateSuperior, rdn, {}, attrs, []); // FIXME: creatorName
     immediateSuperior.subordinates?.push(newEntry);
     // TODO: Schedule modification of RHOBs with subordinate DSAs.
     // TODO: Filter out more operational attributes.

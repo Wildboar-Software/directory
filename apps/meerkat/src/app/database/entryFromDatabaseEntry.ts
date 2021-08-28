@@ -195,10 +195,6 @@ async function entryFromDatabaseEntry (
         };
     }
 
-    if (dbe.entry) {
-        ret.dse.entry = {};
-    }
-
     if (Array.isArray(dbe.aliased_entry_dn)) {
         ret.dse.alias = {
             aliasedEntryName: dbe.aliased_entry_dn
@@ -324,6 +320,10 @@ async function entryFromDatabaseEntry (
 
     if (dbe.dsSubentry) {
         ret.dse.dsSubentry = true;
+    }
+
+    if (!dbe.aliased_entry_dn && !dbe.subentry) {
+        ret.dse.entry = {};
     }
 
     if (dbe.keep_children_in_database) {

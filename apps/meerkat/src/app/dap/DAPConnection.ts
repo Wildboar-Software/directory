@@ -51,6 +51,7 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import findEntry from "../x500/findEntry";
 
 const BER = () => new BERElement();
 
@@ -157,7 +158,13 @@ class DAPConnection {
     }
 
     private async handleUnbind (): Promise<void> {
-        this.ctx.log.info("Unbound.");
+        try {
+            this.idm.close();
+        } catch (e) {
+            this.ctx.log.warn(`Error in closing IDM connection. ${e}`);
+        } finally {
+            this.ctx.log.info("Unbound.");
+        }
     }
 
     constructor (
