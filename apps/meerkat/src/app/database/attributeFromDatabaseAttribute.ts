@@ -1,4 +1,4 @@
-import type { Context, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Value } from "../types";
 import type { AttributeValue, ContextValue } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
 
@@ -6,11 +6,11 @@ export
 async function attributeFromDatabaseAttribute (
     ctx: Context,
     attr: AttributeValue & { ContextValue: ContextValue[] },
-): Promise<StoredAttributeValueWithContexts> {
+): Promise<Value> {
     // TODO: Convert OIDs in the database to Int[]
     const value = new BERElement();
     value.fromBytes(attr.ber);
-    const contexts: StoredAttributeValueWithContexts["contexts"] = new Map();
+    const contexts: Value["contexts"] = new Map();
     attr.ContextValue.forEach((c) => {
         const CONTEXT_OID: string = c.type;
         const el = new BERElement();

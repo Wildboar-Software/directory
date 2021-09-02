@@ -1,4 +1,4 @@
-import { Context, IndexableOID, StoredAttributeValueWithContexts, StoredContext, Vertex } from "../../types";
+import { Context, IndexableOID, Value, StoredContext, Vertex } from "../../types";
 import {
     AddEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
@@ -218,20 +218,20 @@ async function addEntry (
             namingViolationErrorData([]),
         );
     }
-    const attrsFromDN: StoredAttributeValueWithContexts[] = rdn
-        .map((atav): StoredAttributeValueWithContexts => ({
+    const attrsFromDN: Value[] = rdn
+        .map((atav): Value => ({
             id: atav.type_,
             value: atav.value,
             contexts: new Map([]),
         }));
 
-    const attrs: StoredAttributeValueWithContexts[] = data.entry.flatMap((attr) => [
-        ...attr.values.map((value): StoredAttributeValueWithContexts => ({
+    const attrs: Value[] = data.entry.flatMap((attr) => [
+        ...attr.values.map((value): Value => ({
             id: attr.type_,
             value,
             contexts: new Map([]),
         })),
-        ...attr.valuesWithContext?.map((vwc): StoredAttributeValueWithContexts => ({
+        ...attr.valuesWithContext?.map((vwc): Value => ({
             id: attr.type_,
             value: vwc.value,
             contexts: new Map(
@@ -247,7 +247,7 @@ async function addEntry (
         })) ?? [],
     ]);
 
-    const attributesByType: Map<IndexableOID, StoredAttributeValueWithContexts[]> = new Map();
+    const attributesByType: Map<IndexableOID, Value[]> = new Map();
     const nonUserApplicationAttributes: AttributeType[] = [];
     const unrecognizedAttributes: AttributeType[] = [];
     const attributesUsingContexts: AttributeType[] = [];

@@ -6,7 +6,6 @@ import type {
     SpecialAttributeDatabaseEditor,
     PendingUpdates,
 } from "../../types";
-import { ASN1Construction } from "asn1-ts";
 import type { PrismaPromise } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
@@ -16,22 +15,22 @@ import { administrativeRole } from "@wildboar/x500/src/lib/modules/InformationFr
 import { subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import { accessControlScheme } from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
 
-// Attribute Adders
-import * as adders from "../specialAttributeAdders";
+// Attribute Removers
+import * as removers from "../specialAttributeRemovers";
 import rdnToJson from "../../x500/rdnToJson";
 
 const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabaseEditor> = new Map([
-    [ objectClass["&id"]!.toString(), adders.addObjectClass ],
-    [ administrativeRole["&id"]!.toString(), adders.addAdministrativeRole ],
-    [ subtreeSpecification["&id"]!.toString(), adders.addSubtreeSpecification ],
-    [ accessControlScheme["&id"]!.toString(), adders.addAccessControlScheme ],
+    [ objectClass["&id"]!.toString(), removers.removeObjectClass ],
+    [ administrativeRole["&id"]!.toString(), removers.removeAdministrativeRole ],
+    [ subtreeSpecification["&id"]!.toString(), removers.removeSubtreeSpecification ],
+    [ accessControlScheme["&id"]!.toString(), removers.removeAccessControlScheme ],
     // [ id_aca_entryACI.toString(), writeEntryACI ],
     // [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
     // [ id_aca_subentryACI.toString(), writeSubentryACI ],
 ]);
 
 export
-function addValues (
+function removeAttribute (
     ctx: Context,
     entry: Vertex,
     attributes: Value[],
@@ -57,37 +56,14 @@ function addValues (
         ...pendingUpdates.otherWrites,
         ...attributes
             .filter((attr) => !specialAttributeDatabaseWriters.has(attr.id.toString()))
-            .map((attr) => ctx.db.attributeValue.create({
-                data: {
+            .map((attr) => ctx.db.attributeValue.deleteMany({
+                where: {
                     entry_id: entry.dse.id,
                     type: attr.id.toString(),
-                    tag_class: attr.value.tagClass,
-                    constructed: (attr.value.construction === ASN1Construction.constructed),
-                    tag_number: attr.value.tagNumber,
-                    ber: Buffer.from(attr.value.toBytes()),
-                    hint: undefined,
-                    jer: undefined,
-                    visible_to_ldap: true,
-                    ContextValue: {
-                        createMany: {
-                            data: Array.from(attr.contexts.values())
-                                .flatMap((context) => context.values.map((cv) => ({
-                                    entry_id: entry.dse.id,
-                                    type: context.id.toString(),
-                                    tag_class: cv.tagClass,
-                                    constructed: (cv.construction === ASN1Construction.constructed),
-                                    tag_number: cv.tagNumber,
-                                    ber: Buffer.from(cv.toBytes()),
-                                    fallback: context.fallback,
-                                    // hint
-                                    // jer
-                                }))),
-                        },
-                    },
                 },
             })),
     ];
 }
 
-export default addValues;
+export default removeAttribute;
 

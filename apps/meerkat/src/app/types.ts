@@ -47,6 +47,9 @@ import type {
 import type {
     PwdEncAlg,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdEncAlg.ta";
+import type {
+    AttributeType,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import type { PrismaClient } from "@prisma/client";
@@ -76,7 +79,7 @@ export
 type LDAPName = string;
 
 export
-type Value = ASN1Element;
+type ANY = ASN1Element;
 
 export
 interface LDAPSyntaxInfo {
@@ -156,10 +159,10 @@ interface StoredContext {
 }
 
 export
-interface StoredAttributeValueWithContexts {
+interface Value {
     // TODO: Add id field to enhance performance of deletion and replacement.
-    id: OBJECT_IDENTIFIER; // TODO: Rename to "type"
-    value: ASN1Element;
+    id: AttributeType; // TODO: Rename to "type"
+    value: ANY;
     contexts: Map<IndexableOID, StoredContext>;
 }
 
@@ -416,13 +419,19 @@ export
 type SpecialAttributeMemoryEditor = (
     ctx: Readonly<Context>,
     entry: Vertex,
-    attribute: StoredAttributeValueWithContexts,
+    value: Value,
 ) => Promise<void>;
 
 export
 type SpecialAttributeDatabaseEditor = (
     ctx: Readonly<Context>,
     entry: Vertex,
-    attribute: StoredAttributeValueWithContexts,
+    value: Value,
     pendingUpdates: PendingUpdates,
 ) => Promise<void>;
+
+export
+type SpecialAttributeDatabaseReader = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+) => Promise<Value[]>;

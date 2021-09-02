@@ -1,4 +1,4 @@
-import type { Context, Vertex, IndexableOID, StoredAttributeValueWithContexts } from "../../types";
+import type { Context, Vertex, IndexableOID, Value } from "../../types";
 import type LDAPConnection from "../LDAPConnection";
 import type {
     AddRequest,
@@ -454,7 +454,7 @@ async function add (
     }
 
     const manageDSAIT: boolean = controls.some((control) => control.controlType.toString() === MANAGE_DSAIT.toString());
-    const attrs: StoredAttributeValueWithContexts[] = [];
+    const attrs: Value[] = [];
     for (const attr of req.attributes) {
         const type_ = normalizeAttributeDescription(attr.type_);
         const attrType = ctx.attributes.get(type_.trim().toLowerCase());

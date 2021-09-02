@@ -4,7 +4,7 @@ import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
-import type {
+import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import {
@@ -28,11 +28,6 @@ import {
     ServiceControlOptions_copyShallDo,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
-    SearchArgumentData_subset_baseObject,
-    SearchArgumentData_subset_oneLevel,
-    SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
-import {
     ReferenceType,
     ReferenceType_supplier,
     ReferenceType_master,
@@ -42,12 +37,6 @@ import {
     ReferenceType_superior,
     ReferenceType_nonSpecificSubordinate,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
-import {
-    _decode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-// import type {
-//     Filter,
-// } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element, ASN1TagClass } from "asn1-ts";
@@ -55,7 +44,6 @@ import readChildren from "../dit/readChildren";
 import readEntryAttributes from "../database/readEntryAttributes";
 import { specificKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/specificKnowledge.oa";
 import { superiorKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
-// import { nonSpecificKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/nonSpecificKnowledge.oa";
 import * as errors from "../errors";
 import { ServiceErrorData, ServiceProblem_invalidReference, ServiceProblem_loopDetected, ServiceProblem_unableToProceed } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { NameProblem_aliasDereferencingProblem, NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
@@ -63,38 +51,14 @@ import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractS
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-// import type { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import { strict as assert } from "assert";
-import { id_opcode_administerPassword } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-administerPassword.va";
-import { id_opcode_addEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
-import { id_opcode_changePassword } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-changePassword.va";
-import { id_opcode_compare } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
-import { id_opcode_modifyDN } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-modifyDN.va";
-import { id_opcode_modifyEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-modifyEntry.va";
-import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
-import { id_opcode_read } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va";
-import { id_opcode_removeEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-removeEntry.va";
-import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
-import getMatchingRulesFromFilter from "@wildboar/x500/src/lib/utils/getMatchingRulesFromFilter";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import checkSuitabilityProcedure from "./checkSuitability";
 
 const MAX_DEPTH: number = 10000;
 
 // FIXME: If you read the verbal instructions, you'll see that many steps of findDSE are only for List(II) and Search(II)
-
-// TODO: X.500
-function isModificationOperation (operationType: Code): boolean {
-    return (
-        compareCode(id_opcode_administerPassword, operationType)
-        || compareCode(id_opcode_addEntry, operationType)
-        || compareCode(id_opcode_changePassword, operationType)
-        || compareCode(id_opcode_modifyDN, operationType)
-        || compareCode(id_opcode_modifyEntry, operationType)
-        || compareCode(id_opcode_removeEntry, operationType)
-    );
-}
 
 function makeContinuationRefFromSupplierKnowledge (
     cp: Vertex,
@@ -488,70 +452,17 @@ async function findDSE (
         }
     };
 
-    const checkSuitabilityProcedure = async (): Promise<boolean> => {
-        const dse = dse_i;
-        if (!dse.dse.shadow) {
-            // TODO: Check critical extensions
-            return true;
-        }
-        if (isModificationOperation(operationType)) {
-            return false; // You cannot modify a shadow copy.
-        }
-        if (dontUseCopy) {
-            return false; // The user specifically demanded a non-shadow copy.
-        }
-        if (copyShallDo) {
-            // TODO: Check critical extensions
-            return true;
-        }
-        if (compareCode(operationType, id_opcode_list)) {
-            return Boolean(dse.dse.shadow.subordinateCompleteness);
-        } else if (compareCode(operationType, id_opcode_read)) {
-            return true; // FIXME: This might be passable for now, but it is technically incorrect.
-            // I don't know how to tell if the shadow copy is missing attributes
-            // that are present in the master, or if there are no such attributes at all.
-        } else if (compareCode(operationType, id_opcode_search)) {
-            const searchArgs = _decode_SearchArgument(argument);
-            const searchArgData = getOptionallyProtectedValue(searchArgs);
-            if (searchArgData.searchAliases && dse.dse.alias) {
-                return !chainArgs.excludeShadows;
-            }
-            const mrs = searchArgData.filter
-                ? getMatchingRulesFromFilter(searchArgData.filter)
-                : [];
-            if (mrs.map((mr) => mr.toString()).some((mr) => !(
-                ctx.equalityMatchingRules.get(mr)
-                ?? ctx.orderingMatchingRules.get(mr)
-                ?? ctx.substringsMatchingRules.get(mr)
-            ))) { // Matching rule not understood
-                return false;
-            }
-            if (
-                (searchArgData.subset === SearchArgumentData_subset_oneLevel)
-                || (searchArgData.subset === SearchArgumentData_subset_wholeSubtree)
-            ) {
-                if (chainArgs.excludeShadows) {
-                    return false;
-                }
-                // TODO: Check that shadowed information can satisfy search.
-                return true;
-            } else if (searchArgData.subset === SearchArgumentData_subset_baseObject) {
-                // TODO: Check if all attributes are present.
-                return true;
-            } else {
-                return false; // TODO: Review. What to do?
-            }
-        } else if (compareCode(operationType, id_opcode_compare)) {
-            // TODO: Bail out if matching rules are not supported by DSA.
-            // TODO: Check if all attributes requested are present.
-            return true;
-        } else {
-            return false; // TODO: Review. What to do?
-        }
-    };
-
     const targetFoundSubprocedure = async (): Promise<Vertex | undefined> => {
-        if (await checkSuitabilityProcedure()) {
+        const suitable: boolean = checkSuitabilityProcedure(
+            ctx,
+            dse_i,
+            operationType,
+            dontUseCopy,
+            copyShallDo,
+            chainArgs.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
+            argument,
+        );
+        if (suitable) {
             nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
             return dse_i;
         } else {

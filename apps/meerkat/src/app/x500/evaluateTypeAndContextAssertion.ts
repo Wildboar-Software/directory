@@ -1,4 +1,4 @@
-import type { Context, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Value } from "../types";
 import type {
     TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
@@ -17,7 +17,7 @@ export
 function evaluateTypeAndContextAssertion (
     ctx: Context,
     taca: TypeAndContextAssertion,
-    attr: StoredAttributeValueWithContexts,
+    attr: Value,
 ): boolean {
     if (
         !isAttributeSubtype(ctx, attr.id, taca.type_)

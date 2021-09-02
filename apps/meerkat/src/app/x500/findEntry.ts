@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Vertex, IndexableOID, Value } from "../types";
+import type { Context, DIT, Vertex, IndexableOID, ANY } from "../types";
 import readChildren from "../dit/readChildren";
 
 // TODO: Return the number of RDNs that matched, whether aliases were derefed.
@@ -41,7 +41,7 @@ async function findEntry (
     if (queriedRDN.length !== dit.dse.rdn.length) {
         return undefined;
     }
-    const ditRDN: Map<IndexableOID, Value> = new Map(dit.dse.rdn.map((atav) => [ atav.type_.toString(), atav.value ]));
+    const ditRDN: Map<IndexableOID, ANY> = new Map(dit.dse.rdn.map((atav) => [ atav.type_.toString(), atav.value ]));
     const everyATAVMatched: boolean = queriedRDN.every((atav) => {
         const TYPE_OID: string = atav.type_.toString();
         const spec = ctx.attributes.get(TYPE_OID);

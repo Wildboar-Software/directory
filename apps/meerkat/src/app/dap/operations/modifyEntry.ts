@@ -1,4 +1,4 @@
-import type { Context, Vertex, StoredAttributeValueWithContexts } from "../../types";
+import type { Context, Vertex, Value } from "../../types";
 import type {
     ModifyEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
@@ -113,9 +113,9 @@ function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
 function executeEntryModification (
     ctx: Context,
     entry: Vertex,
-    attributes: StoredAttributeValueWithContexts[],
+    attributes: Value[],
     mod: EntryModification,
-): StoredAttributeValueWithContexts[] {
+): Value[] {
 
     /**
      * This only needs to be called for alternatives that do not write new

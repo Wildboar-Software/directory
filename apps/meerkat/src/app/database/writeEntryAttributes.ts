@@ -1,4 +1,4 @@
-import type { Context, Vertex, IndexableOID, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Vertex, IndexableOID, Value } from "../types";
 import { ASN1Construction, BERElement } from "asn1-ts";
 import {
 } from "asn1-ts/dist/node/functional";
@@ -23,20 +23,20 @@ const SUBTREE_SPEC_OID: string = id_oa_subtreeSpecification.toString();
 type SpecialAttributeEntryWriter = (
     ctx: Readonly<Context>,
     entry: Vertex,
-    attribute: StoredAttributeValueWithContexts,
+    attribute: Value,
 ) => Promise<void>;
 
 type SpecialAttributeDatabaseWriter = (
     ctx: Readonly<Context>,
     entry: Vertex,
-    attribute: StoredAttributeValueWithContexts,
+    attribute: Value,
 ) => PrismaPromise<void>;
 
 const writeSomeACI: (scope: ACIScope) => SpecialAttributeDatabaseWriter = (scope: ACIScope) => {
     return (
         ctx: Readonly<Context>,
         entry: Vertex,
-        attribute: StoredAttributeValueWithContexts,
+        attribute: Value,
     ): PrismaPromise<any> => {
         // We ignore contexts for this.
         const aci: ACIItem = _decode_ACIItem(attribute.value);
@@ -68,7 +68,7 @@ const writeSubentryACI = writeSomeACI(ACIScope.SUBENTRY);
 const writeObjectClass: SpecialAttributeEntryWriter = async (
     ctx: Readonly<Context>,
     entry: Vertex,
-    attribute: StoredAttributeValueWithContexts,
+    attribute: Value,
 ): Promise<void> => {
     entry.dse.objectClass.add(attribute.value.objectIdentifier.toString());
 };
@@ -95,7 +95,7 @@ export
 async function writeEntryAttributes (
     ctx: Context,
     entry: Vertex,
-    attributes: StoredAttributeValueWithContexts[],
+    attributes: Value[],
 ): Promise<any> {
     return ctx.db.$transaction([
         ...attributes

@@ -1,4 +1,4 @@
-import type { Context, Vertex, StoredAttributeValueWithContexts, IndexableOID } from "../../types";
+import type { Context, Vertex, Value, IndexableOID } from "../../types";
 import type LDAPConnection from "../LDAPConnection";
 import type {
     ModifyRequest,
@@ -89,10 +89,10 @@ function executeEntryModification (
     ctx: Context,
     entry: Vertex,
     dn: LDAPDN,
-    attributes: StoredAttributeValueWithContexts[],
+    attributes: Value[],
     change: ModifyRequest_changes_change,
     checkPermissionsOnEntry: (request: ProtectedItem, permissions: number[]) => boolean,
-): StoredAttributeValueWithContexts[] | LDAPResult {
+): Value[] | LDAPResult {
     const attrType = normalizeAttributeDescription(change.modification.type_);
     const attrSpec = ctx.attributes.get(attrType);
     if (!attrSpec?.ldapSyntax) {
@@ -138,7 +138,7 @@ function executeEntryModification (
             return [
                 ...attributes,
                 ...values
-                    .map((val: ASN1Element): StoredAttributeValueWithContexts => ({
+                    .map((val: ASN1Element): Value => ({
                         id: attrSpec.id,
                         value: val,
                         contexts: new Map(),
@@ -224,7 +224,7 @@ function executeEntryModification (
             if (relevantAttributes.length === 0) {
                 return [
                     ...attributes,
-                    ...newValues.map((nv): StoredAttributeValueWithContexts => ({
+                    ...newValues.map((nv): Value => ({
                         id: attrSpec.id,
                         value: nv,
                         contexts: new Map(),
@@ -233,7 +233,7 @@ function executeEntryModification (
             } else {
                 return [
                     ...attributes.filter((attr) => attr.id.toString() !== attrType),
-                    ...newValues.map((nv): StoredAttributeValueWithContexts => ({
+                    ...newValues.map((nv): Value => ({
                         id: attrSpec.id,
                         value: nv,
                         contexts: new Map(),

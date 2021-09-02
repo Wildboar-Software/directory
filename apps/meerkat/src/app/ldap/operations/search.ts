@@ -5,7 +5,7 @@ import type {
     ObjectClassInfo,
     LDAPSyntaxInfo,
     IndexableOID,
-    StoredAttributeValueWithContexts
+    Value
 } from "../../types";
 import type LDAPConnection from "../LDAPConnection";
 import type {
@@ -95,8 +95,8 @@ import {
 
 type EntryInfo = [
     entry: Vertex,
-    user: StoredAttributeValueWithContexts[],
-    operational: StoredAttributeValueWithContexts[],
+    user: Value[],
+    operational: Value[],
 ];
 
 function usageToString (usage: AttributeUsage): string | undefined {
@@ -543,7 +543,7 @@ async function search (
             }
         }
 
-        let attrsToReturn: StoredAttributeValueWithContexts[] = [];
+        let attrsToReturn: Value[] = [];
         if (returnAllUserAttributesExclusively) {
             attrsToReturn = userAttrs;
         } else if (returnAllUserAttributesInclusively && selectedAttributes) {

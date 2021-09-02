@@ -1,7 +1,7 @@
 import type {
     Context,
     Vertex,
-    StoredAttributeValueWithContexts,
+    Value,
     SpecialAttributeDatabaseEditor,
     PendingUpdates,
 } from "../types";
@@ -64,7 +64,7 @@ import rdnToJson from "../x500/rdnToJson";
 export const addObjectClass: SpecialAttributeDatabaseEditor = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: StoredAttributeValueWithContexts,
+    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const newOIDs = [
@@ -89,7 +89,7 @@ export const addObjectClass: SpecialAttributeDatabaseEditor = async (
 export const addAccessControlScheme: SpecialAttributeDatabaseEditor = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: StoredAttributeValueWithContexts,
+    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     pendingUpdates.entryUpdate.accessControlScheme = value.value.objectIdentifier.toString();
@@ -108,7 +108,7 @@ export const addAccessControlScheme: SpecialAttributeDatabaseEditor = async (
 export const addAdministrativeRole: SpecialAttributeDatabaseEditor = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: StoredAttributeValueWithContexts,
+    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     pendingUpdates.entryUpdate.administrativeRole = [
@@ -221,7 +221,7 @@ export const addAdministrativeRole: SpecialAttributeDatabaseEditor = async (
 export const addSubtreeSpecification: SpecialAttributeDatabaseEditor = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: StoredAttributeValueWithContexts,
+    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const subtree = _decode_SubtreeSpecification(value.value);
@@ -246,7 +246,7 @@ export const addSubtreeSpecification: SpecialAttributeDatabaseEditor = async (
 export const addNonSpecificKnowledge: SpecialAttributeDatabaseEditor = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: StoredAttributeValueWithContexts,
+    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     pendingUpdates.otherWrites.push(ctx.db.nonSpecificKnowledge.create({
@@ -260,7 +260,7 @@ export const addNonSpecificKnowledge: SpecialAttributeDatabaseEditor = async (
 export const addSpecificKnowledge: SpecialAttributeDatabaseEditor = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: StoredAttributeValueWithContexts,
+    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const mosaps = _decode_MasterAndShadowAccessPoints(value.value);

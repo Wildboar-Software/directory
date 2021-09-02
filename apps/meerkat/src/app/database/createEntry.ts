@@ -1,4 +1,4 @@
-import type { Context, Vertex, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Vertex, Value } from "../types";
 import { Prisma } from "@prisma/client";
 import rdnToJson from "../x500/rdnToJson";
 import entryFromDatabaseEntry from "../database/entryFromDatabaseEntry";
@@ -22,7 +22,7 @@ async function createEntry (
     superior: Vertex,
     rdn: RDN,
     entryInit: Partial<Prisma.EntryCreateInput>,
-    values: StoredAttributeValueWithContexts[],
+    values: Value[],
     modifier: DistinguishedName,
 ): Promise<Vertex> {
     const objectClasses = values

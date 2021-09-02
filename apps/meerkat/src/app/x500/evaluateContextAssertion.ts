@@ -1,4 +1,4 @@
-import type { Context, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Value } from "../types";
 import type {
     ContextAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
@@ -10,7 +10,7 @@ export
 function evaluateContextAssertion (
     ctx: Context,
     assertion: ContextAssertion,
-    value: StoredAttributeValueWithContexts,
+    value: Value,
 ): boolean {
     const CONTEXT_ID: string = assertion.contextType.toString();
     const matcher = ctx.contextMatchers.get(CONTEXT_ID);

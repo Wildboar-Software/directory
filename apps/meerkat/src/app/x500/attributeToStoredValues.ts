@@ -1,17 +1,17 @@
-import type { StoredAttributeValueWithContexts, StoredContext } from "../types";
+import type { Value, StoredContext } from "../types";
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 
 export
-function attributeToStoredValues (attribute: Attribute): StoredAttributeValueWithContexts[] {
+function attributeToStoredValues (attribute: Attribute): Value[] {
     return [
-        ...attribute.values.map((value): StoredAttributeValueWithContexts => ({
+        ...attribute.values.map((value): Value => ({
             id: attribute.type_,
             value,
             contexts: new Map(),
         })),
-        ...attribute.valuesWithContext?.map((vwc): StoredAttributeValueWithContexts => ({
+        ...attribute.valuesWithContext?.map((vwc): Value => ({
             id: attribute.type_,
             value: vwc.value,
             contexts: new Map(

@@ -1,4 +1,4 @@
-import type { Context, StoredAttributeValueWithContexts, Vertex, IndexableOID } from "../types";
+import type { Context, Value, Vertex, IndexableOID } from "../types";
 import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
@@ -16,7 +16,7 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import evaluateTypeAndContextAssertion from "./evaluateTypeAndContextAssertion";
-import { attributesFromStoredValues } from "./attributesFromStoredValues";
+import { attributesFromValues } from "./attributesFromValues";
 
 /**
  * @deprecated
@@ -26,7 +26,7 @@ function selectFromEntry (
     ctx: Context,
     eis: EntryInformationSelection,
     entry: Vertex,
-    attributes: StoredAttributeValueWithContexts[],
+    attributes: Value[],
 ): EntryInformation_information_Item[] {
     const attrs = attributes;
     const selectedAttributes: Set<IndexableOID> | null = (eis.attributes && ("select" in eis.attributes))
@@ -96,7 +96,7 @@ function selectFromEntry (
             attributeType: atav.id,
         }));
     } else if (eis.infoTypes === EntryInformationSelection_infoTypes_attributeTypesAndValues) {
-        const attrs = attributesFromStoredValues(attributeTypesAndValues);
+        const attrs = attributesFromValues(attributeTypesAndValues);
         return (eis.returnContexts === true) // This _defaults_ to FALSE.
             ? attrs.map((attribute) => ({
                 attribute,

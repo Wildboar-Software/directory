@@ -1,4 +1,4 @@
-import type { IndexableOID, StoredAttributeValueWithContexts } from "../types";
+import type { IndexableOID, Value } from "../types";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -8,18 +8,11 @@ import {
 import {
     Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import groupByOID from "../utils/groupByOID";
 
 export
-function attributesFromStoredValues (values: StoredAttributeValueWithContexts[]): Attribute[] {
-    const valuesByType: Record<IndexableOID, StoredAttributeValueWithContexts[]> = values
-        .reduce((acc, atav) => {
-            const TYPE_OID: string = atav.id.toString()
-            if (!acc[TYPE_OID]) {
-                acc[TYPE_OID] = [];
-            }
-            acc[TYPE_OID].push(atav);
-            return acc;
-        }, {});
+function attributesFromValues (values: Value[]): Attribute[] {
+    const valuesByType: Record<IndexableOID, Value[]> = groupByOID<Value>(values, (value) => value.id);
     return Object.values(valuesByType).map((atavs) => {
         return new Attribute(
             atavs[0].id,
@@ -40,4 +33,4 @@ function attributesFromStoredValues (values: StoredAttributeValueWithContexts[])
     });
 }
 
-export default attributesFromStoredValues;
+export default attributesFromValues;

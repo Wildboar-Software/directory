@@ -70,7 +70,7 @@ This is not to imply that these rules are current adhered to.
       - [x] `extendedReq`
       - [x] `startTLS`
     - [ ] Administration Portal
-      - [ ] DIT View
+      - [x] DIT View
       - [ ] View Entry
         - [ ] Human View
         - [ ] XML View
@@ -79,6 +79,8 @@ This is not to imply that these rules are current adhered to.
         - [ ] VCF View
       - [ ] Hierarchical Operational Binding Management
       - [ ] Shadow Operational Binding Management
+      - [ ] Attribute editor
+      - [ ] Export attributes, object classes, name forms, etc. as ASN.1 module (This would be really handy in defining schema!)
     - [ ] gRPC API
     - [ ] Directory Access Protocol
       - [ ] Operations
@@ -251,3 +253,70 @@ This is not to imply that these rules are current adhered to.
   - [ ] X.500 Client
   - [ ] X.500 Server
   - [ ] X.500 Extensions
+- [ ] Schema
+  - [ ] Operational
+    - [ ] dontCacheChildren
+    - [ ] cacheTTL
+  - [ ] User
+    - [ ] Government
+      - [ ] ssn
+      - [ ] driversLicense
+      - [ ] passport
+      - [ ] concealedCarryPermit
+      - [ ] radioLicense
+      - [ ] nofly
+      - [ ] socialCredit
+      - [ ] military
+      - [ ] lawEnforcement
+      - [ ] handwrittenSignatureURL
+      - [ ] handwrittenInitialsURL
+      - [ ] photoURL
+      - [ ] travelEvent
+    - [ ] Object storage
+      - [ ] mimeType
+      - [ ] contentType
+      - [ ] sizeInBytes
+      - [ ] category
+      - [ ] person
+      - [ ] height
+      - [ ] width
+      - [ ] neuralHash
+      - [ ] hash
+      - [ ] recognizedObject
+    - [ ] Website
+      - [ ] htmlLang
+      - [ ] htmlTitle
+      - [ ] htmlLink
+      - [ ] htmlStyle
+      - [ ] htmlScript
+      - [ ] Meta tags (See https://gist.github.com/lancejpollard/1978404)
+      - [ ] technologiesUsed
+      - [ ] javascriptRequired
+      - [ ] browsersSupported
+      - [ ] href
+      - [ ] text
+    - [ ] GPG
+    - [ ] DNS
+    - [ ] OIDC
+    - [ ] SAML
+    - [ ] Law
+      - [ ] text
+      - [ ] example
+      - [ ] subject
+      - [ ] identifier
+      - [ ] author
+      - [ ] violation
+      - [ ] arrest
+      - [ ] plea
+      - [ ] verdict
+      - [ ] case
+      - [ ] warrant
+      - [ ] juror
+    - [ ] Voting
+      - [ ] vote
+      - [ ] signature
+    - [ ] Epistemology
+      - [ ] source (context)
+      - [ ] valueAddedBy (context)
+      - [ ] certainty (context)
+      - [ ] algorithm (context)

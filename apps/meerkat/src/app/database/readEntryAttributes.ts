@@ -1,4 +1,4 @@
-import type { Context, Vertex, StoredAttributeValueWithContexts } from "../types";
+import type { Context, Vertex, Value } from "../types";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 import { DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import { _encodeGeneralizedTime, DER } from "asn1-ts/dist/node/functional";
@@ -45,8 +45,8 @@ interface ReadEntryAttributesOptions {
 
 export
 interface ReadEntryAttributesReturn {
-    userAttributes: StoredAttributeValueWithContexts[];
-    operationalAttributes: StoredAttributeValueWithContexts[];
+    userAttributes: Value[];
+    operationalAttributes: Value[];
     incompleteEntry: boolean;
     derivedEntry: boolean; // If joins or families are used.
     applicableACIItems: ACIItem[];
@@ -59,7 +59,7 @@ async function readEntryAttributes (
     entry: Vertex,
     options?: ReadEntryAttributesOptions,
 ): Promise<ReadEntryAttributesReturn> {
-    const userAttributes: StoredAttributeValueWithContexts[] = await Promise.all(
+    const userAttributes: Value[] = await Promise.all(
         (await ctx.db.attributeValue.findMany({
             where: {
                 entry_id: entry.dse.id,
@@ -94,7 +94,7 @@ async function readEntryAttributes (
     const entryACIItems = aciItems.filter((aci) => aci.scope === ACIScope.ENTRY);
     const prescriptiveACIItems = aciItems.filter((aci) => aci.scope === ACIScope.PRESCRIPTIVE);
     const subentryACIItems = aciItems.filter((aci) => aci.scope === ACIScope.SUBENTRY);
-    const operationalAttributes: StoredAttributeValueWithContexts[] = [];
+    const operationalAttributes: Value[] = [];
     if (options?.includeOperationalAttributes) {
         operationalAttributes.push({
             id: createTimestamp["&id"]!,
@@ -107,7 +107,7 @@ async function readEntryAttributes (
             contexts: new Map(),
         });
         operationalAttributes.push(
-            ...entryACIItems.map((aci): StoredAttributeValueWithContexts => ({
+            ...entryACIItems.map((aci): Value => ({
                 id: entryACI["&id"],
                 value: (() => {
                     const el = new DERElement();
@@ -116,7 +116,7 @@ async function readEntryAttributes (
                 })(),
                 contexts: new Map(),
             })),
-            ...prescriptiveACIItems.map((aci): StoredAttributeValueWithContexts => ({
+            ...prescriptiveACIItems.map((aci): Value => ({
                 id: prescriptiveACI["&id"],
                 value: (() => {
                     const el = new DERElement();
@@ -125,7 +125,7 @@ async function readEntryAttributes (
                 })(),
                 contexts: new Map(),
             })),
-            ...subentryACIItems.map((aci): StoredAttributeValueWithContexts => ({
+            ...subentryACIItems.map((aci): Value => ({
                 id: subentryACI["&id"],
                 value: (() => {
                     const el = new DERElement();
