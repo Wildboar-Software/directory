@@ -3,9 +3,6 @@ import { TRUE_BIT } from "asn1-ts";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-import type {
-    SearchResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData.ta";
 import {
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
@@ -19,6 +16,9 @@ import type {
 import {
     ContinuationReference,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
+import {
+    EntryInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 import readChildren from "../dit/readChildren";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import checkSuitabilityProcedure from "./checkSuitability";
@@ -28,9 +28,9 @@ import {
 import search_i from "./search_i";
 
 export
-interface SearchReturn {
+interface SearchIIReturn {
     chaining: ChainingResults;
-    result: Extract<SearchResultData, { searchInfo: any }>;
+    results: EntryInformation[];
 }
 
 export
@@ -41,7 +41,7 @@ async function search_ii (
     argument: SearchArgument,
     chaining: ChainingArguments,
     SRcontinuationList: ContinuationReference[],
-    ret: SearchReturn,
+    ret: SearchIIReturn,
 ): Promise<void> {
     const data = getOptionallyProtectedValue(argument);
     const serviceControlOptions = data.serviceControls?.options;
@@ -77,3 +77,5 @@ async function search_ii (
         );
     }
 }
+
+export default search_ii;

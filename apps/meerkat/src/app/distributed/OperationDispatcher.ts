@@ -3,6 +3,20 @@ import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type {
     AuthenticationLevel,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import {
+    ChainingArguments,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
+import {
+    SearchArgument,
+    _encode_SearchArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+import {
+    SearchResultData_searchInfo,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
+import {
+    SearchResult,
+    _decode_SearchResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import type {
     UniqueIdentifier,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UniqueIdentifier.ta";
@@ -41,6 +55,8 @@ import { strict as assert } from "assert";
 import { addEntry as doAddEntry } from "./addEntry";
 import list_i from "./list_i";
 import list_ii from "./list_ii";
+import search_i from "./search_i";
+import search_ii from "./search_ii";
 import resultsMergingProcedureForList from "./resultsMergingProcedureForList";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
@@ -50,7 +66,29 @@ import {
     _decode_ListResult,
     _encode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+import {
+    PartialOutcomeQualifier,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 import { DER } from "asn1-ts/dist/node/functional";
+import type { SearchIReturn } from "./search_i";
+import type { SearchIIReturn } from "./search_ii";
+import { ChainingResults } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
+import type { Error_ } from "@wildboar/x500/src/lib/types/Error_";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+import {
+    relatedEntryProcedure,
+    RelatedEntryReturn,
+} from "./relatedEntryProcedure";
+import getDistinguishedName from "../x500/getDistinguishedName";
+
+export
+type SearchResultOrError = {
+    invokeId: InvokeId;
+    opCode: Code;
+    result: SearchResult;
+    chaining: ChainingResults;
+} | Error_;
 
 interface OperationDispatcherState {
     NRcontinuationList: ContinuationReference[];
@@ -154,8 +192,9 @@ class OperationDispatcher {
             throw new errors.UnknownOperationError();
         }
         else if (compareCode(req.opCode, list["&operationCode"]!)) {
-            const op = reqData.chainedArgument.operationProgress;
-            if (op?.nameResolutionPhase === completed) { // List (II)
+            const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
+                ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
+            if (nameResolutionPhase === completed) { // List (II)
                 const result = await list_ii(ctx, state.admPoints, foundDSE, reqData, true);
                 return {
                     invokeId: req.invokeId,
@@ -196,6 +235,194 @@ class OperationDispatcher {
             throw new errors.UnknownOperationError();
         }
         throw new Error();
+    }
+
+    public static async dispatchLocalSearchDSPRequest (
+        ctx: Context,
+        argument: SearchArgument,
+        chaining: ChainingArguments,
+        // authLevel: AuthenticationLevel,
+        // uniqueIdentifier?: UniqueIdentifier,
+    ): Promise<SearchResultOrError> {
+        // Request validation not needed.
+        const data = getOptionallyProtectedValue(argument);
+        const encodedArgument = _encode_SearchArgument(argument, DER);
+        const targetObject = chaining.relatedEntry // The specification is not clear of what to do for targetObject.
+            ? data.joinArguments?.[chaining.relatedEntry]?.joinBaseObject.rdnSequence
+            : chaining.targetObject ?? data.baseObject.rdnSequence;
+        if (!targetObject) {
+            throw errors.invalidRequestError("No discernable targeted object.");
+        }
+        const state: OperationDispatcherState = {
+            NRcontinuationList: [],
+            SRcontinuationList: [],
+            admPoints: [],
+            referralRequests: [],
+            emptyHierarchySelect: false,
+        };
+        const foundDSE: Vertex | undefined = await findDSE(
+            ctx,
+            ctx.dit.root,
+            targetObject,
+            chaining,
+            encodedArgument,
+            search["&operationCode"]!,
+            state.NRcontinuationList,
+            state.admPoints,
+        );
+        if (!foundDSE) {
+            const serviceControlOptions = data.serviceControls?.options;
+            const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
+            const nrcrResult = await nrcrProcedure(
+                ctx,
+                state.NRcontinuationList,
+                {
+                    invokeId: {
+                        present: 1,
+                    },
+                    opCode: search["&operationCode"]!,
+                    chaining,
+                },
+                chainingProhibited,
+            );
+            // This will need to change if parallel requests are implemented,
+            // because only one response can be returned when the strategy is serial.
+            const response =  nrcrResult.responses[0];
+            if ("result" in response) {
+                if (!response.result) {
+                    throw new Error(); // FIXME:
+                }
+                return {
+                    ...response,
+                    result: _decode_SearchResult(response.result),
+                };
+            } else if ("error" in response) {
+                return response;
+            } else {
+                throw new Error(); // FIXME:
+            }
+        }
+        const foundDN = getDistinguishedName(foundDSE);
+        const chainingResults = new ChainingResults(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const relatedEntryReturn: RelatedEntryReturn = {
+            chaining: chainingResults,
+            response: [],
+            unexplored: [],
+        };
+        await relatedEntryProcedure(ctx, argument, chaining, relatedEntryReturn);
+        const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
+            ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
+        if (nameResolutionPhase === completed) { // Search (II)
+            const response: SearchIIReturn = {
+                results: [],
+                chaining: relatedEntryReturn.chaining,
+            };
+            await search_ii(ctx, foundDSE, state.admPoints, argument, chaining, state.SRcontinuationList, response);
+            const localResult: SearchResult = {
+                unsigned: {
+                    searchInfo: new SearchResultData_searchInfo(
+                        {
+                            rdnSequence: foundDN,
+                        },
+                        response.results,
+                        relatedEntryReturn.unexplored.length
+                            ? new PartialOutcomeQualifier(
+                                undefined,
+                                relatedEntryReturn.unexplored,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                            )
+                            : undefined, // FIXME
+                        undefined,
+                        [],
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                },
+            };
+            const result: SearchResult = (relatedEntryReturn.response.length)
+                ? {
+                    unsigned: {
+                        uncorrelatedSearchInfo: [
+                            ...relatedEntryReturn.response,
+                            localResult,
+                        ],
+                    },
+                }
+                : localResult;
+            return {
+                invokeId: {
+                    present: 1,
+                },
+                opCode: search["&operationCode"]!,
+                chaining: response.chaining,
+                result,
+            };
+        } else { // Search (I)
+            // Only Search (I) results in results merging.
+            const response: SearchIReturn = {
+                results: [],
+                chaining: relatedEntryReturn.chaining,
+            };
+            await search_i(ctx, foundDSE, state.admPoints, argument, chaining, state.SRcontinuationList, response);
+            const localResult: SearchResult = {
+                unsigned: {
+                    searchInfo: new SearchResultData_searchInfo(
+                        {
+                            rdnSequence: foundDN,
+                        },
+                        response.results,
+                        relatedEntryReturn.unexplored.length
+                            ? new PartialOutcomeQualifier(
+                                undefined,
+                                relatedEntryReturn.unexplored,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                            )
+                            : undefined, // FIXME
+                        undefined,
+                        [],
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                },
+            };
+            const result: SearchResult = (relatedEntryReturn.response.length)
+                ? {
+                    unsigned: {
+                        uncorrelatedSearchInfo: [
+                            ...relatedEntryReturn.response,
+                            localResult,
+                        ],
+                    },
+                }
+                : localResult;
+            return {
+                invokeId: {
+                    present: 1,
+                },
+                opCode: search["&operationCode"]!,
+                chaining: response.chaining,
+                result,
+            };
+        }
     }
 
 }

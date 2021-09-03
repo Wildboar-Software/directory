@@ -6,9 +6,6 @@ import {
     SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import {
-    SearchResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData.ta";
-import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
@@ -86,9 +83,9 @@ import {
 // TODO: This will require serious changes when service specific areas are implemented.
 
 export
-interface SearchReturn {
+interface SearchIReturn {
     chaining: ChainingResults;
-    result: Extract<SearchResultData, { searchInfo: any }>;
+    results: EntryInformation[];
 }
 
 export
@@ -99,7 +96,7 @@ async function search_i (
     argument: SearchArgument,
     chaining: ChainingArguments,
     SRcontinuationList: ContinuationReference[],
-    ret: SearchReturn,
+    ret: SearchIReturn,
 ): Promise<void> {
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
@@ -279,7 +276,7 @@ async function search_i (
             const match = evaluateFilter(filter, entryInfo, filterOptions);
             if (match) {
                 const einfo = await readEntryInformation(ctx, target, data.selection);
-                ret.result.searchInfo.entries.push(new EntryInformation(
+                ret.results.push(new EntryInformation(
                     {
                         rdnSequence: targetDN,
                     },
@@ -307,7 +304,7 @@ async function search_i (
             const match = evaluateFilter(filter, entryInfo, filterOptions);
             if (match) {
                 const einfo = await readEntryInformation(ctx, target, data.selection);
-                ret.result.searchInfo.entries.push(new EntryInformation(
+                ret.results.push(new EntryInformation(
                     {
                         rdnSequence: targetDN,
                     },

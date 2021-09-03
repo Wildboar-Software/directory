@@ -257,6 +257,8 @@ This is not to imply that these rules are current adhered to.
   - [ ] Operational
     - [ ] dontCacheChildren
     - [ ] cacheTTL
+    - [ ] directoryCreditBalance
+    - [ ] directoryConsumption
   - [ ] User
     - [ ] Government
       - [ ] ssn
