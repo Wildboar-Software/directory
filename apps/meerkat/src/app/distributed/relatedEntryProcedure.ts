@@ -19,7 +19,6 @@ import {
     ContinuationReference,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { strict as assert } from "assert";
 import OperationDispatcher from "./OperationDispatcher";
 import {
     ServiceProblem_busy,
@@ -39,7 +38,7 @@ interface RelatedEntryReturn {
     unexplored: ContinuationReference[];
 }
 
-function createNewChainingArgument (index: number, originator: ChainingArguments["originator"]): ChainingArguments {
+function createNewChainingArgument (index: number, originator?: ChainingArguments["originator"]): ChainingArguments {
     return new ChainingArguments(
         originator,
         undefined,
@@ -70,17 +69,17 @@ function createNewChainingArgument (index: number, originator: ChainingArguments
 export
 async function relatedEntryProcedure (
     ctx: Context,
-    argument: SearchArgument,
-    chaining: ChainingArguments,
     ret: RelatedEntryReturn,
+    argument: SearchArgument,
+    chaining?: ChainingArguments,
 ): Promise<void> {
     const data = getOptionallyProtectedValue(argument);
-    if (!data.joinArguments || chaining.relatedEntry) { // Yes, relatedEntry is supposed to be ABSENT.
+    if (!data.joinArguments || chaining?.relatedEntry) { // Yes, relatedEntry is supposed to be ABSENT.
         return;
     }
     for (let i = 0; i < data.joinArguments.length; i++) {
         const jarg = data.joinArguments[i];
-        const newChaining = createNewChainingArgument(i, chaining.originator);
+        const newChaining = createNewChainingArgument(i, chaining?.originator);
         const newArgument: SearchArgument = ("signed" in argument)
             ? argument
             : {
@@ -142,13 +141,13 @@ async function relatedEntryProcedure (
                 const cr: ContinuationReference = (e instanceof errors.ReferralError)
                     ? e.data.candidate
                     : new ContinuationReference(
-                        chaining.targetObject
+                        chaining?.targetObject
                             ? {
                                 rdnSequence: chaining.targetObject,
                             }
                             : data.baseObject,
-                        chaining.aliasedRDNs,
-                        chaining.operationProgress ?? ChainingArguments._default_value_for_operationProgress,
+                        chaining?.aliasedRDNs,
+                        chaining?.operationProgress ?? ChainingArguments._default_value_for_operationProgress,
                         undefined,
                         ReferenceType_self,
                         [ // REVIEW: I _assume_ we want the CR to point to this current DSA. Is that right?

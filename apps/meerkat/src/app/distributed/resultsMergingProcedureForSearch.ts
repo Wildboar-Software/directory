@@ -1,5 +1,8 @@
 import type { Context } from "../types";
-import {
+import type {
+    SearchResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+import type {
     SearchResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData.ta";
 import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
@@ -8,15 +11,16 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import { strict as assert } from "assert";
 import scrProcedure from "./scrProcedure";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 export
 async function resultsMergingProcedureForSearch (
     ctx: Context,
-    data: SearchResultData,
-    local: boolean,
+    res: SearchResult,
     NRcontinuationList: ContinuationReference[],
     SRcontinuationList: ContinuationReference[],
-): Promise<SearchResultData> {
+): Promise<SearchResult> {
+    const data: SearchResultData = getOptionallyProtectedValue(res);
     // We skip removing duplicates for now.
     // TODO: Return if limit problem.
     if (("searchInfo" in data) && data.searchInfo.partialOutcomeQualifier) {
@@ -49,7 +53,7 @@ async function resultsMergingProcedureForSearch (
      * would need to resolve a name after resolving the target object for the
      * list operation.
      */
-    return data;
+    return res;
 }
 
 export default resultsMergingProcedureForSearch;
