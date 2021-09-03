@@ -8,7 +8,7 @@
             "type": "pwa-node",
             "request": "attach",
             "port": 24010,
-            "name": "Attach",
+            "name": "Attach to Meerkat",
             "skipFiles": [
                 "<node_internals>/**"
             ],

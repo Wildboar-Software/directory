@@ -18,6 +18,10 @@ import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework
 import { administrativeRole } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
 import { subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import { accessControlScheme } from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
+import { createTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
+import { modifyTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/modifyTimestamp.oa";
+import { creatorsName } from "@wildboar/x500/src/lib/modules/InformationFramework/creatorsName.oa";
+import { modifiersName } from "@wildboar/x500/src/lib/modules/InformationFramework/modifiersName.oa";
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
@@ -30,6 +34,7 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     [ administrativeRole["&id"]!.toString(), readers.readAdministrativeRole ],
     [ subtreeSpecification["&id"]!.toString(), readers.readSubtreeSpecification ],
     [ accessControlScheme["&id"]!.toString(), readers.readAccessControlScheme ],
+
     // [ id_aca_entryACI.toString(), writeEntryACI ],
     // [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
     // [ id_aca_subentryACI.toString(), writeSubentryACI ],

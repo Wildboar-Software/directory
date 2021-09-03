@@ -321,7 +321,6 @@ async function search_i (
                     data.serviceControls?.serviceType,
                 );
             }
-            return;
         }
     }
 
