@@ -55,6 +55,7 @@ import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSer
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import { strict as assert } from "assert";
 import { addEntry as doAddEntry } from "./addEntry";
+import { compare as doCompare } from "./compare";
 import list_i from "./list_i";
 import list_ii from "./list_ii";
 import search_i from "./search_i";
@@ -187,7 +188,13 @@ class OperationDispatcher {
             throw new errors.UnknownOperationError();
         }
         else if (compareCode(req.opCode, compare["&operationCode"]!)) {
-            throw new errors.UnknownOperationError();
+            const result = await doCompare(ctx, foundDSE, state.admPoints, reqData);
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: result.result,
+                chaining: result.chainedResult,
+            };
         }
         else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
             throw new errors.UnknownOperationError();
