@@ -60,6 +60,8 @@ import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 
+// TODO: Review: This is unused.
+
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
 // dSABind OPERATION ::= {
@@ -159,6 +161,8 @@ import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 //     ... }
 
 const DER = () => new DERElement();
+
+// FIXME: Allow creation of alias+cp
 
 export
 async function establishSubordinate (

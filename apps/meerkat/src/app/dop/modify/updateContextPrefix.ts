@@ -52,6 +52,7 @@ import deleteEntry from "../../database/deleteEntry";
 
 const DER = () => new DERElement();
 
+// NOTE: This is for RECEIVING an update to the CP, not creating one.
 // TODO: If context prefix initialization fails, undo all changes.
 export
 async function updateContextPrefix (

@@ -679,8 +679,8 @@ model OperationalBinding {
     outbound           Boolean
     uuid               String                      @default(uuid()) // @db.Uuid
     binding_type       OID
-    binding_identifier Int?
-    binding_version    Int?                        @db.SmallInt
+    binding_identifier Int
+    binding_version    Int
     agreement_ber      Bytes
     access_point_id    Int
     access_point       AccessPoint                 @relation("ob_access_point", fields: [access_point_id], references: [id])
@@ -740,7 +740,9 @@ model OperationalBinding {
     last_shadow_problem Int?      @db.SmallInt
 
     OperationalBinding OperationalBinding[] @relation("OperationalBindingToOperationalBinding")
+    @@index([validity_end, validity_start])
     @@unique([uuid])
+    @@unique([binding_type, binding_identifier, binding_version, terminated_time])
 }
 
 // Only accept OB requests from DSAs that can be verified by:

@@ -270,6 +270,7 @@ This is not to imply that these rules are current adhered to.
     - [ ] memoryUsage
     - [ ] legalHold
     - [ ] jurisdiction
+    - [ ] permitUnrecognizedAttributeTypes
   - [ ] User
     - [ ] Government
       - [ ] ssn

@@ -64,6 +64,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
 import rdnToJson from "../../x500/rdnToJson";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -90,10 +91,7 @@ async function establishOperationalBinding (
     ctx: Context,
     arg: EstablishOperationalBindingArgument,
 ): Promise<EstablishOperationalBindingResult> {
-    const data: EstablishOperationalBindingArgumentData = ("signed" in arg)
-        ? arg.signed.toBeSigned
-        : arg.unsigned;
-
+    const data: EstablishOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
     const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
         new Promise<boolean>((resolve) => {
             ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
@@ -201,12 +199,45 @@ async function establishOperationalBinding (
             }
             const reply = await becomeSubordinate(ctx, agreement, init);
             const sp = data.securityParameters;
+            const now = new Date();
+            const alreadyTakenBindingIDs = new Set(
+                (await ctx.db.operationalBinding.findMany({
+                    where: {
+                        binding_type: id_op_binding_hierarchical.toString(),
+                        validity_start: {
+                            gte: now,
+                        },
+                        validity_end: {
+                            lte: now,
+                        },
+                    },
+                    select: {
+                        binding_identifier: true,
+                    },
+                }))
+                    .map((ob) => ob.binding_identifier),
+            );
+            let newBindingIdentifier!: number;
+            if (typeof data.bindingID?.identifier === "number") {
+                if (alreadyTakenBindingIDs.has(data.bindingID.identifier)) {
+                    throw new Error(); // FIXME:
+                } else {
+                    newBindingIdentifier = data.bindingID.identifier;
+                }
+            } else if (typeof data.bindingID?.identifier === "undefined") {
+                let attemptedID: number = 0;
+                while (alreadyTakenBindingIDs.has(attemptedID)) {
+                    attemptedID++;
+                }
+                newBindingIdentifier = attemptedID;
+            }
+
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     outbound: false,
                     binding_type: data.bindingType.toString(),
-                    binding_identifier: data.bindingID?.identifier,
-                    binding_version: data.bindingID?.version,
+                    binding_identifier: newBindingIdentifier,
+                    binding_version: data.bindingID?.version ?? 0,
                     agreement_ber: Buffer.from(data.agreement.toBytes()),
                     access_point: {
                         create: {

@@ -24,7 +24,7 @@ import loadAttributeTypes from "./x500/loadAttributeTypes";
 import loadObjectClasses from "./x500/loadObjectClasses";
 import loadLDAPSyntaxes from "./x500/loadLDAPSyntaxes";
 import ctx from "./ctx";
-import terminate from "./dop/terminate";
+import terminate from "./dop/terminateByID";
 import { differenceInMilliseconds } from "date-fns";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;

@@ -57,6 +57,7 @@ import {
 //     _encode_SubordinateToSuperior,
 // } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 const DER = () => new DERElement();
 
@@ -106,10 +107,7 @@ async function modifyOperationalBinding (
     conn: DOPConnection,
     arg: ModifyOperationalBindingArgument,
 ): Promise<ModifyOperationalBindingResult> {
-    const data: ModifyOperationalBindingArgumentData = ("signed" in arg)
-        ? arg.signed.toBeSigned
-        : arg.unsigned;
-
+    const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
     const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
         new Promise<boolean>((resolve) => {
             ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {

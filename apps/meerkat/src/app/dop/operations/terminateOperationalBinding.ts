@@ -30,7 +30,7 @@ import { BERElement } from "asn1-ts";
 import { differenceInMilliseconds } from "date-fns";
 import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import { Knowledge } from "@prisma/client";
-import terminate from "../terminate";
+import terminate from "../terminateByID";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 function getDateFromOBTime (time: Time): Date {
