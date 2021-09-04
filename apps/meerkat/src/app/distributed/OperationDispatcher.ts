@@ -56,6 +56,7 @@ import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/
 import { strict as assert } from "assert";
 import { addEntry as doAddEntry } from "./addEntry";
 import { compare as doCompare } from "./compare";
+import { read as doRead } from "./read";
 import list_i from "./list_i";
 import list_ii from "./list_ii";
 import search_i from "./search_i";
@@ -237,7 +238,13 @@ class OperationDispatcher {
             }
         }
         else if (compareCode(req.opCode, read["&operationCode"]!)) {
-            throw new errors.UnknownOperationError();
+            const result = await doRead(ctx, foundDSE, state.admPoints, reqData);
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: result.result,
+                chaining: result.chainedResult,
+            };
         }
         else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
             throw new errors.UnknownOperationError();

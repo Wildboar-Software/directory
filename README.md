@@ -259,6 +259,17 @@ This is not to imply that these rules are current adhered to.
     - [ ] cacheTTL
     - [ ] directoryCreditBalance
     - [ ] directoryConsumption
+    - [ ] softwareLicense
+    - [ ] termsOfUse
+    - [ ] copyrightYear
+    - [ ] copyrightHolder
+    - [ ] dsaMake
+    - [ ] dsaModel
+    - [ ] dsaVersion
+    - [ ] uptime
+    - [ ] memoryUsage
+    - [ ] legalHold
+    - [ ] jurisdiction
   - [ ] User
     - [ ] Government
       - [ ] ssn
