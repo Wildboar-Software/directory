@@ -150,6 +150,8 @@ async function removeEntry (
                     continue;
                 }
                 assert(subr.immediateSuperior);
+                // We do not await the return value. This can run independently
+                // of returning from this operation.
                 updateSubordinate(
                     ctx,
                     bindingID,
@@ -157,7 +159,10 @@ async function removeEntry (
                     undefined,
                     subr.dse.rdn,
                     accessPoint,
-                );
+                )
+                    .catch((e) => {
+                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                    });
             } catch (e) {
                 ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
                 continue;
@@ -222,12 +227,17 @@ async function removeEntry (
             const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
             try {
                 assert(target.immediateSuperior);
+                // We do not await the return value. This can run independently
+                // of returning from this operation.
                 terminateByTypeAndBindingID(
                     ctx,
                     accessPoint,
                     id_op_binding_hierarchical,
                     bindingID,
-                );
+                )
+                    .catch((e) => {
+                        ctx.log.warn(`Failed to terminate HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                    });
             } catch (e) {
                 ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
                 continue;

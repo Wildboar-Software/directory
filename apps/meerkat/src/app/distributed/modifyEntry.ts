@@ -23,6 +23,10 @@ import * as errors from "../errors";
 import {
     objectClass,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+// import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import { parent } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
+import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
 // import {
 //     administrativeRole,
 // } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
@@ -48,7 +52,6 @@ import {
     ASN1UniversalType,
     ASN1Construction,
     ObjectIdentifier,
-    OBJECT_IDENTIFIER,
 } from "asn1-ts";
 import {
     DER,
@@ -74,6 +77,26 @@ import removeValues from "../database/entry/removeValues";
 import removeAttribute from "../database/entry/removeAttribute";
 import readValues from "../database/entry/readValues";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
+import { strict as assert } from "assert";
+import {
+    id_op_binding_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+import { OperationalBindingInitiator } from "@prisma/client";
+import {
+    HierarchicalAgreement,
+    _decode_HierarchicalAgreement,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+import {
+    AccessPoint,
+    _decode_AccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import isPrefix from "../x500/isPrefix";
+import updateSubordinate from "../dop/updateSubordinate";
+import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import findEntry from "../x500/findEntry";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
@@ -490,8 +513,86 @@ async function modifyEntry (
         }
     }
 
-    // TODO: Neither the parent nor the child object classes shall be combined with the alias object class to form an alias entry.
-    // TODO: The parent object class is derived by the presence of an immediately subordinate family member, marked by the presence of a child object class value. It may not be directly administered.
+    { // Other validation.
+        const objectClasses = [
+            ...alreadyPresentObjectClasses,
+            ...addedObjectClasses,
+        ];
+
+        /**
+         * From ITU Recommendation X.501 (2016), Section 13.3.3:
+         *
+         * > The parent object class is derived by the presence of an
+         * > immediately subordinate family member, marked by the presence of
+         * > a child object class value. It may not be directly administered.
+         */
+        {
+            const hasParentObjectClass: boolean = objectClasses
+                .some((oc) => oc.isEqualTo(parent["&id"]));
+            if (hasParentObjectClass) {
+                throw new errors.UpdateError(
+                    "Object class 'parent' may not be added directly.",
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attribute: new Attribute(
+                                    objectClass["&id"],
+                                    [
+                                        _encodeObjectIdentifier(parent["&id"], DER),
+                                    ],
+                                    undefined,
+                                ),
+                            },
+                        ],
+                        [],
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+        }
+
+
+        const hasChildObjectClass: boolean = objectClasses
+            .some((oc) => oc.isEqualTo(child["&id"]));
+        const hasAliasObjectClass: boolean = objectClasses
+            .some((oc) => oc.isEqualTo(alias["&id"]));
+
+        /**
+         * From ITU Recommendation X.501 (2016), Section 13.3.3:
+         *
+         * > Neither the parent nor the child object classes shall be combined
+         * > with the alias object class to form an alias entry.
+         */
+        if (hasChildObjectClass && hasAliasObjectClass) {
+            throw new errors.UpdateError(
+                "Object may not have object class 'alias' and 'child' simultaneously.",
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attribute: new Attribute(
+                                objectClass["&id"],
+                                [
+                                    _encodeObjectIdentifier(alias["&id"], DER),
+                                    _encodeObjectIdentifier(child["&id"], DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
 
     await ctx.db.$transaction(pendingUpdates);
     const dbe = await ctx.db.entry.findUnique({
@@ -504,7 +605,88 @@ async function modifyEntry (
     } else {
         ctx.log.warn(`Database entry ${target.dse.uuid} was deleted while it was being modified.`);
     }
-    // TODO: Update HOBs
+
+    // Update relevant hierarchical operational bindings
+    if (target.dse.admPoint || target.dse.subentry) {
+        const admPoint: Vertex | undefined = target.dse.admPoint
+            ? target
+            : target.immediateSuperior;
+        assert(admPoint?.dse.admPoint);
+        const admPointDN = getDistinguishedName(admPoint);
+        const now = new Date();
+        const relevantOperationalBindings = await ctx.db.operationalBinding.findMany({
+            where: {
+                binding_type: id_op_binding_hierarchical.toString(),
+                validity_start: {
+                    gte: now,
+                },
+                validity_end: {
+                    lte: now,
+                },
+                // accepted: true, // FIXME: Is this always set?
+                OR: [
+                    { // Local DSA initiated role A (meaning local DSA is superior.)
+                        initiator: OperationalBindingInitiator.ROLE_A,
+                        outbound: true,
+                    },
+                    { // Remote DSA initiated role B (meaning local DSA is superior again.)
+                        initiator: OperationalBindingInitiator.ROLE_B,
+                        outbound: false,
+                    },
+                ],
+            },
+            select: {
+                binding_identifier: true,
+                binding_version: true,
+                access_point: true,
+                agreement_ber: true,
+            },
+        });
+        for (const ob of relevantOperationalBindings) {
+            const argreementElement = new BERElement();
+            argreementElement.fromBytes(ob.agreement_ber);
+            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
+            if (!isPrefix(ctx, admPointDN, agreement.immediateSuperior)) {
+                continue;
+            }
+            const bindingID = new OperationalBindingID(
+                ob.binding_identifier,
+                ob.binding_version,
+            );
+            const accessPointElement = new BERElement();
+            accessPointElement.fromBytes(ob.access_point.ber);
+            const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
+            try {
+                const subrDN: DistinguishedName = [
+                    ...agreement.immediateSuperior,
+                    agreement.rdn,
+                ];
+                const subr = await findEntry(ctx, ctx.dit.root, subrDN);
+                if (!subr) {
+                    ctx.log.warn(`Subordinate entry for agreement ${bindingID.identifier} (version ${bindingID.version}) not found.`);
+                    continue;
+                }
+                assert(subr.immediateSuperior);
+                // We do not await the return value. This can run independently
+                // of returning from this operation.
+                updateSubordinate(
+                    ctx,
+                    bindingID,
+                    subr.immediateSuperior,
+                    undefined,
+                    subr.dse.rdn,
+                    accessPoint,
+                )
+                    .catch((e) => {
+                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                    });
+            } catch (e) {
+                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                continue;
+            }
+        }
+    }
+
     // TODO: Update Shadows
     const result: ModifyEntryResult = {
         null_: null,
