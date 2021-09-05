@@ -1,4 +1,4 @@
-import { Context, Vertex } from "../types";
+import { Context, IndexableOID, Vertex, Value } from "../types";
 import {
     _decode_ModifyEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
@@ -13,9 +13,25 @@ import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 import {
-    AttributeError,
-    SecurityError,
-} from "../errors";
+    UpdateErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    UpdateProblem_objectClassViolation,
+    UpdateProblem_objectClassModificationProhibited,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import * as errors from "../errors";
+import {
+    objectClass,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+// import {
+//     administrativeRole,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import {
+    ObjectClassKind,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import attributeToStoredValues from "../x500/attributeToStoredValues";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import { AttributeErrorData_problems_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
@@ -31,7 +47,13 @@ import {
     ASN1TagClass,
     ASN1UniversalType,
     ASN1Construction,
+    ObjectIdentifier,
+    OBJECT_IDENTIFIER,
 } from "asn1-ts";
+import {
+    DER,
+    _encodeObjectIdentifier,
+} from "asn1-ts/dist/node/functional";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
@@ -53,6 +75,8 @@ import removeAttribute from "../database/entry/removeAttribute";
 import readValues from "../database/entry/readValues";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
 
+type ValuesIndex = Map<IndexableOID, Value[]>;
+
 function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
     return (
         (el.tagClass === ASN1TagClass.universal)
@@ -61,6 +85,32 @@ function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
             || el.tagNumber === ASN1UniversalType.realNumber
         )
     );
+}
+
+function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Value {
+    const toBeAdded = (toBeAddedElement.tagNumber === ASN1UniversalType.integer)
+        ? toBeAddedElement.integer
+        : toBeAddedElement.real;
+    return (value: Value): Value => {
+        if (!isAcceptableTypeForAlterValues(value.value)) {
+            throw new Error();
+        }
+        if (value.value.tagNumber !== toBeAddedElement.tagNumber) {
+            throw new Error();
+        }
+        const currentValue = (value.value.tagNumber === ASN1UniversalType.integer)
+            ? value.value.integer
+            : value.value.real;
+        return {
+            ...value,
+            value: new DERElement(
+                ASN1TagClass.universal,
+                ASN1Construction.primitive,
+                value.value.tagNumber,
+                (currentValue + toBeAdded),
+            ),
+        };
+    };
 }
 
 /**
@@ -84,6 +134,7 @@ async function executeEntryModification (
     ctx: Context,
     entry: Vertex,
     mod: EntryModification,
+    delta: ValuesIndex,
 ): Promise<PrismaPromise<any>[]> {
 
     /**
@@ -94,7 +145,7 @@ async function executeEntryModification (
         const TYPE_OID: string = attributeType.toString();
         const spec = ctx.attributes.get(TYPE_OID);
         if (!spec) {
-            throw new AttributeError(
+            throw new errors.AttributeError(
                 `Attribute type ${TYPE_OID} not understood.`,
                 new AttributeErrorData(
                     {
@@ -116,7 +167,7 @@ async function executeEntryModification (
             );
         }
         if (spec?.noUserModification) {
-            throw new SecurityError(
+            throw new errors.SecurityError(
                 `Attribute type ${TYPE_OID} may not be modified.`,
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
@@ -135,24 +186,58 @@ async function executeEntryModification (
     if ("addAttribute" in mod) {
         check(mod.addAttribute.type_);
         const values = attributeToStoredValues(mod.addAttribute);
+        const TYPE_OID: IndexableOID = mod.addAttribute.type_.toString();
+        const deltaValues = delta.get(TYPE_OID);
+        if (deltaValues) {
+            deltaValues.push(...values);
+        } else {
+            delta.set(TYPE_OID, values);
+        }
         return addValues(ctx, entry, values, []);
     }
     else if ("removeAttribute" in mod) {
+        delta.delete(mod.removeAttribute.toString());
         return removeAttribute(ctx, entry, mod.removeAttribute, []);
     }
     else if ("addValues" in mod) {
         check(mod.addValues.type_);
         const values = attributeToStoredValues(mod.addValues);
+        const TYPE_OID: IndexableOID = mod.addValues.type_.toString();
+        const deltaValues = delta.get(TYPE_OID);
+        if (deltaValues) {
+            deltaValues.push(...values);
+        } else {
+            delta.set(TYPE_OID, values);
+        }
         return addValues(ctx, entry, values, []);
     }
     else if ("removeValues" in mod) {
         const values = attributeToStoredValues(mod.removeValues);
+        const valuesToBeDeleted: Set<string> = new Set(
+            values?.map((v) => Buffer.from(v.value.toBytes()).toString("base64")),
+        );
+        const TYPE_OID: IndexableOID = mod.removeValues.type_.toString();
+        const deltaValues = delta.get(TYPE_OID);
+        if (deltaValues) {
+            const newValues = deltaValues
+                .filter((dv) => !valuesToBeDeleted.has(Buffer.from(dv.value.toBytes()).toString("base64")));
+            delta.set(TYPE_OID, newValues);
+        }
         return removeValues(ctx, entry, values, []);
     }
     else if ("alterValues" in mod) {
         check(mod.alterValues.type_);
         if (!isAcceptableTypeForAlterValues(mod.alterValues.value)) {
             throw new Error();
+        }
+        const TYPE_OID: IndexableOID = mod.alterValues.type_.toString();
+        const alterer = getValueAlterer(mod.alterValues.value);
+        { // Modify the delta values.
+            const deltaValues = delta.get(TYPE_OID);
+            if (deltaValues) {
+                const newValues = deltaValues.map(alterer);
+                delta.set(TYPE_OID, newValues);
+            }
         }
         const eis = new EntryInformationSelection(
             {
@@ -174,33 +259,7 @@ async function executeEntryModification (
             ...userAttributes,
             ...operationalAttributes,
         ];
-        const TYPE_OID: string = mod.alterValues.type_.toString();
-        const newValues = values.map((value) => {
-            if (value.id.toString() !== TYPE_OID) {
-                return value;
-            }
-            if (!isAcceptableTypeForAlterValues(value.value)) {
-                throw new Error();
-            }
-            if (value.value.tagNumber !== mod.alterValues.value.tagNumber) {
-                throw new Error();
-            }
-            const currentValue = (value.value.tagNumber === ASN1UniversalType.integer)
-                ? value.value.integer
-                : value.value.real;
-            const toBeAdded = (mod.alterValues.value.tagNumber === ASN1UniversalType.integer)
-                ? mod.alterValues.value.integer
-                : mod.alterValues.value.real;
-            return {
-                ...value,
-                value: new BERElement(
-                    ASN1TagClass.universal,
-                    ASN1Construction.primitive,
-                    value.value.tagNumber,
-                    (currentValue + toBeAdded),
-                ),
-            };
-        });
+        const newValues = values.map(alterer);
         return [
             ctx.db.attributeValue.deleteMany({
                 where: {
@@ -214,6 +273,16 @@ async function executeEntryModification (
     else if ("resetValue" in mod) {
         // TODO: This will not update operational attributes, but that might not
         // matter, because it only remove values having some context.
+        const TYPE_OID: IndexableOID = mod.resetValue.toString();
+        { // Updating the delta values
+            const deltaValues = delta.get(TYPE_OID);
+            if (deltaValues) {
+                const newDeltaValues = deltaValues
+                    .filter((dv) => !Array.from(dv.contexts.values())
+                        .some((context) => (context.fallback === false)));
+                delta.set(TYPE_OID, newDeltaValues);
+            }
+        }
         return [
             ctx.db.attributeValue.deleteMany({
                 where: {
@@ -230,13 +299,49 @@ async function executeEntryModification (
     }
     else if ("replaceValues" in mod) {
         check(mod.replaceValues.type_);
-        return [];
+        const TYPE_OID: string = mod.replaceValues.type_.toString();
+        const values = attributeToStoredValues(mod.replaceValues);
+        delta.set(TYPE_OID, values);
+        return [
+            ctx.db.attributeValue.deleteMany({
+                where: {
+                    entry_id: entry.dse.id,
+                    type: TYPE_OID,
+                },
+            }),
+            ...(await addValues(ctx, entry, values, [])),
+        ];
     }
     else {
-        return [];
+        return []; // Any other alternative not understood.
     }
 }
 
+/**
+ * @summary Modify an entry
+ * @description
+ *
+ * ## Implementation
+ *
+ * ### Schema Validation
+ *
+ * ### System Schema Validation
+ *
+ * There are some attributes that may be added to any entry of any object class,
+ * such as `administrativeRole`, because there is no object class defined for
+ * every DSE type, and thus, these special attributes are used to validate if
+ * the DSE is, de facto, of a given type.
+ *
+ * Continuing on the aforementioned example, the mere presence of an
+ * `administrativeRole` attribute is what determines whether Meerkat DSA views
+ * the entry as an
+ *
+ * @param ctx
+ * @param target
+ * @param admPoints
+ * @param request
+ * @returns
+ */
 export
 async function modifyEntry (
     ctx: Context,
@@ -247,22 +352,147 @@ async function modifyEntry (
     const argument = _decode_ModifyEntryArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
     const pendingUpdates: PrismaPromise<any>[] = [];
+    const delta: ValuesIndex = new Map();
     // TODO: Access Control
-    // TODO: Schema validation
-    /**
-     * Change types that warrant validation checks:
-     * - addAttribute
-     * - removeAttribute
-     * - addValues
-     * - removeValues
-     * - resetValue
-     * - replaceValues
-     *
-     * So basically, everything except alterValues
-     */
     for (const mod of data.changes) {
-        pendingUpdates.push(...(await executeEntryModification(ctx, target, mod)));
+        pendingUpdates.push(...(await executeEntryModification(ctx, target, mod, delta)));
     }
+
+    const requiredAttributes: Set<IndexableOID> = new Set();
+    const optionalAttributes: Set<IndexableOID> = new Set();
+    const addedObjectClasses = delta.get(objectClass["&id"].toString())
+        ?.map((value) => value.value.objectIdentifier) ?? [];
+    for (const ocid of addedObjectClasses) {
+        const spec = ctx.objectClasses.get(ocid.toString());
+        if (!spec) {
+            throw new errors.UpdateError(
+                `Object class ${ocid.toString()} not understood.`,
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attribute: new Attribute(
+                                objectClass["&id"],
+                                [
+                                    _encodeObjectIdentifier(ocid, DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+        // TODO: Even though not mandated by the specification, tolerate
+        // modification of the structural object class, as long as it is
+        // a subclass of the current structural object class.
+        if (spec.kind === ObjectClassKind.structural) {
+            // TODO: What to do about abstract object classes?
+            throw new errors.UpdateError(
+                `Cannot supplant structural object class with object class ${ocid.toString()}.`,
+                new UpdateErrorData(
+                    UpdateProblem_objectClassModificationProhibited,
+                    [
+                        {
+                            attribute: new Attribute(
+                                objectClass["&id"],
+                                [
+                                    _encodeObjectIdentifier(ocid, DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
+        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
+    }
+    const alreadyPresentObjectClasses = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
+    for (const ocid of alreadyPresentObjectClasses) {
+        const spec = ctx.objectClasses.get(ocid.toString());
+        if (!spec) {
+            ctx.log.warn(`Object has unrecognized object class ${ocid.toString()}.`);
+            continue;
+        }
+        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
+        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
+    }
+
+    { // Check required attributes
+        const missingRequiredAttributeTypes: Set<IndexableOID> = new Set();
+        for (const ra of Array.from(requiredAttributes)) {
+            const deltaValues = delta.get(ra);
+            if (!deltaValues?.length) {
+                const alreadyPresentValues = await ctx.db.attributeValue.count({
+                    where: {
+                        entry_id: target.dse.id,
+                        type: ra,
+                    },
+                });
+                if (alreadyPresentValues === 0) {
+                    missingRequiredAttributeTypes.add(ra);
+                }
+            }
+        }
+        if (missingRequiredAttributeTypes.size > 0) {
+            const missing: string[] = Array.from(missingRequiredAttributeTypes);
+            throw new errors.UpdateError(
+                `Missing required attribute types: ${missing.join(" ")}`,
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    missing
+                        .map(ObjectIdentifier.fromString)
+                        .map((attributeType) => ({ attributeType })),
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+    { // Check optional attributes
+        const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
+        for (const type_ of Array.from(delta.keys())) {
+            if (!optionalAttributes.has(type_.toString())) {
+                nonPermittedAttributeTypes.add(type_);
+            }
+        }
+        if (nonPermittedAttributeTypes.size > 0) {
+            const nonPermitted: string[] = Array.from(nonPermittedAttributeTypes);
+            throw new errors.UpdateError(
+                `No object class permits attribute types: ${nonPermitted.join(" ")}`,
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    nonPermitted
+                        .map(ObjectIdentifier.fromString)
+                        .map((attributeType) => ({ attributeType })),
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+
+    // TODO: Neither the parent nor the child object classes shall be combined with the alias object class to form an alias entry.
+    // TODO: The parent object class is derived by the presence of an immediately subordinate family member, marked by the presence of a child object class value. It may not be directly administered.
+
     await ctx.db.$transaction(pendingUpdates);
     const dbe = await ctx.db.entry.findUnique({
         where: {
@@ -286,7 +516,7 @@ async function modifyEntry (
             undefined,
             undefined,
         ),
-        _encode_ModifyEntryResult(result, () => new DERElement()),
+        _encode_ModifyEntryResult(result, DER),
     );
 }
 

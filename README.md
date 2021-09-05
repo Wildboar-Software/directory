@@ -271,6 +271,8 @@ This is not to imply that these rules are current adhered to.
     - [ ] legalHold
     - [ ] jurisdiction
     - [ ] permitUnrecognizedAttributeTypes
+    - [ ] readTimestamp
+    - [ ] readersName
   - [ ] User
     - [ ] Government
       - [ ] ssn
