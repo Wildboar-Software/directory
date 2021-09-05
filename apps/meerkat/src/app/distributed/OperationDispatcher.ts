@@ -56,6 +56,7 @@ import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/
 import { strict as assert } from "assert";
 import { addEntry as doAddEntry } from "./addEntry";
 import { compare as doCompare } from "./compare";
+import { modifyEntry as doModifyEntry } from "./modifyEntry";
 import { read as doRead } from "./read";
 import { removeEntry as doRemoveEntry } from "./removeEntry";
 import list_i from "./list_i";
@@ -202,7 +203,13 @@ class OperationDispatcher {
             throw new errors.UnknownOperationError();
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
-            throw new errors.UnknownOperationError();
+            const result = await doModifyEntry(ctx, foundDSE, state.admPoints, reqData);
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: result.result,
+                chaining: result.chainedResult,
+            };
         }
         else if (compareCode(req.opCode, list["&operationCode"]!)) {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase

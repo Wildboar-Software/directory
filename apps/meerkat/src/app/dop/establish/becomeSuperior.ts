@@ -21,7 +21,7 @@ import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectId
 import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import writeEntryAttributes from "../../database/writeEntryAttributes";
-import entryFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
 import valuesFromAttribute from "../../memory/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "../../errors";
@@ -133,7 +133,7 @@ async function becomeSubordinate (
             }
         },
     });
-    const subr = await entryFromDatabaseEntry(ctx, superior, createdEntry, true);
+    const subr = await vertexFromDatabaseEntry(ctx, superior, createdEntry, true);
     const values = sub2sup.entryInfo?.flatMap((attr) => valuesFromAttribute(attr)) ?? [];
     await writeEntryAttributes(ctx, subr, values);
 

@@ -31,12 +31,12 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
 ]);
 
 export
-function addValues (
+async function addValues (
     ctx: Context,
     entry: Vertex,
     attributes: Value[],
     modifier: DistinguishedName,
-): PrismaPromise<any>[] {
+): Promise<PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
@@ -44,9 +44,11 @@ function addValues (
         },
         otherWrites: [],
     };
-    attributes
-        .forEach((attr) => specialAttributeDatabaseWriters
-            .get(attr.id.toString())?.(ctx, entry, attr, pendingUpdates));
+    await Promise.all(
+        attributes
+            .map((attr) => specialAttributeDatabaseWriters
+                .get(attr.id.toString())?.(ctx, entry, attr, pendingUpdates)),
+    );
     return [
         ctx.db.entry.update({
             where: {

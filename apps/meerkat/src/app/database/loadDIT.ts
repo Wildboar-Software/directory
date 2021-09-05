@@ -1,5 +1,5 @@
 import type { Context, DIT } from "../types";
-import entryFromDatabaseEntry from "./entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "./entryFromDatabaseEntry";
 import {
     top,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
@@ -59,7 +59,7 @@ async function loadDIT (
         });
         ctx.log.warn(`Created Root DSE ${rootDSE.entryUUID}.`);
     }
-    ctx.dit.root = await entryFromDatabaseEntry(ctx, undefined, rootDSE);
+    ctx.dit.root = await vertexFromDatabaseEntry(ctx, undefined, rootDSE);
     ctx.log.info("DIT loaded into memory.");
     return ctx.dit.root;
 }

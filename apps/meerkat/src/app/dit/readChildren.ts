@@ -1,5 +1,5 @@
 import type { Context, Vertex } from "../types";
-import entryFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 
 export
 async function readChildren (
@@ -16,7 +16,7 @@ async function readChildren (
                     immediate_superior_id: entry.dse.id,
                     deleteTimestamp: null,
                 },
-            })).map((child) => entryFromDatabaseEntry(ctx, entry, child, true)),
+            })).map((child) => vertexFromDatabaseEntry(ctx, entry, child, true)),
         );
     }
     return entry.subordinates;

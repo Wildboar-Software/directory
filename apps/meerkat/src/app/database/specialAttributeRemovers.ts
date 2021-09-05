@@ -1,44 +1,39 @@
 import type {
     Context,
     Vertex,
-    Value,
-    SpecialAttributeDatabaseEditor,
+    SpecialAttributeDatabaseRemover,
     PendingUpdates,
 } from "../types";
 
-export const removeObjectClass: SpecialAttributeDatabaseEditor = async (
+export const removeObjectClass: SpecialAttributeDatabaseRemover = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     // Note that schema validation must occur elsewhere.
-    vertex.dse.objectClass.delete(value.value.objectIdentifier.toString());
-    pendingUpdates.entryUpdate.objectClass = Array.from(vertex.dse.objectClass).join(" ");
+    vertex.dse.objectClass.clear();
+    pendingUpdates.entryUpdate.objectClass = "";
 };
 
-export const removeAccessControlScheme: SpecialAttributeDatabaseEditor = async (
+export const removeAccessControlScheme: SpecialAttributeDatabaseRemover = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     pendingUpdates.entryUpdate.accessControlScheme = null;
 };
 
-export const removeAdministrativeRole: SpecialAttributeDatabaseEditor = async (
+export const removeAdministrativeRole: SpecialAttributeDatabaseRemover = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     pendingUpdates.entryUpdate.administrativeRole = null;
 };
 
-export const removeSubtreeSpecification: SpecialAttributeDatabaseEditor = async (
+export const removeSubtreeSpecification: SpecialAttributeDatabaseRemover = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     pendingUpdates.otherWrites.push(ctx.db.subtreeSpecification.deleteMany({

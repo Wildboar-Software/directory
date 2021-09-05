@@ -26,7 +26,7 @@ import { id_sc_pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/Informati
 import { id_oc_parent } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
 import { id_oc_child } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import rdnFromJson from "../x500/rdnFromJson";
-import entryFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import readEntryAttributes from "../database/readEntryAttributes";
 import deleteEntry from "../database/deleteEntry";
 import escape from "escape-html";
@@ -267,7 +267,7 @@ export class DitController {
             : undefined;
         const superiorUUID: string | undefined = superior?.entryUUID;
         const rdn = rdnFromJson(entry.rdn as Record<string, string>);
-        const vertex = await entryFromDatabaseEntry(this.ctx, undefined, entry, true);
+        const vertex = await vertexFromDatabaseEntry(this.ctx, undefined, entry, true);
         const {
             userAttributes,
             operationalAttributes,

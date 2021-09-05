@@ -2,12 +2,12 @@ import type {
     Context,
     Vertex,
     IndexableOID,
-    Value,
-    SpecialAttributeDatabaseEditor,
+    SpecialAttributeDatabaseRemover,
     PendingUpdates,
 } from "../../types";
 import type { PrismaPromise } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 
 // Special Attributes
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
@@ -19,7 +19,7 @@ import { accessControlScheme } from "@wildboar/x500/src/lib/modules/BasicAccessC
 import * as removers from "../specialAttributeRemovers";
 import rdnToJson from "../../x500/rdnToJson";
 
-const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabaseEditor> = new Map([
+const specialAttributeDatabaseRemovers: Map<IndexableOID, SpecialAttributeDatabaseRemover> = new Map([
     [ objectClass["&id"]!.toString(), removers.removeObjectClass ],
     [ administrativeRole["&id"]!.toString(), removers.removeAdministrativeRole ],
     [ subtreeSpecification["&id"]!.toString(), removers.removeSubtreeSpecification ],
@@ -30,12 +30,12 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
 ]);
 
 export
-function removeAttribute (
+async function removeAttribute (
     ctx: Context,
     entry: Vertex,
-    attributes: Value[],
+    type_: AttributeType,
     modifier: DistinguishedName,
-): PrismaPromise<any>[] {
+): Promise<PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
@@ -43,27 +43,34 @@ function removeAttribute (
         },
         otherWrites: [],
     };
-    attributes
-        .forEach((attr) => specialAttributeDatabaseWriters
-            .get(attr.id.toString())?.(ctx, entry, attr, pendingUpdates));
-    return [
-        ctx.db.entry.update({
-            where: {
-                id: entry.dse.id,
-            },
-            data: pendingUpdates.entryUpdate,
-        }),
-        ...pendingUpdates.otherWrites,
-        ...attributes
-            .filter((attr) => !specialAttributeDatabaseWriters.has(attr.id.toString()))
-            .map((attr) => ctx.db.attributeValue.deleteMany({
+    const remover = specialAttributeDatabaseRemovers.get(type_.toString());
+    if (remover) {
+        await remover(ctx, entry, pendingUpdates);
+        return [
+            ctx.db.entry.update({
+                where: {
+                    id: entry.dse.id,
+                },
+                data: pendingUpdates.entryUpdate,
+            }),
+            ...pendingUpdates.otherWrites,
+        ];
+    } else {
+        return [
+            ctx.db.entry.update({
+                where: {
+                    id: entry.dse.id,
+                },
+                data: pendingUpdates.entryUpdate,
+            }),
+            ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: entry.dse.id,
-                    type: attr.id.toString(),
+                    type: type_.toString(),
                 },
-            })),
-    ];
+            }),
+        ]
+    }
 }
 
 export default removeAttribute;
-

@@ -435,3 +435,10 @@ type SpecialAttributeDatabaseReader = (
     ctx: Readonly<Context>,
     entry: Vertex,
 ) => Promise<Value[]>;
+
+export
+type SpecialAttributeDatabaseRemover = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    pendingUpdates: PendingUpdates,
+) => Promise<void>;

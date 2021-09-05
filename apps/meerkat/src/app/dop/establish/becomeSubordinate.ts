@@ -40,7 +40,7 @@ import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import writeACI from "../../database/writeACI";
 import writeEntryAttributes from "../../database/writeEntryAttributes";
-import entryFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
 import valuesFromAttribute from "../../memory/valuesFromAttribute";
 import { ACIScope, Knowledge } from "@prisma/client";
 
@@ -130,7 +130,7 @@ async function becomeSubordinate (
             for (const aci of subentryACIs) {
                 await writeACI(ctx, createdEntry.id, aci, ACIScope.SUBENTRY);
             }
-            currentRoot = await entryFromDatabaseEntry(ctx, currentRoot, createdEntry, true);
+            currentRoot = await vertexFromDatabaseEntry(ctx, currentRoot, createdEntry, true);
             currentRoot.dse.entryACI = entryACIs;
             if (currentRoot.dse.admPoint && subentryACIs.length) {
                 currentRoot.dse.admPoint.subentryACI = subentryACIs;
@@ -185,7 +185,7 @@ async function becomeSubordinate (
             modifiersName: [],
         },
     });
-    const subr = await entryFromDatabaseEntry(ctx, currentRoot, createdCP, true);
+    const subr = await vertexFromDatabaseEntry(ctx, currentRoot, createdCP, true);
     if (sup2sub.immediateSuperiorInfo) {
         const values = sup2sub.immediateSuperiorInfo.flatMap((attr) => valuesFromAttribute(attr));
         await writeEntryAttributes(ctx, currentRoot.immediateSuperior!, values);

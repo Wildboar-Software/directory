@@ -1,7 +1,7 @@
 import type { Context, Vertex, Value } from "../types";
 import { Prisma } from "@prisma/client";
 import rdnToJson from "../x500/rdnToJson";
-import entryFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -57,9 +57,9 @@ async function createEntry (
             dsSubentry: entryInit.dsSubentry,
         },
     });
-    const vertex = await entryFromDatabaseEntry(ctx, superior, createdEntry, true);
+    const vertex = await vertexFromDatabaseEntry(ctx, superior, createdEntry, true);
     await ctx.db.$transaction([
-        ...addValues(ctx, vertex, values, modifier),
+        ...await addValues(ctx, vertex, values, modifier),
         ctx.db.entry.update({
             where: {
                 id: createdEntry.id,
@@ -75,7 +75,7 @@ async function createEntry (
         },
     });
     assert(newEntry);
-    return entryFromDatabaseEntry(ctx, superior, newEntry, true);
+    return vertexFromDatabaseEntry(ctx, superior, newEntry, true);
 }
 
 export default createEntry;

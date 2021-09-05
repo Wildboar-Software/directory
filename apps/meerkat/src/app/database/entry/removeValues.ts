@@ -31,12 +31,12 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
 ]);
 
 export
-function removeValues (
+async function removeValues (
     ctx: Context,
     entry: Vertex,
     attributes: Value[],
     modifier: DistinguishedName,
-): PrismaPromise<any>[] {
+): Promise<PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
@@ -44,9 +44,11 @@ function removeValues (
         },
         otherWrites: [],
     };
-    attributes
-        .forEach((attr) => specialAttributeDatabaseWriters
-            .get(attr.id.toString())?.(ctx, entry, attr, pendingUpdates));
+    await Promise.all(
+        attributes
+            .map((attr) => specialAttributeDatabaseWriters
+                .get(attr.id.toString())?.(ctx, entry, attr, pendingUpdates)),
+    );
     return [
         ctx.db.entry.update({
             where: {
@@ -65,9 +67,6 @@ function removeValues (
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
                     ber: Buffer.from(attr.value.toBytes()),
-                    // ContextValue: {
-                    //     every: {},
-                    // },
                 },
             })),
     ];
