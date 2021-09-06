@@ -33,9 +33,12 @@ async function do_administerPassword (
             output: mutedOut,
             terminal: true,
         });
-        rl.question("New Password: ", (answer: string): void => {
-            password = answer;
-            rl.close();
+        await new Promise<void>((resolve) => {
+            rl.question("New Password: ", (answer: string): void => {
+                password = answer;
+                rl.close();
+                resolve();
+            });
         });
         mutedOut.muted = true;
     }

@@ -46,9 +46,8 @@ async function main (): Promise<void> {
 
     const idmServer = net.createServer((c) => {
         try {
-            console.log("IDM client connected.");
+            ctx.log.info("IDM client connected.");
             const idm = new IDMConnection(c); // eslint-disable-line
-            // let dap: DAPConnection | undefined;
 
             idm.events.on("bind", (idmBind: IdmBind) => {
                 if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
@@ -69,16 +68,23 @@ async function main (): Promise<void> {
                 c.end();
             });
 
-            // idm.events.on("unbind", () => {
-            //     dap = undefined;
-            // });
         } catch (e) {
-            console.error(e);
+            ctx.log.error("Unhandled exception: ", e);
         }
+
+        c.on("error", (e) => {
+            ctx.log.error("Connection error: ", e);
+            c.end();
+        });
+
+        c.on("close", () => {
+            ctx.log.info("Socket closed.");
+        });
+
     });
     idmServer.on("error", (err) => {
         // throw err;
-        console.error(err);
+        ctx.log.error("IDM server error: ", err);
     });
 
     const idmPort = process.env.IDM_PORT

@@ -1,4 +1,4 @@
-import { Context } from "../types";
+import { Context, Vertex } from "../types";
 import { IDMConnection } from "@wildboar/idm";
 import type {
     DirectoryBindArgument,
@@ -43,6 +43,9 @@ import {
     Versions_v1,
     Versions_v2,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import { v4 as uuid } from "uuid";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import {
@@ -51,7 +54,14 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
-import findEntry from "../x500/findEntry";
+import { bind as doBind } from "./bind";
+import {
+    directoryBindError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
+import {
+    DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+import { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 
 const BER = () => new BERElement();
 
@@ -72,13 +82,7 @@ async function handleRequest (
             opCode: request.opcode,
             argument: request.argument,
         },
-        {
-            basicLevels: new AuthenticationLevel_basicLevels(
-                AuthenticationLevel_basicLevels_level_none,
-                undefined,
-                undefined,
-            ),
-        },
+        dap.authLevel,
         undefined,
     );
     if ("error" in result) {
@@ -152,6 +156,14 @@ class DAPConnection {
     public get v2 (): boolean {
         return (this.bind.versions?.[Versions_v2] === TRUE_BIT);
     }
+    public boundEntry: Vertex | undefined;
+    public authLevel: AuthenticationLevel = {
+        basicLevels: new AuthenticationLevel_basicLevels(
+            AuthenticationLevel_basicLevels_level_none,
+            0,
+            false,
+        ),
+    };
 
     private async handleRequest (request: Request): Promise<void> {
         await handleRequestAndErrors(this.ctx, this, request);
@@ -172,14 +184,57 @@ class DAPConnection {
         readonly idm: IDMConnection,
         readonly bind: DirectoryBindArgument,
     ) {
-        console.log("DAP connection established.");
-        const bindResult = new DirectoryBindResult(
-            undefined,
-            undefined,
-            undefined,
-        );
-        // Check bind credentials.
-        idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
+        if (bind.credentials) {
+            doBind(ctx, bind.credentials)
+                .then((outcome) => {
+                    if (!outcome) {
+                        const err: typeof directoryBindError["&ParameterType"] = {
+                            unsigned: new DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1(
+                                undefined,
+                                {
+                                    securityError: SecurityProblem_noInformation,
+                                },
+                                undefined,
+                            ),
+                        };
+                        const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
+                        idm
+                            .writeBindError(dap_ip["&id"]!, error)
+                            .then(() => {
+                                this.handleUnbind()
+                                    .then(() => {
+                                        ctx.log.info("Disconnected client due to authentication failure.");
+                                    })
+                                    .catch((e) => {
+                                        ctx.log.error("Error disconnecting from client: ", e);
+                                    });
+                            })
+                            .catch((e) => {
+                                ctx.log.error("Error writing bind error: ", e);
+                            });
+                        ctx.log.info("Invalid credentials.");
+                        return;
+                    }
+                    const bindResult = new DirectoryBindResult(
+                        undefined,
+                        undefined,
+                        undefined,
+                    );
+                    idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
+                    ctx.log.info("Authenticated DAP connection bound.");
+                })
+                .catch((e) => {
+                    ctx.log.error("Error during bind operation: ", e);
+                });
+        } else {
+            const bindResult = new DirectoryBindResult(
+                undefined,
+                undefined,
+                undefined,
+            );
+            idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
+            ctx.log.info("Anonymous DAP connection bound.");
+        }
         idm.events.on("request", this.handleRequest.bind(this));
         idm.events.on("unbind", this.handleUnbind.bind(this));
     }

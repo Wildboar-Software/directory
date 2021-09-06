@@ -97,7 +97,7 @@ async function connect (
         const encoded = _encode_IDM_PDU(pdu, DER);
         await new Promise((resolve, reject) => {
             idm.events.once("bindError", (err) => {
-                reject(err.error);
+                reject(err);
             });
             idm.events.once("bindResult", (result) => {
                 resolve(result);

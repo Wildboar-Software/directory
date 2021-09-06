@@ -1,4 +1,5 @@
 import type { Context, Vertex } from "../types";
+import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     ChangePasswordArgument,
@@ -18,6 +19,12 @@ import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import setEntryPassword from "../database/setEntryPassword";
+import attemptPassword from "../authn/attemptPassword";
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -53,6 +60,30 @@ async function changePassword (
 ): Promise<ChainedResult> {
     const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
+    const oldPasswordIsCorrect: boolean | undefined = await attemptPassword(ctx, target, {
+        userPwd: data.oldPwd,
+    });
+    if (!oldPasswordIsCorrect) {
+        throw new errors.SecurityError(
+            "Old password incorrect in changePassword operation.",
+            new SecurityErrorData(
+                SecurityProblem_noInformation,
+                undefined,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+    // TODO: Access control.
+    await setEntryPassword(ctx, target, data.newPwd);
+    /* Note that the specification says that we should update hierarchical
+    operational bindings, but really, no other DSA should have the passwords for
+    entries in this DSA. Meerkat DSA will take a principled stance and refuse
+    to update HOBs when a password changes. */
     const result: ChangePasswordResult = {
         null_: null,
     };

@@ -24,6 +24,7 @@ import dap_add_dmd from "./yargs/dap_add_dmd";
 import dap_search_new from "./yargs/dap_search_new";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
+import type { Connection } from "./types";
 
 loadLDAPSyntaxes(ctx);
 loadAttributeTypes(ctx);

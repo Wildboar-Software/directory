@@ -18,6 +18,7 @@ import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import setEntryPassword from "../database/setEntryPassword";
 
 // administerPassword OPERATION ::= {
 //   ARGUMENT  AdministerPasswordArgument
@@ -53,6 +54,12 @@ async function administerPassword (
 ): Promise<ChainedResult> {
     const argument: AdministerPasswordArgument = _decode_AdministerPasswordArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
+    // TODO: Access control.
+    await setEntryPassword(ctx, target, data.newPwd);
+    /* Note that the specification says that we should update hierarchical
+    operational bindings, but really, no other DSA should have the passwords for
+    entries in this DSA. Meerkat DSA will take a principled stance and refuse
+    to update HOBs when a password changes. */
     const result: AdministerPasswordResult = {
         null_: null,
     };

@@ -10,6 +10,10 @@ import { DER } from "asn1-ts/dist/node/functional";
 //     ACIItem,
 //     _decode_ACIItem,
 // } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+import {
+    UserPwd,
+    _decode_UserPwd,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 // import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
 // import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
 // import { parent } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
@@ -23,8 +27,36 @@ import {
 import {
     _decode_MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
+import encryptPassword from "../x500/encryptPassword";
+import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 import { Knowledge } from "@prisma/client";
 import rdnToJson from "../x500/rdnToJson";
+// import { pwdStartTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
+// import { pwdExpiryTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
+// import { pwdEndTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEndTime.oa";
+// import { pwdFails } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
+// import { pwdFailureTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
+// import { pwdGracesUsed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGracesUsed.oa";
+// import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+// import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+// import { pwdModifyEntryAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
+// import { pwdChangeAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
+// import { pwdMaxAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxAge.oa";
+// import { pwdExpiryAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryAge.oa";
+// import { pwdMinLength } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinLength.oa";
+// import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
+// import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
+// import { pwdDictionaries } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdDictionaries.oa";
+// import { pwdExpiryWarning } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryWarning.oa";
+// import { pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGraces.oa";
+// import { pwdFailureDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureDuration.oa";
+// import { pwdLockoutDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdLockoutDuration.oa";
+// import { pwdMaxFailures } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxFailures.oa";
+// import { pwdMaxTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxTimeInHistory.oa";
+// import { pwdMinTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinTimeInHistory.oa";
+// import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
+// import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
+// import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 
 /* DATABASE WRITERS */
 
@@ -286,308 +318,465 @@ export const addSpecificKnowledge: SpecialAttributeDatabaseEditor = async (
     );
 };
 
-// TODO:
-
-// export const userPwd: SpecialAttributeDatabaseEditor = async (
+// export const addPwdStartTime: SpecialAttributeDatabaseEditor = async (
 //     ctx: Readonly<Context>,
 //     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
+//     value: Value,
 //     pendingUpdates: PendingUpdates,
 // ): Promise<void> => {
 
 // };
 
-// export const userPassword: SpecialAttributeDatabaseEditor = async (
+export const addPwdExpiryTime: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.password.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            pwdExpiryTime: value.value.generalizedTime,
+        },
+    }));
+};
+
+export const addPwdEndTime: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.password.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            pwdEndTime: value.value.generalizedTime,
+        },
+    }));
+};
+
+// export const addPwdFails: SpecialAttributeDatabaseEditor = async (
 //     ctx: Readonly<Context>,
 //     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
+//     value: Value,
 //     pendingUpdates: PendingUpdates,
 // ): Promise<void> => {
 
 // };
 
-// export const pwdStartTime: SpecialAttributeDatabaseEditor = async (
+// export const addPwdFailureTime: SpecialAttributeDatabaseEditor = async (
 //     ctx: Readonly<Context>,
 //     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
+//     value: Value,
 //     pendingUpdates: PendingUpdates,
 // ): Promise<void> => {
 
 // };
 
-// export const pwdExpiryTime: SpecialAttributeDatabaseEditor = async (
+// export const addPwdGracesUsed: SpecialAttributeDatabaseEditor = async (
 //     ctx: Readonly<Context>,
 //     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
+//     value: Value,
 //     pendingUpdates: PendingUpdates,
 // ): Promise<void> => {
 
 // };
 
-// export const pwdEndTime: SpecialAttributeDatabaseEditor = async (
+// export const addUserPwdHistory: SpecialAttributeDatabaseEditor = async (
 //     ctx: Readonly<Context>,
 //     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
+//     value: Value,
 //     pendingUpdates: PendingUpdates,
 // ): Promise<void> => {
 
 // };
 
-// export const pwdFails: SpecialAttributeDatabaseEditor = async (
+// export const addUserPwdRecentlyExpired: SpecialAttributeDatabaseEditor = async (
 //     ctx: Readonly<Context>,
 //     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
+//     value: Value,
 //     pendingUpdates: PendingUpdates,
 // ): Promise<void> => {
 
 // };
 
-// export const pwdFailureTime: SpecialAttributeDatabaseEditor = async (
+export const addPwdModifyEntryAllowed: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdModifyEntryAllowed.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.boolean,
+        },
+    }));
+};
+
+export const addPwdChangeAllowed: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdChangeAllowed.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.boolean,
+        },
+    }));
+};
+
+export const addPwdMaxAge: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdMaxAge.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdExpiryAge: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdExpiryAge.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdMinLength: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdMinLength.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+// export const addPwdVocabulary: SpecialAttributeDatabaseEditor = async (
 //     ctx: Readonly<Context>,
 //     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
+//     value: Value,
+//     pendingUpdates: PendingUpdates,
+// ): Promise<void> => {
+//     pendingUpdates.otherWrites.push(ctx.db.pwdVo.update({
+//         where: {
+//             entry_id: vertex.dse.id,
+//         },
+//         data: {
+//             value: value.value.boolean,
+//         },
+//     }));
+// };
+
+// export const addPwdAlphabet: SpecialAttributeDatabaseEditor = async (
+//     ctx: Readonly<Context>,
+//     vertex: Vertex,
+//     value: Value,
+//     pendingUpdates: PendingUpdates,
+// ): Promise<void> => {
+//     pendingUpdates.otherWrites.push(ctx.db.pwdModifyEntryAllowed.update({
+//         where: {
+//             entry_id: vertex.dse.id,
+//         },
+//         data: {
+//             value: value.value.boolean,
+//         },
+//     }));
+// };
+
+export const addPwdDictionaries: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdDictionaries.createMany({
+        data: {
+            entry_id: vertex.dse.id,
+            value: value.value.utf8String,
+        },
+    }));
+};
+
+export const addPwdExpiryWarning: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdExpiryWarning.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdGraces: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdGraces.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdFailureDuration: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdFailureDuration.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdLockoutDuration: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdLockoutDuration.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdMaxFailures: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdMaxFailures.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdMaxTimeInHistory: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdMaxTimeInHistory.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdMinTimeInHistory: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdMinTimeInHistory.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdHistorySlots: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdHistorySlots.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+export const addPwdRecentlyExpiredDuration: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdRecentlyExpiredDuration.update({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        data: {
+            value: value.value.integer,
+        },
+    }));
+};
+
+// export const addPwdEncAlg: SpecialAttributeDatabaseEditor = async (
+//     ctx: Readonly<Context>,
+//     vertex: Vertex,
+//     value: Value,
 //     pendingUpdates: PendingUpdates,
 // ): Promise<void> => {
 
 // };
 
-// export const pwdGracesUsed: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
+// NOTE: This might not be used.
+export const addUserPassword: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const algid = getScryptAlgorithmIdentifier();
+    const encrypted = encryptPassword(algid, value.value.octetString);
+    if (!encrypted) {
+        throw new Error();
+    }
+    pendingUpdates.otherWrites.push(ctx.db.password.upsert({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        create: {
+            entry_id: vertex.dse.id,
+            encrypted: Buffer.from(encrypted),
+            algorithm_oid: algid.algorithm.toString(),
+            algorithm_parameters_der: algid.parameters
+                ? Buffer.from(algid.parameters.toBytes())
+                : undefined,
+        },
+        update: {
+            entry_id: vertex.dse.id,
+            encrypted: Buffer.from(encrypted),
+            algorithm_oid: algid.algorithm.toString(),
+            algorithm_parameters_der: algid.parameters
+                ? Buffer.from(algid.parameters.toBytes())
+                : undefined,
+        },
+    }));
+};
 
-// };
-
-// export const pwdModifyEntryAllowed: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdChangeAllowed: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdMaxAge: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdExpiryAge: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdMinLength: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const noDictionaryWords: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const noPersonNames: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const noGeographicalNames: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdDictionaries: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdExpiryWarning: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdGraces: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdFailureDuration: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdLockoutDuration: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdMaxFailures: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdMaxTimeInHistory: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdMinTimeInHistory: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdHistorySlots: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-// export const pwdRecentlyExpiredDuration: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-
-// };
-
-
-
-// TODO: objectClass
-// TODO: commonName
-// TODO: hierarchyLevel
-// TODO: hierarchyBelow
-// TODO: hierarchyParent
-// TODO: hierarchyTop
-// TODO: accessControlScheme
-// TODO: jid
-// TODO: objectIdentifier
-// TODO: countryName
-// TODO: countryCode3c
-// TODO: countryCode3n
-// TODO: utmCoordinates_id
-// TODO: utmCoordinates
-// TODO: organizationIdentifier
-// TODO: communicationsNetwork
-// TODO: oidC1
-// TODO: oidC2
-// TODO: oidC
-// TODO: urnC
-// TODO: tagOid
-// TODO: uiiInUrn
-// TODO: epcInUrn
-// TODO: contentType
-// TODO: messageDigest
-// TODO: administrativeRole
-// TODO: dc
-// TODO: clearance
-// TODO: DITStructureRuleUse
-// TODO: ContentRuleUse
-// TODO: ContextUseRuleUse
-// TODO: FriendshipUse
-// TODO: MatchingRuleUse
-// TODO: AttributeTypeDescriptionUse
-// TODO: ObjectClassDescriptionUsage
-// TODO: ContextDescriptionUse
-// TODO: SearchRuleUse
-// TODO: AccessPoint (Multiple such attributes)
-// TODO: SubtreeSpecification
-// TODO: nonSpecificKnowledge
-// TODO: specificKnowledge
-// TODO: userPwd
-// TODO: userPassword
-// TODO: pwdStartTime
-// TODO: pwdExpiryTime
-// TODO: pwdEndTime
-// TODO: pwdFails
-// TODO: pwdFailureTime
-// TODO: pwdGracesUsed
-// TODO: pwdModifyEntryAllowed
-// TODO: pwdChangeAllowed
-// TODO: pwdMaxAge
-// TODO: pwdExpiryAge
-// TODO: pwdMinLength
-// TODO: noDictionaryWords
-// TODO: noPersonNames
-// TODO: noGeographicalNames
-// TODO: pwdDictionaries
-// TODO: pwdExpiryWarning
-// TODO: pwdGraces
-// TODO: pwdFailureDuration
-// TODO: pwdLockoutDuration
-// TODO: pwdMaxFailures
-// TODO: pwdMaxTimeInHistory
-// TODO: pwdMinTimeInHistory
-// TODO: pwdHistorySlots
-// TODO: pwdRecentlyExpiredDuration
+// NOTE: This might not be used.
+export const addUserPwd: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const pwd = _decode_UserPwd(value.value);
+    if ("clear" in pwd) {
+        const algid = getScryptAlgorithmIdentifier();
+        const clear = Buffer.from(pwd.clear, "utf-8");
+        const encrypted = encryptPassword(algid, clear);
+        if (!encrypted) {
+            throw new Error();
+        }
+        pendingUpdates.otherWrites.push(ctx.db.password.upsert({
+            where: {
+                entry_id: vertex.dse.id,
+            },
+            create: {
+                entry_id: vertex.dse.id,
+                encrypted: Buffer.from(encrypted),
+                algorithm_oid: algid.algorithm.toString(),
+                algorithm_parameters_der: algid.parameters
+                    ? Buffer.from(algid.parameters.toBytes())
+                    : undefined,
+            },
+            update: {
+                entry_id: vertex.dse.id,
+                encrypted: Buffer.from(encrypted),
+                algorithm_oid: algid.algorithm.toString(),
+                algorithm_parameters_der: algid.parameters
+                    ? Buffer.from(algid.parameters.toBytes())
+                    : undefined,
+            },
+        }));
+    } else if ("encrypted" in pwd) {
+        pendingUpdates.otherWrites.push(ctx.db.password.upsert({
+            where: {
+                entry_id: vertex.dse.id,
+            },
+            create: {
+                entry_id: vertex.dse.id,
+                encrypted: Buffer.from(pwd.encrypted.encryptedString),
+                algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
+                algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
+                    ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
+                    : undefined,
+            },
+            update: {
+                entry_id: vertex.dse.id,
+                encrypted: Buffer.from(pwd.encrypted.encryptedString),
+                algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
+                algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
+                    ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
+                    : undefined,
+            },
+        }));
+    } else {
+        throw new Error();
+    }
+};

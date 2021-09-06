@@ -14,6 +14,34 @@ import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework
 import { administrativeRole } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
 import { subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import { accessControlScheme } from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
+import { pwdStartTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
+import { pwdExpiryTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
+import { pwdEndTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEndTime.oa";
+import { pwdFails } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
+import { pwdFailureTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
+import { pwdGracesUsed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGracesUsed.oa";
+import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+import { pwdModifyEntryAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
+import { pwdChangeAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
+import { pwdMaxAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxAge.oa";
+import { pwdExpiryAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryAge.oa";
+import { pwdMinLength } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinLength.oa";
+import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
+import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
+import { pwdDictionaries } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdDictionaries.oa";
+import { pwdExpiryWarning } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryWarning.oa";
+import { pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGraces.oa";
+import { pwdFailureDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureDuration.oa";
+import { pwdLockoutDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdLockoutDuration.oa";
+import { pwdMaxFailures } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxFailures.oa";
+import { pwdMaxTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxTimeInHistory.oa";
+import { pwdMinTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinTimeInHistory.oa";
+import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
+import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
+import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
+import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 
 // Attribute Removers
 import * as removers from "../specialAttributeRemovers";
@@ -27,6 +55,36 @@ const specialAttributeDatabaseRemovers: Map<IndexableOID, SpecialAttributeDataba
     // [ id_aca_entryACI.toString(), writeEntryACI ],
     // [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
     // [ id_aca_subentryACI.toString(), writeSubentryACI ],
+
+    // [ pwdStartTime["&id"]!.toString(), removers.removePwdStartTime ],
+    [ pwdExpiryTime["&id"]!.toString(), removers.removePwdExpiryTime ],
+    [ pwdEndTime["&id"]!.toString(), removers.removePwdEndTime ],
+    // [ pwdFails["&id"]!.toString(), removers.removePwdFails ],
+    // [ pwdFailureTime["&id"]!.toString(), removers.removePwdFailureTime ],
+    // [ pwdGracesUsed["&id"]!.toString(), removers.removePwdGracesUsed ],
+    // [ userPwdHistory["&id"]!.toString(), removers.removeUserPwdHistory ],
+    // [ userPwdRecentlyExpired["&id"]!.toString(), removers.removeUserPwdRecentlyExpired ],
+    [ pwdModifyEntryAllowed["&id"]!.toString(), removers.removePwdModifyEntryAllowed ],
+    [ pwdChangeAllowed["&id"]!.toString(), removers.removePwdChangeAllowed ],
+    [ pwdMaxAge["&id"]!.toString(), removers.removePwdMaxAge ],
+    [ pwdExpiryAge["&id"]!.toString(), removers.removePwdExpiryAge ],
+    [ pwdMinLength["&id"]!.toString(), removers.removePwdMinLength ],
+    // [ pwdVocabulary["&id"]!.toString(), removers.removePwdVocabulary ],
+    // [ pwdAlphabet["&id"]!.toString(), removers.removePwdAlphabet ],
+    [ pwdDictionaries["&id"]!.toString(), removers.removePwdDictionaries ],
+    [ pwdExpiryWarning["&id"]!.toString(), removers.removePwdExpiryWarning ],
+    [ pwdGraces["&id"]!.toString(), removers.removePwdGraces ],
+    [ pwdFailureDuration["&id"]!.toString(), removers.removePwdFailureDuration ],
+    [ pwdLockoutDuration["&id"]!.toString(), removers.removePwdLockoutDuration ],
+    [ pwdMaxFailures["&id"]!.toString(), removers.removePwdMaxFailures ],
+    [ pwdMaxTimeInHistory["&id"]!.toString(), removers.removePwdMaxTimeInHistory ],
+    [ pwdMinTimeInHistory["&id"]!.toString(), removers.removePwdMinTimeInHistory ],
+    [ pwdHistorySlots["&id"]!.toString(), removers.removePwdHistorySlots ],
+    [ pwdRecentlyExpiredDuration["&id"]!.toString(), removers.removePwdRecentlyExpiredDuration ],
+    // [ pwdEncAlg["&id"]!.toString(), removers.removePwdEncAlg ],
+
+    [ userPwd["&id"]!.toString(), removers.removeUserPwd ],
+    [ userPassword["&id"]!.toString(), removers.removeUserPassword ],
 ]);
 
 export

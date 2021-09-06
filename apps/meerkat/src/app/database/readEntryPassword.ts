@@ -11,31 +11,27 @@ async function readEntryPassword (
     ctx: Context,
     entry: Vertex,
 ): Promise<UserPwd | null> {
-    const storedEntry = await ctx.db.entry.findFirst({
+    const password = await ctx.db.password.findUnique({
         where: {
             id: entry.dse.id,
         },
-        include: {
-            password: true,
-        },
     });
-    if (!storedEntry || !storedEntry.password) {
+    if (!password) {
         return null;
     }
-    const pwd = storedEntry.password;
     return {
         encrypted: new UserPwd_encrypted(
             new AlgorithmIdentifier(
-                ObjectIdentifier.fromString(pwd.algorithm_oid),
-                pwd.algorithm_parameters_der
+                ObjectIdentifier.fromString(password.algorithm_oid),
+                password.algorithm_parameters_der
                     ? ((): DERElement => {
                         const el = new DERElement();
-                        el.fromBytes(pwd.algorithm_parameters_der);
+                        el.fromBytes(password.algorithm_parameters_der);
                         return el;
                     })()
                     : undefined,
             ),
-            pwd.encrypted,
+            password.encrypted,
         ),
     };
 }

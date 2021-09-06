@@ -18,12 +18,9 @@ import {
 import * as crypto from "crypto";
 import attemptPassword from "../../x500/attemptPassword";
 import readEntryPassword from "../../database/readEntryPassword";
+import sleep from "../../utils/sleep";
 
 const INVALID_CREDENTIALS_MESSAGE: string = "Invalid credentials or no such object.";
-
-function sleep (ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 function invalidCredentialsError (name: Uint8Array): BindResponse {
     return new BindResponse(
@@ -72,7 +69,7 @@ async function bind (
         );
     }
     // Wait a random amount of time to prevent timing attacks.
-    sleep(crypto.randomInt(10000) + 10000);
+    sleep(crypto.randomInt(3000) + 1000);
     const dn = decodeLDAPDN(ctx, req.name);
     const entry = await findEntry(ctx, ctx.dit.root, dn, true);
     if (!entry) {
@@ -99,7 +96,9 @@ async function bind (
         if (!pwd) {
             return invalidCredentialsError(req.name);
         }
-        const authenticated = attemptPassword(suppliedPassword, pwd);
+        const authenticated = attemptPassword({
+            unprotected: suppliedPassword,
+        }, pwd);
         if (authenticated) {
             return simpleSuccess(encodedDN);
         } else {
@@ -122,7 +121,9 @@ async function bind (
                 if (!pwd) {
                     return invalidCredentialsError(req.name);
                 }
-                const authenticated = attemptPassword(Buffer.from(passwd), pwd);
+                const authenticated = attemptPassword({
+                    unprotected: Buffer.from(passwd),
+                }, pwd);
                 if (authenticated) {
                     return simpleSuccess(encodedDN);
                 } else {

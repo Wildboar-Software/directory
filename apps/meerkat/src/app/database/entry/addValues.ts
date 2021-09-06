@@ -15,6 +15,34 @@ import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework
 import { administrativeRole } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
 import { subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import { accessControlScheme } from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
+import { pwdStartTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
+import { pwdExpiryTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
+import { pwdEndTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEndTime.oa";
+import { pwdFails } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
+import { pwdFailureTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
+import { pwdGracesUsed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGracesUsed.oa";
+import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+import { pwdModifyEntryAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
+import { pwdChangeAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
+import { pwdMaxAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxAge.oa";
+import { pwdExpiryAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryAge.oa";
+import { pwdMinLength } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinLength.oa";
+import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
+import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
+import { pwdDictionaries } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdDictionaries.oa";
+import { pwdExpiryWarning } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryWarning.oa";
+import { pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGraces.oa";
+import { pwdFailureDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureDuration.oa";
+import { pwdLockoutDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdLockoutDuration.oa";
+import { pwdMaxFailures } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxFailures.oa";
+import { pwdMaxTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxTimeInHistory.oa";
+import { pwdMinTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinTimeInHistory.oa";
+import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
+import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
+import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
+import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 
 // Attribute Adders
 import * as adders from "../specialAttributeAdders";
@@ -28,6 +56,37 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     // [ id_aca_entryACI.toString(), writeEntryACI ],
     // [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
     // [ id_aca_subentryACI.toString(), writeSubentryACI ],
+    // [ pwdStartTime["&id"]!.toString(), adders.addPwdStartTime ],
+    [ pwdExpiryTime["&id"]!.toString(), adders.addPwdExpiryTime ],
+    [ pwdEndTime["&id"]!.toString(), adders.addPwdEndTime ],
+    // [ pwdFails["&id"]!.toString(), adders.addPwdFails ],
+    // [ pwdFailureTime["&id"]!.toString(), adders.addPwdFailureTime ],
+    // [ pwdGracesUsed["&id"]!.toString(), adders.addPwdGracesUsed ],
+    // [ userPwdHistory["&id"]!.toString(), adders.addUserPwdHistory ],
+    // [ userPwdRecentlyExpired["&id"]!.toString(), adders.addUserPwdRecentlyExpired ],
+    [ pwdModifyEntryAllowed["&id"]!.toString(), adders.addPwdModifyEntryAllowed ],
+    [ pwdChangeAllowed["&id"]!.toString(), adders.addPwdChangeAllowed ],
+    [ pwdMaxAge["&id"]!.toString(), adders.addPwdMaxAge ],
+    [ pwdExpiryAge["&id"]!.toString(), adders.addPwdExpiryAge ],
+    [ pwdMinLength["&id"]!.toString(), adders.addPwdMinLength ],
+    // [ pwdVocabulary["&id"]!.toString(), adders.addPwdVocabulary ],
+    // [ pwdAlphabet["&id"]!.toString(), adders.addPwdAlphabet ],
+    [ pwdDictionaries["&id"]!.toString(), adders.addPwdDictionaries ],
+    [ pwdExpiryWarning["&id"]!.toString(), adders.addPwdExpiryWarning ],
+    [ pwdGraces["&id"]!.toString(), adders.addPwdGraces ],
+    [ pwdFailureDuration["&id"]!.toString(), adders.addPwdFailureDuration ],
+    [ pwdLockoutDuration["&id"]!.toString(), adders.addPwdLockoutDuration ],
+    [ pwdMaxFailures["&id"]!.toString(), adders.addPwdMaxFailures ],
+    [ pwdMaxTimeInHistory["&id"]!.toString(), adders.addPwdMaxTimeInHistory ],
+    [ pwdMinTimeInHistory["&id"]!.toString(), adders.addPwdMinTimeInHistory ],
+    [ pwdHistorySlots["&id"]!.toString(), adders.addPwdHistorySlots ],
+    [ pwdRecentlyExpiredDuration["&id"]!.toString(), adders.addPwdRecentlyExpiredDuration ],
+    // [ pwdEncAlg["&id"]!.toString(), adders.addPwdEncAlg ],
+
+    // NOTE: These may be removed. Passwords should be administered through the
+    // administerPassword and changePassword operations.
+    [ userPwd["&id"]!.toString(), adders.addUserPwd ],
+    [ userPassword["&id"]!.toString(), adders.addUserPassword ],
 ]);
 
 export

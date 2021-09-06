@@ -48,8 +48,8 @@ model Entry {
     //   writeableCopy Boolean @default(false) // Not used.
 
     // Single-valued attributes
-    createdTimestamp         DateTime       @default(now())
-    modifyTimestamp          DateTime       @updatedAt
+    createdTimestamp         DateTime  @default(now())
+    modifyTimestamp          DateTime  @updatedAt
     deleteTimestamp          DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
     creatorsName             Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
     modifiersName            Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
@@ -57,8 +57,6 @@ model Entry {
     hierarchyBelow           Boolean?
     hierarchyParent          Int? // TODO: Make this a foreign key
     hierarchyTop             Int? // TODO: Make this a foreign key
-    password_id              Int?
-    password                 Password?      @relation(fields: [password_id], references: [id])
     structuralObjectClass    String?
     accessControlScheme      String?
     // intEmail                 String?
@@ -86,12 +84,12 @@ model Entry {
     administrativeRole OIDs?
 
     // Technically a userApplications attribute, but still has operational uses.
-    uniqueIdentifier        Bytes? // DER-encoded bitstring value (not tag and length bytes)
+    uniqueIdentifier Bytes? // DER-encoded bitstring value (not tag and length bytes)
 
     // LDAP operational attributes
     // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
     governingStructureRule Int?
-    entryUUID              String  @default(uuid()) // @db.Uuid
+    entryUUID              String @default(uuid()) // @db.Uuid
     // dc                     String? // https://datatracker.ietf.org/doc/html/rfc4519
     // preferredDeliveryMethod
 
@@ -120,7 +118,26 @@ model Entry {
     AccessPoint                 AccessPoint[]
     SubtreeSpecification        SubtreeSpecification[]
     NonSpecificKnowledge        NonSpecificKnowledge[]
+    PwdModifyEntryAllowed       PwdModifyEntryAllowed[]
+    PwdChangeAllowed            PwdChangeAllowed[]
+    PwdMaxAge                   PwdMaxAge[]
+    PwdExpiryAge                PwdExpiryAge[]
+    PwdMinLength                PwdMinLength[]
+    NoDictionaryWords           NoDictionaryWords[]
+    NoPersonNames               NoPersonNames[]
+    NoGeographicalNames         NoGeographicalNames[]
+    PwdDictionaries             PwdDictionaries[]
+    PwdExpiryWarning            PwdExpiryWarning[]
+    PwdGraces                   PwdGraces[]
+    PwdFailureDuration          PwdFailureDuration[]
+    PwdLockoutDuration          PwdLockoutDuration[]
+    PwdMaxFailures              PwdMaxFailures[]
+    PwdMaxTimeInHistory         PwdMaxTimeInHistory[]
+    PwdMinTimeInHistory         PwdMinTimeInHistory[]
+    PwdHistorySlots             PwdHistorySlots[]
+    PwdRecentlyExpiredDuration  PwdRecentlyExpiredDuration[]
     @@unique([entryUUID])
+    Password Password[]
 }
 
 // model UtmCoordinate {
@@ -133,36 +150,170 @@ model Entry {
 
 // There may be only one password per entry
 model Password {
-    id                         Int       @id @default(autoincrement())
-    encrypted                  Bytes
-    algorithm_oid              String // OID
-    algorithm_parameters_der   Bytes?
-    pwdStartTime               DateTime  @default(now())
-    pwdExpiryTime              DateTime?
-    pwdEndTime                 DateTime?
-    pwdFails                   Int       @default(0)
-    pwdFailureTime             DateTime?
-    pwdGracesUsed              Int       @default(0)
-    pwdModifyEntryAllowed      Boolean?
-    pwdChangeAllowed           Boolean?
-    pwdMaxAge                  Int?
-    pwdExpiryAge               Int?
-    pwdMinLength               Int?
-    noDictionaryWords          Boolean? // From pwdVocabulary
-    noPersonNames              Boolean? // From pwdVocabulary
-    noGeographicalNames        Boolean? // From pwdVocabulary
-    // pwdAlphabet NOT SUPPORTED YET
-    pwdDictionaries            String?
-    pwdExpiryWarning           Int?
-    pwdGraces                  Int?
-    pwdFailureDuration         Int?
-    pwdLockoutDuration         Int?
-    pwdMaxFailures             Int?
-    pwdMaxTimeInHistory        Int?
-    pwdMinTimeInHistory        Int?
-    pwdHistorySlots            Int?
-    pwdRecentlyExpiredDuration Int?
-    entries                    Entry[]
+    id                       Int       @id @default(autoincrement())
+    entry_id                 Int
+    entry                    Entry     @relation(fields: [entry_id], references: [id])
+    encrypted                Bytes
+    algorithm_oid            String // OID
+    algorithm_parameters_der Bytes?
+    pwdStartTime             DateTime  @default(now())
+    pwdExpiryTime            DateTime?
+    pwdEndTime               DateTime?
+    pwdFails                 Int       @default(0)
+    pwdFailureTime           DateTime?
+    pwdGracesUsed            Int       @default(0)
+
+    @@unique([entry_id])
+}
+
+model PwdModifyEntryAllowed {
+    id       Int     @id @default(autoincrement())
+    entry_id Int
+    entry    Entry   @relation(fields: [entry_id], references: [id])
+    value    Boolean
+    @@unique([entry_id])
+}
+
+model PwdChangeAllowed {
+    id       Int     @id @default(autoincrement())
+    entry_id Int
+    entry    Entry   @relation(fields: [entry_id], references: [id])
+    value    Boolean
+    @@unique([entry_id])
+}
+
+model PwdMaxAge {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdExpiryAge {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdMinLength {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model NoDictionaryWords {
+    id       Int     @id @default(autoincrement())
+    entry_id Int
+    entry    Entry   @relation(fields: [entry_id], references: [id])
+    value    Boolean
+    @@unique([entry_id])
+}
+
+model NoPersonNames {
+    id       Int     @id @default(autoincrement())
+    entry_id Int
+    entry    Entry   @relation(fields: [entry_id], references: [id])
+    value    Boolean
+    @@unique([entry_id])
+}
+
+model NoGeographicalNames {
+    id       Int     @id @default(autoincrement())
+    entry_id Int
+    entry    Entry   @relation(fields: [entry_id], references: [id])
+    value    Boolean
+    @@unique([entry_id])
+}
+
+// model PwdAlphabet {
+//     id  Int @id @default(autoincrement())
+//     entry_id    Int
+//     entry       Entry @relation(fields: [entry_id], references: [id])
+//     value
+// }
+
+model PwdDictionaries {
+    id       Int    @id @default(autoincrement())
+    entry_id Int
+    entry    Entry  @relation(fields: [entry_id], references: [id])
+    value    String @db.MediumText
+}
+
+model PwdExpiryWarning {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdGraces {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdFailureDuration {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdLockoutDuration {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdMaxFailures {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdMaxTimeInHistory {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdMinTimeInHistory {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdHistorySlots {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
+}
+
+model PwdRecentlyExpiredDuration {
+    id       Int   @id @default(autoincrement())
+    entry_id Int
+    entry    Entry @relation(fields: [entry_id], references: [id])
+    value    Int
+    @@unique([entry_id])
 }
 
 // AccessPoint ::= SET {
@@ -740,9 +891,9 @@ model OperationalBinding {
     last_shadow_problem Int?      @db.SmallInt
 
     OperationalBinding OperationalBinding[] @relation("OperationalBindingToOperationalBinding")
-    @@index([validity_end, validity_start])
     @@unique([uuid])
     @@unique([binding_type, binding_identifier, binding_version, terminated_time])
+    @@index([validity_end, validity_start])
 }
 
 // Only accept OB requests from DSAs that can be verified by:
