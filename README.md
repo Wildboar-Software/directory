@@ -273,6 +273,8 @@ This is not to imply that these rules are current adhered to.
     - [ ] permitUnrecognizedAttributeTypes
     - [ ] readTimestamp
     - [ ] readersName
+    - [ ] pwdPolicySubentry (adds all of the optional attributes from ITU X.501, 14.9.)
+    - [ ] administrativePoint (object class)
   - [ ] User
     - [ ] Government
       - [ ] ssn

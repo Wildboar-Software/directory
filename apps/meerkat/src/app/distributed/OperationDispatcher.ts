@@ -55,7 +55,10 @@ import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSer
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import { strict as assert } from "assert";
 import { addEntry as doAddEntry } from "./addEntry";
+import { administerPassword as doAdministerPassword } from "./administerPassword";
+import { changePassword as doChangePassword } from "./changePassword";
 import { compare as doCompare } from "./compare";
+import { modifyDN as doModifyDN } from "./modifyDN";
 import { modifyEntry as doModifyEntry } from "./modifyEntry";
 import { read as doRead } from "./read";
 import { removeEntry as doRemoveEntry } from "./removeEntry";
@@ -175,9 +178,6 @@ class OperationDispatcher {
         if (compareCode(req.opCode, abandon["&operationCode"]!)) {
             throw new errors.UnknownOperationError();
         }
-        else if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
-            throw new errors.UnknownOperationError();
-        }
         else if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
             const result = await doAddEntry(ctx, foundDSE, state.admPoints, reqData);
             return {
@@ -187,8 +187,23 @@ class OperationDispatcher {
                 chaining: result.chainedResult,
             };
         }
+        else if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
+            const result = await doAdministerPassword(ctx, foundDSE, state.admPoints, reqData);
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: result.result,
+                chaining: result.chainedResult,
+            };
+        }
         else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
-            throw new errors.UnknownOperationError();
+            const result = await doChangePassword(ctx, foundDSE, state.admPoints, reqData);
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: result.result,
+                chaining: result.chainedResult,
+            };
         }
         else if (compareCode(req.opCode, compare["&operationCode"]!)) {
             const result = await doCompare(ctx, foundDSE, state.admPoints, reqData);
@@ -200,7 +215,13 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
-            throw new errors.UnknownOperationError();
+            const result = await doModifyDN(ctx, foundDSE, state.admPoints, reqData);
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: result.result,
+                chaining: result.chainedResult,
+            };
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
             const result = await doModifyEntry(ctx, foundDSE, state.admPoints, reqData);
