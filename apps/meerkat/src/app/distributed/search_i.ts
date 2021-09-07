@@ -30,7 +30,7 @@ import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatch
 import type ApproxMatcher from "@wildboar/x500/src/lib/types/ApproxMatcher";
 import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500/src/lib/evaluateFilter";
+import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500/src/lib/utils/evaluateFilter";
 import { EntryInformation } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 import {
     EntryInformation_information_Item,

@@ -61,7 +61,7 @@ import {
 import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
-import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500/src/lib/evaluateFilter";
+import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500/src/lib/utils/evaluateFilter";
 import {
     AbandonError,
     NameError,

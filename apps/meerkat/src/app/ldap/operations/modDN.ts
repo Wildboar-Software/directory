@@ -164,7 +164,7 @@ async function modDN (
         ? (await Promise.all(
             newEntryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
                 ...tuple,
-                await userWithinACIUserClass(admPointDN, tuple[0], userName, dn, EQUALITY_MATCHER, isMemberOfGroup),
+                await userWithinACIUserClass(tuple[0], userName, dn, EQUALITY_MATCHER, isMemberOfGroup),
             ]),
         )).filter((tuple) => (tuple[5] > 0))
         : [];

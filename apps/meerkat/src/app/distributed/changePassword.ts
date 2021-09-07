@@ -1,4 +1,5 @@
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex, ClientConnection } from "../types";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -25,6 +26,27 @@ import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstr
 import {
     SecurityProblem_noInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getDistinguishedName from "../x500/getDistinguishedName";
+import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import bacACDF, {
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_REMOVE,
+    PERMISSION_CATEGORY_MODIFY,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import getIsGroupMember from "../bac/getIsGroupMember";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import {
+    userPassword,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import {
+    userPwd,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -54,12 +76,109 @@ import {
 export
 async function changePassword (
     ctx: Context,
+    conn: ClientConnection,
     target: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,
 ): Promise<ChainedResult> {
     const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
+    const targetDN = getDistinguishedName(target);
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
+    const accessControlScheme = admPoints
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    if (accessControlScheme) {
+        const AC_SCHEME: string = accessControlScheme.toString();
+        const relevantACIItems = [
+            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
+                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                : []),
+            ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                ? (target.dse.entryACI ?? [])
+                : []),
+        ];
+        const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
+            .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+        const EQUALITY_MATCHER = (
+            attributeType: OBJECT_IDENTIFIER,
+        ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+        const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    tuple[0],
+                    conn.boundNameAndUID!, // FIXME:
+                    targetDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        ))
+            .filter((tuple) => (tuple[5] > 0));
+        const {
+            authorized: authorizedToModifyEntry,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
+            },
+            [
+                PERMISSION_CATEGORY_MODIFY,
+            ],
+            EQUALITY_MATCHER,
+        );
+        const {
+            authorized: authorizedToModifyUserPassword,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                attributeType: userPassword["&id"],
+            },
+            [
+                PERMISSION_CATEGORY_ADD,
+                PERMISSION_CATEGORY_REMOVE,
+            ],
+            EQUALITY_MATCHER,
+        );
+        const {
+            authorized: authorizedToModifyUserPwd,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                attributeType: userPwd["&id"],
+            },
+            [
+                PERMISSION_CATEGORY_ADD,
+                PERMISSION_CATEGORY_REMOVE,
+            ],
+            EQUALITY_MATCHER,
+        );
+        if (
+            !authorizedToModifyEntry
+            || !authorizedToModifyUserPassword
+            || !authorizedToModifyUserPwd
+        ) {
+            throw new errors.SecurityError(
+                "Not permitted to modify entry with changePassword operation.",
+                new SecurityErrorData(
+                    SecurityProblem_noInformation,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
     const oldPasswordIsCorrect: boolean | undefined = await attemptPassword(ctx, target, {
         userPwd: data.oldPwd,
     });

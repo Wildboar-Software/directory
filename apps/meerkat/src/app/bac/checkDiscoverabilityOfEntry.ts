@@ -76,7 +76,7 @@ async function checkDiscoverabilityOfEntry (
             ? (await Promise.all(
                 entryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
                     ...tuple,
-                    await userWithinACIUserClass(admPointDN, tuple[0], user, dn, EQUALITY_MATCHER, isMemberOfGroup),
+                    await userWithinACIUserClass(tuple[0], user, dn, EQUALITY_MATCHER, isMemberOfGroup),
                 ]),
             )).filter((tuple) => (tuple[5] > 0))
             : [];

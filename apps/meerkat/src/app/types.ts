@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import {
     ObjectClassKind,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
@@ -22,7 +23,7 @@ import type {
 import type {
     ContextMatcher,
 } from "@wildboar/x500/src/lib/types/ContextMatcher";
-import { ASN1Element, OBJECT_IDENTIFIER, BIT_STRING, INTEGER, BOOLEAN } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER, BIT_STRING, INTEGER, BOOLEAN } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
@@ -53,13 +54,23 @@ import type {
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import type { PrismaClient } from "@prisma/client";
-import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { SupplierInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
-import { ConsumerInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
-import { SupplierAndConsumers } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
-import { MasterAndShadowAccessPoints } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
-import { DitBridgeKnowledge } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
+import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import type { SupplierInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
+import type { ConsumerInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
+import type { SupplierAndConsumers } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
+import type { MasterAndShadowAccessPoints } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
+import type { DitBridgeKnowledge } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
 import type { PrismaPromise, Prisma } from "@prisma/client";
+import type { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import {
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import {
+    AuthenticationLevel_basicLevels_level_none,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import type {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -442,3 +453,22 @@ type SpecialAttributeDatabaseRemover = (
     entry: Vertex,
     pendingUpdates: PendingUpdates,
 ) => Promise<void>;
+
+export
+abstract class ClientConnection {
+    public readonly id = randomUUID();
+    public boundEntry: Vertex | undefined;
+    /**
+     * Even though this can be calculated from the `boundEntry` field, this
+     * field exists so that the bound entry's DN does not have to be
+     * repeatedly re-calculated.
+     */
+    public boundNameAndUID: NameAndOptionalUID | undefined;
+    public authLevel: AuthenticationLevel = {
+        basicLevels: new AuthenticationLevel_basicLevels(
+            AuthenticationLevel_basicLevels_level_none,
+            0,
+            false,
+        ),
+    };
+}

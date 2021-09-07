@@ -1,4 +1,5 @@
 import type { Context, Vertex } from "../types";
+import type DAPConnection from "../dap/DAPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type {
     AuthenticationLevel,
@@ -113,9 +114,8 @@ class OperationDispatcher {
 
     public static async dispatchDAPRequest (
         ctx: Context,
+        conn: DAPConnection,
         req: Request,
-        authLevel: AuthenticationLevel,
-        uniqueIdentifier?: UniqueIdentifier,
     ): Promise<ChainedResultOrError> {
         assert(req.opCode);
         assert(req.argument);
@@ -123,8 +123,8 @@ class OperationDispatcher {
             ctx,
             req,
             false,
-            authLevel,
-            uniqueIdentifier,
+            conn.authLevel,
+            conn.boundNameAndUID?.uid,
         );
         const reqData = getOptionallyProtectedValue(preparedRequest);
         const targetObject = getSoughtObjectFromRequest(req);
@@ -188,7 +188,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
-            const result = await doAdministerPassword(ctx, foundDSE, state.admPoints, reqData);
+            const result = await doAdministerPassword(ctx, conn, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -197,7 +197,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
-            const result = await doChangePassword(ctx, foundDSE, state.admPoints, reqData);
+            const result = await doChangePassword(ctx, conn, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,

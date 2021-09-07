@@ -1,4 +1,4 @@
-import { Context, Vertex } from "../types";
+import { Context, ClientConnection } from "../types";
 import { IDMConnection } from "@wildboar/idm";
 import type {
     DirectoryBindArgument,
@@ -46,14 +46,7 @@ import {
 import {
     SecurityProblem_noInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import { v4 as uuid } from "uuid";
 import OperationDispatcher from "../distributed/OperationDispatcher";
-import {
-    AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
-import {
-    AuthenticationLevel_basicLevels_level_none,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import { bind as doBind } from "./bind";
 import {
     directoryBindError,
@@ -61,7 +54,6 @@ import {
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
-import { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 
 const BER = () => new BERElement();
 
@@ -75,6 +67,7 @@ async function handleRequest (
     }
     const result = await OperationDispatcher.dispatchDAPRequest(
         ctx,
+        dap,
         {
             invokeId: {
                 present: request.invokeID,
@@ -82,8 +75,6 @@ async function handleRequest (
             opCode: request.opcode,
             argument: request.argument,
         },
-        dap.authLevel,
-        undefined,
     );
     if ("error" in result) {
         await dap.idm.writeError(
@@ -147,8 +138,7 @@ async function handleRequestAndErrors (
 
 
 export default
-class DAPConnection {
-    public readonly id = uuid();
+class DAPConnection extends ClientConnection {
     public readonly pagedResultsRequests: Map<string, [ request: PagedResultsRequest_newRequest, pageIndex: number ]> = new Map([]);
     public get v1 (): boolean {
         return (this.bind.versions?.[Versions_v1] === TRUE_BIT);
@@ -156,14 +146,6 @@ class DAPConnection {
     public get v2 (): boolean {
         return (this.bind.versions?.[Versions_v2] === TRUE_BIT);
     }
-    public boundEntry: Vertex | undefined;
-    public authLevel: AuthenticationLevel = {
-        basicLevels: new AuthenticationLevel_basicLevels(
-            AuthenticationLevel_basicLevels_level_none,
-            0,
-            false,
-        ),
-    };
 
     private async handleRequest (request: Request): Promise<void> {
         await handleRequestAndErrors(this.ctx, this, request);
@@ -184,6 +166,7 @@ class DAPConnection {
         readonly idm: IDMConnection,
         readonly bind: DirectoryBindArgument,
     ) {
+        super();
         if (bind.credentials) {
             doBind(ctx, bind.credentials)
                 .then((outcome) => {

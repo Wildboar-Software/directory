@@ -149,12 +149,10 @@ async function add (
     }
     if (accessControlled) {
         assert(admPoint);
-        const admPointDN = getDistinguishedName(admPoint);
         const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
             superiorACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
                 ...tuple,
                 await userWithinACIUserClass(
-                    admPointDN,
                     tuple[0],
                     userName!,
                     superiorDN,
@@ -288,7 +286,6 @@ async function add (
             newEntryACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
                 ...tuple,
                 await userWithinACIUserClass(
-                    admPointDN,
                     tuple[0],
                     userName!,
                     superiorDN,
@@ -367,7 +364,6 @@ async function add (
             existingACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
                 ...tuple,
                 await userWithinACIUserClass(
-                    admPointDN,
                     tuple[0],
                     name,
                     existingDN,
