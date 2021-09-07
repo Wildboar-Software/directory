@@ -1,4 +1,6 @@
-import { Context, Vertex } from "../types";
+import { Context, Vertex, ClientConnection } from "../types";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import * as errors from "../errors";
 import {
     _decode_ReadArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
@@ -27,10 +29,29 @@ import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import getRelevantSubentries from "../dit/getRelevantSubentries";
+import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import bacACDF, {
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_REMOVE,
+    PERMISSION_CATEGORY_MODIFY,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import getIsGroupMember from "../bac/getIsGroupMember";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 
 export
 async function read (
     ctx: Context,
+    conn: ClientConnection,
     target: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,

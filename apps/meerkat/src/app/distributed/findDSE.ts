@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Vertex } from "../types";
+import type { Context, DIT, Vertex, ClientConnection } from "../types";
 import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
@@ -39,7 +39,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element, ASN1TagClass } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element, ASN1TagClass, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import readEntryAttributes from "../database/readEntryAttributes";
 import { specificKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/specificKnowledge.oa";
@@ -55,6 +55,24 @@ import { strict as assert } from "assert";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
 import checkSuitabilityProcedure from "./checkSuitability";
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import getRelevantSubentries from "../dit/getRelevantSubentries";
+import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import bacACDF, {
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_REMOVE,
+    PERMISSION_CATEGORY_MODIFY,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import getIsGroupMember from "../bac/getIsGroupMember";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 
 const MAX_DEPTH: number = 10000;
 
@@ -111,6 +129,7 @@ function makeContinuationRefFromSupplierKnowledge (
 export
 async function findDSE (
     ctx: Context,
+    conn: ClientConnection,
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
     chainArgs: ChainingArguments,
@@ -572,6 +591,7 @@ async function findDSE (
                 aliasedRDNs = 1;
                 return findDSE(
                     ctx,
+                    conn,
                     haystackVertex,
                     newN,
                     chainArgs,

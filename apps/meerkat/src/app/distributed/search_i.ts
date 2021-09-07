@@ -1,4 +1,5 @@
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex, ClientConnection } from "../types";
+import * as errors from "../errors";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
@@ -12,7 +13,7 @@ import {
 import {
     HierarchySelections_self,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
-import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import {
     ChainingArguments,
@@ -79,6 +80,23 @@ import {
 import {
     readEntryInformation,
 } from "../database/entry/readEntryInformation";
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import getRelevantSubentries from "../dit/getRelevantSubentries";
+import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import bacACDF, {
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_REMOVE,
+    PERMISSION_CATEGORY_MODIFY,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import getIsGroupMember from "../bac/getIsGroupMember";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -91,6 +109,7 @@ interface SearchIReturn {
 export
 async function search_i (
     ctx: Context,
+    conn: ClientConnection,
     target: Vertex,
     admPoints: Vertex[],
     argument: SearchArgument,
@@ -258,6 +277,7 @@ async function search_i (
     if (target.dse.alias && searchAliases) {
         await searchAliasesProcedure(
             ctx,
+            conn,
             target,
             target.dse.alias,
             argument,
@@ -447,6 +467,7 @@ async function search_i (
             };
         await search_i(
             ctx,
+            conn,
             subordinate,
             admPoints, // TODO: Are you sure you can always pass in the same admPoints?
             newArgument,

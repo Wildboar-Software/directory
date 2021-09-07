@@ -1,4 +1,6 @@
-import { Context, Vertex } from "../types";
+import { Context, Vertex, ClientConnection } from "../types";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import * as errors from "../errors";
 import {
     _decode_RemoveEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
@@ -51,35 +53,98 @@ import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import terminateByTypeAndBindingID from "../dop/terminateByTypeAndBindingID";
-
-const HAS_CHILDREN_ERROR_DATA = new UpdateErrorData(
-    UpdateProblem_notAllowedOnNonLeaf,
-    undefined,
-    [],
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-);
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import getRelevantSubentries from "../dit/getRelevantSubentries";
+import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import bacACDF, {
+    PERMISSION_CATEGORY_REMOVE,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import getIsGroupMember from "../bac/getIsGroupMember";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 
 // TODO: subentries
 
 export
 async function removeEntry (
     ctx: Context,
+    conn: ClientConnection,
     target: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,
 ): Promise<ChainedResult> {
-    // TODO: Check Access Control
     const argument = _decode_RemoveEntryArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
-    const subordinates = await readChildren(ctx, target); // FIXME: You do not need to do this. Just query the database for the count.
-    if (subordinates.length > 0) {
-        throw new UpdateError(
-            "Cannot delete an entry with children.",
-            HAS_CHILDREN_ERROR_DATA,
+    const targetDN = getDistinguishedName(target);
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
+    const accessControlScheme = admPoints
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    if (accessControlScheme) {
+        const AC_SCHEME: string = accessControlScheme.toString();
+        const relevantACIItems = [
+            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
+                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                : []),
+            ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                ? (target.dse.entryACI ?? [])
+                : []),
+        ];
+        const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
+            .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+        const EQUALITY_MATCHER = (
+            attributeType: OBJECT_IDENTIFIER,
+        ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+        const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    tuple[0],
+                    conn.boundNameAndUID!, // FIXME:
+                    targetDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        ))
+            .filter((tuple) => (tuple[5] > 0));
+        const {
+            authorized: authorizedToRemoveEntry,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
+            },
+            [
+                PERMISSION_CATEGORY_REMOVE,
+            ],
+            EQUALITY_MATCHER,
         );
+        if (!authorizedToRemoveEntry) {
+            throw new errors.SecurityError(
+                "Not permitted to remove entry.",
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
     }
 
     if (target.dse.subentry) { // Go to step 5.

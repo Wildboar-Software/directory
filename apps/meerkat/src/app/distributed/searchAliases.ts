@@ -1,4 +1,6 @@
-import type { Context, Vertex, AliasDSE } from "../types";
+import type { Context, Vertex, AliasDSE, ClientConnection } from "../types";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import * as errors from "../errors";
 import isPrefix from "../x500/isPrefix";
 import {
     SearchArgument,
@@ -19,6 +21,7 @@ import {
 export
 async function searchAliases (
     ctx: Context,
+    conn: ClientConnection,
     target: Vertex,
     alias: AliasDSE,
     argument: SearchArgument,

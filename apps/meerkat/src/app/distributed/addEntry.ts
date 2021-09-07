@@ -1,4 +1,5 @@
-import { Context, IndexableOID, Value, StoredContext, Vertex } from "../types";
+import { Context, IndexableOID, Value, StoredContext, Vertex, ClientConnection } from "../types";
+import * as errors from "../errors";
 import {
     _decode_AddEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
@@ -81,6 +82,23 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import createEntry from "../database/createEntry";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import getRelevantSubentries from "../dit/getRelevantSubentries";
+import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import bacACDF, {
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_REMOVE,
+    PERMISSION_CATEGORY_MODIFY,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import getIsGroupMember from "../bac/getIsGroupMember";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 
 const OBJECT_CLASS_ERROR_DATA = new UpdateErrorData(
     UpdateProblem_objectClassViolation,
@@ -161,6 +179,7 @@ function unrecognizedAttributeErrorData (
 export
 async function addEntry (
     ctx: Context,
+    conn: ClientConnection,
     immediateSuperior: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,

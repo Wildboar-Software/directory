@@ -1,5 +1,6 @@
-import type { Context, Vertex } from "../types";
-import { TRUE_BIT } from "asn1-ts";
+import type { Context, Vertex, ClientConnection } from "../types";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import * as errors from "../errors";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
@@ -26,6 +27,24 @@ import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import search_i from "./search_i";
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import getRelevantSubentries from "../dit/getRelevantSubentries";
+import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import bacACDF, {
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_REMOVE,
+    PERMISSION_CATEGORY_MODIFY,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import getIsGroupMember from "../bac/getIsGroupMember";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 
 export
 interface SearchIIReturn {
@@ -36,6 +55,7 @@ interface SearchIIReturn {
 export
 async function search_ii (
     ctx: Context,
+    conn: ClientConnection,
     target: Vertex,
     admPoints: Vertex[],
     argument: SearchArgument,
@@ -68,6 +88,7 @@ async function search_ii (
         // TODO: set entryOnly = TRUE iff dse type == alias and subset === oneLevel
         await search_i(
             ctx,
+            conn,
             subordinate,
             admPoints,
             argument,

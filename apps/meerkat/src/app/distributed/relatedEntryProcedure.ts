@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { ClientConnection, Context } from "../types";
 import * as errors from "../errors";
 import {
     SearchArgument,
@@ -69,6 +69,7 @@ function createNewChainingArgument (index: number, originator?: ChainingArgument
 export
 async function relatedEntryProcedure (
     ctx: Context,
+    conn: ClientConnection,
     ret: RelatedEntryReturn,
     argument: SearchArgument,
     chaining?: ChainingArguments,
@@ -117,6 +118,7 @@ async function relatedEntryProcedure (
         try {
             const response = await OperationDispatcher.dispatchLocalSearchDSPRequest(
                 ctx,
+                conn,
                 newArgument,
                 newChaining,
             );

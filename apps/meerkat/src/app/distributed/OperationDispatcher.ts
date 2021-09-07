@@ -1,9 +1,6 @@
-import type { Context, Vertex } from "../types";
+import type { ClientConnection, Context, Vertex } from "../types";
 import type DAPConnection from "../dap/DAPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import type {
-    AuthenticationLevel,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -20,9 +17,6 @@ import {
     _decode_SearchResult,
     _encode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import type {
-    UniqueIdentifier,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UniqueIdentifier.ta";
 import * as errors from "../errors";
 import requestValidationProcedure from "./requestValidationProcedure";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
@@ -140,6 +134,7 @@ class OperationDispatcher {
         };
         const foundDSE: Vertex | undefined = await findDSE(
             ctx,
+            conn,
             ctx.dit.root,
             targetObject,
             reqData.chainedArgument,
@@ -179,7 +174,7 @@ class OperationDispatcher {
             throw new errors.UnknownOperationError();
         }
         else if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
-            const result = await doAddEntry(ctx, foundDSE, state.admPoints, reqData);
+            const result = await doAddEntry(ctx, conn, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -215,7 +210,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
-            const result = await doModifyDN(ctx, foundDSE, state.admPoints, reqData);
+            const result = await doModifyDN(ctx, conn, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -224,7 +219,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
-            const result = await doModifyEntry(ctx, foundDSE, state.admPoints, reqData);
+            const result = await doModifyEntry(ctx, conn, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -236,7 +231,7 @@ class OperationDispatcher {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // List (II)
-                const result = await list_ii(ctx, state.admPoints, foundDSE, reqData, true);
+                const result = await list_ii(ctx, conn, state.admPoints, foundDSE, reqData, true);
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
@@ -245,11 +240,12 @@ class OperationDispatcher {
                 };
             } else { // List (I)
                 // Only List (I) results in results merging.
-                const response = await list_i(ctx, state.admPoints, foundDSE, reqData);
+                const response = await list_i(ctx, conn, state.admPoints, foundDSE, reqData);
                 const result = _decode_ListResult(response.result);
                 const data = getOptionallyProtectedValue(result);
                 const newData = await resultsMergingProcedureForList(
                     ctx,
+                    conn,
                     data,
                     false, // FIXME:
                     state.NRcontinuationList,
@@ -267,7 +263,7 @@ class OperationDispatcher {
             }
         }
         else if (compareCode(req.opCode, read["&operationCode"]!)) {
-            const result = await doRead(ctx, foundDSE, state.admPoints, reqData);
+            const result = await doRead(ctx, conn, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -276,7 +272,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
-            const result = await doRemoveEntry(ctx, foundDSE, state.admPoints, reqData);
+            const result = await doRemoveEntry(ctx, conn, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -297,7 +293,7 @@ class OperationDispatcher {
                 response: [],
                 unexplored: [],
             };
-            await relatedEntryProcedure(ctx, relatedEntryReturn, argument, reqData.chainedArgument);
+            await relatedEntryProcedure(ctx, conn, relatedEntryReturn, argument, reqData.chainedArgument);
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // Search (II)
@@ -307,6 +303,7 @@ class OperationDispatcher {
                 };
                 await search_ii(
                     ctx,
+                    conn,
                     foundDSE,
                     state.admPoints,
                     argument,
@@ -374,6 +371,7 @@ class OperationDispatcher {
                 };
                 await search_i(
                     ctx,
+                    conn,
                     foundDSE,
                     state.admPoints,
                     argument,
@@ -440,6 +438,7 @@ class OperationDispatcher {
 
     public static async dispatchLocalSearchDSPRequest (
         ctx: Context,
+        conn: ClientConnection,
         argument: SearchArgument,
         chaining: ChainingArguments,
         // authLevel: AuthenticationLevel,
@@ -463,6 +462,7 @@ class OperationDispatcher {
         };
         const foundDSE: Vertex | undefined = await findDSE(
             ctx,
+            conn,
             ctx.dit.root,
             targetObject,
             chaining,
@@ -515,7 +515,7 @@ class OperationDispatcher {
             response: [],
             unexplored: [],
         };
-        await relatedEntryProcedure(ctx, relatedEntryReturn, argument, chaining);
+        await relatedEntryProcedure(ctx, conn, relatedEntryReturn, argument, chaining);
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         if (nameResolutionPhase === completed) { // Search (II)
@@ -523,7 +523,7 @@ class OperationDispatcher {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
             };
-            await search_ii(ctx, foundDSE, state.admPoints, argument, chaining, state.SRcontinuationList, response);
+            await search_ii(ctx, conn, foundDSE, state.admPoints, argument, chaining, state.SRcontinuationList, response);
             const localResult: SearchResult = {
                 unsigned: {
                     searchInfo: new SearchResultData_searchInfo(
@@ -582,7 +582,7 @@ class OperationDispatcher {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
             };
-            await search_i(ctx, foundDSE, state.admPoints, argument, chaining, state.SRcontinuationList, response);
+            await search_i(ctx, conn, foundDSE, state.admPoints, argument, chaining, state.SRcontinuationList, response);
             const localResult: SearchResult = {
                 unsigned: {
                     searchInfo: new SearchResultData_searchInfo(
