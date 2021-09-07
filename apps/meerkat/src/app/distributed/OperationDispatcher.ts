@@ -206,7 +206,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, compare["&operationCode"]!)) {
-            const result = await doCompare(ctx, foundDSE, state.admPoints, reqData);
+            const result = await doCompare(ctx, conn, foundDSE, state.admPoints, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
