@@ -95,7 +95,7 @@ import type {
 import removeValues from "../database/entry/removeValues";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
-    SecurityProblem_noInformation,
+    SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
@@ -103,14 +103,15 @@ import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSc
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
-    PERMISSION_CATEGORY_ADD,
-    PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_MODIFY,
+    PERMISSION_CATEGORY_RENAME,
+    PERMISSION_CATEGORY_EXPORT,
+    PERMISSION_CATEGORY_IMPORT,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import getAdministrativePoints from "../dit/getAdministrativePoints";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -237,6 +238,102 @@ async function modifyDN (
     const argument = _decode_ModifyDNArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
+    const objectClasses: OBJECT_IDENTIFIER[] = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
+    const EQUALITY_MATCHER = (
+        attributeType: OBJECT_IDENTIFIER,
+    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
+    const accessControlScheme = admPoints
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
+    const relevantACIItems = [ // FIXME: subentries
+        ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
+            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+            : []),
+        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+            ? (target.dse.entryACI ?? [])
+            : []),
+    ];
+    const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+            ...tuple,
+            await userWithinACIUserClass(
+                tuple[0],
+                conn.boundNameAndUID!, // FIXME:
+                targetDN,
+                EQUALITY_MATCHER,
+                isMemberOfGroup,
+            ),
+        ]),
+    ))
+        .filter((tuple) => (tuple[5] > 0));
+    if (accessControlScheme) {
+        if (data.newRDN) {
+            const {
+                authorized: authorizedToEntry,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    entry: objectClasses,
+                },
+                [
+                    PERMISSION_CATEGORY_RENAME,
+                ],
+                EQUALITY_MATCHER,
+            );
+            if (!authorizedToEntry) {
+                throw new errors.SecurityError(
+                    "Not permitted to modify entry RDN.",
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+        }
+        if (data.newSuperior) {
+            const {
+                authorized: authorizedToEntry,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    entry: objectClasses,
+                },
+                [
+                    PERMISSION_CATEGORY_EXPORT,
+                ],
+                EQUALITY_MATCHER,
+            );
+            if (!authorizedToEntry) {
+                throw new errors.SecurityError(
+                    "Not permitted to export entry.",
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+        }
+    }
     const newPrefixDN = (data.newSuperior ?? targetDN.slice(0, -1));
     const oldRDN = target.dse.rdn;
     const newRDN = data.newRDN ?? getRDN(targetDN);
@@ -278,6 +375,67 @@ async function modifyDN (
     }
     const superior = newSuperior ?? target.immediateSuperior;
     assert(superior);
+
+    // Access control for the new location.
+    if (data.newSuperior) {
+        const newAdmPoints = getAdministrativePoints(superior);
+        const relevantSubentries: Vertex[] = (await Promise.all(
+            newAdmPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, destinationDN, ap)),
+        )).flat();
+        const newAccessControlScheme = newAdmPoints
+            .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+        const AC_SCHEME: string = newAccessControlScheme?.toString() ?? "";
+        const relevantACIItems = [ // FIXME: subentries
+            // NOTE: ITU X.511 says that the IMPORT permission MUST come only from prescriptiveACI.
+            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
+                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                : []),
+        ];
+        const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
+            .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    tuple[0],
+                    conn.boundNameAndUID!, // FIXME:
+                    targetDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        ))
+            .filter((tuple) => (tuple[5] > 0));
+        const {
+            authorized: authorizedToEntry,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                entry: objectClasses,
+            },
+            [
+                PERMISSION_CATEGORY_IMPORT,
+            ],
+            EQUALITY_MATCHER,
+        );
+        if (!authorizedToEntry) {
+            throw new errors.SecurityError(
+                "Not permitted to import entry.",
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+
     if (!withinThisDSA(superior)) { // `undefined` means we tried and failed.
         throw new errors.UpdateError(
             "New superior not within this DSA.",
@@ -308,6 +466,8 @@ async function modifyDN (
             );
         }
     }
+
+    // TODO: Check if new superior provides IMPORT permission via a prescriptiveACI or subentryACI
 
     // This is, at least implicitly, a part of steps 5, 6, and 7.
     if (await findEntry(ctx, superior, [ newRDN ])) {
