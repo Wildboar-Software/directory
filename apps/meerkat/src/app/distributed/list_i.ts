@@ -44,24 +44,22 @@ import {
 import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import {
-    SecurityProblem_noInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
 import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
-    PERMISSION_CATEGORY_ADD,
-    PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_MODIFY,
+    PERMISSION_CATEGORY_BROWSE,
+    PERMISSION_CATEGORY_RETURN_DN,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
+import { NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 
 export
 async function list_i (
@@ -74,12 +72,129 @@ async function list_i (
     const arg: ListArgument = _decode_ListArgument(request.argument);
     const data = getOptionallyProtectedValue(arg);
     const targetDN = getDistinguishedName(target);
+    const EQUALITY_MATCHER = (
+        attributeType: OBJECT_IDENTIFIER,
+    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
+    const accessControlScheme = admPoints
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
+    const targetACI = [
+        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !target.dse.subentry)
+            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+            : []),
+        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && target.dse.subentry)
+            ? target.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+            : []),
+        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+            ? target.dse.entryACI ?? []
+            : []),
+    ];
+    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+            ...tuple,
+            await userWithinACIUserClass(
+                tuple[0],
+                conn.boundNameAndUID!, // FIXME:
+                targetDN,
+                EQUALITY_MATCHER,
+                isMemberOfGroup,
+            ),
+        ]),
+    ))
+        .filter((tuple) => (tuple[5] > 0));
+    if (accessControlScheme) {
+        const {
+            authorized,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
+            },
+            [
+                PERMISSION_CATEGORY_BROWSE,
+                PERMISSION_CATEGORY_RETURN_DN,
+            ],
+            EQUALITY_MATCHER,
+        );
+        if (!authorized) {
+            // Non-disclosure of the target object is at least addressed in X.501 RBAC!
+            throw new errors.NameError(
+                "Not permitted to list the target entry.",
+                new NameErrorData(
+                    NameProblem_noSuchObject,
+                    {
+                        rdnSequence: [],
+                    },
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+
     const subordinates = await readChildren(ctx, target);
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const SRcontinuationList: ContinuationReference[] = [];
     const listItems: ListItem[] = [];
     if (subentries) {
-        // TODO: Check ACI
+        for (const subordinate of subordinates) {
+            if (!subordinate.dse.subentry) {
+                continue;
+            }
+            const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
+            const subordinateACI = [
+                ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && subordinate.dse.subentry)
+                    ? subordinate.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                    : []),
+                ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                    ? subordinate.dse.entryACI ?? []
+                    : []),
+            ];
+            const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const relevantSubordinateTuples: ACDFTupleExtended[] = (await Promise.all(
+                subordinateACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                    ...tuple,
+                    await userWithinACIUserClass(
+                        tuple[0],
+                        conn.boundNameAndUID!, // FIXME:
+                        subordinateDN,
+                        EQUALITY_MATCHER,
+                        isMemberOfGroup,
+                    ),
+                ]),
+            ))
+                .filter((tuple) => (tuple[5] > 0));
+            const {
+                authorized: authorizedToList,
+            } = bacACDF(
+                relevantSubordinateTuples,
+                conn.authLevel,
+                {
+                    entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
+                },
+                [
+                    PERMISSION_CATEGORY_BROWSE,
+                    PERMISSION_CATEGORY_RETURN_DN,
+                ],
+                EQUALITY_MATCHER,
+            );
+            if (!authorizedToList) {
+                continue;
+            }
+            listItems.push(new ListItem(subordinate.dse.rdn, undefined, undefined));
+        }
+
         const result: ListResult = {
             unsigned: {
                 listInfo: new ListResultData_listInfo(
@@ -87,9 +202,7 @@ async function list_i (
                     //     rdnSequence: targetDN,
                     // },
                     undefined,
-                    subordinates
-                        .filter((sub) => sub.dse.subentry)
-                        .map((sub) => new ListItem(sub.dse.rdn, undefined, undefined)),
+                    listItems,
                     undefined,
                     [],
                     undefined,
@@ -147,7 +260,50 @@ async function list_i (
         ));
     }
     for (const subordinate of subordinates) {
-        // TODO: Check ACI
+        if (accessControlScheme) {
+            const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
+            const subordinateACI = [
+                ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !subordinate.dse.subentry)
+                    ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                    : []),
+                ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                    ? subordinate.dse.entryACI ?? []
+                    : []),
+            ];
+            const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const relevantSubordinateTuples: ACDFTupleExtended[] = (await Promise.all(
+                subordinateACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                    ...tuple,
+                    await userWithinACIUserClass(
+                        tuple[0],
+                        conn.boundNameAndUID!, // FIXME:
+                        subordinateDN,
+                        EQUALITY_MATCHER,
+                        isMemberOfGroup,
+                    ),
+                ]),
+            ))
+                .filter((tuple) => (tuple[5] > 0));
+            const {
+                authorized: authorizedToList,
+            } = bacACDF(
+                relevantSubordinateTuples,
+                conn.authLevel,
+                {
+                    entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
+                },
+                [
+                    PERMISSION_CATEGORY_BROWSE,
+                    PERMISSION_CATEGORY_RETURN_DN,
+                ],
+                EQUALITY_MATCHER,
+            );
+            if (!authorizedToList) {
+                continue;
+            }
+        }
+
         if (subordinate.dse.subr) {
             SRcontinuationList.push(new ContinuationReference(
                 /**
@@ -216,11 +372,7 @@ async function list_i (
     const result: ListResult = {
         unsigned: {
             listInfo: new ListResultData_listInfo(
-                // FIXME: Change this back to `undefined` when you fix the X.500 library issues.
-                {
-                    rdnSequence: targetDN,
-                },
-                // undefined,
+                undefined,
                 listItems,
                 undefined,
                 [],
