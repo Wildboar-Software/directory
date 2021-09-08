@@ -6,6 +6,9 @@ import {
 import {
     id_at_objectClass,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
+import {
+    id_sc_subentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
@@ -25,22 +28,11 @@ import {
     UpdateProblem_objectClassViolation,
     UpdateProblem_entryAlreadyExists,
     UpdateProblem_namingViolation,
+    UpdateProblem_affectsMultipleDSAs,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     AttributeProblem_undefinedAttributeType,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
-// import {
-//     id_oa_hierarchyTop,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hierarchyTop.va";
-// import {
-//     id_oa_hierarchyLevel,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hierarchyLevel.va";
-// import {
-//     id_oa_hierarchyBelow,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hierarchyBelow.va";
-// import {
-//     id_oa_hierarchyParent,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hierarchyParent.va";
 import {
     ServiceControlOptions_manageDSAIT,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
@@ -51,7 +43,6 @@ import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
 import { DERElement, ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
-import { v4 as uuid } from "uuid";
 import {
     EXT_BIT_USE_OF_CONTEXTS,
 } from "../x500/extensions";
@@ -60,15 +51,15 @@ import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
-    SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import {
     ServiceErrorData,
     ServiceProblem_unavailable,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     _encode_AddEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import readChildren from "../dit/readChildren";
 import getRDN from "../x500/getRDN";
 import {
@@ -83,22 +74,21 @@ import {
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import createEntry from "../database/createEntry";
 import {
-    SecurityProblem_noInformation,
+    SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
 import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_ADD,
-    PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_MODIFY,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 const OBJECT_CLASS_ERROR_DATA = new UpdateErrorData(
     UpdateProblem_objectClassViolation,
@@ -185,49 +175,19 @@ async function addEntry (
     request: ChainedArgument,
 ): Promise<ChainedResult> {
     const argument = _decode_AddEntryArgument(request.argument);
-    const data = ("signed" in argument)
-        ? argument.signed.toBeSigned
-        : argument.unsigned;
+    const data = getOptionallyProtectedValue(argument);
     if (immediateSuperior.dse.alias) {
         throw new UpdateError(
             "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
             namingViolationErrorData([]),
         );
     }
-
-    // TODO: Check ACI
-
+    const EQUALITY_MATCHER = (
+        attributeType: OBJECT_IDENTIFIER,
+    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
     const NAMING_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ) => ctx.attributes.get(attributeType.toString())?.namingMatcher;
-
-    // const rdn = getRDN(request.chainedArgument.targetObject ?? data.object.rdnSequence);
-    const rdn = getRDN(data.object.rdnSequence);
-    if (!rdn) {
-        throw new UpdateError(
-            "The Root DSE may not be added.",
-            namingViolationErrorData([]),
-        );
-    }
-    const existingSiblings = await readChildren(ctx, immediateSuperior);
-    const entryAlreadyExists: boolean = existingSiblings
-        .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
-    if (entryAlreadyExists) {
-        throw new UpdateError(
-            "Entry already exists.",
-            ENTRY_EXISTS_ERROR_DATA,
-        );
-    }
-
-    // TODO: If TargetSystem !== this DSA, establish HOB with inferior DSA.
-
-    const entry = uuid();
-    const attrsFromDN: Value[] = rdn
-        .map((atav): Value => ({
-            id: atav.type_,
-            value: atav.value,
-            contexts: new Map([]),
-        }));
 
     // TODO: use memory/valuesFromAttribute
     const attrs: Value[] = data.entry.flatMap((attr) => [
@@ -252,11 +212,184 @@ async function addEntry (
         })) ?? [],
     ]);
 
+    const objectClassValues = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
+    if (objectClassValues.length === 0) {
+        throw new UpdateError("Object class attribute not found.", OBJECT_CLASS_ERROR_DATA);
+    }
+    const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
+
+    // TODO: Check that all superclasses are present.
+
+    /**
+     * From ITU X.501 (2016), Section 13.3.2:
+     *
+     * > There shall be one value of the objectClass attribute for the entry's
+     * > structural object class and a value for each of its superclasses. top
+     * > may be omitted.
+     *
+     * This means that we can determine if this potential new entry is a
+     * subentry by checking that the `subentry` object class is present.
+     */
+    const isSubentry: boolean = objectClasses.some((oc) => oc.isEqualTo(id_sc_subentry));
+    if (isSubentry && !immediateSuperior.dse.admPoint) {
+        throw new errors.UpdateError(
+            "Cannot place a subentry below a DSE that is not an administrative point.",
+            new UpdateErrorData(
+                UpdateProblem_namingViolation,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+
+    if (isSubentry && data.targetSystem) {
+        throw new errors.UpdateError(
+            "Cannot place a subentry in another DSA.",
+            new UpdateErrorData(
+                UpdateProblem_affectsMultipleDSAs,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+
+    const targetDN = data.object.rdnSequence;
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
+    )).flat();
+    const accessControlScheme = admPoints
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
+    const relevantACIItems = isSubentry
+        ? [
+            ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
+                ? (immediateSuperior.dse.admPoint?.subentryACI ?? [])
+                : []),
+        ]
+        : [
+            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
+                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                : []),
+        ];
+    const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+            ...tuple,
+            await userWithinACIUserClass(
+                tuple[0],
+                conn.boundNameAndUID!, // FIXME:
+                targetDN,
+                EQUALITY_MATCHER,
+                isMemberOfGroup,
+            ),
+        ]),
+    ))
+        .filter((tuple) => (tuple[5] > 0));
+    if (accessControlScheme) {
+        const {
+            authorized,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                entry: objectClasses,
+            },
+            [
+                PERMISSION_CATEGORY_ADD,
+            ],
+            EQUALITY_MATCHER,
+        );
+        if (!authorized) {
+            throw new errors.SecurityError(
+                "Not permitted to create this entry.",
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+
+    const rdn = getRDN(data.object.rdnSequence);
+    if (!rdn) {
+        throw new UpdateError(
+            "The Root DSE may not be added.",
+            namingViolationErrorData([]),
+        );
+    }
+    const existingSiblings = await readChildren(ctx, immediateSuperior);
+    const entryAlreadyExists: boolean = existingSiblings
+        .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
+    if (entryAlreadyExists) {
+        throw new UpdateError(
+            "Entry already exists.",
+            ENTRY_EXISTS_ERROR_DATA,
+        );
+    }
+
+    // TODO: If TargetSystem !== this DSA, establish HOB with inferior DSA.
+
+    const attrsFromDN: Value[] = rdn
+        .map((atav): Value => ({
+            id: atav.type_,
+            value: atav.value,
+            contexts: new Map([]),
+        }));
+
     const attributesByType: Map<IndexableOID, Value[]> = new Map();
+    if (accessControlScheme) { // FIXME: Actually check that what follows applies to this scheme.
+        for (const type_ of attributesByType.keys()) {
+            const typeOID = ObjectIdentifier.fromString(type_);
+            const {
+                authorized: authorizedToAddAttributeType,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    attributeType: typeOID,
+                },
+                [
+                    PERMISSION_CATEGORY_ADD,
+                ],
+                EQUALITY_MATCHER,
+            );
+            if (!authorizedToAddAttributeType) {
+                throw new errors.SecurityError(
+                    `Not permitted to create an attribute of type ${type_}.`,
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+        }
+    }
     const nonUserApplicationAttributes: AttributeType[] = [];
     const unrecognizedAttributes: AttributeType[] = [];
     const attributesUsingContexts: AttributeType[] = [];
-    attrs.forEach((attr) => {
+    for (const attr of attrs) {
         const ATTR_OID: string = attr.id.toString();
         const current = attributesByType.get(ATTR_OID);
         if (!current) {
@@ -267,7 +400,40 @@ async function addEntry (
         const spec = ctx.attributes.get(ATTR_OID);
         if (!spec) {
             unrecognizedAttributes.push(attr.id);
-            return;
+            continue;
+        }
+        if (accessControlScheme) {
+            const {
+                authorized: authorizedToAddAttributeValue,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    value: new AttributeTypeAndValue(
+                        attr.id,
+                        attr.value,
+                    ),
+                },
+                [
+                    PERMISSION_CATEGORY_ADD,
+                ],
+                EQUALITY_MATCHER,
+            );
+            if (!authorizedToAddAttributeValue) {
+                throw new errors.SecurityError(
+                    `Not permitted to create an attribute value of type ${attr.id.toString()}.`,
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
         }
         if (spec.usage !== AttributeUsage_userApplications) {
             nonUserApplicationAttributes.push(attr.id);
@@ -275,7 +441,7 @@ async function addEntry (
         if (attr.contexts.size > 0) {
             attributesUsingContexts.push(attr.id);
         }
-    });
+    }
 
     if (unrecognizedAttributes.length > 0) {
         throw new AttributeError(
@@ -299,17 +465,12 @@ async function addEntry (
         );
     }
 
-    const objectClasses = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
-    if (objectClasses.length === 0) {
-        throw new UpdateError("Object class attribute not found.", OBJECT_CLASS_ERROR_DATA);
-    }
-
-    objectClasses
+    objectClassValues
         .map((oc) => ctx.objectClasses.get(oc.value.objectIdentifier.toString()))
         .forEach((oc, i) => {
             if (!oc) {
                 ctx.log.warn(
-                    `Object class ${objectClasses[i]?.value.objectIdentifier} not understood.`,
+                    `Object class ${objectClassValues[i]?.value.objectIdentifier} not understood.`,
                 );
                 return;
             }
@@ -421,8 +582,7 @@ async function addEntry (
     // const manageDSAITPlaneRef = data.serviceControls?.manageDSAITPlaneRef;
 
     if (manageDSAIT) {
-    // TODO: aliases contain aliasedEntryName
-    // TODO: aliased entry exists
+    // NOTE: "aliased entry exists" X.511 specifically says this does not have to be checked.
     // TODO: aliases are not allowed to point to other aliases
     } else if (nonUserApplicationAttributes.length > 0) {
         throw new SecurityError(

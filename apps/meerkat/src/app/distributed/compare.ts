@@ -39,7 +39,6 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import {
     readValues,
 } from "../database/entry/readValues";
-import isAttributeSubtype from "../x500/isAttributeSubtype";
 import evaluateContextAssertion from "@wildboar/x500/src/lib/utils/evaluateContextAssertion";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
@@ -48,7 +47,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
-    SecurityProblem_noInformation,
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
@@ -235,25 +233,27 @@ async function compare (
         if (!matcher(data.purported.assertion, value.value)) {
             continue;
         }
-        const {
-            authorized,
-        } = bacACDF(
-            relevantTuples,
-            conn.authLevel,
-            {
-                value: new AttributeTypeAndValue(
-                    value.id,
-                    value.value,
-                ),
-            },
-            [
-                PERMISSION_CATEGORY_COMPARE,
-                PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
-            ],
-            EQUALITY_MATCHER,
-        );
-        if (!authorized) {
-            continue;
+        if (accessControlScheme) {
+            const {
+                authorized,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    value: new AttributeTypeAndValue(
+                        value.id,
+                        value.value,
+                    ),
+                },
+                [
+                    PERMISSION_CATEGORY_COMPARE,
+                    PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
+                ],
+                EQUALITY_MATCHER,
+            );
+            if (!authorized) {
+                continue;
+            }
         }
         if (acs) { // If ACS is present, operationContexts are ignored.
             if ("allContexts" in acs) {
