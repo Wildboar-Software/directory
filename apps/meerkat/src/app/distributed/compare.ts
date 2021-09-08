@@ -104,7 +104,7 @@ async function compare (
     const accessControlScheme = admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
-    const relevantACIItems = [
+    const relevantACIItems = [ // FIXME: subentries
         ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
             ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
             : []),

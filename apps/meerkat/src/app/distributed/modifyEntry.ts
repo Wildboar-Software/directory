@@ -98,14 +98,14 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import findEntry from "../x500/findEntry";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import {
-    SecurityProblem_noInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
 import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import type {
+    AuthenticationLevel,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import bacACDF, {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
@@ -115,8 +115,22 @@ import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFr
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
+
+const notPermittedData = new SecurityErrorData(
+    SecurityProblem_insufficientAccessRights,
+    undefined,
+    undefined,
+    [],
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+);
 
 function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
     return (
@@ -154,6 +168,475 @@ function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Valu
     };
 }
 
+function checkPermissionToAddValues (
+    attribute: Attribute,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+): void {
+    if (!accessControlScheme) {
+        return;
+    }
+    const values = attributeToStoredValues(attribute);
+    const {
+        authorized: authorizedForAttributeType,
+    } = bacACDF(
+        relevantACDFTuples,
+        authLevel,
+        {
+            attributeType: attribute.type_,
+        },
+        [
+            PERMISSION_CATEGORY_ADD,
+        ],
+        equalityMatcherGetter,
+    );
+    if (!authorizedForAttributeType) {
+        throw new errors.SecurityError(
+            "Modification not permitted.", // TODO: Make more specific.
+            notPermittedData,
+        );
+    }
+    for (const value of values) {
+        const {
+            authorized: authorizedForValue,
+        } = bacACDF(
+            relevantACDFTuples,
+            authLevel,
+            {
+                value: new AttributeTypeAndValue(
+                    value.id,
+                    value.value,
+                ),
+            },
+            [
+                PERMISSION_CATEGORY_ADD,
+            ],
+            equalityMatcherGetter,
+        );
+        if (!authorizedForValue) {
+            throw new errors.SecurityError(
+                "Modification not permitted.", // TODO: Make more specific.
+                notPermittedData,
+            );
+        }
+    }
+}
+
+async function executeAddAttribute (
+    mod: Attribute,
+    ctx: Context,
+    entry: Vertex,
+    delta: ValuesIndex,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+): Promise<PrismaPromise<any>[]> {
+    checkPermissionToAddValues(
+        mod,
+        accessControlScheme,
+        relevantACDFTuples,
+        authLevel,
+        equalityMatcherGetter,
+    );
+    const values = attributeToStoredValues(mod);
+    const TYPE_OID: IndexableOID = mod.type_.toString();
+    const deltaValues = delta.get(TYPE_OID);
+    if (deltaValues) {
+        deltaValues.push(...values);
+    } else {
+        delta.set(TYPE_OID, values);
+    }
+    return addValues(ctx, entry, values, []);
+}
+
+async function executeRemoveAttribute (
+    mod: AttributeType,
+    ctx: Context,
+    entry: Vertex,
+    delta: ValuesIndex,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+): Promise<PrismaPromise<any>[]> {
+    delta.delete(mod.toString());
+    if (accessControlScheme) {
+        const {
+            authorized: authorizedForAttributeType,
+        } = bacACDF(
+            relevantACDFTuples,
+            authLevel,
+            {
+                attributeType: mod,
+            },
+            [
+                PERMISSION_CATEGORY_REMOVE,
+            ],
+            equalityMatcherGetter,
+        );
+        if (!authorizedForAttributeType) {
+            throw new errors.SecurityError(
+                "Modification not permitted.", // TODO: Make more specific.
+                notPermittedData,
+            );
+        }
+    }
+    return removeAttribute(ctx, entry, mod, []);
+    // REVIEW: Do you want to also fail if per-value remove is not granted?
+}
+
+async function executeAddValues (
+    mod: Attribute,
+    ctx: Context,
+    entry: Vertex,
+    delta: ValuesIndex,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+): Promise<PrismaPromise<any>[]> {
+    checkPermissionToAddValues(
+        mod,
+        accessControlScheme,
+        relevantACDFTuples,
+        authLevel,
+        equalityMatcherGetter,
+    );
+    const values = attributeToStoredValues(mod);
+    const TYPE_OID: IndexableOID = mod.type_.toString();
+    const deltaValues = delta.get(TYPE_OID);
+    if (deltaValues) {
+        deltaValues.push(...values);
+    } else {
+        delta.set(TYPE_OID, values);
+    }
+    return addValues(ctx, entry, values, []);
+}
+
+async function executeRemoveValues (
+    mod: Attribute,
+    ctx: Context,
+    entry: Vertex,
+    delta: ValuesIndex,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+): Promise<PrismaPromise<any>[]> {
+    const values = attributeToStoredValues(mod);
+    if (accessControlScheme) {
+        const {
+            authorized: authorizedForAttributeType,
+        } = bacACDF(
+            relevantACDFTuples,
+            authLevel,
+            {
+                attributeType: mod.type_,
+            },
+            [
+                PERMISSION_CATEGORY_REMOVE,
+            ],
+            equalityMatcherGetter,
+        );
+        if (!authorizedForAttributeType) {
+            throw new errors.SecurityError(
+                "Modification not permitted.", // TODO: Make more specific.
+                notPermittedData,
+            );
+        }
+        for (const value of values) {
+            const {
+                authorized: authorizedForValue,
+            } = bacACDF(
+                relevantACDFTuples,
+                authLevel,
+                {
+                    value: new AttributeTypeAndValue(
+                        value.id,
+                        value.value,
+                    ),
+                },
+                [
+                    PERMISSION_CATEGORY_REMOVE,
+                ],
+                equalityMatcherGetter,
+            );
+            if (!authorizedForValue) {
+                throw new errors.SecurityError(
+                    "Modification not permitted.", // TODO: Make more specific.
+                    notPermittedData,
+                );
+            }
+        }
+    }
+    const valuesToBeDeleted: Set<string> = new Set(
+        values?.map((v) => Buffer.from(v.value.toBytes()).toString("base64")),
+    );
+    const TYPE_OID: IndexableOID = mod.type_.toString();
+    const deltaValues = delta.get(TYPE_OID);
+    if (deltaValues) {
+        const newValues = deltaValues
+            .filter((dv) => !valuesToBeDeleted.has(Buffer.from(dv.value.toBytes()).toString("base64")));
+        delta.set(TYPE_OID, newValues);
+    }
+    return removeValues(ctx, entry, values, []);
+}
+
+async function executeAlterValues (
+    mod: AttributeTypeAndValue,
+    ctx: Context,
+    entry: Vertex,
+    delta: ValuesIndex,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+): Promise<PrismaPromise<any>[]> {
+    if (!isAcceptableTypeForAlterValues(mod.value)) {
+        throw new Error();
+    }
+    if (accessControlScheme) {
+        const {
+            authorized: authorizedForAttributeType,
+        } = bacACDF(
+            relevantACDFTuples,
+            authLevel,
+            {
+                attributeType: mod.type_,
+            },
+            [
+                PERMISSION_CATEGORY_REMOVE,
+            ],
+            equalityMatcherGetter,
+        );
+        if (!authorizedForAttributeType) {
+            throw new errors.SecurityError(
+                "Modification not permitted.", // TODO: Make more specific.
+                notPermittedData,
+            );
+        }
+    }
+    const TYPE_OID: IndexableOID = mod.type_.toString();
+    const alterer = getValueAlterer(mod.value);
+    { // Modify the delta values.
+        const deltaValues = delta.get(TYPE_OID);
+        if (deltaValues) {
+            const newValues = deltaValues.map(alterer);
+            delta.set(TYPE_OID, newValues);
+        }
+    }
+    const eis = new EntryInformationSelection(
+        {
+            select: [ mod.type_ ],
+        },
+        undefined,
+        {
+            select: [ mod.type_ ],
+        },
+        undefined,
+        undefined,
+        undefined,
+    );
+    const {
+        userAttributes,
+        operationalAttributes,
+    } = await readValues(ctx, entry, eis);
+    const values = [
+        ...userAttributes,
+        ...operationalAttributes,
+    ];
+    if (accessControlScheme) {
+        for (const value of values) {
+            const {
+                authorized: authorizedForValue,
+            } = bacACDF(
+                relevantACDFTuples,
+                authLevel,
+                {
+                    value: new AttributeTypeAndValue(
+                        value.id,
+                        value.value,
+                    ),
+                },
+                [
+                    PERMISSION_CATEGORY_ADD,
+                    PERMISSION_CATEGORY_REMOVE,
+                ],
+                equalityMatcherGetter,
+            );
+            if (!authorizedForValue) {
+                throw new errors.SecurityError(
+                    "Modification not permitted.", // TODO: Make more specific.
+                    notPermittedData,
+                );
+            }
+        }
+    }
+    const newValues = values.map(alterer);
+    return [
+        ctx.db.attributeValue.deleteMany({
+            where: {
+                entry_id: entry.dse.id,
+                type: mod.type_.toString(),
+            },
+        }),
+        ...(await addValues(ctx, entry, newValues, [])),
+    ];
+}
+
+async function executeResetValue (
+    mod: AttributeType,
+    ctx: Context,
+    entry: Vertex,
+    delta: ValuesIndex,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+): Promise<PrismaPromise<any>[]> {
+    const where = {
+        entry_id: entry.dse.id,
+        type: mod.toString(),
+        ContextValue: {
+            some: {
+                fallback: false,
+            },
+        },
+    };
+    if (accessControlScheme) {
+        const rows = await ctx.db.attributeValue.findMany({
+            where,
+            select: {
+                ber: true,
+            },
+        });
+        for (const row of rows) {
+            const el = new BERElement();
+            el.fromBytes(row.ber);
+            const {
+                authorized: authorizedForAttributeType,
+            } = bacACDF(
+                relevantACDFTuples,
+                authLevel,
+                {
+                    value: new AttributeTypeAndValue(
+                        mod,
+                        el,
+                    ),
+                },
+                [
+                    PERMISSION_CATEGORY_REMOVE,
+                ],
+                equalityMatcherGetter,
+            );
+            if (!authorizedForAttributeType) {
+                throw new errors.SecurityError(
+                    "Modification not permitted.", // TODO: Make more specific.
+                    notPermittedData,
+                );
+            }
+        }
+    }
+    // TODO: This will not update operational attributes, but that might not
+    // matter, because it only remove values having some context.
+    const TYPE_OID: IndexableOID = mod.toString();
+    { // Updating the delta values
+        const deltaValues = delta.get(TYPE_OID);
+        if (deltaValues) {
+            const newDeltaValues = deltaValues
+                .filter((dv) => !Array.from(dv.contexts.values())
+                    .some((context) => (context.fallback === false)));
+            delta.set(TYPE_OID, newDeltaValues);
+        }
+    }
+    return [
+        ctx.db.attributeValue.deleteMany({
+            where,
+        }),
+    ];
+}
+
+async function executeReplaceValues (
+    mod: Attribute,
+    ctx: Context,
+    entry: Vertex,
+    delta: ValuesIndex,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+): Promise<PrismaPromise<any>[]> {
+    const TYPE_OID: string = mod.type_.toString();
+    const values = attributeToStoredValues(mod);
+    const where = {
+        entry_id: entry.dse.id,
+        type: TYPE_OID,
+    };
+    if (accessControlScheme) {
+        const {
+            authorized: authorizedForValue,
+        } = bacACDF(
+            relevantACDFTuples,
+            authLevel,
+            {
+                attributeType: mod.type_,
+            },
+            [
+                PERMISSION_CATEGORY_ADD,
+            ],
+            equalityMatcherGetter,
+        );
+        if (!authorizedForValue) {
+            throw new errors.SecurityError(
+                "Modification not permitted.", // TODO: Make more specific.
+                notPermittedData,
+            );
+        }
+        const rows = await ctx.db.attributeValue.findMany({
+            where,
+            select: {
+                ber: true,
+            },
+        });
+        for (const row of rows) {
+            const el = new BERElement();
+            el.fromBytes(row.ber);
+            const {
+                authorized: authorizedForAttributeType,
+            } = bacACDF(
+                relevantACDFTuples,
+                authLevel,
+                {
+                    value: new AttributeTypeAndValue(
+                        mod.type_,
+                        el,
+                    ),
+                },
+                [
+                    PERMISSION_CATEGORY_REMOVE,
+                ],
+                equalityMatcherGetter,
+            );
+            if (!authorizedForAttributeType) {
+                throw new errors.SecurityError(
+                    "Modification not permitted.", // TODO: Make more specific.
+                    notPermittedData,
+                );
+            }
+        }
+    }
+    delta.set(TYPE_OID, values);
+    return [
+        ctx.db.attributeValue.deleteMany({
+            where,
+        }),
+        ...(await addValues(ctx, entry, values, [])),
+    ];
+}
+
 /**
  * From ITU Recommendation X.501 (2016), Section 13.4.7:
  *
@@ -176,7 +659,21 @@ async function executeEntryModification (
     entry: Vertex,
     mod: EntryModification,
     delta: ValuesIndex,
+    accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    relevantACDFTuples: ACDFTupleExtended[],
+    authLevel: AuthenticationLevel,
+    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
 ): Promise<PrismaPromise<any>[]> {
+
+    const commonArguments = [
+        ctx,
+        entry,
+        delta,
+        accessControlScheme,
+        relevantACDFTuples,
+        authLevel,
+        equalityMatcherGetter,
+    ] as const;
 
     /**
      * This only needs to be called for alternatives that write new
@@ -226,132 +723,28 @@ async function executeEntryModification (
 
     if ("addAttribute" in mod) {
         check(mod.addAttribute.type_);
-        const values = attributeToStoredValues(mod.addAttribute);
-        const TYPE_OID: IndexableOID = mod.addAttribute.type_.toString();
-        const deltaValues = delta.get(TYPE_OID);
-        if (deltaValues) {
-            deltaValues.push(...values);
-        } else {
-            delta.set(TYPE_OID, values);
-        }
-        return addValues(ctx, entry, values, []);
+        return executeAddAttribute(mod.addAttribute, ...commonArguments);
     }
     else if ("removeAttribute" in mod) {
-        delta.delete(mod.removeAttribute.toString());
-        return removeAttribute(ctx, entry, mod.removeAttribute, []);
+        return executeRemoveAttribute(mod.removeAttribute, ...commonArguments);
     }
     else if ("addValues" in mod) {
         check(mod.addValues.type_);
-        const values = attributeToStoredValues(mod.addValues);
-        const TYPE_OID: IndexableOID = mod.addValues.type_.toString();
-        const deltaValues = delta.get(TYPE_OID);
-        if (deltaValues) {
-            deltaValues.push(...values);
-        } else {
-            delta.set(TYPE_OID, values);
-        }
-        return addValues(ctx, entry, values, []);
+        return executeAddValues(mod.addValues, ...commonArguments);
     }
     else if ("removeValues" in mod) {
-        const values = attributeToStoredValues(mod.removeValues);
-        const valuesToBeDeleted: Set<string> = new Set(
-            values?.map((v) => Buffer.from(v.value.toBytes()).toString("base64")),
-        );
-        const TYPE_OID: IndexableOID = mod.removeValues.type_.toString();
-        const deltaValues = delta.get(TYPE_OID);
-        if (deltaValues) {
-            const newValues = deltaValues
-                .filter((dv) => !valuesToBeDeleted.has(Buffer.from(dv.value.toBytes()).toString("base64")));
-            delta.set(TYPE_OID, newValues);
-        }
-        return removeValues(ctx, entry, values, []);
+        return executeRemoveValues(mod.removeValues, ...commonArguments);
     }
     else if ("alterValues" in mod) {
         check(mod.alterValues.type_);
-        if (!isAcceptableTypeForAlterValues(mod.alterValues.value)) {
-            throw new Error();
-        }
-        const TYPE_OID: IndexableOID = mod.alterValues.type_.toString();
-        const alterer = getValueAlterer(mod.alterValues.value);
-        { // Modify the delta values.
-            const deltaValues = delta.get(TYPE_OID);
-            if (deltaValues) {
-                const newValues = deltaValues.map(alterer);
-                delta.set(TYPE_OID, newValues);
-            }
-        }
-        const eis = new EntryInformationSelection(
-            {
-                select: [ mod.alterValues.type_ ],
-            },
-            undefined,
-            {
-                select: [ mod.alterValues.type_ ],
-            },
-            undefined,
-            undefined,
-            undefined,
-        );
-        const {
-            userAttributes,
-            operationalAttributes,
-        } = await readValues(ctx, entry, eis);
-        const values = [
-            ...userAttributes,
-            ...operationalAttributes,
-        ];
-        const newValues = values.map(alterer);
-        return [
-            ctx.db.attributeValue.deleteMany({
-                where: {
-                    entry_id: entry.dse.id,
-                    type: mod.alterValues.type_.toString(),
-                },
-            }),
-            ...(await addValues(ctx, entry, newValues, [])),
-        ];
+        return executeAlterValues(mod.alterValues, ...commonArguments);
     }
     else if ("resetValue" in mod) {
-        // TODO: This will not update operational attributes, but that might not
-        // matter, because it only remove values having some context.
-        const TYPE_OID: IndexableOID = mod.resetValue.toString();
-        { // Updating the delta values
-            const deltaValues = delta.get(TYPE_OID);
-            if (deltaValues) {
-                const newDeltaValues = deltaValues
-                    .filter((dv) => !Array.from(dv.contexts.values())
-                        .some((context) => (context.fallback === false)));
-                delta.set(TYPE_OID, newDeltaValues);
-            }
-        }
-        return [
-            ctx.db.attributeValue.deleteMany({
-                where: {
-                    entry_id: entry.dse.id,
-                    type: mod.resetValue.toString(),
-                    ContextValue: {
-                        some: {
-                            fallback: false,
-                        },
-                    },
-                },
-            }),
-        ];
+        return executeResetValue(mod.resetValue, ...commonArguments);
     }
     else if ("replaceValues" in mod) {
         check(mod.replaceValues.type_);
-        const TYPE_OID: string = mod.replaceValues.type_.toString();
-        const values = attributeToStoredValues(mod.replaceValues);
-        delta.set(TYPE_OID, values);
-        return [
-            ctx.db.attributeValue.deleteMany({
-                where: {
-                    entry_id: entry.dse.id,
-                    type: TYPE_OID,
-                },
-            }),
-            ...(await addValues(ctx, entry, values, [])),
-        ];
+        return executeReplaceValues(mod.replaceValues, ...commonArguments);
     }
     else {
         return []; // Any other alternative not understood.
@@ -393,11 +786,86 @@ async function modifyEntry (
 ): Promise<ChainedResult> {
     const argument = _decode_ModifyEntryArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
+    const EQUALITY_MATCHER = (
+        attributeType: OBJECT_IDENTIFIER,
+    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const targetDN = getDistinguishedName(target);
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
+    const accessControlScheme = admPoints
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
+    const relevantACIItems = [ // FIXME: subentries
+        ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
+            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+            : []),
+        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+            ? (target.dse.entryACI ?? [])
+            : []),
+    ];
+    const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+            ...tuple,
+            await userWithinACIUserClass(
+                tuple[0],
+                conn.boundNameAndUID!, // FIXME:
+                targetDN,
+                EQUALITY_MATCHER,
+                isMemberOfGroup,
+            ),
+        ]),
+    ))
+        .filter((tuple) => (tuple[5] > 0));
+    if (accessControlScheme) {
+        const {
+            authorized: authorizedToEntry,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
+            },
+            [
+                PERMISSION_CATEGORY_MODIFY,
+            ],
+            EQUALITY_MATCHER,
+        );
+        if (!authorizedToEntry) {
+            throw new errors.SecurityError(
+                "Not permitted to modify entry.",
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+
     const pendingUpdates: PrismaPromise<any>[] = [];
     const delta: ValuesIndex = new Map();
-    // TODO: Access Control
     for (const mod of data.changes) {
-        pendingUpdates.push(...(await executeEntryModification(ctx, target, mod, delta)));
+        pendingUpdates.push(
+            ...(await executeEntryModification(
+                ctx,
+                target,
+                mod,
+                delta,
+                accessControlScheme,
+                relevantTuples,
+                conn.authLevel,
+                EQUALITY_MATCHER,
+            )),
+        );
     }
 
     const requiredAttributes: Set<IndexableOID> = new Set();
