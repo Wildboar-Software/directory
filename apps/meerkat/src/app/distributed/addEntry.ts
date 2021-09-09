@@ -21,9 +21,6 @@ import {
 import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
-import type {
-    Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import {
     UpdateProblem_objectClassViolation,
     UpdateProblem_entryAlreadyExists,
@@ -89,78 +86,41 @@ import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    id_opcode_addEntry,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
 
-const OBJECT_CLASS_ERROR_DATA = new UpdateErrorData(
-    UpdateProblem_objectClassViolation,
-    undefined,
-    [],
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-);
-const ENTRY_EXISTS_ERROR_DATA = new UpdateErrorData(
-    UpdateProblem_entryAlreadyExists,
-    undefined,
-    [],
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-);
-const CANNOT_MANAGE_OPERATIONAL_ATTRIBUTES_ERROR_DATA = new SecurityErrorData(
-    SecurityProblem_insufficientAccessRights,
-    undefined,
-    undefined,
-    [],
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-);
-
-function missingAttributeErrorData (attributeTypes: AttributeType[]): UpdateErrorData {
-    return new UpdateErrorData(
-        UpdateProblem_objectClassViolation,
-        attributeTypes.map((at) => ({
-            attributeType: at,
-        })),
-        [],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    );
-}
-
-function namingViolationErrorData (attributeTypes: AttributeType[]): UpdateErrorData {
+function namingViolationErrorData (
+    ctx: Context,
+    conn: ClientConnection,
+    attributeTypes: AttributeType[],
+): UpdateErrorData {
     return new UpdateErrorData(
         UpdateProblem_namingViolation,
         attributeTypes.map((at) => ({
             attributeType: at,
         })),
         [],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    );
-}
-
-function unrecognizedAttributeErrorData (
-    name: Name,
-    attributeTypes: AttributeType[],
-): AttributeErrorData {
-    return new AttributeErrorData(
-        name,
-        attributeTypes.map((at) => new AttributeErrorData_problems_Item(
-            AttributeProblem_undefinedAttributeType,
-            at,
+        createSecurityParameters(
+            ctx,
+            conn.boundNameAndUID?.dn,
             undefined,
-        )),
-        [],
-        undefined,
-        undefined,
+            updateError["&errorCode"],
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
         undefined,
         undefined,
     );
@@ -179,7 +139,7 @@ async function addEntry (
     if (immediateSuperior.dse.alias) {
         throw new UpdateError(
             "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
-            namingViolationErrorData([]),
+            namingViolationErrorData(ctx, conn, []),
         );
     }
     const EQUALITY_MATCHER = (
@@ -214,7 +174,23 @@ async function addEntry (
 
     const objectClassValues = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
     if (objectClassValues.length === 0) {
-        throw new UpdateError("Object class attribute not found.", OBJECT_CLASS_ERROR_DATA);
+        throw new UpdateError(
+            "Object class attribute not found.",
+            new UpdateErrorData(
+                UpdateProblem_objectClassViolation,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                undefined,
+                undefined,
+                undefined,
+            ),
+        );
     }
     const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
 
@@ -238,7 +214,12 @@ async function addEntry (
                 UpdateProblem_namingViolation,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -253,7 +234,12 @@ async function addEntry (
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -317,7 +303,12 @@ async function addEntry (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -330,7 +321,7 @@ async function addEntry (
     if (!rdn) {
         throw new UpdateError(
             "The Root DSE may not be added.",
-            namingViolationErrorData([]),
+            namingViolationErrorData(ctx, conn, []),
         );
     }
     const existingSiblings = await readChildren(ctx, immediateSuperior);
@@ -339,7 +330,20 @@ async function addEntry (
     if (entryAlreadyExists) {
         throw new UpdateError(
             "Entry already exists.",
-            ENTRY_EXISTS_ERROR_DATA,
+            new UpdateErrorData(
+                UpdateProblem_entryAlreadyExists,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                undefined,
+                undefined,
+                undefined,
+            ),
         );
     }
 
@@ -377,7 +381,12 @@ async function addEntry (
                         undefined,
                         undefined,
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -427,7 +436,12 @@ async function addEntry (
                         undefined,
                         undefined,
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -446,7 +460,24 @@ async function addEntry (
     if (unrecognizedAttributes.length > 0) {
         throw new AttributeError(
             `Unrecognized attributes: ${unrecognizedAttributes.map((at) => at.toString()).join(", ")}.`,
-            unrecognizedAttributeErrorData(data.object, unrecognizedAttributes),
+            new AttributeErrorData(
+                data.object,
+                unrecognizedAttributes.map((at) => new AttributeErrorData_problems_Item(
+                    AttributeProblem_undefinedAttributeType,
+                    at,
+                    undefined,
+                )),
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                undefined,
+                undefined,
+                undefined,
+            ),
         );
     }
 
@@ -457,7 +488,12 @@ async function addEntry (
             new ServiceErrorData(
                 ServiceProblem_unavailable,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -483,7 +519,22 @@ async function addEntry (
             if (missingMandatoryAttributes.length > 0) {
                 throw new UpdateError(
                     `Missing mandatory attributes: ${missingMandatoryAttributes.map((ma) => ma.toString())}.`,
-                    missingAttributeErrorData(missingMandatoryAttributes),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        missingMandatoryAttributes.map((at) => ({
+                            attributeType: at,
+                        })),
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
                 );
             }
             // Optional attributes are not checked.
@@ -529,7 +580,7 @@ async function addEntry (
         throw new UpdateError(
             "Attributes of the following types in the RDNs of the entry were "
             + `duplicated: ${duplicatedAFDNs.join(", ")}`,
-            namingViolationErrorData(duplicatedAFDNs),
+            namingViolationErrorData(ctx, conn, duplicatedAFDNs),
         );
     }
 
@@ -537,7 +588,7 @@ async function addEntry (
         throw new UpdateError(
             "Attributes of the following types in the RDNs of the entry were "
             + `not recognized, and therefore cannot be used for naming: ${unrecognizedAFDNs.join(", ")}`,
-            namingViolationErrorData(unrecognizedAFDNs),
+            namingViolationErrorData(ctx, conn, unrecognizedAFDNs),
         );
     }
 
@@ -545,7 +596,7 @@ async function addEntry (
         throw new UpdateError(
             "Attributes of the following types in the RDNs of the entry are "
             + `innately not suitable for naming: ${cannotBeUsedInNameAFDNs.join(", ")}`,
-            namingViolationErrorData(cannotBeUsedInNameAFDNs),
+            namingViolationErrorData(ctx, conn, cannotBeUsedInNameAFDNs),
         );
     }
 
@@ -553,7 +604,7 @@ async function addEntry (
         throw new UpdateError(
             "Attributes of the following types in the RDNs of the entry did not "
             + `have matching values in the attributes: ${unmatchedAFDNs.join(", ")}`,
-            namingViolationErrorData(unmatchedAFDNs),
+            namingViolationErrorData(ctx, conn, unmatchedAFDNs),
         );
     }
 
@@ -587,7 +638,21 @@ async function addEntry (
     } else if (nonUserApplicationAttributes.length > 0) {
         throw new SecurityError(
             "Operational attributes may not be managed without setting the manageDSAIT flag.",
-            CANNOT_MANAGE_OPERATIONAL_ATTRIBUTES_ERROR_DATA,
+            new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                undefined,
+                undefined,
+                undefined,
+            ),
         );
     }
     const newEntry = await createEntry(ctx, immediateSuperior, rdn, {}, attrs, []); // FIXME: creatorName
@@ -599,7 +664,11 @@ async function addEntry (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_addEntry,
+            ),
             undefined,
         ),
         _encode_AddEntryResult({

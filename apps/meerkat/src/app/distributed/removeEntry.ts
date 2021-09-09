@@ -7,14 +7,6 @@ import {
 import {
     _encode_RemoveEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
-import {
-    UpdateError,
-} from "../errors";
-import { UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
-import {
-    UpdateProblem_notAllowedOnNonLeaf,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import readChildren from "../dit/readChildren";
 import deleteEntry from "../database/deleteEntry";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
@@ -69,6 +61,13 @@ import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFr
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_removeEntry,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-removeEntry.va";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 
 // TODO: subentries
 
@@ -138,7 +137,12 @@ async function removeEntry (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -321,7 +325,11 @@ async function removeEntry (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_removeEntry,
+            ),
             undefined,
         ),
         _encode_RemoveEntryResult({

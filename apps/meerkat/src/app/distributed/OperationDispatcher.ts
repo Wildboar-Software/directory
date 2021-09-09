@@ -86,6 +86,7 @@ import {
     RelatedEntryReturn,
 } from "./relatedEntryProcedure";
 import getDistinguishedName from "../x500/getDistinguishedName";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 export
 type SearchResultOrError = {
@@ -285,7 +286,11 @@ class OperationDispatcher {
             const chainingResults = new ChainingResults(
                 undefined,
                 undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    search["&operationCode"],
+                ),
                 undefined,
             );
             const relatedEntryReturn: RelatedEntryReturn = {
@@ -332,7 +337,11 @@ class OperationDispatcher {
                                 : undefined, // FIXME
                             undefined,
                             [],
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                search["&operationCode"],
+                            ),
                             undefined,
                             undefined,
                             undefined,
@@ -400,7 +409,11 @@ class OperationDispatcher {
                                 : undefined, // FIXME
                             undefined,
                             [],
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                search["&operationCode"],
+                            ),
                             undefined,
                             undefined,
                             undefined,
@@ -545,7 +558,11 @@ class OperationDispatcher {
                             : undefined, // FIXME
                         undefined,
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            search["&operationCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -604,7 +621,11 @@ class OperationDispatcher {
                             : undefined, // FIXME
                         undefined,
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            search["&operationCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,

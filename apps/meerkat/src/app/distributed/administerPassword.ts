@@ -46,6 +46,22 @@ import {
 import {
     userPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_administerPassword,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-administerPassword.va";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 // administerPassword OPERATION ::= {
 //   ARGUMENT  AdministerPasswordArgument
@@ -170,7 +186,12 @@ async function administerPassword (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -190,7 +211,11 @@ async function administerPassword (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_administerPassword,
+            ),
             undefined,
         ),
         _encode_AdministerPasswordResult(result, DER),

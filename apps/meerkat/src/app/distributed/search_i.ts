@@ -97,6 +97,7 @@ import bacACDF, {
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -309,6 +310,7 @@ async function search_i (
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(
+                    ctx,
                     data.hierarchySelections,
                     data.serviceControls?.serviceType,
                 );
@@ -337,6 +339,7 @@ async function search_i (
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(
+                    ctx,
                     data.hierarchySelections,
                     data.serviceControls?.serviceType,
                 );

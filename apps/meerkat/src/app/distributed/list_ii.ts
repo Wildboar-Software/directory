@@ -44,6 +44,22 @@ import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import { NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_list,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
+import {
+    nameError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 export
 async function list_ii (
@@ -116,7 +132,12 @@ async function list_ii (
                         rdnSequence: [],
                     },
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        nameError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -200,7 +221,12 @@ async function list_ii (
             new ServiceErrorData(
                 ServiceProblem_invalidReference,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -217,7 +243,11 @@ async function list_ii (
                 listItems,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_list,
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -228,7 +258,11 @@ async function list_ii (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_list,
+            ),
             undefined,
         ),
         _encode_ListResult(result, DER),

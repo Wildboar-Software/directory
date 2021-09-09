@@ -47,6 +47,22 @@ import {
 import {
     userPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_changePassword,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-changePassword.va";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -171,7 +187,12 @@ async function changePassword (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -190,7 +211,12 @@ async function changePassword (
                 undefined,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -210,7 +236,11 @@ async function changePassword (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_changePassword,
+            ),
             undefined,
         ),
         _encode_ChangePasswordResult(result, DER),

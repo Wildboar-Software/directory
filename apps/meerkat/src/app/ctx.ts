@@ -12,6 +12,23 @@ import {
 import { PrismaClient } from "@prisma/client";
 import objectClassFromInformationObject from "./x500/objectClassFromInformationObject";
 import { EventEmitter } from "stream";
+import { createPrivateKey } from "crypto";
+import * as fs from "fs";
+import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
+
+if (!process.env.SIGNING_CERT_CHAIN || !process.env.SIGNING_KEY) {
+    console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
+    process.exit(1);
+}
+
+const chainFile = fs.readFileSync(process.env.SIGNING_CERT_CHAIN, { encoding: "utf-8" });
+const keyFile = fs.readFileSync(process.env.SIGNING_KEY, { encoding: "utf-8" });
+const pkiPath = decodePkiPathFromPEM(chainFile);
+const dsaCert = pkiPath[pkiPath.length - 1];
+if (!dsaCert) {
+    console.error("Certificate chain file indicated by environment variable SIGNING_CERT_CHAIN had no PEM-encoded certificates.");
+    process.exit(1);
+}
 
 const rootID = uuid();
 const root: Vertex = {
@@ -28,9 +45,7 @@ const root: Vertex = {
 const ctx: Context = {
     dsa: {
         accessPoint: new AccessPoint(
-            {
-                rdnSequence: [],
-            },
+            dsaCert.toBeSigned.subject,
             new PresentationAddress(
                 undefined,
                 undefined,
@@ -40,6 +55,13 @@ const ctx: Context = {
             undefined,
         ),
         hibernatingSince: undefined,
+        signing: {
+            key: createPrivateKey({
+                key: keyFile,
+                format: "pem",
+            }),
+            certPath: pkiPath,
+        },
     },
     dit: {
         root,

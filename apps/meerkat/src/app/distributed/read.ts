@@ -37,7 +37,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
-    SecurityProblem_noInformation,
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
@@ -49,10 +48,7 @@ import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtend
 import bacACDF, {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_RENAME,
-    PERMISSION_CATEGORY_MODIFY,
     PERMISSION_CATEGORY_READ,
-    PERMISSION_CATEGORY_BROWSE,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
@@ -63,6 +59,13 @@ import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-St
 import attributesFromValues from "../x500/attributesFromValues";
 import type { ModifyRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights.ta";
 import { ModifyRights_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights-Item.ta";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_read,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 
 export
 async function read (
@@ -139,7 +142,12 @@ async function read (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -297,7 +305,11 @@ async function read (
                 ? modifyRights
                 : undefined,
             [],
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_read,
+            ),
             undefined,
             undefined,
             undefined,
@@ -307,7 +319,11 @@ async function read (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_read,
+            ),
             undefined,
         ),
         _encode_ReadResult(result, () => new DERElement()),

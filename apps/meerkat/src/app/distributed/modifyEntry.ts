@@ -118,15 +118,33 @@ import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUser
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_modifyEntry,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-modifyEntry.va";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
-const notPermittedData = new SecurityErrorData(
+const notPermittedData =  (ctx: Context, conn: ClientConnection) => new SecurityErrorData(
     SecurityProblem_insufficientAccessRights,
     undefined,
     undefined,
     [],
-    undefined,
+    createSecurityParameters(
+        ctx,
+        conn.boundNameAndUID?.dn,
+        undefined,
+        securityError["&errorCode"],
+    ),
     undefined,
     undefined,
     undefined,
@@ -170,6 +188,8 @@ function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Valu
 
 function checkPermissionToAddValues (
     attribute: Attribute,
+    ctx: Context,
+    conn: ClientConnection,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -195,7 +215,7 @@ function checkPermissionToAddValues (
     if (!authorizedForAttributeType) {
         throw new errors.SecurityError(
             "Modification not permitted.", // TODO: Make more specific.
-            notPermittedData,
+            notPermittedData(ctx, conn),
         );
     }
     for (const value of values) {
@@ -218,7 +238,7 @@ function checkPermissionToAddValues (
         if (!authorizedForValue) {
             throw new errors.SecurityError(
                 "Modification not permitted.", // TODO: Make more specific.
-                notPermittedData,
+                notPermittedData(ctx, conn),
             );
         }
     }
@@ -227,6 +247,7 @@ function checkPermissionToAddValues (
 async function executeAddAttribute (
     mod: Attribute,
     ctx: Context,
+    conn: ClientConnection,
     entry: Vertex,
     delta: ValuesIndex,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
@@ -236,6 +257,8 @@ async function executeAddAttribute (
 ): Promise<PrismaPromise<any>[]> {
     checkPermissionToAddValues(
         mod,
+        ctx,
+        conn,
         accessControlScheme,
         relevantACDFTuples,
         authLevel,
@@ -255,6 +278,7 @@ async function executeAddAttribute (
 async function executeRemoveAttribute (
     mod: AttributeType,
     ctx: Context,
+    conn: ClientConnection,
     entry: Vertex,
     delta: ValuesIndex,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
@@ -280,7 +304,7 @@ async function executeRemoveAttribute (
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
                 "Modification not permitted.", // TODO: Make more specific.
-                notPermittedData,
+                notPermittedData(ctx, conn),
             );
         }
     }
@@ -291,6 +315,7 @@ async function executeRemoveAttribute (
 async function executeAddValues (
     mod: Attribute,
     ctx: Context,
+    conn: ClientConnection,
     entry: Vertex,
     delta: ValuesIndex,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
@@ -300,6 +325,8 @@ async function executeAddValues (
 ): Promise<PrismaPromise<any>[]> {
     checkPermissionToAddValues(
         mod,
+        ctx,
+        conn,
         accessControlScheme,
         relevantACDFTuples,
         authLevel,
@@ -319,6 +346,7 @@ async function executeAddValues (
 async function executeRemoveValues (
     mod: Attribute,
     ctx: Context,
+    conn: ClientConnection,
     entry: Vertex,
     delta: ValuesIndex,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
@@ -344,7 +372,7 @@ async function executeRemoveValues (
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
                 "Modification not permitted.", // TODO: Make more specific.
-                notPermittedData,
+                notPermittedData(ctx, conn),
             );
         }
         for (const value of values) {
@@ -367,7 +395,7 @@ async function executeRemoveValues (
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
                     "Modification not permitted.", // TODO: Make more specific.
-                    notPermittedData,
+                    notPermittedData(ctx, conn),
                 );
             }
         }
@@ -388,6 +416,7 @@ async function executeRemoveValues (
 async function executeAlterValues (
     mod: AttributeTypeAndValue,
     ctx: Context,
+    conn: ClientConnection,
     entry: Vertex,
     delta: ValuesIndex,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
@@ -415,7 +444,7 @@ async function executeAlterValues (
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
                 "Modification not permitted.", // TODO: Make more specific.
-                notPermittedData,
+                notPermittedData(ctx, conn),
             );
         }
     }
@@ -470,7 +499,7 @@ async function executeAlterValues (
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
                     "Modification not permitted.", // TODO: Make more specific.
-                    notPermittedData,
+                    notPermittedData(ctx, conn),
                 );
             }
         }
@@ -490,6 +519,7 @@ async function executeAlterValues (
 async function executeResetValue (
     mod: AttributeType,
     ctx: Context,
+    conn: ClientConnection,
     entry: Vertex,
     delta: ValuesIndex,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
@@ -535,7 +565,7 @@ async function executeResetValue (
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
                     "Modification not permitted.", // TODO: Make more specific.
-                    notPermittedData,
+                    notPermittedData(ctx, conn),
                 );
             }
         }
@@ -562,6 +592,7 @@ async function executeResetValue (
 async function executeReplaceValues (
     mod: Attribute,
     ctx: Context,
+    conn: ClientConnection,
     entry: Vertex,
     delta: ValuesIndex,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
@@ -592,7 +623,7 @@ async function executeReplaceValues (
         if (!authorizedForValue) {
             throw new errors.SecurityError(
                 "Modification not permitted.", // TODO: Make more specific.
-                notPermittedData,
+                notPermittedData(ctx, conn),
             );
         }
         const rows = await ctx.db.attributeValue.findMany({
@@ -623,7 +654,7 @@ async function executeReplaceValues (
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
                     "Modification not permitted.", // TODO: Make more specific.
-                    notPermittedData,
+                    notPermittedData(ctx, conn),
                 );
             }
         }
@@ -656,6 +687,7 @@ async function executeReplaceValues (
  */
 async function executeEntryModification (
     ctx: Context,
+    conn: ClientConnection,
     entry: Vertex,
     mod: EntryModification,
     delta: ValuesIndex,
@@ -667,6 +699,7 @@ async function executeEntryModification (
 
     const commonArguments = [
         ctx,
+        conn,
         entry,
         delta,
         accessControlScheme,
@@ -697,7 +730,12 @@ async function executeEntryModification (
                         ),
                     ],
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -712,7 +750,12 @@ async function executeEntryModification (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -842,7 +885,12 @@ async function modifyEntry (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -857,6 +905,7 @@ async function modifyEntry (
         pendingUpdates.push(
             ...(await executeEntryModification(
                 ctx,
+                conn,
                 target,
                 mod,
                 delta,
@@ -891,7 +940,12 @@ async function modifyEntry (
                         },
                     ],
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -919,7 +973,12 @@ async function modifyEntry (
                         },
                     ],
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -966,7 +1025,12 @@ async function modifyEntry (
                         .map(ObjectIdentifier.fromString)
                         .map((attributeType) => ({ attributeType })),
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -991,7 +1055,12 @@ async function modifyEntry (
                         .map(ObjectIdentifier.fromString)
                         .map((attributeType) => ({ attributeType })),
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -1033,7 +1102,12 @@ async function modifyEntry (
                             },
                         ],
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -1072,7 +1146,12 @@ async function modifyEntry (
                         },
                     ],
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -1182,7 +1261,11 @@ async function modifyEntry (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_modifyEntry,
+            ),
             undefined,
         ),
         _encode_ModifyEntryResult(result, DER),

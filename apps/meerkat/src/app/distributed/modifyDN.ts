@@ -112,6 +112,22 @@ import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import getAdministrativePoints from "../dit/getAdministrativePoints";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_modifyDN,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-modifyDN.va";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -214,7 +230,12 @@ async function modifyDN (
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -228,7 +249,12 @@ async function modifyDN (
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -295,7 +321,12 @@ async function modifyDN (
                         undefined,
                         undefined,
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -325,7 +356,12 @@ async function modifyDN (
                         undefined,
                         undefined,
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -349,7 +385,12 @@ async function modifyDN (
                 UpdateProblem_namingViolation,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -366,7 +407,12 @@ async function modifyDN (
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -427,7 +473,12 @@ async function modifyDN (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -443,7 +494,12 @@ async function modifyDN (
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -458,7 +514,12 @@ async function modifyDN (
                     UpdateProblem_affectsMultipleDSAs,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -477,7 +538,12 @@ async function modifyDN (
                 UpdateProblem_entryAlreadyExists,
                 undefined,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -646,8 +712,8 @@ async function modifyDN (
             const [ masters ] = splitIntoMastersAndShadows(nsk);
             // TODO: Use only IDM endpoints.
             for (const accessPoint of masters) {
-                const conn: Connection | undefined = await connect(ctx, accessPoint, dsp_ip["&id"]!, undefined);
-                if (!conn) {
+                const client: Connection | undefined = await connect(ctx, accessPoint, dsp_ip["&id"]!, undefined);
+                if (!client) {
                     continue;
                 }
                 const serviceControlOptions: Uint8ClampedArray = new Uint8ClampedArray(5);
@@ -680,7 +746,11 @@ async function modifyDN (
                             undefined,
                             undefined,
                         ),
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            chainedRead["&operationCode"],
+                        ),
                         undefined, // TODO:
                         new OperationProgress(
                             OperationProgress_nameResolutionPhase_completed,
@@ -711,7 +781,11 @@ async function modifyDN (
                         ReferenceType_nonSpecificSubordinate,
                         undefined,
                         undefined, // TODO:
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            chainedRead["&operationCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -728,7 +802,7 @@ async function modifyDN (
                     _encode_ReadArgument(readArg, DER),
                 );
                 try {
-                    const response = await conn.writeOperation({
+                    const response = await client.writeOperation({
                         opCode: chainedRead["&operationCode"]!,
                         argument: _encode_ChainedArgument(chained, DER),
                     });
@@ -739,7 +813,12 @@ async function modifyDN (
                                 UpdateProblem_entryAlreadyExists,
                                 undefined,
                                 [],
-                                undefined,
+                                createSecurityParameters(
+                                    ctx,
+                                    conn.boundNameAndUID?.dn,
+                                    undefined,
+                                    updateError["&errorCode"],
+                                ),
                                 undefined,
                                 undefined,
                                 undefined,
@@ -801,7 +880,11 @@ async function modifyDN (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_modifyDN,
+            ),
             undefined,
         ),
         _encode_ModifyDNResult(result, DER),

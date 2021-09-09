@@ -71,6 +71,8 @@ import {
 import type {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import { KeyObject } from "crypto";
+import { PkiPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -384,9 +386,23 @@ interface DITInfo {
 }
 
 export
+interface SigningInfo {
+    key: KeyObject;
+    certPath: PkiPath;
+}
+
+export
 interface DSAInfo {
+    /**
+     * NOTE: ae-title should be taken from the signing certificate. In X.518
+     * (2016), section 10.8:
+     *
+     * > When referring to a DSA, the access point shall have a Name, that of
+     * > the DSA concerned.
+     */
     accessPoint: AccessPoint;
     hibernatingSince?: Date;
+    signing: SigningInfo;
 }
 
 export

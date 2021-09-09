@@ -1,3 +1,4 @@
+import type { Context } from "../types";
 import * as errors from "../errors";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import { _encodeObjectIdentifier, DER } from "asn1-ts/dist/node/functional";
@@ -19,9 +20,11 @@ import {
 import {
     hierarchySelectList,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/hierarchySelectList.oa";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 export
 function hierarchySelectionProcedure (
+    ctx: Context,
     hierarchySelections: HierarchySelections,
     serviceControls_serviceType?: OBJECT_IDENTIFIER,
 ): never {
@@ -50,7 +53,7 @@ function hierarchySelectionProcedure (
         new ServiceErrorData(
             ServiceProblem_requestedServiceNotAvailable,
             [],
-            undefined,
+            createSecurityParameters(ctx),
             undefined,
             undefined,
             notificationAttributes,

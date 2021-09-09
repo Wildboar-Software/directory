@@ -65,6 +65,16 @@ import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUser
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_compare,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -150,7 +160,12 @@ async function compare (
                     undefined,
                     undefined,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
                     undefined,
                     undefined,
                     undefined,
@@ -180,7 +195,12 @@ async function compare (
                         undefined,
                         undefined,
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -198,7 +218,12 @@ async function compare (
             new ServiceErrorData(
                 ServiceProblem_unsupportedMatchingUse,
                 [],
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -332,7 +357,11 @@ async function compare (
             !target.dse.shadow,
             matchedType,
             [],
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_compare,
+            ),
             undefined,
             undefined,
             undefined,
@@ -343,7 +372,11 @@ async function compare (
         new ChainingResults(
             undefined,
             undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                id_opcode_compare,
+            ),
             undefined,
         ),
         _encode_CompareResult(result, () => new DERElement()),

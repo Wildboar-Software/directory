@@ -73,6 +73,16 @@ import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFr
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    nameError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 
 const MAX_DEPTH: number = 10000;
 
@@ -265,7 +275,12 @@ async function findDSE (
                         rdnSequence: needleDN.slice(0, i),
                     },
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        nameError["&errorCode"],
+                    ),
                     undefined,
                     aliasDereferenced,
                     undefined,
@@ -351,7 +366,12 @@ async function findDSE (
                                     rdnSequence: [],
                                 },
                                 [],
-                                undefined,
+                                createSecurityParameters(
+                                    ctx,
+                                    conn.boundNameAndUID?.dn,
+                                    undefined,
+                                    nameError["&errorCode"],
+                                ),
                                 undefined,
                                 aliasDereferenced,
                                 undefined,
@@ -432,7 +452,12 @@ async function findDSE (
                         new ServiceErrorData(
                             ServiceProblem_unableToProceed,
                             [],
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
                             undefined,
                             undefined,
                             undefined,
@@ -444,7 +469,12 @@ async function findDSE (
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
                             undefined,
                             undefined,
                             undefined,
@@ -458,7 +488,12 @@ async function findDSE (
                     new ServiceErrorData(
                         ServiceProblem_invalidReference,
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
                         undefined,
                         undefined,
                         undefined,
@@ -554,7 +589,12 @@ async function findDSE (
                 new ServiceErrorData(
                     ServiceProblem_unableToProceed,
                     [],
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
                     undefined,
                     aliasDereferenced,
                     undefined,
@@ -574,7 +614,12 @@ async function findDSE (
                                 rdnSequence: getDistinguishedName(dse_i),
                             },
                             [],
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                nameError["&errorCode"],
+                            ),
                             undefined,
                             false,
                             undefined,
@@ -614,7 +659,12 @@ async function findDSE (
                             rdnSequence: needleDN.slice(0, i),
                         },
                         [],
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            nameError["&errorCode"],
+                        ),
                         undefined,
                         aliasDereferenced,
                         undefined,
@@ -644,7 +694,7 @@ async function findDSE (
                 //         new ServiceErrorData(
                 //             ServiceProblem_invalidReference,
                 //             [],
-                //             undefined,
+                //             createSecurityParameters(ctx),
                 //             undefined,
                 //             undefined,
                 //             undefined,
@@ -744,7 +794,12 @@ async function findDSE (
         new ServiceErrorData(
             ServiceProblem_loopDetected,
             [],
-            undefined,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                undefined,
+                serviceError["&errorCode"],
+            ),
             undefined,
             aliasDereferenced,
             undefined,

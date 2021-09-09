@@ -53,7 +53,7 @@ import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import { assert } from "console";
-
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -440,7 +440,7 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_busy,
                 [],
-                undefined,
+                createSecurityParameters(ctx),
                 undefined,
                 undefined,
                 undefined,
@@ -479,7 +479,7 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_unwillingToPerform, // TODO: Is this correct?
                 [],
-                undefined,
+                createSecurityParameters(ctx),
                 undefined,
                 undefined,
                 undefined,
@@ -506,7 +506,7 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_loopDetected,
                 [],
-                undefined,
+                createSecurityParameters(ctx),
                 undefined,
                 undefined,
                 undefined,

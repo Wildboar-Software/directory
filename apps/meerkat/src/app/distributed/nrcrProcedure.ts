@@ -10,6 +10,7 @@ import { ServiceErrorData, ServiceProblem_unableToProceed } from "@wildboar/x500
 import { apinfoProcedure } from "./apinfoProcedure";
 import ChainedRequest from "@wildboar/x500/src/lib/types/ChainedRequest";
 import ChainedResultOrError from "@wildboar/x500/src/lib/types/ChainedResultOrError";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 export
 interface NRCRProcedureReturn {
@@ -33,7 +34,7 @@ async function nrcrProcedure (
             new ReferralData(
                 crefs[0], // TODO:
                 [],
-                undefined,
+                createSecurityParameters(ctx),
                 undefined,
                 undefined,
                 undefined,
@@ -73,7 +74,7 @@ async function nrcrProcedure (
         new ServiceErrorData(
             ServiceProblem_unableToProceed, // REVIEW: Not sure this is the right error.
             [],
-            undefined,
+            createSecurityParameters(ctx),
             undefined,
             undefined,
             undefined,

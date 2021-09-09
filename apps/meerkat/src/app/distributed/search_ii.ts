@@ -45,6 +45,7 @@ import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFr
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 export
 interface SearchIIReturn {
