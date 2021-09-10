@@ -406,11 +406,17 @@ interface DSAInfo {
 }
 
 export
+interface Telemetry {
+    sendEvent: (info: Record<string, any>) => void;
+}
+
+export
 interface Context {
     dit: DITInfo;
     dsa: DSAInfo;
     log: typeof console;
     db: PrismaClient;
+    telemetry: Telemetry;
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
     /* Note that there cannot be a single attributes hierarchy like there is

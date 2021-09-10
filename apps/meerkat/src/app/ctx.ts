@@ -15,6 +15,9 @@ import { EventEmitter } from "stream";
 import { createPrivateKey } from "crypto";
 import * as fs from "fs";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
+import axios from "axios";
+
+const telemetryURL: string = "https://telemetry.wildboar.software:443/events/6495A31B-D062-4ECC-B0A6-D7C2BC3F793C";
 
 if (!process.env.SIGNING_CERT_CHAIN || !process.env.SIGNING_KEY) {
     console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
@@ -68,6 +71,22 @@ const ctx: Context = {
     },
     log: console,
     db: new PrismaClient(),
+    telemetry: {
+        sendEvent: (body: Record<string, any>) => {
+            try {
+                axios.post(telemetryURL, body, {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    auth: {
+                        username: "859EA8D1-503C-4C0F-9B7F-28AD3AA1451D",
+                        password: "399274DA-9CB1-471E-9C99-91A2D532DA8C",
+                    },
+                })
+                    .catch(() => {}); // eslint-disable-line
+            } catch {} // eslint-disable-line
+        },
+    },
     structuralObjectClassHierarchy: {
         ...objectClassFromInformationObject(top),
         parent: undefined,
