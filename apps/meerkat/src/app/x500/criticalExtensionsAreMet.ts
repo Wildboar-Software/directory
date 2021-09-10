@@ -3,7 +3,7 @@ import criticalExtensionsSupportedByThisDSA from "./criticalExtensionsSupportedB
 
 export
 function criticalExtensionsAreMet (requested: BIT_STRING): boolean {
-    for (const i: number = 0; i < requested.length; i++) {
+    for (let i: number = 0; i < requested.length; i++) {
         if (
             (requested[i] === TRUE_BIT)
             && (!criticalExtensionsSupportedByThisDSA[i])
