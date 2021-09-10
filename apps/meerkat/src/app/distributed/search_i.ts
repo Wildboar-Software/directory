@@ -1,5 +1,6 @@
 import type { Context, Vertex, ClientConnection } from "../types";
 import * as errors from "../errors";
+import { DER } from "asn1-ts/dist/node/functional";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
@@ -25,6 +26,10 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import {
     ServiceControlOptions_subentries as subentriesBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import {
+    DistinguishedName,
+    _encode_DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
 import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
@@ -81,23 +86,47 @@ import {
     readEntryInformation,
 } from "../database/entry/readEntryInformation";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import {
+    NameProblem_noSuchObject,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
     SecurityProblem_noInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
 import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
-    PERMISSION_CATEGORY_ADD,
-    PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_MODIFY,
+    PERMISSION_CATEGORY_BROWSE,
+    PERMISSION_CATEGORY_RETURN_DN,
+    PERMISSION_CATEGORY_COMPARE,
+    PERMISSION_CATEGORY_READ,
+    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+    PERMISSION_CATEGORY_FILTER_MATCH,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    id_opcode_search,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
+import {
+    nameError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
+import attributeToStoredValues from "../x500/attributeToStoredValues";
+import attributesFromValues from "../x500/attributesFromValues";
+import {
+    id_at_aliasedEntryName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-aliasedEntryName.va";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -120,6 +149,112 @@ async function search_i (
 ): Promise<void> {
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
+    const EQUALITY_MATCHER = (
+        attributeType: OBJECT_IDENTIFIER,
+    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
+    const accessControlScheme = admPoints
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
+    const targetACI = [
+        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !target.dse.subentry)
+            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+            : []),
+        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && target.dse.subentry)
+            ? target.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+            : []),
+        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+            ? target.dse.entryACI ?? []
+            : []),
+    ];
+    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+            ...tuple,
+            await userWithinACIUserClass(
+                tuple[0],
+                conn.boundNameAndUID!, // FIXME:
+                targetDN,
+                EQUALITY_MATCHER,
+                isMemberOfGroup,
+            ),
+        ]),
+    ))
+        .filter((tuple) => (tuple[5] > 0));
+    const onBaseObjectIteration: boolean = (targetDN.length === data.baseObject.rdnSequence.length);
+    const authorized = (permissions: number[]) => {
+        const {
+            authorized,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
+            },
+            permissions,
+            EQUALITY_MATCHER,
+        );
+        return authorized;
+    };
+    if (accessControlScheme) {
+        const authorizedToSearch = authorized([
+            PERMISSION_CATEGORY_RETURN_DN,
+            PERMISSION_CATEGORY_BROWSE,
+        ]);
+        if (onBaseObjectIteration) {
+            const authorizedForDisclosure = authorized([
+                PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+            ]);
+            if (!authorizedToSearch) {
+                if (authorizedForDisclosure) {
+                    throw new errors.SecurityError(
+                        "Not permitted to search the base object entry.",
+                        new SecurityErrorData(
+                            SecurityProblem_insufficientAccessRights,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                securityError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                    );
+                } else {
+                    throw new errors.NameError(
+                        "Not permitted to search the base object entry.",
+                        new NameErrorData(
+                            NameProblem_noSuchObject,
+                            {
+                                rdnSequence: [],
+                            },
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                nameError["&errorCode"],
+                            ),
+                            undefined,
+                            undefined,
+                            undefined,
+                        ),
+                    );
+                }
+            }
+        } else if (!authorizedToSearch) {
+            return;
+        }
+    }
     const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
     const searchAliases = data.searchAliases ?? SearchArgumentData._default_value_for_searchAliases;
     const entryOnly = data.entryOnly ?? SearchArgumentData._default_value_for_entryOnly;
@@ -174,6 +309,10 @@ async function search_i (
     infoItems.push(...attributes.map((attribute): EntryInformation_information_Item => ({
         attribute,
     })));
+    /**
+     * This is the entry information that is used for filtering, not necessarily
+     * what is returned by the search (via `selection`).
+     */
     const entryInfo = new EntryInformation(
         {
             rdnSequence: targetDN,
@@ -211,7 +350,29 @@ async function search_i (
             return true; // FIXME:
         },
         permittedToMatch: (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
-            return true; // FIXME:
+            const {
+                authorized: authorizedToMatch,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                value
+                    ? {
+                        value: new AttributeTypeAndValue(
+                            attributeType,
+                            value,
+                        ),
+                    }
+                    : {
+                        attributeType,
+                    },
+                [
+                    PERMISSION_CATEGORY_FILTER_MATCH,
+                    PERMISSION_CATEGORY_COMPARE, // Not required by specification.
+                    PERMISSION_CATEGORY_READ, // Not required by specification.
+                ],
+                EQUALITY_MATCHER,
+            );
+            return authorizedToMatch;
         },
         performExactly: false, // FIXME:
     };
@@ -275,7 +436,129 @@ async function search_i (
         }
     }
 
+    // NOTE: This was copied from the read operation.
+    const filterUnauthorizedEntryInformation = (
+        einfo: EntryInformation_information_Item[],
+    ): [ boolean, EntryInformation_information_Item[] ] => {
+        if (!accessControlScheme) {
+            return [ true, einfo ];
+        }
+        let incompleteEntry: boolean = false;
+        const permittedEinfo: EntryInformation_information_Item[] = [];
+        for (const info of einfo) {
+            if ("attribute" in info) {
+                const {
+                    authorized: authorizedToAddAttributeType,
+                } = bacACDF(
+                    relevantTuples,
+                    conn.authLevel,
+                    {
+                        attributeType: info.attribute.type_,
+                    },
+                    [
+                        PERMISSION_CATEGORY_READ,
+                    ],
+                    EQUALITY_MATCHER,
+                );
+                if (!authorizedToAddAttributeType) {
+                    incompleteEntry = true;
+                    continue;
+                }
+                const permittedValues = attributeToStoredValues(info.attribute)
+                    .filter((value) => {
+                        const {
+                            authorized: authorizedToAddAttributeValue,
+                        } = bacACDF(
+                            relevantTuples,
+                            conn.authLevel,
+                            {
+                                value: new AttributeTypeAndValue(
+                                    value.id,
+                                    value.value,
+                                ),
+                            },
+                            [
+                                PERMISSION_CATEGORY_READ,
+                            ],
+                            EQUALITY_MATCHER,
+                        );
+                        if (!authorizedToAddAttributeValue) {
+                            incompleteEntry = true;
+                        }
+                        return authorizedToAddAttributeValue;
+                    });
+                const attribute = attributesFromValues(permittedValues)[0];
+                if (attribute) {
+                    permittedEinfo.push({ attribute });
+                } else {
+                    permittedEinfo.push({
+                        attributeType: info.attribute.type_,
+                    });
+                }
+            } else if ("attributeType" in info) {
+                const {
+                    authorized: authorizedToAddAttributeType,
+                } = bacACDF(
+                    relevantTuples,
+                    conn.authLevel,
+                    {
+                        attributeType: info.attributeType,
+                    },
+                    [
+                        PERMISSION_CATEGORY_READ,
+                    ],
+                    EQUALITY_MATCHER,
+                );
+                if (authorizedToAddAttributeType) {
+                    permittedEinfo.push(info);
+                }
+            } else {
+                continue;
+            }
+        }
+        return [ incompleteEntry, permittedEinfo ];
+    };
+
     if (target.dse.alias && searchAliases) {
+        const authorizedToReadEntry: boolean = authorized([
+            PERMISSION_CATEGORY_READ,
+        ]);
+        const {
+            authorized: authorizedToReadAliasedEntryName,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                attributeType: id_at_aliasedEntryName,
+            },
+            [
+                PERMISSION_CATEGORY_READ,
+            ],
+            EQUALITY_MATCHER,
+        );
+        const {
+            authorized: authorizedToReadAliasedEntryNameValue,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                value: new AttributeTypeAndValue(
+                    id_at_aliasedEntryName,
+                    _encode_DistinguishedName(target.dse.alias.aliasedEntryName, DER),
+                ),
+            },
+            [
+                PERMISSION_CATEGORY_READ,
+            ],
+            EQUALITY_MATCHER,
+        );
+        if (
+            !authorizedToReadEntry
+            || !authorizedToReadAliasedEntryName
+            || !authorizedToReadAliasedEntryNameValue
+        ) {
+            return; // REVIEW: This is not totally correct.
+        }
         await searchAliasesProcedure(
             ctx,
             conn,
@@ -293,17 +576,18 @@ async function search_i (
             (target.dse.subentry && subentries)
             || (!target.dse.subentry && !subentries)
         ) {
-            // TODO: Check ACI
+            // Entry ACI is checked above.
             const match = evaluateFilter(filter, entryInfo, filterOptions);
             if (match) {
                 const einfo = await readEntryInformation(ctx, target, data.selection);
+                const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
                 ret.results.push(new EntryInformation(
                     {
                         rdnSequence: targetDN,
                     },
                     Boolean(target.dse.shadow),
-                    einfo,
-                    undefined, // TODO: Will be implemented with authorization
+                    permittedEinfo,
+                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
                     undefined, // TODO: Review, but I think this will always be false.
                     undefined, // TODO: Where is a join EVER specified in X.518's procedures?
                 ));
@@ -322,17 +606,18 @@ async function search_i (
             (target.dse.subentry && subentries)
             || (!target.dse.subentry && !subentries)
         ) {
-            // TODO: Check ACI
+            // Entry ACI is checked above.
             const match = evaluateFilter(filter, entryInfo, filterOptions);
             if (match) {
                 const einfo = await readEntryInformation(ctx, target, data.selection);
+                const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
                 ret.results.push(new EntryInformation(
                     {
                         rdnSequence: targetDN,
                     },
                     Boolean(target.dse.shadow),
-                    einfo,
-                    undefined, // TODO: Will be implemented with authorization
+                    permittedEinfo,
+                    incompleteEntry,  // Technically, you need DiscloseOnError permission to see this, but this is fine.
                     undefined, // TODO: Review, but I think this will always be false.
                     undefined, // TODO: Where is a join EVER specified in X.518's procedures?
                 ));

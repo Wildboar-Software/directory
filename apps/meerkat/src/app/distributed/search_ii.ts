@@ -1,9 +1,14 @@
 import type { Context, Vertex, ClientConnection } from "../types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
-import * as errors from "../errors";
+import { TRUE_BIT, TRUE } from "asn1-ts";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+import {
+    SearchArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+import {
+    SearchArgumentData_subset_oneLevel,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import {
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
@@ -27,25 +32,6 @@ import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import search_i from "./search_i";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import {
-    SecurityProblem_noInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
-import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
-    PERMISSION_CATEGORY_ADD,
-    PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_MODIFY,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
-import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import getIsGroupMember from "../bac/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
-import createSecurityParameters from "../x500/createSecurityParameters";
 
 export
 interface SearchIIReturn {
@@ -65,11 +51,10 @@ async function search_ii (
     ret: SearchIIReturn,
 ): Promise<void> {
     const data = getOptionallyProtectedValue(argument);
+    const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
     const serviceControlOptions = data.serviceControls?.options;
-    const dontUseCopy: boolean = (
-        serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
-    const copyShallDo: boolean = (
-        serviceControlOptions?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
+    const dontUseCopy: boolean = (serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
+    const copyShallDo: boolean = (serviceControlOptions?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
     const subordinates = await readChildren(ctx, target);
     for (const subordinate of subordinates) {
         if (!subordinate.dse.cp) {
@@ -86,13 +71,49 @@ async function search_ii (
         if (!suitable) {
             continue;
         }
-        // TODO: set entryOnly = TRUE iff dse type == alias and subset === oneLevel
+        const newArgument: SearchArgument = (
+            (subset !== SearchArgumentData_subset_oneLevel)
+            && (target.dse.alias)
+        )
+            ? argument
+            : {
+                unsigned: new SearchArgumentData(
+                    data.baseObject,
+                    data.subset,
+                    data.filter,
+                    data.searchAliases,
+                    data.selection,
+                    data.pagedResults,
+                    data.matchedValuesOnly,
+                    data.extendedFilter,
+                    data.checkOverspecified,
+                    data.relaxation,
+                    data.extendedArea,
+                    data.hierarchySelections,
+                    data.searchControlOptions,
+                    data.joinArguments,
+                    data.joinType,
+                    data._unrecognizedExtensionsList,
+                    data.serviceControls,
+                    data.securityParameters,
+                    data.requestor,
+                    data.operationProgress,
+                    data.aliasedRDNs,
+                    data.criticalExtensions,
+                    data.referenceType,
+                    TRUE, // data.entryOnly,
+                    data.exclusions,
+                    data.nameResolveOnMaster,
+                    data.operationContexts,
+                    data.familyGrouping,
+                ),
+            };
         await search_i(
             ctx,
             conn,
             subordinate,
             admPoints,
-            argument,
+            newArgument,
             chaining,
             SRcontinuationList,
             ret,
