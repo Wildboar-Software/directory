@@ -40,7 +40,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element, ASN1TagClass, TRUE, FALSE } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import * as errors from "../errors";
 import { ServiceErrorData, ServiceProblem_invalidReference, ServiceProblem_loopDetected, ServiceProblem_unableToProceed } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
@@ -62,19 +62,15 @@ import {
 import {
     id_opcode_search,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import {
-    SecurityProblem_noInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
 import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
-    PERMISSION_CATEGORY_ADD,
-    PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_MODIFY,
+    PERMISSION_CATEGORY_BROWSE,
+    PERMISSION_CATEGORY_RETURN_DN,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
@@ -85,16 +81,11 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import {
-    securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import {
     nameError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const MAX_DEPTH: number = 10000;
-
-// FIXME: If you read the verbal instructions, you'll see that many steps of findDSE are only for List(II) and Search(II)
 
 function makeContinuationRefFromSupplierKnowledge (
     cp: Vertex,
@@ -207,6 +198,9 @@ async function findDSE (
      * This is used to set the EntryInformation.partialName.
      */
     let partialName: boolean = false;
+    const EQUALITY_MATCHER = (
+        attributeType: OBJECT_IDENTIFIER,
+    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
 
     const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
@@ -550,8 +544,68 @@ async function findDSE (
                 : targetNotFoundSubprocedure();
         }
         const needleRDN = needleDN[i];
-        let rdnMatched: boolean = false
+        let rdnMatched: boolean = false;
+        const accessControlScheme = admPoints
+            .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+        const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
         for (const child of children) {
+            const childDN = getDistinguishedName(child);
+            const relevantSubentries: Vertex[] = (await Promise.all(
+                admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+            )).flat();
+            const targetACI = [
+                ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
+                    ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                    : []),
+                ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
+                    ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                    : []),
+                ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                    ? child.dse.entryACI ?? []
+                    : []),
+            ];
+            const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+            const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                    ...tuple,
+                    await userWithinACIUserClass(
+                        tuple[0],
+                        conn.boundNameAndUID!, // FIXME:
+                        childDN,
+                        EQUALITY_MATCHER,
+                        isMemberOfGroup,
+                    ),
+                ]),
+            ))
+                .filter((tuple) => (tuple[5] > 0));
+            if (accessControlScheme) { // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                const {
+                    authorized,
+                } = bacACDF(
+                    relevantTuples,
+                    conn.authLevel,
+                    {
+                        entry: Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString),
+                    },
+                    [
+                        PERMISSION_CATEGORY_BROWSE,
+                        PERMISSION_CATEGORY_RETURN_DN,
+                    ],
+                    EQUALITY_MATCHER,
+                );
+                if (!authorized) {
+                    /**
+                     * We ignore entries for which browse and returnDN permissions
+                     * are not granted. This is not specified in the Find DSE
+                     * procedure, but it is important for preventing information
+                     * disclosure vulnerabilities.
+                     */
+                    continue;
+                }
+            }
+
             rdnMatched = compareRDN(
                 needleRDN,
                 child.dse.rdn,
