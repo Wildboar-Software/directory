@@ -49,6 +49,8 @@ import bacACDF, {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_READ,
+    PERMISSION_CATEGORY_RENAME,
+    PERMISSION_CATEGORY_EXPORT,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
@@ -272,11 +274,23 @@ async function read (
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
-                PERMISSION_CATEGORY_REMOVE,
+                PERMISSION_CATEGORY_RENAME,
             ],
             EQUALITY_MATCHER,
         );
-        // TODO: Finish this. It is contingent upon the implementation of rights for modifyEntry and modifyDN.
+        const {
+            authorized: authorizedToMoveEntry,
+        } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
+            },
+            [
+                PERMISSION_CATEGORY_EXPORT,
+            ],
+            EQUALITY_MATCHER,
+        );
         modifyRights.push(new ModifyRights_Item(
             {
                 entry: null,
@@ -285,6 +299,7 @@ async function read (
                 authorizedToAddEntry ? TRUE_BIT : FALSE_BIT,
                 authorizedToRemoveEntry ? TRUE_BIT : FALSE_BIT,
                 authorizedToRenameEntry ? TRUE_BIT : FALSE_BIT,
+                authorizedToMoveEntry ? TRUE_BIT : FALSE_BIT,
             ]),
         ));
     }
