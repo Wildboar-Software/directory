@@ -150,8 +150,11 @@ import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
 import {
+    LimitProblem,
     LimitProblem_sizeLimitExceeded,
+    LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+import { addSeconds } from "date-fns";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -177,7 +180,14 @@ async function search_i (
     SRcontinuationList: ContinuationReference[],
     ret: SearchIReturn,
 ): Promise<void> {
+    const startTime: Date = ("present" in invokeId)
+        ? conn.invocations.get(invokeId.present)?.startTime ?? new Date()
+        : new Date();
     const data = getOptionallyProtectedValue(argument);
+    const timeLimit: number | undefined = data.serviceControls?.timeLimit;
+    const timeLimitEndTime: Date | undefined = (timeLimit !== undefined && timeLimit >= 0)
+        ? addSeconds(startTime, timeLimit)
+        : undefined;
     const targetDN = getDistinguishedName(target);
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
     let page: number = 0;
@@ -290,6 +300,21 @@ async function search_i (
     const pageSize: number = pagingRequest?.pageSize
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
+    if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+        ret.poq = new PartialOutcomeQualifier(
+            LimitProblem_timeLimitExceeded,
+            undefined,
+            undefined,
+            undefined,
+            queryReference
+                ? Buffer.from(queryReference, "base64")
+                : undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        return;
+    }
     if (ret.results.length >= pageSize) {
         ret.poq = new PartialOutcomeQualifier(
             LimitProblem_sizeLimitExceeded,
@@ -853,6 +878,7 @@ async function search_i (
             subentry: subentries,
         },
     );
+    let limitExceeded: LimitProblem | undefined;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             // TODO: Return if time limit is exceeded.
@@ -876,6 +902,10 @@ async function search_i (
                         ),
                     );
                 }
+            }
+            if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+                limitExceeded = LimitProblem_timeLimitExceeded;
+                break;
             }
             cursorId = subordinate.dse.id;
             if (subentries && !subordinate.dse.subentry) {
@@ -970,7 +1000,7 @@ async function search_i (
                 ret,
             );
         }
-        if (ret.results.length >= pageSize) {
+        if (limitExceeded !== undefined) {
             break;
         }
         subordinatesInBatch = await readChildren(

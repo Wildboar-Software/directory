@@ -20,6 +20,9 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    ServiceControls,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
 import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
@@ -36,18 +39,29 @@ async function do_list (
         {
             rdnSequence: objectName,
         },
-        {
-            newRequest: new PagedResultsRequest_newRequest(
-                10,
-                undefined,
-                undefined,
-                undefined,
-                19,
-            ),
-        },
+        // {
+        //     newRequest: new PagedResultsRequest_newRequest(
+        //         10,
+        //         undefined,
+        //         undefined,
+        //         undefined,
+        //         19,
+        //     ),
+        // },
+        undefined,
         argv.listFamily,
         [],
-        undefined,
+        new ServiceControls(
+            undefined,
+            undefined,
+            10, // timeLimit
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        ),
         undefined,
         undefined,
         undefined,

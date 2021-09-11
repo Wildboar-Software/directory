@@ -324,6 +324,7 @@ class OperationDispatcher {
                     state.SRcontinuationList,
                     response,
                 );
+                // FIXME: Use response.poq!
                 const localResult: SearchResult = {
                     unsigned: {
                         searchInfo: new SearchResultData_searchInfo(

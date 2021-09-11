@@ -95,8 +95,11 @@ import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
 import {
+    LimitProblem,
     LimitProblem_sizeLimitExceeded,
+    LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+import { addSeconds } from "date-fns";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -109,8 +112,15 @@ async function list_i (
     target: Vertex,
     request: ChainedArgument,
 ): Promise<ChainedResult> {
+    const startTime: Date = ("present" in invokeId)
+        ? conn.invocations.get(invokeId.present)?.startTime ?? new Date()
+        : new Date();
     const arg: ListArgument = _decode_ListArgument(request.argument);
     const data = getOptionallyProtectedValue(arg);
+    const timeLimit: number | undefined = data.serviceControls?.timeLimit;
+    const timeLimitEndTime: Date | undefined = (timeLimit !== undefined && timeLimit >= 0)
+        ? addSeconds(startTime, timeLimit)
+        : undefined;
     const targetDN = getDistinguishedName(target);
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
@@ -316,7 +326,8 @@ async function list_i (
     let skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
         ? (pageNumber * pageSize)
         : 0;
-    let sizeLimitExceeded: boolean = false;
+
+    let limitExceeded: LimitProblem | undefined;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             if ("present" in invokeId) {
@@ -340,10 +351,13 @@ async function list_i (
                     );
                 }
             }
+            if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+                limitExceeded = LimitProblem_timeLimitExceeded;
+                break;
+            }
             cursorId = subordinate.dse.id;
-            // TODO: Return if time limit is exceeded.
             if (listItems.length >= pageSize) {
-                sizeLimitExceeded = true;
+                limitExceeded = LimitProblem_sizeLimitExceeded;
                 break;
             }
             if (subentries && !subordinate.dse.subentry) {
@@ -479,7 +493,7 @@ async function list_i (
                 }
             }
         }
-        if (listItems.length >= pageSize) {
+        if (limitExceeded !== undefined) {
             break;
         }
         subordinatesInBatch = await readChildren(
@@ -546,11 +560,10 @@ async function list_i (
             listInfo: new ListResultData_listInfo(
                 undefined,
                 listItems,
-                queryReference
+                // The POQ shall only be present if the results are incomplete.
+                (queryReference && (limitExceeded !== undefined))
                     ? new PartialOutcomeQualifier(
-                        sizeLimitExceeded
-                            ? LimitProblem_sizeLimitExceeded
-                            : undefined,
+                        limitExceeded,
                         undefined,
                         undefined,
                         undefined,
