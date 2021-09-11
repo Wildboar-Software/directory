@@ -1,4 +1,4 @@
-import { Context, ClientConnection } from "../types";
+import { Context, ClientConnection, PagedResultsRequestState } from "../types";
 import { IDMConnection } from "@wildboar/idm";
 import type {
     DirectoryBindArgument,
@@ -36,9 +36,6 @@ import {
     IdmReject_reason_unknownOperationRequest,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import { Abort_reasonNotSpecified } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import type {
-    PagedResultsRequest_newRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import {
     Versions_v1,
     Versions_v2,
@@ -139,7 +136,7 @@ async function handleRequestAndErrors (
 
 export default
 class DAPConnection extends ClientConnection {
-    public readonly pagedResultsRequests: Map<string, [ request: PagedResultsRequest_newRequest, pageIndex: number ]> = new Map([]);
+    public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
     public get v1 (): boolean {
         return (this.bind.versions?.[Versions_v1] === TRUE_BIT);
     }

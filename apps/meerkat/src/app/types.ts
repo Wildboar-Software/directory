@@ -477,6 +477,31 @@ type SpecialAttributeDatabaseRemover = (
 ) => Promise<void>;
 
 export
+interface PagedResultsRequestState {
+    /**
+     * The original paged results request.
+     */
+    request: PagedResultsRequest_newRequest;
+
+    /**
+     * Note that, even though there is a `pageNumber` field in
+     * `PagedResultsRequest.newRequest`, this field only indicates the page on
+     * which to start; X.500 directory services don't give users the ability to
+     * page backwards or randomly (and thankfully so).
+     *
+     * Hence, this `pageIndex` field exists so the current page number of the
+     * query can be tracked.
+     */
+    pageIndex: number;
+
+    /**
+     * This is for implementing cursor-based pagination in Prisma.
+     * See this: https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination
+     */
+    cursorId?: number;
+}
+
+export
 abstract class ClientConnection {
     public readonly id = randomUUID();
     public boundEntry: Vertex | undefined;
@@ -493,4 +518,5 @@ abstract class ClientConnection {
             false,
         ),
     };
+    public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
 }

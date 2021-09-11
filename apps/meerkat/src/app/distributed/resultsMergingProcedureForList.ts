@@ -45,7 +45,7 @@ async function resultsMergingProcedureForList (
             && (data.listInfo.subordinates.length === 0)
         );
         if (nullResult) {
-            // TODO: Check ACI, return error if denied.
+            // TODO: Check ACI, return error if denied... I don't actually feel like this is necessary.
         }
         return data;
     }

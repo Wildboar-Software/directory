@@ -1,8 +1,17 @@
 import { Context, Vertex, ClientConnection } from "../types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "../errors";
+import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
 import readChildren from "../dit/readChildren";
+import {
+    ListArgument,
+    _decode_ListArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+import {
+    ServiceControlOptions_subentries as subentriesBit,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -52,14 +61,32 @@ import {
     nameError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 import {
-    securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import {
-    attributeError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
-import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    ServiceProblem_invalidQueryReference,
+    ServiceProblem_unavailable,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    PartialOutcomeQualifier,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+import type {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    AbandonedProblem_pagingAbandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
+import {
+    LimitProblem_sizeLimitExceeded,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+
+const BYTES_IN_A_UUID: number = 16;
 
 export
 async function list_ii (
@@ -70,6 +97,9 @@ async function list_ii (
     request: ChainedArgument,
     fromDAP: boolean,
 ): Promise<ChainedResult> {
+    const arg: ListArgument = _decode_ListArgument(request.argument);
+    const data = getOptionallyProtectedValue(arg);
+    const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
@@ -145,76 +175,234 @@ async function list_ii (
             );
         }
     }
-    const subordinates = await readChildren(ctx, target);
+
+    let pagingRequest: PagedResultsRequest_newRequest | undefined;
+    let page: number = 0;
+    let queryReference: string | undefined;
+    if (data.pagedResults) {
+        if ("newRequest" in data.pagedResults) {
+            const nr = data.pagedResults.newRequest;
+            const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
+            if ((pi < 0) || !Number.isSafeInteger(pi)) {
+                throw new errors.ServiceError(
+                    `Paginated query page index ${pi} is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+            // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
+            if ((nr.pageSize < 1) || !Number.isSafeInteger(nr.pageSize)) {
+                throw new errors.ServiceError(
+                    `Paginated query page size ${nr.pageSize} is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+            queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
+            pagingRequest = data.pagedResults.newRequest;
+            page = ((data.pagedResults.newRequest.pageNumber ?? 1) - 1);
+        } else if ("queryReference" in data.pagedResults) {
+            queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
+            const paging = conn.pagedResultsRequests.get(queryReference);
+            if (!paging) {
+                throw new errors.ServiceError(
+                    `Paginated query reference '${queryReference.slice(0, 32)}' is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+            pagingRequest = paging[0];
+            page = paging[1];
+        } else if ("abandonQuery" in data.pagedResults) {
+            queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
+            throw new errors.AbandonError(
+                `Abandoned paginated query identified by query reference '${queryReference.slice(0, 32)}'.`,
+                new AbandonedData(
+                    AbandonedProblem_pagingAbandoned,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        } else {
+            throw new errors.ServiceError(
+                "Unrecognized paginated query syntax.",
+                new ServiceErrorData(
+                    ServiceProblem_unavailable,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+
     const excludeShadows: boolean = request.chainedArgument.excludeShadows
         ?? ChainingArguments._default_value_for_excludeShadows;
     const listItems: ListItem[] = [];
-    for (const subordinate of subordinates) {
-        // TODO: Check limits
-        if (!(subordinate.dse.entry) && !(subordinate.dse.alias)) {
-            continue;
-        }
-        if (
-            excludeShadows
-            && (subordinate.dse.shadow) // TODO: Ignore if writeableCopy
-            // writableCopy has been deprecated, but it still constitutes a "copy"
-        ) {
-            continue;
-        }
-
-        if (accessControlScheme) {
-            const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
-            const subordinateACI = [
-                ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !subordinate.dse.subentry)
-                    ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                    : []),
-                ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && subordinate.dse.subentry)
-                    ? subordinate.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
-                    : []),
-                ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                    ? subordinate.dse.entryACI ?? []
-                    : []),
-            ];
-            const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
-                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-            const relevantSubordinateTuples: ACDFTupleExtended[] = (await Promise.all(
-                subordinateACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                    ...tuple,
-                    await userWithinACIUserClass(
-                        tuple[0],
-                        conn.boundNameAndUID!, // FIXME:
-                        subordinateDN,
-                        EQUALITY_MATCHER,
-                        isMemberOfGroup,
-                    ),
-                ]),
-            ))
-                .filter((tuple) => (tuple[5] > 0));
-            const {
-                authorized: authorizedToList,
-            } = bacACDF(
-                relevantSubordinateTuples,
-                conn.authLevel,
-                {
-                    entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
-                },
-                [
-                    PERMISSION_CATEGORY_BROWSE,
-                    PERMISSION_CATEGORY_RETURN_DN,
-                ],
-                EQUALITY_MATCHER,
-            );
-            if (!authorizedToList) {
+    const pageNumber: number = pagingRequest?.pageNumber ?? 0;
+    const pageSize: number = pagingRequest?.pageSize
+        ?? data.serviceControls?.sizeLimit
+        ?? Infinity;
+    let cursorId: number | undefined;
+    let subordinatesInBatch = await readChildren(
+        ctx,
+        target,
+        pageSize,
+        undefined,
+        cursorId,
+        {
+            subentry: subentries,
+        },
+    );
+    let skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
+        ? (pageNumber * pageSize)
+        : 0;
+    let sizeLimitExceeded: boolean = false;
+    while (subordinatesInBatch.length) {
+        for (const subordinate of subordinatesInBatch) {
+            // TODO: Return if time limit is exceeded.
+            if (listItems.length >= pageSize) {
+                sizeLimitExceeded = true;
+                break;
+            }
+            if (!(subordinate.dse.entry) && !(subordinate.dse.alias)) {
                 continue;
             }
-        }
+            if (
+                excludeShadows
+                && (subordinate.dse.shadow)
+                // writableCopy has been deprecated, but it still constitutes a "copy"
+            ) {
+                continue;
+            }
 
-        listItems.push(new ListItem(
-            subordinate.dse.rdn,
-            Boolean(subordinate.dse.alias),
-            Boolean(subordinate.dse.shadow),
-        ));
+            if (accessControlScheme) {
+                const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
+                const subordinateACI = [
+                    ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !subordinate.dse.subentry)
+                        ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                        : []),
+                    ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && subordinate.dse.subentry)
+                        ? subordinate.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                        : []),
+                    ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                        ? subordinate.dse.entryACI ?? []
+                        : []),
+                ];
+                const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
+                    .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                const relevantSubordinateTuples: ACDFTupleExtended[] = (await Promise.all(
+                    subordinateACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                        ...tuple,
+                        await userWithinACIUserClass(
+                            tuple[0],
+                            conn.boundNameAndUID!, // FIXME:
+                            subordinateDN,
+                            EQUALITY_MATCHER,
+                            isMemberOfGroup,
+                        ),
+                    ]),
+                ))
+                    .filter((tuple) => (tuple[5] > 0));
+                const {
+                    authorized: authorizedToList,
+                } = bacACDF(
+                    relevantSubordinateTuples,
+                    conn.authLevel,
+                    {
+                        entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
+                    },
+                    [
+                        PERMISSION_CATEGORY_BROWSE,
+                        PERMISSION_CATEGORY_RETURN_DN,
+                    ],
+                    EQUALITY_MATCHER,
+                );
+                if (!authorizedToList) {
+                    continue;
+                }
+            }
+            if (skipsRemaining <= 0) {
+                listItems.push(new ListItem(
+                    subordinate.dse.rdn,
+                    Boolean(subordinate.dse.alias),
+                    Boolean(subordinate.dse.shadow),
+                ));
+            } else {
+                skipsRemaining--;
+            }
+        }
+        if (listItems.length >= pageSize) {
+            break;
+        }
+        subordinatesInBatch = await readChildren(
+            ctx,
+            target,
+            pageSize,
+            undefined,
+            cursorId,
+            {
+                subentry: subentries,
+            },
+        );
     }
+
+    if (queryReference && pagingRequest) {
+        conn.pagedResultsRequests.set(queryReference, {
+            request: pagingRequest,
+            pageIndex: page + 1,
+            cursorId,
+        });
+    }
+
     if (fromDAP && (listItems.length === 0)) {
         throw new errors.ServiceError(
             "Null result from DAP list operation",
@@ -241,7 +429,20 @@ async function list_ii (
                 // },
                 undefined,
                 listItems,
-                undefined,
+                queryReference
+                    ? new PartialOutcomeQualifier(
+                        sizeLimitExceeded
+                            ? LimitProblem_sizeLimitExceeded
+                            : undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        Buffer.from(queryReference, "base64"),
+                        undefined,
+                        undefined,
+                        undefined,
+                    )
+                    : undefined,
                 [],
                 createSecurityParameters(
                     ctx,

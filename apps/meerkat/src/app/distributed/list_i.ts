@@ -1,6 +1,7 @@
 import { Context, Vertex, ClientConnection } from "../types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
+import * as crypto from "crypto";
 import {
     ListArgument,
     _decode_ListArgument,
@@ -67,6 +68,36 @@ import {
 import {
     nameError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    ServiceProblem_invalidQueryReference,
+    ServiceProblem_unavailable,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    PartialOutcomeQualifier,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+import type {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    AbandonedProblem_pagingAbandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
+import {
+    LimitProblem_sizeLimitExceeded,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+
+const BYTES_IN_A_UUID: number = 16;
 
 export
 async function list_i (
@@ -82,6 +113,7 @@ async function list_i (
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const relevantSubentries: Vertex[] = (await Promise.all(
         admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -154,94 +186,302 @@ async function list_i (
         }
     }
 
-    const subordinates = await readChildren(ctx, target);
-    const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
-    const SRcontinuationList: ContinuationReference[] = [];
-    const listItems: ListItem[] = [];
-    if (subentries) {
-        for (const subordinate of subordinates) {
-            if (!subordinate.dse.subentry) {
-                continue;
-            }
-            const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
-            const subordinateACI = [
-                ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && subordinate.dse.subentry)
-                    ? subordinate.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
-                    : []),
-                ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                    ? subordinate.dse.entryACI ?? []
-                    : []),
-            ];
-            const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
-                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-            const relevantSubordinateTuples: ACDFTupleExtended[] = (await Promise.all(
-                subordinateACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                    ...tuple,
-                    await userWithinACIUserClass(
-                        tuple[0],
-                        conn.boundNameAndUID!, // FIXME:
-                        subordinateDN,
-                        EQUALITY_MATCHER,
-                        isMemberOfGroup,
+    let pagingRequest: PagedResultsRequest_newRequest | undefined;
+    let page: number = 0;
+    let queryReference: string | undefined;
+    if (data.pagedResults) {
+        if ("newRequest" in data.pagedResults) {
+            const nr = data.pagedResults.newRequest;
+            const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
+            if ((pi < 0) || !Number.isSafeInteger(pi)) {
+                throw new errors.ServiceError(
+                    `Paginated query page index ${pi} is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
                     ),
-                ]),
-            ))
-                .filter((tuple) => (tuple[5] > 0));
-            const {
-                authorized: authorizedToList,
-            } = bacACDF(
-                relevantSubordinateTuples,
-                conn.authLevel,
-                {
-                    entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
-                },
-                [
-                    PERMISSION_CATEGORY_BROWSE,
-                    PERMISSION_CATEGORY_RETURN_DN,
-                ],
-                EQUALITY_MATCHER,
-            );
-            if (!authorizedToList) {
-                continue;
+                );
             }
-            listItems.push(new ListItem(subordinate.dse.rdn, undefined, undefined));
-        }
-
-        const result: ListResult = {
-            unsigned: {
-                listInfo: new ListResultData_listInfo(
-                    // {
-                    //     rdnSequence: targetDN,
-                    // },
-                    undefined,
-                    listItems,
-                    undefined,
+            // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
+            if ((nr.pageSize < 1) || !Number.isSafeInteger(nr.pageSize)) {
+                throw new errors.ServiceError(
+                    `Paginated query page size ${nr.pageSize} is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+            queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
+            pagingRequest = data.pagedResults.newRequest;
+            page = ((data.pagedResults.newRequest.pageNumber ?? 1) - 1);
+        } else if ("queryReference" in data.pagedResults) {
+            queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
+            const paging = conn.pagedResultsRequests.get(queryReference);
+            if (!paging) {
+                throw new errors.ServiceError(
+                    `Paginated query reference '${queryReference.slice(0, 32)}' is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+            pagingRequest = paging[0];
+            page = paging[1];
+        } else if ("abandonQuery" in data.pagedResults) {
+            queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
+            throw new errors.AbandonError(
+                `Abandoned paginated query identified by query reference '${queryReference.slice(0, 32)}'.`,
+                new AbandonedData(
+                    AbandonedProblem_pagingAbandoned,
                     [],
                     createSecurityParameters(
                         ctx,
                         conn.boundNameAndUID?.dn,
-                        id_opcode_list,
+                        undefined,
+                        abandoned["&errorCode"],
                     ),
                     undefined,
                     undefined,
                     undefined,
                 ),
-            },
-        };
-        return new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_list,
+            );
+        } else {
+            throw new errors.ServiceError(
+                "Unrecognized paginated query syntax.",
+                new ServiceErrorData(
+                    ServiceProblem_unavailable,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
                 ),
-                undefined,
-            ),
-            _encode_ListResult(result, DER),
+            );
+        }
+    }
+
+    const SRcontinuationList: ContinuationReference[] = [];
+    const listItems: ListItem[] = [];
+    const pageNumber: number = pagingRequest?.pageNumber ?? 0;
+    const pageSize: number = pagingRequest?.pageSize
+        ?? data.serviceControls?.sizeLimit
+        ?? Infinity;
+    let cursorId: number | undefined;
+    let subordinatesInBatch = await readChildren(
+        ctx,
+        target,
+        pageSize,
+        undefined,
+        cursorId,
+        {
+            subentry: subentries,
+        },
+    );
+    let skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
+        ? (pageNumber * pageSize)
+        : 0;
+    let sizeLimitExceeded: boolean = false;
+    while (subordinatesInBatch.length) {
+        for (const subordinate of subordinatesInBatch) {
+            // TODO: Return if time limit is exceeded.
+            if (listItems.length >= pageSize) {
+                sizeLimitExceeded = true;
+                break;
+            }
+            if (subentries && !subordinate.dse.subentry) {
+                continue;
+            }
+            if (accessControlScheme) {
+                const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
+                const subordinateACI = [
+                    ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && subordinate.dse.subentry)
+                        ? target.dse.admPoint?.subentryACI ?? []
+                        : []),
+                    ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !subordinate.dse.subentry)
+                        ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                        : []),
+                    ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                        ? subordinate.dse.entryACI ?? []
+                        : []),
+                ];
+                const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
+                    .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                const relevantSubordinateTuples: ACDFTupleExtended[] = (await Promise.all(
+                    subordinateACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                        ...tuple,
+                        await userWithinACIUserClass(
+                            tuple[0],
+                            conn.boundNameAndUID!, // FIXME:
+                            subordinateDN,
+                            EQUALITY_MATCHER,
+                            isMemberOfGroup,
+                        ),
+                    ]),
+                ))
+                    .filter((tuple) => (tuple[5] > 0));
+                const {
+                    authorized: authorizedToList,
+                } = bacACDF(
+                    relevantSubordinateTuples,
+                    conn.authLevel,
+                    {
+                        entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
+                    },
+                    [
+                        PERMISSION_CATEGORY_BROWSE,
+                        PERMISSION_CATEGORY_RETURN_DN,
+                    ],
+                    EQUALITY_MATCHER,
+                );
+                if (!authorizedToList) {
+                    continue;
+                }
+            }
+            if (subentries && subordinate.dse.subentry) {
+                if (skipsRemaining <= 0) {
+                    listItems.push(new ListItem(
+                        subordinate.dse.rdn,
+                        undefined,
+                        undefined,
+                    ));
+                    cursorId = subordinate.dse.id;
+                    continue;
+                } else {
+                    skipsRemaining--;
+                }
+            }
+            if (subordinate.dse.subr) {
+                SRcontinuationList.push(new ContinuationReference(
+                    /**
+                     * The specification says to return the DN of the TARGET, not
+                     * the subordinate... This does not quite make sense to me. I
+                     * wonder if the specification is incorrect, but it also seems
+                     * plausible that I am misunderstanding the semantics of the
+                     * ContinuationReference.
+                     */
+                    // {
+                    //     rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
+                    // },
+                    {
+                        rdnSequence: targetDN,
+                    },
+                    undefined,
+                    new OperationProgress(
+                        OperationProgress_nameResolutionPhase_completed,
+                        undefined,
+                    ),
+                    undefined,
+                    ReferenceType_subordinate,
+                    ((): AccessPointInformation[] => {
+                        const [
+                            masters,
+                            shadows,
+                        ] = splitIntoMastersAndShadows(subordinate.dse.subr.specificKnowledge);
+                        const preferred = shadows[0] ?? masters[0];
+                        if (!preferred) {
+                            return [];
+                        }
+                        return [
+                            new AccessPointInformation(
+                                preferred.ae_title,
+                                preferred.address,
+                                preferred.protocolInformation,
+                                preferred.category,
+                                preferred.chainingRequired,
+                                shadows[0]
+                                    ? [ ...shadows.slice(1), ...masters ]
+                                    : [ ...shadows, ...masters.slice(1) ],
+                            ),
+                        ];
+                    })(),
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ));
+            }
+            if (subordinate.dse.entry || subordinate.dse.glue) {
+                if (skipsRemaining <= 0) {
+                    listItems.push(new ListItem(
+                        subordinate.dse.rdn,
+                        false,
+                        Boolean(subordinate.dse.shadow),
+                    ));
+                    cursorId = subordinate.dse.id;
+                } else {
+                    skipsRemaining--;
+                }
+            } else if (subordinate.dse.alias) {
+                if (skipsRemaining <= 0) {
+                    listItems.push(new ListItem(
+                        subordinate.dse.rdn,
+                        true,
+                        Boolean(subordinate.dse.shadow),
+                    ));
+                    cursorId = subordinate.dse.id;
+                } else {
+                    skipsRemaining--;
+                }
+            }
+        }
+        if (listItems.length >= pageSize) {
+            break;
+        }
+        subordinatesInBatch = await readChildren(
+            ctx,
+            target,
+            pageSize,
+            undefined,
+            cursorId,
+            {
+                subentry: subentries,
+            },
         );
     }
+
+    if (queryReference && pagingRequest) {
+        conn.pagedResultsRequests.set(queryReference, {
+            request: pagingRequest,
+            pageIndex: page + 1,
+            cursorId,
+        });
+    }
+
+    // TODO: Implement sorting.
     if (target.dse.nssr) {
         SRcontinuationList.push(new ContinuationReference(
             {
@@ -279,122 +519,26 @@ async function list_i (
             undefined,
         ));
     }
-    for (const subordinate of subordinates) {
-        if (accessControlScheme) {
-            const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
-            const subordinateACI = [
-                ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !subordinate.dse.subentry)
-                    ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                    : []),
-                ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                    ? subordinate.dse.entryACI ?? []
-                    : []),
-            ];
-            const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
-                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-            const relevantSubordinateTuples: ACDFTupleExtended[] = (await Promise.all(
-                subordinateACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                    ...tuple,
-                    await userWithinACIUserClass(
-                        tuple[0],
-                        conn.boundNameAndUID!, // FIXME:
-                        subordinateDN,
-                        EQUALITY_MATCHER,
-                        isMemberOfGroup,
-                    ),
-                ]),
-            ))
-                .filter((tuple) => (tuple[5] > 0));
-            const {
-                authorized: authorizedToList,
-            } = bacACDF(
-                relevantSubordinateTuples,
-                conn.authLevel,
-                {
-                    entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
-                },
-                [
-                    PERMISSION_CATEGORY_BROWSE,
-                    PERMISSION_CATEGORY_RETURN_DN,
-                ],
-                EQUALITY_MATCHER,
-            );
-            if (!authorizedToList) {
-                continue;
-            }
-        }
 
-        if (subordinate.dse.subr) {
-            SRcontinuationList.push(new ContinuationReference(
-                /**
-                 * The specification says to return the DN of the TARGET, not
-                 * the subordinate... This does not quite make sense to me. I
-                 * wonder if the specification is incorrect, but it also seems
-                 * plausible that I am misunderstanding the semantics of the
-                 * ContinuationReference.
-                 */
-                // {
-                //     rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
-                // },
-                {
-                    rdnSequence: targetDN,
-                },
-                undefined,
-                new OperationProgress(
-                    OperationProgress_nameResolutionPhase_completed,
-                    undefined,
-                ),
-                undefined,
-                ReferenceType_subordinate,
-                ((): AccessPointInformation[] => {
-                    const [
-                        masters,
-                        shadows,
-                    ] = splitIntoMastersAndShadows(subordinate.dse.subr.specificKnowledge);
-                    const preferred = shadows[0] ?? masters[0];
-                    if (!preferred) {
-                        return [];
-                    }
-                    return [
-                        new AccessPointInformation(
-                            preferred.ae_title,
-                            preferred.address,
-                            preferred.protocolInformation,
-                            preferred.category,
-                            preferred.chainingRequired,
-                            shadows[0]
-                                ? [ ...shadows.slice(1), ...masters ]
-                                : [ ...shadows, ...masters.slice(1) ],
-                        ),
-                    ];
-                })(),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-            ));
-        }
-        if (subordinate.dse.entry || subordinate.dse.glue) {
-            listItems.push(new ListItem(
-                subordinate.dse.rdn,
-                false,
-                Boolean(subordinate.dse.shadow),
-            ));
-        } else if (subordinate.dse.alias) {
-            listItems.push(new ListItem(
-                subordinate.dse.rdn,
-                true,
-                Boolean(subordinate.dse.shadow),
-            ));
-        }
-        // TODO: Check if limit is exceeded.
-    }
     const result: ListResult = {
         unsigned: {
             listInfo: new ListResultData_listInfo(
                 undefined,
                 listItems,
-                undefined,
+                queryReference
+                    ? new PartialOutcomeQualifier(
+                        sizeLimitExceeded
+                            ? LimitProblem_sizeLimitExceeded
+                            : undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        Buffer.from(queryReference, "base64"),
+                        undefined,
+                        undefined,
+                        undefined,
+                    )
+                    : undefined,
                 [],
                 createSecurityParameters(
                     ctx,

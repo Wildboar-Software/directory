@@ -7,10 +7,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import DAPConnection from "../DAPConnection";
 import {
-    SearchArgumentData_subset,
     SearchArgumentData_subset_baseObject,
-    SearchArgumentData_subset_oneLevel,
-    SearchArgumentData_subset_wholeSubtree,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import {
     EntryInformation,
@@ -30,7 +27,6 @@ import {
     HierarchySelections_children,
     HierarchySelections_parent,
     HierarchySelections_hierarchy,
-    HierarchySelections_top,
     HierarchySelections_subtree,
     HierarchySelections_siblings,
     HierarchySelections_siblingChildren,
@@ -281,7 +277,7 @@ async function search (
                 );
             }
             queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
-            connection.pagedResultsRequests.set(queryReference, [ nr, pi ]);
+            // connection.pagedResultsRequests.set(queryReference, [ nr, pi ]);
             pagingRequest = data.pagedResults.newRequest;
             page = ((data.pagedResults.newRequest.pageNumber ?? 1) - 1);
         } else if ("queryReference" in data.pagedResults) {
@@ -336,7 +332,7 @@ async function search (
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
     if (queryReference && pagingRequest) {
-        connection.pagedResultsRequests.set(queryReference, [ pagingRequest, (page + 1) ]);
+        // connection.pagedResultsRequests.set(queryReference, [ pagingRequest, (page + 1) ]);
     }
     // Meerkat will only sort the results of the page, and only by the first sort key.
     const sortKey = (pagingRequest?.sortKeys && (pagingRequest.sortKeys.length > 0))
@@ -433,7 +429,7 @@ async function search (
         const children: boolean = (data.hierarchySelections[HierarchySelections_children] === TRUE_BIT) || all;
         const parent: boolean = (data.hierarchySelections[HierarchySelections_parent] === TRUE_BIT) || all;
         const hierarchy: boolean = (data.hierarchySelections[HierarchySelections_hierarchy] === TRUE_BIT) || all;
-        const top: boolean = (data.hierarchySelections[HierarchySelections_top] === TRUE_BIT) || all;
+        // const top: boolean = (data.hierarchySelections[HierarchySelections_top] === TRUE_BIT) || all;
         const subtree: boolean = (data.hierarchySelections[HierarchySelections_subtree] === TRUE_BIT) || all;
         const siblings: boolean = (data.hierarchySelections[HierarchySelections_siblings] === TRUE_BIT) || all;
         const siblingChildren: boolean = (data.hierarchySelections[HierarchySelections_siblingChildren] === TRUE_BIT) || all;

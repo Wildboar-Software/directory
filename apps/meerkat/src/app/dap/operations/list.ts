@@ -45,7 +45,6 @@ import {
 import { TRUE_BIT } from "asn1-ts";
 import * as crypto from "crypto";
 import findEntry from "../../x500/findEntry";
-import getDistinguishedName from "../../x500/getDistinguishedName";
 import readChildren from "../../dit/readChildren";
 
 // list OPERATION ::= {
@@ -205,7 +204,7 @@ async function list (
                 );
             }
             queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
-            connection.pagedResultsRequests.set(queryReference, [ nr, pi ]);
+            // connection.pagedResultsRequests.set(queryReference, [ nr, pi ]);
             pagingRequest = data.pagedResults.newRequest;
             page = ((data.pagedResults.newRequest.pageNumber ?? 1) - 1);
         } else if ("queryReference" in data.pagedResults) {
@@ -283,7 +282,7 @@ async function list (
     const results: Vertex[] = await readChildren(ctx, base);
     const completeResults: boolean = ((skip + pageSize) < results.length);
     if (queryReference && pagingRequest) {
-        connection.pagedResultsRequests.set(queryReference, [ pagingRequest, (page + 1) ]);
+        // connection.pagedResultsRequests.set(queryReference, [ pagingRequest, (page + 1) ]);
     }
     // Meerkat will only sort the results of the page, and only by the first sort key.
     const sortKey = (pagingRequest?.sortKeys && (pagingRequest.sortKeys.length > 0))

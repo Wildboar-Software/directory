@@ -17,6 +17,7 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
+import OperationDispatcher from "./OperationDispatcher";
 
 export
 async function searchAliases (
@@ -48,7 +49,7 @@ async function searchAliases (
     }
 
     // TODO: Step 4; pending service-specific administrative area implementation.
-    // FIXME: Call operation dispatcher.
+    // FIXME: Call operation dispatcher. Pending dispatchLocalDSPRequest
 }
 
 export default searchAliases;
