@@ -14,6 +14,9 @@ import {
     ListResult,
     _decode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+import {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -33,7 +36,15 @@ async function do_list (
         {
             rdnSequence: objectName,
         },
-        undefined,
+        {
+            newRequest: new PagedResultsRequest_newRequest(
+                10,
+                undefined,
+                undefined,
+                undefined,
+                19,
+            ),
+        },
         argv.listFamily,
         [],
         undefined,
@@ -76,7 +87,7 @@ async function do_list (
     if ("listInfo" in resData) {
         resData.listInfo.subordinates
             .map((sub) => stringifyDN(ctx, [ sub.rdn ]))
-            .forEach((str) => ctx.log.info(str));
+            .forEach((str, i) => ctx.log.info(`#${(i + 1).toString().padStart(4, "0")}: ${str}`));
         ctx.log.info("End of list.");
     } else if ("uncorrelatedListInfo" in resData) {
         ctx.log.warn("Uncorrelated info."); // FIXME:

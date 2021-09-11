@@ -317,6 +317,7 @@ async function list_i (
     let sizeLimitExceeded: boolean = false;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
+            cursorId = subordinate.dse.id;
             // TODO: Return if time limit is exceeded.
             if (listItems.length >= pageSize) {
                 sizeLimitExceeded = true;
@@ -378,7 +379,6 @@ async function list_i (
                         undefined,
                         undefined,
                     ));
-                    cursorId = subordinate.dse.id;
                     continue;
                 } else {
                     skipsRemaining--;
@@ -441,7 +441,6 @@ async function list_i (
                         false,
                         Boolean(subordinate.dse.shadow),
                     ));
-                    cursorId = subordinate.dse.id;
                 } else {
                     skipsRemaining--;
                 }
@@ -452,7 +451,6 @@ async function list_i (
                         true,
                         Boolean(subordinate.dse.shadow),
                     ));
-                    cursorId = subordinate.dse.id;
                 } else {
                     skipsRemaining--;
                 }

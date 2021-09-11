@@ -1,5 +1,6 @@
 import type { Context, Vertex, ClientConnection } from "../types";
 import * as errors from "../errors";
+import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     SearchArgument,
@@ -27,7 +28,6 @@ import {
     ServiceControlOptions_subentries as subentriesBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
-    DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
@@ -92,7 +92,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 import {
     SecurityProblem_insufficientAccessRights,
-    SecurityProblem_noInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
@@ -113,9 +112,6 @@ import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
-    id_opcode_search,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
-import {
     nameError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 import {
@@ -127,13 +123,45 @@ import attributesFromValues from "../x500/attributesFromValues";
 import {
     id_at_aliasedEntryName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-aliasedEntryName.va";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    ServiceProblem_invalidQueryReference,
+    ServiceProblem_unavailable,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    PartialOutcomeQualifier,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+import type {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    AbandonedProblem_pagingAbandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
+import {
+    LimitProblem_sizeLimitExceeded,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 
 // TODO: This will require serious changes when service specific areas are implemented.
+
+const BYTES_IN_A_UUID: number = 16;
 
 export
 interface SearchIReturn {
     chaining: ChainingResults;
     results: EntryInformation[];
+    poq?: PartialOutcomeQualifier;
+    skipsRemaining?: number;
 }
 
 export
@@ -149,6 +177,137 @@ async function search_i (
 ): Promise<void> {
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
+    let pagingRequest: PagedResultsRequest_newRequest | undefined;
+    let page: number = 0;
+    let queryReference: string | undefined;
+    if (data.pagedResults) {
+        if ("newRequest" in data.pagedResults) {
+            const nr = data.pagedResults.newRequest;
+            const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
+            if ((pi < 0) || !Number.isSafeInteger(pi)) {
+                throw new errors.ServiceError(
+                    `Paginated query page index ${pi} is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+            // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
+            if ((nr.pageSize < 1) || !Number.isSafeInteger(nr.pageSize)) {
+                throw new errors.ServiceError(
+                    `Paginated query page size ${nr.pageSize} is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+            queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
+            pagingRequest = data.pagedResults.newRequest;
+            page = ((data.pagedResults.newRequest.pageNumber ?? 1) - 1);
+        } else if ("queryReference" in data.pagedResults) {
+            queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
+            const paging = conn.pagedResultsRequests.get(queryReference);
+            if (!paging) {
+                throw new errors.ServiceError(
+                    `Paginated query reference '${queryReference.slice(0, 32)}' is invalid.`,
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+            pagingRequest = paging[0];
+            page = paging[1];
+        } else if ("abandonQuery" in data.pagedResults) {
+            queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
+            throw new errors.AbandonError(
+                `Abandoned paginated query identified by query reference '${queryReference.slice(0, 32)}'.`,
+                new AbandonedData(
+                    AbandonedProblem_pagingAbandoned,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        } else {
+            throw new errors.ServiceError(
+                "Unrecognized paginated query syntax.",
+                new ServiceErrorData(
+                    ServiceProblem_unavailable,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+    const pageNumber: number = pagingRequest?.pageNumber ?? 0;
+    const pageSize: number = pagingRequest?.pageSize
+        ?? data.serviceControls?.sizeLimit
+        ?? Infinity;
+    if (ret.results.length >= pageSize) {
+        ret.poq = new PartialOutcomeQualifier(
+            LimitProblem_sizeLimitExceeded,
+            undefined,
+            undefined,
+            undefined,
+            queryReference
+                ? Buffer.from(queryReference, "base64")
+                : undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        return;
+    }
+    if (ret.skipsRemaining === undefined) {
+        ret.skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
+            ? (pageNumber * pageSize)
+            : 0;
+    }
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
@@ -579,6 +738,10 @@ async function search_i (
             // Entry ACI is checked above.
             const match = evaluateFilter(filter, entryInfo, filterOptions);
             if (match) {
+                if (ret.skipsRemaining > 0) {
+                    ret.skipsRemaining--;
+                    return;
+                }
                 const einfo = await readEntryInformation(ctx, target, data.selection);
                 const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
                 ret.results.push(new EntryInformation(
@@ -591,13 +754,13 @@ async function search_i (
                     undefined, // TODO: Review, but I think this will always be false.
                     undefined, // TODO: Where is a join EVER specified in X.518's procedures?
                 ));
-            }
-            if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
-                hierarchySelectionProcedure(
-                    ctx,
-                    data.hierarchySelections,
-                    data.serviceControls?.serviceType,
-                );
+                if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
+                    hierarchySelectionProcedure(
+                        ctx,
+                        data.hierarchySelections,
+                        data.serviceControls?.serviceType,
+                    );
+                }
             }
             return;
         }
@@ -609,25 +772,29 @@ async function search_i (
             // Entry ACI is checked above.
             const match = evaluateFilter(filter, entryInfo, filterOptions);
             if (match) {
-                const einfo = await readEntryInformation(ctx, target, data.selection);
-                const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
-                ret.results.push(new EntryInformation(
-                    {
-                        rdnSequence: targetDN,
-                    },
-                    Boolean(target.dse.shadow),
-                    permittedEinfo,
-                    incompleteEntry,  // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                    undefined, // TODO: Review, but I think this will always be false.
-                    undefined, // TODO: Where is a join EVER specified in X.518's procedures?
-                ));
-            }
-            if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
-                hierarchySelectionProcedure(
-                    ctx,
-                    data.hierarchySelections,
-                    data.serviceControls?.serviceType,
-                );
+                if (ret.skipsRemaining > 0) {
+                    ret.skipsRemaining--;
+                } else {
+                    const einfo = await readEntryInformation(ctx, target, data.selection);
+                    const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
+                    ret.results.push(new EntryInformation(
+                        {
+                            rdnSequence: targetDN,
+                        },
+                        Boolean(target.dse.shadow),
+                        permittedEinfo,
+                        incompleteEntry,  // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                        undefined, // TODO: Review, but I think this will always be false.
+                        undefined, // TODO: Where is a join EVER specified in X.518's procedures?
+                    ));
+                    if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
+                        hierarchySelectionProcedure(
+                            ctx,
+                            data.hierarchySelections,
+                            data.serviceControls?.serviceType,
+                        );
+                    }
+                }
             }
         }
     }
@@ -673,96 +840,133 @@ async function search_i (
         SRcontinuationList.push(cr);
     }
 
-    const subordinates = await readChildren(ctx, target);
-    for (const subordinate of subordinates) {
-        if (subordinate.dse.subr && !subordinate.dse.cp) {
-            const cr = new ContinuationReference(
-                {
-                    // REVIEW: The documentation says use the DN of e, but I am pretty sure they mean e'.
-                    // rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
-                    rdnSequence: targetDN,
-                },
-                undefined,
-                new OperationProgress(
-                    OperationProgress_nameResolutionPhase_completed,
+    let cursorId: number | undefined;
+    let subordinatesInBatch = await readChildren(
+        ctx,
+        target,
+        pageSize,
+        undefined,
+        cursorId,
+        {
+            subentry: subentries,
+        },
+    );
+    while (subordinatesInBatch.length) {
+        for (const subordinate of subordinatesInBatch) {
+            // TODO: Return if time limit is exceeded.
+            cursorId = subordinate.dse.id;
+            if (subentries && !subordinate.dse.subentry) {
+                continue;
+            }
+            if (subordinate.dse.subr && !subordinate.dse.cp) {
+                const cr = new ContinuationReference(
+                    {
+                        // REVIEW: The documentation says use the DN of e, but I am pretty sure they mean e'.
+                        // rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
+                        rdnSequence: targetDN,
+                    },
                     undefined,
-                ),
-                undefined,
-                ReferenceType_subordinate,
-                ((): AccessPointInformation[] => {
-                    const [
-                        masters,
-                        shadows,
-                    ] = splitIntoMastersAndShadows(subordinate.dse.subr.specificKnowledge);
-                    const preferred = shadows[0] ?? masters[0];
-                    if (!preferred) {
-                        return [];
-                    }
-                    return [
-                        new AccessPointInformation(
-                            preferred.ae_title,
-                            preferred.address,
-                            preferred.protocolInformation,
-                            preferred.category,
-                            preferred.chainingRequired,
-                            shadows[0]
-                                ? [ ...shadows.slice(1), ...masters ]
-                                : [ ...shadows, ...masters.slice(1) ],
-                        ),
-                    ];
-                })(),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                    new OperationProgress(
+                        OperationProgress_nameResolutionPhase_completed,
+                        undefined,
+                    ),
+                    undefined,
+                    ReferenceType_subordinate,
+                    ((): AccessPointInformation[] => {
+                        const [
+                            masters,
+                            shadows,
+                        ] = splitIntoMastersAndShadows(subordinate.dse.subr.specificKnowledge);
+                        const preferred = shadows[0] ?? masters[0];
+                        if (!preferred) {
+                            return [];
+                        }
+                        return [
+                            new AccessPointInformation(
+                                preferred.ae_title,
+                                preferred.address,
+                                preferred.protocolInformation,
+                                preferred.category,
+                                preferred.chainingRequired,
+                                shadows[0]
+                                    ? [ ...shadows.slice(1), ...masters ]
+                                    : [ ...shadows, ...masters.slice(1) ],
+                            ),
+                        ];
+                    })(),
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                );
+                SRcontinuationList.push(cr);
+            }
+            const newArgument: SearchArgument = (subset !== SearchArgumentData_subset_oneLevel)
+                ? argument
+                : {
+                    unsigned: new SearchArgumentData(
+                        data.baseObject,
+                        data.subset,
+                        data.filter,
+                        data.searchAliases,
+                        data.selection,
+                        data.pagedResults,
+                        data.matchedValuesOnly,
+                        data.extendedFilter,
+                        data.checkOverspecified,
+                        data.relaxation,
+                        data.extendedArea,
+                        data.hierarchySelections,
+                        data.searchControlOptions,
+                        data.joinArguments,
+                        data.joinType,
+                        data._unrecognizedExtensionsList,
+                        data.serviceControls,
+                        data.securityParameters,
+                        data.requestor,
+                        data.operationProgress,
+                        data.aliasedRDNs,
+                        data.criticalExtensions,
+                        data.referenceType,
+                        TRUE, // data.entryOnly,
+                        data.exclusions,
+                        data.nameResolveOnMaster,
+                        data.operationContexts,
+                        data.familyGrouping,
+                    ),
+                };
+            await search_i(
+                ctx,
+                conn,
+                subordinate,
+                admPoints, // TODO: Are you sure you can always pass in the same admPoints?
+                newArgument,
+                chaining,
+                SRcontinuationList,
+                ret,
             );
-            SRcontinuationList.push(cr);
         }
-
-        const newArgument: SearchArgument = (subset !== SearchArgumentData_subset_oneLevel)
-            ? argument
-            : {
-                unsigned: new SearchArgumentData(
-                    data.baseObject,
-                    data.subset,
-                    data.filter,
-                    data.searchAliases,
-                    data.selection,
-                    data.pagedResults,
-                    data.matchedValuesOnly,
-                    data.extendedFilter,
-                    data.checkOverspecified,
-                    data.relaxation,
-                    data.extendedArea,
-                    data.hierarchySelections,
-                    data.searchControlOptions,
-                    data.joinArguments,
-                    data.joinType,
-                    data._unrecognizedExtensionsList,
-                    data.serviceControls,
-                    data.securityParameters,
-                    data.requestor,
-                    data.operationProgress,
-                    data.aliasedRDNs,
-                    data.criticalExtensions,
-                    data.referenceType,
-                    TRUE, // data.entryOnly,
-                    data.exclusions,
-                    data.nameResolveOnMaster,
-                    data.operationContexts,
-                    data.familyGrouping,
-                ),
-            };
-        await search_i(
+        if (ret.results.length >= pageSize) {
+            break;
+        }
+        subordinatesInBatch = await readChildren(
             ctx,
-            conn,
-            subordinate,
-            admPoints, // TODO: Are you sure you can always pass in the same admPoints?
-            newArgument,
-            chaining,
-            SRcontinuationList,
-            ret,
+            target,
+            pageSize,
+            undefined,
+            cursorId,
+            {
+                subentry: subentries,
+            },
         );
+    }
+
+    if (queryReference && pagingRequest) {
+        conn.pagedResultsRequests.set(queryReference, {
+            request: pagingRequest,
+            pageIndex: page + 1,
+            cursorId,
+        });
     }
 }
 

@@ -27,6 +27,9 @@ import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
 import stringifyDN from "../../utils/stringifyDN";
+import {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import { requestedServiceNotAvailable } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 
 function subsetFromString (str: string): SearchArgumentData_subset {
@@ -57,7 +60,15 @@ async function search_new (
         undefined,
         true,
         undefined,
-        undefined,
+        {
+            newRequest: new PagedResultsRequest_newRequest(
+                10,
+                undefined,
+                undefined,
+                undefined,
+                3,
+            ),
+        },
         undefined,
         undefined,
         false,
