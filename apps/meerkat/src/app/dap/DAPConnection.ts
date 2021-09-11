@@ -89,6 +89,12 @@ async function handleRequestAndErrors (
     dap: DAPConnection, // eslint-disable-line
     request: Request,
 ): Promise<void> {
+    const now = new Date();
+    dap.invocations.set(request.invokeID, {
+        invokeId: request.invokeID,
+        operationCode: request.opcode,
+        startTime: new Date(),
+    });
     try {
         await handleRequest(ctx, dap, request);
     } catch (e) {
@@ -130,6 +136,13 @@ async function handleRequestAndErrors (
         } else {
             await dap.idm.writeAbort(Abort_reasonNotSpecified);
         }
+    } finally {
+        dap.invocations.set(request.invokeID, {
+            invokeId: request.invokeID,
+            operationCode: request.opcode,
+            startTime: now,
+            resultTime: new Date(),
+        });
     }
 }
 

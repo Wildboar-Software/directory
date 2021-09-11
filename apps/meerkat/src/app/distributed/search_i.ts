@@ -1,4 +1,5 @@
 import type { Context, Vertex, ClientConnection } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import * as errors from "../errors";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -168,6 +169,7 @@ export
 async function search_i (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     target: Vertex,
     admPoints: Vertex[],
     argument: SearchArgument,
@@ -854,6 +856,27 @@ async function search_i (
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             // TODO: Return if time limit is exceeded.
+            if ("present" in invokeId) {
+                const op = conn.invocations.get(invokeId.present);
+                if (op?.abandonTime) {
+                    throw new errors.AbandonError(
+                        "Abandoned.",
+                        new AbandonedData(
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                abandoned["&errorCode"],
+                            ),
+                            undefined,
+                            undefined,
+                            undefined,
+                        ),
+                    );
+                }
+            }
             cursorId = subordinate.dse.id;
             if (subentries && !subordinate.dse.subentry) {
                 continue;
@@ -938,6 +961,7 @@ async function search_i (
             await search_i(
                 ctx,
                 conn,
+                invokeId,
                 subordinate,
                 admPoints, // TODO: Are you sure you can always pass in the same admPoints?
                 newArgument,

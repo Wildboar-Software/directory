@@ -1,4 +1,5 @@
 import { Context, StoredContext, Vertex, ClientConnection } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { DERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import {
@@ -97,6 +98,7 @@ export
 async function compare (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     target: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,

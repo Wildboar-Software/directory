@@ -1,4 +1,5 @@
 import { Context, Vertex, ClientConnection } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT, FALSE_BIT } from "asn1-ts";
 import * as errors from "../errors";
 import {
@@ -73,6 +74,7 @@ export
 async function read (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     target: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,

@@ -30,7 +30,6 @@ import stringifyDN from "../../utils/stringifyDN";
 import {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
-import { requestedServiceNotAvailable } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 
 function subsetFromString (str: string): SearchArgumentData_subset {
     const str_ = str.toLowerCase();

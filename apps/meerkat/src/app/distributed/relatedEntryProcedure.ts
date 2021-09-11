@@ -1,4 +1,5 @@
 import type { ClientConnection, Context } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import * as errors from "../errors";
 import {
     SearchArgument,
@@ -70,6 +71,7 @@ export
 async function relatedEntryProcedure (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     ret: RelatedEntryReturn,
     argument: SearchArgument,
     chaining?: ChainingArguments,
@@ -119,6 +121,7 @@ async function relatedEntryProcedure (
             const response = await OperationDispatcher.dispatchLocalSearchDSPRequest(
                 ctx,
                 conn,
+                invokeId,
                 newArgument,
                 newChaining,
             );

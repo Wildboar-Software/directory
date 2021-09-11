@@ -71,8 +71,9 @@ import {
 import type {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import { KeyObject } from "crypto";
-import { PkiPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
+import type { KeyObject } from "crypto";
+import type { PkiPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
+import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -502,6 +503,26 @@ interface PagedResultsRequestState {
 }
 
 export
+interface OperationInvocationInfo {
+    /**
+     * From `InvokeId.present`.
+     */
+    invokeId: number;
+    operationCode?: Code;
+    startTime: Date;
+
+    /**
+     * This field exists to indicate the abandonment of an operation.
+     */
+    abandonTime?: Date;
+
+    /**
+     * This field exists so that AbandonError.tooLate can be used.
+     */
+    resultTime?: Date;
+}
+
+export
 abstract class ClientConnection {
     public readonly id = randomUUID();
     public boundEntry: Vertex | undefined;
@@ -518,5 +539,14 @@ abstract class ClientConnection {
             false,
         ),
     };
-    public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
+    public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map();
+
+    /**
+     * When an operation is started, it is added to this map. When the operation
+     * is abandoned, its `abandonTime` field is set with the current time. Each
+     * operation independently will be responsible for checking, say, in every
+     * iteration of a loop, if this field is set (which would mean that the
+     * request has been abandoned).
+     */
+    public readonly invocations: Map<number, OperationInvocationInfo> = new Map(); // number is the InvokeId.present.
 }

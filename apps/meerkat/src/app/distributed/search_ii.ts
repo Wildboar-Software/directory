@@ -1,4 +1,6 @@
 import type { Context, Vertex, ClientConnection } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import * as errors from "../errors";
 import { TRUE_BIT, TRUE } from "asn1-ts";
 import {
     SearchArgument,
@@ -25,9 +27,16 @@ import {
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
 import readChildren from "../dit/readChildren";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import checkSuitabilityProcedure from "./checkSuitability";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
@@ -43,6 +52,7 @@ export
 async function search_ii (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     target: Vertex,
     admPoints: Vertex[],
     argument: SearchArgument,
@@ -55,8 +65,29 @@ async function search_ii (
     const serviceControlOptions = data.serviceControls?.options;
     const dontUseCopy: boolean = (serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (serviceControlOptions?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
-    const subordinates = await readChildren(ctx, target);
+    const subordinates = await readChildren(ctx, target); // TODO: Pagination
     for (const subordinate of subordinates) {
+        if ("present" in invokeId) {
+            const op = conn.invocations.get(invokeId.present);
+            if (op?.abandonTime) {
+                throw new errors.AbandonError(
+                    "Abandoned.",
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            abandoned["&errorCode"],
+                        ),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
+        }
         if (!subordinate.dse.cp) {
             continue;
         }
@@ -111,6 +142,7 @@ async function search_ii (
         await search_i(
             ctx,
             conn,
+            invokeId,
             subordinate,
             admPoints,
             newArgument,

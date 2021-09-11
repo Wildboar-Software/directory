@@ -1,4 +1,5 @@
 import { Context, Vertex, ClientConnection } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import * as crypto from "crypto";
@@ -103,6 +104,7 @@ export
 async function list_i (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     admPoints: Vertex[],
     target: Vertex,
     request: ChainedArgument,
@@ -317,6 +319,27 @@ async function list_i (
     let sizeLimitExceeded: boolean = false;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
+            if ("present" in invokeId) {
+                const op = conn.invocations.get(invokeId.present);
+                if (op?.abandonTime) {
+                    throw new errors.AbandonError(
+                        "Abandoned.",
+                        new AbandonedData(
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                abandoned["&errorCode"],
+                            ),
+                            undefined,
+                            undefined,
+                            undefined,
+                        ),
+                    );
+                }
+            }
             cursorId = subordinate.dse.id;
             // TODO: Return if time limit is exceeded.
             if (listItems.length >= pageSize) {

@@ -1,4 +1,5 @@
 import type { Context, Vertex, ClientConnection } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -93,6 +94,7 @@ export
 async function changePassword (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     target: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,

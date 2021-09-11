@@ -1,4 +1,5 @@
 import { Context, Vertex, Value, ClientConnection } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { TRUE_BIT, BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import * as errors from "../errors";
@@ -219,6 +220,7 @@ export
 async function modifyDN (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     target: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,

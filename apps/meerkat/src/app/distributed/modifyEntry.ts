@@ -1,4 +1,5 @@
 import { Context, IndexableOID, Vertex, Value, ClientConnection } from "../types";
+import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import * as errors from "../errors";
 import {
     _decode_ModifyEntryArgument,
@@ -823,6 +824,7 @@ export
 async function modifyEntry (
     ctx: Context,
     conn: ClientConnection,
+    invokeId: InvokeId,
     target: Vertex,
     admPoints: Vertex[],
     request: ChainedArgument,
