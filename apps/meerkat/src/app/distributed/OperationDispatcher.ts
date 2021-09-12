@@ -1,5 +1,6 @@
 import type { ClientConnection, Context, Vertex } from "../types";
 import type DAPConnection from "../dap/DAPConnection";
+import type DSPConnection from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import {
     ChainingArguments,
@@ -88,6 +89,10 @@ import {
 } from "./relatedEntryProcedure";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import createSecurityParameters from "../x500/createSecurityParameters";
+import type { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+import type {
+    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 
 export
 type SearchResultOrError = {
@@ -108,20 +113,14 @@ interface OperationDispatcherState {
 export
 class OperationDispatcher {
 
-    public static async dispatchDAPRequest (
+    private static async dispatchPreparedDSPRequest (
         ctx: Context,
-        conn: DAPConnection,
+        conn: ClientConnection,
         req: Request,
+        preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
     ): Promise<ChainedResultOrError> {
         assert(req.opCode);
         assert(req.argument);
-        const preparedRequest = await requestValidationProcedure(
-            ctx,
-            req,
-            false,
-            conn.authLevel,
-            conn.boundNameAndUID?.uid,
-        );
         const reqData = getOptionallyProtectedValue(preparedRequest);
         if (compareCode(req.opCode, abandon["&operationCode"]!)) {
             const result = await doAbandon(ctx, conn, reqData);
@@ -458,6 +457,46 @@ class OperationDispatcher {
             }
         }
         throw new Error();
+    }
+
+    public static async dispatchDAPRequest (
+        ctx: Context,
+        conn: DAPConnection,
+        req: Request,
+    ): Promise<ChainedResultOrError> {
+        const preparedRequest = await requestValidationProcedure(
+            ctx,
+            req,
+            false,
+            conn.authLevel,
+            conn.boundNameAndUID?.uid,
+        );
+        return this.dispatchPreparedDSPRequest(
+            ctx,
+            conn,
+            req,
+            preparedRequest,
+        );
+    }
+
+    public static async dispatchDSPRequest (
+        ctx: Context,
+        conn: DSPConnection,
+        req: Request,
+    ): Promise<ChainedResultOrError> {
+        const preparedRequest = await requestValidationProcedure(
+            ctx,
+            req,
+            true,
+            conn.authLevel,
+            conn.boundNameAndUID?.uid,
+        );
+        return this.dispatchPreparedDSPRequest(
+            ctx,
+            conn,
+            req,
+            preparedRequest,
+        );
     }
 
     public static async dispatchLocalSearchDSPRequest (

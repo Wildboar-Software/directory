@@ -2,8 +2,8 @@ import type { Context, Vertex } from "../types";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {
-    DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+    DSABindArgument,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
@@ -52,7 +52,7 @@ export
 async function bind (
     ctx: Context,
     socket: Socket | TLSSocket,
-    arg: DirectoryBindArgument,
+    arg: DSABindArgument,
 ): Promise<BindReturn> {
     const tlsProtocol: string | null = ("getProtocol" in socket)
         ? socket.getProtocol()

@@ -46,6 +46,31 @@ const root: Vertex = {
     },
 };
 const ctx: Context = {
+    config: {
+        localQualifierPointsFor: {
+            usingStartTLS: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS
+                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS, 10)
+                : 0,
+            usingTLS: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS
+                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS, 10)
+                : 0,
+            usingSSLv3: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3
+                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3, 10)
+                : 0,
+            usingTLSv1_0: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0
+                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0, 10)
+                : 0,
+            usingTLSv1_1: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1
+                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1, 10)
+                : 0,
+            usingTLSv1_2: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2
+                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2, 10)
+                : 0,
+            usingTLSv1_3: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3
+                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3, 10)
+                : 0,
+        },
+    },
     dsa: {
         accessPoint: new AccessPoint(
             dsaCert.toBeSigned.subject,

@@ -1,5 +1,6 @@
 import { Context, ClientConnection, PagedResultsRequestState } from "../types";
 import { IDMConnection } from "@wildboar/idm";
+import versions from "./versions";
 import type {
     DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
@@ -23,7 +24,7 @@ import {
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { BERElement, TRUE_BIT } from "asn1-ts";
+import { BER } from "asn1-ts/dist/node/functional";
 import { _encode_AbandonedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
 import { _encode_AbandonFailedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonFailedData.ta";
 import { _encode_AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
@@ -37,10 +38,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import { Abort_reasonNotSpecified } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import {
-    Versions_v1,
-    Versions_v2,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
-import {
     SecurityProblem_noInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import OperationDispatcher from "../distributed/OperationDispatcher";
@@ -51,8 +48,12 @@ import {
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
-
-const BER = () => new BERElement();
+import {
+    directoryBind,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBind.oa";
+import {
+    AuthenticationLevel_basicLevels_level_none,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 
 async function handleRequest (
     ctx: Context,
@@ -150,12 +151,6 @@ async function handleRequestAndErrors (
 export default
 class DAPConnection extends ClientConnection {
     public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
-    public get v1 (): boolean {
-        return (this.bind.versions?.[Versions_v1] === TRUE_BIT);
-    }
-    public get v2 (): boolean {
-        return (this.bind.versions?.[Versions_v2] === TRUE_BIT);
-    }
 
     private async handleRequest (request: Request): Promise<void> {
         await handleRequestAndErrors(this.ctx, this, request);
@@ -165,9 +160,9 @@ class DAPConnection extends ClientConnection {
         try {
             this.idm.close();
         } catch (e) {
-            this.ctx.log.warn(`Error in closing IDM connection. ${e}`);
+            this.ctx.log.warn(`${DAPConnection.name} ${this.id}: Error in closing IDM connection: ${e}`);
         } finally {
-            this.ctx.log.info("Unbound.");
+            this.ctx.log.info(`${DAPConnection.name} ${this.id}: Unbound.`);
         }
     }
 
@@ -177,57 +172,59 @@ class DAPConnection extends ClientConnection {
         readonly bind: DirectoryBindArgument,
     ) {
         super();
-        if (bind.credentials) {
-            doBind(ctx, bind.credentials)
-                .then((outcome) => {
-                    if (!outcome) {
-                        const err: typeof directoryBindError["&ParameterType"] = {
-                            unsigned: new DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1(
-                                undefined,
-                                {
-                                    securityError: SecurityProblem_noInformation,
-                                },
-                                undefined,
-                            ),
-                        };
-                        const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
-                        idm
-                            .writeBindError(dap_ip["&id"]!, error)
-                            .then(() => {
-                                this.handleUnbind()
-                                    .then(() => {
-                                        ctx.log.info("Disconnected client due to authentication failure.");
-                                    })
-                                    .catch((e) => {
-                                        ctx.log.error("Error disconnecting from client: ", e);
-                                    });
-                            })
-                            .catch((e) => {
-                                ctx.log.error("Error writing bind error: ", e);
-                            });
-                        ctx.log.info("Invalid credentials.");
-                        return;
-                    }
-                    const bindResult = new DirectoryBindResult(
-                        undefined,
-                        undefined,
-                        undefined,
-                    );
-                    idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
-                    ctx.log.info("Authenticated DAP connection bound.");
-                })
-                .catch((e) => {
-                    ctx.log.error("Error during bind operation: ", e);
-                });
-        } else {
-            const bindResult = new DirectoryBindResult(
-                undefined,
-                undefined,
-                undefined,
-            );
-            idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
-            ctx.log.info("Anonymous DAP connection bound.");
-        }
+        const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
+        doBind(ctx, idm.s, bind)
+            .then((outcome) => {
+                this.boundEntry = undefined;
+                this.boundNameAndUID = undefined;
+                this.authLevel = outcome.authLevel;
+                if (outcome.failedAuthentication) {
+                    const err: typeof directoryBindError["&ParameterType"] = {
+                        unsigned: new DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1(
+                            versions,
+                            {
+                                securityError: SecurityProblem_noInformation,
+                            },
+                            undefined, // Failed authentication will not yield any security parameters.
+                        ),
+                    };
+                    const error = directoryBind.encoderFor["&ParameterType"]!(err, BER);
+                    idm
+                        .writeBindError(dap_ip["&id"]!, error)
+                        .then(() => {
+                            this.handleUnbind()
+                                .then(() => {
+                                    ctx.log.info(`${DAPConnection.name} ${this.id}: Disconnected ${remoteHostIdentifier} due to authentication failure.`);
+                                })
+                                .catch((e) => {
+                                    ctx.log.error(`${DAPConnection.name} ${this.id}: Error disconnecting from ${remoteHostIdentifier}: `, e);
+                                });
+                        })
+                        .catch((e) => {
+                            ctx.log.error(`${DAPConnection.name} ${this.id}: Error writing bind error: ${remoteHostIdentifier}: `, e);
+                        });
+                    ctx.log.info(`${DAPConnection.name} ${this.id}: Invalid credentials from ${remoteHostIdentifier}.`);
+                    return;
+                }
+                const bindResult = new DirectoryBindResult(
+                    undefined,
+                    versions,
+                    undefined,
+                );
+                idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
+                if (
+                    ("basicLevels" in outcome.authLevel)
+                    && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
+                ) {
+                    ctx.log.info(`${DAPConnection.name} ${this.id}: Anonymous DAP connection bound from ${remoteHostIdentifier}.`);
+                } else {
+                    ctx.log.info(`${DAPConnection.name} ${this.id}: Authenticated DAP connection bound from ${remoteHostIdentifier}.`);
+                }
+            })
+            .catch((e) => {
+                ctx.log.error(`${DAPConnection.name} ${this.id}: Error during DAP bind operation from ${remoteHostIdentifier}: `, e);
+            });
+
         idm.events.on("request", this.handleRequest.bind(this));
         idm.events.on("unbind", this.handleUnbind.bind(this));
     }

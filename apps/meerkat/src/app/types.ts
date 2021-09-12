@@ -412,9 +412,23 @@ interface Telemetry {
 }
 
 export
+interface Configuration {
+    localQualifierPointsFor: {
+        usingStartTLS: number;
+        usingTLS: number;
+        usingSSLv3: number;
+        usingTLSv1_0: number;
+        usingTLSv1_1: number;
+        usingTLSv1_2: number;
+        usingTLSv1_3: number;
+    };
+}
+
+export
 interface Context {
     dit: DITInfo;
     dsa: DSAInfo;
+    config: Configuration;
     log: typeof console;
     db: PrismaClient;
     telemetry: Telemetry;

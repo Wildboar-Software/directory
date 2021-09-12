@@ -18,6 +18,9 @@ import DOPConnection from "./dop/DOPConnection";
 import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+import {
+    _decode_DSABindArgument,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import LDAPConnection from "./ldap/LDAPConnection";
 import loadDIT from "./database/loadDIT";
 import loadAttributeTypes from "./x500/loadAttributeTypes";
@@ -54,7 +57,7 @@ async function main (): Promise<void> {
                     const dba = _decode_DirectoryBindArgument(idmBind.argument);
                     new DAPConnection(ctx, idm, dba); // eslint-disable-line
                 } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
-                    const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
+                    const dba = _decode_DSABindArgument(idmBind.argument);
                     new DSPConnection(ctx, idm, dba);
                 } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
                     const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
