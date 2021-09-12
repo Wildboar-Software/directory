@@ -132,6 +132,17 @@ import {
 import {
     attributeError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import { addSeconds } from "date-fns";
+import {
+    ServiceProblem_timeLimitExceeded
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
@@ -831,6 +842,29 @@ async function modifyEntry (
 ): Promise<ChainedResult> {
     const argument = _decode_ModifyEntryArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
+    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
+        ? getDateFromTime(request.chainedArgument.timeLimit)
+        : undefined;
+    const checkTimeLimit = () => {
+        if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+            throw new errors.ServiceError(
+                "Could not complete operation in time.",
+                new ServiceErrorData(
+                    ServiceProblem_timeLimitExceeded,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    };
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
@@ -917,6 +951,7 @@ async function modifyEntry (
                 EQUALITY_MATCHER,
             )),
         );
+        checkTimeLimit();
     }
 
     const requiredAttributes: Set<IndexableOID> = new Set();
@@ -1162,6 +1197,7 @@ async function modifyEntry (
         }
     }
 
+    checkTimeLimit();
     await ctx.db.$transaction(pendingUpdates);
     const dbe = await ctx.db.entry.findUnique({
         where: {

@@ -43,8 +43,17 @@ import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistin
 import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import * as errors from "../errors";
-import { ServiceErrorData, ServiceProblem_invalidReference, ServiceProblem_loopDetected, ServiceProblem_unableToProceed } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import { NameProblem_aliasDereferencingProblem, NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+import {
+    ServiceProblem_timeLimitExceeded,
+    ServiceProblem_loopDetected,
+    ServiceProblem_unableToProceed,
+    ServiceProblem_invalidReference,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    NameProblem_aliasDereferencingProblem,
+    NameProblem_noSuchObject,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
@@ -83,6 +92,7 @@ import {
 import {
     nameError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const MAX_DEPTH: number = 10000;
@@ -146,6 +156,29 @@ async function findDSE (
     NRcontinuationList: ContinuationReference[],
     admPoints: Vertex[],
 ): Promise<Vertex | undefined> {
+    const timeLimitEndTime: Date | undefined = chainArgs.timeLimit
+        ? getDateFromTime(chainArgs.timeLimit)
+        : undefined;
+    const checkTimeLimit = () => {
+        if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+            throw new errors.ServiceError(
+                "Could not complete operation in time.",
+                new ServiceErrorData(
+                    ServiceProblem_timeLimitExceeded,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    };
     /**
      * This procedural deviation is needed. Without it, the subordinates of the
      * root DSE will be searched for an entry with a zero-length RDN!
@@ -514,7 +547,7 @@ async function findDSE (
     let iterations: number = 0;
     while (iterations < MAX_DEPTH) {
         iterations++;
-        const children = await readChildren(ctx, dse_i);
+        const children = await readChildren(ctx, dse_i); // TODO: Read in batches.
         if (i === m) {
             // I pretty much don't understand this entire section.
             if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
@@ -549,6 +582,7 @@ async function findDSE (
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
         for (const child of children) {
+            checkTimeLimit();
             const childDN = getDistinguishedName(child);
             const relevantSubentries: Vertex[] = (await Promise.all(
                 admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),

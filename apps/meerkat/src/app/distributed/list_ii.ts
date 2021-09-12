@@ -88,7 +88,7 @@ import {
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
-import { addSeconds } from "date-fns";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -102,14 +102,10 @@ async function list_ii (
     request: ChainedArgument,
     fromDAP: boolean,
 ): Promise<ChainedResult> {
-    const startTime: Date = ("present" in invokeId)
-        ? conn.invocations.get(invokeId.present)?.startTime ?? new Date()
-        : new Date();
     const arg: ListArgument = _decode_ListArgument(request.argument);
     const data = getOptionallyProtectedValue(arg);
-    const timeLimit: number | undefined = data.serviceControls?.timeLimit;
-    const timeLimitEndTime: Date | undefined = (timeLimit !== undefined && timeLimit >= 0)
-        ? addSeconds(startTime, timeLimit)
+    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
+        ? getDateFromTime(request.chainedArgument.timeLimit)
         : undefined;
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const EQUALITY_MATCHER = (

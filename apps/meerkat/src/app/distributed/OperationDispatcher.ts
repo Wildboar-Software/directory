@@ -168,6 +168,7 @@ class OperationDispatcher {
             const chainingProhibited = (serviceControlOptions?.bitString?.[chainingProhibitedBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
+                conn,
                 state.NRcontinuationList,
                 {
                     ...req,
@@ -500,6 +501,7 @@ class OperationDispatcher {
             const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
+                conn,
                 state.NRcontinuationList,
                 {
                     invokeId: {

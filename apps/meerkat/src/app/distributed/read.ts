@@ -84,9 +84,6 @@ async function read (
     const EQUALITY_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
-    const NAMING_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ) => ctx.attributes.get(attributeType.toString())?.namingMatcher;
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = isSubentry

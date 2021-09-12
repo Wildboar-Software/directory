@@ -129,6 +129,14 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import { addSeconds, differenceInMilliseconds } from "date-fns";
+import {
+    ServiceProblem_timeLimitExceeded
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -265,6 +273,29 @@ async function modifyDN (
     }
     const argument = _decode_ModifyDNArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
+    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
+        ? getDateFromTime(request.chainedArgument.timeLimit)
+        : undefined;
+    const checkTimeLimit = () => {
+        if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+            throw new errors.ServiceError(
+                "Could not complete operation in time.",
+                new ServiceErrorData(
+                    ServiceProblem_timeLimitExceeded,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    };
     const targetDN = getDistinguishedName(target);
     const objectClasses: OBJECT_IDENTIFIER[] = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
     const EQUALITY_MATCHER = (
@@ -379,7 +410,6 @@ async function modifyDN (
         ...newPrefixDN,
         newRDN,
     ];
-    // TODO: Access Control
     if ((data.object.length === 0) || (destinationDN.length === 0)) {
         throw new errors.UpdateError(
             "The zero-RDN entry is the automatically-managed root DSE and may not be edited.",
@@ -553,6 +583,7 @@ async function modifyDN (
         );
     }
 
+    checkTimeLimit();
     if (target.dse.subentry) { // Continue at step 7.
         // TODO: I believe the code in this section could be deduplicated.
         const admPoint = target.immediateSuperior;

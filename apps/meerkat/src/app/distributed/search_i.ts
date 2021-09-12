@@ -154,7 +154,7 @@ import {
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
-import { addSeconds } from "date-fns";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -180,13 +180,9 @@ async function search_i (
     SRcontinuationList: ContinuationReference[],
     ret: SearchIReturn,
 ): Promise<void> {
-    const startTime: Date = ("present" in invokeId)
-        ? conn.invocations.get(invokeId.present)?.startTime ?? new Date()
-        : new Date();
     const data = getOptionallyProtectedValue(argument);
-    const timeLimit: number | undefined = data.serviceControls?.timeLimit;
-    const timeLimitEndTime: Date | undefined = (timeLimit !== undefined && timeLimit >= 0)
-        ? addSeconds(startTime, timeLimit)
+    const timeLimitEndTime: Date | undefined = chaining.timeLimit
+        ? getDateFromTime(chaining.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
     let pagingRequest: PagedResultsRequest_newRequest | undefined;

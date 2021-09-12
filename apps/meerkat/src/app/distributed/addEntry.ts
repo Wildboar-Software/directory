@@ -133,6 +133,7 @@ import { addSeconds, differenceInMilliseconds } from "date-fns";
 import {
     ServiceProblem_timeLimitExceeded
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 
 function namingViolationErrorData (
     ctx: Context,
@@ -166,14 +167,10 @@ async function addEntry (
     admPoints: Vertex[],
     request: ChainedArgument,
 ): Promise<ChainedResult> {
-    const startTime: Date = ("present" in invokeId)
-        ? conn.invocations.get(invokeId.present)?.startTime ?? new Date()
-        : new Date();
     const argument = _decode_AddEntryArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
-    const timeLimit: number | undefined = data.serviceControls?.timeLimit;
-    const timeLimitEndTime: Date | undefined = (timeLimit !== undefined && timeLimit >= 0)
-        ? addSeconds(startTime, timeLimit)
+    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
+        ? getDateFromTime(request.chainedArgument.timeLimit)
         : undefined;
     if (immediateSuperior.dse.alias) {
         throw new UpdateError(

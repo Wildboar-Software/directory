@@ -31,6 +31,17 @@ import {
 import {
     AccessPointInformation,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
+import {
+    ServiceProblem_timeLimitExceeded,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 export
 interface RelatedEntryReturn {
@@ -76,11 +87,35 @@ async function relatedEntryProcedure (
     argument: SearchArgument,
     chaining?: ChainingArguments,
 ): Promise<void> {
+    const timeLimitEndTime: Date | undefined = chaining?.timeLimit
+        ? getDateFromTime(chaining.timeLimit)
+        : undefined;
+    const checkTimeLimit = () => {
+        if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+            throw new errors.ServiceError(
+                "Could not complete operation in time.",
+                new ServiceErrorData(
+                    ServiceProblem_timeLimitExceeded,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    };
     const data = getOptionallyProtectedValue(argument);
     if (!data.joinArguments || chaining?.relatedEntry) { // Yes, relatedEntry is supposed to be ABSENT.
         return;
     }
     for (let i = 0; i < data.joinArguments.length; i++) {
+        checkTimeLimit();
         const jarg = data.joinArguments[i];
         const newChaining = createNewChainingArgument(i, chaining?.originator);
         const newArgument: SearchArgument = ("signed" in argument)
@@ -175,7 +210,6 @@ async function relatedEntryProcedure (
                 continue;
             }
         }
-
     }
 }
 

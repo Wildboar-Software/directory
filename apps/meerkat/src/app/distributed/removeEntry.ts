@@ -69,6 +69,17 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import { addSeconds, differenceInMilliseconds } from "date-fns";
+import {
+    ServiceProblem_timeLimitExceeded
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 
 // TODO: subentries
 
@@ -83,6 +94,29 @@ async function removeEntry (
 ): Promise<ChainedResult> {
     const argument = _decode_RemoveEntryArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
+    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
+        ? getDateFromTime(request.chainedArgument.timeLimit)
+        : undefined;
+    const checkTimeLimit = () => {
+        if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+            throw new errors.ServiceError(
+                "Could not complete operation in time.",
+                new ServiceErrorData(
+                    ServiceProblem_timeLimitExceeded,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    };
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
         admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
@@ -153,6 +187,7 @@ async function removeEntry (
         }
     }
 
+    checkTimeLimit();
     if (target.dse.subentry) { // Go to step 5.
         // 1. Remove the subentry.
         // 2. Modify the operational bindings of all relevant subordinate DSAs.
