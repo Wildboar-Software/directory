@@ -40,7 +40,7 @@ import {
 import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
-import { DERElement, ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
+import { DERElement, ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT, BERElement } from "asn1-ts";
 import {
     EXT_BIT_USE_OF_CONTEXTS,
 } from "../x500/extensions";
@@ -71,6 +71,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import createEntry from "../database/createEntry";
+import {
+    ServiceProblem_unwillingToPerform,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
@@ -103,6 +106,33 @@ import {
 import {
     id_opcode_addEntry,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
+import establishSubordinate from "../dop/establishSubordinate";
+import { chainedAddEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAddEntry.oa";
+import { strict as assert } from "assert";
+import getDistinguishedName from "../x500/getDistinguishedName";
+import {
+    id_op_binding_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+import { OperationalBindingInitiator } from "@prisma/client";
+import {
+    HierarchicalAgreement,
+    _decode_HierarchicalAgreement,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+import {
+    AccessPoint,
+    _decode_AccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import isPrefix from "../x500/isPrefix";
+import updateSubordinate from "../dop/updateSubordinate";
+import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import findEntry from "../x500/findEntry";
+import { addSeconds, differenceInMilliseconds } from "date-fns";
+import {
+    ServiceProblem_timeLimitExceeded
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 
 function namingViolationErrorData (
     ctx: Context,
@@ -136,8 +166,15 @@ async function addEntry (
     admPoints: Vertex[],
     request: ChainedArgument,
 ): Promise<ChainedResult> {
+    const startTime: Date = ("present" in invokeId)
+        ? conn.invocations.get(invokeId.present)?.startTime ?? new Date()
+        : new Date();
     const argument = _decode_AddEntryArgument(request.argument);
     const data = getOptionallyProtectedValue(argument);
+    const timeLimit: number | undefined = data.serviceControls?.timeLimit;
+    const timeLimitEndTime: Date | undefined = (timeLimit !== undefined && timeLimit >= 0)
+        ? addSeconds(startTime, timeLimit)
+        : undefined;
     if (immediateSuperior.dse.alias) {
         throw new UpdateError(
             "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
@@ -349,7 +386,62 @@ async function addEntry (
         );
     }
 
-    // TODO: If TargetSystem !== this DSA, establish HOB with inferior DSA.
+    if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+        throw new errors.ServiceError(
+            "Could not complete operation in time.",
+            new ServiceErrorData(
+                ServiceProblem_timeLimitExceeded,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                undefined,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+    const timeRemainingInMilliseconds = timeLimitEndTime
+        ? differenceInMilliseconds(timeLimitEndTime, new Date())
+        : undefined;
+    // NOTE: This does not actually check if targetSystem is the current DSA.
+    if (data.targetSystem) {
+        const obResponse = await establishSubordinate(
+            ctx,
+            immediateSuperior,
+            undefined,
+            rdn,
+            data.entry,
+            data.targetSystem,
+            {
+                timeLimitInMilliseconds: timeRemainingInMilliseconds,
+            },
+        );
+        if (("result" in obResponse) && obResponse.result) {
+            const chainedResult = chainedAddEntry.decoderFor["&ResultType"]!(obResponse.result);
+            return getOptionallyProtectedValue(chainedResult); // TODO: This strips the remote DSA's signature!
+        } else {
+            throw new errors.ServiceError(
+                "Could not add entry to remote DSA via targetSystem.",
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
 
     const attrsFromDN: Value[] = rdn
         .map((atav): Value => ({
@@ -657,10 +749,108 @@ async function addEntry (
             ),
         );
     }
+    if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+        throw new errors.ServiceError(
+            "Could not complete operation in time.",
+            new ServiceErrorData(
+                ServiceProblem_timeLimitExceeded,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                undefined,
+                undefined,
+                undefined,
+            ),
+        );
+    }
     const newEntry = await createEntry(ctx, immediateSuperior, rdn, {}, attrs, []); // FIXME: creatorName
     immediateSuperior.subordinates?.push(newEntry);
-    // TODO: Schedule modification of RHOBs with subordinate DSAs.
-    // TODO: Filter out more operational attributes.
+
+    // Update relevant hierarchical operational bindings
+    if (newEntry.dse.admPoint || newEntry.dse.subentry) {
+        const admPoint: Vertex | undefined = newEntry.dse.admPoint
+            ? newEntry
+            : newEntry.immediateSuperior;
+        assert(admPoint?.dse.admPoint);
+        const admPointDN = getDistinguishedName(admPoint);
+        const now = new Date();
+        const relevantOperationalBindings = await ctx.db.operationalBinding.findMany({
+            where: {
+                binding_type: id_op_binding_hierarchical.toString(),
+                validity_start: {
+                    gte: now,
+                },
+                validity_end: {
+                    lte: now,
+                },
+                // accepted: true, // FIXME: Is this always set?
+                OR: [
+                    { // Local DSA initiated role A (meaning local DSA is superior.)
+                        initiator: OperationalBindingInitiator.ROLE_A,
+                        outbound: true,
+                    },
+                    { // Remote DSA initiated role B (meaning local DSA is superior again.)
+                        initiator: OperationalBindingInitiator.ROLE_B,
+                        outbound: false,
+                    },
+                ],
+            },
+            select: {
+                binding_identifier: true,
+                binding_version: true,
+                access_point: true,
+                agreement_ber: true,
+            },
+        });
+        for (const ob of relevantOperationalBindings) {
+            const argreementElement = new BERElement();
+            argreementElement.fromBytes(ob.agreement_ber);
+            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
+            if (!isPrefix(ctx, admPointDN, agreement.immediateSuperior)) {
+                continue;
+            }
+            const bindingID = new OperationalBindingID(
+                ob.binding_identifier,
+                ob.binding_version,
+            );
+            const accessPointElement = new BERElement();
+            accessPointElement.fromBytes(ob.access_point.ber);
+            const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
+            try {
+                const subrDN: DistinguishedName = [
+                    ...agreement.immediateSuperior,
+                    agreement.rdn,
+                ];
+                const subr = await findEntry(ctx, ctx.dit.root, subrDN);
+                if (!subr) {
+                    ctx.log.warn(`Subordinate entry for agreement ${bindingID.identifier} (version ${bindingID.version}) not found.`);
+                    continue;
+                }
+                assert(subr.immediateSuperior);
+                // We do not await the return value. This can run independently
+                // of returning from this operation.
+                updateSubordinate(
+                    ctx,
+                    bindingID,
+                    subr.immediateSuperior,
+                    undefined,
+                    subr.dse.rdn,
+                    accessPoint,
+                )
+                    .catch((e) => {
+                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                    });
+            } catch (e) {
+                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                continue;
+            }
+        }
+    }
+
     // TODO: Update shadows
     return new ChainedResult(
         new ChainingResults(

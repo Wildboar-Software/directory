@@ -27,8 +27,13 @@ interface Emitter<T extends EventMap> {
 type ConnectionEventEmitter = Emitter<EventMap>;
 
 export
+interface WriteOperationOptions {
+    timeLimitInMilliseconds?: number;
+}
+
+export
 interface Connection {
-    writeOperation: (req: Omit<Request, "invokeId">) => Promise<ResultOrError>;
+    writeOperation: (req: Omit<Request, "invokeId">, options?: WriteOperationOptions) => Promise<ResultOrError>;
     close: () => Promise<void>;
     events: ConnectionEventEmitter;
 }
