@@ -42,8 +42,11 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 
 // TODO: If context prefix initialization fails, undo all changes.
 export
@@ -61,8 +64,13 @@ async function becomeSubordinate (
                 undefined,
                 undefined,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -78,8 +86,13 @@ async function becomeSubordinate (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -96,8 +109,13 @@ async function becomeSubordinate (
                 undefined,
                 undefined,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),

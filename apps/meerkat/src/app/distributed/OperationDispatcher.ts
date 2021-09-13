@@ -94,6 +94,13 @@ import type { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/Enhanc
 import type {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
+    id_errcode_securityError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-securityError.va";
 
 export
 type SearchResultOrError = {
@@ -146,7 +153,24 @@ class OperationDispatcher {
         }
         const targetObject = getSoughtObjectFromRequest(req);
         if (!targetObject) {
-            throw errors.invalidRequestError("No discernable targeted object.");
+            throw new errors.SecurityError(
+                "No discernable targeted object.",
+                new SecurityErrorData(
+                    SecurityProblem_noInformation,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_securityError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
         }
         const chainingResults = new ChainingResults(
             undefined,
@@ -367,7 +391,7 @@ class OperationDispatcher {
                                 conn.boundNameAndUID?.dn,
                                 search["&operationCode"],
                             ),
-                            undefined,
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -436,7 +460,7 @@ class OperationDispatcher {
                                 conn.boundNameAndUID?.dn,
                                 search["&operationCode"],
                             ),
-                            undefined,
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -527,7 +551,24 @@ class OperationDispatcher {
             ? data.joinArguments?.[chaining.relatedEntry]?.joinBaseObject.rdnSequence
             : chaining.targetObject ?? data.baseObject.rdnSequence;
         if (!targetObject) {
-            throw errors.invalidRequestError("No discernable targeted object.");
+            throw new errors.SecurityError(
+                "No discernable targeted object.",
+                new SecurityErrorData(
+                    SecurityProblem_noInformation,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_securityError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
         }
         const chainingResults = new ChainingResults(
             undefined,
@@ -625,7 +666,7 @@ class OperationDispatcher {
                             conn.boundNameAndUID?.dn,
                             search["&operationCode"],
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -688,7 +729,7 @@ class OperationDispatcher {
                             conn.boundNameAndUID?.dn,
                             search["&operationCode"],
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),

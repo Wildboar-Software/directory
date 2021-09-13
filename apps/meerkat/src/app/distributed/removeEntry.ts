@@ -1,9 +1,9 @@
 import { Context, Vertex, ClientConnection } from "../types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
-import {
-    _decode_RemoveEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
+// import {
+//     _decode_RemoveEntryArgument,
+// } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
 import {
     _encode_RemoveEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
@@ -14,8 +14,8 @@ import {
 import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import { DERElement, BERElement } from "asn1-ts";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { BERElement } from "asn1-ts";
+// import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { strict as assert } from "assert";
 import {
     id_op_binding_hierarchical,
@@ -65,7 +65,6 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import { addSeconds, differenceInMilliseconds } from "date-fns";
 import {
     ServiceProblem_timeLimitExceeded
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
@@ -77,6 +76,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import { DER } from "asn1-ts/dist/node/functional";
 
 // TODO: subentries
 
@@ -87,8 +87,8 @@ async function removeEntry (
     state: OperationDispatcherState,
 ): Promise<ChainedResult> {
     const target = state.foundDSE;
-    const argument = _decode_RemoveEntryArgument(state.operationArgument);
-    const data = getOptionallyProtectedValue(argument);
+    // const argument = _decode_RemoveEntryArgument(state.operationArgument);
+    // const data = getOptionallyProtectedValue(argument);
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -105,7 +105,7 @@ async function removeEntry (
                         undefined,
                         serviceError["&errorCode"],
                     ),
-                    undefined,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -174,7 +174,7 @@ async function removeEntry (
                         undefined,
                         securityError["&errorCode"],
                     ),
-                    undefined,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -366,7 +366,7 @@ async function removeEntry (
         ),
         _encode_RemoveEntryResult({
             null_: null,
-        }, () => new DERElement()),
+        }, DER),
     );
 }
 

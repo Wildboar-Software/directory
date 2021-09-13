@@ -39,7 +39,7 @@ import {
 import {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { OBJECT_IDENTIFIER, DERElement } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import writeACI from "../../database/writeACI";
@@ -48,9 +48,7 @@ import vertexFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
 import valuesFromAttribute from "../../memory/valuesFromAttribute";
 import { ACIScope, Knowledge } from "@prisma/client";
 import deleteEntry from "../../database/deleteEntry";
-
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
 
 // NOTE: This is for RECEIVING an update to the CP, not creating one.
 // TODO: If context prefix initialization fails, undo all changes.

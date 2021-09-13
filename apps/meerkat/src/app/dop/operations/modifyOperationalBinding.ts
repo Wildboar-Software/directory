@@ -30,7 +30,7 @@ import type {
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { ASN1Element, BERElement, packBits, DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Element, BERElement, packBits, OBJECT_IDENTIFIER } from "asn1-ts";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
@@ -58,8 +58,11 @@ import {
 // } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    id_err_operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -126,8 +129,13 @@ async function modifyOperationalBinding (
                 undefined,
                 undefined,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -169,8 +177,13 @@ async function modifyOperationalBinding (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -200,8 +213,13 @@ async function modifyOperationalBinding (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -324,8 +342,13 @@ async function modifyOperationalBinding (
                             undefined,
                             undefined,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -347,8 +370,13 @@ async function modifyOperationalBinding (
                             undefined,
                             undefined,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -374,8 +402,13 @@ async function modifyOperationalBinding (
                         undefined,
                         undefined,
                         [],
-                        undefined,
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            undefined,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -386,9 +419,6 @@ async function modifyOperationalBinding (
     } else {
         throw NOT_SUPPORTED_ERROR;
     }
-    return {
-        null_: null,
-    };
 }
 
 export default modifyOperationalBinding;

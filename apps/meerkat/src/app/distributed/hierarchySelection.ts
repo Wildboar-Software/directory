@@ -54,7 +54,7 @@ function hierarchySelectionProcedure (
             ServiceProblem_requestedServiceNotAvailable,
             [],
             createSecurityParameters(ctx),
-            undefined,
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
             undefined,
             notificationAttributes,
         ),

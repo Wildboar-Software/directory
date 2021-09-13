@@ -35,7 +35,7 @@ import {
 import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
-import { OBJECT_IDENTIFIER, DERElement } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import writeACI from "../../database/writeACI";
@@ -43,8 +43,7 @@ import writeEntryAttributes from "../../database/writeEntryAttributes";
 import vertexFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
 import valuesFromAttribute from "../../memory/valuesFromAttribute";
 import { ACIScope, Knowledge } from "@prisma/client";
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
 
 // TODO: If context prefix initialization fails, undo all changes.
 export

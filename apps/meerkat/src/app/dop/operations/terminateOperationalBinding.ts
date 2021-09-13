@@ -32,6 +32,10 @@ import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocke
 import { Knowledge } from "@prisma/client";
 import terminate from "../terminateByID";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    id_err_operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -57,8 +61,13 @@ async function terminateOperationalBinding (
                 undefined,
                 undefined,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -100,8 +109,13 @@ async function terminateOperationalBinding (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -133,8 +147,13 @@ async function terminateOperationalBinding (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),

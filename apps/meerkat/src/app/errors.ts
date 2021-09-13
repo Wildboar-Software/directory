@@ -223,22 +223,6 @@ function namingViolationErrorData (attributeTypes: AttributeType[]): UpdateError
     );
 }
 
-function securityParameters (): SecurityParameters {
-    return new SecurityParameters(
-        undefined,
-        undefined, // DSA name
-        {
-            generalizedTime: new Date(),
-        },
-        unpackBits(randomBytes(16)),
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    );
-}
-
-
 export
 function invalidRequestErrorData (): SecurityErrorData {
     return new SecurityErrorData(
@@ -261,21 +245,5 @@ function invalidRequestErrorData (): SecurityErrorData {
         undefined,
         undefined,
         undefined,
-    );
-}
-
-/**
- * This is implemented because the X.500 specifications do not seem to specify
- * a general-purpose "invalid request" error. For a lack thereof, we use a
- * no-information security error.
- *
- * @param message The error message
- * @returns A security error, which is not thrown.
- */
-export
-function invalidRequestError (message: string): SecurityError {
-    return new SecurityError(
-        message,
-        invalidRequestErrorData(),
     );
 }

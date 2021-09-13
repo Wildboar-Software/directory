@@ -34,8 +34,7 @@ import {
 import readChildren from "../dit/readChildren";
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier } from "asn1-ts";
 import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
 
 export
 async function getContextPrefixInfo (

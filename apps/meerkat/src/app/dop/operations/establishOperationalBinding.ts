@@ -1,5 +1,4 @@
 import type { Context } from "../../types";
-import type DOPConnection from "../DOPConnection";
 import * as errors from "../../errors";
 import type {
     EstablishOperationalBindingArgument,
@@ -55,7 +54,7 @@ import {
     _encode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import { ASN1Element, DERElement, OBJECT_IDENTIFIER, packBits } from "asn1-ts";
+import { ASN1Element, OBJECT_IDENTIFIER, packBits } from "asn1-ts";
 import becomeSubordinate from "../establish/becomeSubordinate";
 import becomeSuperior from "../establish/becomeSuperior";
 import { OperationalBindingInitiator, Knowledge } from "@prisma/client";
@@ -65,6 +64,14 @@ import {
 import rdnToJson from "../../x500/rdnToJson";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { DER } from "asn1-ts/dist/node/functional";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    id_err_operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
+import {
+    id_op_establishOperationalBinding,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-establishOperationalBinding.va";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -83,8 +90,6 @@ function codeToString (code?: Code): string | undefined {
                 : undefined
         : undefined);
 }
-
-const DER = () => new DERElement();
 
 export
 async function establishOperationalBinding (
@@ -110,8 +115,13 @@ async function establishOperationalBinding (
                 undefined,
                 undefined,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -132,8 +142,13 @@ async function establishOperationalBinding (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -154,8 +169,13 @@ async function establishOperationalBinding (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -189,8 +209,13 @@ async function establishOperationalBinding (
                             undefined,
                             undefined,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -286,8 +311,13 @@ async function establishOperationalBinding (
                             undefined,
                             undefined,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -303,8 +333,12 @@ async function establishOperationalBinding (
                         roleB_replies: _encode_SubordinateToSuperior(reply, DER),
                     },
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        id_op_establishOperationalBinding,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -321,8 +355,12 @@ async function establishOperationalBinding (
                         roleA_replies: _encode_SuperiorToSubordinate(reply, DER),
                     },
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        id_op_establishOperationalBinding,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -337,8 +375,13 @@ async function establishOperationalBinding (
                         undefined,
                         undefined,
                         [],
-                        undefined,
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            undefined,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),

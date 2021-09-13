@@ -1,5 +1,6 @@
 import type { Context, Vertex, IndexableOID, Value } from "../types";
-import { ASN1Construction, BERElement } from "asn1-ts";
+import { ASN1Construction } from "asn1-ts";
+import { DER } from "asn1-ts/dist/node/functional";
 import {
 } from "asn1-ts/dist/node/functional";
 import { id_aca_entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
@@ -140,7 +141,7 @@ async function writeEntryAttributes (
             })),
         ...(entry.dse.subentry?.subtreeSpecification ?? [])
             .map((subtree) => {
-                const value = _encode_SubtreeSpecification(subtree, () => new BERElement());
+                const value = _encode_SubtreeSpecification(subtree, DER);
                 return ctx.db.attributeValue.create({
                     data: {
                         entry_id: entry.dse.id,

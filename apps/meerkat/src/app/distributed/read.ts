@@ -11,7 +11,6 @@ import {
 import {
     ReadResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResultData.ta";
-import { DERElement } from "asn1-ts";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -66,6 +65,7 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import { DER } from "asn1-ts/dist/node/functional";
 
 export
 async function read (
@@ -144,7 +144,7 @@ async function read (
                         undefined,
                         securityError["&errorCode"],
                     ),
-                    undefined,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -319,7 +319,7 @@ async function read (
                 conn.boundNameAndUID?.dn,
                 id_opcode_read,
             ),
-            undefined,
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
             undefined,
             undefined,
         ),
@@ -335,7 +335,7 @@ async function read (
             ),
             undefined,
         ),
-        _encode_ReadResult(result, () => new DERElement()),
+        _encode_ReadResult(result, DER),
     );
 }
 

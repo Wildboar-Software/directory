@@ -1,6 +1,5 @@
 import { Context, ClientConnection } from "../types";
 import * as errors from "../errors";
-import { DERElement } from "asn1-ts";
 import {
     _decode_AbandonArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
@@ -33,9 +32,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-abandonFailed.va";
 import { compareCode } from "@wildboar/x500/src/lib/utils/compareCode";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
-// import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
-// import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+import { DER } from "asn1-ts/dist/node/functional";
 
 export
 async function abandon (
@@ -64,7 +62,7 @@ async function abandon (
                             undefined,
                             id_errcode_abandonFailed,
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -83,7 +81,7 @@ async function abandon (
                             undefined,
                             id_errcode_abandonFailed,
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -104,7 +102,7 @@ async function abandon (
                         undefined,
                         id_errcode_abandonFailed,
                     ),
-                    undefined,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -125,7 +123,7 @@ async function abandon (
             ),
             undefined,
         ),
-        _encode_AbandonResult(result, () => new DERElement()),
+        _encode_AbandonResult(result, DER),
     );
 }
 

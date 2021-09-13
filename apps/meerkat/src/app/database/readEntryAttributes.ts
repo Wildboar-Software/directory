@@ -52,6 +52,7 @@ interface ReadEntryAttributesReturn {
     applicableACIItems: ACIItem[];
 };
 
+// TODO: Get rid of this.
 // TODO: Document why I separate userAttributes and operationalAttributes.
 export
 async function readEntryAttributes (

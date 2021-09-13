@@ -1,8 +1,7 @@
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
 import { scrypt, Scrypt_params } from "@wildboar/scrypt-0";
-import { DERElement } from "asn1-ts";
 import * as crypto from "crypto";
-
+import { DER } from "asn1-ts/dist/node/functional";
 export
 const getScryptAlgorithmIdentifier = () => new AlgorithmIdentifier(
     scrypt["&id"]!,
@@ -12,7 +11,7 @@ const getScryptAlgorithmIdentifier = () => new AlgorithmIdentifier(
         8,
         1,
         128,
-    ), () => new DERElement())
+    ), DER),
 );
 
 export default getScryptAlgorithmIdentifier;

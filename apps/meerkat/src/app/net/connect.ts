@@ -24,7 +24,7 @@ import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
 import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
 import type { ChainedResultOrError } from "@wildboar/x500/src/lib/types/ChainedResultOrError";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
-import { DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
 import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import * as net from "net";
@@ -50,8 +50,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
+import { DER } from "asn1-ts/dist/node/functional";
 
-const DER = () => new DERElement();
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
 const MAX_INVOKE_ID: number = 2147483648;
@@ -186,7 +186,7 @@ async function connect (
                                             undefined,
                                             serviceError["&errorCode"],
                                         ),
-                                        undefined,
+                                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                                         undefined,
                                         undefined,
                                     ),
@@ -277,7 +277,7 @@ async function connect (
                             const pdu: IDM_PDU = {
                                 request: new Request(invokeID, req.opCode, encodedParam),
                             };
-                            const encoded = _encode_IDM_PDU(pdu, () => new DERElement());
+                            const encoded = _encode_IDM_PDU(pdu, DER);
                             return Promise.race<ChainedResultOrError>([
                                 new Promise<ChainedResultOrError>((resolve) => {
                                     idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
@@ -312,7 +312,7 @@ async function connect (
                                                     undefined,
                                                     serviceError["&errorCode"],
                                                 ),
-                                                undefined,
+                                                ctx.dsa.accessPoint.ae_title.rdnSequence,
                                                 undefined,
                                                 undefined,
                                             ),

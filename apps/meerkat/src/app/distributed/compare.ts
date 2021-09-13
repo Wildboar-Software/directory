@@ -1,5 +1,5 @@
 import { Context, StoredContext, Vertex, ClientConnection } from "../types";
-import { DERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import {
     _decode_CompareArgument,
@@ -14,9 +14,6 @@ import {
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import {
-    ServiceError,
-} from "../errors";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
@@ -73,6 +70,7 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import { DER } from "asn1-ts/dist/node/functional";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -163,7 +161,7 @@ async function compare (
                         undefined,
                         securityError["&errorCode"],
                     ),
-                    undefined,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -198,7 +196,7 @@ async function compare (
                             undefined,
                             securityError["&errorCode"],
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -210,7 +208,7 @@ async function compare (
         .map((type_) => ctx.attributes.get(type_.toString()))
         .find((spec) => spec?.equalityMatcher)?.equalityMatcher;
     if (!matcher) {
-        throw new ServiceError(
+        throw new errors.ServiceError(
             `Equality matching rule used by type ${data.purported.type_.toString()} not understood.`,
             new ServiceErrorData(
                 ServiceProblem_unsupportedMatchingUse,
@@ -221,7 +219,7 @@ async function compare (
                     undefined,
                     serviceError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -359,7 +357,7 @@ async function compare (
                 conn.boundNameAndUID?.dn,
                 id_opcode_compare,
             ),
-            undefined,
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
             undefined,
             undefined,
         ),
@@ -376,7 +374,7 @@ async function compare (
             ),
             undefined,
         ),
-        _encode_CompareResult(result, () => new DERElement()),
+        _encode_CompareResult(result, DER),
     );
 }
 

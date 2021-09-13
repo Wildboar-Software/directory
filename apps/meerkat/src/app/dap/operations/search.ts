@@ -65,21 +65,16 @@ import {
     objectDoesNotExistErrorData,
 } from "../../errors";
 import findEntry from "../../x500/findEntry";
-// import canJoin from "../../x500/canJoin";
 import entryInformationFromEntry from "../../x500/entryInformationFromEntry";
-import selectFromEntry from "../../x500/selectFromEntry";
 import { TRUE_BIT, OBJECT_IDENTIFIER, ASN1Element } from "asn1-ts";
-import { EntryInformation_information_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import { ServiceErrorData, ServiceProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import * as crypto from "crypto";
 import getSubset from "../../x500/getSubset";
-import readEntry from "../../database/readEntry";
 import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
 import SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
 import ApproxMatcher from "@wildboar/x500/src/lib/types/ApproxMatcher";
 import ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
-// import sort from "@wildboar/x500/src/lib/dap/sort";
 
 // search OPERATION ::= {
 //   ARGUMENT  SearchArgument
@@ -675,80 +670,35 @@ async function search (
         });
     }
 
-    // TODO: Use a default EIS instead.
-    // Apply selections from selection
-    if (data.selection) {
-        const eis = data.selection;
-        const attrs = await readEntry(ctx, entry);
-        const selectedInfos = candidates
-            .map(([ entry, einfo ]): [ EntryInformation, EntryInformation_information_Item[] ] => [
-                einfo,
-                selectFromEntry(ctx, eis, entry, attrs),
-            ])
-            .slice(skip, pageSize);
-        return {
-            unsigned: {
-                searchInfo: new SearchResultData_searchInfo(
-                    undefined, // FIXME: if dereferenced.
-                    selectedInfos.map(([einfo, selectedInfoItems]) => new EntryInformation(
-                        einfo.name,
-                        einfo.fromEntry,
-                        selectedInfoItems,
-                        einfo.incompleteEntry,
-                        einfo.partialName,
-                        einfo.derivedEntry,
-                    )), // FIXME: This will return operational attributes.
-                    (completeResults && queryReference)
-                        ? undefined
-                        : new PartialOutcomeQualifier(
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                            Buffer.from(queryReference!, "base64"),
-                            undefined,
-                            undefined,
-                            undefined,
-                        ),
-                    false, // FIXME: Will change once relaxation is implemented.
-                    [],
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                ),
-            },
-        };
-    } else {
-        return {
-            unsigned: {
-                searchInfo: new SearchResultData_searchInfo(
-                    undefined, // FIXME: if dereferenced.
-                    candidates
-                        .map(([, einfo]) => einfo)
-                        .slice(skip, pageSize), // FIXME: This will return operational attributes.
-                    (completeResults && queryReference)
-                        ? undefined
-                        : new PartialOutcomeQualifier(
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                            Buffer.from(queryReference!, "base64"),
-                            undefined,
-                            undefined,
-                            undefined,
-                        ),
-                    false, // FIXME: Will change once relaxation is implemented.
-                    [],
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                ),
-            },
-        };
-    }
+
+    return {
+        unsigned: {
+            searchInfo: new SearchResultData_searchInfo(
+                undefined, // FIXME: if dereferenced.
+                candidates
+                    .map(([, einfo]) => einfo)
+                    .slice(skip, pageSize), // FIXME: This will return operational attributes.
+                (completeResults && queryReference)
+                    ? undefined
+                    : new PartialOutcomeQualifier(
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        Buffer.from(queryReference!, "base64"),
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                false, // FIXME: Will change once relaxation is implemented.
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            ),
+        },
+    };
 }
 
 export default search;

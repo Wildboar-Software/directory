@@ -15,6 +15,7 @@ import { hierarchyBelow } from "@wildboar/x500/src/lib/modules/InformationFramew
 // import { hierarchyParent } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
 import { hierarchyTop } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyTop.oa";
 
+// TODO: Get rid of this.
 export
 const dsaManagedAttributes: Set<IndexableOID> = new Set<IndexableOID>([
     createTimestamp["&id"].toString(),

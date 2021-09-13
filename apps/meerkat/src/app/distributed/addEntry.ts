@@ -13,12 +13,6 @@ import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import {
-    AttributeError,
-    SecurityError,
-    ServiceError,
-    UpdateError,
-} from "../errors";
-import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
@@ -39,7 +33,7 @@ import {
 import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
-import { DERElement, ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT, BERElement } from "asn1-ts";
+import { ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT, BERElement } from "asn1-ts";
 import {
     EXT_BIT_USE_OF_CONTEXTS,
 } from "../x500/extensions";
@@ -131,6 +125,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import { DER } from "asn1-ts/dist/node/functional";
 
 function namingViolationErrorData (
     ctx: Context,
@@ -168,7 +163,7 @@ async function addEntry (
         : undefined;
     const immediateSuperior = state.foundDSE;
     if (immediateSuperior.dse.alias) {
-        throw new UpdateError(
+        throw new errors.UpdateError(
             "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
             namingViolationErrorData(ctx, conn, []),
         );
@@ -205,7 +200,7 @@ async function addEntry (
 
     const objectClassValues = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
     if (objectClassValues.length === 0) {
-        throw new UpdateError(
+        throw new errors.UpdateError(
             "Object class attribute not found.",
             new UpdateErrorData(
                 UpdateProblem_objectClassViolation,
@@ -217,7 +212,7 @@ async function addEntry (
                     undefined,
                     updateError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -251,7 +246,7 @@ async function addEntry (
                     undefined,
                     updateError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -271,7 +266,7 @@ async function addEntry (
                     undefined,
                     updateError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -340,7 +335,7 @@ async function addEntry (
                         undefined,
                         securityError["&errorCode"],
                     ),
-                    undefined,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -350,7 +345,7 @@ async function addEntry (
 
     const rdn = getRDN(data.object.rdnSequence);
     if (!rdn) {
-        throw new UpdateError(
+        throw new errors.UpdateError(
             "The Root DSE may not be added.",
             namingViolationErrorData(ctx, conn, []),
         );
@@ -359,7 +354,7 @@ async function addEntry (
     const entryAlreadyExists: boolean = existingSiblings
         .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
     if (entryAlreadyExists) {
-        throw new UpdateError(
+        throw new errors.UpdateError(
             "Entry already exists.",
             new UpdateErrorData(
                 UpdateProblem_entryAlreadyExists,
@@ -371,7 +366,7 @@ async function addEntry (
                     undefined,
                     updateError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -390,7 +385,7 @@ async function addEntry (
                     undefined,
                     serviceError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -427,7 +422,7 @@ async function addEntry (
                         undefined,
                         serviceError["&errorCode"],
                     ),
-                    undefined,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -473,7 +468,7 @@ async function addEntry (
                             undefined,
                             securityError["&errorCode"],
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -528,7 +523,7 @@ async function addEntry (
                             undefined,
                             securityError["&errorCode"],
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -544,7 +539,7 @@ async function addEntry (
     }
 
     if (unrecognizedAttributes.length > 0) {
-        throw new AttributeError(
+        throw new errors.AttributeError(
             `Unrecognized attributes: ${unrecognizedAttributes.map((at) => at.toString()).join(", ")}.`,
             new AttributeErrorData(
                 data.object,
@@ -560,7 +555,7 @@ async function addEntry (
                     undefined,
                     attributeError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -569,7 +564,7 @@ async function addEntry (
 
     const useOfContexts = (data.criticalExtensions?.[EXT_BIT_USE_OF_CONTEXTS] === TRUE_BIT);
     if (!useOfContexts && (attributesUsingContexts.length > 0)) {
-        throw new ServiceError(
+        throw new errors.ServiceError(
             "Use of contexts was not enabled by the request.",
             new ServiceErrorData(
                 ServiceProblem_unavailable,
@@ -580,7 +575,7 @@ async function addEntry (
                     undefined,
                     serviceError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -603,7 +598,7 @@ async function addEntry (
                     mandate.split(".").map((node) => Number.parseInt(node)),
                 ));
             if (missingMandatoryAttributes.length > 0) {
-                throw new UpdateError(
+                throw new errors.UpdateError(
                     `Missing mandatory attributes: ${missingMandatoryAttributes.map((ma) => ma.toString())}.`,
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
@@ -617,7 +612,7 @@ async function addEntry (
                             undefined,
                             updateError["&errorCode"],
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -663,7 +658,7 @@ async function addEntry (
         });
 
     if (duplicatedAFDNs.length > 0) {
-        throw new UpdateError(
+        throw new errors.UpdateError(
             "Attributes of the following types in the RDNs of the entry were "
             + `duplicated: ${duplicatedAFDNs.join(", ")}`,
             namingViolationErrorData(ctx, conn, duplicatedAFDNs),
@@ -671,7 +666,7 @@ async function addEntry (
     }
 
     if (unrecognizedAFDNs.length > 0) {
-        throw new UpdateError(
+        throw new errors.UpdateError(
             "Attributes of the following types in the RDNs of the entry were "
             + `not recognized, and therefore cannot be used for naming: ${unrecognizedAFDNs.join(", ")}`,
             namingViolationErrorData(ctx, conn, unrecognizedAFDNs),
@@ -679,7 +674,7 @@ async function addEntry (
     }
 
     if (cannotBeUsedInNameAFDNs.length > 0) {
-        throw new UpdateError(
+        throw new errors.UpdateError(
             "Attributes of the following types in the RDNs of the entry are "
             + `innately not suitable for naming: ${cannotBeUsedInNameAFDNs.join(", ")}`,
             namingViolationErrorData(ctx, conn, cannotBeUsedInNameAFDNs),
@@ -687,7 +682,7 @@ async function addEntry (
     }
 
     if (unmatchedAFDNs.length > 0) {
-        throw new UpdateError(
+        throw new errors.UpdateError(
             "Attributes of the following types in the RDNs of the entry did not "
             + `have matching values in the attributes: ${unmatchedAFDNs.join(", ")}`,
             namingViolationErrorData(ctx, conn, unmatchedAFDNs),
@@ -722,7 +717,7 @@ async function addEntry (
     // NOTE: "aliased entry exists" X.511 specifically says this does not have to be checked.
     // TODO: aliases are not allowed to point to other aliases
     } else if (nonUserApplicationAttributes.length > 0) {
-        throw new SecurityError(
+        throw new errors.SecurityError(
             "Operational attributes may not be managed without setting the manageDSAIT flag.",
             new SecurityErrorData(
                 SecurityProblem_insufficientAccessRights,
@@ -735,7 +730,7 @@ async function addEntry (
                     undefined,
                     securityError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -753,7 +748,7 @@ async function addEntry (
                     undefined,
                     serviceError["&errorCode"],
                 ),
-                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -857,6 +852,6 @@ async function addEntry (
         ),
         _encode_AddEntryResult({
             null_: null,
-        }, () => new DERElement()),
+        }, DER),
     );
 }

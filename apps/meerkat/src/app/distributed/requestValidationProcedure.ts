@@ -440,8 +440,11 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_busy,
                 [],
-                createSecurityParameters(ctx),
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    // TODO:
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -479,8 +482,8 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_unwillingToPerform, // TODO: Is this correct?
                 [],
-                createSecurityParameters(ctx),
-                undefined,
+                createSecurityParameters(ctx), // TODO:
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -506,8 +509,8 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_loopDetected,
                 [],
-                createSecurityParameters(ctx),
-                undefined,
+                createSecurityParameters(ctx), // TODO:
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),

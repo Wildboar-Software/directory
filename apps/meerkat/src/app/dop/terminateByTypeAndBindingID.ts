@@ -1,5 +1,5 @@
 import type { Context } from "../types";
-import { DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
@@ -19,6 +19,7 @@ import {
 import {
     terminateOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/terminateOperationalBinding.oa";
+import { DER } from "asn1-ts/dist/node/functional";
 
 // TODO: I haven't figured out how to meaningfully name / differentiate between this and `terminateByID()`.
 
@@ -45,7 +46,7 @@ async function terminateByTypeAndBindingID (
     };
     return conn.writeOperation({
         opCode: terminateOperationalBinding["&operationCode"]!,
-        argument: _encode_TerminateOperationalBindingArgument(arg, () => new DERElement()),
+        argument: _encode_TerminateOperationalBindingArgument(arg, DER),
     });
 }
 

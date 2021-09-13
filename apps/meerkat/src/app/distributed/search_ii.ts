@@ -75,7 +75,7 @@ async function search_ii (
                             undefined,
                             abandoned["&errorCode"],
                         ),
-                        undefined,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),

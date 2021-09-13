@@ -1,13 +1,11 @@
-import type { Context, Vertex } from "../types";
+import type { Context } from "../types";
 import {
     ACIItem,
     _encode_ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
-import { DERElement } from "asn1-ts";
 import type { ACIScope } from "@prisma/client";
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
 
 export
 async function writeACI (
