@@ -38,6 +38,15 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import search_i from "./search_i";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    ServiceProblem_unwillingToPerform,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    id_errcode_serviceError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
 
 export
 interface SearchIIReturn {
@@ -59,6 +68,51 @@ async function search_ii (
     const serviceControlOptions = data.serviceControls?.options;
     const dontUseCopy: boolean = (serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (serviceControlOptions?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
+
+    /**
+     * NOTE: Joins are going to be ENTIRELY UNSUPPORTED, because many details
+     * are unspecified:
+     *
+     * - The `relatedEntry` attribute that joining depends on is _undefined_ by any ITU specification.
+     * - ~~It is not clear what `JoinArgument.domainLocalID` even is, nor how to handle if it is not understood.~~
+     *   - I rescined this statement^. `domainLocalID` is defined in X.518.
+     *   - However, it is still undefined what to do if it is not recognized.
+     *
+     * If this is ever implemented, the code below will also need to perform
+     * pagination before joining. The code below is _extremely unscalable_.
+     * Because every entry has to be compared against every other entry
+     * (and indexing attribute values generally is not viable), the compute
+     * time will grow a O(n^2) or even worse time (because all attributes of
+     * each entry must be compared, and the same for all values of said
+     * attributes.) This is so unscalable, I had doubts about implementing it
+     * in the first place.
+     *
+     * Also, if the code below is ever implemented, another deduplication may be
+     * necessary, because the additional entries brought in by the joins may
+     * overlap. On the other hand, maybe it's fine to allow the user to do this?
+     *
+     * For now, if a join is attempted, the server should just return an
+     * unwillingToPerform error.
+     */
+    if (data.joinArguments) {
+        throw new errors.ServiceError(
+            "Joins are entirely unsupported by this server.",
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_serviceError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+
     const subordinates = await readChildren(ctx, target); // TODO: Pagination
     for (const subordinate of subordinates) {
         if ("present" in state.invokeId) {

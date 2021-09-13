@@ -124,9 +124,6 @@ import {
     id_at_aliasedEntryName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-aliasedEntryName.va";
 import {
-    serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import {
@@ -134,7 +131,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     ServiceProblem_invalidQueryReference,
-    ServiceProblem_unavailable,
+    ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     PartialOutcomeQualifier,
@@ -155,6 +152,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import {
+    id_errcode_serviceError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -178,6 +178,51 @@ async function search_i (
 ): Promise<void> {
     const target = state.foundDSE
     const data = getOptionallyProtectedValue(argument);
+
+    /**
+     * NOTE: Joins are going to be ENTIRELY UNSUPPORTED, because many details
+     * are unspecified:
+     *
+     * - The `relatedEntry` attribute that joining depends on is _undefined_ by any ITU specification.
+     * - ~~It is not clear what `JoinArgument.domainLocalID` even is, nor how to handle if it is not understood.~~
+     *   - I rescined this statement^. `domainLocalID` is defined in X.518.
+     *   - However, it is still undefined what to do if it is not recognized.
+     *
+     * If this is ever implemented, the code below will also need to perform
+     * pagination before joining. The code below is _extremely unscalable_.
+     * Because every entry has to be compared against every other entry
+     * (and indexing attribute values generally is not viable), the compute
+     * time will grow a O(n^2) or even worse time (because all attributes of
+     * each entry must be compared, and the same for all values of said
+     * attributes.) This is so unscalable, I had doubts about implementing it
+     * in the first place.
+     *
+     * Also, if the code below is ever implemented, another deduplication may be
+     * necessary, because the additional entries brought in by the joins may
+     * overlap. On the other hand, maybe it's fine to allow the user to do this?
+     *
+     * For now, if a join is attempted, the server should just return an
+     * unwillingToPerform error.
+     */
+    if (data.joinArguments) {
+        throw new errors.ServiceError(
+            "Joins are entirely unsupported by this server.",
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_serviceError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -199,7 +244,7 @@ async function search_i (
                             ctx,
                             conn.boundNameAndUID?.dn,
                             undefined,
-                            serviceError["&errorCode"],
+                            id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
@@ -218,7 +263,7 @@ async function search_i (
                             ctx,
                             conn.boundNameAndUID?.dn,
                             undefined,
-                            serviceError["&errorCode"],
+                            id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
@@ -242,7 +287,7 @@ async function search_i (
                             ctx,
                             conn.boundNameAndUID?.dn,
                             undefined,
-                            serviceError["&errorCode"],
+                            id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
@@ -274,13 +319,13 @@ async function search_i (
             throw new errors.ServiceError(
                 "Unrecognized paginated query syntax.",
                 new ServiceErrorData(
-                    ServiceProblem_unavailable,
+                    ServiceProblem_unwillingToPerform,
                     [],
                     createSecurityParameters(
                         ctx,
                         conn.boundNameAndUID?.dn,
                         undefined,
-                        serviceError["&errorCode"],
+                        id_errcode_serviceError,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
@@ -772,7 +817,7 @@ async function search_i (
                     permittedEinfo,
                     incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
                     undefined, // TODO: Review, but I think this will always be false.
-                    undefined, // TODO: Where is a join EVER specified in X.518's procedures?
+                    undefined,
                 ));
                 if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                     hierarchySelectionProcedure(
@@ -803,9 +848,9 @@ async function search_i (
                         },
                         Boolean(target.dse.shadow),
                         permittedEinfo,
-                        incompleteEntry,  // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                        incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
                         undefined, // TODO: Review, but I think this will always be false.
-                        undefined, // TODO: Where is a join EVER specified in X.518's procedures?
+                        undefined,
                     ));
                     if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                         hierarchySelectionProcedure(
