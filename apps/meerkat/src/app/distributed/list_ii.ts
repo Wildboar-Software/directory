@@ -1,5 +1,4 @@
 import { Context, Vertex, ClientConnection } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "../errors";
 import * as crypto from "crypto";
@@ -13,9 +12,6 @@ import {
     ServiceControlOptions_subentries as subentriesBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import {
-    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
@@ -89,6 +85,7 @@ import {
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import type { OperationDispatcherState } from "./OperationDispatcher";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -96,16 +93,14 @@ export
 async function list_ii (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
-    admPoints: Vertex[],
-    target: Vertex,
-    request: ChainedArgument,
+    state: OperationDispatcherState,
     fromDAP: boolean,
 ): Promise<ChainedResult> {
-    const arg: ListArgument = _decode_ListArgument(request.argument);
+    const target = state.foundDSE;
+    const arg: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(arg);
-    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
-        ? getDateFromTime(request.chainedArgument.timeLimit)
+    const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
+        ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const EQUALITY_MATCHER = (
@@ -113,9 +108,9 @@ async function list_ii (
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = admPoints
+    const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
     const targetACI = [
@@ -292,7 +287,7 @@ async function list_ii (
         }
     }
 
-    const excludeShadows: boolean = request.chainedArgument.excludeShadows
+    const excludeShadows: boolean = state.chainingArguments.excludeShadows
         ?? ChainingArguments._default_value_for_excludeShadows;
     const listItems: ListItem[] = [];
     const pageNumber: number = pagingRequest?.pageNumber ?? 0;
@@ -316,8 +311,8 @@ async function list_ii (
     let limitExceeded: LimitProblem | undefined;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
-            if ("present" in invokeId) {
-                const op = conn.invocations.get(invokeId.present);
+            if ("present" in state.invokeId) {
+                const op = conn.invocations.get(state.invokeId.present);
                 if (op?.abandonTime) {
                     throw new errors.AbandonError(
                         "Abandoned.",

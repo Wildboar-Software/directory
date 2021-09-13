@@ -1,5 +1,4 @@
 import type { Context, Vertex, ClientConnection } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -11,9 +10,6 @@ import {
     ChangePasswordResult,
     _encode_ChangePasswordResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordResult.ta";
-import {
-    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -53,17 +49,9 @@ import {
     id_opcode_changePassword,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-changePassword.va";
 import {
-    updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
-import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import {
-    attributeError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
-import {
-    serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import type { OperationDispatcherState } from "./OperationDispatcher";
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -94,18 +82,16 @@ export
 async function changePassword (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
-    target: Vertex,
-    admPoints: Vertex[],
-    request: ChainedArgument,
+    state: OperationDispatcherState,
 ): Promise<ChainedResult> {
-    const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(request.argument);
+    const target = state.foundDSE;
+    const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = admPoints
+    const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     if (accessControlScheme) {
         const AC_SCHEME: string = accessControlScheme.toString();
@@ -128,7 +114,7 @@ async function changePassword (
                 ...tuple,
                 await userWithinACIUserClass(
                     tuple[0],
-                    conn.boundNameAndUID!, // FIXME:
+                    conn.boundNameAndUID!,
                     targetDN,
                     EQUALITY_MATCHER,
                     isMemberOfGroup,
@@ -225,7 +211,6 @@ async function changePassword (
             ),
         );
     }
-    // TODO: Access control.
     await setEntryPassword(ctx, target, data.newPwd);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for

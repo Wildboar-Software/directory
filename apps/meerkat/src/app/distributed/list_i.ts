@@ -1,5 +1,4 @@
 import { Context, Vertex, ClientConnection } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import * as crypto from "crypto";
@@ -13,9 +12,6 @@ import {
 import { TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import readChildren from "../dit/readChildren";
-import {
-    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { AccessPointInformation, ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -100,6 +96,7 @@ import {
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import type { OperationDispatcherState } from "./OperationDispatcher";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -107,15 +104,13 @@ export
 async function list_i (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
-    admPoints: Vertex[],
-    target: Vertex,
-    request: ChainedArgument,
+    state: OperationDispatcherState,
 ): Promise<ChainedResult> {
-    const arg: ListArgument = _decode_ListArgument(request.argument);
+    const target = state.foundDSE;
+    const arg: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(arg);
-    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
-        ? getDateFromTime(request.chainedArgument.timeLimit)
+    const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
+        ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
     const EQUALITY_MATCHER = (
@@ -123,9 +118,9 @@ async function list_i (
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = admPoints
+    const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
     const targetACI = [
@@ -147,7 +142,7 @@ async function list_i (
             ...tuple,
             await userWithinACIUserClass(
                 tuple[0],
-                conn.boundNameAndUID!, // FIXME:
+                conn.boundNameAndUID!,
                 targetDN,
                 EQUALITY_MATCHER,
                 isMemberOfGroup,
@@ -326,8 +321,8 @@ async function list_i (
     let limitExceeded: LimitProblem | undefined;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
-            if ("present" in invokeId) {
-                const op = conn.invocations.get(invokeId.present);
+            if ("present" in state.invokeId) {
+                const op = conn.invocations.get(state.invokeId.present);
                 if (op?.abandonTime) {
                     throw new errors.AbandonError(
                         "Abandoned.",
@@ -379,7 +374,7 @@ async function list_i (
                         ...tuple,
                         await userWithinACIUserClass(
                             tuple[0],
-                            conn.boundNameAndUID!, // FIXME:
+                            conn.boundNameAndUID!,
                             subordinateDN,
                             EQUALITY_MATCHER,
                             isMemberOfGroup,

@@ -1,5 +1,4 @@
 import { Context, IndexableOID, Value, StoredContext, Vertex, ClientConnection } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import * as errors from "../errors";
 import {
     _decode_AddEntryArgument,
@@ -60,9 +59,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import readChildren from "../dit/readChildren";
 import getRDN from "../x500/getRDN";
-import {
-    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -129,11 +125,12 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import findEntry from "../x500/findEntry";
-import { addSeconds, differenceInMilliseconds } from "date-fns";
+import { differenceInMilliseconds } from "date-fns";
 import {
     ServiceProblem_timeLimitExceeded
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import type { OperationDispatcherState } from "./OperationDispatcher";
 
 function namingViolationErrorData (
     ctx: Context,
@@ -162,16 +159,14 @@ export
 async function addEntry (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
-    immediateSuperior: Vertex,
-    admPoints: Vertex[],
-    request: ChainedArgument,
+    state: OperationDispatcherState,
 ): Promise<ChainedResult> {
-    const argument = _decode_AddEntryArgument(request.argument);
+    const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
-        ? getDateFromTime(request.chainedArgument.timeLimit)
+    const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
+        ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
+    const immediateSuperior = state.foundDSE;
     if (immediateSuperior.dse.alias) {
         throw new UpdateError(
             "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
@@ -285,9 +280,9 @@ async function addEntry (
 
     const targetDN = data.object.rdnSequence;
     const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
     )).flat();
-    const accessControlScheme = admPoints
+    const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
     const relevantACIItems = isSubentry

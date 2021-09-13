@@ -1,11 +1,11 @@
 import type { Context } from "../types";
+import { BOOLEAN, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import connect from "../net/connect";
-import { AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import {
     referral,
@@ -27,39 +27,28 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import { Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import { DER } from "asn1-ts/dist/node/functional";
-
-function cloneChainingArgs (chaining: ChainingArguments): ChainingArguments {
-    return new ChainingArguments(
-        chaining.originator,
-        chaining.targetObject,
-        chaining.operationProgress,
-        chaining.traceInformation,
-        chaining.aliasDereferenced,
-        chaining.aliasedRDNs,
-        chaining.returnCrossRefs,
-        chaining.referenceType,
-        chaining.info,
-        chaining.timeLimit,
-        chaining.securityParameters,
-        chaining.entryOnly,
-        chaining.uniqueIdentifier,
-        chaining.authenticationLevel,
-        chaining.exclusions,
-        chaining.excludeShadows,
-        chaining.nameResolveOnMaster,
-        chaining.operationIdentifier,
-        chaining.searchRuleId,
-        chaining.chainedRelaxation,
-        chaining.relatedEntry,
-        chaining.dspPaging,
-        chaining.excludeWriteableCopies,
-    );
-}
+import {
+    MasterOrShadowAccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+import {
+    MasterOrShadowAccessPoint_category_shadow,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
+import {
+    ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import isModificationOperation from "../x500/isModificationOperation";
+import {
+    OperationProgress_nameResolutionPhase_proceeding as proceeding,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+import {
+    ReferenceType_nonSpecificSubordinate as nssr,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+import cloneChainingArguments from "../x500/cloneChainingArguments";
 
 export
 async function apinfoProcedure (
     ctx: Context,
-    apis: AccessPointInformation[],
+    api: AccessPointInformation,
     req: ChainedRequest,
 ): Promise<ChainedResultOrError | null> {
     // TODO: Loop AVOIDANCE, not loop DETECTION.
@@ -76,15 +65,51 @@ async function apinfoProcedure (
     //         ),
     //     );
     // }
-    const chainingArgs: ChainingArguments = cloneChainingArgs(req.chaining);
-    // TODO: Set chainingArgs.excludeShadows
-    // TODO: Set chainingArgs.nameResolveOnMaster
-    for (const api of apis) {
-        const ap = new AccessPoint(
+    const serviceControls = req.argument?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 30)
+        ))?.inner;
+    const serviceControlOptions = serviceControls?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 0)
+        ))?.inner;
+    const chainingProhibited = (serviceControlOptions?.bitString?.[chainingProhibitedBit] === TRUE_BIT);
+    if (chainingProhibited) {
+        return null;
+    }
+    const excludeShadows: BOOLEAN = req.chaining.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows;
+    const nameResolveOnMaster: BOOLEAN = req.chaining.nameResolveOnMaster
+        ?? ChainingArguments._default_value_for_nameResolveOnMaster;
+    const nameResolutionIsProceeding: boolean = (req.chaining.operationProgress?.nameResolutionPhase === proceeding);
+    const chainingArgs: ChainingArguments = cloneChainingArguments(req.chaining, {
+        nameResolveOnMaster: (
+            (nameResolutionIsProceeding && nameResolveOnMaster)
+            || (isModificationOperation(req.opCode) && (req.chaining.referenceType === nssr))
+        ),
+    });
+    const accessPoints: MasterOrShadowAccessPoint[] = [
+        new MasterOrShadowAccessPoint(
             api.ae_title,
             api.address,
             api.protocolInformation,
-        );
+            undefined,
+            undefined,
+        ),
+        ...api.additionalPoints ?? [],
+    ];
+    for (const ap of accessPoints) {
+        // TODO: Check if localScope.
+        if (
+            (ap.category === MasterOrShadowAccessPoint_category_shadow)
+            && (
+                excludeShadows
+                || (nameResolutionIsProceeding && nameResolveOnMaster)
+            )
+        ) {
+            continue;
+        }
         const connection = await connect(ctx, ap, dsp_ip["&id"]!);
         if (!connection) {
             continue;

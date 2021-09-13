@@ -30,9 +30,10 @@ import {
     TraceItem,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import nrcrProcedure from "./nrcrProcedure";
-import { ASN1TagClass, TRUE_BIT } from "asn1-ts";
+import { ASN1TagClass, TRUE_BIT, ASN1Element } from "asn1-ts";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
+    ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ChainedResultOrError,
@@ -102,12 +103,24 @@ type SearchResultOrError = {
     chaining: ChainingResults;
 } | Error_;
 
+export
 interface OperationDispatcherState {
+    // Variables defined in X.518 (2016), Section 16.1.2.
     NRcontinuationList: ContinuationReference[];
     SRcontinuationList: ContinuationReference[];
     admPoints: Vertex[];
     referralRequests: TraceItem[];
     emptyHierarchySelect: boolean;
+
+    // Procedures need to modify these by reference:
+    invokeId: InvokeId;
+    operationCode: Code;
+    operationArgument: ASN1Element;
+    chainingArguments: ChainingArguments;
+    chainingResults: ChainingResults;
+    foundDSE: Vertex;
+    entrySuitable: boolean;
+    partialName: boolean;
 }
 
 export
@@ -135,54 +148,61 @@ class OperationDispatcher {
         if (!targetObject) {
             throw errors.invalidRequestError("No discernable targeted object.");
         }
+        const chainingResults = new ChainingResults(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
         const state: OperationDispatcherState = {
             NRcontinuationList: [],
             SRcontinuationList: [],
             admPoints: [],
             referralRequests: [],
             emptyHierarchySelect: false,
+            invokeId: req.invokeId,
+            operationCode: req.opCode,
+            operationArgument: reqData.argument,
+            chainingArguments: reqData.chainedArgument,
+            chainingResults,
+            foundDSE: ctx.dit.root,
+            entrySuitable: false,
+            partialName: false,
         };
-        const foundDSE: Vertex | undefined = await findDSE(
+        await findDSE(
             ctx,
             conn,
             ctx.dit.root,
             targetObject,
-            reqData.chainedArgument,
-            reqData.argument,
-            req.opCode!,
-            state.NRcontinuationList,
-            state.admPoints,
+            state,
         );
-        if (!foundDSE) {
+        if (!state.entrySuitable) {
             const serviceControls = reqData.argument.set
                 .find((el) => (
                     (el.tagClass === ASN1TagClass.context)
                     && (el.tagNumber === 30)
-                ));
+                ))?.inner;
             const serviceControlOptions = serviceControls?.set
                 .find((el) => (
                     (el.tagClass === ASN1TagClass.context)
                     && (el.tagNumber === 0)
-                ));
+                ))?.inner;
             const chainingProhibited = (serviceControlOptions?.bitString?.[chainingProhibitedBit] === TRUE_BIT);
+            const partialNameResolution = (serviceControlOptions?.bitString?.[partialNameResolutionBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
                 conn,
-                state.NRcontinuationList,
-                {
-                    ...req,
-                    opCode: req.opCode!,
-                    chaining: reqData.chainedArgument,
-                },
+                state,
                 chainingProhibited,
+                partialNameResolution,
             );
-            // This will need to change if parallel requests are implemented,
-            // because only one response can be returned when the strategy is serial.
-            return nrcrResult.responses[0];
+            if (nrcrResult) {
+                return nrcrResult;
+            }
         }
-        const foundDN = getDistinguishedName(foundDSE);
+        const foundDN = getDistinguishedName(state.foundDSE);
         if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
-            const result = await doAddEntry(ctx, conn, req.invokeId, foundDSE, state.admPoints, reqData);
+            const result = await doAddEntry(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -191,7 +211,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
-            const result = await doAdministerPassword(ctx, conn, req.invokeId, foundDSE, state.admPoints, reqData);
+            const result = await doAdministerPassword(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -200,7 +220,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
-            const result = await doChangePassword(ctx, conn, req.invokeId, foundDSE, state.admPoints, reqData);
+            const result = await doChangePassword(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -209,7 +229,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, compare["&operationCode"]!)) {
-            const result = await doCompare(ctx, conn, req.invokeId, foundDSE, state.admPoints, reqData);
+            const result = await doCompare(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -218,7 +238,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
-            const result = await doModifyDN(ctx, conn, req.invokeId, foundDSE, state.admPoints, reqData);
+            const result = await doModifyDN(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -227,7 +247,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
-            const result = await doModifyEntry(ctx, conn, req.invokeId, foundDSE, state.admPoints, reqData);
+            const result = await doModifyEntry(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -239,7 +259,7 @@ class OperationDispatcher {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // List (II)
-                const result = await list_ii(ctx, conn, req.invokeId, state.admPoints, foundDSE, reqData, true);
+                const result = await list_ii(ctx, conn, state, true);
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
@@ -248,7 +268,7 @@ class OperationDispatcher {
                 };
             } else { // List (I)
                 // Only List (I) results in results merging.
-                const response = await list_i(ctx, conn, req.invokeId, state.admPoints, foundDSE, reqData);
+                const response = await list_i(ctx, conn, state);
                 const result = _decode_ListResult(response.result);
                 const data = getOptionallyProtectedValue(result);
                 const newData = await resultsMergingProcedureForList(
@@ -271,7 +291,7 @@ class OperationDispatcher {
             }
         }
         else if (compareCode(req.opCode, read["&operationCode"]!)) {
-            const result = await doRead(ctx, conn, req.invokeId, foundDSE, state.admPoints, reqData);
+            const result = await doRead(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -280,7 +300,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
-            const result = await doRemoveEntry(ctx, conn, req.invokeId, foundDSE, state.admPoints, reqData);
+            const result = await doRemoveEntry(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -316,12 +336,8 @@ class OperationDispatcher {
                 await search_ii(
                     ctx,
                     conn,
-                    req.invokeId,
-                    foundDSE,
-                    state.admPoints,
+                    state,
                     argument,
-                    reqData.chainedArgument,
-                    state.SRcontinuationList,
                     response,
                 );
                 // FIXME: Use response.poq!
@@ -390,12 +406,8 @@ class OperationDispatcher {
                 await search_i(
                     ctx,
                     conn,
-                    req.invokeId,
-                    foundDSE,
-                    state.admPoints,
+                    state,
                     argument,
-                    reqData.chainedArgument,
-                    state.SRcontinuationList,
                     response,
                 );
                 const localResult: SearchResult = {
@@ -517,64 +529,62 @@ class OperationDispatcher {
         if (!targetObject) {
             throw errors.invalidRequestError("No discernable targeted object.");
         }
-        const state: OperationDispatcherState = {
-            NRcontinuationList: [],
-            SRcontinuationList: [],
-            admPoints: [],
-            referralRequests: [],
-            emptyHierarchySelect: false,
-        };
-        const foundDSE: Vertex | undefined = await findDSE(
-            ctx,
-            conn,
-            ctx.dit.root,
-            targetObject,
-            chaining,
-            encodedArgument,
-            search["&operationCode"]!,
-            state.NRcontinuationList,
-            state.admPoints,
-        );
-        if (!foundDSE) {
-            const serviceControlOptions = data.serviceControls?.options;
-            const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
-            const nrcrResult = await nrcrProcedure(
-                ctx,
-                conn,
-                state.NRcontinuationList,
-                {
-                    invokeId: {
-                        present: 1,
-                    },
-                    opCode: search["&operationCode"]!,
-                    chaining,
-                },
-                chainingProhibited,
-            );
-            // This will need to change if parallel requests are implemented,
-            // because only one response can be returned when the strategy is serial.
-            const response =  nrcrResult.responses[0];
-            if ("result" in response) {
-                if (!response.result) {
-                    throw new Error(); // FIXME:
-                }
-                return {
-                    ...response,
-                    result: _decode_SearchResult(response.result),
-                };
-            } else if ("error" in response) {
-                return response;
-            } else {
-                throw new Error(); // FIXME:
-            }
-        }
-        const foundDN = getDistinguishedName(foundDSE);
         const chainingResults = new ChainingResults(
             undefined,
             undefined,
             undefined,
             undefined,
         );
+        const state: OperationDispatcherState = {
+            NRcontinuationList: [],
+            SRcontinuationList: [],
+            admPoints: [],
+            referralRequests: [],
+            emptyHierarchySelect: false,
+            invokeId: invokeId,
+            operationCode: search["&operationCode"]!,
+            operationArgument: encodedArgument,
+            chainingArguments: chaining,
+            chainingResults,
+            foundDSE: ctx.dit.root,
+            entrySuitable: false,
+            partialName: false,
+        };
+        await findDSE(
+            ctx,
+            conn,
+            ctx.dit.root,
+            targetObject,
+            state,
+        );
+        if (!state.entrySuitable) {
+            const serviceControlOptions = data.serviceControls?.options;
+            const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
+            const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
+            const nrcrResult = await nrcrProcedure(
+                ctx,
+                conn,
+                state,
+                chainingProhibited,
+                partialNameResolution,
+            );
+            if (nrcrResult) {
+                if ("result" in nrcrResult) {
+                    if (!nrcrResult.result) {
+                        throw new Error(); // FIXME:
+                    }
+                    return {
+                        ...nrcrResult,
+                        result: _decode_SearchResult(nrcrResult.result),
+                    };
+                } else if ("error" in nrcrResult) {
+                    return nrcrResult;
+                } else {
+                    throw new Error(); // FIXME:
+                }
+            }
+        }
+        const foundDN = getDistinguishedName(state.foundDSE);
         const relatedEntryReturn: RelatedEntryReturn = {
             chaining: chainingResults,
             response: [],
@@ -588,7 +598,7 @@ class OperationDispatcher {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
             };
-            await search_ii(ctx, conn, invokeId, foundDSE, state.admPoints, argument, chaining, state.SRcontinuationList, response);
+            await search_ii(ctx, conn, state, argument, response);
             const localResult: SearchResult = {
                 unsigned: {
                     searchInfo: new SearchResultData_searchInfo(
@@ -651,7 +661,7 @@ class OperationDispatcher {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
             };
-            await search_i(ctx, conn, invokeId, foundDSE, state.admPoints, argument, chaining, state.SRcontinuationList, response);
+            await search_i(ctx, conn, state, argument, response);
             const localResult: SearchResult = {
                 unsigned: {
                     searchInfo: new SearchResultData_searchInfo(

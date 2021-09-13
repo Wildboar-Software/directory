@@ -132,7 +132,6 @@ import {
 import {
     attributeError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
-import { addSeconds } from "date-fns";
 import {
     ServiceProblem_timeLimitExceeded
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
@@ -143,6 +142,7 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import type { OperationDispatcherState } from "./OperationDispatcher";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
@@ -835,15 +835,13 @@ export
 async function modifyEntry (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
-    target: Vertex,
-    admPoints: Vertex[],
-    request: ChainedArgument,
+    state: OperationDispatcherState,
 ): Promise<ChainedResult> {
-    const argument = _decode_ModifyEntryArgument(request.argument);
+    const target = state.foundDSE;
+    const argument = _decode_ModifyEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
-        ? getDateFromTime(request.chainedArgument.timeLimit)
+    const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
+        ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
@@ -870,9 +868,9 @@ async function modifyEntry (
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = admPoints
+    const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
     const relevantACIItems = [ // FIXME: subentries

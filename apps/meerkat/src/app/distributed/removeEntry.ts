@@ -1,5 +1,4 @@
 import { Context, Vertex, ClientConnection } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import {
@@ -9,9 +8,6 @@ import {
     _encode_RemoveEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
 import deleteEntry from "../database/deleteEntry";
-import {
-    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -80,6 +76,7 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import type { OperationDispatcherState } from "./OperationDispatcher";
 
 // TODO: subentries
 
@@ -87,15 +84,13 @@ export
 async function removeEntry (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
-    target: Vertex,
-    admPoints: Vertex[],
-    request: ChainedArgument,
+    state: OperationDispatcherState,
 ): Promise<ChainedResult> {
-    const argument = _decode_RemoveEntryArgument(request.argument);
+    const target = state.foundDSE;
+    const argument = _decode_RemoveEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const timeLimitEndTime: Date | undefined = request.chainedArgument.timeLimit
-        ? getDateFromTime(request.chainedArgument.timeLimit)
+    const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
+        ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
@@ -119,9 +114,9 @@ async function removeEntry (
     };
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = admPoints
+    const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     if (accessControlScheme) {
         const AC_SCHEME: string = accessControlScheme.toString();
@@ -144,7 +139,7 @@ async function removeEntry (
                 ...tuple,
                 await userWithinACIUserClass(
                     tuple[0],
-                    conn.boundNameAndUID!, // FIXME:
+                    conn.boundNameAndUID!,
                     targetDN,
                     EQUALITY_MATCHER,
                     isMemberOfGroup,

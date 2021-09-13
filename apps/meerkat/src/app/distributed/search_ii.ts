@@ -1,5 +1,4 @@
-import type { Context, Vertex, ClientConnection } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import type { Context, ClientConnection } from "../types";
 import * as errors from "../errors";
 import { TRUE_BIT, TRUE } from "asn1-ts";
 import {
@@ -22,9 +21,6 @@ import type {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import {
-    ContinuationReference,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
-import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 import {
@@ -41,6 +37,7 @@ import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import search_i from "./search_i";
+import type { OperationDispatcherState } from "./OperationDispatcher";
 
 export
 interface SearchIIReturn {
@@ -52,14 +49,11 @@ export
 async function search_ii (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
-    target: Vertex,
-    admPoints: Vertex[],
+    state: OperationDispatcherState,
     argument: SearchArgument,
-    chaining: ChainingArguments,
-    SRcontinuationList: ContinuationReference[],
     ret: SearchIIReturn,
 ): Promise<void> {
+    const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
     const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
     const serviceControlOptions = data.serviceControls?.options;
@@ -67,8 +61,8 @@ async function search_ii (
     const copyShallDo: boolean = (serviceControlOptions?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
     const subordinates = await readChildren(ctx, target); // TODO: Pagination
     for (const subordinate of subordinates) {
-        if ("present" in invokeId) {
-            const op = conn.invocations.get(invokeId.present);
+        if ("present" in state.invokeId) {
+            const op = conn.invocations.get(state.invokeId.present);
             if (op?.abandonTime) {
                 throw new errors.AbandonError(
                     "Abandoned.",
@@ -97,7 +91,7 @@ async function search_ii (
             search["&operationCode"]!,
             dontUseCopy,
             copyShallDo,
-            chaining.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
+            state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
         );
         if (!suitable) {
             continue;
@@ -142,12 +136,8 @@ async function search_ii (
         await search_i(
             ctx,
             conn,
-            invokeId,
-            subordinate,
-            admPoints,
+            state,
             newArgument,
-            chaining,
-            SRcontinuationList,
             ret,
         );
     }

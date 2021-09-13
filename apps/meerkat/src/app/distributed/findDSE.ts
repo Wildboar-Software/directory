@@ -40,7 +40,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import * as errors from "../errors";
 import {
@@ -57,14 +57,10 @@ import {
 import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { strict as assert } from "assert";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
 import checkSuitabilityProcedure from "./checkSuitability";
-import {
-    id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import {
     id_opcode_list,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
@@ -93,8 +89,23 @@ import {
     nameError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import type { OperationDispatcherState } from "./OperationDispatcher";
+import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import { id_ar_accessControlSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+import { id_ar_subschemaAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
+import { id_ar_collectiveAttributeSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
+import { id_ar_contextDefaultSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
 
-const AUTONOMOUS: string = id_ar_autonomousArea.toString();
+const autonomousArea: string = id_ar_autonomousArea.toString();
+const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
+const subschemaAdminSpecificArea: string = id_ar_subschemaAdminSpecificArea.toString();
+const collectiveAttributeSpecificArea: string = id_ar_collectiveAttributeSpecificArea.toString();
+const contextDefaultSpecificArea: string = id_ar_contextDefaultSpecificArea.toString();
+const serviceSpecificArea: string = id_ar_serviceSpecificArea.toString();
+const pwdAdminSpecificArea: string = id_ar_pwdAdminSpecificArea.toString();
+
 const MAX_DEPTH: number = 10000;
 
 function makeContinuationRefFromSupplierKnowledge (
@@ -150,14 +161,15 @@ async function findDSE (
     conn: ClientConnection,
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
-    chainArgs: ChainingArguments,
-    argument: ASN1Element,
-    operationType: Code,
-    NRcontinuationList: ContinuationReference[],
-    admPoints: Vertex[],
-): Promise<Vertex | undefined> {
-    const timeLimitEndTime: Date | undefined = chainArgs.timeLimit
-        ? getDateFromTime(chainArgs.timeLimit)
+    state: OperationDispatcherState,
+    // state.chainingArguments: ChainingArguments,
+    // argument: ASN1Element,
+    // operationType: Code,
+    // NRcontinuationList: ContinuationReference[],
+    // admPoints: Vertex[],
+): Promise<void> {
+    const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
+        ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
@@ -184,30 +196,31 @@ async function findDSE (
      * root DSE will be searched for an entry with a zero-length RDN!
      */
     if (needleDN.length === 0) {
-        return ctx.dit.root;
+        state.entrySuitable = true;
+        return;
     }
     let i: number = 0;
     let dse_i: Vertex = haystackVertex;
     let nssrEncountered: boolean = false;
-    let nameResolutionPhase: OperationProgress_nameResolutionPhase = chainArgs
+    let nameResolutionPhase: OperationProgress_nameResolutionPhase = state.chainingArguments
         .operationProgress?.nameResolutionPhase ?? OperationProgress_nameResolutionPhase_notStarted;
-    let nextRDNToBeResolved: number = chainArgs.operationProgress?.nextRDNToBeResolved ?? 0;
+    let nextRDNToBeResolved: number = state.chainingArguments.operationProgress?.nextRDNToBeResolved ?? 0;
     const m: number = needleDN.length;
     let lastEntryFound: number = 0; // The last RDN whose DSE was of type entry.
     let dse_lastEntryFound: Vertex | undefined = undefined;
     let lastCP: Vertex | undefined;
     const candidateRefs: ContinuationReference[] = [];
 
-    const serviceControls = argument.set
+    const serviceControls = state.operationArgument.set
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
             && (el.tagNumber === 30)
-        ));
+        ))?.inner;
     const serviceControlOptions = serviceControls?.set
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
             && (el.tagNumber === 0)
-        ));
+        ))?.inner;
     // You don't even need to decode this. Just determining that it exists is sufficient.
     const manageDSAITPlaneRefElement = serviceControls?.set
         .find((el) => (
@@ -239,7 +252,7 @@ async function findDSE (
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
-            NRcontinuationList.push(...candidateRefs);
+            state.NRcontinuationList.push(...candidateRefs);
             return undefined; // entry unsuitable
         } else {
             return candidateRefsEmpty_yes_branch();
@@ -293,7 +306,7 @@ async function findDSE (
             );
             candidateRefs.push(cr);
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
-            NRcontinuationList.push(...candidateRefs);
+            state.NRcontinuationList.push(...candidateRefs);
             return undefined;
         }
         return node_candidateRefs_empty_2();
@@ -331,7 +344,7 @@ async function findDSE (
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
-            NRcontinuationList.push(...candidateRefs);
+            state.NRcontinuationList.push(...candidateRefs);
             return undefined; // entry unsuitable
         } else {
             return candidateRefsEmpty_yes_branch();
@@ -376,8 +389,8 @@ async function findDSE (
                 if (m === 0) { // ...and the operation was directed at the root DSE.
                     // Step 5.
                     if (
-                        compareCode(operationType, list["&operationCode"]!)
-                        || compareCode(operationType, search["&operationCode"]!)
+                        compareCode(state.operationCode, list["&operationCode"]!)
+                        || compareCode(state.operationCode, search["&operationCode"]!)
                     ) {
                         nameResolutionPhase = OperationProgress_nameResolutionPhase_completed; // TODO: I think you have to return the modified chaningArgs.
                         return dse_i; // Entry suitable.
@@ -398,7 +411,7 @@ async function findDSE (
                                     nameError["&errorCode"],
                                 ),
                                 undefined,
-                                chainArgs.aliasDereferenced,
+                                state.chainingArguments.aliasDereferenced,
                                 undefined,
                             ),
                         );
@@ -459,7 +472,7 @@ async function findDSE (
                     return node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false();
                 }
                 if (
-                    (chainArgs.referenceType === ReferenceType_nonSpecificSubordinate)
+                    (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate)
                     && (nextRDNToBeResolved === (i + 1))
                 ) {
                     throw new errors.ServiceError(
@@ -525,11 +538,11 @@ async function findDSE (
         const suitable: boolean = checkSuitabilityProcedure(
             ctx,
             dse_i,
-            operationType,
+            state.operationCode,
             dontUseCopy,
             copyShallDo,
-            chainArgs.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
-            argument,
+            state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
+            state.operationArgument,
         );
         if (suitable) {
             nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
@@ -551,41 +564,49 @@ async function findDSE (
         if (i === m) {
             // I pretty much don't understand this entire section.
             if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
-                return targetNotFoundSubprocedure();
+                await targetNotFoundSubprocedure();
+                return;
             }
             if (manageDSAITPlaneRefElement || manageDSAIT) {
-                return dse_i;
+                state.foundDSE = dse_i;
+                state.entrySuitable = true;
+                return;
             }
             // This is present in the diagram, but not the text.
             // if (
-            //     (chainArgs.referenceType === ReferenceType_supplier)
-            //     || (chainArgs.referenceType === ReferenceType_master)
+            //     (state.chainingArguments.referenceType === ReferenceType_supplier)
+            //     || (state.chainingArguments.referenceType === ReferenceType_master)
             // ) {
             //     return targetNotFoundSubprocedure();
             // }
             // I don't understand why we do this.
             // Name resolution phase MUST be completed at this point.
             if (
-                !compareCode(operationType, id_opcode_list)
-                && !compareCode(operationType, id_opcode_search)
+                !compareCode(state.operationCode, id_opcode_list)
+                && !compareCode(state.operationCode, id_opcode_search)
             ) {
-                return dse_i;
+                state.foundDSE = dse_i;
+                state.entrySuitable = true;
+                return;
             }
             const someChildrenAreCP: boolean = (children.some((child) => child.dse.cp));
-            return someChildrenAreCP
-                ? dse_i
-                : targetNotFoundSubprocedure();
+            if (!someChildrenAreCP) {
+                await targetNotFoundSubprocedure();
+            }
+            state.foundDSE = dse_i;
+            state.entrySuitable = true;
+            return;
         }
         const needleRDN = needleDN[i];
         let rdnMatched: boolean = false;
-        const accessControlScheme = admPoints
+        const accessControlScheme = state.admPoints
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
         for (const child of children) {
             checkTimeLimit();
             const childDN = getDistinguishedName(child);
             const relevantSubentries: Vertex[] = (await Promise.all(
-                admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+                state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
             )).flat();
             const targetACI = [
                 ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
@@ -652,7 +673,8 @@ async function findDSE (
             }
         }
         if (!rdnMatched) {
-            return targetNotFoundSubprocedure();
+            await targetNotFoundSubprocedure();
+            return;
         }
         /**
          * This is not explicitly required by the specification, but it seems to
@@ -662,9 +684,9 @@ async function findDSE (
             nssrEncountered = true;
         }
         if (
-            (i === chainArgs.operationProgress?.nextRDNToBeResolved)
+            (i === state.chainingArguments.operationProgress?.nextRDNToBeResolved)
             // Is checking for shadow enough to determine if !master?
-            || (chainArgs.nameResolveOnMaster && dse_i.dse.shadow)
+            || (state.chainingArguments.nameResolveOnMaster && dse_i.dse.shadow)
         ) {
             throw new errors.ServiceError(
                 "Could not resolve name on master.",
@@ -678,7 +700,7 @@ async function findDSE (
                         serviceError["&errorCode"],
                     ),
                     undefined,
-                    chainArgs.aliasDereferenced,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -686,7 +708,8 @@ async function findDSE (
         if (dse_i.dse.alias) {
             if (dontDereferenceAliases) {
                 if (i === m) {
-                    return targetFoundSubprocedure();
+                    await targetFoundSubprocedure();
+                    return;
                 } else {
                     throw new errors.NameError(
                         "Reached an alias above the sought object, and dereferencing was prohibited.",
@@ -714,49 +737,47 @@ async function findDSE (
                     ...needleDN.slice(i), // RDNs N(i + 1) to N(m)
                 ];
                 const newChaining: ChainingArguments = new ChainingArguments(
-                    chainArgs.originator,
+                    state.chainingArguments.originator,
                     newN,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_notStarted,
                         undefined,
                     ),
-                    chainArgs.traceInformation,
+                    state.chainingArguments.traceInformation,
                     TRUE, // aliasDereferenced
                     undefined, // Specifically told not to set aliasedRDNs.
-                    chainArgs.returnCrossRefs,
-                    chainArgs.referenceType,
-                    chainArgs.info,
-                    chainArgs.timeLimit,
-                    chainArgs.securityParameters,
-                    chainArgs.entryOnly,
-                    chainArgs.uniqueIdentifier,
-                    chainArgs.authenticationLevel,
-                    chainArgs.exclusions,
-                    chainArgs.excludeShadows,
-                    chainArgs.nameResolveOnMaster,
-                    chainArgs.operationIdentifier,
-                    chainArgs.searchRuleId,
-                    chainArgs.chainedRelaxation,
-                    chainArgs.relatedEntry,
-                    chainArgs.dspPaging,
-                    chainArgs.excludeWriteableCopies,
+                    state.chainingArguments.returnCrossRefs,
+                    state.chainingArguments.referenceType,
+                    state.chainingArguments.info,
+                    state.chainingArguments.timeLimit,
+                    state.chainingArguments.securityParameters,
+                    state.chainingArguments.entryOnly,
+                    state.chainingArguments.uniqueIdentifier,
+                    state.chainingArguments.authenticationLevel,
+                    state.chainingArguments.exclusions,
+                    state.chainingArguments.excludeShadows,
+                    state.chainingArguments.nameResolveOnMaster,
+                    state.chainingArguments.operationIdentifier,
+                    state.chainingArguments.searchRuleId,
+                    state.chainingArguments.chainedRelaxation,
+                    state.chainingArguments.relatedEntry,
+                    state.chainingArguments.dspPaging,
+                    state.chainingArguments.excludeWriteableCopies,
                 );
+                state.chainingArguments = newChaining;
                 return findDSE(
                     ctx,
                     conn,
                     haystackVertex,
                     newN,
-                    newChaining,
-                    argument,
-                    operationType,
-                    NRcontinuationList,
-                    admPoints,
+                    state,
                 );
             }
         }
         if (dse_i.dse.subentry) {
             if (i === m) {
-                return targetFoundSubprocedure();
+                await targetFoundSubprocedure();
+                return;
             } else {
                 throw new errors.NameError(
                     "No DSEs to find beneath a subentry.",
@@ -774,7 +795,7 @@ async function findDSE (
                             nameError["&errorCode"],
                         ),
                         undefined,
-                        chainArgs.aliasDereferenced,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -783,22 +804,28 @@ async function findDSE (
         if (dse_i.dse.entry) {
             if (i === m) {
                 if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
-                    return targetFoundSubprocedure();
+                    await targetFoundSubprocedure();
+                    return;
                 }
                 if (manageDSAITPlaneRefElement || manageDSAIT) {
-                    return dse_i;
+                    state.foundDSE = dse_i;
+                    state.entrySuitable = true;
+                    return;
                 }
                 if (
-                    (chainArgs.referenceType === ReferenceType_supplier)
-                    || (chainArgs.referenceType === ReferenceType_master)
+                    (state.chainingArguments.referenceType === ReferenceType_supplier)
+                    || (state.chainingArguments.referenceType === ReferenceType_master)
                 ) {
-                    return targetFoundSubprocedure();
+                    await targetFoundSubprocedure();
+                    return;
                 }
                 if (
-                    !compareCode(operationType, id_opcode_list)
-                    && !compareCode(operationType, id_opcode_search)
+                    !compareCode(state.operationCode, id_opcode_list)
+                    && !compareCode(state.operationCode, id_opcode_search)
                 ) {
-                    return dse_i;
+                    state.foundDSE = dse_i;
+                    state.entrySuitable = true;
+                    return;
                 }
                 const someSubordinatesAreCP = children.some((child) => child.dse.cp);
                 if (!someSubordinatesAreCP) {
@@ -814,7 +841,9 @@ async function findDSE (
                         ),
                     );
                 }
-                return dse_i; // Entry suitable
+                state.foundDSE = dse_i;
+                state.entrySuitable = true;
+                return;
             } else {
                 lastEntryFound = i;
                 dse_lastEntryFound = dse_i;
@@ -883,7 +912,7 @@ async function findDSE (
                             )),
                     ),
                 ],
-                undefined, // FIXME:
+                undefined,
                 undefined,
                 undefined, // Return to DUA not supported.
                 nssrEncountered,
@@ -891,11 +920,26 @@ async function findDSE (
             candidateRefs.push(cr);
         }
         if (dse_i.dse.admPoint) {
-            if (dse_i.dse.admPoint.administrativeRole.has(AUTONOMOUS)) {
-                admPoints.length = 0;
+            if (dse_i.dse.admPoint.administrativeRole.has(autonomousArea)) {
+                state.admPoints.length = 0;
             }
-            // TODO: Remove superceded specific administrative areas.
-            admPoints.push(dse_i);
+            [ // Specific areas supplant other specific areas of the same kind.
+                accessControlSpecificArea,
+                subschemaAdminSpecificArea,
+                collectiveAttributeSpecificArea,
+                contextDefaultSpecificArea,
+                serviceSpecificArea,
+                pwdAdminSpecificArea,
+            ]
+                .forEach((specificAreaType) => {
+                    if (dse_i.dse.admPoint?.administrativeRole.has(specificAreaType)) {
+                        state.admPoints = state.admPoints
+                            .filter((admPoint) => admPoint.dse.admPoint?.administrativeRole.has(specificAreaType));
+                    }
+                });
+            // TODO: inner areas shall not be used if SAC is in place.
+            // NOTE: This actually needs to be implemented elsewhere.
+            state.admPoints.push(dse_i);
         }
         if (dse_i.dse.cp && dse_i.dse.shadow) {
             lastCP = dse_i;
@@ -913,7 +957,7 @@ async function findDSE (
                 serviceError["&errorCode"],
             ),
             undefined,
-            chainArgs.aliasDereferenced,
+            state.chainingArguments.aliasDereferenced,
             undefined,
         ),
     );

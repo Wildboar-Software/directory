@@ -1,5 +1,4 @@
 import type { Context, Vertex, ClientConnection } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import * as errors from "../errors";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -155,6 +154,7 @@ import {
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import type { OperationDispatcherState } from "./OperationDispatcher";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -172,17 +172,14 @@ export
 async function search_i (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
-    target: Vertex,
-    admPoints: Vertex[],
+    state: OperationDispatcherState,
     argument: SearchArgument,
-    chaining: ChainingArguments,
-    SRcontinuationList: ContinuationReference[],
     ret: SearchIReturn,
 ): Promise<void> {
+    const target = state.foundDSE
     const data = getOptionallyProtectedValue(argument);
-    const timeLimitEndTime: Date | undefined = chaining.timeLimit
-        ? getDateFromTime(chaining.timeLimit)
+    const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
+        ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
@@ -335,9 +332,9 @@ async function search_i (
         attributeType: OBJECT_IDENTIFIER,
     ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
     const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = admPoints
+    const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
     const targetACI = [
@@ -359,7 +356,7 @@ async function search_i (
             ...tuple,
             await userWithinACIUserClass(
                 tuple[0],
-                conn.boundNameAndUID!, // FIXME:
+                conn.boundNameAndUID!,
                 targetDN,
                 EQUALITY_MATCHER,
                 isMemberOfGroup,
@@ -569,7 +566,7 @@ async function search_i (
                 search["&operationCode"]!,
                 dontUseCopy,
                 copyShallDo,
-                chaining.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
+                state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
             );
             if (suitable) {
                 if (ret.chaining.alreadySearched) {
@@ -612,7 +609,7 @@ async function search_i (
                     undefined,
                     undefined,
                 );
-                SRcontinuationList.push(cr);
+                state.SRcontinuationList.push(cr);
             }
             return;
         }
@@ -745,9 +742,9 @@ async function search_i (
             ctx,
             conn,
             target,
-            target.dse.alias,
             argument,
-            chaining,
+            state.chainingArguments,
+            ret,
         );
         return;
     }
@@ -860,7 +857,7 @@ async function search_i (
             undefined,
             undefined,
         );
-        SRcontinuationList.push(cr);
+        state.SRcontinuationList.push(cr);
     }
 
     let cursorId: number | undefined;
@@ -878,8 +875,8 @@ async function search_i (
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             // TODO: Return if time limit is exceeded.
-            if ("present" in invokeId) {
-                const op = conn.invocations.get(invokeId.present);
+            if ("present" in state.invokeId) {
+                const op = conn.invocations.get(state.invokeId.present);
                 if (op?.abandonTime) {
                     throw new errors.AbandonError(
                         "Abandoned.",
@@ -948,7 +945,7 @@ async function search_i (
                     undefined,
                     undefined,
                 );
-                SRcontinuationList.push(cr);
+                state.SRcontinuationList.push(cr);
             }
             const newArgument: SearchArgument = (subset !== SearchArgumentData_subset_oneLevel)
                 ? argument
@@ -987,12 +984,8 @@ async function search_i (
             await search_i(
                 ctx,
                 conn,
-                invokeId,
-                subordinate,
-                admPoints, // TODO: Are you sure you can always pass in the same admPoints?
+                state, // TODO: Are you sure you can always pass in the same admPoints?
                 newArgument,
-                chaining,
-                SRcontinuationList,
                 ret,
             );
         }
