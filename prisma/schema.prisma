@@ -332,8 +332,8 @@ model AttributeValue {
     constructed Boolean
     tag_number  Int
     ber         Bytes
-    hint        BigInt?
     jer         Json?
+    sort_key    Int? // A number that sorts the values according to the default ordering rule.
 
     // attributeValueSecurityLabelContext
     // At most one security label context can be assigned to an attribute value
@@ -343,9 +343,9 @@ model AttributeValue {
     privacy_mark               String?
 
     // Not part of a specification, but still usable
-    deleteTimestamp DateTime?
-    visible_to_ldap Boolean        @default(true)
     ContextValue    ContextValue[]
+    @@index([entry_id])
+    @@index([type, sort_key])
 }
 
 model ContextValue {

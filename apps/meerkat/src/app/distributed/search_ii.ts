@@ -48,6 +48,8 @@ import {
     id_errcode_serviceError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
 
+const SEARCH_II_PAGE_SIZE: number = 100;
+
 export
 interface SearchIIReturn {
     chaining: ChainingResults;
@@ -113,86 +115,103 @@ async function search_ii (
         );
     }
 
-    const subordinates = await readChildren(ctx, target); // TODO: Pagination
-    for (const subordinate of subordinates) {
-        if ("present" in state.invokeId) {
-            const op = conn.invocations.get(state.invokeId.present);
-            if (op?.abandonTime) {
-                throw new errors.AbandonError(
-                    "Abandoned.",
-                    new AbandonedData(
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
+    let cursorId: number | undefined;
+    let subordinatesInBatch = await readChildren(
+        ctx,
+        target,
+        SEARCH_II_PAGE_SIZE,
+        undefined,
+        cursorId,
+    );
+    while (subordinatesInBatch.length) {
+        for (const subordinate of subordinatesInBatch) {
+            cursorId = subordinate.dse.id;
+            if ("present" in state.invokeId) {
+                const op = conn.invocations.get(state.invokeId.present);
+                if (op?.abandonTime) {
+                    throw new errors.AbandonError(
+                        "Abandoned.",
+                        new AbandonedData(
                             undefined,
-                            abandoned["&errorCode"],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                abandoned["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
                         ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
-                    ),
-                );
+                    );
+                }
             }
+            if (!subordinate.dse.cp) {
+                continue;
+            }
+            const suitable = checkSuitabilityProcedure(
+                ctx,
+                subordinate,
+                search["&operationCode"]!,
+                dontUseCopy,
+                copyShallDo,
+                state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
+            );
+            if (!suitable) {
+                continue;
+            }
+            const newArgument: SearchArgument = (
+                (subset !== SearchArgumentData_subset_oneLevel)
+                && (target.dse.alias)
+            )
+                ? argument
+                : {
+                    unsigned: new SearchArgumentData(
+                        data.baseObject,
+                        data.subset,
+                        data.filter,
+                        data.searchAliases,
+                        data.selection,
+                        data.pagedResults,
+                        data.matchedValuesOnly,
+                        data.extendedFilter,
+                        data.checkOverspecified,
+                        data.relaxation,
+                        data.extendedArea,
+                        data.hierarchySelections,
+                        data.searchControlOptions,
+                        data.joinArguments,
+                        data.joinType,
+                        data._unrecognizedExtensionsList,
+                        data.serviceControls,
+                        data.securityParameters,
+                        data.requestor,
+                        data.operationProgress,
+                        data.aliasedRDNs,
+                        data.criticalExtensions,
+                        data.referenceType,
+                        TRUE, // data.entryOnly,
+                        data.exclusions,
+                        data.nameResolveOnMaster,
+                        data.operationContexts,
+                        data.familyGrouping,
+                    ),
+                };
+            await search_i(
+                ctx,
+                conn,
+                state,
+                newArgument,
+                ret,
+            );
         }
-        if (!subordinate.dse.cp) {
-            continue;
-        }
-        const suitable = checkSuitabilityProcedure(
+        subordinatesInBatch = await readChildren(
             ctx,
-            subordinate,
-            search["&operationCode"]!,
-            dontUseCopy,
-            copyShallDo,
-            state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
-        );
-        if (!suitable) {
-            continue;
-        }
-        const newArgument: SearchArgument = (
-            (subset !== SearchArgumentData_subset_oneLevel)
-            && (target.dse.alias)
-        )
-            ? argument
-            : {
-                unsigned: new SearchArgumentData(
-                    data.baseObject,
-                    data.subset,
-                    data.filter,
-                    data.searchAliases,
-                    data.selection,
-                    data.pagedResults,
-                    data.matchedValuesOnly,
-                    data.extendedFilter,
-                    data.checkOverspecified,
-                    data.relaxation,
-                    data.extendedArea,
-                    data.hierarchySelections,
-                    data.searchControlOptions,
-                    data.joinArguments,
-                    data.joinType,
-                    data._unrecognizedExtensionsList,
-                    data.serviceControls,
-                    data.securityParameters,
-                    data.requestor,
-                    data.operationProgress,
-                    data.aliasedRDNs,
-                    data.criticalExtensions,
-                    data.referenceType,
-                    TRUE, // data.entryOnly,
-                    data.exclusions,
-                    data.nameResolveOnMaster,
-                    data.operationContexts,
-                    data.familyGrouping,
-                ),
-            };
-        await search_i(
-            ctx,
-            conn,
-            state,
-            newArgument,
-            ret,
+            target,
+            SEARCH_II_PAGE_SIZE,
+            undefined,
+            cursorId,
         );
     }
 }
