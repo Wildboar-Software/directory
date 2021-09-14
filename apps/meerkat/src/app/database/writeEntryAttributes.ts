@@ -118,9 +118,7 @@ async function writeEntryAttributes (
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
                     ber: Buffer.from(attr.value.toBytes()),
-                    hint: undefined,
                     jer: undefined,
-                    visible_to_ldap: true,
                     ContextValue: {
                         createMany: {
                             data: Array.from(attr.contexts.values())
@@ -150,9 +148,7 @@ async function writeEntryAttributes (
                         constructed: (value.construction === ASN1Construction.constructed),
                         tag_number: value.tagNumber,
                         ber: Buffer.from(value.toBytes()),
-                        hint: undefined,
                         jer: undefined,
-                        visible_to_ldap: true,
                     },
                 });
             }),

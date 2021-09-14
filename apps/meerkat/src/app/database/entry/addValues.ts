@@ -126,9 +126,7 @@ async function addValues (
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
                     ber: Buffer.from(attr.value.toBytes()),
-                    hint: undefined,
                     jer: undefined,
-                    visible_to_ldap: true,
                     ContextValue: {
                         createMany: {
                             data: Array.from(attr.contexts.values())

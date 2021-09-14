@@ -26,6 +26,7 @@ import {
     ServiceControlOptions_partialNameResolution,
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
+    ServiceControlOptions_subentries,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ReferenceType,
@@ -107,6 +108,20 @@ const serviceSpecificArea: string = id_ar_serviceSpecificArea.toString();
 const pwdAdminSpecificArea: string = id_ar_pwdAdminSpecificArea.toString();
 
 const MAX_DEPTH: number = 10000;
+
+async function someSubordinatesAreCP (
+    ctx: Context,
+    vertex: Vertex,
+): Promise<boolean> {
+    return Boolean(await ctx.db.entry.findFirst({
+        where: {
+            immediate_superior_id: vertex.dse.id,
+            cp: true,
+            deleteTimestamp: null,
+        },
+        select: {},
+    }));
+}
 
 function makeContinuationRefFromSupplierKnowledge (
     cp: Vertex,
@@ -239,6 +254,8 @@ async function findDSE (
         serviceControlOptions?.bitString?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
         serviceControlOptions?.bitString?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
+    const subentries: boolean = (
+        serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
     /**
      * This is used to set the EntryInformation.partialName.
@@ -560,7 +577,6 @@ async function findDSE (
     let iterations: number = 0;
     while (iterations < MAX_DEPTH) {
         iterations++;
-        const children = await readChildren(ctx, dse_i); // TODO: Read in batches.
         if (i === m) {
             // I pretty much don't understand this entire section.
             if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
@@ -589,8 +605,7 @@ async function findDSE (
                 state.entrySuitable = true;
                 return;
             }
-            const someChildrenAreCP: boolean = (children.some((child) => child.dse.cp));
-            if (!someChildrenAreCP) {
+            if (!await someSubordinatesAreCP(ctx, dse_i)) {
                 await targetNotFoundSubprocedure();
             }
             state.foundDSE = dse_i;
@@ -602,75 +617,99 @@ async function findDSE (
         const accessControlScheme = state.admPoints
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
-        for (const child of children) {
-            checkTimeLimit();
-            const childDN = getDistinguishedName(child);
-            const relevantSubentries: Vertex[] = (await Promise.all(
-                state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
-            )).flat();
-            const targetACI = [
-                ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
-                    ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                    : []),
-                ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
-                    ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
-                    : []),
-                ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                    ? child.dse.entryACI ?? []
-                    : []),
-            ];
-            const acdfTuples: ACDFTuple[] = (targetACI ?? [])
-                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-            const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
-            const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-                acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                    ...tuple,
-                    await userWithinACIUserClass(
-                        tuple[0],
-                        conn.boundNameAndUID!, // FIXME:
-                        childDN,
+        let cursorId: number | undefined;
+        let subordinatesInBatch = await readChildren(
+            ctx,
+            dse_i,
+            100,
+            undefined,
+            cursorId,
+            {
+                subentry: subentries,
+            },
+        );
+        while (subordinatesInBatch.length) {
+            for (const child of subordinatesInBatch) {
+                cursorId = child.dse.id;
+                checkTimeLimit();
+                const childDN = getDistinguishedName(child);
+                const relevantSubentries: Vertex[] = (await Promise.all(
+                    state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+                )).flat();
+                const targetACI = [
+                    ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
+                        ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                        : []),
+                    ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
+                        ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                        : []),
+                    ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                        ? child.dse.entryACI ?? []
+                        : []),
+                ];
+                const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                    .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+                const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                    acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                        ...tuple,
+                        await userWithinACIUserClass(
+                            tuple[0],
+                            conn.boundNameAndUID!, // FIXME:
+                            childDN,
+                            EQUALITY_MATCHER,
+                            isMemberOfGroup,
+                        ),
+                    ]),
+                ))
+                    .filter((tuple) => (tuple[5] > 0));
+                if (accessControlScheme) { // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                    const {
+                        authorized,
+                    } = bacACDF(
+                        relevantTuples,
+                        conn.authLevel,
+                        {
+                            entry: Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString),
+                        },
+                        [
+                            PERMISSION_CATEGORY_BROWSE,
+                            PERMISSION_CATEGORY_RETURN_DN,
+                        ],
                         EQUALITY_MATCHER,
-                        isMemberOfGroup,
-                    ),
-                ]),
-            ))
-                .filter((tuple) => (tuple[5] > 0));
-            if (accessControlScheme) { // TODO: Make this a check for AC schemes that use the BAC ACDF.
-                const {
-                    authorized,
-                } = bacACDF(
-                    relevantTuples,
-                    conn.authLevel,
-                    {
-                        entry: Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString),
-                    },
-                    [
-                        PERMISSION_CATEGORY_BROWSE,
-                        PERMISSION_CATEGORY_RETURN_DN,
-                    ],
-                    EQUALITY_MATCHER,
+                    );
+                    if (!authorized) {
+                        /**
+                         * We ignore entries for which browse and returnDN permissions
+                         * are not granted. This is not specified in the Find DSE
+                         * procedure, but it is important for preventing information
+                         * disclosure vulnerabilities.
+                         */
+                        continue;
+                    }
+                }
+
+                rdnMatched = compareRDN(
+                    needleRDN,
+                    child.dse.rdn,
+                    (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
                 );
-                if (!authorized) {
-                    /**
-                     * We ignore entries for which browse and returnDN permissions
-                     * are not granted. This is not specified in the Find DSE
-                     * procedure, but it is important for preventing information
-                     * disclosure vulnerabilities.
-                     */
-                    continue;
+                if (rdnMatched) {
+                    i++;
+                    dse_i = child;
+                    break;
                 }
             }
-
-            rdnMatched = compareRDN(
-                needleRDN,
-                child.dse.rdn,
-                (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
+            subordinatesInBatch = await readChildren(
+                ctx,
+                dse_i,
+                100,
+                undefined,
+                cursorId,
+                {
+                    subentry: subentries,
+                },
             );
-            if (rdnMatched) {
-                i++;
-                dse_i = child;
-                break;
-            }
         }
         if (!rdnMatched) {
             await targetNotFoundSubprocedure();
@@ -827,8 +866,7 @@ async function findDSE (
                     state.entrySuitable = true;
                     return;
                 }
-                const someSubordinatesAreCP = children.some((child) => child.dse.cp);
-                if (!someSubordinatesAreCP) {
+                if (!await someSubordinatesAreCP(ctx, dse_i)) {
                     throw new errors.ServiceError(
                         "",
                         new ServiceErrorData(

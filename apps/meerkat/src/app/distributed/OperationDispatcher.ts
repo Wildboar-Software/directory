@@ -200,7 +200,7 @@ class OperationDispatcher {
             targetObject,
             state,
         );
-        if (!state.entrySuitable) {
+        if (!state.entrySuitable && state.NRcontinuationList.length) {
             const serviceControls = reqData.argument.set
                 .find((el) => (
                     (el.tagClass === ASN1TagClass.context)
@@ -598,7 +598,7 @@ class OperationDispatcher {
             targetObject,
             state,
         );
-        if (!state.entrySuitable) {
+        if (!state.entrySuitable && state.NRcontinuationList.length) {
             const serviceControlOptions = data.serviceControls?.options;
             const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
             const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
