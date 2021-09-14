@@ -7,8 +7,9 @@ import type {
     PendingUpdates,
 } from "../../types";
 import { ASN1Construction } from "asn1-ts";
-import type { PrismaPromise } from "@prisma/client";
+import type { PrismaPromise, Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import calculateSortKey from "../calculateSortKey";
 
 // Special Attributes
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
@@ -126,7 +127,8 @@ async function addValues (
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
                     ber: Buffer.from(attr.value.toBytes()),
-                    jer: undefined,
+                    sort_key: calculateSortKey(attr.value),
+                    jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {
                             data: Array.from(attr.contexts.values())
@@ -138,8 +140,6 @@ async function addValues (
                                     tag_number: cv.tagNumber,
                                     ber: Buffer.from(cv.toBytes()),
                                     fallback: context.fallback,
-                                    // hint
-                                    // jer
                                 }))),
                         },
                     },

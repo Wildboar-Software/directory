@@ -333,8 +333,8 @@ model AttributeValue {
     tag_number  Int
     ber         Bytes
     jer         Json?
-    sort_key    Int? // A number that sorts the values according to the default ordering rule.
-
+    sort_key    BigInt? @db.UnsignedBigInt
+ // A number that sorts the values according to the default ordering rule.
     // attributeValueSecurityLabelContext
     // At most one security label context can be assigned to an attribute value
     security_label             Bytes?
