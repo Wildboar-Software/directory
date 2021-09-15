@@ -485,8 +485,6 @@ enum ObjectClassKind {
     AUXILIARY
 }
 
-// TODO: SchemaAdministration
-
 // NAME-FORM ::= CLASS {
 //     &namedObjectClass     OBJECT-CLASS,
 //     &MandatoryAttributes  ATTRIBUTE,
@@ -514,6 +512,8 @@ model NameForm {
     name                Names
     description         String?
     obsolete            Boolean            @default(false)
+
+    @@unique([oid])
 }
 
 // DITStructureRule ::= SEQUENCE {
@@ -620,6 +620,8 @@ model Friendship {
     description   String?
     obsolete      Boolean         @default(false)
     FriendshipUse FriendshipUse[]
+
+    @@unique([anchor])
 }
 
 model FriendshipUse {
@@ -677,7 +679,15 @@ model AttributeTypeDescription {
     collective                  Boolean                       @default(false)
     userModifiable              Boolean                       @default(true)
     application                 AttributeUsage                @default(USER_APPLICATIONS)
+
+    // Fields not present in AttributeTypeDescription
+    ldapSyntax                  OID?
+    ldapNames                   Names?
+    ldapDescription             String?
+    dummy                       Boolean             @default(false)
+
     AttributeTypeDescriptionUse AttributeTypeDescriptionUse[]
+    @@unique([identifier])
 }
 
 model AttributeTypeDescriptionUse {
@@ -698,7 +708,11 @@ model ObjectClassDescription {
     kind                        ObjectClassKind               @default(STRUCTURAL)
     mandatories                 OIDs
     optionals                   OIDs
+    ldapNames                   Names?
+    ldapDescription             String?
+
     ObjectClassDescriptionUsage ObjectClassDescriptionUsage[]
+    @@unique([identifier])
 }
 
 model ObjectClassDescriptionUsage {
@@ -718,6 +732,7 @@ model ContextDescription {
     syntax                String
     assertionSyntax       String?
     ContextDescriptionUse ContextDescriptionUse[]
+    @@unique([identifier])
 }
 
 model ContextDescriptionUse {

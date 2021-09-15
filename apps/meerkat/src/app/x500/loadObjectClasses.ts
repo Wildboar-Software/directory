@@ -7,6 +7,14 @@ import { collectiveAttributeSubentry } from "@wildboar/x500/src/lib/modules/Info
 import { contextAssertionSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
 import { serviceAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
 import { pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+import { ObjectClassKind as PrismaObjectClassKind } from "@prisma/client";
+import {
+    ObjectClassKind,
+    ObjectClassKind_abstract,
+    ObjectClassKind_auxiliary,
+    ObjectClassKind_structural,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import { ObjectIdentifier } from "asn1-ts";
 
 const additionalObjectClasses = [
     subentry,
@@ -17,8 +25,23 @@ const additionalObjectClasses = [
     pwdAdminSubentry,
 ];
 
+function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
+    switch (ock) {
+    case (PrismaObjectClassKind.ABSTRACT): {
+        return ObjectClassKind_abstract;
+    }
+    case (PrismaObjectClassKind.AUXILIARY): {
+        return ObjectClassKind_auxiliary;
+    }
+    case (PrismaObjectClassKind.STRUCTURAL): {
+        return ObjectClassKind_structural;
+    }
+    default: throw new Error();
+    }
+}
+
 export
-function loadObjectClasses (ctx: Context): void {
+async function loadObjectClasses (ctx: Context): Promise<void> {
     additionalObjectClasses
         .map(objectClassFromInformationObject)
         .forEach((oc) => {
@@ -30,6 +53,19 @@ function loadObjectClasses (ctx: Context): void {
             ctx.objectClasses.set(oc.id.toString(), oc);
         });
 
+    const ocs = await ctx.db.objectClassDescription.findMany();
+    for (const oc of ocs) {
+        ctx.objectClasses.set(oc.identifier, {
+            id: ObjectIdentifier.fromString(oc.identifier),
+            superclasses: new Set(oc.subclassOf.split(" ")),
+            kind: prismaOCK2OCK(oc.kind),
+            mandatoryAttributes: new Set(oc.mandatories.split(" ")),
+            optionalAttributes: new Set(oc.optionals.split(" ")),
+            obsolete: oc.obsolete,
+            ldapNames: oc.ldapNames?.split(" ") ?? undefined,
+            ldapDescription: oc.ldapDescription ?? undefined,
+        });
+    }
     // ctx.structuralObjectClassHierarchy.children.push({
     //     ...personOC,
     //     parent: ctx.structuralObjectClassHierarchy,

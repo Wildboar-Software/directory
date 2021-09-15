@@ -1,4 +1,4 @@
-import { Context } from "../types";
+import type { Context, AttributeInfo } from "../types";
 import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
 import attributeFromInformationObject from "./attributeFromInformationObject";
 import {
@@ -14,9 +14,6 @@ import {
     intEmailMatch,
 } from "@wildboar/x500/src/lib/matching/equality/intEmailMatch";
 import {
-    telephoneNumberMatch,
-} from "@wildboar/x500/src/lib/matching/equality/telephoneNumberMatch";
-import {
     uriMatch,
 } from "@wildboar/x500/src/lib/matching/equality/uriMatch";
 import {
@@ -25,9 +22,64 @@ import {
 import {
     uUIDPairMatch,
 } from "@wildboar/x500/src/lib/matching/equality/uUIDPairMatch";
+import { ObjectIdentifier } from "asn1-ts";
+import { AttributeUsage, AttributeTypeDescription } from "@prisma/client";
+import {
+    AttributeUsage_userApplications,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { booleanMatch } from "@wildboar/x500/src/lib/matching/equality/booleanMatch";
+import { integerMatch } from "@wildboar/x500/src/lib/matching/equality/integerMatch";
+import { bitStringMatch } from "@wildboar/x500/src/lib/matching/equality/bitStringMatch";
+import { octetStringMatch } from "@wildboar/x500/src/lib/matching/equality/octetStringMatch";
+import { objectIdentifierMatch } from "@wildboar/x500/src/lib/matching/equality/objectIdentifierMatch";
+import { generalizedTimeMatch } from "@wildboar/x500/src/lib/matching/equality/generalizedTimeMatch";
+import { uTCTimeMatch } from "@wildboar/x500/src/lib/matching/equality/uTCTimeMatch";
+import { caseIgnoreIA5Match } from "@wildboar/x500/src/lib/matching/equality/caseIgnoreIA5Match";
+import { numeringStringMatch } from "@wildboar/x500/src/lib/matching/equality/numericStringMatch"; // FIXME: Typo
+import { telephoneNumberMatch } from "@wildboar/x500/src/lib/matching/equality/telephoneNumberMatch";
+import { distinguishedNameMatch } from "@wildboar/x500/src/lib/matching/equality/distinguishedNameMatch";
+import { integerOrderingMatch } from "@wildboar/x500/src/lib/matching/ordering/integerOrderingMatch";
+import { octetStringOrderingMatch } from "@wildboar/x500/src/lib/matching/ordering/octetStringOrderingMatch";
+import { generalizedTimeOrderingMatch } from "@wildboar/x500/src/lib/matching/ordering/generalizedTimeOrderingMatch";
+import { uTCTimeOrderingMatch } from "@wildboar/x500/src/lib/matching/ordering/uTCTimeOrderingMatch";
+import { caseIgnoreOrderingMatch } from "@wildboar/x500/src/lib/matching/ordering/caseIgnoreOrderingMatch";
+import { numericStringOrderingMatch } from "@wildboar/x500/src/lib/matching/ordering/numericStringOrderingMatch";
+import { octetStringSubstringsMatch } from "@wildboar/x500/src/lib/matching/substring/octetStringSubstringsMatch";
+import { caseIgnoreIA5SubstringsMatch } from "@wildboar/x500/src/lib/matching/substring/caseIgnoreIA5SubstringsMatch";
+import { caseIgnoreSubstringsMatch } from "@wildboar/x500/src/lib/matching/substring/caseIgnoreSubstringsMatch";
+import { numericStringSubstringsMatch } from "@wildboar/x500/src/lib/matching/substring/numericStringSubstringsMatch";
+import { telephoneNumberSubstringsMatch } from "@wildboar/x500/src/lib/matching/substring/telephoneNumberSubstringsMatch";
+
+function attributeTypeFromDatabaseEntry (dbe: AttributeTypeDescription): AttributeInfo {
+    return {
+        id: ObjectIdentifier.fromString(dbe.identifier),
+        parent: dbe.derivation
+            ? ObjectIdentifier.fromString(dbe.derivation)
+            : undefined,
+        // namingMatcher?: EqualityMatcher;
+        // equalityMatcher?: EqualityMatcher;
+        // orderingMatcher?: OrderingMatcher;
+        // substringsMatcher?: SubstringsMatcher;
+        // approxMatcher?: EqualityMatcher;
+        singleValued: !dbe.multiValued,
+        collective: dbe.collective,
+        dummy: dbe.dummy,
+        noUserModification: !dbe.userModifiable,
+        usage: AttributeUsage_userApplications,
+        obsolete: dbe.obsolete,
+        ldapSyntax: dbe.ldapSyntax
+            ? ObjectIdentifier.fromString(dbe.ldapSyntax)
+            : undefined,
+        ldapNames: dbe.ldapNames
+            ? dbe.ldapNames.split(" ")
+            : undefined,
+        ldapDescription: dbe.ldapDescription ?? undefined,
+        compatibleMatchingRules: new Set(),
+    };
+}
 
 export
-function loadAttributeTypes (ctx: Context): void {
+async function loadAttributeTypes (ctx: Context): Promise<void> {
     Object.values(x500at)
         .map(attributeFromInformationObject)
         .forEach((attr) => {
@@ -131,6 +183,177 @@ function loadAttributeTypes (ctx: Context): void {
     ctx.attributes.get(x500at.utmCoordinates["&id"].toString())!.namingMatcher = undefined;
     ctx.attributes.get(x500at.uUIDPair["&id"].toString())!.namingMatcher = uUIDPairMatch;
     ctx.attributes.get(x500at.x121Address["&id"].toString())!.namingMatcher = undefined;
+
+    const storedTypes = await ctx.db.attributeTypeDescription.findMany();
+    for (const storedType of storedTypes) {
+        if (
+            !storedType.attributeSyntax
+            || !storedType.userModifiable
+            || (storedType.application !== AttributeUsage.USER_APPLICATIONS)
+        ) {
+            continue;
+        }
+        switch (storedType.attributeSyntax.trim()) {
+            case ("BOOLEAN"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: booleanMatch,
+                    equalityMatcher: booleanMatch,
+                    orderingMatcher: undefined,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("INTEGER"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: integerMatch,
+                    equalityMatcher: integerMatch,
+                    orderingMatcher: integerOrderingMatch,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("BIT STRING"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: bitStringMatch,
+                    equalityMatcher: bitStringMatch,
+                    orderingMatcher: integerOrderingMatch,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("OCTET STRING"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: octetStringMatch,
+                    equalityMatcher: octetStringMatch,
+                    orderingMatcher: octetStringOrderingMatch,
+                    substringsMatcher: octetStringSubstringsMatch,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("NULL"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: undefined,
+                    equalityMatcher: undefined,
+                    orderingMatcher: undefined,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("OBJECT IDENTIFIER"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: objectIdentifierMatch,
+                    equalityMatcher: objectIdentifierMatch,
+                    orderingMatcher: undefined,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("GeneralizedTime"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: generalizedTimeMatch,
+                    equalityMatcher: generalizedTimeMatch,
+                    orderingMatcher: generalizedTimeOrderingMatch,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("UTCTime"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: uTCTimeMatch,
+                    equalityMatcher: uTCTimeMatch,
+                    orderingMatcher: uTCTimeOrderingMatch,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("IA5String"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: caseIgnoreIA5Match,
+                    equalityMatcher: caseIgnoreIA5Match,
+                    orderingMatcher: caseIgnoreOrderingMatch,
+                    substringsMatcher: caseIgnoreIA5SubstringsMatch,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("NumericString"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: numeringStringMatch,
+                    equalityMatcher: numeringStringMatch,
+                    orderingMatcher: numericStringOrderingMatch,
+                    substringsMatcher: numericStringSubstringsMatch,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("PrintableString"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: caseIgnoreMatch,
+                    equalityMatcher: caseIgnoreMatch,
+                    orderingMatcher: caseIgnoreOrderingMatch,
+                    substringsMatcher: caseIgnoreSubstringsMatch,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("TelephoneNumber"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: telephoneNumberMatch,
+                    equalityMatcher: telephoneNumberMatch,
+                    orderingMatcher: undefined,
+                    substringsMatcher: telephoneNumberSubstringsMatch,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("DistinguishedName"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: distinguishedNameMatch,
+                    equalityMatcher: distinguishedNameMatch,
+                    orderingMatcher: undefined,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            case ("UnboundedDirectoryString"):
+            case ("DirectoryString"): {
+                ctx.attributes.set(storedType.identifier, {
+                    ...attributeTypeFromDatabaseEntry(storedType),
+                    namingMatcher: distinguishedNameMatch,
+                    equalityMatcher: distinguishedNameMatch,
+                    orderingMatcher: undefined,
+                    substringsMatcher: undefined,
+                    approxMatcher: undefined,
+                });
+                break;
+            }
+            default: {
+                continue;
+            }
+        }
+    }
 
     Array.from(ctx.attributes.values())
         .filter((attr) => attr.collective)

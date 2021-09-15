@@ -7,6 +7,7 @@ import * as net from "net";
 import * as tls from "tls";
 import * as fs from "fs";
 import * as path from "path";
+import { ObjectIdentifier } from "asn1-ts";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
 import { IDMConnection } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
@@ -40,12 +41,33 @@ async function main (): Promise<void> {
     await loadDIT(ctx);
     // The ordering of these is important.
     // Loading LDAP syntaxes before attribute types allows us to use the names instead of OIDs.
-    loadObjectClasses(ctx);
+    await loadObjectClasses(ctx);
     ctx.log.debug("Loaded object classes.");
     loadLDAPSyntaxes(ctx);
     ctx.log.debug("Loaded LDAP syntaxes.");
-    loadAttributeTypes(ctx);
+    await loadAttributeTypes(ctx);
     ctx.log.debug("Loaded attribute types.");
+
+    const nameForms = await ctx.db.nameForm.findMany();
+    for (const nameForm of nameForms) {
+        ctx.nameForms.set(nameForm.oid, {
+            id: ObjectIdentifier.fromString(nameForm.oid),
+            name: [ nameForm.name ],
+            description: nameForm.description ?? undefined,
+            obsolete: nameForm.obsolete,
+            namedObjectClass: ObjectIdentifier.fromString(nameForm.namedObjectClass),
+            mandatoryAttributes: new Set(nameForm.mandatoryAttributes.split(" ")),
+            optionalAttributes: new Set(nameForm.optionalAttributes.split(" ")),
+        });
+    }
+
+    const friendships = await ctx.db.friendship.findMany();
+    for (const friendship of friendships) {
+        ctx.friendships.set(friendship.anchor, {
+            anchor: ObjectIdentifier.fromString(friendship.anchor),
+            friends: new Set(friendship.friends.split(" ")),
+        });
+    }
 
     const idmServer = net.createServer((c) => {
         try {

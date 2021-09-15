@@ -107,11 +107,6 @@ export
 interface AttributeInfo {
     id: OBJECT_IDENTIFIER;
     parent?: OBJECT_IDENTIFIER;
-    value: {
-        write: (ctx: Context, value: ASN1Element) => Promise<void>; // eslint-disable-line
-        read: (ctx: Context) => Promise<ASN1Element>; // eslint-disable-line
-    };
-
     /**
      * From ITU Recommendation X.501 (2016), Section 8.9.5:
      *
@@ -425,6 +420,23 @@ interface Configuration {
 }
 
 export
+interface NameFormInfo {
+    id: OBJECT_IDENTIFIER;
+    name?: string[];
+    description?: string;
+    obsolete?: boolean;
+    namedObjectClass: OBJECT_IDENTIFIER;
+    mandatoryAttributes: Set<IndexableOID>;
+    optionalAttributes: Set<IndexableOID>;
+}
+
+export
+interface FriendshipInfo {
+    anchor: OBJECT_IDENTIFIER;
+    friends: Set<IndexableOID>;
+}
+
+export
 interface Context {
     dit: DITInfo;
     dsa: DSAInfo;
@@ -456,6 +468,8 @@ interface Context {
     pagedResultsRequests: Map<UUID, Map<string, PagedResultsRequest_newRequest>>;
     operationalBindingControlEvents: OperationalBindingControlEvents;
     collectiveAttributes: Set<IndexableOID>;
+    nameForms: Map<IndexableOID, NameFormInfo>;
+    friendships: Map<IndexableOID, FriendshipInfo>;
 }
 
 export
