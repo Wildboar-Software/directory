@@ -526,10 +526,12 @@ async function search_i (
     const {
         userAttributes,
         operationalAttributes,
-    } = await readAttributes(ctx, target, eis);
+        collectiveAttributes,
+    } = await readAttributes(ctx, target, eis, relevantSubentries);
     const attributes = [
         ...userAttributes,
         ...operationalAttributes,
+        ...collectiveAttributes,
     ];
     infoItems.push(...attributes.map((attribute): EntryInformation_information_Item => ({
         attribute,
@@ -808,7 +810,12 @@ async function search_i (
                     ret.skipsRemaining--;
                     return;
                 }
-                const einfo = await readEntryInformation(ctx, target, data.selection);
+                const einfo = await readEntryInformation(
+                    ctx,
+                    target,
+                    data.selection,
+                    relevantSubentries,
+                );
                 const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
                 ret.results.push(new EntryInformation(
                     {
@@ -841,7 +848,12 @@ async function search_i (
                 if (ret.skipsRemaining > 0) {
                     ret.skipsRemaining--;
                 } else {
-                    const einfo = await readEntryInformation(ctx, target, data.selection);
+                    const einfo = await readEntryInformation(
+                        ctx,
+                        target,
+                        data.selection,
+                        relevantSubentries,
+                    );
                     const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
                     ret.results.push(new EntryInformation(
                         {

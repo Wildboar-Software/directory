@@ -152,7 +152,12 @@ async function read (
         }
     }
 
-    const einfo: EntryInformation_information_Item[] = await readEntryInformation(ctx, target, data.selection);
+    const einfo: EntryInformation_information_Item[] = await readEntryInformation(
+        ctx,
+        target,
+        data.selection,
+        relevantSubentries,
+    );
     const permittedEinfo: EntryInformation_information_Item[] = accessControlScheme
         ? []
         : einfo;

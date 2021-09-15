@@ -12,6 +12,7 @@ import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
 import attributeFromDatabaseAttribute from "../attributeFromDatabaseAttribute";
+import readCollectiveValues from "./readCollectiveValues";
 
 // Special Attributes
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
@@ -104,6 +105,7 @@ export
 interface ReadEntryAttributesReturn {
     userAttributes: Value[];
     operationalAttributes: Value[];
+    collectiveValues: Value[];
     // incompleteEntry: boolean;
     // derivedEntry: boolean; // If joins or families are used.
 };
@@ -134,6 +136,7 @@ async function readValues (
     ctx: Context,
     entry: Vertex,
     eis?: EntryInformationSelection,
+    relevantSubentries?: Vertex[],
 ): Promise<ReadEntryAttributesReturn> {
     const selectedUserAttributes: Set<IndexableOID> | null = (eis?.attributes && ("select" in eis.attributes))
         ? new Set(eis.attributes.select.map((oid) => oid.toString()))
@@ -197,10 +200,27 @@ async function readValues (
         operationalAttributes.push(...await reader(ctx, entry));
     }
 
+    /**
+     * NOTE: Only an entry should have collective values. If collective values
+     * are applied to a subentry, the subentry could have duplicated collective
+     * values listed as both its collective values and user values.
+     */
+    const collectiveValues: Value[] = ((relevantSubentries && entry.dse.entry && !entry.dse.subentry)
+        ? readCollectiveValues(ctx, entry, relevantSubentries)
+        : [])
+            .filter((attr) => {
+                if (!selectedUserAttributes) {
+                    return true;
+                }
+                // Collective attributes cannot be operational attributes.
+                return selectedUserAttributes.has(attr.id.toString());
+            });
+
     // FIXME: Fully implement this!
     return {
         userAttributes,
         operationalAttributes,
+        collectiveValues,
     };
 }
 

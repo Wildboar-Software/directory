@@ -12,6 +12,7 @@ export
 interface ReadEntryAttributesReturn {
     userAttributes: Attribute[];
     operationalAttributes: Attribute[];
+    collectiveAttributes: Attribute[];
 };
 
 export
@@ -19,13 +20,16 @@ async function readAttributes (
     ctx: Context,
     vertex: Vertex,
     eis?: EntryInformationSelection,
+    relevantSubentries?: Vertex[],
 ): Promise<ReadEntryAttributesReturn> {
-    const values = await readValues(ctx, vertex, eis);
+    const values = await readValues(ctx, vertex, eis, relevantSubentries);
     const userAttributes = attributesFromValues(values.userAttributes);
     const operationalAttributes = attributesFromValues(values.operationalAttributes);
+    const collectiveAttributes = attributesFromValues(values.collectiveValues);
     return {
         userAttributes,
         operationalAttributes,
+        collectiveAttributes,
     };
 }
 

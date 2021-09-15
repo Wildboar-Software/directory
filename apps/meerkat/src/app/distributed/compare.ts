@@ -241,10 +241,12 @@ async function compare (
     const {
         userAttributes,
         operationalAttributes,
-    } = await readValues(ctx, target, eis);
+        collectiveValues,
+    } = await readValues(ctx, target, eis, relevantSubentries);
     const values = [
         ...userAttributes,
         ...operationalAttributes,
+        ...collectiveValues,
     ];
     const acs = data.purported.assertedContexts;
     let matchedType: AttributeType | undefined;

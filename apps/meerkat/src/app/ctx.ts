@@ -127,6 +127,7 @@ const ctx: Context = {
     pagedResultsRequests: new Map([]),
     ldapSyntaxes: new Map([]),
     operationalBindingControlEvents: new EventEmitter(),
+    collectiveAttributes: new Set(),
 };
 
 export default ctx;

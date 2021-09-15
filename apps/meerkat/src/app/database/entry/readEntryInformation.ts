@@ -12,14 +12,17 @@ async function readEntryInformation (
     ctx: Context,
     vertex: Vertex,
     eis?: EntryInformationSelection,
+    relevantSubentries?: Vertex[],
 ): Promise<EntryInformation_information_Item[]> {
     const {
         userAttributes,
         operationalAttributes,
-    } = await readAttributes(ctx, vertex, eis);
+        collectiveAttributes,
+    } = await readAttributes(ctx, vertex, eis, relevantSubentries);
     const attributes = [
         ...userAttributes,
         ...operationalAttributes,
+        ...collectiveAttributes,
     ];
     return attributes
         .map((attribute): EntryInformation_information_Item => (

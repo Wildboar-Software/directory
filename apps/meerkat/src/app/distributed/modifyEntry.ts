@@ -143,6 +143,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import {
+    id_oa_collectiveExclusions,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
@@ -953,7 +956,9 @@ async function modifyEntry (
     }
 
     const requiredAttributes: Set<IndexableOID> = new Set();
-    const optionalAttributes: Set<IndexableOID> = new Set();
+    const optionalAttributes: Set<IndexableOID> = new Set([
+        id_oa_collectiveExclusions.toString(), // Permitted for every entry.
+    ]);
     const addedObjectClasses = delta.get(objectClass["&id"].toString())
         ?.map((value) => value.value.objectIdentifier) ?? [];
     for (const ocid of addedObjectClasses) {
@@ -1077,6 +1082,9 @@ async function modifyEntry (
         const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
         for (const type_ of Array.from(delta.keys())) {
             if (!optionalAttributes.has(type_.toString())) {
+                if (target.dse.subentry && ctx.attributes.get(type_.toString())?.collective) {
+                    continue; // You can write any collective attribute to a subentry.
+                }
                 nonPermittedAttributeTypes.add(type_);
             }
         }
@@ -1289,6 +1297,7 @@ async function modifyEntry (
         }
     }
 
+    // TODO: return EntryInformation if requested. (Must include collective attributes.)
     // TODO: Update Shadows
     const result: ModifyEntryResult = {
         null_: null,

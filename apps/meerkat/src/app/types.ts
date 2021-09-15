@@ -234,7 +234,7 @@ interface ContextPrefixDSE {
 
 export
 interface EntryDSE {
-
+    collectiveExclusions: Set<IndexableOID>;
 }
 
 export
@@ -455,6 +455,7 @@ interface Context {
      */
     pagedResultsRequests: Map<UUID, Map<string, PagedResultsRequest_newRequest>>;
     operationalBindingControlEvents: OperationalBindingControlEvents;
+    collectiveAttributes: Set<IndexableOID>;
 }
 
 export

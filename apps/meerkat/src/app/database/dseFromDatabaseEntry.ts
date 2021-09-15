@@ -29,10 +29,21 @@ import {
 import {
     _decode_MasterOrShadowAccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+import type {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import type {
+    AttributeType,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import attributesFromValues from "../x500/attributesFromValues";
+import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import * as os from "os";
 import { Knowledge } from "@prisma/client";
-import { _decode_DitBridgeKnowledge, _decode_MasterAndShadowAccessPoints } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
+import {
+    _decode_DitBridgeKnowledge,
+    _decode_MasterAndShadowAccessPoints,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
     const el = new BERElement();
@@ -271,10 +282,31 @@ async function dseFromDatabaseEntry (
                 el.fromBytes(s.ber);
                 return _decode_SubtreeSpecification(el);
             });
+
+        const collectiveAttributeTypes: string[] = Array.from(ctx.collectiveAttributes);
+
+        const collectiveAttributes: Attribute[] = attributesFromValues(
+            await Promise.all(
+                (await ctx.db.attributeValue.findMany({
+                    where: {
+                        entry_id: dbe.id,
+                        type: {
+                            in: collectiveAttributeTypes,
+                        },
+                    },
+                    include: {
+                        ContextValue: true,
+                    },
+                }))
+                    .map((attr) => attributeFromDatabaseAttribute(ctx, attr)),
+            ),
+        );
+
         ret.subentry = {
             commonName: "",
             subtreeSpecification,
             prescriptiveACI,
+            collectiveAttributes,
         };
     }
 
@@ -317,7 +349,9 @@ async function dseFromDatabaseEntry (
     }
 
     if (!dbe.aliased_entry_dn && !dbe.subentry) {
-        ret.entry = {};
+        ret.entry = {
+            collectiveExclusions: new Set(dbe.collectiveExclusions?.split(" ") ?? []),
+        };
     }
 
     if (dbe.keep_children_in_database) {

@@ -82,6 +82,7 @@ model Entry {
 
     // Not exactly single-valued, but do not need a separate table:
     administrativeRole OIDs?
+    collectiveExclusions OIDs?
 
     // Technically a userApplications attribute, but still has operational uses.
     uniqueIdentifier Bytes? // DER-encoded bitstring value (not tag and length bytes)

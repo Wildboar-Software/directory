@@ -131,6 +131,12 @@ function loadAttributeTypes (ctx: Context): void {
     ctx.attributes.get(x500at.utmCoordinates["&id"].toString())!.namingMatcher = undefined;
     ctx.attributes.get(x500at.uUIDPair["&id"].toString())!.namingMatcher = uUIDPairMatch;
     ctx.attributes.get(x500at.x121Address["&id"].toString())!.namingMatcher = undefined;
+
+    Array.from(ctx.attributes.values())
+        .filter((attr) => attr.collective)
+        .forEach((attr) => {
+            ctx.collectiveAttributes.add(attr.id.toString());
+        });
 }
 
 export default loadAttributeTypes;
