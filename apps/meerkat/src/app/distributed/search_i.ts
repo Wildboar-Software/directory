@@ -815,6 +815,7 @@ async function search_i (
                     target,
                     data.selection,
                     relevantSubentries,
+                    data.operationContexts,
                 );
                 const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
                 ret.results.push(new EntryInformation(
@@ -853,6 +854,7 @@ async function search_i (
                         target,
                         data.selection,
                         relevantSubentries,
+                        data.operationContexts,
                     );
                     const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
                     ret.results.push(new EntryInformation(

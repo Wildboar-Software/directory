@@ -157,6 +157,7 @@ async function read (
         target,
         data.selection,
         relevantSubentries,
+        data.operationContexts,
     );
     const permittedEinfo: EntryInformation_information_Item[] = accessControlScheme
         ? []
