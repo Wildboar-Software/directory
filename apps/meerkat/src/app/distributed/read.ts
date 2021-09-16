@@ -18,12 +18,6 @@ import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import {
-    readEntryInformation,
-} from "../database/entry/readEntryInformation";
-import type {
-    EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     EntryInformation,
@@ -52,9 +46,6 @@ import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFr
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../bac/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
-import attributeToStoredValues from "../x500/attributeToStoredValues";
-import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
-import attributesFromValues from "../x500/attributesFromValues";
 import type { ModifyRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights.ta";
 import { ModifyRights_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights-Item.ta";
 import createSecurityParameters from "../x500/createSecurityParameters";
@@ -66,6 +57,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
+import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
 
 export
 async function read (
@@ -152,90 +144,16 @@ async function read (
         }
     }
 
-    const einfo: EntryInformation_information_Item[] = await readEntryInformation(
+    const permittedEntryInfo = await readPermittedEntryInformation(
         ctx,
         target,
+        conn.authLevel,
+        relevantTuples,
+        accessControlScheme,
         data.selection,
         relevantSubentries,
         data.operationContexts,
     );
-    const permittedEinfo: EntryInformation_information_Item[] = accessControlScheme
-        ? []
-        : einfo;
-    let incompleteEntry: boolean = true;
-    if (accessControlScheme) {
-        for (const info of einfo) {
-            if ("attribute" in info) {
-                const {
-                    authorized: authorizedToAddAttributeType,
-                } = bacACDF(
-                    relevantTuples,
-                    conn.authLevel,
-                    {
-                        attributeType: info.attribute.type_,
-                    },
-                    [
-                        PERMISSION_CATEGORY_READ,
-                    ],
-                    EQUALITY_MATCHER,
-                );
-                if (!authorizedToAddAttributeType) {
-                    incompleteEntry = true;
-                    continue;
-                }
-                const permittedValues = attributeToStoredValues(info.attribute)
-                    .filter((value) => {
-                        const {
-                            authorized: authorizedToAddAttributeValue,
-                        } = bacACDF(
-                            relevantTuples,
-                            conn.authLevel,
-                            {
-                                value: new AttributeTypeAndValue(
-                                    value.id,
-                                    value.value,
-                                ),
-                            },
-                            [
-                                PERMISSION_CATEGORY_READ,
-                            ],
-                            EQUALITY_MATCHER,
-                        );
-                        if (!authorizedToAddAttributeValue) {
-                            incompleteEntry = true;
-                        }
-                        return authorizedToAddAttributeValue;
-                    });
-                const attribute = attributesFromValues(permittedValues)[0];
-                if (attribute) {
-                    permittedEinfo.push({ attribute });
-                } else {
-                    permittedEinfo.push({
-                        attributeType: info.attribute.type_,
-                    });
-                }
-            } else if ("attributeType" in info) {
-                const {
-                    authorized: authorizedToAddAttributeType,
-                } = bacACDF(
-                    relevantTuples,
-                    conn.authLevel,
-                    {
-                        attributeType: info.attributeType,
-                    },
-                    [
-                        PERMISSION_CATEGORY_READ,
-                    ],
-                    EQUALITY_MATCHER,
-                );
-                if (authorizedToAddAttributeType) {
-                    permittedEinfo.push(info);
-                }
-            } else {
-                continue;
-            }
-        }
-    }
 
     const modifyRights: ModifyRights = [];
     if (data.modifyRightsRequest && accessControlScheme) {
@@ -311,8 +229,8 @@ async function read (
                     rdnSequence: targetDN,
                 },
                 !target.dse.shadow,
-                permittedEinfo,
-                incompleteEntry,
+                permittedEntryInfo.information,
+                permittedEntryInfo.incompleteEntry,
                 state.partialName,
                 false,
             ),

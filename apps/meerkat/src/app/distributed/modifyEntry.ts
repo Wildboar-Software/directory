@@ -111,6 +111,7 @@ import bacACDF, {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_MODIFY,
+    PERMISSION_CATEGORY_READ,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
@@ -146,6 +147,13 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
+import {
+    ModifyEntryResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResultData.ta";
+import {
+    EntryInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
@@ -900,21 +908,25 @@ async function modifyEntry (
         ]),
     ))
         .filter((tuple) => (tuple[5] > 0));
-    if (accessControlScheme) {
+
+    const authorizedToEntry = (permissions: number[]): boolean => {
         const {
-            authorized: authorizedToEntry,
+            authorized,
         } = bacACDF(
             relevantTuples,
             conn.authLevel,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
-            [
-                PERMISSION_CATEGORY_MODIFY,
-            ],
+            permissions,
             EQUALITY_MATCHER,
         );
-        if (!authorizedToEntry) {
+        return authorized;
+    };
+
+    if (accessControlScheme) {
+        const authorizedToModifyEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_MODIFY ]);
+        if (!authorizedToModifyEntry) {
             throw new errors.SecurityError(
                 "Not permitted to modify entry.",
                 new SecurityErrorData(
@@ -1297,8 +1309,79 @@ async function modifyEntry (
         }
     }
 
-    // TODO: return EntryInformation if requested. (Must include collective attributes.)
     // TODO: Update Shadows
+
+    if (data.selection) {
+        const authorizedToModifyEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_READ ]);
+        if (!authorizedToModifyEntry) {
+            const result: ModifyEntryResult = {
+                null_: null,
+            };
+            return new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_modifyEntry,
+                    ),
+                    undefined,
+                ),
+                _encode_ModifyEntryResult(result, DER),
+            );
+        }
+        const permittedEntryInfo = await readPermittedEntryInformation(
+            ctx,
+            target,
+            conn.authLevel,
+            relevantTuples,
+            accessControlScheme,
+            data.selection,
+            relevantSubentries,
+            data.operationContexts,
+        );
+        const result: ModifyEntryResult = {
+            information: {
+                unsigned: new ModifyEntryResultData(
+                    new EntryInformation(
+                        {
+                            rdnSequence: getDistinguishedName(target),
+                        },
+                        !target.dse.shadow,
+                        permittedEntryInfo.information,
+                        permittedEntryInfo.incompleteEntry,
+                        undefined,
+                        undefined,
+                    ),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_modifyEntry,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            },
+
+        };
+        return new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_modifyEntry,
+                ),
+                undefined,
+            ),
+            _encode_ModifyEntryResult(result, DER),
+        );
+    }
+
     const result: ModifyEntryResult = {
         null_: null,
     };
