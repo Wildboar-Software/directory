@@ -131,6 +131,22 @@ interface ReadEntryAttributesReturn {
 //     selectedContexts  SET SIZE (1..MAX) OF TypeAndContextAssertion,
 //     ... }
 
+// This is so friends of friends, recursively, can be added.
+function addFriends (
+    ctx: Context,
+    selectedUserAttributes: Set<IndexableOID>,
+    type_: IndexableOID,
+): void {
+    const friendship = ctx.friendships.get(type_);
+    if (friendship) {
+        for (const friend of friendship.friends) {
+            if (!selectedUserAttributes.has(friend)) {
+                addFriends(ctx, selectedUserAttributes, friend);
+            }
+        }
+    }
+}
+
 export
 async function readValues (
     ctx: Context,
@@ -141,11 +157,21 @@ async function readValues (
     const selectedUserAttributes: Set<IndexableOID> | null = (eis?.attributes && ("select" in eis.attributes))
         ? new Set(eis.attributes.select.map((oid) => oid.toString()))
         : null;
+    if (selectedUserAttributes) {
+        for (const attr of Array.from(selectedUserAttributes ?? [])) {
+            addFriends(ctx, selectedUserAttributes, attr);
+        }
+    }
     const selectedOperationalAttributes: Set<IndexableOID> | null | undefined = eis?.extraAttributes
         ? (("select" in eis.extraAttributes)
             ? new Set(eis.extraAttributes.select.map((oid) => oid.toString()))
             : null)
         : undefined;
+    if (selectedOperationalAttributes) {
+        for (const attr of Array.from(selectedOperationalAttributes ?? [])) {
+            addFriends(ctx, selectedOperationalAttributes, attr);
+        }
+    }
     const operationalAttributes: Value[] = [];
     // TODO: I feel like this could be optimized to query fewer attributes.
     const userAttributes: Value[] = await Promise.all(
