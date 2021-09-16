@@ -24,7 +24,6 @@ function readCollectiveAttributes (
         .flatMap((subentry) => subentry.dse.subentry?.collectiveAttributes ?? [])
         .filter((attr) => !entry.dse.entry?.collectiveExclusions.has(attr.type_.toString()));
         ;
-    // TODO: Support collectiveExclusions
 }
 
 export default readCollectiveAttributes;

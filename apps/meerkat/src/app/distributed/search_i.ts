@@ -527,7 +527,7 @@ async function search_i (
         userAttributes,
         operationalAttributes,
         collectiveAttributes,
-    } = await readAttributes(ctx, target, eis, relevantSubentries);
+    } = await readAttributes(ctx, target, eis, relevantSubentries, data.operationContexts);
     const attributes = [
         ...userAttributes,
         ...operationalAttributes,

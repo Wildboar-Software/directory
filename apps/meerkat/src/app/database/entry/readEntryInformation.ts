@@ -6,6 +6,9 @@ import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import readAttributes from "./readAttributes";
+import type {
+    ContextSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
 
 export
 async function readEntryInformation (
@@ -13,12 +16,13 @@ async function readEntryInformation (
     vertex: Vertex,
     eis?: EntryInformationSelection,
     relevantSubentries?: Vertex[],
+    operationContexts?: ContextSelection,
 ): Promise<EntryInformation_information_Item[]> {
     const {
         userAttributes,
         operationalAttributes,
         collectiveAttributes,
-    } = await readAttributes(ctx, vertex, eis, relevantSubentries);
+    } = await readAttributes(ctx, vertex, eis, relevantSubentries, operationContexts);
     const attributes = [
         ...userAttributes,
         ...operationalAttributes,

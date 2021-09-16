@@ -13,6 +13,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
 import attributeFromDatabaseAttribute from "../attributeFromDatabaseAttribute";
 import readCollectiveValues from "./readCollectiveValues";
+import type {
+    ContextSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
+import {
+    contextAssertionSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
 
 // Special Attributes
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
@@ -54,6 +60,12 @@ import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFrame
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
+
+const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
+// TODO: Explore making this a temporalContext
+const DEFAULT_CAD: ContextSelection = {
+    allContexts: null,
+};
 
 const userAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseReader> = new Map([
     [ objectClass["&id"]!.toString(), readers.readObjectClass ],
@@ -153,7 +165,27 @@ async function readValues (
     entry: Vertex,
     eis?: EntryInformationSelection,
     relevantSubentries?: Vertex[],
+    operationContexts?: ContextSelection,
 ): Promise<ReadEntryAttributesReturn> {
+    const cadSubentries: Vertex[] = relevantSubentries
+        ?.filter((subentry) => (
+            subentry.dse.subentry
+            && subentry.dse.objectClass.has(CAD_SUBENTRY)
+            && subentry.dse.subentry?.contextAssertionDefaults?.length
+        )) ?? [];
+    /**
+     * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
+     * Per ITU X.501 (2016), Section 8.9.2.2.
+     */
+    const contextSelection: ContextSelection = eis?.contextSelection
+        ?? operationContexts
+        ?? (cadSubentries.length
+            ? {
+                selectedContexts: cadSubentries
+                    .flatMap((subentry) => subentry.dse.subentry!.contextAssertionDefaults!),
+            }
+            : undefined)
+        ?? DEFAULT_CAD;
     const selectedUserAttributes: Set<IndexableOID> | null = (eis?.attributes && ("select" in eis.attributes))
         ? new Set(eis.attributes.select.map((oid) => oid.toString()))
         : null;
@@ -185,10 +217,7 @@ async function readValues (
                     : undefined,
             },
             include: {
-                ContextValue: (
-                    Boolean(eis?.returnContexts)
-                    || Boolean(eis?.contextSelection && ("selectedContexts" in eis.contextSelection))
-                )
+                ContextValue: (contextSelection || ("selectedContexts" in contextSelection))
                     ? {
                         select: {
                             type: true,
