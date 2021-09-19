@@ -963,6 +963,7 @@ interface Context {
     with structural classes. */
     attributes: Map<IndexableOID, AttributeInfo>;
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
+    // TODO: These matching rule fields are entirely unused!
     equalityMatchingRules: Map<IndexableOID, EqualityMatcher>;
     orderingMatchingRules: Map<IndexableOID, OrderingMatcher>;
     substringsMatchingRules: Map<IndexableOID, SubstringsMatcher>;

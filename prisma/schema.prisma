@@ -447,7 +447,7 @@ model AccessPoint {
 model NetworkServiceAccessPoint {
     id              Int         @id @default(autoincrement())
     ipv4            String? // @db.Inet
-    tcp_port        Int?        @db.SmallInt
+    tcp_port        Int?        @db.SmallUnsignedInt
     url             String?
     bytes           Bytes
     access_point_id Int

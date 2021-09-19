@@ -36,6 +36,7 @@ import {
     emailSignupEndpoint,
     updatesDomain,
 } from "./constants";
+import createDatabaseReport from "./telemetry/createDatabaseReport";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;
 const DEFAULT_LDAP_TCP_PORT: number = 1389;
@@ -218,7 +219,7 @@ async function main (): Promise<void> {
             await axios.post(emailSignupEndpoint, {
                 administratorEmailAddress: ctx.config.administratorEmail,
             }).catch();
-        } catch {}
+        } catch {} // eslint-disable-line
     }
 
     { // Updates checking.
@@ -231,6 +232,12 @@ async function main (): Promise<void> {
             }
         }
     }
+
+    setInterval(() => {
+        createDatabaseReport(ctx)
+            .then(ctx.telemetry.sendEvent)
+            .catch();
+    }, 604_800_000); // Weekly
 
     /**
      * This section handles the delayed termination of operational bindings that
