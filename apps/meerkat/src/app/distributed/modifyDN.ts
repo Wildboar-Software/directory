@@ -1,4 +1,4 @@
-import { Context, Vertex, Value, ClientConnection } from "../types";
+import { Context, Vertex, Value, ClientConnection, OperationReturn } from "../types";
 import { TRUE_BIT, BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import * as errors from "../errors";
@@ -133,6 +133,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -225,7 +227,7 @@ async function modifyDN (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const target = state.foundDSE;
     if (!withinThisDSA(target)) {
         throw new errors.UpdateError(
@@ -903,19 +905,31 @@ async function modifyDN (
     const result: ModifyDNResult = {
         null_: null,
     };
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_modifyDN,
+    return {
+        result: new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_modifyDN,
+                ),
+                undefined,
             ),
-            undefined,
+            _encode_ModifyDNResult(result, DER),
         ),
-        _encode_ModifyDNResult(result, DER),
-    );
+        stats: {
+            request: {
+                operationCode: codeToString(id_opcode_modifyDN),
+                ...getStatisticsFromCommonArguments(data),
+                targetNameLength: targetDN.length,
+                newRDNLength: data.newRDN.length,
+                newSuperiorNameLength: data.newSuperior?.length,
+                deleteOldRDN: data.deleteOldRDN,
+            },
+        },
+    };
 }
 
 export default modifyDN;

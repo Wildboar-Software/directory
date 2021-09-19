@@ -1,4 +1,4 @@
-import type { Context, Vertex, ClientConnection } from "../types";
+import type { Context, Vertex, ClientConnection, OperationReturn } from "../types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -51,6 +51,8 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 
 // administerPassword OPERATION ::= {
 //   ARGUMENT  AdministerPasswordArgument
@@ -82,7 +84,7 @@ async function administerPassword (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument: AdministerPasswordArgument = _decode_AdministerPasswordArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
@@ -195,19 +197,22 @@ async function administerPassword (
     const result: AdministerPasswordResult = {
         null_: null,
     };
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_administerPassword,
+    return {
+        result: new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_administerPassword,
+                ),
+                undefined,
             ),
-            undefined,
+            _encode_AdministerPasswordResult(result, DER),
         ),
-        _encode_AdministerPasswordResult(result, DER),
-    );
+        stats: {},
+    };
 }
 
 export default administerPassword;

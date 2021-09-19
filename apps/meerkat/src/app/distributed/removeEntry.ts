@@ -1,9 +1,9 @@
-import { Context, Vertex, ClientConnection } from "../types";
+import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
-// import {
-//     _decode_RemoveEntryArgument,
-// } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
+import {
+    _decode_RemoveEntryArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
 import {
     _encode_RemoveEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
@@ -15,7 +15,7 @@ import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import { BERElement } from "asn1-ts";
-// import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { strict as assert } from "assert";
 import {
     id_op_binding_hierarchical,
@@ -77,6 +77,8 @@ import {
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 
 // TODO: subentries
 
@@ -85,10 +87,10 @@ async function removeEntry (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const target = state.foundDSE;
-    // const argument = _decode_RemoveEntryArgument(state.operationArgument);
-    // const data = getOptionallyProtectedValue(argument);
+    const argument = _decode_RemoveEntryArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -353,21 +355,30 @@ async function removeEntry (
     // TODO: Step 7: Update shadows.
     await deleteEntry(ctx, target);
 
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_removeEntry,
+    return {
+        result: new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_removeEntry,
+                ),
+                undefined,
             ),
-            undefined,
+            _encode_RemoveEntryResult({
+                null_: null,
+            }, DER),
         ),
-        _encode_RemoveEntryResult({
-            null_: null,
-        }, DER),
-    );
+        stats: {
+            request: {
+                operationCode: codeToString(id_opcode_removeEntry),
+                ...getStatisticsFromCommonArguments(data),
+                targetNameLength: targetDN.length,
+            },
+        },
+    };
 }
 
 export default removeEntry;

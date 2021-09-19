@@ -1,4 +1,4 @@
-import { Context, StoredContext, Vertex, ClientConnection } from "../types";
+import { Context, StoredContext, Vertex, ClientConnection, OperationReturn } from "../types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import {
@@ -71,6 +71,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -94,7 +97,7 @@ async function compare (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_CompareArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
@@ -365,19 +368,29 @@ async function compare (
         ),
     };
 
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_compare,
+    return {
+        result: new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_compare,
+                ),
+                undefined,
             ),
-            undefined,
+            _encode_CompareResult(result, DER),
         ),
-        _encode_CompareResult(result, DER),
-    );
+        stats: {
+            request: {
+                operationCode: codeToString(id_opcode_compare),
+                ...getStatisticsFromCommonArguments(data),
+                targetNameLength: targetDN.length,
+                ava: getStatisticsFromAttributeValueAssertion(data.purported),
+            },
+        },
+    };
 }
 
 export default compare;

@@ -1,4 +1,4 @@
-import type { ClientConnection, Context, Vertex } from "../types";
+import type { ClientConnection, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics } from "../types";
 import type DAPConnection from "../dap/DAPConnection";
 import type DSPConnection from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
@@ -35,7 +35,7 @@ import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import {
+import type {
     ChainedResultOrError,
 } from "@wildboar/x500/src/lib/types/ChainedResultOrError";
 import { compareCode } from "@wildboar/x500/src/lib/utils/compareCode";
@@ -101,6 +101,14 @@ import {
 import {
     id_errcode_securityError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-securityError.va";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getFilterStatistics from "../telemetry/getFilterStatistics";
+import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
+import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
+import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
+import getSearchResultStatistics from "../telemetry/getSearchResultStatistics";
+import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 
 export
 type SearchResultOrError = {
@@ -131,6 +139,11 @@ interface OperationDispatcherState {
 }
 
 export
+type OperationDispatcherReturn = ChainedResultOrError
+    & Partial<WithRequestStatistics>
+    & Partial<WithOutcomeStatistics>;
+
+export
 class OperationDispatcher {
 
     private static async dispatchPreparedDSPRequest (
@@ -138,7 +151,7 @@ class OperationDispatcher {
         conn: ClientConnection,
         req: Request,
         preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
-    ): Promise<ChainedResultOrError> {
+    ): Promise<OperationDispatcherReturn> {
         assert(req.opCode);
         assert(req.argument);
         const reqData = getOptionallyProtectedValue(preparedRequest);
@@ -149,6 +162,12 @@ class OperationDispatcher {
                 opCode: req.opCode,
                 result: result.result,
                 chaining: result.chainedResult,
+                request: {
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    result: {},
+                },
             };
         }
         const targetObject = getSoughtObjectFromRequest(req);
@@ -226,74 +245,123 @@ class OperationDispatcher {
         }
         const foundDN = getDistinguishedName(state.foundDSE);
         if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
-            const result = await doAddEntry(ctx, conn, state);
+            const outcome = await doAddEntry(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: outcome.result.result,
+                chaining: outcome.result.chainedResult,
+                request: {
+                    ...outcome.stats.request,
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    ...outcome.stats.outcome,
+                },
             };
         }
         else if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
-            const result = await doAdministerPassword(ctx, conn, state);
+            const outcome = await doAdministerPassword(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: outcome.result.result,
+                chaining: outcome.result.chainedResult,
+                request: {
+                    ...outcome.stats.request,
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    ...outcome.stats.outcome,
+                },
             };
         }
         else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
-            const result = await doChangePassword(ctx, conn, state);
+            const outcome = await doChangePassword(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: outcome.result.result,
+                chaining: outcome.result.chainedResult,
+                request: {
+                    ...outcome.stats.request,
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    ...outcome.stats.outcome,
+                },
             };
         }
         else if (compareCode(req.opCode, compare["&operationCode"]!)) {
-            const result = await doCompare(ctx, conn, state);
+            const outcome = await doCompare(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: outcome.result.result,
+                chaining: outcome.result.chainedResult,
+                request: {
+                    ...outcome.stats.request,
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    ...outcome.stats.outcome,
+                },
             };
         }
         else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
-            const result = await doModifyDN(ctx, conn, state);
+            const outcome = await doModifyDN(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: outcome.result.result,
+                chaining: outcome.result.chainedResult,
+                request: {
+                    ...outcome.stats.request,
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    ...outcome.stats.outcome,
+                },
             };
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
-            const result = await doModifyEntry(ctx, conn, state);
+            const outcome = await doModifyEntry(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: outcome.result.result,
+                chaining: outcome.result.chainedResult,
+                request: {
+                    ...outcome.stats.request,
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    ...outcome.stats.outcome,
+                },
             };
         }
         else if (compareCode(req.opCode, list["&operationCode"]!)) {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // List (II)
-                const result = await list_ii(ctx, conn, state, true);
+                const outcome = await list_ii(ctx, conn, state, true);
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
-                    result: result.result,
-                    chaining: result.chainedResult,
+                    result: outcome.result.result,
+                    chaining: outcome.result.chainedResult,
+                    request: {
+                        ...outcome.stats.request,
+                        operationCode: codeToString(req.opCode),
+                    },
+                    outcome: {
+                        ...outcome.stats.outcome,
+                    },
                 };
             } else { // List (I)
                 // Only List (I) results in results merging.
                 const response = await list_i(ctx, conn, state);
-                const result = _decode_ListResult(response.result);
+                const result = _decode_ListResult(response.result.result);
                 const data = getOptionallyProtectedValue(result);
                 const newData = await resultsMergingProcedureForList(
                     ctx,
@@ -310,30 +378,85 @@ class OperationDispatcher {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
                     result: _encode_ListResult(newResult, DER),
-                    chaining: response.chainedResult,
+                    chaining: response.result.chainedResult,
+                    request: {
+                        ...response.stats.request,
+                        operationCode: codeToString(req.opCode),
+                    },
+                    outcome: {
+                        ...response.stats.outcome,
+                    },
                 };
             }
         }
         else if (compareCode(req.opCode, read["&operationCode"]!)) {
-            const result = await doRead(ctx, conn, state);
+            const outcome = await doRead(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: outcome.result.result,
+                chaining: outcome.result.chainedResult,
+                request: {
+                    ...outcome.stats.request,
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    ...outcome.stats.outcome,
+                },
             };
         }
         else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
-            const result = await doRemoveEntry(ctx, conn, state);
+            const outcome = await doRemoveEntry(ctx, conn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: outcome.result.result,
+                chaining: outcome.result.chainedResult,
+                request: {
+                    ...outcome.stats.request,
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    ...outcome.stats.outcome,
+                },
             };
         }
         else if (compareCode(req.opCode, search["&operationCode"]!)) {
             const argument = _decode_SearchArgument(reqData.argument);
+            const data = getOptionallyProtectedValue(argument);
+            const requestStats: RequestStatistics = {
+                operationCode: codeToString(req.opCode),
+                ...getStatisticsFromCommonArguments(data),
+                targetNameLength: data.baseObject.rdnSequence.length,
+                subset: data.subset,
+                filter: data.filter
+                    ? getFilterStatistics(data.filter)
+                    : undefined,
+                searchAliases: data.searchAliases,
+                eis: data.selection
+                    ? getEntryInformationSelectionStatistics(data.selection)
+                    : undefined,
+                prr: data.pagedResults
+                    ? getStatisticsFromPagedResultsRequest(data.pagedResults)
+                    : undefined,
+                matchedValuesOnly: data.matchedValuesOnly,
+                extendedFilter: data.extendedFilter
+                    ? getFilterStatistics(data.extendedFilter)
+                    : undefined,
+                checkOverspecified: data.checkOverspecified,
+                // relaxation
+                extendedArea: data.extendedArea,
+                hierarchySelections: data.hierarchySelections
+                    ? Array.from(data.hierarchySelections)
+                    : undefined,
+                searchControlOptions: data.searchControlOptions
+                    ? Array.from(data.searchControlOptions)
+                    : undefined,
+                joinArguments: data.joinArguments
+                    ? data.joinArguments.map(getJoinArgumentStatistics)
+                    : undefined,
+                joinType: data.joinType,
+            };
             const chainingResults = new ChainingResults(
                 undefined,
                 undefined,
@@ -364,6 +487,7 @@ class OperationDispatcher {
                     argument,
                     response,
                 );
+                // const poq: PartialOutcomeQualifier =
                 // FIXME: Use response.poq!
                 const localResult: SearchResult = {
                     unsigned: {
@@ -413,6 +537,7 @@ class OperationDispatcher {
                     state.NRcontinuationList,
                     state.SRcontinuationList,
                 );
+                const unprotectedResult = getOptionallyProtectedValue(result);
                 return {
                     invokeId: {
                         present: 1,
@@ -420,6 +545,18 @@ class OperationDispatcher {
                     opCode: search["&operationCode"]!,
                     chaining: response.chaining,
                     result: _encode_SearchResult(result, DER),
+                    request: requestStats,
+                    outcome: {
+                        result: {
+                            search: getSearchResultStatistics(result),
+                            poq: (
+                                ("searchInfo" in unprotectedResult)
+                                && unprotectedResult.searchInfo.partialOutcomeQualifier
+                            )
+                                ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
+                                : undefined,
+                        },
+                    },
                 };
             } else { // Search (I)
                 // Only Search (I) results in results merging.
@@ -482,6 +619,7 @@ class OperationDispatcher {
                     state.NRcontinuationList,
                     state.SRcontinuationList,
                 );
+                const unprotectedResult = getOptionallyProtectedValue(result);
                 return {
                     invokeId: {
                         present: 1,
@@ -489,6 +627,18 @@ class OperationDispatcher {
                     opCode: search["&operationCode"]!,
                     chaining: response.chaining,
                     result: _encode_SearchResult(result, DER),
+                    request: requestStats,
+                    outcome: {
+                        result: {
+                            search: getSearchResultStatistics(result),
+                            poq: (
+                                ("searchInfo" in unprotectedResult)
+                                && unprotectedResult.searchInfo.partialOutcomeQualifier
+                            )
+                                ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
+                                : undefined,
+                        },
+                    },
                 };
             }
         }
@@ -499,7 +649,7 @@ class OperationDispatcher {
         ctx: Context,
         conn: DAPConnection,
         req: Request,
-    ): Promise<ChainedResultOrError> {
+    ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(
             ctx,
             req,
@@ -519,7 +669,7 @@ class OperationDispatcher {
         ctx: Context,
         conn: DSPConnection,
         req: Request,
-    ): Promise<ChainedResultOrError> {
+    ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(
             ctx,
             req,

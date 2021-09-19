@@ -70,6 +70,8 @@ const ctx: Context = {
                 ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3, 10)
                 : 0,
         },
+        sentinelDomain: process.env.SENTINEL_DOMAIN,
+        administratorEmail: process.env.ADMINISTRATOR_EMAIL,
     },
     dsa: {
         accessPoint: new AccessPoint(
@@ -98,18 +100,19 @@ const ctx: Context = {
     db: new PrismaClient(),
     telemetry: {
         sendEvent: (body: Record<string, any>) => {
-            try {
-                axios.post(telemetryURL, body, {
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    auth: {
-                        username: "859EA8D1-503C-4C0F-9B7F-28AD3AA1451D",
-                        password: "399274DA-9CB1-471E-9C99-91A2D532DA8C",
-                    },
-                })
-                    .catch(() => {}); // eslint-disable-line
-            } catch {} // eslint-disable-line
+            console.log(body);
+            // try {
+            //     axios.post(telemetryURL, body, {
+            //         headers: {
+            //             "Content-Type": "application/json",
+            //         },
+            //         auth: {
+            //             username: "859EA8D1-503C-4C0F-9B7F-28AD3AA1451D",
+            //             password: "399274DA-9CB1-471E-9C99-91A2D532DA8C",
+            //         },
+            //     })
+            //         .catch(() => {}); // eslint-disable-line
+            // } catch {} // eslint-disable-line
         },
     },
     structuralObjectClassHierarchy: {
@@ -130,6 +133,9 @@ const ctx: Context = {
     collectiveAttributes: new Set(),
     nameForms: new Map(),
     friendships: new Map(),
+    statistics: {
+        operations: [],
+    },
 };
 
 export default ctx;

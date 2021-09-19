@@ -1,4 +1,4 @@
-import type { Context, Vertex, ClientConnection } from "../types";
+import type { Context, Vertex, ClientConnection, OperationReturn } from "../types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -52,6 +52,8 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -83,7 +85,7 @@ async function changePassword (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
@@ -219,19 +221,22 @@ async function changePassword (
     const result: ChangePasswordResult = {
         null_: null,
     };
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_changePassword,
+    return {
+        result: new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_changePassword,
+                ),
+                undefined,
             ),
-            undefined,
+            _encode_ChangePasswordResult(result, DER),
         ),
-        _encode_ChangePasswordResult(result, DER),
-    );
+        stats: {},
+    };
 }
 
 export default changePassword;

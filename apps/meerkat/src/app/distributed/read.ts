@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientConnection } from "../types";
+import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT, FALSE_BIT } from "asn1-ts";
 import * as errors from "../errors";
 import {
@@ -58,13 +58,16 @@ import {
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
 import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 
 export
 async function read (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ReadArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
@@ -248,19 +251,32 @@ async function read (
             undefined,
         ),
     };
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_read,
+    return {
+        result: new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_read,
+                ),
+                undefined,
             ),
-            undefined,
+            _encode_ReadResult(result, DER),
         ),
-        _encode_ReadResult(result, DER),
-    );
+        stats: {
+            request: {
+                operationCode: codeToString(id_opcode_read),
+                ...getStatisticsFromCommonArguments(data),
+                targetNameLength: targetDN.length,
+                eis: data.selection
+                    ? getEntryInformationSelectionStatistics(data.selection)
+                    : undefined,
+                modifyRightsRequest: data.modifyRightsRequest,
+            },
+        },
+    };
 }
 
 export default read;

@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientConnection } from "../types";
+import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import * as crypto from "crypto";
@@ -97,6 +97,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
+import getListResultStatistics from "../telemetry/getListResultStatistics";
+import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -105,7 +110,7 @@ async function list_i (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const target = state.foundDSE;
     const arg: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(arg);
@@ -576,19 +581,40 @@ async function list_i (
             ),
         },
     };
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_list,
+    return {
+        result: new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_list,
+                ),
+                undefined,
             ),
-            undefined,
+            _encode_ListResult(result, DER),
         ),
-        _encode_ListResult(result, DER),
-    );
+        stats: {
+            request: {
+                operationCode: codeToString(id_opcode_list),
+                ...getStatisticsFromCommonArguments(data),
+                targetNameLength: targetDN.length,
+                listFamily: data.listFamily,
+                prr: data.pagedResults
+                    ? getStatisticsFromPagedResultsRequest(data.pagedResults)
+                    : undefined,
+            },
+            outcome: {
+                result: {
+                    list: getListResultStatistics(result),
+                    poq: (("listInfo" in result.unsigned) && result.unsigned.listInfo.partialOutcomeQualifier)
+                        ? getPartialOutcomeQualifierStatistics(result.unsigned.listInfo.partialOutcomeQualifier)
+                        : undefined,
+                },
+            },
+        },
+    };
 }
 
 export default list_i;

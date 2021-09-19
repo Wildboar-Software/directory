@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "../types";
+import type { Context, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "../types";
 import * as errors from "../errors";
 import { TRUE_BIT, TRUE } from "asn1-ts";
 import {
@@ -51,7 +51,7 @@ import {
 const SEARCH_II_PAGE_SIZE: number = 100;
 
 export
-interface SearchIIReturn {
+interface SearchIIReturn extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
     chaining: ChainingResults;
     results: EntryInformation[];
 }

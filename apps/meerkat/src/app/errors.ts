@@ -1,4 +1,3 @@
-import type { Context } from "./types";
 import type {
     AbandonedData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
@@ -23,9 +22,6 @@ import {
 import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
-import {
-    ServiceProblem_unavailable,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -54,35 +50,19 @@ import {
     id_errcode_updateError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-updateError.va";
 import {
-    NameProblem_noSuchObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
-import type {
-    Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
-import type {
-    AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import {
-    UpdateProblem_namingViolation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import {
     operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
-import findEntry from "./x500/findEntry";
-import getDistinguishedName from "./x500/getDistinguishedName";
-import {
-    SecurityProblem_noInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import {
-    SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import { unpackBits } from "asn1-ts";
-import { randomBytes } from "crypto";
-
-// ReferralError
 
 export
-class AbandonError extends Error {
+abstract class DirectoryError extends Error {
+    public static readonly errcode: Code;
+    public getErrCode (): Code {
+        return DirectoryError.errcode;
+    }
+}
+
+export
+class AbandonError extends DirectoryError {
     public static readonly errcode: Code = id_errcode_abandoned;
     constructor (readonly message: string, readonly data: AbandonedData) {
         super(message);
@@ -91,7 +71,7 @@ class AbandonError extends Error {
 }
 
 export
-class AbandonFailedError extends Error {
+class AbandonFailedError extends DirectoryError {
     public static readonly errcode: Code = id_errcode_abandonFailed;
     constructor (readonly message: string, readonly data: AbandonFailedData) {
         super(message);
@@ -100,7 +80,7 @@ class AbandonFailedError extends Error {
 }
 
 export
-class AttributeError extends Error {
+class AttributeError extends DirectoryError {
     public static readonly errcode: Code = id_errcode_attributeError;
     constructor (readonly message: string, readonly data: AttributeErrorData) {
         super(message);
@@ -109,7 +89,7 @@ class AttributeError extends Error {
 }
 
 export
-class NameError extends Error {
+class NameError extends DirectoryError {
     public static readonly errcode: Code = id_errcode_nameError;
     constructor (readonly message: string, readonly data: NameErrorData) {
         super(message);
@@ -118,7 +98,7 @@ class NameError extends Error {
 }
 
 export
-class ReferralError extends Error {
+class ReferralError extends DirectoryError {
     public static readonly errcode: Code = id_errcode_referral;
     constructor (readonly message: string, readonly data: ReferralData) {
         super(message);
@@ -127,7 +107,7 @@ class ReferralError extends Error {
 }
 
 export
-class SecurityError extends Error {
+class SecurityError extends DirectoryError {
     public static readonly errcode: Code = id_errcode_securityError;
     constructor (readonly message: string, readonly data: SecurityErrorData) {
         super(message);
@@ -136,7 +116,7 @@ class SecurityError extends Error {
 }
 
 export
-class ServiceError extends Error {
+class ServiceError extends DirectoryError {
     public static readonly errcode: Code = id_errcode_serviceError;
     constructor (readonly message: string, readonly data: ServiceErrorData) {
         super(message);
@@ -145,7 +125,7 @@ class ServiceError extends Error {
 }
 
 export
-class UpdateError extends Error {
+class UpdateError extends DirectoryError {
     public static readonly errcode: Code = id_errcode_updateError;
     constructor (readonly message: string, readonly data: UpdateErrorData) {
         super(message);
@@ -154,7 +134,7 @@ class UpdateError extends Error {
 }
 
 export
-class OperationalBindingError extends Error {
+class OperationalBindingError extends DirectoryError {
     public static readonly errcode: Code = operationalBindingError["&errorCode"]!;
     constructor (readonly message: string, readonly data: typeof operationalBindingError["&ParameterType"]) {
         super(message);
@@ -168,82 +148,4 @@ class UnknownOperationError extends Error {
         super(message ?? "Unknown operation.");
         Object.setPrototypeOf(this, UnknownOperationError.prototype);
     }
-}
-
-export
-async function objectDoesNotExistErrorData (ctx: Context, soughtName: Name): Promise<NameErrorData> {
-    let name: Name = {
-        rdnSequence: [ ...soughtName.rdnSequence.slice(0, -1) ],
-    };
-    let match = await findEntry(ctx, ctx.dit.root, name.rdnSequence);
-    while (!match) {
-        name = {
-            rdnSequence: [ ...name.rdnSequence.slice(0, -1) ],
-        };
-        match = await findEntry(ctx, ctx.dit.root, name.rdnSequence);
-    }
-    return new NameErrorData(
-        NameProblem_noSuchObject,
-        {
-            rdnSequence: getDistinguishedName(match),
-        },
-        [],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    );
-}
-
-export
-const CONTEXTS_NOT_ENABLED_ERROR = new ServiceError(
-    "Use of contexts was not enabled by the request.",
-    new ServiceErrorData(
-        ServiceProblem_unavailable,
-        [],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    ),
-);
-
-export
-function namingViolationErrorData (attributeTypes: AttributeType[]): UpdateErrorData {
-    return new UpdateErrorData(
-        UpdateProblem_namingViolation,
-        attributeTypes.map((at) => ({
-            attributeType: at,
-        })),
-        [],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    );
-}
-
-export
-function invalidRequestErrorData (): SecurityErrorData {
-    return new SecurityErrorData(
-        SecurityProblem_noInformation,
-        undefined,
-        undefined,
-        [],
-        new SecurityParameters(
-            undefined,
-            undefined, // DSA name
-            {
-                generalizedTime: new Date(),
-            },
-            unpackBits(randomBytes(16)),
-            undefined,
-            undefined,
-            undefined,
-            SecurityError.errcode,
-        ),
-        undefined,
-        undefined,
-        undefined,
-    );
 }

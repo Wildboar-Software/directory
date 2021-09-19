@@ -1,4 +1,6 @@
-import { Context, ClientConnection, PagedResultsRequestState } from "../types";
+import { Context, ClientConnection, PagedResultsRequestState, OperationStatistics } from "../types";
+import * as errors from "../errors";
+import type { Socket } from "net";
 import { IDMConnection } from "@wildboar/idm";
 import versions from "./versions";
 import type {
@@ -10,17 +12,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta";
 import type { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
-import {
-    AbandonError,
-    AbandonFailedError,
-    AttributeError,
-    NameError,
-    ReferralError,
-    SecurityError,
-    ServiceError,
-    UpdateError,
-    UnknownOperationError,
-} from "../errors";
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -54,11 +45,16 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import getServerStatistics from "../telemetry/getServerStatistics";
+import getConnectionStatistics from "../telemetry/getConnectionStatistics";
+import codeToString from "../x500/codeToString";
+import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
 
 async function handleRequest (
     ctx: Context,
     dap: DAPConnection, // eslint-disable-line
     request: Request,
+    stats: OperationStatistics,
 ): Promise<void> {
     if (!("local" in request.opcode)) {
         throw new Error();
@@ -74,6 +70,8 @@ async function handleRequest (
             argument: request.argument,
         },
     );
+    stats.request = result.request ?? stats.request;
+    stats.outcome = result.outcome ?? stats.outcome;
     if ("error" in result) {
         await dap.idm.writeError(
             request.invokeID,
@@ -83,6 +81,7 @@ async function handleRequest (
     } else {
         await dap.idm.writeResult(request.invokeID, result.opCode, result.result!);
     }
+    ctx.statistics.operations.push(stats);
 }
 
 async function handleRequestAndErrors (
@@ -90,6 +89,19 @@ async function handleRequestAndErrors (
     dap: DAPConnection, // eslint-disable-line
     request: Request,
 ): Promise<void> {
+    const stats: OperationStatistics = {
+        type: "op",
+        inbound: true,
+        server: getServerStatistics(),
+        connection: getConnectionStatistics(dap),
+        // idm?: IDMTransportStatistics;
+        bind: {
+            protocol: dap_ip["&id"]!.toString(),
+        },
+        request: {
+            operationCode: codeToString(request.opcode),
+        },
+    };
     const now = new Date();
     dap.invocations.set(request.invokeID, {
         invokeId: request.invokeID,
@@ -97,45 +109,77 @@ async function handleRequestAndErrors (
         startTime: new Date(),
     });
     try {
-        await handleRequest(ctx, dap, request);
+        await handleRequest(ctx, dap, request, stats);
     } catch (e) {
-        console.error(e);
-        if (e instanceof AbandonError) {
-            const code = _encode_Code(AbandonError.errcode, BER);
+        if (!stats.outcome) {
+            stats.outcome = {};
+        }
+        if (!stats.outcome.error) {
+            stats.outcome.error = {};
+        }
+        if (e instanceof Error) {
+            stats.outcome.error.stack = e.stack;
+        }
+        if (e instanceof errors.DirectoryError) {
+            stats.outcome.error.code = codeToString(e.getErrCode());
+        }
+        if (e instanceof errors.AbandonError) {
+            const code = _encode_Code(errors.AbandonError.errcode, BER);
             const data = _encode_AbandonedData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof AbandonFailedError) {
-            const code = _encode_Code(AbandonFailedError.errcode, BER);
+            stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
+        } else if (e instanceof errors.AbandonFailedError) {
+            const code = _encode_Code(errors.AbandonFailedError.errcode, BER);
             const data = _encode_AbandonFailedData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof AttributeError) {
-            const code = _encode_Code(AttributeError.errcode, BER);
+            stats.outcome.error.problem = e.data.problem;
+        } else if (e instanceof errors.AttributeError) {
+            const code = _encode_Code(errors.AttributeError.errcode, BER);
             const data = _encode_AttributeErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof NameError) {
-            const code = _encode_Code(NameError.errcode, BER);
+            stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
+                type: ap.type_.toString(),
+                problem: ap.problem,
+            }));
+        } else if (e instanceof errors.NameError) {
+            const code = _encode_Code(errors.NameError.errcode, BER);
             const data = _encode_NameErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof ReferralError) {
-            const code = _encode_Code(ReferralError.errcode, BER);
+            stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
+        } else if (e instanceof errors.ReferralError) {
+            const code = _encode_Code(errors.ReferralError.errcode, BER);
             const data = _encode_ReferralData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof SecurityError) {
-            const code = _encode_Code(SecurityError.errcode, BER);
+            stats.outcome.error.candidate = getContinuationReferenceStatistics(e.data.candidate);
+        } else if (e instanceof errors.SecurityError) {
+            const code = _encode_Code(errors.SecurityError.errcode, BER);
             const data = _encode_SecurityErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof ServiceError) {
-            const code = _encode_Code(ServiceError.errcode, BER);
+            stats.outcome.error.problem = e.data.problem;
+        } else if (e instanceof errors.ServiceError) {
+            const code = _encode_Code(errors.ServiceError.errcode, BER);
             const data = _encode_ServiceErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof UpdateError) {
-            const code = _encode_Code(UpdateError.errcode, BER);
+            stats.outcome.error.problem = e.data.problem;
+        } else if (e instanceof errors.UpdateError) {
+            const code = _encode_Code(errors.UpdateError.errcode, BER);
             const data = _encode_UpdateErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof UnknownOperationError) {
+            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.attributeInfo = e.data.attributeInfo?.map((ai) => {
+                if ("attributeType" in ai) {
+                    return ai.attributeType.toString();
+                } else if ("attribute" in ai) {
+                    return ai.attribute.type_.toString();
+                } else {
+                    return null;
+                }
+            }).filter((ainfo): ainfo is string => !!ainfo);
+        } else if (e instanceof errors.UnknownOperationError) {
             await dap.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else {
             await dap.idm.writeAbort(Abort_reasonNotSpecified);
+            // TODO: Don't you need to actually close the connection?
         }
     } finally {
         dap.invocations.set(request.invokeID, {
@@ -144,12 +188,16 @@ async function handleRequestAndErrors (
             startTime: now,
             resultTime: new Date(),
         });
+        for (const opstat of ctx.statistics.operations) {
+            ctx.telemetry.sendEvent(opstat);
+        }
     }
 }
 
 
 export default
 class DAPConnection extends ClientConnection {
+    public readonly socket!: Socket;
     public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
 
     private async handleRequest (request: Request): Promise<void> {
@@ -172,6 +220,7 @@ class DAPConnection extends ClientConnection {
         readonly bind: DirectoryBindArgument,
     ) {
         super();
+        this.socket = idm.s;
         const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
         doBind(ctx, idm.s, bind)
             .then((outcome) => {

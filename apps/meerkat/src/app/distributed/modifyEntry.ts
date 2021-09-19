@@ -1,5 +1,12 @@
-import { Context, IndexableOID, Vertex, Value, ClientConnection } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import {
+    Context,
+    IndexableOID,
+    Vertex,
+    Value,
+    ClientConnection,
+    OperationReturn,
+    EntryModificationStatistics,
+} from "../types";
 import * as errors from "../errors";
 import {
     _decode_ModifyEntryArgument,
@@ -61,9 +68,6 @@ import {
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import {
-    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -154,6 +158,10 @@ import {
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getEntryModificationStatistics from "../telemetry/getEntryModificationStatistics";
+import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
@@ -847,7 +855,7 @@ async function modifyEntry (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ModifyEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
@@ -1317,19 +1325,22 @@ async function modifyEntry (
             const result: ModifyEntryResult = {
                 null_: null,
             };
-            return new ChainedResult(
-                new ChainingResults(
-                    undefined,
-                    undefined,
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        id_opcode_modifyEntry,
+            return {
+                result: new ChainedResult(
+                    new ChainingResults(
+                        undefined,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            id_opcode_modifyEntry,
+                        ),
+                        undefined,
                     ),
-                    undefined,
+                    _encode_ModifyEntryResult(result, DER),
                 ),
-                _encode_ModifyEntryResult(result, DER),
-            );
+                stats: {},
+            };
         }
         const permittedEntryInfo = await readPermittedEntryInformation(
             ctx,
@@ -1367,7 +1378,29 @@ async function modifyEntry (
             },
 
         };
-        return new ChainedResult(
+        return {
+            result: new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_modifyEntry,
+                    ),
+                    undefined,
+                ),
+                _encode_ModifyEntryResult(result, DER),
+            ),
+            stats: {},
+        };
+    }
+
+    const result: ModifyEntryResult = {
+        null_: null,
+    };
+    return {
+        result: new ChainedResult(
             new ChainingResults(
                 undefined,
                 undefined,
@@ -1379,25 +1412,19 @@ async function modifyEntry (
                 undefined,
             ),
             _encode_ModifyEntryResult(result, DER),
-        );
-    }
-
-    const result: ModifyEntryResult = {
-        null_: null,
-    };
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_modifyEntry,
-            ),
-            undefined,
         ),
-        _encode_ModifyEntryResult(result, DER),
-    );
+        stats: {
+            request: {
+                operationCode: codeToString(id_opcode_modifyEntry),
+                ...getStatisticsFromCommonArguments(data),
+                targetNameLength: targetDN.length,
+                modifications: data.changes.map(getEntryModificationStatistics),
+                eis: data.selection
+                    ? getEntryInformationSelectionStatistics(data.selection)
+                    : undefined,
+            },
+        },
+    };
 }
 
 export default modifyEntry;

@@ -2,14 +2,7 @@ import type { Context } from "../types";
 import { Controller, Get, Post, Render, Inject, Res } from "@nestjs/common";
 import type { Response } from "express";
 import * as os from "os";
-
-function canFail (cb: () => string): string {
-    try {
-        return cb();
-    } catch {
-        return "ERROR";
-    }
-}
+import canFail from "../utils/canFail";
 
 @Controller()
 export class SystemController {

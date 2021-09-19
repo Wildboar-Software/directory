@@ -1,4 +1,4 @@
-import type { Context, Vertex, ClientConnection } from "../types";
+import type { Context, Vertex, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "../types";
 import * as errors from "../errors";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -156,13 +156,15 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     id_errcode_serviceError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
 const BYTES_IN_A_UUID: number = 16;
 
 export
-interface SearchIReturn {
+interface SearchIReturn extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
     chaining: ChainingResults;
     results: EntryInformation[];
     poq?: PartialOutcomeQualifier;

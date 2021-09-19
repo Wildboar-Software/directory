@@ -19,7 +19,8 @@
             "tsConfig": "apps/meerkat/tsconfig.app.json",
             "assets": ["apps/meerkat/src/assets"],
             "memoryLimit": 1024,
-            "maxWorkers": 1
+            "maxWorkers": 1,
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -103,7 +104,8 @@
             "tsConfig": "apps/x500-cli/tsconfig.app.json",
             "assets": ["apps/x500-cli/src/assets"],
             "memoryLimit": 1024,
-            "maxWorkers": 1
+            "maxWorkers": 1,
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {

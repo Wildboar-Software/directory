@@ -5,7 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as net from "net";
 import * as tls from "tls";
-import * as fs from "fs";
+import * as fs from "fs/promises";
 import * as path from "path";
 import { ObjectIdentifier } from "asn1-ts";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
@@ -30,6 +30,12 @@ import loadLDAPSyntaxes from "./x500/loadLDAPSyntaxes";
 import ctx from "./ctx";
 import terminate from "./dop/terminateByID";
 import { differenceInMilliseconds } from "date-fns";
+import * as dns from "dns/promises";
+import axios from "axios";
+import {
+    emailSignupEndpoint,
+    updatesDomain,
+} from "./constants";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;
 const DEFAULT_LDAP_TCP_PORT: number = 1389;
@@ -38,6 +44,10 @@ const DEFAULT_WEB_ADMIN_PORT: number = 18080;
 
 export default
 async function main (): Promise<void> {
+    const packageJSON = await import("package.json")
+        .catch(() => undefined);
+    const versionSlug = packageJSON?.default.version.replace(/\./g, "-");
+
     await loadDIT(ctx);
     // The ordering of these is important.
     // Loading LDAP syntaxes before attribute types allows us to use the names instead of OIDs.
@@ -135,8 +145,8 @@ async function main (): Promise<void> {
 
     if (process.env.SERVER_TLS_CERT && process.env.SERVER_TLS_KEY) {
         const ldapsServer = tls.createServer({
-            cert: fs.readFileSync(process.env.SERVER_TLS_CERT),
-            key: fs.readFileSync(process.env.SERVER_TLS_KEY),
+            cert: await fs.readFile(process.env.SERVER_TLS_CERT),
+            key: await fs.readFile(process.env.SERVER_TLS_KEY),
         }, (c) => {
             console.log("LDAPS client connected.");
             new LDAPConnection(ctx, c);
@@ -177,6 +187,49 @@ async function main (): Promise<void> {
         await app.listen(port, () => {
             Logger.log('Listening at http://localhost:' + port);
         });
+    }
+
+    if (ctx.config.sentinelDomain) {
+        setInterval(async () => {
+            const records = await dns.resolveTxt(ctx.config.sentinelDomain!)
+                .catch(() => []);
+            for (const record of records) {
+                const fullRecord: string = record.join(" ").trim().toLowerCase();
+                switch (fullRecord) {
+                case ("meerkat:kill"): {
+                    ctx.log.error("Killed by sentinent.");
+                    process.exit(503);
+                    break;
+                }
+                case ("meerkat:hibernate"): {
+                    ctx.dsa.sentinelTriggeredHibernation = new Date();
+                    break;
+                }
+                default: {
+                    continue;
+                }
+                }
+            }
+        }, 300000);
+    }
+
+    if (ctx.config.administratorEmail) {
+        try {
+            await axios.post(emailSignupEndpoint, {
+                administratorEmailAddress: ctx.config.administratorEmail,
+            }).catch();
+        } catch {}
+    }
+
+    { // Updates checking.
+        const records = await dns.resolveTxt(updatesDomain)
+            .catch(() => []);
+        for (const record of records) {
+            const fullRecord: string = record.join(" ").trim().toLowerCase();
+            if (fullRecord === versionSlug) {
+                ctx.log.info("An update is available for Meerkat DSA.");
+            }
+        }
     }
 
     /**

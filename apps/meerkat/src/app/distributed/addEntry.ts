@@ -1,4 +1,4 @@
-import { Context, IndexableOID, Value, StoredContext, Vertex, ClientConnection } from "../types";
+import { Context, IndexableOID, Value, StoredContext, Vertex, ClientConnection, OperationReturn } from "../types";
 import * as errors from "../errors";
 import {
     _decode_AddEntryArgument,
@@ -126,6 +126,9 @@ import {
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
+import codeToString from "../x500/codeToString";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import accessPointToNSAPStrings from "../x500/accessPointToNSAPStrings";
 
 function namingViolationErrorData (
     ctx: Context,
@@ -155,7 +158,7 @@ async function addEntry (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<ChainedResult> {
+): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
@@ -409,7 +412,10 @@ async function addEntry (
         );
         if (("result" in obResponse) && obResponse.result) {
             const chainedResult = chainedAddEntry.decoderFor["&ResultType"]!(obResponse.result);
-            return getOptionallyProtectedValue(chainedResult); // TODO: This strips the remote DSA's signature!
+            return {
+                result: getOptionallyProtectedValue(chainedResult),
+                stats: {},
+            }; // TODO: This strips the remote DSA's signature!
         } else {
             throw new errors.ServiceError(
                 "Could not add entry to remote DSA via targetSystem.",
@@ -839,19 +845,31 @@ async function addEntry (
     }
 
     // TODO: Update shadows
-    return new ChainedResult(
-        new ChainingResults(
-            undefined,
-            undefined,
-            createSecurityParameters(
-                ctx,
-                conn.boundNameAndUID?.dn,
-                id_opcode_addEntry,
+    return {
+        result: new ChainedResult(
+            new ChainingResults(
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    id_opcode_addEntry,
+                ),
+                undefined,
             ),
-            undefined,
+            _encode_AddEntryResult({
+                null_: null,
+            }, DER),
         ),
-        _encode_AddEntryResult({
-            null_: null,
-        }, DER),
-    );
+        stats: {
+            request: {
+                operationCode: codeToString(id_opcode_addEntry),
+                ...getStatisticsFromCommonArguments(data),
+                targetNameLength: targetDN.length,
+                targetSystemNSAPs: data.targetSystem
+                    ? Array.from(accessPointToNSAPStrings(data.targetSystem))
+                    : undefined,
+            },
+        },
+    };
 }

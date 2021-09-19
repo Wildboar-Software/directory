@@ -74,6 +74,11 @@ import type {
 import type { KeyObject } from "crypto";
 import type { PkiPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+import type { cpus, networkInterfaces } from "os";
+import type { Socket } from "net";
+import {
+    Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -94,6 +99,9 @@ type LDAPName = string;
 
 export
 type ANY = ASN1Element;
+
+export
+type DateString = string;
 
 export
 interface LDAPSyntaxInfo {
@@ -398,6 +406,7 @@ interface DSAInfo {
      */
     accessPoint: AccessPoint;
     hibernatingSince?: Date;
+    sentinelTriggeredHibernation?: Date;
     signing: SigningInfo;
 }
 
@@ -417,6 +426,8 @@ interface Configuration {
         usingTLSv1_2: number;
         usingTLSv1_3: number;
     };
+    sentinelDomain?: string;
+    administratorEmail?: string;
 }
 
 export
@@ -437,12 +448,514 @@ interface FriendshipInfo {
 }
 
 export
+interface ServerStatistics {
+    version?: string;
+    hash?: string;
+    license?: string;
+    os_cpu_cores?: ReturnType<typeof cpus>;
+    os_networkInterfaces?: ReturnType<typeof networkInterfaces>;
+    os_arch?: string;
+    os_endianness?: string;
+    os_freemem?: number;
+    os_homedir?: string;
+    os_hostname?: string;
+    os_platform?: string;
+    os_release?: string;
+    os_totalmem?: number;
+    os_type?: string;
+    os_uptime?: number;
+    os_version?: string;
+}
+
+export
+interface ConnectionStatistics {
+    remoteFamily?: string;
+    remoteAddress?: string;
+    remotePort?: number;
+    transport?: string; // IDMv1, IDMv2
+    presentation?: string;
+}
+
+export
+interface IDMTransportStatistics {
+    version: number;
+    presentation: number;
+}
+
+export
+interface SimpleCredentialStatistics {
+    nameLength: number;
+    validity: {
+        time1?: boolean;
+        time2?: boolean;
+        random1?: boolean;
+        random2?: boolean;
+    };
+    passwordChoice?: string; // unprotected, protected, userPwd.
+}
+
+export
+interface StrongCredentialStatistics {
+    certPathLength?: number;
+    tokenSigningAlgorithm: string;
+    attributeCertPathLength?: number;
+}
+
+export
+interface SaslCredentialStatus {
+    mechanism?: string;
+}
+
+export
+interface CredentialStatistics {
+    simple?: SimpleCredentialStatistics;
+    strong?: StrongCredentialStatistics;
+    externalProcedure?: boolean;
+    spkm?: true;
+    sasl?: SaslCredentialStatus;
+}
+
+export
+interface ServiceControlStatistics {
+    priority?: number;
+    // timeLimit?: DateString;
+    timeLimits?: number;
+    sizeLimit?: number;
+    scopeOfReferral?: number;
+    attributeSizeLimit?: number;
+    manageDSAITPlaneRef?: boolean;
+    serviceType?: IndexableOID;
+    userClass?: number;
+    options?: {
+        preferChaining?: boolean;
+        chainingProhibited?: boolean;
+        localScope?: boolean;
+        dontUseCopy?: boolean;
+        dontDereferenceAliases?: boolean;
+        subentries?: boolean;
+        copyShallDo?: boolean;
+        partialNameResolution?: boolean;
+        manageDSAIT?: boolean;
+        noSubtypeMatch?: boolean;
+        noSubtypeSelection?: boolean;
+        countFamily?: boolean;
+        dontSelectFriends?: boolean;
+        dontMatchFriends?: boolean;
+        allowWriteableCopy?: boolean;
+    };
+}
+
+export
+interface SecurityParametersStatistics {
+    certificationPathLength?: number;
+    nameLength?: number;
+    time?: string;
+    random?: boolean;
+    target?: number;
+    operationCode?: boolean;
+    errorProtection?: number;
+    errorCode?: boolean;
+}
+
+export
+interface EntryInformationStatistics {
+    nameLength?: number;
+    fromEntry?: boolean;
+    informationLength?: number;
+    incompleteEntry?: boolean;
+    partialName?: boolean;
+    derivedEntry?: boolean;
+}
+
+export
+interface ProtocolInformation {
+    nsap: string;
+    profiles: IndexableOID[];
+}
+
+export
+interface AccessPointStatistics {
+    aeTitleLength?: number;
+    nsaps?: string[];
+    protocolInformation?: ProtocolInformation[];
+}
+
+export
+interface MasterOrShadowAccessPointStatistics extends AccessPointStatistics {
+    category?: number;
+    chainingRequired?: boolean;
+}
+
+export
+interface AccessPointInformationStatistics extends MasterOrShadowAccessPointStatistics {
+    additionalPoints?: MasterOrShadowAccessPointStatistics[];
+}
+
+export
+interface ContinuationReferenceStatistics {
+    targetObjectNameLength?: number;
+    aliasedRDNs?: number;
+    operationProgress?: OperationProgressStatistics;
+    rdnsResolved?: number;
+    referenceType?: number;
+    accessPoints?: AccessPointInformationStatistics[];
+    entryOnly?: boolean;
+    numberOfExclusions?: number;
+    returnToDUA?: boolean;
+    nameResolveOnMaster?: boolean;
+}
+
+export
+interface PartialOutcomeQualifierStatistics {
+    limitProblem?: number;
+    unexplored?: ContinuationReferenceStatistics[];
+    unavailableCriticalExtensions?: boolean;
+    numberOfUnknownErrors?: number;
+    queryReferencePresent?: boolean;
+    overspecFilter?: FilterStatistics;
+    notification?: IndexableOID[];
+    bestEstimate?: number;
+    lowEstimate?: number;
+    exact?: number;
+}
+
+export
+interface ListResultStatistics {
+    numberOfSubordinates?: number;
+    uncorrelatedListInfo?: ListResultStatistics[];
+}
+
+export
+interface SearchResultStatistics {
+    numberOfResults?: number;
+    altMatching?: boolean;
+    uncorrelatedSearchInfo?: SearchResultStatistics[];
+}
+
+export
+interface ResultStatistics {
+    sizeInBytes?: number;
+    entry?: EntryInformationStatistics;
+    numberOfModifyRights?: number;
+    fromEntry?: boolean;
+    numberOfUncorrelatedResults?: number;
+    poq?: PartialOutcomeQualifierStatistics;
+    list?: ListResultStatistics;
+    search?: SearchResultStatistics;
+}
+
+export
+interface AttributeErrorProblemStatistics {
+    problem: number;
+    type: IndexableOID;
+}
+
+export
+interface ErrorStatistics {
+    code?: string;
+    stack?: string;
+    pagingAbandoned?: boolean;
+    problem?: number;
+    attributeProblems?: AttributeErrorProblemStatistics[];
+    matchedNameLength?: number;
+    candidate?: ContinuationReferenceStatistics;
+    attributeInfo?: IndexableOID[];
+}
+
+export
+interface ContextAssertionStatistics {
+    contextType: IndexableOID;
+    contextValuesLength: number;
+}
+
+export
+interface TypeAndContextAssertionStatistics {
+    type: IndexableOID;
+    preference?: ContextAssertionStatistics[];
+    all?: ContextAssertionStatistics[];
+}
+
+export
+interface OperationProgressStatistics {
+    phase: number;
+    next?: number;
+}
+
+export
+interface CommonArgumentsStatistics {
+    serviceControls?: ServiceControlStatistics;
+    securityParameters?: SecurityParametersStatistics;
+    requestorLength?: number;
+    operationProgress?: OperationProgressStatistics;
+    aliasedRDNs?: number;
+    criticalExtensions?: number[];
+    referenceType?: number;
+    entryOnly?: boolean;
+    exclusionsLength?: number;
+    nameResolveOnMaster?: boolean;
+    operationContextsAllContexts?: boolean;
+    operationContextsSelectedContexts?: TypeAndContextAssertionStatistics[];
+    familyGrouping?: number;
+}
+
+export
+interface ASN1ElementStatistics {
+    tagClass?: number;
+    tagNumber?: number;
+    valueLength?: number;
+}
+
+export
+interface ContextStatistics {
+    type: IndexableOID;
+    values?: ASN1ElementStatistics[];
+    fallback?: boolean;
+}
+
+export
+interface AttributeStatistics {
+    type: IndexableOID;
+    values?: ASN1ElementStatistics[];
+    valuesWithContext?: {
+        value?: ASN1ElementStatistics;
+        contextList?: ContextStatistics[];
+    }[];
+}
+
+export
+interface AttributeValueAssertionStatistics {
+    type: IndexableOID;
+    assertion?: ASN1ElementStatistics;
+    allContexts?: boolean;
+    selectedContexts?: ContextStatistics[];
+}
+
+export
+interface SortKeyStatistics {
+    type: IndexableOID;
+    orderingRule?: IndexableOID;
+}
+
+export
+interface PagedResultsRequestStatistics {
+    newRequest?: boolean;
+    queryReference?: boolean;
+    abandonQuery?: boolean;
+    pageSize?: number;
+    sortKeysLength?: number;
+    sortKeys?: SortKeyStatistics[];
+    reverse?: boolean;
+    unmerged?: boolean;
+    pageNumber?: number;
+}
+
+export
+interface EntryModificationStatistics {
+    type?: string;
+    attributeType?: IndexableOID;
+    numberOfValues?: number;
+    contextsUsed?: ContextStatistics[];
+}
+
+export
+interface EntryInformationSelectionStatistics {
+    allUserAttributes?: boolean;
+    selectUserAttributes?: IndexableOID[];
+    infoTypes?: number;
+    allExtraAttributes?: boolean;
+    selectExtraAttributes?: IndexableOID[];
+    allContexts?: boolean;
+    selectedContexts?: TypeAndContextAssertionStatistics[];
+    returnContexts?: boolean;
+    familyReturn?: {
+        memberSelect?: number;
+        familySelect?: IndexableOID[];
+    };
+}
+
+export
+interface FilterItemSubstringsStatistics {
+    type: IndexableOID;
+    strings: {
+        type?: "initial" | "any" | "final" | "control" | "other";
+        controlType?: IndexableOID;
+    }[];
+}
+
+export
+interface MatchingRuleAssertionStatistics {
+    matchingRule?: IndexableOID[];
+    type?: IndexableOID;
+    dnAttributes?: boolean;
+}
+
+export
+interface AttributeTypeAssertionStatistics {
+    type: IndexableOID;
+    assertionContexts?: ContextAssertionStatistics[];
+}
+
+export
+type FilterItemStatistics = {
+    equality: AttributeValueAssertionStatistics;
+} | {
+    substrings: FilterItemSubstringsStatistics;
+} | {
+    greaterOrEqual: AttributeValueAssertionStatistics;
+} | {
+    lessOrEqual: AttributeValueAssertionStatistics;
+} | {
+    present: IndexableOID;
+} | {
+    approximateMatch: AttributeValueAssertionStatistics;
+} | {
+    extensibleMatch: MatchingRuleAssertionStatistics;
+} | {
+    contextPresent: AttributeTypeAssertionStatistics;
+} | {
+    other: null;
+}
+
+export
+type FilterStatistics = {
+    item: FilterItemStatistics;
+} | {
+    and: FilterStatistics[];
+} | {
+    or: FilterStatistics[];
+} | {
+    not: FilterStatistics;
+} | {
+    other: null;
+}
+
+export
+interface MappingStatistics {
+    mappingFunction?: IndexableOID;
+    level?: number;
+}
+
+export
+interface MRSubstitution {
+    attribute: IndexableOID;
+    oldMatchingRule?: IndexableOID;
+    newMatchingRule?: IndexableOID;
+}
+
+export
+interface MRMappingStatistics {
+    mapping?: MappingStatistics[];
+    substitution?: MRSubstitution[];
+}
+
+export
+interface RelaxationPolicy {
+    basic?: MRMappingStatistics;
+    tightenings?: MRMappingStatistics[];
+    relaxations?: MRMappingStatistics[];
+    maximum?: number;
+    minimum?: number;
+}
+
+export
+interface JoinAttPairStatistics {
+    baseAtt: IndexableOID;
+    joinAtt: IndexableOID;
+    joinContext?: IndexableOID[];
+}
+
+export
+interface JoinArgumentStatistics {
+    joinBaseObjectNameLength?: number;
+    domainLocalID?: string;
+    joinSubset?: number;
+    joinFilter?: FilterStatistics;
+    joinAttributes?: JoinAttPairStatistics[];
+    joinSelection?: EntryInformationSelectionStatistics;
+}
+
+export
+interface RequestStatistics extends CommonArgumentsStatistics {
+    operationCode: string;
+    targetNameLength?: number;
+    targetSystemNSAPs?: string[];
+    attributes?: AttributeStatistics[];
+    ava?: AttributeValueAssertionStatistics;
+    listFamily?: boolean;
+    prr?: PagedResultsRequestStatistics;
+    newSuperiorNameLength?: number;
+    newRDNLength?: number;
+    deleteOldRDN?: boolean;
+    modifications?: EntryModificationStatistics[];
+    modifyRightsRequest?: boolean;
+    eis?: EntryInformationSelectionStatistics;
+    subset?: number;
+    filter?: FilterStatistics;
+    searchAliases?: boolean;
+    matchedValuesOnly?: boolean;
+    extendedFilter?: FilterStatistics;
+    checkOverspecified?: boolean;
+    relaxation?: RelaxationPolicy;
+    extendedArea?: number;
+    hierarchySelections?: number[];
+    searchControlOptions?: number[];
+    joinArguments?: JoinArgumentStatistics[];
+    joinType?: number;
+}
+
+export
+interface OutcomeStatistics {
+    result?: ResultStatistics;
+    error?: ErrorStatistics;
+}
+
+export
+interface WithRequestStatistics {
+    request: RequestStatistics;
+}
+
+export
+interface WithOutcomeStatistics {
+    outcome: OutcomeStatistics;
+}
+
+export
+interface OperationStatistics extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
+    type: "op";
+    inbound: boolean;
+    server: ServerStatistics;
+    connection: ConnectionStatistics;
+    idm?: IDMTransportStatistics;
+    bind: {
+        protocol: IndexableOID;
+        callingAETitleLength?: number;
+        calledAETitleLength?: number;
+        credentials?: CredentialStatistics;
+        versions?: number[];
+    };
+}
+
+export
+interface Statistics {
+    // stats for feature usage
+    // stats for connections
+    operations: OperationStatistics[];
+}
+
+export
+interface OperationReturn {
+    result: ChainedResult;
+    stats: Partial<WithRequestStatistics> & Partial<WithOutcomeStatistics>;
+}
+
+export
 interface Context {
     dit: DITInfo;
     dsa: DSAInfo;
     config: Configuration;
     log: typeof console;
     db: PrismaClient;
+    statistics: Statistics;
     telemetry: Telemetry;
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
@@ -553,6 +1066,7 @@ interface OperationInvocationInfo {
 
 export
 abstract class ClientConnection {
+    public readonly socket: Socket;
     public readonly id = randomUUID();
     public boundEntry: Vertex | undefined;
     /**

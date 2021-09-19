@@ -434,17 +434,14 @@ async function requestValidationProcedure (
 ): Promise<Chain> {
     assert(req.opCode);
     assert(req.argument);
-    if (ctx.dsa.hibernatingSince) {
+    if (ctx.dsa.hibernatingSince || ctx.dsa.sentinelTriggeredHibernation) {
         throw new errors.ServiceError(
             "Request denied. Hibernating.",
             new ServiceErrorData(
                 ServiceProblem_busy,
                 [],
-                createSecurityParameters(
-                    ctx,
-                    // TODO:
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined, // Intentionally not including more information.
+                undefined,
                 undefined,
                 undefined,
             ),
