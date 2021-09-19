@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context, OperationStatistics } from "../types";
 import * as errors from "../errors";
 import type {
     AccessPoint,
@@ -51,6 +51,8 @@ import {
 import createSecurityParameters from "../x500/createSecurityParameters";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import { DER } from "asn1-ts/dist/node/functional";
+import getServerStatistics from "../telemetry/getServerStatistics";
+import codeToString from "../x500/codeToString";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -60,6 +62,99 @@ export
 interface ConnectOptions {
     timeLimitInMilliseconds?: number;
     credentials?: DSACredentials,
+}
+
+function getIDMOperationWriter (
+    ctx: Context,
+    idm: IDMConnection,
+    targetSystem: AccessPoint,
+): Connection["writeOperation"] {
+    return async function (req: ChainedRequest, options?: WriteOperationOptions): Promise<ChainedResultOrError> {
+        const opstat: OperationStatistics = {
+            type: "op",
+            inbound: false,
+            server: getServerStatistics(),
+            connection: {
+                remoteAddress: idm.s.remoteAddress,
+                remoteFamily: idm.s.remoteFamily,
+                remotePort: idm.s.remotePort,
+                transport: "IDMv2",
+            },
+            request: {
+                operationCode: codeToString(req.opCode),
+            },
+            outcome: {},
+        };
+        const invokeID: number = crypto.randomInt(MAX_INVOKE_ID);
+        const param: Chained = {
+            unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                req.chaining,
+                req.argument!,
+            ),
+        };
+        const encodedParam = chainedRead.encoderFor["&ArgumentType"]!(param, DER);
+        const pdu: IDM_PDU = {
+            request: new Request(invokeID, req.opCode, encodedParam),
+        };
+        const encoded = _encode_IDM_PDU(pdu, DER);
+        const ret = await Promise.race<ChainedResultOrError>([
+            new Promise<ChainedResultOrError>((resolve) => {
+                idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
+                    if ("error" in roe) {
+                        resolve(roe);
+                    } else {
+                        const result = chainedRead.decoderFor["&ResultType"]!(roe.result!);
+                        // TODO: Verify signature.
+                        const resultData = getOptionallyProtectedValue(result);
+                        resolve({
+                            invokeId: {
+                                present: invokeID,
+                            },
+                            opCode: req.opCode,
+                            chaining: resultData.chainedResult,
+                            result: resultData.result,
+                        });
+                    }
+                });
+                idm.write(encoded.toBytes(), 0);
+            }),
+            new Promise<never>((resolve, reject) => setTimeout(
+                () => {
+                    const err = new errors.ServiceError(
+                        `DSA-initiated invocation ${invokeID.toString()} timed out.`,
+                        new ServiceErrorData(
+                            ServiceProblem_timeLimitExceeded,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                targetSystem.ae_title.rdnSequence,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                    );
+                    reject(err);
+                },
+                (options?.timeLimitInMilliseconds ?? DEFAULT_OPERATION_TIMEOUT_IN_SECONDS),
+            )),
+        ]);
+        if ("error" in ret) {
+            opstat.outcome!.error = {
+                code: ret.errcode
+                    ? codeToString(ret.errcode)
+                    : undefined,
+            };
+        } else {
+            opstat.outcome!.result = {
+                sizeInBytes: ret.result?.value.length,
+            };
+        }
+        ctx.telemetry.sendEvent(opstat);
+        return ret;
+    };
 }
 
 export
@@ -139,64 +234,7 @@ async function connect (
                 continue;
             }
             const ret: Connection = {
-                writeOperation: async (req: ChainedRequest, options?: WriteOperationOptions): Promise<ChainedResultOrError> => {
-                    const invokeID: number = crypto.randomInt(MAX_INVOKE_ID);
-                    const param: Chained = {
-                        unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
-                            req.chaining,
-                            req.argument!,
-                        ),
-                    };
-                    const encodedParam = chainedRead.encoderFor["&ArgumentType"]!(param, DER);
-                    const pdu: IDM_PDU = {
-                        request: new Request(invokeID, req.opCode, encodedParam),
-                    };
-                    const encoded = _encode_IDM_PDU(pdu, DER);
-                    return Promise.race<ChainedResultOrError>([
-                        new Promise<ChainedResultOrError>((resolve) => {
-                            idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
-                                if ("error" in roe) {
-                                    resolve(roe);
-                                } else {
-                                    const result = chainedRead.decoderFor["&ResultType"]!(roe.result!);
-                                    // TODO: Verify signature.
-                                    const resultData = getOptionallyProtectedValue(result);
-                                    resolve({
-                                        invokeId: {
-                                            present: invokeID,
-                                        },
-                                        opCode: req.opCode,
-                                        chaining: resultData.chainedResult,
-                                        result: resultData.result,
-                                    });
-                                }
-                            });
-                            idm.write(encoded.toBytes(), 0);
-                        }),
-                        new Promise<never>((resolve, reject) => setTimeout(
-                            () => {
-                                const err = new errors.ServiceError(
-                                    `DSA-initiated invocation ${invokeID.toString()} timed out.`,
-                                    new ServiceErrorData(
-                                        ServiceProblem_timeLimitExceeded,
-                                        [],
-                                        createSecurityParameters(
-                                            ctx,
-                                            targetSystem.ae_title.rdnSequence,
-                                            undefined,
-                                            serviceError["&errorCode"],
-                                        ),
-                                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                        undefined,
-                                        undefined,
-                                    ),
-                                );
-                                reject(err);
-                            },
-                            (options?.timeLimitInMilliseconds ?? DEFAULT_OPERATION_TIMEOUT_IN_SECONDS),
-                        )),
-                    ]);
-                },
+                writeOperation: getIDMOperationWriter(ctx, idm, targetSystem),
                 close: async (): Promise<void> => {
                     idm.close();
                 },
@@ -265,64 +303,7 @@ async function connect (
                         continue;
                     }
                     const ret: Connection = {
-                        writeOperation: async (req: ChainedRequest, options?: WriteOperationOptions): Promise<ChainedResultOrError> => {
-                            const invokeID: number = crypto.randomInt(MAX_INVOKE_ID);
-                            const param: Chained = {
-                                unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
-                                    req.chaining,
-                                    req.argument!,
-                                ),
-                            };
-                            const encodedParam = chainedRead.encoderFor["&ArgumentType"]!(param, DER);
-                            const pdu: IDM_PDU = {
-                                request: new Request(invokeID, req.opCode, encodedParam),
-                            };
-                            const encoded = _encode_IDM_PDU(pdu, DER);
-                            return Promise.race<ChainedResultOrError>([
-                                new Promise<ChainedResultOrError>((resolve) => {
-                                    idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
-                                        if ("error" in roe) {
-                                            resolve(roe);
-                                        } else {
-                                            const result = chainedRead.decoderFor["&ResultType"]!(roe.result!);
-                                            // TODO: Verify signature.
-                                            const resultData = getOptionallyProtectedValue(result);
-                                            resolve({
-                                                invokeId: {
-                                                    present: invokeID,
-                                                },
-                                                opCode: req.opCode,
-                                                chaining: resultData.chainedResult,
-                                                result: resultData.result,
-                                            });
-                                        }
-                                    });
-                                    idm.write(encoded.toBytes(), 0);
-                                }),
-                                new Promise<never>((resolve, reject) => setTimeout(
-                                    () => {
-                                        const err = new errors.ServiceError(
-                                            `DSA-initiated invocation ${invokeID.toString()} timed out.`,
-                                            new ServiceErrorData(
-                                                ServiceProblem_timeLimitExceeded,
-                                                [],
-                                                createSecurityParameters(
-                                                    ctx,
-                                                    targetSystem.ae_title.rdnSequence,
-                                                    undefined,
-                                                    serviceError["&errorCode"],
-                                                ),
-                                                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                                undefined,
-                                                undefined,
-                                            ),
-                                        );
-                                        reject(err);
-                                    },
-                                    (options?.timeLimitInMilliseconds ?? DEFAULT_OPERATION_TIMEOUT_IN_SECONDS),
-                                )),
-                            ]);
-                        },
+                        writeOperation: getIDMOperationWriter(ctx, idm, targetSystem),
                         close: async (): Promise<void> => {
                             idm.close();
                         },

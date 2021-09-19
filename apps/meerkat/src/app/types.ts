@@ -923,10 +923,10 @@ export
 interface OperationStatistics extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
     type: "op";
     inbound: boolean;
-    server: ServerStatistics;
-    connection: ConnectionStatistics;
+    server?: ServerStatistics;
+    connection?: ConnectionStatistics;
     idm?: IDMTransportStatistics;
-    bind: {
+    bind?: {
         protocol: IndexableOID;
         callingAETitleLength?: number;
         calledAETitleLength?: number;
