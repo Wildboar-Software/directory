@@ -282,7 +282,7 @@ async function search (
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     const authLevel: AuthenticationLevel = {
         basicLevels: new AuthenticationLevel_basicLevels(
-            conn.authLevel,
+            0,
             undefined,
             undefined,
         ),

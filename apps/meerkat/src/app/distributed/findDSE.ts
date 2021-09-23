@@ -563,6 +563,8 @@ async function findDSE (
         );
         if (suitable) {
             nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
+            state.entrySuitable = true;
+            state.foundDSE = dse_i;
             return dse_i;
         } else {
             nameResolutionPhase = OperationProgress_nameResolutionPhase_proceeding;
@@ -699,6 +701,9 @@ async function findDSE (
                     dse_i = child;
                     break;
                 }
+            }
+            if (rdnMatched) {
+                break;
             }
             subordinatesInBatch = await readChildren(
                 ctx,

@@ -141,7 +141,10 @@ interface OperationDispatcherState {
 export
 type OperationDispatcherReturn = ChainedResultOrError
     & Partial<WithRequestStatistics>
-    & Partial<WithOutcomeStatistics>;
+    & Partial<WithOutcomeStatistics>
+    & {
+        foundDSE?: Vertex;
+    };
 
 export
 class OperationDispatcher {
@@ -219,7 +222,10 @@ class OperationDispatcher {
             targetObject,
             state,
         );
-        if (!state.entrySuitable && state.NRcontinuationList.length) {
+        if (!state.entrySuitable) {
+            if (!state.NRcontinuationList.length) {
+                throw new Error(); // FIXME:
+            }
             const serviceControls = reqData.argument.set
                 .find((el) => (
                     (el.tagClass === ASN1TagClass.context)
@@ -258,6 +264,7 @@ class OperationDispatcher {
                 outcome: {
                     ...outcome.stats.outcome,
                 },
+                foundDSE: state.foundDSE,
             };
         }
         else if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
@@ -274,6 +281,7 @@ class OperationDispatcher {
                 outcome: {
                     ...outcome.stats.outcome,
                 },
+                foundDSE: state.foundDSE,
             };
         }
         else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
@@ -290,6 +298,7 @@ class OperationDispatcher {
                 outcome: {
                     ...outcome.stats.outcome,
                 },
+                foundDSE: state.foundDSE,
             };
         }
         else if (compareCode(req.opCode, compare["&operationCode"]!)) {
@@ -306,6 +315,7 @@ class OperationDispatcher {
                 outcome: {
                     ...outcome.stats.outcome,
                 },
+                foundDSE: state.foundDSE,
             };
         }
         else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
@@ -322,6 +332,7 @@ class OperationDispatcher {
                 outcome: {
                     ...outcome.stats.outcome,
                 },
+                foundDSE: state.foundDSE,
             };
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
@@ -338,6 +349,7 @@ class OperationDispatcher {
                 outcome: {
                     ...outcome.stats.outcome,
                 },
+                foundDSE: state.foundDSE,
             };
         }
         else if (compareCode(req.opCode, list["&operationCode"]!)) {
@@ -357,6 +369,7 @@ class OperationDispatcher {
                     outcome: {
                         ...outcome.stats.outcome,
                     },
+                    foundDSE: state.foundDSE,
                 };
             } else { // List (I)
                 // Only List (I) results in results merging.
@@ -386,6 +399,7 @@ class OperationDispatcher {
                     outcome: {
                         ...response.stats.outcome,
                     },
+                    foundDSE: state.foundDSE,
                 };
             }
         }
@@ -403,6 +417,7 @@ class OperationDispatcher {
                 outcome: {
                     ...outcome.stats.outcome,
                 },
+                foundDSE: state.foundDSE,
             };
         }
         else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
@@ -419,6 +434,7 @@ class OperationDispatcher {
                 outcome: {
                     ...outcome.stats.outcome,
                 },
+                foundDSE: state.foundDSE,
             };
         }
         else if (compareCode(req.opCode, search["&operationCode"]!)) {
@@ -557,6 +573,7 @@ class OperationDispatcher {
                                 : undefined,
                         },
                     },
+                    foundDSE: state.foundDSE,
                 };
             } else { // Search (I)
                 // Only Search (I) results in results merging.
@@ -639,6 +656,7 @@ class OperationDispatcher {
                                 : undefined,
                         },
                     },
+                    foundDSE: state.foundDSE,
                 };
             }
         }
@@ -647,7 +665,7 @@ class OperationDispatcher {
 
     public static async dispatchDAPRequest (
         ctx: Context,
-        conn: DAPConnection,
+        conn: ClientConnection,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(
@@ -748,7 +766,10 @@ class OperationDispatcher {
             targetObject,
             state,
         );
-        if (!state.entrySuitable && state.NRcontinuationList.length) {
+        if (!state.entrySuitable) {
+            if (!state.NRcontinuationList.length) {
+                throw new Error(); // FIXME:
+            }
             const serviceControlOptions = data.serviceControls?.options;
             const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
             const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);

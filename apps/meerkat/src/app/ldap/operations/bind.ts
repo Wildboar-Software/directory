@@ -79,6 +79,9 @@ async function bind (
     const pwd = await readEntryPassword(ctx, entry);
     if ("simple" in req.authentication) {
         const suppliedPassword = Buffer.from(req.authentication.simple);
+        if (suppliedPassword.length === 0) {
+            return simpleSuccess(encodedDN);
+        }
         if (dn.length === 0) { // Provides Root DSE (super-administrator) authentication.
             const rootDSEPassword = Buffer.from(process.env.ROOT_DSE_PASSWORD ?? "", "utf-8");
             if (

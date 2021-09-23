@@ -123,7 +123,7 @@ async function add (
     const superiorDN = getDistinguishedName(superior);
     const authLevel: AuthenticationLevel = {
         basicLevels: new AuthenticationLevel_basicLevels(
-            conn.authLevel,
+            0,
             undefined,
             undefined,
         ),

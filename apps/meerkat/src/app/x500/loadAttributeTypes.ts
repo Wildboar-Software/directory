@@ -85,6 +85,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         .forEach((attr) => {
             ctx.attributes.set(attr.id.toString(), attr);
             attr.ldapNames?.forEach((ldapName: string): void => {
+                ctx.attributes.set(ldapName.trim(), attr);
                 ctx.attributes.set(ldapName.trim().toLowerCase(), attr);
                 if (!attr.ldapSyntax) {
                     return;

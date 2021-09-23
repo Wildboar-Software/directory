@@ -1067,7 +1067,7 @@ interface OperationInvocationInfo {
 
 export
 abstract class ClientConnection {
-    public readonly socket: Socket;
+    public socket!: Socket;
     public readonly id = randomUUID();
     public boundEntry: Vertex | undefined;
     /**

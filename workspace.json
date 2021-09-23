@@ -18,9 +18,10 @@
             "main": "apps/meerkat/src/main.ts",
             "tsConfig": "apps/meerkat/tsconfig.app.json",
             "assets": ["apps/meerkat/src/assets"],
-            "memoryLimit": 1024,
-            "maxWorkers": 1,
-            "generatePackageJson": true
+            "memoryLimit": 4096,
+            "maxWorkers": 4,
+            "generatePackageJson": true,
+            "sourceMap": true
           },
           "configurations": {
             "production": {

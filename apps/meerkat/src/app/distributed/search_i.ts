@@ -156,6 +156,7 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     id_errcode_serviceError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
+import cloneChainingArguments from "../x500/cloneChainingArguments";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 
@@ -179,7 +180,7 @@ async function search_i (
     argument: SearchArgument,
     ret: SearchIReturn,
 ): Promise<void> {
-    const target = state.foundDSE
+    const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
 
     /**
@@ -484,7 +485,11 @@ async function search_i (
     }
     const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
     const searchAliases = data.searchAliases ?? SearchArgumentData._default_value_for_searchAliases;
-    const entryOnly = data.entryOnly ?? SearchArgumentData._default_value_for_entryOnly;
+    /**
+     * NOTE: It is critical that entryOnly comes from ChainingArguments. The
+     * default values are the OPPOSITE between ChainingArguments and CommonArguments.
+     */
+    const entryOnly = state.chainingArguments.entryOnly ?? ChainingArguments._default_value_for_entryOnly;
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const filter = data.filter ?? SearchArgumentData._default_value_for_filter;
     const serviceControlOptions = data.serviceControls?.options;
@@ -798,7 +803,7 @@ async function search_i (
         );
         return;
     }
-    if (subset === SearchArgumentData_subset_oneLevel) {
+    if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) {
         // Nothing needs to be done here. Proceed to step 6.
     } else if ((subset === SearchArgumentData_subset_baseObject) || entryOnly) {
         if (
@@ -840,7 +845,7 @@ async function search_i (
             }
             return;
         }
-    } else /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
+    } else if (!entryOnly) /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
         if (
             (target.dse.subentry && subentries)
             || (!target.dse.subentry && !subentries)
@@ -1030,45 +1035,20 @@ async function search_i (
                 );
                 state.SRcontinuationList.push(cr);
             }
-            const newArgument: SearchArgument = (subset !== SearchArgumentData_subset_oneLevel)
-                ? argument
-                : {
-                    unsigned: new SearchArgumentData(
-                        data.baseObject,
-                        data.subset,
-                        data.filter,
-                        data.searchAliases,
-                        data.selection,
-                        data.pagedResults,
-                        data.matchedValuesOnly,
-                        data.extendedFilter,
-                        data.checkOverspecified,
-                        data.relaxation,
-                        data.extendedArea,
-                        data.hierarchySelections,
-                        data.searchControlOptions,
-                        data.joinArguments,
-                        data.joinType,
-                        data._unrecognizedExtensionsList,
-                        data.serviceControls,
-                        data.securityParameters,
-                        data.requestor,
-                        data.operationProgress,
-                        data.aliasedRDNs,
-                        data.criticalExtensions,
-                        data.referenceType,
-                        TRUE, // data.entryOnly,
-                        data.exclusions,
-                        data.nameResolveOnMaster,
-                        data.operationContexts,
-                        data.familyGrouping,
-                    ),
-                };
+            const newChainingArguments: ChainingArguments = (subset === SearchArgumentData_subset_oneLevel)
+                ? cloneChainingArguments(state.chainingArguments, {
+                    entryOnly: TRUE,
+                })
+                : state.chainingArguments;
             await search_i(
                 ctx,
                 conn,
-                state, // TODO: Are you sure you can always pass in the same admPoints?
-                newArgument,
+                {
+                    ...state,
+                    chainingArguments: newChainingArguments,
+                    foundDSE: subordinate,
+                }, // TODO: Are you sure you can always pass in the same admPoints?
+                argument,
                 ret,
             );
         }

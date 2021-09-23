@@ -197,7 +197,6 @@ async function handleRequestAndErrors (
 
 export default
 class DAPConnection extends ClientConnection {
-    public readonly socket!: Socket;
     public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
 
     private async handleRequest (request: Request): Promise<void> {
@@ -237,7 +236,7 @@ class DAPConnection extends ClientConnection {
                             undefined, // Failed authentication will not yield any security parameters.
                         ),
                     };
-                    const error = directoryBind.encoderFor["&ParameterType"]!(err, BER);
+                    const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
                     idm
                         .writeBindError(dap_ip["&id"]!, error)
                         .then(() => {

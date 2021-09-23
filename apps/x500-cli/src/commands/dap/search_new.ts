@@ -59,15 +59,16 @@ async function search_new (
         undefined,
         true,
         undefined,
-        {
-            newRequest: new PagedResultsRequest_newRequest(
-                10,
-                undefined,
-                undefined,
-                undefined,
-                3,
-            ),
-        },
+        // {
+        //     newRequest: new PagedResultsRequest_newRequest(
+        //         10,
+        //         undefined,
+        //         undefined,
+        //         undefined,
+        //         3,
+        //     ),
+        // },
+        undefined,
         undefined,
         undefined,
         false,
