@@ -1,5 +1,4 @@
 import { Context, Vertex, ClientConnection } from "../types";
-import * as errors from "../errors";
 import * as net from "net";
 import * as tls from "tls";
 import { BERElement, ASN1TruncationError, ObjectIdentifier } from "asn1-ts";
@@ -13,6 +12,9 @@ import {
     LDAPResult,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
 import {
+    BindResponse,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindResponse.ta";
+import {
     SearchResultEntry,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
 import {
@@ -21,39 +23,22 @@ import {
 import {
     LDAPResult_resultCode_success,
     LDAPResult_resultCode_protocolError,
-    LDAPResult_resultCode_attributeOrValueExists,
-    LDAPResult_resultCode_invalidAttributeSyntax,
-    LDAPResult_resultCode_noSuchAttribute,
     LDAPResult_resultCode_other,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
 import {
-    AttributeProblem_invalidAttributeSyntax,
-    AttributeProblem_noSuchAttributeOrValue,
-    AttributeProblem_undefinedAttributeType,
-    AttributeProblem_attributeOrValueAlreadyExists,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
 import {
-    AuthenticationLevel_basicLevels_level,
     AuthenticationLevel_basicLevels_level_none,
-    AuthenticationLevel_basicLevels_level_simple,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
-import {
-    startTLS,
-} from "@wildboar/ldap/src/lib/extensions";
-import add from "./operations/add";
-import bind from "./operations/bind";
-import compare from "./operations/compare";
-import del from "./operations/del";
-import modDN from "./operations/modDN";
-import modify from "./operations/modify";
-import search from "./operations/search";
+import { startTLS } from "@wildboar/ldap/src/lib/extensions";
+import bind from "./bind";
 import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
-import decodeLDAPDN from "./decodeLDAPDN";
-import findEntry from "../x500/findEntry";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
 import dapReplyToLDAPResult from "../distributed/dapReplyToLDAPResult";
 import OperationDispatcher from "../distributed/OperationDispatcher";
+import dapErrorToLDAPResult from "../distributed/dapErrorToLDAPResult";
 
 async function handleRequest (
     ctx: Context,
@@ -74,7 +59,6 @@ async function handleRequest (
     // let toWriteBuffer: Buffer = Buffer.alloc(0);
     // let resultsBuffered: number = 0;
     const onEntry = async (searchResEntry: SearchResultEntry): Promise<void> => {
-        // console.log(searchResEntry.objectName);
         const resultMessage = new LDAPMessage(
             message.messageID,
             {
@@ -101,15 +85,6 @@ async function handleRequest (
     // stats.request = result.request ?? stats.request;
     // stats.outcome = result.outcome ?? stats.outcome;
     // ctx.statistics.operations.push(stats);
-}
-
-function createLDAPResultFromError (e: Error): LDAPResult {
-    return new LDAPResult(
-        LDAPResult_resultCode_other,
-        new Uint8Array(),
-        Buffer.from(e.message, "utf-8"),
-        undefined,
-    );
 }
 
 async function handleRequestAndErrors (
@@ -140,7 +115,10 @@ async function handleRequestAndErrors (
         await handleRequest(ctx, conn, message);
     } catch (e) {
         console.log(e);
-        const result = createLDAPResultFromError(e);
+        const result: LDAPResult | undefined = dapErrorToLDAPResult(e);
+        if (!result) {
+            return; // No response is returned for abandoned operations in LDAP.
+        }
         if ("addRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { addResponse: result }, undefined);
             conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
@@ -174,40 +152,6 @@ async function handleRequestAndErrors (
         // if (e instanceof errors.DirectoryError) {
         //     stats.outcome.error.code = codeToString(e.getErrCode());
         // }
-        if (e instanceof errors.AbandonError) {
-            // stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
-        } else if (e instanceof errors.AbandonFailedError) {
-            // stats.outcome.error.problem = e.data.problem;
-        } else if (e instanceof errors.AttributeError) {
-            // stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
-            //     type: ap.type_.toString(),
-            //     problem: ap.problem,
-            // }));
-        } else if (e instanceof errors.NameError) {
-            // stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
-        } else if (e instanceof errors.ReferralError) {
-            // stats.outcome.error.candidate = getContinuationReferenceStatistics(e.data.candidate);
-        } else if (e instanceof errors.SecurityError) {
-            // stats.outcome.error.problem = e.data.problem;
-        } else if (e instanceof errors.ServiceError) {
-            // stats.outcome.error.problem = e.data.problem;
-        } else if (e instanceof errors.UpdateError) {
-            // stats.outcome.error.problem = e.data.problem;
-            // stats.outcome.error.attributeInfo = e.data.attributeInfo?.map((ai) => {
-            //     if ("attributeType" in ai) {
-            //         return ai.attributeType.toString();
-            //     } else if ("attribute" in ai) {
-            //         return ai.attribute.type_.toString();
-            //     } else {
-            //         return null;
-            //     }
-            // }).filter((ainfo): ainfo is string => !!ainfo);
-        } else if (e instanceof errors.UnknownOperationError) {
-            // await dap.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
-        } else {
-            // await dap.idm.writeAbort(Abort_reasonNotSpecified);
-            // TODO: Don't you need to actually close the connection?
-        }
     } finally {
         // dap.invocations.set(request.invokeID, {
         //     invokeId: request.invokeID,
@@ -257,30 +201,47 @@ class LDAPConnection extends ClientConnection {
 
             if ("bindRequest" in message.protocolOp) {
                 const req = message.protocolOp.bindRequest;
-                bind(ctx, req)
-                    .then(async (result) => {
-                        if (result.resultCode === LDAPResult_resultCode_success) {
-                            const dn = decodeLDAPDN(ctx, req.name);
-                            this.boundEntry = await findEntry(ctx, ctx.dit.root, dn, true);
-                            // Currently, there is no way to achieve strong auth using LDAP.
-                            // this.authLevel = AuthenticationLevel_basicLevels_level_simple;
+                bind(ctx, this.socket, req)
+                    .then(async (bindReturn) => {
+                        if (bindReturn.result.resultCode === LDAPResult_resultCode_success) {
+                            this.boundEntry = bindReturn.boundVertex;
+                            this.authLevel = bindReturn.authLevel;
                         }
                         const res = new LDAPMessage(
                             message.messageID,
                             {
-                                bindResponse: result,
+                                bindResponse: bindReturn.result,
                             },
                             undefined,
                         );
                         this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     })
-                    .catch(() => {
-                        // TODO:
+                    .catch((e) => {
+                        ctx.log.error(e);
+                        const res = new LDAPMessage(
+                            message.messageID,
+                            {
+                                bindResponse: new BindResponse(
+                                    LDAPResult_resultCode_other,
+                                    new Uint8Array(),
+                                    Buffer.alloc(0),
+                                    undefined,
+                                    undefined,
+                                ),
+                            },
+                            undefined,
+                        );
+                        this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     });
-
             } else if ("unbindRequest" in message.protocolOp) {
                 this.boundEntry = undefined;
-                // this.authLevel = AuthenticationLevel_basicLevels_level_none;
+                this.authLevel = {
+                    basicLevels: new AuthenticationLevel_basicLevels(
+                        AuthenticationLevel_basicLevels_level_none,
+                        0,
+                        false,
+                    ),
+                };
             } else if ("abandonRequest" in message.protocolOp) {
                 console.log(`Abandon operation ${message.protocolOp.abandonRequest}`);
             } else if ("extendedReq" in message.protocolOp) {
@@ -288,7 +249,7 @@ class LDAPConnection extends ClientConnection {
                 const oid = decodeLDAPOID(req.requestName);
                 if (oid.isEqualTo(startTLS)) {
                     this.socket.removeAllListeners("data");
-                    // this.buffer = Buffer.alloc(0);
+                    this.buffer = Buffer.alloc(0);
                     this.socket = new tls.TLSSocket(this.socket);
                     const res = new LDAPMessage(
                         message.messageID,

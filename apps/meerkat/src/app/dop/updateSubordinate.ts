@@ -205,7 +205,7 @@ async function updateSubordinate (
     const timeoutTime: Date | undefined = connectionTimeout
         ? addMilliseconds(startTime, connectionTimeout)
         : undefined;
-    const conn: Connection | undefined = await connect(ctx, targetSystem, dop_ip["&id"]!, {
+    const conn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
     });
     if (!conn) {

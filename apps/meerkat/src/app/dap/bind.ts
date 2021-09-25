@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../types";
+import type { Context, BindReturn } from "../types";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {
@@ -10,9 +10,6 @@ import {
 import findEntry from "../x500/findEntry";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
-import type {
-    AuthenticationLevel,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
@@ -23,14 +20,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import attemptPassword from "../authn/attemptPassword";
 import getDistinguishedName from "../x500/getDistinguishedName";
-
-export
-interface BindReturn {
-    boundVertex?: Vertex;
-    boundNameAndUID?: NameAndOptionalUID;
-    authLevel: AuthenticationLevel;
-    failedAuthentication: boolean;
-}
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation

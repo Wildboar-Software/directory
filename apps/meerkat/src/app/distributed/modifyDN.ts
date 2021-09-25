@@ -109,7 +109,7 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import getIsGroupMember from "../bac/getIsGroupMember";
+import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import getAdministrativePoints from "../dit/getAdministrativePoints";
 import createSecurityParameters from "../x500/createSecurityParameters";
@@ -741,7 +741,7 @@ async function modifyDN (
             const [ masters ] = splitIntoMastersAndShadows(nsk);
             // TODO: Use only IDM endpoints.
             for (const accessPoint of masters) {
-                const client: Connection | undefined = await connect(ctx, accessPoint, dsp_ip["&id"]!, undefined);
+                const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, undefined);
                 if (!client) {
                     continue;
                 }

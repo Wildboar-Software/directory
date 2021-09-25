@@ -3,11 +3,11 @@ import type { INTEGER } from "asn1-ts";
 import type { Result } from "@wildboar/x500/src/lib/types/Result";
 import { LDAPMessage } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+// import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+// import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
-import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
+// import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
 import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
@@ -34,6 +34,9 @@ import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 import {
     EntryInformation_information_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+import type {
+    ListResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import type {
     SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
@@ -113,6 +116,17 @@ async function getSearchResultEntries (
     }
 }
 
+/**
+ * This procedure is not specified in the X.500 series, but can be inferred from
+ * ITU X.518 (2016), Section 20.7.
+ *
+ * @param ctx
+ * @param res
+ * @param messageId
+ * @param onEntry
+ * @param foundDSE
+ * @returns
+ */
 export
 async function dapReplyToLDAPResult (
     ctx: Context,

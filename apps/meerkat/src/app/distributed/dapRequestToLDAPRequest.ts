@@ -405,6 +405,14 @@ function convertDAPFilterToLDAPFilter (ctx: Context, filter: DAPFilter): LDAPFil
     }
 }
 
+/**
+ * This procedure is not specified in the X.500 series, but can be inferred from
+ * ITU X.518 (2016), Section 20.6.
+ *
+ * @param ctx
+ * @param req
+ * @returns
+ */
 export
 function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     if (!req.opCode || !req.argument) {

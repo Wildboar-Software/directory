@@ -1094,3 +1094,11 @@ abstract class ClientConnection {
      */
     public readonly invocations: Map<number, OperationInvocationInfo> = new Map(); // number is the InvokeId.present.
 }
+
+export
+interface BindReturn {
+    boundVertex?: Vertex;
+    boundNameAndUID?: NameAndOptionalUID;
+    authLevel: AuthenticationLevel;
+    failedAuthentication: boolean;
+}

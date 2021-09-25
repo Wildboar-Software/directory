@@ -5,6 +5,70 @@
   },
   "defaultProject": "meerkat",
   "projects": {
+    "idm": {
+      "root": "libs/idm",
+      "sourceRoot": "libs/idm/src",
+      "projectType": "library",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/idm",
+            "tsConfig": "libs/idm/tsconfig.lib.json",
+            "packageJson": "libs/idm/package.json",
+            "main": "libs/idm/src/index.ts",
+            "assets": ["libs/idm/*.md"]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/idm/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/idm"],
+          "options": {
+            "jestConfig": "libs/idm/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "ldap-socket": {
+      "root": "libs/ldap-socket",
+      "sourceRoot": "libs/ldap-socket/src",
+      "projectType": "library",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/ldap-socket",
+            "tsConfig": "libs/ldap-socket/tsconfig.lib.json",
+            "packageJson": "libs/ldap-socket/package.json",
+            "main": "libs/ldap-socket/src/index.ts",
+            "assets": ["libs/ldap-socket/*.md"]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/ldap-socket/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/ldap-socket"],
+          "options": {
+            "jestConfig": "libs/ldap-socket/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
     "meerkat": {
       "root": "apps/meerkat",
       "sourceRoot": "apps/meerkat/src",
@@ -54,38 +118,6 @@
           "outputs": ["coverage/apps/meerkat"],
           "options": {
             "jestConfig": "apps/meerkat/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "idm": {
-      "root": "libs/idm",
-      "sourceRoot": "libs/idm/src",
-      "projectType": "library",
-      "targets": {
-        "build": {
-          "executor": "@nrwl/node:package",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-            "outputPath": "dist/libs/idm",
-            "tsConfig": "libs/idm/tsconfig.lib.json",
-            "packageJson": "libs/idm/package.json",
-            "main": "libs/idm/src/index.ts",
-            "assets": ["libs/idm/*.md"]
-          }
-        },
-        "lint": {
-          "executor": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/idm/**/*.ts"]
-          }
-        },
-        "test": {
-          "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/idm"],
-          "options": {
-            "jestConfig": "libs/idm/jest.config.js",
             "passWithNoTests": true
           }
         }

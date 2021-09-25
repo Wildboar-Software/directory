@@ -41,7 +41,7 @@ import rdnToJson from "../../x500/rdnToJson";
 import writeACI from "../../database/writeACI";
 import writeEntryAttributes from "../../database/writeEntryAttributes";
 import vertexFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
-import valuesFromAttribute from "../../memory/valuesFromAttribute";
+import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { ACIScope, Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 

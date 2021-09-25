@@ -22,7 +22,7 @@ import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import writeEntryAttributes from "../../database/writeEntryAttributes";
 import vertexFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
-import valuesFromAttribute from "../../memory/valuesFromAttribute";
+import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "../../errors";
 import {

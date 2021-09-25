@@ -241,7 +241,7 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
                                 final: decoder(str.final),
                             };
                         } else {
-                            throw new Error(); // TODO:
+                            throw new Error();
                         }
                     }),
                 ),
@@ -379,12 +379,11 @@ function ldapRequestToDAPRequest (ctx: Context, req: LDAPMessage): Request {
                     rdnSequence: decodeLDAPDN(ctx, req.protocolOp.searchRequest.baseObject),
                 },
                 req.protocolOp.searchRequest.scope,
-                // req.protocolOp.searchRequest.filter
-                //     ? convert_ldap_filter_to_dap_filter(ctx, req.protocolOp.searchRequest.filter)
-                //     : undefined,
-                undefined,
+                req.protocolOp.searchRequest.filter
+                    ? convert_ldap_filter_to_dap_filter(ctx, req.protocolOp.searchRequest.filter)
+                    : undefined,
                 Boolean(req.protocolOp.searchRequest.derefAliases),
-                undefined, // FIXME: eis,
+                eis,
                 undefined,
                 undefined,
                 undefined,

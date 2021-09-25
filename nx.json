@@ -23,10 +23,13 @@
     }
   },
   "projects": {
-    "meerkat": {
+    "idm": {
       "tags": []
     },
-    "idm": {
+    "ldap-socket": {
+      "tags": []
+    },
+    "meerkat": {
       "tags": []
     },
     "x500-cli": {
