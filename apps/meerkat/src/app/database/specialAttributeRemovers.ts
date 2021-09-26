@@ -37,8 +37,8 @@ export const removeObjectClass: SpecialAttributeDatabaseRemover = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     // Note that schema validation must occur elsewhere.
-    vertex.dse.objectClass.clear();
-    pendingUpdates.entryUpdate.objectClass = "";
+    // vertex.dse.objectClass.clear();
+    // FIXME: This should only work for auxiliary classes.
 };
 
 export const removeAccessControlScheme: SpecialAttributeDatabaseRemover = async (
@@ -46,7 +46,11 @@ export const removeAccessControlScheme: SpecialAttributeDatabaseRemover = async 
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.entryUpdate.accessControlScheme = null;
+    pendingUpdates.otherWrites.push(ctx.db.entryAccessControlScheme.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
 };
 
 export const removeAdministrativeRole: SpecialAttributeDatabaseRemover = async (
@@ -54,7 +58,11 @@ export const removeAdministrativeRole: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.entryUpdate.administrativeRole = null;
+    pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
 };
 
 export const removeSubtreeSpecification: SpecialAttributeDatabaseRemover = async (

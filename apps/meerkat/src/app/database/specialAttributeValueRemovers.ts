@@ -43,7 +43,12 @@ export const removeObjectClass: SpecialAttributeDatabaseEditor = async (
 ): Promise<void> => {
     // Note that schema validation must occur elsewhere.
     vertex.dse.objectClass.delete(value.value.objectIdentifier.toString());
-    pendingUpdates.entryUpdate.objectClass = Array.from(vertex.dse.objectClass).join(" ");
+    pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            object_class: value.value.objectIdentifier.toString(),
+        },
+    }));
 };
 
 export const removeAccessControlScheme: SpecialAttributeDatabaseEditor = async (
@@ -52,7 +57,12 @@ export const removeAccessControlScheme: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.entryUpdate.accessControlScheme = null;
+    pendingUpdates.otherWrites.push(ctx.db.entryAccessControlScheme.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            accessControlScheme: value.value.objectIdentifier.toString(),
+        },
+    }));
 };
 
 export const removeAdministrativeRole: SpecialAttributeDatabaseEditor = async (
@@ -65,9 +75,12 @@ export const removeAdministrativeRole: SpecialAttributeDatabaseEditor = async (
         return;
     }
     vertex.dse.admPoint.administrativeRole.delete(value.value.objectIdentifier.toString());
-    pendingUpdates.entryUpdate.administrativeRole = ((vertex.dse.admPoint.administrativeRole.size ?? 0) > 0)
-        ? Array.from(vertex.dse.admPoint.administrativeRole).join(" ")
-        : null;
+    pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            administrativeRole: value.value.objectIdentifier.toString(),
+        },
+    }));
 };
 
 export const removeSubtreeSpecification: SpecialAttributeDatabaseEditor = async (

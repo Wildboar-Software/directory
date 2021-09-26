@@ -11,25 +11,6 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import {
-    administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
-import {
-    accessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
-import {
-    subentryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
-import {
-    entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import {
-    prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
-import {
-    ACIItem,
-    _decode_ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import {
     MasterOrShadowAccessPoint,
     _encode_MasterOrShadowAccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
@@ -39,16 +20,13 @@ import {
 import {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
-import writeACI from "../../database/writeACI";
-import writeEntryAttributes from "../../database/writeEntryAttributes";
-import vertexFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
-import { ACIScope, Knowledge } from "@prisma/client";
+import { Knowledge } from "@prisma/client";
 import deleteEntry from "../../database/deleteEntry";
 import { DER } from "asn1-ts/dist/node/functional";
+import createEntry from "../../database/createEntry";
 
 // NOTE: This is for RECEIVING an update to the CP, not creating one.
 // TODO: If context prefix initialization fails, undo all changes.
@@ -115,52 +93,15 @@ async function updateContextPrefix (
             continue;
         }
         immSuprAccessPoints = vertex.accessPoints;
-        const administrativeRoles: OBJECT_IDENTIFIER[] = vertex.admPointInfo
-            ?.filter((attr) => attr.type_.isEqualTo(administrativeRole["&id"]))
-            .flatMap((attr) => [
-                ...attr.values,
-                ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-            ])
-            .map((value) => value.objectIdentifier) ?? [];
-        const accessControlSchemeOIDs: OBJECT_IDENTIFIER[] = vertex.admPointInfo
-            ?.filter((attr) => attr.type_.isEqualTo(accessControlScheme["&id"]))
-            .flatMap((attr) => [
-                ...attr.values,
-                ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-            ])
-            .map((value) => value.objectIdentifier) ?? [];
-        const subentryACIs: ACIItem[] = vertex.admPointInfo
-            ?.filter((attr) => attr.type_.isEqualTo(subentryACI["&id"]))
-            .flatMap((attr) => [
-                ...attr.values,
-                ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-            ])
-            .map((value) => _decode_ACIItem(value)) ?? [];
-        const entryACIs: ACIItem[] = vertex.admPointInfo
-            ?.filter((attr) => attr.type_.isEqualTo(entryACI["&id"]))
-            .flatMap((attr) => [
-                ...attr.values,
-                ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-            ])
-            .map((value) => _decode_ACIItem(value)) ?? [];
         const immSupr: boolean = Boolean(immSuprAccessPoints && last);
-        const createdEntry = await ctx.db.entry.create({
-            data: {
-                rdn: rdnToJson(vertex.rdn),
-                objectClass: "", // FIXME:
-                immediate_superior_id: currentRoot.dse.id,
+        const createdEntry = await createEntry(
+            ctx,
+            currentRoot,
+            vertex.rdn,
+            {
                 glue: (!vertex.admPointInfo && !vertex.accessPoints),
                 rhob: Boolean(vertex.admPointInfo),
-                // admPoint: Boolean(vertex.admPointInfo),
                 immSupr,
-                creatorsName: [],
-                modifiersName: [],
-                administrativeRole: administrativeRoles.length
-                    ? administrativeRoles.map((ar) => ar.toString()).join(" ")
-                    : undefined,
-                accessControlScheme: (accessControlSchemeOIDs.length === 1)
-                    ? accessControlSchemeOIDs.toString()
-                    : undefined,
                 AccessPoint: immSupr
                     ? {
                         createMany: {
@@ -177,70 +118,35 @@ async function updateContextPrefix (
                     }
                     : undefined,
             },
-        });
-        for (const aci of entryACIs) {
-            await writeACI(ctx, createdEntry.id, aci, ACIScope.ENTRY);
-        }
-        for (const aci of subentryACIs) {
-            await writeACI(ctx, createdEntry.id, aci, ACIScope.SUBENTRY);
-        }
-        currentRoot = await vertexFromDatabaseEntry(ctx, currentRoot, createdEntry, true);
-        currentRoot.dse.entryACI = entryACIs;
-        if (currentRoot.dse.admPoint && subentryACIs.length) {
-            currentRoot.dse.admPoint.subentryACI = subentryACIs;
-        }
+            vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
+            [],
+        );
         for (const subentry of (vertex.subentries ?? [])) {
-            const entryACIs_for_subentry: ACIItem[] = subentry.info
-                ?.filter((attr) => attr.type_.isEqualTo(entryACI["&id"]))
-                .flatMap((attr) => [
-                    ...attr.values,
-                    ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-                ])
-                .map((value) => _decode_ACIItem(value)) ?? [];
-            const prescriptiveACIs: ACIItem[] = subentry.info
-                ?.filter((attr) => attr.type_.isEqualTo(prescriptiveACI["&id"]))
-                .flatMap((attr) => [
-                    ...attr.values,
-                    ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-                ])
-                .map((value) => _decode_ACIItem(value)) ?? [];
-            const createdSubentry = await ctx.db.entry.create({
-                data: {
-                    rdn: rdnToJson(subentry.rdn),
-                    objectClass: "", // FIXME:
-                    immediate_superior_id: createdEntry.id,
+            await createEntry(
+                ctx,
+                createdEntry,
+                subentry.rdn,
+                {
                     subentry: true,
-                    creatorsName: [],
-                    modifiersName: [],
                 },
-            });
-            for (const aci of entryACIs_for_subentry) {
-                await writeACI(ctx, createdSubentry.id, aci, ACIScope.ENTRY);
-            }
-            for (const aci of prescriptiveACIs) {
-                await writeACI(ctx, createdSubentry.id, aci, ACIScope.SUBENTRY);
-            }
+                subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                [],
+            );
         }
     }
-    const createdCP = await ctx.db.entry.create({
-        data: {
-            rdn: rdnToJson(newAgreement.rdn),
-            objectClass: "", // FIXME:
-            immediate_superior_id: currentRoot.dse.id,
+    const createdCP = await createEntry(
+        ctx,
+        currentRoot,
+        newAgreement.rdn,
+        {
             cp: true,
             immSupr: false, // This is supposed to be on the superior of this entry.
-            // supr: false, // This is supposed to be on the Root DSE.
             entry: true,
-            // alias: false, // This should be flipped by `writeEntryAttributes()`, if applicable.
-            creatorsName: [],
-            modifiersName: [],
         },
-    });
-    const subr = await vertexFromDatabaseEntry(ctx, currentRoot, createdCP, true);
-    if (mod.immediateSuperiorInfo) {
-        const values = mod.immediateSuperiorInfo.flatMap((attr) => valuesFromAttribute(attr));
-        await writeEntryAttributes(ctx, currentRoot.immediateSuperior!, values);
-    }
+        mod.immediateSuperiorInfo?.flatMap((attr) => valuesFromAttribute(attr)) ?? [],
+        [],
+    );
+
     // This should not be present in a Sup2SubModification.
     // if (sup2sub.entryInfo) {
     //     const values = sup2sub.entryInfo.flatMap((attr) => valuesFromAttribute(attr));
@@ -274,7 +180,7 @@ async function updateContextPrefix (
              * so how could it possibly have shadows at that time?
              */
         ],
-        Boolean(subr.dse.alias),
+        Boolean(createdCP.dse.alias),
         mod.entryInfo,
         undefined,
     );

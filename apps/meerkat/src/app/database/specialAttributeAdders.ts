@@ -101,11 +101,12 @@ export const addObjectClass: SpecialAttributeDatabaseEditor = async (
 ): Promise<void> => {
     // TODO: Block object class "parent" from being added directly.
     // TODO: Automatically add object class "parent" to superior if "child" is added.
-    const newOIDs = [
-        ...Array.from(vertex.dse.objectClass).filter((oc) => (oc.length >= 3)),
-        value.value.objectIdentifier.toString(),
-    ];
-    pendingUpdates.entryUpdate.objectClass = newOIDs.join(" ");
+    pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.create({
+        data: {
+            entry_id: vertex.dse.id,
+            object_class: value.value.objectIdentifier.toString(),
+        },
+    }));
 };
 
 // TODO:
@@ -126,7 +127,12 @@ export const addAccessControlScheme: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.entryUpdate.accessControlScheme = value.value.objectIdentifier.toString();
+    pendingUpdates.otherWrites.push(ctx.db.entryAccessControlScheme.create({
+        data: {
+            entry_id: vertex.dse.id,
+            accessControlScheme: value.value.objectIdentifier.toString(),
+        },
+    }));
 };
 
 // TODO:
@@ -145,10 +151,12 @@ export const addAdministrativeRole: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.entryUpdate.administrativeRole = [
-        ...Array.from(vertex.dse.admPoint?.administrativeRole ?? []),
-        value.value.objectIdentifier.toString(),
-    ].join(" ");
+    pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.create({
+        data: {
+            entry_id: vertex.dse.id,
+            administrativeRole: value.value.objectIdentifier.toString(),
+        },
+    }));
 };
 
 // TODO: All of these.

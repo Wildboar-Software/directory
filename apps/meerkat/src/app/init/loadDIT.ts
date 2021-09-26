@@ -1,8 +1,6 @@
 import type { Context, DIT } from "../types";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
-import {
-    top,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+import { randomBytes } from "crypto";
 
 const ROOT_DSE_NAME = [];
 
@@ -22,39 +20,27 @@ async function loadDIT (
         rootDSE = await ctx.db.entry.create({
             data: {
                 immediate_superior_id: null,
-                rdn: ROOT_DSE_NAME,
                 glue: false,
                 cp: false,
                 entry: false,
-                // alias: false,
                 subr: false,
                 nssr: false,
-                // supr: false,
                 xr: false,
-                // admPoint: false,
                 subentry: false,
                 shadow: false,
                 immSupr: false,
                 rhob: false,
                 sa: false,
                 dsSubentry: false,
-                // familyMember: false,
-                // ditBridge: false,
-                // writeableCopy: false,
                 createdTimestamp: now,
                 modifyTimestamp: now,
-                // deleteTimestamp
+                deleteTimestamp: null,
                 creatorsName: ROOT_DSE_NAME,
                 modifiersName: ROOT_DSE_NAME,
-                // hierarchyLevel
-                // hierarchyBelow
-                // hierarchyParent
-                // hierarchyTop
-                structuralObjectClass: top["&id"].toString(),
-                // accessControlScheme
-                // entryUUID
-                objectClass: top["&id"].toString(),
-                // administrativeRole
+                uniqueIdentifier: Buffer.concat([
+                    Buffer.from([ 0 ]),
+                    randomBytes(8),
+                ]),
             },
         });
         ctx.log.warn(`Created Root DSE ${rootDSE.entryUUID}.`);

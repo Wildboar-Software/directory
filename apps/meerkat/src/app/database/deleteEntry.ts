@@ -9,11 +9,6 @@ async function deleteEntry (
         return; // Protects us from accidentally deleting the Root DSE.
     }
     await ctx.db.$transaction([
-        ctx.db.contextValue.deleteMany({
-            where: {
-                entry_id: entry.dse.id,
-            },
-        }),
         ctx.db.attributeValue.deleteMany({
             where: {
                 entry_id: entry.dse.id,

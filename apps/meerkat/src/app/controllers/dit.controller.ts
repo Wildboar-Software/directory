@@ -9,6 +9,7 @@ import { OBJECT_IDENTIFIER, ASN1Element, ASN1TagClass, ASN1UniversalType } from 
 import type {
     RelativeDistinguishedName
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+import getRDNFromEntryId from "../database/getRDNFromEntryId";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import { id_ar_accessControlSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
 import { id_ar_accessControlInnerArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
@@ -25,7 +26,6 @@ import { id_sc_serviceAdminSubentry } from "@wildboar/x500/src/lib/modules/Infor
 import { id_sc_pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-pwdAdminSubentry.va";
 import { id_oc_parent } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
 import { id_oc_child } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
-import rdnFromJson from "../x500/rdnFromJson";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import readEntryAttributes from "../database/readEntryAttributes";
 import deleteEntry from "../database/deleteEntry";
@@ -266,7 +266,7 @@ export class DitController {
             })
             : undefined;
         const superiorUUID: string | undefined = superior?.entryUUID;
-        const rdn = rdnFromJson(entry.rdn as Record<string, string>);
+        const rdn: RelativeDistinguishedName = await getRDNFromEntryId(this.ctx, entry.id);
         const vertex = await vertexFromDatabaseEntry(this.ctx, undefined, entry, true);
         const {
             userAttributes,
@@ -308,10 +308,18 @@ export class DitController {
                 ? "(Empty RDN)"
                 : escape(encodeRDN(this.ctx, rdn)),
             flags: printFlags(vertex),
-            objectClasses: entry.objectClass.split(" ").map((oc) => ({
-                oid: oc,
-                name: this.ctx.objectClasses.get(oc)?.ldapNames?.[0],
-            })),
+            objectClasses: (await this.ctx.db.entryObjectClass.findMany({
+                where: {
+                    entry_id: entry.id,
+                },
+                select: {
+                    object_class: true,
+                },
+            }))
+                .map(({ object_class: oc }) => ({
+                    oid: oc,
+                    name: this.ctx.objectClasses.get(oc)?.ldapNames?.[0],
+                })),
             createdTimestamp: entry.createdTimestamp.toISOString(),
             modifyTimestamp: entry.modifyTimestamp.toISOString(),
             deleteTimestamp: entry.deleteTimestamp?.toISOString(),
@@ -339,7 +347,8 @@ export class DitController {
         let current: Entry | null = soughtEntry;
         const currentDN: DistinguishedName = [];
         while (current?.immediate_superior_id) {
-            currentDN.unshift(rdnFromJson(current.rdn as Record<string, string>));
+            const rdn = await getRDNFromEntryId(this.ctx, current.id);
+            currentDN.unshift(rdn);
             current = await this.ctx.db.entry.findUnique({
                 where: {
                     id: current.immediate_superior_id,

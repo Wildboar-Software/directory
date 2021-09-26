@@ -880,9 +880,31 @@ async function modifyDN (
         },
         data: {
             immediate_superior_id: superior.dse.id,
-            rdn: rdnToJson(newRDN),
+            // rdn: rdnToJson(newRDN),
         },
     });
+    await ctx.db.$transaction([
+        ctx.db.entry.update({
+            where: {
+                id: target.dse.id,
+            },
+            data: {
+                immediate_superior_id: superior.dse.id,
+            },
+        }),
+        ctx.db.rDN.deleteMany({
+            where: {
+                entry_id: target.dse.id,
+            },
+        }),
+        ctx.db.rDN.createMany({
+            data: newRDN.map((atav) => ({
+                entry_id: target.dse.id,
+                type: atav.type_.toString(),
+                value: Buffer.from(atav.value.toBytes()),
+            })),
+        }),
+    ]);
     target.dse.rdn = data.newRDN; // Update the RDN.
     if (data.deleteOldRDN) {
         for (const oldATAV of oldRDN) {

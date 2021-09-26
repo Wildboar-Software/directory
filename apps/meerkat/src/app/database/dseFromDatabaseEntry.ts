@@ -32,9 +32,6 @@ import {
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import type {
-    AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import attributesFromValues from "../x500/attributesFromValues";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
@@ -44,6 +41,8 @@ import {
     _decode_DitBridgeKnowledge,
     _decode_MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
+import getRDNFromEntryId from "./getRDNFromEntryId";
+import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
     const el = new BERElement();
@@ -68,17 +67,20 @@ async function dseFromDatabaseEntry (
         ? acis.filter((aci) => aci.scope === ACIScope.PRESCRIPTIVE).map(toACIItem)
         : [];
     const subentryACI = acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem);
+    const rdn = await getRDNFromEntryId(ctx, dbe.id);
+    const objectClasses = await ctx.db.entryObjectClass.findMany({
+        where: {
+            entry_id: dbe.id,
+        },
+        select: {
+            object_class: true,
+        },
+    });
     const ret: DSE = {
         id: dbe.id,
         uuid: dbe.entryUUID,
-        rdn: (dbe.rdn && (typeof dbe.rdn === "object") && !(Array.isArray(dbe.rdn)))
-            ? rdnFromJson(dbe.rdn as Record<string, string>)
-            : [],
-        objectClass: new Set(
-            dbe.objectClass
-                .split(" ")
-                .filter((oid) => (oid.length >= 3))
-        ),
+        rdn,
+        objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
         creatorsName: {
             rdnSequence: Array.isArray(dbe.creatorsName)
                 ? dbe.creatorsName.map((rdn: Record<string, string>) => rdnFromJson(rdn))
@@ -92,14 +94,6 @@ async function dseFromDatabaseEntry (
         createdTimestamp: dbe.createdTimestamp,
         modifyTimestamp: dbe.modifyTimestamp,
         entryACI,
-        // hierarchy: ( // FIXME: Depends on jsonToDN()
-        //     dbe.hierarchyTop !== undefined
-        //     && dbe.hierarchyLevel !== undefined
-        // )
-        //     ? {
-        //         top: dbe.hierarchyTop,
-        //     }
-        //     : undefined,
     };
 
     if (dbe.immediate_superior_id === null) { // root and possibly supr
@@ -204,11 +198,23 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    if (Array.isArray(dbe.aliased_entry_dn)) {
-        ret.alias = {
-            aliasedEntryName: dbe.aliased_entry_dn
-                .map((rdn: Record<string, string>) => rdnFromJson(rdn)),
-        };
+    if (ret.objectClass.has(alias["&id"].toString())) {
+        const aliasedEntry = await ctx.db.alias.findUnique({
+            where: {
+                alias_entry_id: dbe.id,
+            },
+            select: {
+                aliased_entry_name: true,
+            },
+        });
+        if (Array.isArray(aliasedEntry?.aliased_entry_name)) {
+            ret.alias = {
+                aliasedEntryName: aliasedEntry!.aliased_entry_name
+                    .map((rdn: Record<string, string>) => rdnFromJson(rdn)),
+            };
+        } else {
+            ctx.log.warn("Alias entry found without corresponding alias attribute.");
+        }
     }
 
     if (dbe.subr) {
@@ -264,11 +270,27 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    if (dbe.administrativeRole?.length) {
+    const administrativeRoles = await ctx.db.entryAdministrativeRole.findMany({
+        where: {
+            entry_id: dbe.id,
+        },
+        select: {
+            administrativeRole: true,
+        },
+    });
+    if (administrativeRoles.length > 0) {
+        const accessControlScheme = await ctx.db.entryAccessControlScheme.findUnique({
+            where: {
+                entry_id: dbe.id,
+            },
+            select: {
+                accessControlScheme: true,
+            },
+        });
         ret.admPoint = {
-            administrativeRole: new Set(dbe.administrativeRole),
-            accessControlScheme: dbe.accessControlScheme
-                ? ObjectIdentifier.fromString(dbe.accessControlScheme)
+            administrativeRole: new Set(administrativeRoles.map((ar) => ar.administrativeRole)),
+            accessControlScheme: accessControlScheme
+                ? ObjectIdentifier.fromString(accessControlScheme.accessControlScheme)
                 : undefined,
             subentryACI,
         };
@@ -352,9 +374,19 @@ async function dseFromDatabaseEntry (
         ret.dsSubentry = true;
     }
 
-    if (!dbe.aliased_entry_dn && !dbe.subentry) {
+    if (!ret.alias && !ret.subentry) {
+        const collectiveExclusions = await ctx.db.entryCollectiveExclusion.findMany({
+            where: {
+                entry_id: dbe.id,
+            },
+            select: {
+                collectiveExclusion: true,
+            }
+        });
         ret.entry = {
-            collectiveExclusions: new Set(dbe.collectiveExclusions?.split(" ") ?? []),
+            collectiveExclusions: new Set(
+                collectiveExclusions.map((ce) => ce.collectiveExclusion),
+            ),
         };
     }
 

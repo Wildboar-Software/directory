@@ -90,28 +90,14 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
                 },
             }),
             // DSE types that are calculated.
-            alias: await ctx.db.entry.count({
-                where: {
-                    deleteTimestamp: null,
-                    aliased_entry_dn: {
-                        not: null,
-                    },
-                },
+            alias: await ctx.db.alias.count(),
+            admPoint: await ctx.db.entryAdministrativeRole.count({
+                distinct: ["entry_id"],
             }),
-            admPoint: await ctx.db.entry.count({
-                where: {
-                    deleteTimestamp: null,
-                    administrativeRole: {
-                        not: null,
-                    },
-                },
+            objectClasses: await ctx.db.entryObjectClass.groupBy({
+                by: ["object_class"],
+                _count: true,
             }),
-            // TODO: Blocked on making object class a separate table.
-            // objectClasses: await ctx.db.entry.count({
-            //     where: {
-            //         deleteTimestamp: null,
-            //     },
-            // }),
         },
         values: {
             total: await ctx.db.attributeValue.count(),

@@ -18,13 +18,13 @@ type Names = String
 // shall NOT be a part of this model. They should only be kept in the subentry,
 // just like collective attributes.
 model Entry {
-    id                    Int     @id @default(autoincrement())
-    rdn                   Json // { "2.5.4.3": "Jonathan Wilbur", "O": "Wildboar Software" }
+    id                    Int    @id @default(autoincrement())
+    // rdn                   Json // { "2.5.4.3": "Jonathan Wilbur", "O": "Wildboar Software" }
     immediate_superior_id Int?
-    immediate_superior    Entry?  @relation(fields: [immediate_superior_id], references: [id])
-    objectClass           OIDs // OIDs
-    commonName            String? // Multi-valued, but here just for subentries.
-    aliased_entry_dn      Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    immediate_superior    Entry? @relation(fields: [immediate_superior_id], references: [id])
+    // objectClass           OIDs // OIDs
+    // commonName            String? // Multi-valued, but here just for subentries.
+    // aliased_entry_dn      Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
 
     // DSE Types
     //   root          Boolean @default(false) // Indicated by having no immediate superior.
@@ -48,17 +48,17 @@ model Entry {
     //   writeableCopy Boolean @default(false) // Not used.
 
     // Single-valued attributes
-    createdTimestamp         DateTime  @default(now())
-    modifyTimestamp          DateTime  @updatedAt
-    deleteTimestamp          DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
-    creatorsName             Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    modifiersName            Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    hierarchyLevel           Int?
-    hierarchyBelow           Boolean?
-    hierarchyParent          Int? // TODO: Make this a foreign key
-    hierarchyTop             Int? // TODO: Make this a foreign key
-    structuralObjectClass    String?
-    accessControlScheme      String?
+    createdTimestamp DateTime  @default(now())
+    modifyTimestamp  DateTime  @updatedAt
+    deleteTimestamp  DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
+    creatorsName     Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    modifiersName    Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+    // hierarchyLevel           Int?
+    // hierarchyBelow           Boolean?
+    // hierarchyParent          Int?
+    // hierarchyTop             Int?
+    // structuralObjectClass OID? // Calculate on demand.
+    // accessControlScheme   OID?
     // intEmail                 String?
     // jid                      String?
     // objectIdentifier         String?
@@ -78,19 +78,15 @@ model Entry {
     // epcInUrn                 String?
     // contentType              OID? // From PkiPmiWrapper
     // messageDigest            Bytes? // From PkiPmiWrapper
-    attribute_integrity_info Bytes? // From EnhancedSecurity.attributeIntegrityInfo
-
-    // Not exactly single-valued, but do not need a separate table:
-    administrativeRole OIDs?
-    collectiveExclusions OIDs?
+    // attribute_integrity_info Bytes? // From EnhancedSecurity.attributeIntegrityInfo
 
     // Technically a userApplications attribute, but still has operational uses.
     uniqueIdentifier Bytes? // DER-encoded bitstring value (not tag and length bytes)
 
     // LDAP operational attributes
     // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
-    governingStructureRule Int?
-    entryUUID              String @default(uuid()) // @db.Uuid
+    // governingStructureRule Int? // This shall be calculated instead of stored.
+    entryUUID String @default(uuid()) // @db.Uuid
     // dc                     String? // https://datatracker.ietf.org/doc/html/rfc4519
     // preferredDeliveryMethod
 
@@ -113,7 +109,6 @@ model Entry {
     AttributeTypeDescriptionUse AttributeTypeDescriptionUse[]
     ObjectClassDescriptionUsage ObjectClassDescriptionUsage[]
     AttributeValue              AttributeValue[]
-    ContextValue                ContextValue[]
     ContextDescriptionUse       ContextDescriptionUse[]
     SearchRuleUse               SearchRuleUse[]
     AccessPoint                 AccessPoint[]
@@ -137,8 +132,18 @@ model Entry {
     PwdMinTimeInHistory         PwdMinTimeInHistory[]
     PwdHistorySlots             PwdHistorySlots[]
     PwdRecentlyExpiredDuration  PwdRecentlyExpiredDuration[]
+    Password                    Password[]
+    RDN                         RDN[]
+    EntryObjectClass            EntryObjectClass[]
+    AliasEntry                  Alias[]                       @relation("alias_entry")
+    AliasedEntry                Alias[]                       @relation("aliased_entry")
+    EntryAdministrativeRole     EntryAdministrativeRole[]
+    EntryCollectiveExclusion    EntryCollectiveExclusion[]
+    EntryAccessControlScheme EntryAccessControlScheme[]
+
     @@unique([entryUUID])
-    Password Password[]
+    @@unique([uniqueIdentifier])
+    @@index([immediate_superior_id, deleteTimestamp, subentry])
 }
 
 // model UtmCoordinate {
@@ -172,6 +177,7 @@ model PwdModifyEntryAllowed {
     entry_id Int
     entry    Entry   @relation(fields: [entry_id], references: [id])
     value    Boolean
+
     @@unique([entry_id])
 }
 
@@ -180,6 +186,7 @@ model PwdChangeAllowed {
     entry_id Int
     entry    Entry   @relation(fields: [entry_id], references: [id])
     value    Boolean
+
     @@unique([entry_id])
 }
 
@@ -188,6 +195,7 @@ model PwdMaxAge {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -196,6 +204,7 @@ model PwdExpiryAge {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -204,6 +213,7 @@ model PwdMinLength {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -212,6 +222,7 @@ model NoDictionaryWords {
     entry_id Int
     entry    Entry   @relation(fields: [entry_id], references: [id])
     value    Boolean
+
     @@unique([entry_id])
 }
 
@@ -220,6 +231,7 @@ model NoPersonNames {
     entry_id Int
     entry    Entry   @relation(fields: [entry_id], references: [id])
     value    Boolean
+
     @@unique([entry_id])
 }
 
@@ -228,6 +240,7 @@ model NoGeographicalNames {
     entry_id Int
     entry    Entry   @relation(fields: [entry_id], references: [id])
     value    Boolean
+
     @@unique([entry_id])
 }
 
@@ -250,6 +263,7 @@ model PwdExpiryWarning {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -258,6 +272,7 @@ model PwdGraces {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -266,6 +281,7 @@ model PwdFailureDuration {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -274,6 +290,7 @@ model PwdLockoutDuration {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -282,6 +299,7 @@ model PwdMaxFailures {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -290,6 +308,7 @@ model PwdMaxTimeInHistory {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -298,6 +317,7 @@ model PwdMinTimeInHistory {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -306,6 +326,7 @@ model PwdHistorySlots {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -314,6 +335,7 @@ model PwdRecentlyExpiredDuration {
     entry_id Int
     entry    Entry @relation(fields: [entry_id], references: [id])
     value    Int
+
     @@unique([entry_id])
 }
 
@@ -325,17 +347,17 @@ model PwdRecentlyExpiredDuration {
 //     ... }
 
 model AttributeValue {
-    id          Int     @id @default(autoincrement())
-    entry_id    Int
-    entry       Entry   @relation(fields: [entry_id], references: [id])
-    type        String // OID
-    tag_class   Int     @db.SmallInt
-    constructed Boolean
-    tag_number  Int
-    ber         Bytes
-    jer         Json?
-    sort_key    BigInt? @db.UnsignedBigInt
- // A number that sorts the values according to the default ordering rule.
+    id                         Int     @id @default(autoincrement())
+    entry_id                   Int
+    entry                      Entry   @relation(fields: [entry_id], references: [id])
+    type                       String // OID
+    tag_class                  Int     @db.SmallInt
+    constructed                Boolean
+    tag_number                 Int
+    ber                        Bytes
+    jer                        Json?
+    sort_key                   BigInt? @db.UnsignedBigInt
+    // A number that sorts the values according to the default ordering rule.
     // attributeValueSecurityLabelContext
     // At most one security label context can be assigned to an attribute value
     security_label             Bytes?
@@ -344,15 +366,13 @@ model AttributeValue {
     privacy_mark               String?
 
     // Not part of a specification, but still usable
-    ContextValue    ContextValue[]
+    ContextValue ContextValue[]
     @@index([entry_id])
     @@index([type, sort_key])
 }
 
 model ContextValue {
     id          Int            @id @default(autoincrement())
-    entry_id    Int
-    entry       Entry          @relation(fields: [entry_id], references: [id])
     value_id    Int
     value       AttributeValue @relation(fields: [value_id], references: [id])
     type        OID
@@ -447,7 +467,7 @@ model AccessPoint {
 model NetworkServiceAccessPoint {
     id              Int         @id @default(autoincrement())
     ipv4            String? // @db.Inet
-    tcp_port        Int?        // @db.SmallUnsignedInt
+    tcp_port        Int? // @db.SmallUnsignedInt
     url             String?
     bytes           Bytes
     access_point_id Int
@@ -665,26 +685,26 @@ enum AttributeUsage {
 }
 
 model AttributeTypeDescription {
-    id                          Int                           @id @default(autoincrement())
-    identifier                  OID
-    name                        Names
-    description                 String?
-    obsolete                    Boolean                       @default(false)
-    derivation                  OID?
-    equalityMatch               OID?
-    orderingMatch               OID?
-    substringsMatch             OID?
-    attributeSyntax             String?
-    multiValued                 Boolean                       @default(true)
-    collective                  Boolean                       @default(false)
-    userModifiable              Boolean                       @default(true)
-    application                 AttributeUsage                @default(USER_APPLICATIONS)
+    id              Int            @id @default(autoincrement())
+    identifier      OID
+    name            Names
+    description     String?
+    obsolete        Boolean        @default(false)
+    derivation      OID?
+    equalityMatch   OID?
+    orderingMatch   OID?
+    substringsMatch OID?
+    attributeSyntax String?
+    multiValued     Boolean        @default(true)
+    collective      Boolean        @default(false)
+    userModifiable  Boolean        @default(true)
+    application     AttributeUsage @default(USER_APPLICATIONS)
 
     // Fields not present in AttributeTypeDescription
-    ldapSyntax                  OID?
-    ldapNames                   Names?
-    ldapDescription             String?
-    dummy                       Boolean             @default(false)
+    ldapSyntax      OID?
+    ldapNames       Names?
+    ldapDescription String?
+    dummy           Boolean @default(false)
 
     AttributeTypeDescriptionUse AttributeTypeDescriptionUse[]
     @@unique([identifier])
@@ -699,17 +719,17 @@ model AttributeTypeDescriptionUse {
 }
 
 model ObjectClassDescription {
-    id                          Int                           @id @default(autoincrement())
-    identifier                  String // OID
-    name                        Names
-    description                 String?
-    obsolete                    Boolean                       @default(false)
-    subclassOf                  OIDs
-    kind                        ObjectClassKind               @default(STRUCTURAL)
-    mandatories                 OIDs
-    optionals                   OIDs
-    ldapNames                   Names?
-    ldapDescription             String?
+    id              Int             @id @default(autoincrement())
+    identifier      String // OID
+    name            Names
+    description     String?
+    obsolete        Boolean         @default(false)
+    subclassOf      OIDs
+    kind            ObjectClassKind @default(STRUCTURAL)
+    mandatories     OIDs
+    optionals       OIDs
+    ldapNames       Names?
+    ldapDescription String?
 
     ObjectClassDescriptionUsage ObjectClassDescriptionUsage[]
     @@unique([identifier])
@@ -732,6 +752,7 @@ model ContextDescription {
     syntax                String
     assertionSyntax       String?
     ContextDescriptionUse ContextDescriptionUse[]
+
     @@unique([identifier])
 }
 
@@ -928,9 +949,69 @@ model WhitelistedOperationalBinding {
 }
 
 model NamedObjectIdentifier {
-    id                 Int                          @id @default(autoincrement())
-    oid OID
+    id   Int    @id @default(autoincrement())
+    oid  OID
     name String @db.VarChar(128)
+
     @@unique([oid])
     @@index([name])
+}
+
+model RDN {
+    id       BigInt  @id @default(autoincrement())
+    entry_id Int
+    entry    Entry   @relation(fields: [entry_id], references: [id])
+    type     OID
+    value    Bytes
+    str      String?
+
+    @@unique([entry_id, type])
+}
+
+model EntryObjectClass {
+    id           BigInt @id @default(autoincrement())
+    entry_id     Int
+    entry        Entry  @relation(fields: [entry_id], references: [id])
+    object_class OID
+
+    @@unique([entry_id, object_class])
+}
+
+model Alias {
+    id                 Int    @id @default(autoincrement())
+    alias_entry_id     Int
+    alias_entry        Entry  @relation(name: "alias_entry", fields: [alias_entry_id], references: [id])
+    aliased_entry_id   Int?
+    aliased_entry      Entry? @relation(name: "aliased_entry", fields: [aliased_entry_id], references: [id])
+    aliased_entry_name Json?
+
+    @@unique([alias_entry_id])
+    @@index([aliased_entry_id])
+}
+
+model EntryAdministrativeRole {
+    id                 Int   @id @default(autoincrement())
+    entry_id           Int
+    entry              Entry @relation(fields: [entry_id], references: [id])
+    administrativeRole OID
+
+    @@unique([entry_id, administrativeRole])
+}
+
+model EntryCollectiveExclusion {
+    id                  Int   @id @default(autoincrement())
+    entry_id            Int
+    entry               Entry @relation(fields: [entry_id], references: [id])
+    collectiveExclusion OID
+
+    @@unique([entry_id, collectiveExclusion])
+}
+
+model EntryAccessControlScheme {
+    id                  Int   @id @default(autoincrement())
+    entry_id            Int
+    entry               Entry @relation(fields: [entry_id], references: [id])
+    accessControlScheme OID
+
+    @@unique([entry_id])
 }
