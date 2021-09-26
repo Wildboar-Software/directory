@@ -1,6 +1,10 @@
 import type { Context } from "../types";
 import { Controller, Get, Post, Render, Inject, Param, Res } from "@nestjs/common";
 import type { Response } from "express";
+import * as fs from "fs/promises";
+import * as path from "path";
+
+const conformancePath = path.join(__dirname, "assets", "static", "conformance.md");
 
 @Controller()
 export class HomeController {
@@ -15,6 +19,15 @@ export class HomeController {
     @Render('index')
     index () {
         return {};
+    }
+
+    @Get("/conformance")
+    @Render("markdown")
+    public async conformance () {
+        return {
+            title: "Conformance",
+            content: await fs.readFile(conformancePath, { encoding: "utf-8" }),
+        };
     }
 
     @Get("/ob")

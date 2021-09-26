@@ -205,7 +205,7 @@ async function convertVertexToHTML (ctx: Context, vertex: Vertex): Promise<strin
     return (
         "<li>"
         + "<span>"
-        + `<a href="/dit/dse/${vertex.dse.uuid}">${stringifiedRDN}</a>&nbsp;`
+        + `<a href="/dsait/dse/${vertex.dse.uuid}">${stringifiedRDN}</a>&nbsp;`
         + printFlags(vertex)
         + "</span>"
         + "<ul>"
@@ -237,7 +237,7 @@ export class DitController {
         @Inject("CONTEXT") readonly ctx: Context,
     ) {}
 
-    @Get("/dit/tree")
+    @Get("/dsait/tree")
     @Render('tree')
     async tree () {
         return {
@@ -245,8 +245,8 @@ export class DitController {
         };
     }
 
-    @Get("/dit/dse/:id")
-    @Render("dit_dse_id")
+    @Get("/dsait/dse/:id")
+    @Render("dsait_dse_id")
     async dse_id (
         @Param("id") id: string,
     ) {
@@ -323,7 +323,7 @@ export class DitController {
         };
     }
 
-    @Post("/dit/dse/:id/delete")
+    @Post("/dsait/dse/:id/delete")
     async delete_dse_id (
         @Param("id") id: string,
         @Res() res: Response,
@@ -350,6 +350,6 @@ export class DitController {
         if (entry) {
             await deleteEntry(this.ctx, entry);
         }
-        res.redirect("/dit/tree");
+        res.redirect("/dsait/tree");
     }
 }

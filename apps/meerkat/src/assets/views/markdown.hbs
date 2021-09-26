@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>{{ title }}</title>
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            @media screen and (prefers-color-scheme: light) {
+                body {
+                    background-color: white;
+                    color: black;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>{{ title }}</h1>
+        <hr />
+        <nav><a href="/">Back to Home</a></nav>
+        <hr />
+        <pre>{{ content }}</pre>
+    </body>
+</html>
