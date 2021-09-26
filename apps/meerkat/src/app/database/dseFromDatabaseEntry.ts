@@ -81,6 +81,13 @@ async function dseFromDatabaseEntry (
         uuid: dbe.entryUUID,
         rdn,
         objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
+        uniqueIdentifier: dbe.uniqueIdentifier
+            ? (() => {
+                const el = new BERElement();
+                el.fromBytes(dbe.uniqueIdentifier);
+                return el.bitString;
+            })()
+            : undefined,
         creatorsName: {
             rdnSequence: Array.isArray(dbe.creatorsName)
                 ? dbe.creatorsName.map((rdn: Record<string, string>) => rdnFromJson(rdn))

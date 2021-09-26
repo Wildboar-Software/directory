@@ -545,3 +545,7 @@ export const removeUserPwd: SpecialAttributeDatabaseEditor = async (
         },
     }));
 };
+
+export const removeUniqueIdentifier: SpecialAttributeDatabaseEditor = async (): Promise<void> => {
+    // This function intentionally does nothing. The unique identifier should not be changed.
+};

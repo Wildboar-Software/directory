@@ -788,3 +788,7 @@ export const addUserPwd: SpecialAttributeDatabaseEditor = async (
         throw new Error();
     }
 };
+
+export const addUniqueIdentifier: SpecialAttributeDatabaseEditor = async (): Promise<void> => {
+    // This function intentionally does nothing. The unique identifier should not be changed.
+};

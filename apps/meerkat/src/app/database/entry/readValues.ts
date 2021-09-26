@@ -57,6 +57,7 @@ import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/Passw
 import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
@@ -71,6 +72,7 @@ const userAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseRe
     [ objectClass["&id"]!.toString(), readers.readObjectClass ],
     [ userPwd["&id"]!.toString(), readers.readUserPwd ],
     [ userPassword["&id"]!.toString(), readers.readUserPassword ],
+    [ uniqueIdentifier["&id"].toString(), readers.readUniqueIdentifier ], // Has significance for Basic Access Control
 ]);
 
 const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseReader> = new Map([

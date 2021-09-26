@@ -44,6 +44,8 @@ import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/Passw
 import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
+
 
 // Attribute Adders
 import * as adders from "../specialAttributeAdders";
@@ -88,6 +90,8 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     // administerPassword and changePassword operations.
     [ userPwd["&id"]!.toString(), adders.addUserPwd ],
     [ userPassword["&id"]!.toString(), adders.addUserPassword ],
+
+    [ uniqueIdentifier["&id"].toString(), adders.addUniqueIdentifier ], // Has significance for Basic Access Control
 ]);
 
 export

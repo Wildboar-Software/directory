@@ -8,6 +8,7 @@ import { ASN1UniversalType, BERElement, DERElement, ObjectIdentifier } from "asn
 import {
     DER,
     _encodeObjectIdentifier,
+    _encodeBitString,
     _encodeGeneralizedTime,
     _encodeInteger,
     _encodeBoolean,
@@ -51,6 +52,7 @@ import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/Passw
 import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
 
 export const readObjectClass: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
@@ -728,6 +730,23 @@ export const readUserPwd: SpecialAttributeDatabaseReader = async (
             {
                 id: userPassword["&id"],
                 value: _encode_UserPwd(pwd, DER),
+                contexts: new Map(),
+            },
+        ];
+    } else {
+        return [];
+    }
+};
+
+export const readUniqueIdentifier: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (vertex.dse.uniqueIdentifier) {
+        return [
+            {
+                id: uniqueIdentifier["&id"],
+                value: _encodeBitString(vertex.dse.uniqueIdentifier, DER),
                 contexts: new Map(),
             },
         ];

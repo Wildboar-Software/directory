@@ -31,7 +31,6 @@ const commonPrefix: number[] = [
     0x00, 0x72, 0x87, 0x22, // The IDI
 ];
 
-// TODO: Actually use this.
 export
 async function saveAccessPoint (
     ctx: Context,

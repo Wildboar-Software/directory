@@ -339,6 +339,7 @@ export
 interface DSE {
     id: number; // Database primary key ID.
     uuid: UUID;
+    uniqueIdentifier?: BIT_STRING;
     rdn: RelativeDistinguishedName;
     objectClass: Set<IndexableOID>;
     hierarchy?: HierarchyInfo;

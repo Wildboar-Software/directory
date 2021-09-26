@@ -42,6 +42,7 @@ import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/Passw
 import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
 
 // Attribute Removers
 import * as removers from "../specialAttributeRemovers";
@@ -85,6 +86,8 @@ const specialAttributeDatabaseRemovers: Map<IndexableOID, SpecialAttributeDataba
 
     [ userPwd["&id"]!.toString(), removers.removeUserPwd ],
     [ userPassword["&id"]!.toString(), removers.removeUserPassword ],
+
+    [ uniqueIdentifier["&id"].toString(), removers.removeUniqueIdentifier ], // Has significance for BAC
 ]);
 
 export

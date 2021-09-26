@@ -129,6 +129,7 @@ import { DER } from "asn1-ts/dist/node/functional";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import accessPointToNSAPStrings from "../x500/accessPointToNSAPStrings";
+import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
 
 function namingViolationErrorData (
     ctx: Context,
@@ -375,7 +376,9 @@ async function addEntry (
             ),
         );
     }
-
+    if (immediateSuperior.dse.nssr) {
+        await checkIfNameIsAlreadyTakenInNSSR(ctx, immediateSuperior.dse.nssr?.nonSpecificKnowledge ?? [], targetDN);
+    }
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         throw new errors.ServiceError(
             "Could not complete operation in time.",

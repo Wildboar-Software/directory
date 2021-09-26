@@ -135,6 +135,7 @@ import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -739,132 +740,7 @@ async function modifyDN (
         && superior.dse.nssr
     ) { // Continue at step 5.
         // Follow instructions in 19.1.5. These are the only steps unique to this DSE type.
-        for (const nsk of superior.dse.nssr?.nonSpecificKnowledge ?? []) {
-            const [ masters ] = splitIntoMastersAndShadows(nsk);
-            // TODO: Use only IDM endpoints.
-            for (const accessPoint of masters) {
-                const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, undefined);
-                if (!client) {
-                    continue;
-                }
-                const serviceControlOptions: Uint8ClampedArray = new Uint8ClampedArray(5);
-                serviceControlOptions[ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
-                const readArg: ReadArgument = {
-                    unsigned: new ReadArgumentData(
-                        {
-                            rdnSequence: destinationDN,
-                        },
-                        new EntryInformationSelection(
-                            {
-                                select: [ objectClass["&id"] ],
-                            },
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                        ),
-                        undefined,
-                        [],
-                        new ServiceControls(
-                            serviceControlOptions,
-                            undefined,
-                            undefined, // TODO:
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                        ),
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            chainedRead["&operationCode"],
-                        ),
-                        undefined, // TODO:
-                        new OperationProgress(
-                            OperationProgress_nameResolutionPhase_completed,
-                            undefined,
-                        ),
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                    ),
-                };
-                const chained: ChainedArgument = new ChainedArgument(
-                    new ChainingArguments(
-                        undefined, // TODO:
-                        undefined,
-                        new OperationProgress(
-                            OperationProgress_nameResolutionPhase_proceeding,
-                            undefined,
-                        ),
-                        [],
-                        undefined,
-                        undefined,
-                        undefined,
-                        ReferenceType_nonSpecificSubordinate,
-                        undefined,
-                        undefined, // TODO:
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            chainedRead["&operationCode"],
-                        ),
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                    ),
-                    _encode_ReadArgument(readArg, DER),
-                );
-                try {
-                    const response = await client.writeOperation({
-                        opCode: chainedRead["&operationCode"]!,
-                        argument: _encode_ChainedArgument(chained, DER),
-                    });
-                    if ("result" in response) {
-                        throw new errors.UpdateError(
-                            "Entry already exists (among an NSSR).",
-                            new UpdateErrorData(
-                                UpdateProblem_entryAlreadyExists,
-                                undefined,
-                                [],
-                                createSecurityParameters(
-                                    ctx,
-                                    conn.boundNameAndUID?.dn,
-                                    undefined,
-                                    updateError["&errorCode"],
-                                ),
-                                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                undefined,
-                                undefined,
-                            ),
-                        );
-                    } else {
-                        break; // Breaks the inner for loop.
-                    }
-                } catch (e) {
-                    ctx.log.warn(`Failed to access master access point: ${e}`);
-                    continue;
-                }
-            }
-        }
-        // If we made it out of this for loop, that means we found no already existing entry among the other DSAs.
+        await checkIfNameIsAlreadyTakenInNSSR(ctx, superior.dse.nssr.nonSpecificKnowledge ?? [], destinationDN);
     }
 
     // TODO: Name schema validation.
