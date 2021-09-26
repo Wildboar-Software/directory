@@ -1,6 +1,8 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Vertex, IndexableOID, ANY } from "../types";
+import type { Context, DIT, Vertex } from "../types";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import readChildren from "../dit/readChildren";
+import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 
 // TODO: Return the number of RDNs that matched, whether aliases were derefed.
 // TODO: Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
@@ -23,14 +25,17 @@ async function findEntry (
     if (!currentVertex) {
         return undefined;
     }
-    const children = await readChildren(ctx, dit);
     if ((currentVertex.dse.rdn.length === 0) && (dn.length === 0)) {
         return currentVertex;
     }
+    const children = await readChildren(ctx, dit); // TODO: Pagination.
     if (currentVertex.dse.rdn.length === 0) { // Root DSE, which will not match.
-        return children // So we start the search with its children.
-            .map((child) => findEntry(ctx, child, dn, derefAliases))
-            .find((e) => e);
+        for (const child of children) {
+            const found = await findEntry(ctx, child, dn, derefAliases);
+            if (found) {
+                return found;
+            }
+        }
     }
     // To minimize modification by reference.
     const query: DistinguishedName = [ ...dn ];
@@ -41,25 +46,12 @@ async function findEntry (
     if (queriedRDN.length !== dit.dse.rdn.length) {
         return undefined;
     }
-    const ditRDN: Map<IndexableOID, ANY> = new Map(dit.dse.rdn.map((atav) => [ atav.type_.toString(), atav.value ]));
-    const everyATAVMatched: boolean = queriedRDN.every((atav) => {
-        const TYPE_OID: string = atav.type_.toString();
-        const spec = ctx.attributes.get(TYPE_OID);
-        if (!spec) {
-            return false;
-        }
-        const matcher = spec.namingMatcher;
-        if (!matcher) {
-            return false;
-        }
-        const ditValue = ditRDN.get(TYPE_OID);
-        if (!ditValue) {
-            return false;
-        }
-        const queriedValue = atav.value;
-        return matcher(queriedValue, ditValue);
-    });
-    if (!everyATAVMatched) {
+    const rdnMatched = compareRDN(
+        queriedRDN,
+        dit.dse.rdn,
+        (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
+    );
+    if (!rdnMatched) {
         return undefined;
     }
     if (query.length === 0) {
@@ -69,9 +61,12 @@ async function findEntry (
      * Otherwise, we repeat the process by querying each child vertex of the DIT
      * with a distinguished name whose terminal RDN has been truncated.
      */
-    return children // So we start the search with its children.
-        .map((child) => findEntry(ctx, child, query, derefAliases))
-        .find((e) => e);
+    for (const child of children) {
+        const found = await findEntry(ctx, child, query, derefAliases);
+        if (found) {
+            return found;
+        }
+    }
 }
 
 export default findEntry;

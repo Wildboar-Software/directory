@@ -10,7 +10,7 @@ import {
     top,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
 import { PrismaClient } from "@prisma/client";
-import objectClassFromInformationObject from "./x500/objectClassFromInformationObject";
+import objectClassFromInformationObject from "./init/objectClassFromInformationObject";
 import { EventEmitter } from "stream";
 import { createPrivateKey } from "crypto";
 import * as fs from "fs";
@@ -120,6 +120,8 @@ const ctx: Context = {
         parent: undefined,
         children: [],
     },
+    objectIdentifierToName: new Map(),
+    nameToObjectIdentifier: new Map(),
     objectClasses: new Map(),
     attributes: new Map(),
     equalityMatchingRules: new Map(),

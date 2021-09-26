@@ -1,4 +1,6 @@
 import { Context } from "../types";
+import { ASN1Element } from "asn1-ts";
+import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject";
 import { attributeTypeDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/attributeTypeDescription.oa";
 import { bitString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/bitString.oa";
@@ -37,47 +39,49 @@ import { ldapSyntaxDescription } from "@wildboar/x500/src/lib/modules/SelectedAt
 import { substringAssertion } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/substringAssertion.oa";
 import * as decoders from "@wildboar/ldap/src/lib/syntaxDecoders";
 import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
-
+import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 
 export
 function loadLDAPSyntaxes (ctx: Context): void {
-    [
-        attributeTypeDescription,
-        bitString,
-        boolean_,
-        countryString,
-        dn,
-        deliveryMethod,
-        directoryString,
-        dITContentRuleDescription,
-        dITStructureRuleDescription,
-        enhancedGuide,
-        facsimileTelephoneNr,
-        fax,
-        generalizedTime,
-        guide,
-        ia5String,
-        integer,
-        jpeg,
-        matchingRuleDescription,
-        matchingRuleUseDescription,
-        nameAndOptionalUID,
-        nameFormDescription,
-        numericString,
-        objectClassDescription,
-        oid,
-        otherMailbox,
-        octetString,
-        postalAddr,
-        presentationAddr,
-        printableString,
-        subtreeSpec,
-        telephoneNr,
-        telexNr,
-        utcTime,
-        ldapSyntaxDescription,
-        substringAssertion,
-    ]
+    const ldapSyntaxes = {
+        "attributeTypeDescription": attributeTypeDescription,
+        "bitString": bitString,
+        "boolean_": boolean_,
+        "countryString": countryString,
+        "dn": dn,
+        "deliveryMethod": deliveryMethod,
+        "directoryString": directoryString,
+        "dITContentRuleDescription": dITContentRuleDescription,
+        "dITStructureRuleDescription": dITStructureRuleDescription,
+        "enhancedGuide": enhancedGuide,
+        "facsimileTelephoneNr": facsimileTelephoneNr,
+        "fax": fax,
+        "generalizedTime": generalizedTime,
+        "guide": guide,
+        "ia5String": ia5String,
+        "integer": integer,
+        "jpeg": jpeg,
+        "matchingRuleDescription": matchingRuleDescription,
+        "matchingRuleUseDescription": matchingRuleUseDescription,
+        "nameAndOptionalUID": nameAndOptionalUID,
+        "nameFormDescription": nameFormDescription,
+        "numericString": numericString,
+        "objectClassDescription": objectClassDescription,
+        "oid": oid,
+        "otherMailbox": otherMailbox,
+        "octetString": octetString,
+        "postalAddr": postalAddr,
+        "presentationAddr": presentationAddr,
+        "printableString": printableString,
+        "subtreeSpec": subtreeSpec,
+        "telephoneNr": telephoneNr,
+        "telexNr": telexNr,
+        "utcTime": utcTime,
+        "ldapSyntaxDescription": ldapSyntaxDescription,
+        "substringAssertion": substringAssertion,
+    };
+
+    Object.values(ldapSyntaxes)
         .map(ldapSyntaxFromInformationObject)
         .forEach((syntax) => {
             ctx.ldapSyntaxes.set(syntax.id.toString(), syntax);
@@ -117,8 +121,22 @@ function loadLDAPSyntaxes (ctx: Context): void {
     ctx.ldapSyntaxes.get(numericString["&id"]!.toString())!.decoder = decoders.numericString;
     ctx.ldapSyntaxes.get(numericString["&id"]!.toString())!.encoder = encoders.numericString;
     // objectClassDescription
-    ctx.ldapSyntaxes.get(oid["&id"]!.toString())!.decoder = decoders.oid;
-    ctx.ldapSyntaxes.get(oid["&id"]!.toString())!.encoder = encoders.oid;
+    ctx.ldapSyntaxes.get(oid["&id"]!.toString())!.decoder = (value: Uint8Array): ASN1Element => {
+        const desc = normalizeAttributeDescription(value);
+        const id = ctx.nameToObjectIdentifier.get(desc);
+        if (!id) {
+            throw new Error();
+        }
+        return _encodeObjectIdentifier(id, DER);
+    };
+    ctx.ldapSyntaxes.get(oid["&id"]!.toString())!.encoder = (value: ASN1Element): Uint8Array => {
+        const name = ctx.objectIdentifierToName.get(value.objectIdentifier.toString());
+        if (name) {
+            return Buffer.from(name);
+        } else {
+            return encoders.oid(value);
+        }
+    };
     ctx.ldapSyntaxes.get(otherMailbox["&id"]!.toString())!.decoder = decoders.otherMailbox;
     ctx.ldapSyntaxes.get(otherMailbox["&id"]!.toString())!.encoder = encoders.otherMailbox;
     ctx.ldapSyntaxes.get(octetString["&id"]!.toString())!.decoder = decoders.octetString;
@@ -141,6 +159,11 @@ function loadLDAPSyntaxes (ctx: Context): void {
     ctx.ldapSyntaxes.set("commonName", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);
     ctx.ldapSyntaxes.set("surname", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);
     ctx.ldapSyntaxes.set("sn", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);
+
+    Object.entries(ldapSyntaxes).forEach(([ name, ldapSyntax ]) => {
+        ctx.nameToObjectIdentifier.set(name, ldapSyntax["&id"]);
+        ctx.objectIdentifierToName.set(ldapSyntax["&id"].toString(), name);
+    });
 }
 
 export default loadLDAPSyntaxes;

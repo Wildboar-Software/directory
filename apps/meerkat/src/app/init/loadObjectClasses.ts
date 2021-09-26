@@ -71,6 +71,14 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
     //     parent: ctx.structuralObjectClassHierarchy,
     //     children: [],
     // });
+
+    Object.entries(x500oc).forEach(([ name, oc ]) => {
+        ctx.nameToObjectIdentifier.set(name, oc["&id"]);
+        oc["&ldapName"]?.map((ldapName) => {
+            ctx.nameToObjectIdentifier.set(ldapName, oc["&id"]);
+        });
+        ctx.objectIdentifierToName.set(oc["&id"].toString(), name);
+    });
 }
 
 export default loadObjectClasses;

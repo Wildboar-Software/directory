@@ -361,6 +361,14 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         .forEach((attr) => {
             ctx.collectiveAttributes.add(attr.id.toString());
         });
+
+    Object.entries(x500at).forEach(([ name, attr ]) => {
+        ctx.nameToObjectIdentifier.set(name, attr["&id"]);
+        attr["&ldapName"]?.map((ldapName) => {
+            ctx.nameToObjectIdentifier.set(ldapName, attr["&id"]);
+        });
+        ctx.objectIdentifierToName.set(attr["&id"].toString(), name);
+    });
 }
 
 export default loadAttributeTypes;

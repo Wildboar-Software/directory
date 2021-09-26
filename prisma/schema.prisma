@@ -447,7 +447,7 @@ model AccessPoint {
 model NetworkServiceAccessPoint {
     id              Int         @id @default(autoincrement())
     ipv4            String? // @db.Inet
-    tcp_port        Int?        @db.SmallUnsignedInt
+    tcp_port        Int?        // @db.SmallUnsignedInt
     url             String?
     bytes           Bytes
     access_point_id Int
@@ -925,4 +925,12 @@ model WhitelistedOperationalBinding {
     hostnames          String // Whitespace delimited.
     subnet             String? // @db.Inet
     permitted          Boolean // if true, it is whitelisted. If false, it is blacklisted.
+}
+
+model NamedObjectIdentifier {
+    id                 Int                          @id @default(autoincrement())
+    oid OID
+    name String @db.VarChar(128)
+    @@unique([oid])
+    @@index([name])
 }

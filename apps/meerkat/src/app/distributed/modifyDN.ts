@@ -458,60 +458,62 @@ async function modifyDN (
         )).flat();
         const newAccessControlScheme = newAdmPoints
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-        const AC_SCHEME: string = newAccessControlScheme?.toString() ?? "";
-        const relevantACIItems = [ // FIXME: subentries
-            // NOTE: ITU X.511 says that the IMPORT permission MUST come only from prescriptiveACI.
-            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                : []),
-        ];
-        const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
-            .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                ...tuple,
-                await userWithinACIUserClass(
-                    tuple[0],
-                    conn.boundNameAndUID!, // FIXME:
-                    targetDN,
-                    EQUALITY_MATCHER,
-                    isMemberOfGroup,
-                ),
-            ]),
-        ))
-            .filter((tuple) => (tuple[5] > 0));
-        const {
-            authorized: authorizedToEntry,
-        } = bacACDF(
-            relevantTuples,
-            conn.authLevel,
-            {
-                entry: objectClasses,
-            },
-            [
-                PERMISSION_CATEGORY_IMPORT,
-            ],
-            EQUALITY_MATCHER,
-        );
-        if (!authorizedToEntry) {
-            throw new errors.SecurityError(
-                "Not permitted to import entry.",
-                new SecurityErrorData(
-                    SecurityProblem_insufficientAccessRights,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        securityError["&errorCode"],
+        if (newAccessControlScheme) {
+            const AC_SCHEME: string = newAccessControlScheme?.toString() ?? "";
+            const relevantACIItems = [ // FIXME: subentries
+                // NOTE: ITU X.511 says that the IMPORT permission MUST come only from prescriptiveACI.
+                ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
+                    ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                    : []),
+            ];
+            const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                    ...tuple,
+                    await userWithinACIUserClass(
+                        tuple[0],
+                        conn.boundNameAndUID!, // FIXME:
+                        targetDN,
+                        EQUALITY_MATCHER,
+                        isMemberOfGroup,
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
+                ]),
+            ))
+                .filter((tuple) => (tuple[5] > 0));
+            const {
+                authorized: authorizedToEntry,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    entry: objectClasses,
+                },
+                [
+                    PERMISSION_CATEGORY_IMPORT,
+                ],
+                EQUALITY_MATCHER,
             );
+            if (!authorizedToEntry) {
+                throw new errors.SecurityError(
+                    "Not permitted to import entry.",
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
         }
     }
 

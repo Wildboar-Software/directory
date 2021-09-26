@@ -958,6 +958,17 @@ interface Context {
     statistics: Statistics;
     telemetry: Telemetry;
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
+    /**
+     * LDAP often uses human-friendly names object descriptors instead of object
+     * identifiers.
+     *
+     * This might be somewhat duplicated, since you could find the name of all
+     * attributes, object classes, name forms, etc. using other fields of
+     * `Context`, but it speeds up lookups, and it could contain object
+     * identifiers that do not correspond to X.500-related objects.
+     */
+    objectIdentifierToName: Map<IndexableOID, string>;
+    nameToObjectIdentifier: Map<string, OBJECT_IDENTIFIER>;
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
     /* Note that there cannot be a single attributes hierarchy like there is
     with structural classes. */

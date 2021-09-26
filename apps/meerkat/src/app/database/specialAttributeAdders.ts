@@ -102,7 +102,7 @@ export const addObjectClass: SpecialAttributeDatabaseEditor = async (
     // TODO: Block object class "parent" from being added directly.
     // TODO: Automatically add object class "parent" to superior if "child" is added.
     const newOIDs = [
-        ...Array.from(vertex.dse.objectClass),
+        ...Array.from(vertex.dse.objectClass).filter((oc) => (oc.length >= 3)),
         value.value.objectIdentifier.toString(),
     ];
     pendingUpdates.entryUpdate.objectClass = newOIDs.join(" ");

@@ -584,6 +584,9 @@ async function search_i (
             return true; // FIXME:
         },
         permittedToMatch: (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
+            if (!accessControlScheme) {
+                return true;
+            }
             const {
                 authorized: authorizedToMatch,
             } = bacACDF(

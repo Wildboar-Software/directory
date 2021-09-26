@@ -24,9 +24,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import LDAPConnection from "./ldap/LDAPConnection";
 import loadDIT from "./database/loadDIT";
-import loadAttributeTypes from "./x500/loadAttributeTypes";
-import loadObjectClasses from "./x500/loadObjectClasses";
-import loadLDAPSyntaxes from "./x500/loadLDAPSyntaxes";
+import loadAttributeTypes from "./init/loadAttributeTypes";
+import loadObjectClasses from "./init/loadObjectClasses";
+import loadLDAPSyntaxes from "./init/loadLDAPSyntaxes";
+import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
 import ctx from "./ctx";
 import terminate from "./dop/terminateByID";
 import { differenceInMilliseconds } from "date-fns";
@@ -58,6 +59,8 @@ async function main (): Promise<void> {
     ctx.log.debug("Loaded LDAP syntaxes.");
     await loadAttributeTypes(ctx);
     ctx.log.debug("Loaded attribute types.");
+    await loadObjectIdentifierNames(ctx);
+    ctx.log.debug("Loaded object identifier names.");
 
     const nameForms = await ctx.db.nameForm.findMany();
     for (const nameForm of nameForms) {

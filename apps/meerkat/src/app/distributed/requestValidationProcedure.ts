@@ -52,7 +52,7 @@ import { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import { assert } from "console";
+import { strict as assert } from "assert";
 import createSecurityParameters from "../x500/createSecurityParameters";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;

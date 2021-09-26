@@ -74,7 +74,11 @@ async function dseFromDatabaseEntry (
         rdn: (dbe.rdn && (typeof dbe.rdn === "object") && !(Array.isArray(dbe.rdn)))
             ? rdnFromJson(dbe.rdn as Record<string, string>)
             : [],
-        objectClass: new Set(dbe.objectClass.split(" ")),
+        objectClass: new Set(
+            dbe.objectClass
+                .split(" ")
+                .filter((oid) => (oid.length >= 3))
+        ),
         creatorsName: {
             rdnSequence: Array.isArray(dbe.creatorsName)
                 ? dbe.creatorsName.map((rdn: Record<string, string>) => rdnFromJson(rdn))
