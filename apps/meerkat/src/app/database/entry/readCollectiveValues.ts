@@ -4,7 +4,7 @@ import type {
     Value,
 } from "../../types";
 import readCollectiveAttributes from "./readCollectiveAttributes";
-import attributeToStoredValues from "../../x500/attributeToStoredValues";
+import valuesFromAttribute from "../../x500/valuesFromAttribute";
 
 export
 function readCollectiveValues (
@@ -12,7 +12,7 @@ function readCollectiveValues (
     entry: Vertex,
     relevantSubentries: Vertex[],
 ): Value[] {
-    return readCollectiveAttributes(ctx, entry, relevantSubentries).flatMap(attributeToStoredValues);
+    return readCollectiveAttributes(ctx, entry, relevantSubentries).flatMap(valuesFromAttribute);
 }
 
 export default readCollectiveValues;

@@ -119,7 +119,7 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
-import attributeToStoredValues from "../x500/attributeToStoredValues";
+import valuesFromAttribute from "../x500/valuesFromAttribute";
 import attributesFromValues from "../x500/attributesFromValues";
 import {
     id_at_aliasedEntryName,
@@ -701,7 +701,7 @@ async function search_i (
                     incompleteEntry = true;
                     continue;
                 }
-                const permittedValues = attributeToStoredValues(info.attribute)
+                const permittedValues = valuesFromAttribute(info.attribute)
                     .filter((value) => {
                         const {
                             authorized: authorizedToAddAttributeValue,

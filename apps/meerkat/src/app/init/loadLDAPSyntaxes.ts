@@ -40,6 +40,13 @@ import { substringAssertion } from "@wildboar/x500/src/lib/modules/SelectedAttri
 import * as decoders from "@wildboar/ldap/src/lib/syntaxDecoders";
 import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import decodeLDAPDN from "../ldap/decodeLDAPDN";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import {
+    DistinguishedName,
+    _decode_DistinguishedName,
+    _encode_DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 export
 function loadLDAPSyntaxes (ctx: Context): void {
@@ -93,8 +100,14 @@ function loadLDAPSyntaxes (ctx: Context): void {
     ctx.ldapSyntaxes.get(boolean_["&id"]!.toString())!.encoder = encoders.boolean_;
     ctx.ldapSyntaxes.get(countryString["&id"]!.toString())!.decoder = decoders.countryString;
     ctx.ldapSyntaxes.get(countryString["&id"]!.toString())!.encoder = encoders.countryString;
-    // ctx.ldapSyntaxes.get(dn["&id"]!.toString())!.decoder = decoders.dn;
-    // ctx.ldapSyntaxes.get(dn["&id"]!.toString())!.encoder = encoders.dn;
+    ctx.ldapSyntaxes.get(dn["&id"]!.toString())!.decoder = (value: Uint8Array): ASN1Element => {
+        const dn: DistinguishedName = decodeLDAPDN(ctx, value);
+        return _encode_DistinguishedName(dn, DER);
+    };
+    ctx.ldapSyntaxes.get(dn["&id"]!.toString())!.encoder = (value: ASN1Element): Uint8Array => {
+        const dn: DistinguishedName = _decode_DistinguishedName(value);
+        return encodeLDAPDN(ctx, dn);
+    };
     ctx.ldapSyntaxes.get(deliveryMethod["&id"]!.toString())!.decoder = decoders.deliveryMethod;
     ctx.ldapSyntaxes.get(deliveryMethod["&id"]!.toString())!.encoder = encoders.deliveryMethod;
     ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!.decoder = decoders.directoryString;

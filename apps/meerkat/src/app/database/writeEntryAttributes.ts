@@ -91,6 +91,7 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
  * @param ctx
  * @param entry
  * @param attributes
+ * @deprecated This should be replaced by addValues.
  */
 export
 async function writeEntryAttributes (

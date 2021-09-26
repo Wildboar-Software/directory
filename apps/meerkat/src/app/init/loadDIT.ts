@@ -1,5 +1,5 @@
 import type { Context, DIT } from "../types";
-import vertexFromDatabaseEntry from "./entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import {
     top,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";

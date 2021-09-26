@@ -44,7 +44,7 @@ import {
 import {
     ObjectClassKind,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import attributeToStoredValues from "../x500/attributeToStoredValues";
+import valuesFromAttribute from "../x500/valuesFromAttribute";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import { AttributeErrorData_problems_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
 import { AttributeProblem_undefinedAttributeType } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
@@ -229,7 +229,7 @@ function checkPermissionToAddValues (
     if (!accessControlScheme) {
         return;
     }
-    const values = attributeToStoredValues(attribute);
+    const values = valuesFromAttribute(attribute);
     const {
         authorized: authorizedForAttributeType,
     } = bacACDF(
@@ -295,7 +295,7 @@ async function executeAddAttribute (
         authLevel,
         equalityMatcherGetter,
     );
-    const values = attributeToStoredValues(mod);
+    const values = valuesFromAttribute(mod);
     const TYPE_OID: IndexableOID = mod.type_.toString();
     const deltaValues = delta.get(TYPE_OID);
     if (deltaValues) {
@@ -363,7 +363,7 @@ async function executeAddValues (
         authLevel,
         equalityMatcherGetter,
     );
-    const values = attributeToStoredValues(mod);
+    const values = valuesFromAttribute(mod);
     const TYPE_OID: IndexableOID = mod.type_.toString();
     const deltaValues = delta.get(TYPE_OID);
     if (deltaValues) {
@@ -385,7 +385,7 @@ async function executeRemoveValues (
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
 ): Promise<PrismaPromise<any>[]> {
-    const values = attributeToStoredValues(mod);
+    const values = valuesFromAttribute(mod);
     if (accessControlScheme) {
         const {
             authorized: authorizedForAttributeType,
@@ -632,7 +632,7 @@ async function executeReplaceValues (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
 ): Promise<PrismaPromise<any>[]> {
     const TYPE_OID: string = mod.type_.toString();
-    const values = attributeToStoredValues(mod);
+    const values = valuesFromAttribute(mod);
     const where = {
         entry_id: entry.dse.id,
         type: TYPE_OID,

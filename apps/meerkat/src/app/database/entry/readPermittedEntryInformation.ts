@@ -18,7 +18,7 @@ import bacACDF, {
     PERMISSION_CATEGORY_READ,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import attributeToStoredValues from "../../x500/attributeToStoredValues";
+import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import attributesFromValues from "../../x500/attributesFromValues";
 import {
     AttributeTypeAndValue,
@@ -80,7 +80,7 @@ async function readPermittedEntryInformation (
                 incompleteEntry = true;
                 continue;
             }
-            const permittedValues = attributeToStoredValues(info.attribute)
+            const permittedValues = valuesFromAttribute(info.attribute)
                 .filter((value) => {
                     const {
                         authorized: authorizedToAddAttributeValue,

@@ -23,7 +23,7 @@ import {
     _decode_DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import LDAPConnection from "./ldap/LDAPConnection";
-import loadDIT from "./database/loadDIT";
+import loadDIT from "./init/loadDIT";
 import loadAttributeTypes from "./init/loadAttributeTypes";
 import loadObjectClasses from "./init/loadObjectClasses";
 import loadLDAPSyntaxes from "./init/loadLDAPSyntaxes";
