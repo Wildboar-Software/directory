@@ -12,8 +12,11 @@ import {
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import findEntry from "../x500/findEntry";
-import readEntryAttributes from "../database/readEntryAttributes";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import readValues from "../database/entry/readValues";
+import {
+    EntryInformationSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 
 const GROUP_OF_NAMES: string = groupOfNames["&id"].toString();
 const GROUP_OF_UNIQUE_NAMES: string = groupOfUniqueNames["&id"].toString();
@@ -37,14 +40,19 @@ function getIsGroupMember (
         ) {
             return undefined;
         }
-        const { userAttributes: groupAttributes } = await readEntryAttributes(ctx, groupEntry, {
-            attributesSelect: [
-                member["&id"],
-                uniqueMember["&id"],
-            ],
-            includeOperationalAttributes: false,
-            returnContexts: false,
-        });
+        const { userAttributes: groupAttributes } = await readValues(ctx, groupEntry, new EntryInformationSelection(
+            {
+                select: [
+                    member["&id"],
+                    uniqueMember["&id"],
+                ],
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        ));
         // TODO: Review what to do about the unique identifier.
         for (const attr of groupAttributes) {
             if (attr.id.isEqualTo(member["&id"])) {

@@ -251,10 +251,18 @@ async function readValues (
         : [];
 
     for (const reader of userAttributeReaderToExecute) {
-        userAttributes.push(...await reader(ctx, entry));
+        try {
+            userAttributes.push(...await reader(ctx, entry));
+        } catch (e) {
+            continue;
+        }
     }
     for (const reader of operationalAttributeReadersToExecute) {
-        operationalAttributes.push(...await reader(ctx, entry));
+        try {
+            operationalAttributes.push(...await reader(ctx, entry));
+        } catch (e) {
+            continue;
+        }
     }
 
     /**

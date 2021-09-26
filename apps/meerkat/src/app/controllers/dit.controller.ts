@@ -27,7 +27,7 @@ import { id_sc_pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/Informati
 import { id_oc_parent } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
 import { id_oc_child } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
-import readEntryAttributes from "../database/readEntryAttributes";
+import readValues from "../database/entry/readValues";
 import deleteEntry from "../database/deleteEntry";
 import escape from "escape-html";
 import type { DistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/DistinguishedName.ta";
@@ -271,13 +271,12 @@ export class DitController {
         const {
             userAttributes,
             operationalAttributes,
-        } = await readEntryAttributes(this.ctx, vertex, {
-            includeOperationalAttributes: true,
-            returnContexts: true,
-        });
+            collectiveValues,
+        } = await readValues(this.ctx, vertex);
         const attributes: [ string, string, string ][] = [
             ...userAttributes,
             ...operationalAttributes,
+            ...collectiveValues,
         ]
             .map((attr) => [
                 ((): string => {
