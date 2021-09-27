@@ -84,7 +84,7 @@ async function dseFromDatabaseEntry (
         uniqueIdentifier: dbe.uniqueIdentifier
             ? (() => {
                 const el = new BERElement();
-                el.fromBytes(dbe.uniqueIdentifier);
+                el.value = dbe.uniqueIdentifier;
                 return el.bitString;
             })()
             : undefined,

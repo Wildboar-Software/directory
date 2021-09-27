@@ -369,19 +369,21 @@ async function compare (
     };
 
     return {
-        result: new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_compare,
+        result: {
+            unsigned: new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_compare,
+                    ),
+                    undefined,
                 ),
-                undefined,
+                _encode_CompareResult(result, DER),
             ),
-            _encode_CompareResult(result, DER),
-        ),
+        },
         stats: {
             request: {
                 operationCode: codeToString(id_opcode_compare),

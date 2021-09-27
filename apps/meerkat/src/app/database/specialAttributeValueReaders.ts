@@ -15,6 +15,9 @@ import {
     _encodeUTF8String,
 } from "asn1-ts/dist/node/functional";
 import {
+    _encode_DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
     UserPwd,
     _encode_UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
@@ -53,6 +56,10 @@ import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncA
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
+import { createTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
+import { modifyTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/modifyTimestamp.oa";
+import { creatorsName } from "@wildboar/x500/src/lib/modules/InformationFramework/creatorsName.oa";
+import { modifiersName } from "@wildboar/x500/src/lib/modules/InformationFramework/modifiersName.oa";
 
 export const readObjectClass: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
@@ -753,4 +760,62 @@ export const readUniqueIdentifier: SpecialAttributeDatabaseReader = async (
     } else {
         return [];
     }
+};
+
+export const readCreateTimestamp: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    return [
+        {
+            id: createTimestamp["&id"],
+            value: _encodeGeneralizedTime(vertex.dse.createdTimestamp, DER),
+            contexts: new Map(),
+        },
+    ];
+};
+
+export const readModifyTimestamp: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    return [
+        {
+            id: modifyTimestamp["&id"],
+            value: _encodeGeneralizedTime(vertex.dse.modifyTimestamp, DER),
+            contexts: new Map(),
+        },
+    ];
+};
+
+export const readCreatorsName: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (!vertex.dse.creatorsName) {
+        return [];
+    }
+    return [
+        {
+            id: creatorsName["&id"],
+            value: _encode_DistinguishedName(vertex.dse.creatorsName.rdnSequence, DER),
+            contexts: new Map(),
+        },
+    ];
+};
+
+export const readModifiersName: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (!vertex.dse.modifiersName) {
+        return [];
+    }
+    return [
+        {
+            id: modifiersName["&id"],
+            value: _encode_DistinguishedName(vertex.dse.modifiersName.rdnSequence, DER),
+            contexts: new Map(),
+        },
+    ];
 };

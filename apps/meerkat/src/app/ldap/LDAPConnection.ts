@@ -39,6 +39,7 @@ import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
 import dapReplyToLDAPResult from "../distributed/dapReplyToLDAPResult";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import dapErrorToLDAPResult from "../distributed/dapErrorToLDAPResult";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 async function handleRequest (
     ctx: Context,
@@ -80,7 +81,12 @@ async function handleRequest (
         // }
         conn.socket.write(_encode_LDAPMessage(resultMessage, BER).toBytes());
     };
-    const ldapResult = await dapReplyToLDAPResult(ctx, result, message.messageID, onEntry);
+    const unprotectedResult = getOptionallyProtectedValue(result.result);
+    const ldapResult = await dapReplyToLDAPResult(ctx, {
+        invokeId: dapRequest.invokeId, // TODO: I think this is unnecessary.
+        opCode: dapRequest.opCode,
+        result: unprotectedResult.result,
+    }, message.messageID, onEntry);
     conn.socket.write(_encode_LDAPMessage(ldapResult, BER).toBytes());
     // stats.request = result.request ?? stats.request;
     // stats.outcome = result.outcome ?? stats.outcome;

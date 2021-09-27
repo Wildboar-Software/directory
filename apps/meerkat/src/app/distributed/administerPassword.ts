@@ -51,8 +51,6 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import codeToString from "../x500/codeToString";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 
 // administerPassword OPERATION ::= {
 //   ARGUMENT  AdministerPasswordArgument
@@ -115,7 +113,7 @@ async function administerPassword (
                 ...tuple,
                 await userWithinACIUserClass(
                     tuple[0],
-                    conn.boundNameAndUID!, // FIXME:
+                    conn.boundNameAndUID!,
                     targetDN,
                     EQUALITY_MATCHER,
                     isMemberOfGroup,
@@ -198,19 +196,21 @@ async function administerPassword (
         null_: null,
     };
     return {
-        result: new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_administerPassword,
+        result: {
+            unsigned: new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_administerPassword,
+                    ),
+                    undefined,
                 ),
-                undefined,
+                _encode_AdministerPasswordResult(result, DER),
             ),
-            _encode_AdministerPasswordResult(result, DER),
-        ),
+        },
         stats: {},
     };
 }

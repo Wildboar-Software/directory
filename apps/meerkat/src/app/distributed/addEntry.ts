@@ -130,6 +130,8 @@ import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import accessPointToNSAPStrings from "../x500/accessPointToNSAPStrings";
 import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
+import validateObjectClasses from "../x500/validateObjectClasses";
+import valuesFromAttribute from "../x500/valuesFromAttribute";
 
 function namingViolationErrorData (
     ctx: Context,
@@ -178,30 +180,7 @@ async function addEntry (
     const NAMING_MATCHER = (
         attributeType: OBJECT_IDENTIFIER,
     ) => ctx.attributes.get(attributeType.toString())?.namingMatcher;
-
-    // TODO: use memory/valuesFromAttribute
-    const attrs: Value[] = data.entry.flatMap((attr) => [
-        ...attr.values.map((value): Value => ({
-            id: attr.type_,
-            value,
-            contexts: new Map([]),
-        })),
-        ...attr.valuesWithContext?.map((vwc): Value => ({
-            id: attr.type_,
-            value: vwc.value,
-            contexts: new Map(
-                vwc.contextList.map((context): [ string, StoredContext ] => [
-                    context.contextType.toString(),
-                    {
-                        id: context.contextType,
-                        fallback: context.fallback ?? false,
-                        values: context.contextValues,
-                    },
-                ]),
-            ),
-        })) ?? [],
-    ]);
-
+    const attrs: Value[] = data.entry.flatMap(valuesFromAttribute);
     const objectClassValues = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
     if (objectClassValues.length === 0) {
         throw new errors.UpdateError(
@@ -223,8 +202,25 @@ async function addEntry (
         );
     }
     const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
-
-    // TODO: Check that all superclasses are present.
+    if (!validateObjectClasses(ctx, objectClasses)) {
+        throw new errors.UpdateError(
+            `Invalid object classes: ${objectClasses.map((oc) => oc.toString()).join(" ")}`,
+            new UpdateErrorData(
+                UpdateProblem_objectClassViolation,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
 
     /**
      * From ITU X.501 (2016), Section 13.3.2:
@@ -303,7 +299,7 @@ async function addEntry (
             ...tuple,
             await userWithinACIUserClass(
                 tuple[0],
-                conn.boundNameAndUID!, // FIXME:
+                conn.boundNameAndUID!, // This request is not allowed if the connection is not bound.
                 targetDN,
                 EQUALITY_MATCHER,
                 isMemberOfGroup,
@@ -416,7 +412,7 @@ async function addEntry (
         if (("result" in obResponse) && obResponse.result) {
             const chainedResult = chainedAddEntry.decoderFor["&ResultType"]!(obResponse.result);
             return {
-                result: getOptionallyProtectedValue(chainedResult),
+                result: chainedResult,
                 stats: {},
             }; // TODO: This strips the remote DSA's signature!
         } else {
@@ -591,8 +587,8 @@ async function addEntry (
         );
     }
 
-    objectClassValues
-        .map((oc) => ctx.objectClasses.get(oc.value.objectIdentifier.toString()))
+    objectClasses
+        .map((oc) => ctx.objectClasses.get(oc.toString()))
         .forEach((oc, i) => {
             if (!oc) {
                 ctx.log.warn(
@@ -723,8 +719,8 @@ async function addEntry (
     // const manageDSAITPlaneRef = data.serviceControls?.manageDSAITPlaneRef;
 
     if (manageDSAIT) {
+    // aliases are not allowed to point to other aliases
     // NOTE: "aliased entry exists" X.511 specifically says this does not have to be checked.
-    // TODO: aliases are not allowed to point to other aliases
     } else if (nonUserApplicationAttributes.length > 0) {
         throw new errors.SecurityError(
             "Operational attributes may not be managed without setting the manageDSAIT flag.",
@@ -763,7 +759,7 @@ async function addEntry (
             ),
         );
     }
-    const newEntry = await createEntry(ctx, immediateSuperior, rdn, {}, attrs, []); // FIXME: creatorName
+    const newEntry = await createEntry(ctx, immediateSuperior, rdn, {}, attrs, conn.boundNameAndUID?.dn);
     immediateSuperior.subordinates?.push(newEntry);
 
     // Update relevant hierarchical operational bindings
@@ -783,7 +779,7 @@ async function addEntry (
                 validity_end: {
                     lte: now,
                 },
-                // accepted: true, // FIXME: Is this always set?
+                accepted: true,
                 OR: [
                     { // Local DSA initiated role A (meaning local DSA is superior.)
                         initiator: OperationalBindingInitiator.ROLE_A,
@@ -849,21 +845,23 @@ async function addEntry (
 
     // TODO: Update shadows
     return {
-        result: new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_addEntry,
+        result: {
+            unsigned: new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_addEntry,
+                    ),
+                    undefined,
                 ),
-                undefined,
+                _encode_AddEntryResult({
+                    null_: null,
+                }, DER),
             ),
-            _encode_AddEntryResult({
-                null_: null,
-            }, DER),
-        ),
+        },
         stats: {
             request: {
                 operationCode: codeToString(id_opcode_addEntry),

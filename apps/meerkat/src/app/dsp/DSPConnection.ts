@@ -1,5 +1,6 @@
 import { Context, ClientConnection, OperationStatistics } from "../types";
 import * as errors from "../errors";
+import { DER } from "asn1-ts/dist/node/functional";
 import type { Socket } from "net";
 import { IDMConnection } from "@wildboar/idm";
 import versions from "./versions";
@@ -48,6 +49,7 @@ import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "../x500/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
+import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 
 async function handleRequest (
     ctx: Context,
@@ -71,15 +73,8 @@ async function handleRequest (
     );
     stats.request = result.request ?? stats.request;
     stats.outcome = result.outcome ?? stats.outcome;
-    if ("error" in result) {
-        await dsp.idm.writeError(
-            request.invokeID,
-            _encode_Code(result.errcode!, BER),
-            result.error,
-        );
-    } else {
-        await dsp.idm.writeResult(request.invokeID, result.opCode, result.result!);
-    }
+    const encodedResult = chainedRead.encoderFor["&ResultType"]!(result.result, DER);
+    await dsp.idm.writeResult(request.invokeID, result.opCode, encodedResult);
     ctx.statistics.operations.push(stats);
 }
 

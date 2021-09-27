@@ -1,6 +1,5 @@
 import { Context, ClientConnection, PagedResultsRequestState, OperationStatistics } from "../types";
 import * as errors from "../errors";
-import type { Socket } from "net";
 import { IDMConnection } from "@wildboar/idm";
 import versions from "./versions";
 import type {
@@ -40,15 +39,13 @@ import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
-    directoryBind,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBind.oa";
-import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "../x500/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 async function handleRequest (
     ctx: Context,
@@ -72,15 +69,8 @@ async function handleRequest (
     );
     stats.request = result.request ?? stats.request;
     stats.outcome = result.outcome ?? stats.outcome;
-    if ("error" in result) {
-        await dap.idm.writeError(
-            request.invokeID,
-            _encode_Code(result.errcode!, BER),
-            result.error,
-        );
-    } else {
-        await dap.idm.writeResult(request.invokeID, result.opCode, result.result!);
-    }
+    const unprotectedResult = getOptionallyProtectedValue(result.result);
+    await dap.idm.writeResult(request.invokeID, result.opCode, unprotectedResult.result);
     ctx.statistics.operations.push(stats);
 }
 
@@ -193,7 +183,6 @@ async function handleRequestAndErrors (
         }
     }
 }
-
 
 export default
 class DAPConnection extends ClientConnection {

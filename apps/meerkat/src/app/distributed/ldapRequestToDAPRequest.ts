@@ -364,11 +364,21 @@ function ldapRequestToDAPRequest (ctx: Context, req: LDAPMessage): Request {
             req.protocolOp.searchRequest.typesOnly
                 ? EntryInformationSelection_infoTypes_attributeTypesOnly
                 : EntryInformationSelection_infoTypes_attributeTypesAndValues,
-            returnAllUserAttributesExclusively
-                ? undefined
-                : {
-                    select: selectedAttributes,
-                },
+            ((): EntryInformationSelection["extraAttributes"] => {
+                if (returnNoAttributes || returnAllUserAttributesExclusively) {
+                    return undefined;
+                } else if (returnAllUserAttributesInclusively) {
+                    return {
+                        allOperationalAttributes: null,
+                    };
+                } else if (selectedAttributes) {
+                    return {
+                        select: selectedAttributes ?? [],
+                    };
+                } else {
+                    return undefined;
+                }
+            })(),
             undefined,
             false,
             undefined,

@@ -77,6 +77,9 @@ import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecific
 import type { cpus, networkInterfaces } from "os";
 import type { Socket } from "net";
 import {
+    OPTIONALLY_PROTECTED,
+} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 
@@ -87,6 +90,8 @@ interface OperationalBindingControlEvents {
     once (eventName: string, fn: EventReceiver<boolean>): void;
     emit (eventName: string, params: boolean): void;
 }
+
+export type OPCR = OPTIONALLY_PROTECTED<ChainedResult>;
 
 export
 type UUID = string;
@@ -945,7 +950,7 @@ interface Statistics {
 
 export
 interface OperationReturn {
-    result: ChainedResult;
+    result: OPTIONALLY_PROTECTED<ChainedResult>;
     stats: Partial<WithRequestStatistics> & Partial<WithOutcomeStatistics>;
 }
 

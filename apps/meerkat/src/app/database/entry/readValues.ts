@@ -76,6 +76,10 @@ const userAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseRe
 ]);
 
 const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseReader> = new Map([
+    [ createTimestamp["&id"]!.toString(), readers.readCreateTimestamp ],
+    [ modifyTimestamp["&id"]!.toString(), readers.readModifyTimestamp ],
+    [ creatorsName["&id"]!.toString(), readers.readCreatorsName ],
+    [ modifiersName["&id"]!.toString(), readers.readModifiersName ],
     [ administrativeRole["&id"]!.toString(), readers.readAdministrativeRole ],
     [ subtreeSpecification["&id"]!.toString(), readers.readSubtreeSpecification ],
     [ accessControlScheme["&id"]!.toString(), readers.readAccessControlScheme ],
@@ -239,12 +243,12 @@ async function readValues (
         ? Array.from(selectedUserAttributes)
             .map((oid) => userAttributeDatabaseReaders.get(oid))
             .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler)
-        : Object.values(userAttributeDatabaseReaders);
+        : Array.from(userAttributeDatabaseReaders.values());
     const operationalAttributeReadersToExecute: SpecialAttributeDatabaseReader[] = (
         selectedOperationalAttributes !== undefined
     )
         ? ((selectedOperationalAttributes === null)
-            ? Object.values(operationalAttributeDatabaseReaders)
+            ? Array.from(operationalAttributeDatabaseReaders.values())
             : Array.from(selectedOperationalAttributes)
                 .map((oid) => operationalAttributeDatabaseReaders.get(oid))
                 .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler))

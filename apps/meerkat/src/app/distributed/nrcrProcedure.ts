@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "../types";
+import type { Context, ClientConnection, OPCR } from "../types";
 import { BOOLEAN, TRUE } from "asn1-ts";
 import * as errors from "../errors";
 import {
@@ -11,7 +11,8 @@ import { ReferralData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSe
 import { strict as assert } from "assert";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { apinfoProcedure } from "./apinfoProcedure";
-import ChainedResultOrError from "@wildboar/x500/src/lib/types/ChainedResultOrError";
+import Error_ from "@wildboar/x500/src/lib/types/Error_";
+import ResultOrError from "@wildboar/x500/src/lib/types/ResultOrError";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     ServiceProblem_timeLimitExceeded,
@@ -40,6 +41,7 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
+import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 
 export
 async function nrcrProcedure (
@@ -48,7 +50,7 @@ async function nrcrProcedure (
     state: OperationDispatcherState,
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
-): Promise<ChainedResultOrError | null> {
+): Promise<OPCR | Error_ | null> {
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -113,21 +115,24 @@ async function nrcrProcedure (
         //  */
         const isNSSR = (cref.accessPoints.length > 1);
         if (!isNSSR) {
-            const outcome: ChainedResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req);
+            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req);
             if (!outcome) {
                 continue;
+            } else if (("result" in outcome) && outcome.result) {
+                return chainedRead.decoderFor["&ResultType"]!(outcome.result);
+            } else if (("error" in outcome) && outcome.error) {
+                return outcome;
             }
-            return outcome;
         }
         let allServiceErrors: boolean = true;
         for (const ap of cref.accessPoints) {
             try {
-                const outcome: ChainedResultOrError | null = await apinfoProcedure(ctx, ap, req);
+                const outcome: ResultOrError | null = await apinfoProcedure(ctx, ap, req);
                 if (!outcome) {
                     continue;
                 }
-                if ("result" in outcome) {
-                    return outcome;
+                if (("result" in outcome) && outcome.result) {
+                    return chainedRead.decoderFor["&ResultType"]!(outcome.result);
                 } else if ("error" in outcome) {
                     if (outcome.errcode && compareCode(outcome.errcode, serviceError["&errorCode"]!)) {
                         const errorParam = serviceError.decoderFor["&ParameterType"]!(outcome.error);

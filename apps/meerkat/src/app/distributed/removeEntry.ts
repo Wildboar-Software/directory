@@ -356,21 +356,23 @@ async function removeEntry (
     await deleteEntry(ctx, target);
 
     return {
-        result: new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_removeEntry,
+        result: {
+            unsigned: new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_removeEntry,
+                    ),
+                    undefined,
                 ),
-                undefined,
+                _encode_RemoveEntryResult({
+                    null_: null,
+                }, DER),
             ),
-            _encode_RemoveEntryResult({
-                null_: null,
-            }, DER),
-        ),
+        },
         stats: {
             request: {
                 operationCode: codeToString(id_opcode_removeEntry),

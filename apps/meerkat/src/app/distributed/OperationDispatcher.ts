@@ -1,5 +1,4 @@
-import type { ClientConnection, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics } from "../types";
-import type DAPConnection from "../dap/DAPConnection";
+import type { ClientConnection, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "../types";
 import type DSPConnection from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import {
@@ -35,9 +34,6 @@ import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import type {
-    ChainedResultOrError,
-} from "@wildboar/x500/src/lib/types/ChainedResultOrError";
 import { compareCode } from "@wildboar/x500/src/lib/utils/compareCode";
 import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
 import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
@@ -109,6 +105,7 @@ import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFrom
 import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
 import getSearchResultStatistics from "../telemetry/getSearchResultStatistics";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
+import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 
 export
 type SearchResultOrError = {
@@ -138,13 +135,25 @@ interface OperationDispatcherState {
     partialName: boolean;
 }
 
+// export
+// type OperationDispatcherReturn = ChainedResultOrError
+//     & Partial<WithRequestStatistics>
+//     & Partial<WithOutcomeStatistics>
+//     & {
+//         foundDSE?: Vertex;
+//     };
+
 export
-type OperationDispatcherReturn = ChainedResultOrError
-    & Partial<WithRequestStatistics>
-    & Partial<WithOutcomeStatistics>
-    & {
-        foundDSE?: Vertex;
-    };
+interface OperationDispatcherReturn
+extends
+    Partial<WithRequestStatistics>,
+    Partial<WithOutcomeStatistics>
+{
+    invokeId: InvokeId;
+    opCode: Code;
+    foundDSE?: Vertex;
+    result: OPCR;
+}
 
 export
 class OperationDispatcher {
@@ -163,8 +172,17 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: result.result,
-                chaining: result.chainedResult,
+                result: {
+                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                        new ChainingResults(
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ),
+                        result.result,
+                    ),
+                },
                 request: {
                     operationCode: codeToString(req.opCode),
                 },
@@ -245,9 +263,18 @@ class OperationDispatcher {
                 chainingProhibited,
                 partialNameResolution,
             );
-            if (nrcrResult) {
-                return nrcrResult;
+            if (!nrcrResult) {
+                throw new Error(); // FIXME:
             }
+            if ("error" in nrcrResult) {
+                throw new Error(); // FIXME:
+            }
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                foundDSE: state.foundDSE,
+                result: nrcrResult,
+            };
         }
         const foundDN = getDistinguishedName(state.foundDSE);
         if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
@@ -255,8 +282,7 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result.result,
-                chaining: outcome.result.chainedResult,
+                result: outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -272,8 +298,7 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result.result,
-                chaining: outcome.result.chainedResult,
+                result: outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -289,8 +314,7 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result.result,
-                chaining: outcome.result.chainedResult,
+                result: outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -306,8 +330,7 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result.result,
-                chaining: outcome.result.chainedResult,
+                result: outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -323,8 +346,7 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result.result,
-                chaining: outcome.result.chainedResult,
+                result: outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -340,8 +362,7 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result.result,
-                chaining: outcome.result.chainedResult,
+                result: outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -360,8 +381,7 @@ class OperationDispatcher {
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
-                    result: outcome.result.result,
-                    chaining: outcome.result.chainedResult,
+                    result: outcome.result,
                     request: {
                         ...outcome.stats.request,
                         operationCode: codeToString(req.opCode),
@@ -374,7 +394,8 @@ class OperationDispatcher {
             } else { // List (I)
                 // Only List (I) results in results merging.
                 const response = await list_i(ctx, conn, state);
-                const result = _decode_ListResult(response.result.result);
+                const responseData = getOptionallyProtectedValue(response.result);
+                const result = _decode_ListResult(responseData.result);
                 const data = getOptionallyProtectedValue(result);
                 const newData = await resultsMergingProcedureForList(
                     ctx,
@@ -390,8 +411,17 @@ class OperationDispatcher {
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
-                    result: _encode_ListResult(newResult, DER),
-                    chaining: response.result.chainedResult,
+                    result: {
+                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                            new ChainingResults(
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                            ),
+                            _encode_ListResult(newResult, DER),
+                        ),
+                    },
                     request: {
                         ...response.stats.request,
                         operationCode: codeToString(req.opCode),
@@ -408,8 +438,7 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result.result,
-                chaining: outcome.result.chainedResult,
+                result: outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -425,8 +454,7 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result.result,
-                chaining: outcome.result.chainedResult,
+                result: outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -559,8 +587,17 @@ class OperationDispatcher {
                         present: 1,
                     },
                     opCode: search["&operationCode"]!,
-                    chaining: response.chaining,
-                    result: _encode_SearchResult(result, DER),
+                    result: {
+                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                            new ChainingResults(
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                            ),
+                            _encode_SearchResult(result, DER),
+                        ),
+                    },
                     request: requestStats,
                     outcome: {
                         result: {
@@ -642,8 +679,17 @@ class OperationDispatcher {
                         present: 1,
                     },
                     opCode: search["&operationCode"]!,
-                    chaining: response.chaining,
-                    result: _encode_SearchResult(result, DER),
+                    result: {
+                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                            new ChainingResults(
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                            ),
+                            _encode_SearchResult(result, DER),
+                        ),
+                    },
                     request: requestStats,
                     outcome: {
                         result: {
@@ -780,20 +826,21 @@ class OperationDispatcher {
                 chainingProhibited,
                 partialNameResolution,
             );
-            if (nrcrResult) {
-                if ("result" in nrcrResult) {
-                    if (!nrcrResult.result) {
-                        throw new Error(); // FIXME:
-                    }
-                    return {
-                        ...nrcrResult,
-                        result: _decode_SearchResult(nrcrResult.result),
-                    };
-                } else if ("error" in nrcrResult) {
-                    return nrcrResult;
-                } else {
-                    throw new Error(); // FIXME:
-                }
+            if (!nrcrResult) {
+                throw new Error(); // FIXME:
+            } else if ("error" in nrcrResult) {
+                return nrcrResult;
+            } else {
+                const unprotectedResult = getOptionallyProtectedValue(nrcrResult);
+                const searchResult = _decode_SearchResult(unprotectedResult.result);
+                return {
+                    invokeId: {
+                        present: 1,
+                    },
+                    opCode: search["&operationCode"]!,
+                    chaining: unprotectedResult.chainedResult,
+                    result: searchResult,
+                };
             }
         }
         const foundDN = getDistinguishedName(state.foundDSE);

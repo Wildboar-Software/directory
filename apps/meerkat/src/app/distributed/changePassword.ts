@@ -222,19 +222,21 @@ async function changePassword (
         null_: null,
     };
     return {
-        result: new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_changePassword,
+        result: {
+            unsigned: new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_changePassword,
+                    ),
+                    undefined,
                 ),
-                undefined,
+                _encode_ChangePasswordResult(result, DER),
             ),
-            _encode_ChangePasswordResult(result, DER),
-        ),
+        },
         stats: {},
     };
 }

@@ -487,19 +487,21 @@ async function list_ii (
         },
     };
     return {
-        result: new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_list,
+        result: {
+            unsigned: new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_list,
+                    ),
+                    undefined,
                 ),
-                undefined,
+                _encode_ListResult(result, DER),
             ),
-            _encode_ListResult(result, DER),
-        ),
+        },
         stats: {
             request: {
                 operationCode: codeToString(id_opcode_list),

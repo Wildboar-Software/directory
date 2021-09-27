@@ -806,19 +806,21 @@ async function modifyDN (
         null_: null,
     };
     return {
-        result: new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_modifyDN,
+        result: {
+            unsigned: new ChainedResult(
+                new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        id_opcode_modifyDN,
+                    ),
+                    undefined,
                 ),
-                undefined,
+                _encode_ModifyDNResult(result, DER),
             ),
-            _encode_ModifyDNResult(result, DER),
-        ),
+        },
         stats: {
             request: {
                 operationCode: codeToString(id_opcode_modifyDN),

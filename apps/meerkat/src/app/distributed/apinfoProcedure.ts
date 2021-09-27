@@ -21,7 +21,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
-import type { ChainedResultOrError } from "@wildboar/x500/src/lib/types/ChainedResultOrError";
+import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -50,7 +50,7 @@ async function apinfoProcedure (
     ctx: Context,
     api: AccessPointInformation,
     req: ChainedRequest,
-): Promise<ChainedResultOrError | null> {
+): Promise<ResultOrError | null> {
     // TODO: Loop AVOIDANCE, not loop DETECTION.
     // if (loopDetected(chaining.traceInformation)) {
     //     throw new errors.ServiceError(
@@ -159,8 +159,6 @@ async function apinfoProcedure (
                     return result;
                 }
             } else {
-                const decodedArg = chainedRead.decoderFor["&ResultType"]!(result.result!);
-                const decodedArgData = getOptionallyProtectedValue(decodedArg);
                 if (!result.opCode) {
                     ctx.log.warn(`This DSA returned a result with no opCode, which might have been malicious: `, api.ae_title);
                     continue;
@@ -168,12 +166,11 @@ async function apinfoProcedure (
                 return {
                     invokeId: result.invokeId,
                     opCode: result.opCode,
-                    chaining: decodedArgData.chainedResult,
                     result: result.result,
                 };
             }
         } catch (e) {
-            ctx.log.warn(`Unable to access DSA `, api.ae_title);
+            ctx.log.warn(`Unable to access DSA `, api.ae_title); // FIXME:
             continue;
         }
     }

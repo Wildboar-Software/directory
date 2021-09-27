@@ -5,7 +5,6 @@ import {
     Value,
     ClientConnection,
     OperationReturn,
-    EntryModificationStatistics,
 } from "../types";
 import * as errors from "../errors";
 import {
@@ -162,6 +161,7 @@ import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEntryModificationStatistics from "../telemetry/getEntryModificationStatistics";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
+import validateObjectClasses from "../x500/validateObjectClasses";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
@@ -1137,6 +1137,25 @@ async function modifyEntry (
             ...alreadyPresentObjectClasses,
             ...addedObjectClasses,
         ];
+        if (!validateObjectClasses(ctx, objectClasses)) {
+            throw new errors.UpdateError(
+                `Invalid object classes: ${objectClasses.map((oc) => oc.toString()).join(" ")}`,
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
 
         /**
          * From ITU Recommendation X.501 (2016), Section 13.3.3:
@@ -1253,7 +1272,7 @@ async function modifyEntry (
                 validity_end: {
                     lte: now,
                 },
-                // accepted: true, // FIXME: Is this always set?
+                accepted: true,
                 OR: [
                     { // Local DSA initiated role A (meaning local DSA is superior.)
                         initiator: OperationalBindingInitiator.ROLE_A,
@@ -1326,19 +1345,21 @@ async function modifyEntry (
                 null_: null,
             };
             return {
-                result: new ChainedResult(
-                    new ChainingResults(
-                        undefined,
-                        undefined,
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            id_opcode_modifyEntry,
+                result: {
+                    unsigned: new ChainedResult(
+                        new ChainingResults(
+                            undefined,
+                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                id_opcode_modifyEntry,
+                            ),
+                            undefined,
                         ),
-                        undefined,
+                        _encode_ModifyEntryResult(result, DER),
                     ),
-                    _encode_ModifyEntryResult(result, DER),
-                ),
+                },
                 stats: {},
             };
         }
@@ -1379,7 +1400,31 @@ async function modifyEntry (
 
         };
         return {
-            result: new ChainedResult(
+            result: {
+                unsigned: new ChainedResult(
+                    new ChainingResults(
+                        undefined,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            id_opcode_modifyEntry,
+                        ),
+                        undefined,
+                    ),
+                    _encode_ModifyEntryResult(result, DER),
+                ),
+            },
+            stats: {},
+        };
+    }
+
+    const result: ModifyEntryResult = {
+        null_: null,
+    };
+    return {
+        result: {
+            unsigned: new ChainedResult(
                 new ChainingResults(
                     undefined,
                     undefined,
@@ -1392,27 +1437,7 @@ async function modifyEntry (
                 ),
                 _encode_ModifyEntryResult(result, DER),
             ),
-            stats: {},
-        };
-    }
-
-    const result: ModifyEntryResult = {
-        null_: null,
-    };
-    return {
-        result: new ChainedResult(
-            new ChainingResults(
-                undefined,
-                undefined,
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_modifyEntry,
-                ),
-                undefined,
-            ),
-            _encode_ModifyEntryResult(result, DER),
-        ),
+        },
         stats: {
             request: {
                 operationCode: codeToString(id_opcode_modifyEntry),
