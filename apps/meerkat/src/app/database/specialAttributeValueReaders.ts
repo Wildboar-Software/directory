@@ -60,6 +60,65 @@ import { createTimestamp } from "@wildboar/x500/src/lib/modules/InformationFrame
 import { modifyTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/modifyTimestamp.oa";
 import { creatorsName } from "@wildboar/x500/src/lib/modules/InformationFramework/creatorsName.oa";
 import { modifiersName } from "@wildboar/x500/src/lib/modules/InformationFramework/modifiersName.oa";
+import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+import { nameForms } from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+import { dITContentRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+import { objectClasses } from "@wildboar/x500/src/lib/modules/SchemaAdministration/objectClasses.oa";
+import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
+import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
+import { contextTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/contextTypes.oa";
+import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
+import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
+import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
+import {
+    DITStructureRuleDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+import {
+    NameFormDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+import {
+    NameFormInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+import {
+    DITContentRuleDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+import {
+    MatchingRuleDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleDescription.ta";
+import {
+    ObjectClassDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassDescription.ta";
+import {
+    ObjectClassInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassInformation.ta";
+import {
+    AttributeTypeDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeDescription.ta";
+import {
+    AttributeTypeInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeInformation.ta";
+import {
+    MatchingRuleUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
+import {
+    ContextDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextDescription.ta";
+import {
+    ContextInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextInformation.ta";
+import {
+    FriendsDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
+import {
+    DITContextUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+import {
+    DITContextUseInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
+import {
+    LdapSyntaxDescription,
+} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
 
 export const readObjectClass: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
@@ -818,4 +877,326 @@ export const readModifiersName: SpecialAttributeDatabaseReader = async (
             contexts: new Map(),
         },
     ];
+};
+
+export const readDITStructureRules: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    const results = await ctx.db.dITStructureRule.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    });
+    return results
+        .map((result) => new DITStructureRuleDescription(
+            result.ruleIdentifier,
+            ObjectIdentifier.fromString(result.nameForm),
+            result.superiorStructureRules
+                ? result.superiorStructureRules
+                    .split(" ")
+                    .map((ssr) => Number.parseInt(ssr))
+                : undefined,
+            result.name
+                ?.split("|")
+                .map((name) => ({
+                    uTF8String: name,
+                })),
+            result.description
+                ? {
+                    uTF8String: result.description,
+                }
+                : undefined,
+            result.obsolete,
+        ))
+        .map((value) => ({
+            id: dITStructureRules["&id"],
+            value: dITStructureRules.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
+};
+
+export const readNameForms: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    return Array.from(ctx.nameForms.values())
+        .map((nf) => new NameFormDescription(
+            nf.namedObjectClass,
+            nf.name?.map((name) => ({
+                uTF8String: name,
+            })),
+            nf.description
+                ? {
+                    uTF8String: nf.description,
+                }
+                : undefined,
+            nf.obsolete,
+            new NameFormInformation(
+                nf.namedObjectClass,
+                Array.from(nf.mandatoryAttributes).map(ObjectIdentifier.fromString),
+                nf.optionalAttributes
+                    ? Array.from(nf.optionalAttributes).map(ObjectIdentifier.fromString)
+                    : undefined,
+            ),
+        ))
+        .map((value) => ({
+            id: nameForms["&id"],
+            value: nameForms.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
+};
+
+export const readDITContentRules: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    const results = await ctx.db.contentRule.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    });
+    return results
+        .map((result) => new DITContentRuleDescription(
+            ObjectIdentifier.fromString(result.structural_class),
+            result.auxiliary_classes
+                ?.split(" ")
+                .map(ObjectIdentifier.fromString),
+            result.mandatory_attributes
+                ?.split(" ")
+                .map(ObjectIdentifier.fromString),
+            result.optional_attributes
+                ?.split(" ")
+                .map(ObjectIdentifier.fromString),
+            result.precluded_attributes
+                ?.split(" ")
+                .map(ObjectIdentifier.fromString),
+            result.name
+                ?.split("|")
+                .map((name) => ({
+                    uTF8String: name,
+                })),
+            result.description
+                ? {
+                    uTF8String: result.description,
+                }
+                : undefined,
+            result.obsolete,
+        ))
+        .map((value) => ({
+            id: dITContentRules["&id"],
+            value: dITContentRules.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
+};
+
+export const readObjectClasses: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    return Array.from(ctx.objectClasses.values())
+        .map((oc) => new ObjectClassDescription(
+            oc.id,
+            oc.name?.map((name) => ({
+                uTF8String: name,
+            })),
+            oc.description
+                ? {
+                    uTF8String: oc.description,
+                }
+                : undefined,
+            oc.obsolete,
+            new ObjectClassInformation(
+                Array.from(oc.superclasses)
+                    .map(ObjectIdentifier.fromString),
+                oc.kind,
+                Array.from(oc.mandatoryAttributes)
+                    .map(ObjectIdentifier.fromString),
+                Array.from(oc.optionalAttributes)
+                    .map(ObjectIdentifier.fromString),
+            ),
+        ))
+        .map((value) => ({
+            id: objectClasses["&id"],
+            value: objectClasses.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
+};
+
+export const readAttributeTypes: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    return Array.from(ctx.attributes.values())
+        .map((attr) => new AttributeTypeDescription(
+            attr.id,
+            attr.name?.map((name) => ({
+                uTF8String: name,
+            })),
+            attr.description
+                ? {
+                    uTF8String: attr.description,
+                }
+                : undefined,
+            attr.obsolete,
+            new AttributeTypeInformation(
+                attr.parent,
+                undefined, // FIXME: Matching rule functions need to be replaced with full matching rules.
+                undefined,
+                undefined,
+                undefined, // FIXME: attribute syntax needs to be added to attribute type
+                !attr.singleValued,
+                attr.collective,
+                !attr.noUserModification,
+                attr.usage,
+            ),
+        ))
+        .map((value) => ({
+            id: attributeTypes["&id"],
+            value: attributeTypes.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
+};
+
+export const readFriends: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    const results = await ctx.db.friendship.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    });
+    return results
+        .map((result) => new FriendsDescription(
+            ObjectIdentifier.fromString(result.anchor),
+            result.name
+                ?.split("|")
+                .map((name) => ({
+                    uTF8String: name,
+                })),
+            result.description
+                ? {
+                    uTF8String: result.description,
+                }
+                : undefined,
+            result.obsolete,
+            result.friends
+                .split(" ")
+                .map(ObjectIdentifier.fromString),
+        ))
+        .map((value) => ({
+            id: friends["&id"],
+            value: friends.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
+};
+
+export const readContextTypes: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    // FIXME: contextTypes
+    return [];
+};
+
+export const readDITContextUse: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    const results = await ctx.db.contextUseRule.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    });
+    return results
+        .map((result) => new DITContextUseDescription(
+            ObjectIdentifier.fromString(result.attributeType),
+            result.name
+                ?.split("|")
+                .map((name) => ({
+                    uTF8String: name,
+                })),
+            result.description
+                ? {
+                    uTF8String: result.description,
+                }
+                : undefined,
+            result.obsolete,
+            new DITContextUseInformation(
+                result.mandatory
+                    ?.split(" ")
+                    .map(ObjectIdentifier.fromString),
+                result.optional
+                    ?.split(" ")
+                    .map(ObjectIdentifier.fromString),
+            ),
+        ))
+        .map((value) => ({
+            id: dITContextUse["&id"],
+            value: dITContextUse.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
+};
+
+export const readMatchingRules: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    // FIXME: Pending changes to how matching rules are indexed in memory.
+    return [];
+};
+
+export const readMatchingRuleUse: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    const results = await ctx.db.matchingRuleUse.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    });
+    return results
+        .map((result) => new MatchingRuleUseDescription(
+            ObjectIdentifier.fromString(result.identifier),
+            result.name
+                ?.split("|")
+                .map((name) => ({
+                    uTF8String: name,
+                })),
+            result.description
+                ? {
+                    uTF8String: result.description,
+                }
+                : undefined,
+            result.obsolete,
+            result.information
+                .split(" ")
+                .map(ObjectIdentifier.fromString),
+        ))
+        .map((value) => ({
+            id: matchingRuleUse["&id"],
+            value: matchingRuleUse.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
+};
+
+export const readLdapSyntaxes: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    return Array.from(ctx.ldapSyntaxes.values())
+        .map((syntax) => new LdapSyntaxDescription(
+            syntax.id,
+            syntax.description
+                ? {
+                    uTF8String: syntax.description,
+                }
+                : undefined,
+        ))
+        .map((value) => ({
+            id: ldapSyntaxes["&id"],
+            value: ldapSyntaxes.encoderFor["&Type"]!(value, DER),
+            contexts: new Map(),
+        }));
 };

@@ -31,11 +31,14 @@ import type {
 // import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
 // import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 
+const NOOP: SpecialAttributeDatabaseRemover = async (): Promise<void> => {};
+
 export const removeObjectClass: SpecialAttributeDatabaseRemover = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    // TODO: Throw, because you cannot delete all object classes.
     // Note that schema validation must occur elsewhere.
     // vertex.dse.objectClass.clear();
     // FIXME: This should only work for auxiliary classes.
@@ -422,6 +425,76 @@ export const removeUserPwd: SpecialAttributeDatabaseRemover = async (
     }));
 };
 
-export const removeUniqueIdentifier: SpecialAttributeDatabaseRemover = async (): Promise<void> => {
-    // This function intentionally does nothing. The unique identifier should not be changed.
+export const removeUniqueIdentifier: SpecialAttributeDatabaseRemover = NOOP;
+
+export const removeDITStructureRules: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
 };
+
+export const removeNameForms: SpecialAttributeDatabaseRemover = NOOP;
+
+export const removeDITContentRules: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.contentRule.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
+};
+
+export const removeObjectClasses: SpecialAttributeDatabaseRemover = NOOP;
+
+export const removeAttributeTypes: SpecialAttributeDatabaseRemover = NOOP;
+
+export const removeFriends: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.friendship.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
+};
+
+export const removeContextTypes: SpecialAttributeDatabaseRemover = NOOP;
+
+export const removeDITContextUse: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.contextUseRule.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
+};
+
+export const removeMatchingRules: SpecialAttributeDatabaseRemover = NOOP;
+
+export const removeMatchingRuleUse: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.matchingRuleUse.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
+};
+
+export const removeLdapSyntaxes: SpecialAttributeDatabaseRemover = NOOP;

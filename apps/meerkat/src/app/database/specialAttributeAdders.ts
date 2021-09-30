@@ -27,9 +27,28 @@ import {
 import {
     _decode_MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
+import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
 import encryptPassword from "../x500/encryptPassword";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
-import { Knowledge } from "@prisma/client";
+import {
+    Knowledge,
+    ObjectClassKind as PrismaObjectClassKind,
+    AttributeUsage as PrismaAttributeUsage,
+} from "@prisma/client";
+import {
+    ObjectClassKind_abstract,
+    ObjectClassKind_auxiliary,
+    ObjectClassKind_structural,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import {
+    AttributeUsage_dSAOperation,
+    AttributeUsage_directoryOperation,
+    AttributeUsage_distributedOperation,
+    AttributeUsage_userApplications,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import {
+    DITContextUse,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DITContextUse.ta";
 import rdnToJson from "../x500/rdnToJson";
 // import { pwdStartTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
 // import { pwdExpiryTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
@@ -57,8 +76,21 @@ import rdnToJson from "../x500/rdnToJson";
 // import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
 // import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
 // import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
+import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+import { nameForms } from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+import { dITContentRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+import { objectClasses } from "@wildboar/x500/src/lib/modules/SchemaAdministration/objectClasses.oa";
+import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
+import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
+import { contextTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/contextTypes.oa";
+import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+// import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
+import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
+// import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
 
 /* DATABASE WRITERS */
+
+const NOOP: SpecialAttributeDatabaseEditor = async (): Promise<void> => {};
 
 // const writeSomeACI: (scope: ACIScope) => SpecialAttributeDatabaseEditor = (scope: ACIScope) => {
 //     return (
@@ -733,7 +765,7 @@ export const addUserPwd: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    const pwd = _decode_UserPwd(value.value);
+    const pwd: UserPwd = _decode_UserPwd(value.value);
     if ("clear" in pwd) {
         const algid = getScryptAlgorithmIdentifier();
         const clear = Buffer.from(pwd.clear, "utf-8");
@@ -789,6 +821,377 @@ export const addUserPwd: SpecialAttributeDatabaseEditor = async (
     }
 };
 
-export const addUniqueIdentifier: SpecialAttributeDatabaseEditor = async (): Promise<void> => {
-    // This function intentionally does nothing. The unique identifier should not be changed.
+export const addUniqueIdentifier: SpecialAttributeDatabaseEditor = NOOP;
+
+export const addDITStructureRules: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = dITStructureRules.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.create({
+        data: {
+            entry_id: vertex.dse.id,
+            ruleIdentifier: decoded.ruleIdentifier,
+            nameForm: decoded.nameForm.toString(),
+            superiorStructureRules: decoded.superiorStructureRules
+                ?.map((ssr) => ssr.toString())
+                .join(" ") ?? null,
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+        },
+    }));
+    if (vertex.dse.subentry) {
+        if (vertex.dse.subentry.ditStructureRules) {
+            vertex.dse.subentry.ditStructureRules.push(decoded);
+        } else {
+            vertex.dse.subentry.ditStructureRules = [ decoded ];
+        }
+    }
 };
+
+export const addNameForms: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = nameForms.decoderFor["&Type"]!(value.value);
+    const name = decoded.name
+        ? decoded.name
+            .map(directoryStringToString)
+            .map((str) => str.replace(/\|/g, ""))
+            .join("|")
+        : undefined;
+    const description = decoded.description
+        ? directoryStringToString(decoded.description)
+        : undefined;
+    pendingUpdates.otherWrites.push(ctx.db.nameForm.create({
+        data: {
+            identifier: decoded.identifier.toString(),
+            name,
+            description,
+            obsolete: decoded.obsolete,
+            namedObjectClass: decoded.information.subordinate.toString(),
+            mandatoryAttributes: decoded.information.namingMandatories
+                .map((oid) => oid.toString())
+                .join(" "),
+            optionalAttributes: decoded.information.namingOptionals
+                ?.map((oid) => oid.toString())
+                .join(" "),
+        },
+    }));
+    ctx.nameForms.set(decoded.identifier.toString(), {
+        id: decoded.identifier,
+        name: decoded.name?.map(directoryStringToString),
+        description,
+        obsolete: decoded.obsolete,
+        namedObjectClass: decoded.information.subordinate,
+        mandatoryAttributes: new Set(),
+        optionalAttributes: new Set(),
+    });
+};
+
+export const addDITContentRules: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = dITContentRules.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.contentRule.create({
+        data: {
+            entry_id: vertex.dse.id,
+            structural_class: decoded.structuralObjectClass.toString(),
+            auxiliary_classes: decoded.auxiliaries?.map((aux) => aux.toString()).join(" "),
+            mandatory_attributes: decoded.mandatory?.map((attr) => attr.toString()).join(" "),
+            optional_attributes: decoded.optional?.map((attr) => attr.toString()).join(" "),
+            precluded_attributes: decoded.precluded?.map((attr) => attr.toString()).join(" "),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+        },
+    }));
+    if (vertex.dse.subentry) {
+        if (vertex.dse.subentry.ditContentRules) {
+            vertex.dse.subentry.ditContentRules.push(decoded);
+        } else {
+            vertex.dse.subentry.ditContentRules = [ decoded ];
+        }
+    }
+};
+
+export const addObjectClasses: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = objectClasses.decoderFor["&Type"]!(value.value);
+    const name = decoded.name
+        ? decoded.name
+            .map(directoryStringToString)
+            .map((str) => str.replace(/\|/g, ""))
+            .join("|")
+        : undefined;
+    const description = decoded.description
+        ? directoryStringToString(decoded.description)
+        : undefined;
+    pendingUpdates.otherWrites.push(ctx.db.objectClassDescription.create({
+        data: {
+            identifier: decoded.identifier.toString(),
+            name,
+            description,
+            obsolete: decoded.obsolete,
+            subclassOf: decoded.information.subclassOf
+                ?.map((oid) => oid.toString())
+                .join(" "),
+            mandatories: decoded.information.mandatories?.map((attr) => attr.toString()).join(" "),
+            optionals: decoded.information.optionals?.map((attr) => attr.toString()).join(" "),
+            kind: (() => {
+                switch (decoded.information.kind) {
+                case (ObjectClassKind_abstract): return PrismaObjectClassKind.ABSTRACT;
+                case (ObjectClassKind_auxiliary): return PrismaObjectClassKind.AUXILIARY
+                case (ObjectClassKind_structural): return PrismaObjectClassKind.STRUCTURAL;
+                default: return undefined;
+                }
+            })(),
+            ldapDescription: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            ldapNames: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+        },
+    }));
+    ctx.objectClasses.set(decoded.identifier.toString(), {
+        id: decoded.identifier,
+        name: decoded.name?.map(directoryStringToString),
+        description,
+        obsolete: decoded.obsolete,
+        superclasses: decoded.information.subclassOf
+            ? new Set(decoded.information.subclassOf.map((oid) => oid.toString()))
+            : new Set(),
+        kind: decoded.information.kind ?? ObjectClassKind_structural,
+        mandatoryAttributes: new Set(decoded.information.mandatories?.map((oid) => oid.toString())),
+        optionalAttributes: new Set(decoded.information.optionals?.map((oid) => oid.toString())),
+        ldapNames: [],
+        ldapDescription: description,
+    });
+};
+
+export const addAttributeTypes: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = attributeTypes.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.attributeTypeDescription.create({
+        data: {
+            identifier: decoded.identifier.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            derivation: decoded.information.derivation?.toString(),
+            equalityMatch: decoded.information.equalityMatch?.toString(),
+            orderingMatch: decoded.information.orderingMatch?.toString(),
+            substringsMatch: decoded.information.substringsMatch?.toString(),
+            attributeSyntax: decoded.information.attributeSyntax
+                ? directoryStringToString(decoded.information.attributeSyntax)
+                : undefined,
+            multiValued: decoded.information.multi_valued,
+            collective: decoded.information.collective,
+            userModifiable: decoded.information.userModifiable,
+            application: (() => {
+                switch (decoded.information.application) {
+                case (AttributeUsage_dSAOperation):
+                    return PrismaAttributeUsage.DSA_OPERATION;
+                case (AttributeUsage_directoryOperation):
+                    return PrismaAttributeUsage.DIRECTORY_OPERATION;
+                case (AttributeUsage_distributedOperation):
+                    return PrismaAttributeUsage.DISTRIBUTED_OPERATION;
+                case (AttributeUsage_userApplications):
+                    return PrismaAttributeUsage.USER_APPLICATIONS;
+                default:
+                    return PrismaAttributeUsage.USER_APPLICATIONS;
+                }
+            })(),
+        },
+    }));
+    // TODO: Pending Matching rules change
+};
+
+export const addFriends: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = friends.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.friendship.create({
+        data: {
+            entry_id: vertex.dse.id,
+            anchor: decoded.anchor.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            friends: decoded.friends.map((oid) => oid.toString()).join(" "),
+        },
+    }));
+    if (vertex.dse.subentry) {
+        if (vertex.dse.subentry.friendships) {
+            vertex.dse.subentry.friendships.set(decoded.anchor.toString(), decoded.friends);
+        } else {
+            vertex.dse.subentry.friendships = new Map([
+                [ decoded.anchor.toString(), decoded.friends ],
+            ]);
+        }
+    }
+};
+
+export const addContextTypes: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = contextTypes.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.contextDescription.create({
+        data: {
+            identifier: decoded.identifier.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            syntax: directoryStringToString(decoded.information.syntax),
+            assertionSyntax: decoded.information.assertionSyntax
+                ? directoryStringToString(decoded.information.assertionSyntax)
+                : undefined,
+        },
+    }));
+    // FIXME: Blocked pending contextType implementation.
+};
+
+export const addDITContextUse: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = dITContextUse.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.contextUseRule.create({
+        data: {
+            entry_id: vertex.dse.id,
+            attributeType: decoded.identifier.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            mandatory: decoded.information.mandatoryContexts
+                ?.map((oid) => oid.toString())
+                .join(" "),
+            optional: decoded.information.optionalContexts
+                ?.map((oid) => oid.toString())
+                .join(" "),
+        }
+    }));
+    if (vertex.dse.subentry) {
+        const ditContextUse = new DITContextUse(
+            decoded.identifier,
+            decoded.information.mandatoryContexts,
+            decoded.information.optionalContexts,
+        );
+        if (vertex.dse.subentry.ditContextUse) {
+            vertex.dse.subentry.ditContextUse.push(ditContextUse);
+        } else {
+            vertex.dse.subentry.ditContextUse = [ ditContextUse ];
+        }
+    }
+};
+
+export const addMatchingRules: SpecialAttributeDatabaseEditor = NOOP;
+
+export const addMatchingRuleUse: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = matchingRuleUse.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.matchingRuleUse.create({
+        data: {
+            entry_id: vertex.dse.id,
+            identifier: decoded.identifier.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            information: decoded.information
+                .map((oid) => oid.toString())
+                .join(" "),
+        },
+    }));
+    if (vertex.dse.subentry) {
+        if (vertex.dse.subentry.matchingRuleUse) {
+            vertex.dse.subentry.matchingRuleUse.set(decoded.identifier.toString(), decoded);
+        } else {
+            vertex.dse.subentry.matchingRuleUse = new Map([
+                [ decoded.identifier.toString(), decoded ],
+            ]);
+        }
+    }
+};
+
+export const addLdapSyntaxes: SpecialAttributeDatabaseEditor = NOOP;

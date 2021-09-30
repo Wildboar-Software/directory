@@ -134,7 +134,6 @@ const ctx: Context = {
     operationalBindingControlEvents: new EventEmitter(),
     collectiveAttributes: new Set(),
     nameForms: new Map(),
-    friendships: new Map(),
     statistics: {
         operations: [],
     },

@@ -34,6 +34,19 @@ import {
 // import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
 // import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
 // import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
+import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+// import { nameForms } from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+import { dITContentRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+// import { objectClasses } from "@wildboar/x500/src/lib/modules/SchemaAdministration/objectClasses.oa";
+// import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
+import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
+// import { contextTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/contextTypes.oa";
+import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+// import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
+import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
+// import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
+
+const NOOP: SpecialAttributeDatabaseEditor = async (): Promise<void> => {};
 
 export const removeObjectClass: SpecialAttributeDatabaseEditor = async (
     ctx: Readonly<Context>,
@@ -549,3 +562,96 @@ export const removeUserPwd: SpecialAttributeDatabaseEditor = async (
 export const removeUniqueIdentifier: SpecialAttributeDatabaseEditor = async (): Promise<void> => {
     // This function intentionally does nothing. The unique identifier should not be changed.
 };
+
+export const removeDITStructureRules: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = dITStructureRules.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            ruleIdentifier: decoded.ruleIdentifier,
+        },
+    }));
+};
+
+export const removeNameForms: SpecialAttributeDatabaseEditor = NOOP;
+
+export const removeDITContentRules: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = dITContentRules.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.contentRule.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            /**
+             * From ITU X.501 (2016), Section 13.8.1:
+             *
+             * > For any valid subschema specification, there is at most one
+             * > DIT content rule for each structural object class.
+             */
+            structural_class: decoded.structuralObjectClass.toString(),
+        },
+    }));
+};
+
+export const removeObjectClasses: SpecialAttributeDatabaseEditor = NOOP;
+
+export const removeAttributeTypes: SpecialAttributeDatabaseEditor = NOOP;
+
+export const removeFriends: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = friends.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.friendship.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            anchor: decoded.anchor.toString(),
+        },
+    }));
+};
+
+export const removeContextTypes: SpecialAttributeDatabaseEditor = NOOP;
+
+export const removeDITContextUse: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = dITContextUse.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.contextUseRule.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            attributeType: decoded.identifier.toString(),
+        },
+    }));
+};
+
+export const removeMatchingRules: SpecialAttributeDatabaseEditor = NOOP;
+
+export const removeMatchingRuleUse: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = matchingRuleUse.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.matchingRuleUse.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            identifier: decoded.identifier.toString(),
+        },
+    }));
+};
+
+export const removeLdapSyntaxes: SpecialAttributeDatabaseEditor = NOOP;

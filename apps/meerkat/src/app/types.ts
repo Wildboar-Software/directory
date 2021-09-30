@@ -82,6 +82,18 @@ import {
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import type {
+    DITStructureRule,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DITStructureRule.ta";
+import type {
+    DITContentRule,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DITContentRule.ta";
+import type {
+    DITContextUse,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DITContextUse.ta";
+import type {
+    MatchingRuleUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -119,6 +131,9 @@ interface LDAPSyntaxInfo {
 export
 interface AttributeInfo {
     id: OBJECT_IDENTIFIER;
+    name?: string[];
+    description?: string;
+    obsolete: boolean;
     parent?: OBJECT_IDENTIFIER;
     /**
      * From ITU Recommendation X.501 (2016), Section 8.9.5:
@@ -148,21 +163,21 @@ interface AttributeInfo {
     ldapSyntax?: OBJECT_IDENTIFIER;
     ldapNames?: LDAPName[];
     ldapDescription?: string;
-    obsolete: boolean;
     compatibleMatchingRules: Set<IndexableOID>;
 }
 
 export
 interface ObjectClassInfo {
     id: OBJECT_IDENTIFIER;
+    name?: string[];
+    description?: string;
+    obsolete?: boolean;
     superclasses: Set<IndexableOID>;
     kind: ObjectClassKind;
     mandatoryAttributes: Set<IndexableOID>;
     optionalAttributes: Set<IndexableOID>;
     ldapNames?: LDAPName[];
     ldapDescription?: string;
-    // The X.500 specifications do not define this field. IETF RFC 4512, Section 4.1.1 does.
-    obsolete?: boolean;
 }
 
 // Still necessary, because not all object classes have OIDs.
@@ -186,28 +201,6 @@ interface Value {
     id: AttributeType; // TODO: Rename to "type"
     value: ANY;
     contexts: Map<IndexableOID, StoredContext>;
-}
-
-export
-interface DSEType {
-    root: boolean;
-    glue: boolean;
-    cp: boolean;
-    entry: boolean;
-    alias: boolean;
-    subr: boolean;
-    nssr: boolean;
-    supr: boolean;
-    xr: boolean;
-    admPoint: boolean;
-    subentry: boolean;
-    shadow: boolean;
-    immSupr: boolean;
-    rhob: boolean;
-    sa: boolean;
-    dsSubentry: boolean;
-    familyMember: boolean;
-    ditBridge: boolean;
 }
 
 export
@@ -284,8 +277,14 @@ interface SubentryDSE {
     subtreeSpecification: SubtreeSpecification[];
     prescriptiveACI?: ACIItem[];
     collectiveAttributes?: Attribute[];
+    // TODO: Index these via Map().
     contextAssertionDefaults?: TypeAndContextAssertion[];
     searchRules?: SearchRuleDescription[];
+    ditStructureRules?: DITStructureRule[];
+    ditContentRules?: DITContentRule[];
+    ditContextUse?: DITContextUse[];
+    matchingRuleUse?: Map<IndexableOID, MatchingRuleUseDescription>;
+    friendships?: Map<IndexableOID, OBJECT_IDENTIFIER[]>;
 
     // Password admin
     pwdAttribute?: OBJECT_IDENTIFIER;
@@ -1000,7 +999,6 @@ interface Context {
     operationalBindingControlEvents: OperationalBindingControlEvents;
     collectiveAttributes: Set<IndexableOID>;
     nameForms: Map<IndexableOID, NameFormInfo>;
-    friendships: Map<IndexableOID, FriendshipInfo>;
 }
 
 export

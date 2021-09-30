@@ -19,6 +19,9 @@ import type {
 import {
     contextAssertionSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
+import {
+    id_soc_subschema,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
 
 // Special Attributes
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
@@ -35,15 +38,15 @@ import { pwdEndTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEnd
 import { pwdFails } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
 import { pwdFailureTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
 import { pwdGracesUsed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGracesUsed.oa";
-import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
-import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+// import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+// import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
 import { pwdModifyEntryAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
 import { pwdChangeAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
 import { pwdMaxAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxAge.oa";
 import { pwdExpiryAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryAge.oa";
 import { pwdMinLength } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinLength.oa";
-import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
-import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
+// import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
+// import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
 import { pwdDictionaries } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdDictionaries.oa";
 import { pwdExpiryWarning } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryWarning.oa";
 import { pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGraces.oa";
@@ -54,10 +57,21 @@ import { pwdMaxTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPoli
 import { pwdMinTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinTimeInHistory.oa";
 import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
 import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
-import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
+// import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
+import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+import { nameForms } from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+import { dITContentRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+import { objectClasses } from "@wildboar/x500/src/lib/modules/SchemaAdministration/objectClasses.oa";
+import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
+import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
+import { contextTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/contextTypes.oa";
+import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
+import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
+import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
@@ -117,6 +131,20 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
 
     [ userPwd["&id"]!.toString(), readers.readUserPwd ],
     [ userPassword["&id"]!.toString(), readers.readUserPassword ],
+
+    [ uniqueIdentifier["&id"].toString(), readers.readUniqueIdentifier ], // Has significance for Basic Access Control
+
+    [ dITStructureRules["&id"].toString(), readers.readDITStructureRules ],
+    [ nameForms["&id"].toString(), readers.readNameForms ],
+    [ dITContentRules["&id"].toString(), readers.readDITContentRules ],
+    [ objectClasses["&id"].toString(), readers.readObjectClasses ],
+    [ attributeTypes["&id"].toString(), readers.readAttributeTypes ],
+    [ friends["&id"].toString(), readers.readFriends ],
+    [ contextTypes["&id"].toString(), readers.readContextTypes ],
+    [ dITContextUse["&id"].toString(), readers.readDITContextUse ],
+    [ matchingRules["&id"].toString(), readers.readMatchingRules ],
+    [ matchingRuleUse["&id"].toString(), readers.readMatchingRuleUse ],
+    [ ldapSyntaxes["&id"].toString(), readers.readLdapSyntaxes ],
 ]);
 
 export
@@ -151,15 +179,20 @@ interface ReadEntryAttributesReturn {
 
 // This is so friends of friends, recursively, can be added.
 function addFriends (
-    ctx: Context,
+    relevantSubentries: Vertex[],
     selectedUserAttributes: Set<IndexableOID>,
     type_: IndexableOID,
 ): void {
-    const friendship = ctx.friendships.get(type_);
+    const friendship = relevantSubentries
+        .find((sub) => (
+            sub.dse.objectClass.has(id_soc_subschema.toString())
+            && sub.dse.subentry?.friendships
+        ))?.dse.subentry!.friendships?.get(type_);
     if (friendship) {
-        for (const friend of friendship.friends) {
-            if (!selectedUserAttributes.has(friend)) {
-                addFriends(ctx, selectedUserAttributes, friend);
+        for (const friend of friendship) {
+            const fstr = friend.toString();
+            if (!selectedUserAttributes.has(fstr)) {
+                addFriends(relevantSubentries, selectedUserAttributes, fstr);
             }
         }
     }
@@ -195,9 +228,9 @@ async function readValues (
     const selectedUserAttributes: Set<IndexableOID> | null = (eis?.attributes && ("select" in eis.attributes))
         ? new Set(eis.attributes.select.map((oid) => oid.toString()))
         : null;
-    if (selectedUserAttributes) {
+    if (selectedUserAttributes && relevantSubentries) {
         for (const attr of Array.from(selectedUserAttributes ?? [])) {
-            addFriends(ctx, selectedUserAttributes, attr);
+            addFriends(relevantSubentries, selectedUserAttributes, attr);
         }
     }
     const selectedOperationalAttributes: Set<IndexableOID> | null | undefined = eis?.extraAttributes
@@ -205,9 +238,9 @@ async function readValues (
             ? new Set(eis.extraAttributes.select.map((oid) => oid.toString()))
             : null)
         : undefined;
-    if (selectedOperationalAttributes) {
+    if (selectedOperationalAttributes && relevantSubentries) {
         for (const attr of Array.from(selectedOperationalAttributes ?? [])) {
-            addFriends(ctx, selectedOperationalAttributes, attr);
+            addFriends(relevantSubentries, selectedOperationalAttributes, attr);
         }
     }
     const operationalAttributes: Value[] = [];

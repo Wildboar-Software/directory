@@ -43,6 +43,17 @@ import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncA
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
+import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+import { nameForms } from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+import { dITContentRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+import { objectClasses } from "@wildboar/x500/src/lib/modules/SchemaAdministration/objectClasses.oa";
+import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
+import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
+import { contextTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/contextTypes.oa";
+import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
+import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
+import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
 
 // Attribute Removers
 import * as removers from "../specialAttributeRemovers";
@@ -88,6 +99,18 @@ const specialAttributeDatabaseRemovers: Map<IndexableOID, SpecialAttributeDataba
     [ userPassword["&id"]!.toString(), removers.removeUserPassword ],
 
     [ uniqueIdentifier["&id"].toString(), removers.removeUniqueIdentifier ], // Has significance for BAC
+
+    [ dITStructureRules["&id"].toString(), removers.removeDITStructureRules ],
+    [ nameForms["&id"].toString(), removers.removeNameForms ],
+    [ dITContentRules["&id"].toString(), removers.removeDITContentRules ],
+    [ objectClasses["&id"].toString(), removers.removeObjectClasses ],
+    [ attributeTypes["&id"].toString(), removers.removeAttributeTypes ],
+    [ friends["&id"].toString(), removers.removeFriends ],
+    [ contextTypes["&id"].toString(), removers.removeContextTypes ],
+    [ dITContextUse["&id"].toString(), removers.removeDITContextUse ],
+    [ matchingRules["&id"].toString(), removers.removeMatchingRules ],
+    [ matchingRuleUse["&id"].toString(), removers.removeMatchingRuleUse ],
+    [ ldapSyntaxes["&id"].toString(), removers.removeLdapSyntaxes ],
 ]);
 
 export

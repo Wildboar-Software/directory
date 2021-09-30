@@ -64,22 +64,16 @@ async function main (): Promise<void> {
 
     const nameForms = await ctx.db.nameForm.findMany();
     for (const nameForm of nameForms) {
-        ctx.nameForms.set(nameForm.oid, {
-            id: ObjectIdentifier.fromString(nameForm.oid),
-            name: [ nameForm.name ],
+        ctx.nameForms.set(nameForm.identifier, {
+            id: ObjectIdentifier.fromString(nameForm.identifier),
+            name: nameForm.name
+                ? [ nameForm.name ]
+                : undefined,
             description: nameForm.description ?? undefined,
             obsolete: nameForm.obsolete,
             namedObjectClass: ObjectIdentifier.fromString(nameForm.namedObjectClass),
             mandatoryAttributes: new Set(nameForm.mandatoryAttributes.split(" ")),
-            optionalAttributes: new Set(nameForm.optionalAttributes.split(" ")),
-        });
-    }
-
-    const friendships = await ctx.db.friendship.findMany();
-    for (const friendship of friendships) {
-        ctx.friendships.set(friendship.anchor, {
-            anchor: ObjectIdentifier.fromString(friendship.anchor),
-            friends: new Set(friendship.friends.split(" ")),
+            optionalAttributes: new Set(nameForm.optionalAttributes?.split(" ")),
         });
     }
 

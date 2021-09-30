@@ -45,6 +45,17 @@ import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncA
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
+import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+import { nameForms } from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+import { dITContentRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+import { objectClasses } from "@wildboar/x500/src/lib/modules/SchemaAdministration/objectClasses.oa";
+import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
+import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
+import { contextTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/contextTypes.oa";
+import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
+import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
+import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
 
 
 // Attribute Adders
@@ -92,6 +103,18 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ userPassword["&id"]!.toString(), adders.addUserPassword ],
 
     [ uniqueIdentifier["&id"].toString(), adders.addUniqueIdentifier ], // Has significance for Basic Access Control
+
+    [ dITStructureRules["&id"].toString(), adders.addDITStructureRules ],
+    [ nameForms["&id"].toString(), adders.addNameForms ],
+    [ dITContentRules["&id"].toString(), adders.addDITContentRules ],
+    [ objectClasses["&id"].toString(), adders.addObjectClasses ],
+    [ attributeTypes["&id"].toString(), adders.addAttributeTypes ],
+    [ friends["&id"].toString(), adders.addFriends ],
+    [ contextTypes["&id"].toString(), adders.addContextTypes ],
+    [ dITContextUse["&id"].toString(), adders.addDITContextUse ],
+    [ matchingRules["&id"].toString(), adders.addMatchingRules ],
+    [ matchingRuleUse["&id"].toString(), adders.addMatchingRuleUse ],
+    [ ldapSyntaxes["&id"].toString(), adders.addLdapSyntaxes ],
 ]);
 
 export
