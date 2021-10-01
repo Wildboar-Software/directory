@@ -954,6 +954,16 @@ interface OperationReturn {
 }
 
 export
+interface MatchingRuleInfo <Matcher> {
+    id: OBJECT_IDENTIFIER;
+    name?: string[];
+    description?: string;
+    obsolete?: boolean;
+    syntax?: boolean;
+    matcher: Matcher;
+}
+
+export
 interface Context {
     dit: DITInfo;
     dsa: DSAInfo;
@@ -980,11 +990,11 @@ interface Context {
     attributes: Map<IndexableOID, AttributeInfo>;
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
     // TODO: These matching rule fields are entirely unused!
-    equalityMatchingRules: Map<IndexableOID, EqualityMatcher>;
-    orderingMatchingRules: Map<IndexableOID, OrderingMatcher>;
-    substringsMatchingRules: Map<IndexableOID, SubstringsMatcher>;
-    approxMatchingRules: Map<IndexableOID, EqualityMatcher>;
-    contextMatchers: Map<IndexableOID, ContextMatcher>;
+    equalityMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
+    orderingMatchingRules: Map<IndexableOID, MatchingRuleInfo<OrderingMatcher>>;
+    substringsMatchingRules: Map<IndexableOID, MatchingRuleInfo<SubstringsMatcher>>;
+    approxMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
+    contextMatchers: Map<IndexableOID, ContextMatcher>; // FIXME: Define context types.
     /**
      * A map of connection UUIDs to a map of query references to paged results
      * requests. Query references should be 16 bytes (length of a UUID) of

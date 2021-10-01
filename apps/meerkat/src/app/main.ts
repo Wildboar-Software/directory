@@ -27,6 +27,7 @@ import loadDIT from "./init/loadDIT";
 import loadAttributeTypes from "./init/loadAttributeTypes";
 import loadObjectClasses from "./init/loadObjectClasses";
 import loadLDAPSyntaxes from "./init/loadLDAPSyntaxes";
+import loadMatchingRules from "./init/loadMatchingRules";
 import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
 import ctx from "./ctx";
 import terminate from "./dop/terminateByID";
@@ -61,6 +62,8 @@ async function main (): Promise<void> {
     ctx.log.debug("Loaded attribute types.");
     await loadObjectIdentifierNames(ctx);
     ctx.log.debug("Loaded object identifier names.");
+    loadMatchingRules(ctx);
+    ctx.log.debug("Loaded matching rules.");
 
     const nameForms = await ctx.db.nameForm.findMany();
     for (const nameForm of nameForms) {
