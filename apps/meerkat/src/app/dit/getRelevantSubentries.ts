@@ -3,11 +3,11 @@ import {
     id_sc_subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import dnWithinSubtreeSpecification from "@wildboar/x500/src/lib/utils/dnWithinSubtreeSpecification";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import readChildren from "./readChildren";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 const SUBENTRY: string = id_sc_subentry.toString();
 
@@ -18,6 +18,7 @@ async function getRelevantSubentries (
     entryDN: DistinguishedName,
     admPoint: Vertex,
 ): Promise<Vertex[]> {
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const children = await readChildren(ctx, admPoint);
     return children
         .filter((child) => (
@@ -30,9 +31,7 @@ async function getRelevantSubentries (
                     : Array.from(entry.dse.objectClass).map(ObjectIdentifier.fromString),
                 subtree,
                 getDistinguishedName(child),
-                (attributeType: OBJECT_IDENTIFIER): EqualityMatcher | undefined => ctx
-                    .attributes
-                    .get(attributeType.toString())?.equalityMatcher,
+                EQUALITY_MATCHER,
             ))
         ));
 }

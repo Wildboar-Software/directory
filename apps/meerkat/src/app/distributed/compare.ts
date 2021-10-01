@@ -53,7 +53,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_COMPARE,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import {
@@ -74,6 +73,7 @@ import { DER } from "asn1-ts/dist/node/functional";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -103,9 +103,7 @@ async function compare (
     const data = getOptionallyProtectedValue(argument);
     const typeAndSuperTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, data.purported.type_));
     const targetDN = getDistinguishedName(target);
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -207,9 +205,7 @@ async function compare (
             }
         }
     }
-    const matcher = typeAndSuperTypes
-        .map((type_) => ctx.attributes.get(type_.toString()))
-        .find((spec) => spec?.equalityMatcher)?.equalityMatcher;
+    const matcher = EQUALITY_MATCHER(data.purported.type_);
     if (!matcher) {
         throw new errors.ServiceError(
             `Equality matching rule used by type ${data.purported.type_.toString()} not understood.`,

@@ -3,6 +3,7 @@ import type { Context, DIT, Vertex } from "../types";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 // TODO: Return the number of RDNs that matched, whether aliases were derefed.
 // TODO: Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
@@ -17,6 +18,7 @@ async function findEntry (
     dn: DistinguishedName,
     derefAliases: boolean = true,
 ): Promise<Vertex | undefined> {
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const currentVertex = derefAliases
         ? (dit.dse.alias
             ? await findEntry(ctx, dit, dit.dse.alias.aliasedEntryName, derefAliases)
@@ -46,11 +48,7 @@ async function findEntry (
     if (queriedRDN.length !== dit.dse.rdn.length) {
         return undefined;
     }
-    const rdnMatched = compareRDN(
-        queriedRDN,
-        dit.dse.rdn,
-        (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
-    );
+    const rdnMatched = compareRDN(queriedRDN, dit.dse.rdn, NAMING_MATCHER);
     if (!rdnMatched) {
         return undefined;
     }

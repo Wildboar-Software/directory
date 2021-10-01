@@ -1,5 +1,5 @@
 import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import {
     _decode_RemoveEntryArgument,
@@ -38,9 +38,6 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import type {
-    AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import terminateByTypeAndBindingID from "../dop/terminateByTypeAndBindingID";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
@@ -55,7 +52,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_REMOVE,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import createSecurityParameters from "../x500/createSecurityParameters";
@@ -79,6 +75,8 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 // TODO: subentries
 
@@ -88,6 +86,7 @@ async function removeEntry (
     conn: ClientConnection,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const target = state.foundDSE;
     const argument = _decode_RemoveEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
@@ -132,9 +131,7 @@ async function removeEntry (
         ];
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const EQUALITY_MATCHER = (
-            attributeType: OBJECT_IDENTIFIER,
-        ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+        const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
         const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
         const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
             acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
@@ -316,8 +313,7 @@ async function removeEntry (
                 ...agreement.immediateSuperior,
                 agreement.rdn,
             ];
-            const EQUALITY_MATCHER = (type_: AttributeType) => ctx.attributes.get(type_.toString())?.namingMatcher;
-            const match = compareDistinguishedName(targetDN, agreementDN, EQUALITY_MATCHER);
+            const match = compareDistinguishedName(targetDN, agreementDN, NAMING_MATCHER);
             if (!match) {
                 continue;
             }

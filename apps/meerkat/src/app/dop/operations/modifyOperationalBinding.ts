@@ -30,7 +30,7 @@ import type {
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { ASN1Element, BERElement, packBits, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Element, BERElement, packBits } from "asn1-ts";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
@@ -49,13 +49,7 @@ import {
 import {
     SuperiorToSubordinateModification,
     _decode_SuperiorToSubordinateModification,
-    // _encode_SuperiorToSubordinateModification,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinateModification.ta";
-// import {
-//     SubordinateToSuperior,
-//     _decode_SubordinateToSuperior,
-//     _encode_SubordinateToSuperior,
-// } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -63,6 +57,7 @@ import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -110,6 +105,7 @@ async function modifyOperationalBinding (
     conn: DOPConnection,
     arg: ModifyOperationalBindingArgument,
 ): Promise<ModifyOperationalBindingResult> {
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
     const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
         new Promise<boolean>((resolve) => {
@@ -331,7 +327,7 @@ async function modifyOperationalBinding (
             if (!compareDistinguishedName(
                 agreement.immediateSuperior,
                 init.contextPrefixInfo.map((rdn) => rdn.rdn),
-                (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
+                NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
                     "Operational binding contextPrefixInfo did not match immediateSuperior.",

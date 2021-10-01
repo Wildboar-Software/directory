@@ -5,6 +5,7 @@ import type {
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 export
 function isPrefix (
@@ -12,11 +13,8 @@ function isPrefix (
     prefix: DistinguishedName,
     name: DistinguishedName,
 ): boolean {
-    return compareRDNSequence(
-        prefix,
-        name.slice(0, prefix.length),
-        (type_: OBJECT_IDENTIFIER): EqualityMatcher | undefined => ctx.attributes.get(type_.toString())?.namingMatcher
-    );
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+    return compareRDNSequence(prefix, name.slice(0, prefix.length), NAMING_MATCHER);
 }
 
 export default isPrefix;

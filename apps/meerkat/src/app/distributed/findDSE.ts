@@ -98,6 +98,8 @@ import { id_ar_collectiveAttributeSpecificArea } from "@wildboar/x500/src/lib/mo
 import { id_ar_contextDefaultSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
 import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
 import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
@@ -261,9 +263,7 @@ async function findDSE (
      * This is used to set the EntryInformation.partialName.
      */
     let partialName: boolean = false;
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
 
     const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
@@ -694,7 +694,7 @@ async function findDSE (
                 rdnMatched = compareRDN(
                     needleRDN,
                     child.dse.rdn,
-                    (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
+                    getNamingMatcherGetter(ctx),
                 );
                 if (rdnMatched) {
                     i++;

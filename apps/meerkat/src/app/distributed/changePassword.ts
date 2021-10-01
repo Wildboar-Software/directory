@@ -54,6 +54,7 @@ import {
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -107,9 +108,7 @@ async function changePassword (
         ];
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const EQUALITY_MATCHER = (
-            attributeType: OBJECT_IDENTIFIER,
-        ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+        const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
         const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
         const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
             acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [

@@ -1,5 +1,5 @@
 import { Context, Vertex, Value, ClientConnection, OperationReturn } from "../types";
-import { TRUE_BIT, BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import * as errors from "../errors";
 import {
@@ -9,10 +9,6 @@ import {
     ModifyDNResult,
     _encode_ModifyDNResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResult.ta";
-import {
-    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-    _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as _encode_ChainedArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -31,45 +27,7 @@ import {
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getRDN from "../x500/getRDN";
 import findEntry from "../x500/findEntry";
-import rdnToJson from "../x500/rdnToJson";
 import { strict as assert } from "assert";
-import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
-import connect from "../net/connect";
-import type Connection from "../net/Connection";
-import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
-import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
-import {
-    ReadArgument,
-    _encode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
-import {
-    ReadArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
-import {
-    EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import {
-    objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import {
-    ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import {
-    ServiceControlOptions_dontDereferenceAliases,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import {
-    OperationProgress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
-import {
-    OperationProgress_nameResolutionPhase_proceeding,
-    OperationProgress_nameResolutionPhase_completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import {
-    ChainingArguments,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import {
-    ReferenceType_nonSpecificSubordinate,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
@@ -89,9 +47,6 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import type {
-    AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import removeValues from "../database/entry/removeValues";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
@@ -108,7 +63,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_IMPORT,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import getAdministrativePoints from "../dit/getAdministrativePoints";
@@ -136,6 +90,8 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -295,9 +251,8 @@ async function modifyDN (
     };
     const targetDN = getDistinguishedName(target);
     const objectClasses: OBJECT_IDENTIFIER[] = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -703,8 +658,7 @@ async function modifyDN (
                 ...agreement.immediateSuperior,
                 agreement.rdn,
             ];
-            const EQUALITY_MATCHER = (type_: AttributeType) => ctx.attributes.get(type_.toString())?.namingMatcher;
-            const match = compareDistinguishedName(targetDN, agreementDN, EQUALITY_MATCHER);
+            const match = compareDistinguishedName(targetDN, agreementDN, NAMING_MATCHER);
             if (!match) {
                 continue;
             }
@@ -787,8 +741,8 @@ async function modifyDN (
             const valueInNewRDN = newRDN
                 .find((newATAV) => newATAV.type_.isEqualTo(oldATAV.type_));
             if (valueInNewRDN) {
-                const spec = ctx.attributes.get(oldATAV.type_.toString());
-                if (spec?.namingMatcher && spec.namingMatcher(oldATAV.value, valueInNewRDN.value)) {
+                const namingMatcher = NAMING_MATCHER(oldATAV.type_);
+                if (namingMatcher?.(oldATAV.value, valueInNewRDN.value)) {
                     continue;
                 }
             }

@@ -72,6 +72,7 @@ import {
 import {
     id_op_establishOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-establishOperationalBinding.va";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -96,6 +97,7 @@ async function establishOperationalBinding (
     ctx: Context,
     arg: EstablishOperationalBindingArgument,
 ): Promise<EstablishOperationalBindingResult> {
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: EstablishOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
     const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
         new Promise<boolean>((resolve) => {
@@ -198,7 +200,7 @@ async function establishOperationalBinding (
             if (!compareDistinguishedName(
                 agreement.immediateSuperior,
                 init.contextPrefixInfo.map((rdn) => rdn.rdn),
-                (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
+                NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
                     "Operational binding contextPrefixInfo did not match immediateSuperior.",

@@ -162,6 +162,7 @@ import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromComm
 import getEntryModificationStatistics from "../telemetry/getEntryModificationStatistics";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import validateObjectClasses from "../x500/validateObjectClasses";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 
@@ -882,9 +883,7 @@ async function modifyEntry (
             );
         }
     };
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),

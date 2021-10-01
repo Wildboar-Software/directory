@@ -1,4 +1,4 @@
-import { Context, IndexableOID, Value, StoredContext, Vertex, ClientConnection, OperationReturn } from "../types";
+import { Context, IndexableOID, Value, Vertex, ClientConnection, OperationReturn } from "../types";
 import * as errors from "../errors";
 import {
     _decode_AddEntryArgument,
@@ -132,6 +132,8 @@ import accessPointToNSAPStrings from "../x500/accessPointToNSAPStrings";
 import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
 import validateObjectClasses from "../x500/validateObjectClasses";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 function namingViolationErrorData (
     ctx: Context,
@@ -174,12 +176,8 @@ async function addEntry (
             namingViolationErrorData(ctx, conn, []),
         );
     }
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
-    const NAMING_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ) => ctx.attributes.get(attributeType.toString())?.namingMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const attrs: Value[] = data.entry.flatMap(valuesFromAttribute);
     const objectClassValues = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
     if (objectClassValues.length === 0) {
@@ -646,7 +644,7 @@ async function addEntry (
                 unrecognizedAFDNs.push(afdn.id);
                 return;
             }
-            const matcher = spec.namingMatcher;
+            const matcher = getNamingMatcherGetter(ctx)(afdn.id);
             if (!matcher) {
                 cannotBeUsedInNameAFDNs.push(afdn.id);
                 return;

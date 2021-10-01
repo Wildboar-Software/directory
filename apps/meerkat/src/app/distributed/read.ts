@@ -61,6 +61,7 @@ import readPermittedEntryInformation from "../database/entry/readPermittedEntryI
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 export
 async function read (
@@ -71,9 +72,7 @@ async function read (
     const target = state.foundDSE;
     const argument = _decode_ReadArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = isSubentry

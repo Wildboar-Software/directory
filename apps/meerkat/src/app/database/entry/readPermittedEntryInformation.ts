@@ -23,6 +23,7 @@ import attributesFromValues from "../../x500/attributesFromValues";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 
 export
 interface ReadPermittedEntryInformationReturn {
@@ -41,9 +42,7 @@ async function readPermittedEntryInformation (
     relevantSubentries?: Vertex[],
     operationContexts?: ContextSelection,
 ): Promise<ReadPermittedEntryInformationReturn> {
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const einfo: EntryInformation_information_Item[] = await readEntryInformation(
         ctx,
         target,

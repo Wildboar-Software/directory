@@ -51,6 +51,7 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 // administerPassword OPERATION ::= {
 //   ARGUMENT  AdministerPasswordArgument
@@ -104,9 +105,7 @@ async function administerPassword (
         ];
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const EQUALITY_MATCHER = (
-            attributeType: OBJECT_IDENTIFIER,
-        ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+        const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
         const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
         const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
             acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [

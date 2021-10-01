@@ -15,9 +15,6 @@ import { EventEmitter } from "stream";
 import { createPrivateKey } from "crypto";
 import * as fs from "fs";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
-import axios from "axios";
-
-const telemetryURL: string = "https://telemetry.wildboar.software:443/events/6495A31B-D062-4ECC-B0A6-D7C2BC3F793C";
 
 if (!process.env.SIGNING_CERT_CHAIN || !process.env.SIGNING_KEY) {
     console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
@@ -129,6 +126,7 @@ const ctx: Context = {
     substringsMatchingRules: new Map(),
     approxMatchingRules: new Map(),
     contextMatchers: new Map(),
+    matchingRulesSuitableForNaming: new Set(),
     pagedResultsRequests: new Map(),
     ldapSyntaxes: new Map(),
     operationalBindingControlEvents: new EventEmitter(),

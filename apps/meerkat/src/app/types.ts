@@ -150,11 +150,9 @@ interface AttributeInfo {
      *
      * This same footnote appears in section 9.4.
      */
-    namingMatcher?: EqualityMatcher;
-    equalityMatcher?: EqualityMatcher;
-    orderingMatcher?: OrderingMatcher;
-    substringsMatcher?: SubstringsMatcher;
-    approxMatcher?: EqualityMatcher;
+    equalityMatchingRule?: OBJECT_IDENTIFIER;
+    orderingMatchingRule?: OBJECT_IDENTIFIER;
+    substringsMatchingRule?: OBJECT_IDENTIFIER;
     singleValued: boolean;
     collective: boolean;
     dummy: boolean;
@@ -995,6 +993,7 @@ interface Context {
     substringsMatchingRules: Map<IndexableOID, MatchingRuleInfo<SubstringsMatcher>>;
     approxMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
     contextMatchers: Map<IndexableOID, ContextMatcher>; // FIXME: Define context types.
+    matchingRulesSuitableForNaming: Set<IndexableOID>;
     /**
      * A map of connection UUIDs to a map of query references to paged results
      * requests. Query references should be 16 bytes (length of a UUID) of

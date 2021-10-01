@@ -11,9 +11,9 @@ function attributeFromInformationObject (io: ATTRIBUTE): AttributeInfo {
     return {
         id: io["&id"],
         parent: io["&derivation"]?.["&id"],
-        // equalityMatcher?: EqualityMatcher;
-        // orderingMatcher?: OrderingMatcher;
-        // substringsMatcher?: SubstringsMatcher;
+        equalityMatchingRule: io["&equality-match"]?.["&id"],
+        orderingMatchingRule: io["&ordering-match"]?.["&id"],
+        substringsMatchingRule: io["&substrings-match"]?.["&id"],
         singleValued: io["&single-valued"] ?? false,
         collective: io["&collective"] ?? false,
         dummy: io["&dummy"] ?? false,

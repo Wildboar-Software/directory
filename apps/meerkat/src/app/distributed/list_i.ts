@@ -102,6 +102,7 @@ import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromComm
 import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
 import getListResultStatistics from "../telemetry/getListResultStatistics";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -118,9 +119,7 @@ async function list_i (
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),

@@ -159,6 +159,9 @@ import {
 import cloneChainingArguments from "../x500/cloneChainingArguments";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
+import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -377,9 +380,7 @@ async function search_i (
             ? (pageNumber * pageSize)
             : 0;
     }
-    const EQUALITY_MATCHER = (
-        attributeType: OBJECT_IDENTIFIER,
-    ): EqualityMatcher | undefined => ctx.attributes.get(attributeType.toString())?.equalityMatcher;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -558,21 +559,11 @@ async function search_i (
         undefined,
     );
     const filterOptions: EvaluateFilterSettings = {
-        getEqualityMatcher: (attributeType: OBJECT_IDENTIFIER): EqualityMatcher | undefined => {
-            const spec = ctx.attributes.get(attributeType.toString());
-            return spec?.equalityMatcher;
-        },
-        getOrderingMatcher: (attributeType: OBJECT_IDENTIFIER): OrderingMatcher | undefined => {
-            const spec = ctx.attributes.get(attributeType.toString());
-            return spec?.orderingMatcher;
-        },
-        getSubstringsMatcher: (attributeType: OBJECT_IDENTIFIER): SubstringsMatcher | undefined => {
-            const spec = ctx.attributes.get(attributeType.toString());
-            return spec?.substringsMatcher;
-        },
+        getEqualityMatcher: getEqualityMatcherGetter(ctx),
+        getOrderingMatcher: getOrderingMatcherGetter(ctx),
+        getSubstringsMatcher: getSubstringsMatcherGetter(ctx),
         getApproximateMatcher: (attributeType: OBJECT_IDENTIFIER): ApproxMatcher | undefined => {
-            const spec = ctx.attributes.get(attributeType.toString());
-            return spec?.approxMatcher;
+            return undefined; // TODO:
         },
         getContextMatcher: (contextType: OBJECT_IDENTIFIER): ContextMatcher | undefined => {
             return ctx.contextMatchers.get(contextType.toString());
