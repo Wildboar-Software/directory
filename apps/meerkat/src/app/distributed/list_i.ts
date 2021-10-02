@@ -12,6 +12,7 @@ import {
 import { TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import readChildren from "../dit/readChildren";
+import readChildrenSorted from "../dit/readChildrenSorted";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { AccessPointInformation, ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -81,7 +82,7 @@ import {
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
-import type {
+import {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import {
@@ -307,22 +308,42 @@ async function list_i (
     const pageSize: number = pagingRequest?.pageSize
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
+    const useSortedSearch: boolean = Boolean(pagingRequest?.sortKeys?.length);
     let cursorId: number | undefined;
-    let subordinatesInBatch = await readChildren(
-        ctx,
-        target,
-        pageSize,
-        undefined,
-        cursorId,
-        {
-            subentry: subentries,
-        },
-    );
+    const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
+        return useSortedSearch
+            ? await (async () => {
+                const results: Vertex[] = [];
+                const newCursorId = await readChildrenSorted(
+                    ctx,
+                    target,
+                    pagingRequest!.sortKeys![0].type_,
+                    results,
+                    pagingRequest?.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
+                    pageSize,
+                    undefined,
+                    cursorId,
+                );
+                cursorId = newCursorId;
+                return results;
+            })()
+            : await readChildren(
+                ctx,
+                target,
+                pageSize,
+                undefined,
+                cursorId,
+                {
+                    subentry: subentries,
+                },
+            );
+    };
     let skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
         ? (pageNumber * pageSize)
         : 0;
 
     let limitExceeded: LimitProblem | undefined;
+    let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             if ("present" in state.invokeId) {
@@ -491,16 +512,7 @@ async function list_i (
         if (limitExceeded !== undefined) {
             break;
         }
-        subordinatesInBatch = await readChildren(
-            ctx,
-            target,
-            pageSize,
-            undefined,
-            cursorId,
-            {
-                subentry: subentries,
-            },
-        );
+        subordinatesInBatch = await getNextBatchOfSubordinates();
     }
 
     if (queryReference && pagingRequest) {
