@@ -54,6 +54,8 @@ import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministrati
 import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
 import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
 import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
+import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
+import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
 
 // Attribute Removers
 import * as removers from "../specialAttributeRemovers";
@@ -111,6 +113,9 @@ const specialAttributeDatabaseRemovers: Map<IndexableOID, SpecialAttributeDataba
     [ matchingRules["&id"].toString(), removers.removeMatchingRules ],
     [ matchingRuleUse["&id"].toString(), removers.removeMatchingRuleUse ],
     [ ldapSyntaxes["&id"].toString(), removers.removeLdapSyntaxes ],
+
+    [ governingStructureRule["&id"].toString(), removers.removeGoverningStructureRule ],
+    [ structuralObjectClass["&id"].toString(), removers.removeStructuralObjectClass ],
 ]);
 
 export

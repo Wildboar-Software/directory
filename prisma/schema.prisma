@@ -62,8 +62,18 @@ model Entry {
 
   // LDAP operational attributes
   // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
-  // governingStructureRule Int? // This shall be calculated instead of stored.
   entryUUID String @default(uuid()) // @db.Uuid
+
+  // This should be stored, rather than calculated. The reason for this is that
+  // the permitted superior structure rules refers to the governingStructureRule
+  // value of the superior entry. If this is not stored, it means that the
+  // governingStructureRule must be recursively calculated for every ancestor up
+  // until the subschema administrative point, which could be wrong as the rules
+  // change and new rules also permit the entry.
+  governingStructureRule Int?
+
+  // The structural object class is not permitted to change for an entry.
+  structuralObjectClass OID?
 
   // Shadowing flags. See ITU Recommendation X.525 (2016), Section 7.2.1.
   subordinate_completeness    Boolean?

@@ -56,7 +56,8 @@ import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministrati
 import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
 import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
 import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
-
+import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
+import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
 
 // Attribute Adders
 import * as adders from "../specialAttributeAdders";
@@ -115,6 +116,9 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ matchingRules["&id"].toString(), adders.addMatchingRules ],
     [ matchingRuleUse["&id"].toString(), adders.addMatchingRuleUse ],
     [ ldapSyntaxes["&id"].toString(), adders.addLdapSyntaxes ],
+
+    [ governingStructureRule["&id"].toString(), adders.addGoverningStructureRule ],
+    [ structuralObjectClass["&id"].toString(), adders.addStructuralObjectClass ],
 ]);
 
 export

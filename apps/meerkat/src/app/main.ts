@@ -28,6 +28,7 @@ import loadAttributeTypes from "./init/loadAttributeTypes";
 import loadObjectClasses from "./init/loadObjectClasses";
 import loadLDAPSyntaxes from "./init/loadLDAPSyntaxes";
 import loadMatchingRules from "./init/loadMatchingRules";
+import loadContextTypes from "./init/loadContextTypes";
 import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
 import ctx from "./ctx";
 import terminate from "./dop/terminateByID";
@@ -64,6 +65,8 @@ async function main (): Promise<void> {
     ctx.log.debug("Loaded object identifier names.");
     loadMatchingRules(ctx);
     ctx.log.debug("Loaded matching rules.");
+    loadContextTypes(ctx);
+    ctx.log.debug("Loaded context types.");
 
     const nameForms = await ctx.db.nameForm.findMany();
     for (const nameForm of nameForms) {
@@ -75,8 +78,12 @@ async function main (): Promise<void> {
             description: nameForm.description ?? undefined,
             obsolete: nameForm.obsolete,
             namedObjectClass: ObjectIdentifier.fromString(nameForm.namedObjectClass),
-            mandatoryAttributes: new Set(nameForm.mandatoryAttributes.split(" ")),
-            optionalAttributes: new Set(nameForm.optionalAttributes?.split(" ")),
+            mandatoryAttributes: nameForm.mandatoryAttributes
+                .split(" ")
+                .map(ObjectIdentifier.fromString),
+            optionalAttributes: nameForm.optionalAttributes
+                ?.split(" ")
+                .map(ObjectIdentifier.fromString) ?? [],
         });
     }
 

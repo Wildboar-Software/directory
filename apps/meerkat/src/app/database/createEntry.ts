@@ -15,6 +15,7 @@ import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias
 import addValues from "./entry/addValues";
 import { strict as assert } from "assert";
 import { randomBytes } from "crypto";
+import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 
 export
 async function createEntry (
@@ -52,6 +53,9 @@ async function createEntry (
             rhob: entryInit.rhob,
             sa: entryInit.sa,
             dsSubentry: entryInit.dsSubentry,
+            structuralObjectClass: entryInit.structuralObjectClass
+                ?? getStructuralObjectClass(ctx, objectClasses).toString(),
+            governingStructureRule: entryInit.governingStructureRule,
             uniqueIdentifier: Buffer.concat([
                 Buffer.from([ 0 ]),
                 randomBytes(8),

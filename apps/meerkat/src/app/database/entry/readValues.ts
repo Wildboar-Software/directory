@@ -5,6 +5,7 @@ import type {
     Value,
     SpecialAttributeDatabaseReader,
 } from "../../types";
+import { ObjectIdentifier } from "asn1-ts";
 import type {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
@@ -72,9 +73,12 @@ import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministrati
 import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
 import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
 import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
+import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
+import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
+import { OBJECT_IDENTIFIER } from "asn1-ts";
 
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 // TODO: Explore making this a temporalContext
@@ -145,6 +149,9 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     [ matchingRules["&id"].toString(), readers.readMatchingRules ],
     [ matchingRuleUse["&id"].toString(), readers.readMatchingRuleUse ],
     [ ldapSyntaxes["&id"].toString(), readers.readLdapSyntaxes ],
+
+    [ governingStructureRule["&id"].toString(), readers.readGoverningStructureRule ],
+    [ structuralObjectClass["&id"].toString(), readers.readStructuralObjectClass ],
 ]);
 
 export
@@ -181,18 +188,17 @@ interface ReadEntryAttributesReturn {
 function addFriends (
     relevantSubentries: Vertex[],
     selectedUserAttributes: Set<IndexableOID>,
-    type_: IndexableOID,
+    type_: OBJECT_IDENTIFIER,
 ): void {
     const friendship = relevantSubentries
         .find((sub) => (
             sub.dse.objectClass.has(id_soc_subschema.toString())
             && sub.dse.subentry?.friendships
-        ))?.dse.subentry!.friendships?.get(type_);
+        ))?.dse.subentry!.friendships?.find((fr) => fr.anchor.isEqualTo(type_));
     if (friendship) {
-        for (const friend of friendship) {
-            const fstr = friend.toString();
-            if (!selectedUserAttributes.has(fstr)) {
-                addFriends(relevantSubentries, selectedUserAttributes, fstr);
+        for (const friend of friendship.friends) {
+            if (!selectedUserAttributes.has(friend.toString())) {
+                addFriends(relevantSubentries, selectedUserAttributes, friend);
             }
         }
     }
@@ -230,7 +236,7 @@ async function readValues (
         : null;
     if (selectedUserAttributes && relevantSubentries) {
         for (const attr of Array.from(selectedUserAttributes ?? [])) {
-            addFriends(relevantSubentries, selectedUserAttributes, attr);
+            addFriends(relevantSubentries, selectedUserAttributes, ObjectIdentifier.fromString(attr));
         }
     }
     const selectedOperationalAttributes: Set<IndexableOID> | null | undefined = eis?.extraAttributes
@@ -240,7 +246,7 @@ async function readValues (
         : undefined;
     if (selectedOperationalAttributes && relevantSubentries) {
         for (const attr of Array.from(selectedOperationalAttributes ?? [])) {
-            addFriends(relevantSubentries, selectedOperationalAttributes, attr);
+            addFriends(relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
         }
     }
     const operationalAttributes: Value[] = [];

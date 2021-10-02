@@ -498,3 +498,6 @@ export const removeMatchingRuleUse: SpecialAttributeDatabaseRemover = async (
 };
 
 export const removeLdapSyntaxes: SpecialAttributeDatabaseRemover = NOOP;
+
+export const removeGoverningStructureRule: SpecialAttributeDatabaseRemover = NOOP;
+export const removeStructuralObjectClass: SpecialAttributeDatabaseRemover = NOOP;

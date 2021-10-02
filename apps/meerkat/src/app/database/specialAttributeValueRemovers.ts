@@ -655,3 +655,6 @@ export const removeMatchingRuleUse: SpecialAttributeDatabaseEditor = async (
 };
 
 export const removeLdapSyntaxes: SpecialAttributeDatabaseEditor = NOOP;
+
+export const removeGoverningStructureRule: SpecialAttributeDatabaseEditor = NOOP;
+export const removeStructuralObjectClass: SpecialAttributeDatabaseEditor = NOOP;

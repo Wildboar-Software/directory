@@ -292,7 +292,7 @@ async function compare (
                 .every((sc): boolean => evaluateContextAssertion(
                     sc,
                     Object.values(value.contexts).map(contextFromStoredContext),
-                    (ctype: OBJECT_IDENTIFIER) => ctx.contextMatchers.get(ctype.toString()),
+                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                 ));
             if (matched) {
                 break;
@@ -317,7 +317,7 @@ async function compare (
                                 .every((ca): boolean => evaluateContextAssertion(
                                     ca,
                                     Object.values(value.contexts).map(contextFromStoredContext),
-                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextMatchers.get(ctype.toString()),
+                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                                 ));
                         } else if ("preference" in sc.contextAssertions) {
                             // REVIEW: I _think_ this is fine. See X.511, Section 7.6.3.
@@ -325,7 +325,7 @@ async function compare (
                                 .some((ca): boolean => evaluateContextAssertion(
                                     ca,
                                     Object.values(value.contexts).map(contextFromStoredContext),
-                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextMatchers.get(ctype.toString()),
+                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                                 ));
                         } else {
                             return false; // FIXME: Not understood. What to do?

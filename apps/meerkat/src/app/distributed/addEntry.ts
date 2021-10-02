@@ -22,6 +22,7 @@ import {
     UpdateProblem_affectsMultipleDSAs,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
+    AttributeProblem_contextViolation,
     AttributeProblem_undefinedAttributeType,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
@@ -76,7 +77,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_ADD,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
@@ -125,7 +125,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import accessPointToNSAPStrings from "../x500/accessPointToNSAPStrings";
@@ -134,6 +134,26 @@ import validateObjectClasses from "../x500/validateObjectClasses";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import {
+    subschema,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+import getStructuralObjectClass from "../x500/getStructuralObjectClass";
+import checkNameForm from "../x500/checkNameForm";
+import {
+    ObjectClassKind_auxiliary,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import {
+    DITContextUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+import {
+    id_oa_allAttributeTypes,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+
+const SUBSCHEMA: string = subschema["&id"].toString();
+const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
 function namingViolationErrorData (
     ctx: Context,
@@ -219,6 +239,7 @@ async function addEntry (
             ),
         );
     }
+    const structuralObjectClass = getStructuralObjectClass(ctx, objectClasses);
 
     /**
      * From ITU X.501 (2016), Section 13.3.2:
@@ -692,6 +713,350 @@ async function addEntry (
         );
     }
 
+    // Subschema validation
+    let governingStructureRule: number | undefined;
+    if (!isSubentry) { // Schema rules only apply to entries.
+        const newEntryIsANewSubschema = objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
+        const subentries = (await Promise.all(
+            state.admPoints.map((ap) => readChildren(
+                ctx,
+                ap,
+                undefined,
+                undefined,
+                undefined,
+                {
+                    subentry: true,
+                },
+            )),
+        )).flat();
+        const schemaSubentries = subentries // FIXME: Only get the closest subschema.
+            .filter((sub) => sub.dse.objectClass.has(SUBSCHEMA));
+        const structuralRules = schemaSubentries
+            .flatMap((sub) => sub.dse.subentry?.ditStructureRules ?? [])
+            .filter((rule) => !rule.obsolete)
+            .filter((rule) => (
+                (
+                    newEntryIsANewSubschema
+                    && (rule.superiorStructureRules === undefined)
+                )
+                || (
+                    !newEntryIsANewSubschema
+                    && (rule.superiorStructureRules === immediateSuperior.dse.governingStructureRule)
+                )
+            ))
+            .filter((rule) => {
+                const nf = ctx.nameForms.get(rule.nameForm.toString());
+                if (!nf) {
+                    return false;
+                }
+                if (!nf.namedObjectClass.isEqualTo(structuralObjectClass)) {
+                    return false;
+                }
+                return checkNameForm(rdn, nf.mandatoryAttributes, nf.optionalAttributes);
+            });
+        if (structuralRules.length === 0) {
+            throw new errors.UpdateError(
+                "Entry not permitted here by any DIT structural rules.",
+                new UpdateErrorData(
+                    UpdateProblem_namingViolation,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        governingStructureRule = structuralRules[0].ruleIdentifier;
+        const contentRule = schemaSubentries
+            .flatMap((sub) => sub.dse.subentry?.ditContentRules ?? [])
+            .filter((rule) => !rule.obsolete)
+            // .find(), because there should only be one per SOC.
+            .find((rule) => rule.structuralObjectClass.isEqualTo(structuralObjectClass));
+        const auxiliaryClasses = objectClasses
+            .filter((oc) => ctx.objectClasses.get(oc.toString())?.kind == ObjectClassKind_auxiliary);
+        if (contentRule) {
+            const permittedAuxiliaries: Set<IndexableOID> = new Set(
+                contentRule.auxiliaries?.map((oid) => oid.toString()));
+            for (const ac of auxiliaryClasses) {
+                if (!permittedAuxiliaries.has(ac.toString())) {
+                    throw new errors.UpdateError(
+                        `Auxiliary class ${ac.toString()} not permitted by `
+                        + "DIT content rule for structural object class "
+                        + `${contentRule.structuralObjectClass.toString()}.`,
+                        new UpdateErrorData(
+                            UpdateProblem_objectClassViolation,
+                            [
+                                {
+                                    attribute: new Attribute(
+                                        id_at_objectClass,
+                                        [
+                                            _encodeObjectIdentifier(ac, DER),
+                                        ],
+                                        undefined,
+                                    ),
+                                },
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                updateError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+            }
+            /**
+             * According to ITU Recommendation X.501 (2016), Section 13.8.2:
+             *
+             * > the optional components specify user attribute types which an
+             * > entry to which the DIT content rule applies may contain in
+             * > addition to those which it may contain according to its
+             * > structural and auxiliary object classes;
+             *
+             * Meerkat DSA knowingly will not observe this feature.
+             * Circumstantially allowing attributes to be added in spite of the
+             * object class constraints would make it difficult to enforce
+             * schema. What happens when you move the entry? What happens when
+             * you move, change, or remove the content rule? Meerkat DSA does
+             * not have to handle these tricky cases, because it will not permit
+             * additional attribute types.
+             */
+            // const optionalAttributes: Set<IndexableOID> = new Set(
+            //     contentRule.optional?.map((oid) => oid.toString()));
+            const mandatoryAttributesRemaining: Set<IndexableOID> = new Set(
+                contentRule.mandatory?.map((oid) => oid.toString()));
+            const precludedAttributes: Set<IndexableOID> = new Set(
+                contentRule.precluded?.map((oid) => oid.toString()));
+            for (const attr of data.entry) {
+                mandatoryAttributesRemaining.delete(attr.type_.toString());
+                if (precludedAttributes.has(attr.type_.toString())) {
+                    throw new errors.UpdateError(
+                        `Attribute type ${attr.type_.toString()} precluded by relevant the relevant DIT content rule.`,
+                        new UpdateErrorData(
+                            UpdateProblem_objectClassViolation,
+                            [
+                                {
+                                    attributeType: attr.type_,
+                                },
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                updateError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+            }
+            if (mandatoryAttributesRemaining.size > 0) {
+                throw new errors.UpdateError(
+                    "Missing these mandatory attributes, which are required by "
+                    + "relevant DIT content rules: "
+                    + Array.from(mandatoryAttributesRemaining.values())
+                        .join(" "),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        Array.from(mandatoryAttributesRemaining.values())
+                            .map(ObjectIdentifier.fromString)
+                            .map((oid) => ({
+                                attributeType: oid,
+                            })),
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        } else {
+            /**
+             * From ITU Recommendation X.501 (2016), Section 13.8.1:
+             *
+             * > If no DIT content rule is present for a structural object
+             * > class, then entries of that class shall contain only the
+             * > attributes permitted by the structural object class definition.
+             *
+             * This implementation will simply check that there are no
+             * auxiliary classes at all. Theoretically, this could exclude
+             * auxiliary classes that have only optional attributes that overlap
+             * with those of the structural object class, but at that point,
+             * there is almost no point in including the auxiliary object class.
+             */
+
+            if (auxiliaryClasses.length > 0) {
+                throw new errors.UpdateError(
+                    "Auxiliary object classes are forbidden entirely, because "
+                    + "there are no relevant DIT content rules to permit them.",
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attribute: new Attribute(
+                                    id_at_objectClass,
+                                    auxiliaryClasses
+                                        .map((ac) => _encodeObjectIdentifier(ac, DER)),
+                                    undefined,
+                                ),
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+
+        const contextUseRules = schemaSubentries
+            .flatMap((sub) => sub.dse.subentry?.ditContextUse ?? [])
+            .filter((rule) => !rule.obsolete);
+        const contextRulesIndex: Map<IndexableOID, DITContextUseDescription> = new Map(
+            contextUseRules.map((rule) => [ rule.identifier.toString(), rule ]),
+        );
+        for (const attr of attrs) {
+            const applicableRule = contextRulesIndex.get(attr.id.toString())
+                ?? contextRulesIndex.get(ALL_ATTRIBUTE_TYPES);
+            /**
+             * From ITU Recommendation X.501 (2016), Section 13.10.1:
+             *
+             * > If no DIT Context Use definition is present for a given
+             * > attribute type, then values of attributes of that type shall
+             * > contain no context lists.
+             */
+            if (!applicableRule) {
+                if (attr.contexts.size > 0) {
+                    throw new errors.AttributeError(
+                        "No contexts are permitted due to an absence of DIT "
+                        + "context use rules that permit them.",
+                        new AttributeErrorData(
+                            {
+                                rdnSequence: targetDN,
+                            },
+                            [
+                                new AttributeErrorData_problems_Item(
+                                    AttributeProblem_contextViolation,
+                                    attr.id,
+                                    attr.value,
+                                ),
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                attributeError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                } else {
+                    continue;
+                }
+            }
+            const mandatoryContextsRemaining: Set<IndexableOID> = new Set(
+                applicableRule.information.mandatoryContexts?.map((con) => con.toString()),
+            );
+            const permittedContexts: Set<IndexableOID> = new Set([
+                ...applicableRule.information.mandatoryContexts?.map((con) => con.toString()) ?? [],
+                ...applicableRule.information.optionalContexts?.map((con) => con.toString()) ?? [],
+            ]);
+            for (const context of attr.contexts.values()) {
+                const ID: string = context.id.toString();
+                mandatoryContextsRemaining.delete(ID);
+                if (!permittedContexts.has(ID)) {
+                    throw new errors.AttributeError(
+                        `Context type ${ID} not permitted by applicable DIT context use rules.`,
+                        new AttributeErrorData(
+                            {
+                                rdnSequence: targetDN,
+                            },
+                            [
+                                new AttributeErrorData_problems_Item(
+                                    AttributeProblem_contextViolation,
+                                    attr.id,
+                                    attr.value,
+                                ),
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                attributeError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+            }
+            if (mandatoryContextsRemaining.size > 0) {
+                // throw new Error(); // FIXME:
+                throw new errors.AttributeError(
+                    "These context types are required by applicable DIT "
+                    + "context use rules are missing the following context "
+                    + "types: "
+                    + Array.from(mandatoryContextsRemaining.values()),
+                    new AttributeErrorData(
+                        {
+                            rdnSequence: targetDN,
+                        },
+                        [
+                            new AttributeErrorData_problems_Item(
+                                AttributeProblem_contextViolation,
+                                attr.id,
+                                attr.value,
+                            ),
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            attributeError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+    }
+
     /**
      * throw parentNotAncestor if the parent is a part of a compound entry, but
      * it is not the ancestor of that compound entry. From what I can tell, this
@@ -757,7 +1122,10 @@ async function addEntry (
             ),
         );
     }
-    const newEntry = await createEntry(ctx, immediateSuperior, rdn, {}, attrs, conn.boundNameAndUID?.dn);
+    const newEntry = await createEntry(ctx, immediateSuperior, rdn, {
+        governingStructureRule,
+        structuralObjectClass: structuralObjectClass.toString(),
+    }, attrs, conn.boundNameAndUID?.dn);
     immediateSuperior.subordinates?.push(newEntry);
 
     // Update relevant hierarchical operational bindings

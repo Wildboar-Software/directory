@@ -91,9 +91,54 @@ import type {
 import type {
     DITContextUse,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DITContextUse.ta";
-import type {
+import {
+    DITStructureRuleDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+import {
+    NameFormDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+import {
+    NameFormInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+import {
+    DITContentRuleDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+import {
+    MatchingRuleDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleDescription.ta";
+import {
+    ObjectClassDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassDescription.ta";
+import {
+    ObjectClassInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassInformation.ta";
+import {
+    AttributeTypeDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeDescription.ta";
+import {
+    AttributeTypeInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeInformation.ta";
+import {
     MatchingRuleUseDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
+import {
+    ContextDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextDescription.ta";
+import {
+    ContextInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextInformation.ta";
+import {
+    FriendsDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
+import {
+    DITContextUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+import {
+    DITContextUseInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
+import {
+    LdapSyntaxDescription,
+} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -162,6 +207,7 @@ interface AttributeInfo {
     ldapNames?: LDAPName[];
     ldapDescription?: string;
     compatibleMatchingRules: Set<IndexableOID>;
+    syntax?: string;
 }
 
 export
@@ -278,11 +324,11 @@ interface SubentryDSE {
     // TODO: Index these via Map().
     contextAssertionDefaults?: TypeAndContextAssertion[];
     searchRules?: SearchRuleDescription[];
-    ditStructureRules?: DITStructureRule[];
-    ditContentRules?: DITContentRule[];
-    ditContextUse?: DITContextUse[];
-    matchingRuleUse?: Map<IndexableOID, MatchingRuleUseDescription>;
-    friendships?: Map<IndexableOID, OBJECT_IDENTIFIER[]>;
+    ditStructureRules?: DITStructureRuleDescription[];
+    ditContentRules?: DITContentRuleDescription[];
+    ditContextUse?: DITContextUseDescription[];
+    matchingRuleUse?: MatchingRuleUseDescription[];
+    friendships?: FriendsDescription[];
 
     // Password admin
     pwdAttribute?: OBJECT_IDENTIFIER;
@@ -343,7 +389,9 @@ interface DSE {
     uuid: UUID;
     uniqueIdentifier?: BIT_STRING;
     rdn: RelativeDistinguishedName;
-    objectClass: Set<IndexableOID>;
+    objectClass: Set<IndexableOID>
+    governingStructureRule?: number;
+    structuralObjectClass?: OBJECT_IDENTIFIER;
     hierarchy?: HierarchyInfo;
     creatorsName?: Name;
     modifiersName?: Name;
@@ -440,8 +488,8 @@ interface NameFormInfo {
     description?: string;
     obsolete?: boolean;
     namedObjectClass: OBJECT_IDENTIFIER;
-    mandatoryAttributes: Set<IndexableOID>;
-    optionalAttributes: Set<IndexableOID>;
+    mandatoryAttributes: OBJECT_IDENTIFIER[];
+    optionalAttributes: OBJECT_IDENTIFIER[];
 }
 
 export
@@ -957,8 +1005,21 @@ interface MatchingRuleInfo <Matcher> {
     name?: string[];
     description?: string;
     obsolete?: boolean;
-    syntax?: boolean;
+    syntax?: string;
     matcher: Matcher;
+}
+
+export
+interface ContextTypeInfo {
+    id: OBJECT_IDENTIFIER;
+    name?: string[];
+    description?: string;
+    obsolete?: boolean;
+    syntax: string;
+    assertionSyntax?: string;
+    defaultValue?: () => ASN1Element;
+    absentMatch: boolean; // Defaults to TRUE
+    matcher: ContextMatcher;
 }
 
 export
@@ -987,12 +1048,11 @@ interface Context {
     with structural classes. */
     attributes: Map<IndexableOID, AttributeInfo>;
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
-    // TODO: These matching rule fields are entirely unused!
     equalityMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
     orderingMatchingRules: Map<IndexableOID, MatchingRuleInfo<OrderingMatcher>>;
     substringsMatchingRules: Map<IndexableOID, MatchingRuleInfo<SubstringsMatcher>>;
     approxMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
-    contextMatchers: Map<IndexableOID, ContextMatcher>; // FIXME: Define context types.
+    contextTypes: Map<IndexableOID, ContextTypeInfo>;
     matchingRulesSuitableForNaming: Set<IndexableOID>;
     /**
      * A map of connection UUIDs to a map of query references to paged results

@@ -125,7 +125,7 @@ const ctx: Context = {
     orderingMatchingRules: new Map(),
     substringsMatchingRules: new Map(),
     approxMatchingRules: new Map(),
-    contextMatchers: new Map(),
+    contextTypes: new Map(),
     matchingRulesSuitableForNaming: new Set(),
     pagedResultsRequests: new Map(),
     ldapSyntaxes: new Map(),

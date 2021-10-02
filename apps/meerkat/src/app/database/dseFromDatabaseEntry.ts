@@ -43,6 +43,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
 import getRDNFromEntryId from "./getRDNFromEntryId";
 import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import readDITContentRuleDescriptions from "./readers/readDITContentRuleDescriptions";
+import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptions";
+import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
+import readFriendsDescriptions from "./readers/readFriendsDescriptions";
+import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
     const el = new BERElement();
@@ -88,6 +93,10 @@ async function dseFromDatabaseEntry (
                 return el.bitString;
             })()
             : undefined,
+        structuralObjectClass: dbe.structuralObjectClass
+            ? ObjectIdentifier.fromString(dbe.structuralObjectClass)
+            : undefined,
+        governingStructureRule: dbe.governingStructureRule ?? undefined,
         creatorsName: {
             rdnSequence: Array.isArray(dbe.creatorsName)
                 ? dbe.creatorsName.map((rdn: Record<string, string>) => rdnFromJson(rdn))
@@ -340,6 +349,11 @@ async function dseFromDatabaseEntry (
             subtreeSpecification,
             prescriptiveACI,
             collectiveAttributes,
+            ditStructureRules: await readDITStructureRuleDescriptions(ctx, dbe.id),
+            ditContentRules: await readDITContentRuleDescriptions(ctx, dbe.id),
+            ditContextUse: await readDITContextUseDescriptions(ctx, dbe.id),
+            friendships: await readFriendsDescriptions(ctx, dbe.id),
+            matchingRuleUse: await readMatchingRuleUseDescriptions(ctx, dbe.id),
         };
     }
 

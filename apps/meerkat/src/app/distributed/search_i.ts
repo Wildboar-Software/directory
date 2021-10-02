@@ -566,7 +566,7 @@ async function search_i (
             return undefined; // TODO:
         },
         getContextMatcher: (contextType: OBJECT_IDENTIFIER): ContextMatcher | undefined => {
-            return ctx.contextMatchers.get(contextType.toString());
+            return ctx.contextTypes.get(contextType.toString())?.matcher;
         },
         isMatchingRuleCompatibleWithAttributeType: (mr: OBJECT_IDENTIFIER, at: OBJECT_IDENTIFIER): boolean => {
             return true; // FIXME:

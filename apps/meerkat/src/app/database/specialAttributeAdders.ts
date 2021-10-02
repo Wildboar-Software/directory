@@ -46,9 +46,6 @@ import {
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import {
-    DITContextUse,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DITContextUse.ta";
 import rdnToJson from "../x500/rdnToJson";
 // import { pwdStartTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
 // import { pwdExpiryTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
@@ -140,16 +137,6 @@ export const addObjectClass: SpecialAttributeDatabaseEditor = async (
         },
     }));
 };
-
-// TODO:
-// export const commonName: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: StoredAttributeValueWithContexts,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-//     pendingUpdates.entryUpdate.commonName = value.ds
-// };
 
 // TODO: Hierarchy
 
@@ -896,8 +883,8 @@ export const addNameForms: SpecialAttributeDatabaseEditor = async (
         description,
         obsolete: decoded.obsolete,
         namedObjectClass: decoded.information.subordinate,
-        mandatoryAttributes: new Set(),
-        optionalAttributes: new Set(),
+        mandatoryAttributes: decoded.information.namingMandatories,
+        optionalAttributes: decoded.information.namingOptionals ?? [],
     });
 };
 
@@ -1045,7 +1032,6 @@ export const addAttributeTypes: SpecialAttributeDatabaseEditor = async (
             })(),
         },
     }));
-    // TODO: Pending Matching rules change
 };
 
 export const addFriends: SpecialAttributeDatabaseEditor = async (
@@ -1074,11 +1060,9 @@ export const addFriends: SpecialAttributeDatabaseEditor = async (
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.friendships) {
-            vertex.dse.subentry.friendships.set(decoded.anchor.toString(), decoded.friends);
+            vertex.dse.subentry.friendships.push(decoded);
         } else {
-            vertex.dse.subentry.friendships = new Map([
-                [ decoded.anchor.toString(), decoded.friends ],
-            ]);
+            vertex.dse.subentry.friendships = [ decoded ];
         }
     }
 };
@@ -1109,7 +1093,6 @@ export const addContextTypes: SpecialAttributeDatabaseEditor = async (
                 : undefined,
         },
     }));
-    // FIXME: Blocked pending contextType implementation.
 };
 
 export const addDITContextUse: SpecialAttributeDatabaseEditor = async (
@@ -1142,15 +1125,10 @@ export const addDITContextUse: SpecialAttributeDatabaseEditor = async (
         }
     }));
     if (vertex.dse.subentry) {
-        const ditContextUse = new DITContextUse(
-            decoded.identifier,
-            decoded.information.mandatoryContexts,
-            decoded.information.optionalContexts,
-        );
         if (vertex.dse.subentry.ditContextUse) {
-            vertex.dse.subentry.ditContextUse.push(ditContextUse);
+            vertex.dse.subentry.ditContextUse.push(decoded);
         } else {
-            vertex.dse.subentry.ditContextUse = [ ditContextUse ];
+            vertex.dse.subentry.ditContextUse = [ decoded ];
         }
     }
 };
@@ -1185,13 +1163,14 @@ export const addMatchingRuleUse: SpecialAttributeDatabaseEditor = async (
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.matchingRuleUse) {
-            vertex.dse.subentry.matchingRuleUse.set(decoded.identifier.toString(), decoded);
+            vertex.dse.subentry.matchingRuleUse.push(decoded);
         } else {
-            vertex.dse.subentry.matchingRuleUse = new Map([
-                [ decoded.identifier.toString(), decoded ],
-            ]);
+            vertex.dse.subentry.matchingRuleUse = [ decoded ];
         }
     }
 };
 
 export const addLdapSyntaxes: SpecialAttributeDatabaseEditor = NOOP;
+
+export const addGoverningStructureRule: SpecialAttributeDatabaseEditor = NOOP;
+export const addStructuralObjectClass: SpecialAttributeDatabaseEditor = NOOP;
