@@ -1,6 +1,6 @@
-import { Context, Vertex, Value, ClientConnection, OperationReturn } from "../types";
+import { Context, Vertex, Value, ClientConnection, OperationReturn, IndexableOID } from "../types";
 import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "../errors";
 import {
     _decode_ModifyDNArgument,
@@ -23,6 +23,7 @@ import {
     UpdateProblem_entryAlreadyExists,
     UpdateProblem_namingViolation,
     UpdateProblem_affectsMultipleDSAs,
+    UpdateProblem_objectClassViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getRDN from "../x500/getRDN";
@@ -80,6 +81,7 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import {
+    ServiceProblem_ditError,
     ServiceProblem_timeLimitExceeded
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
@@ -92,6 +94,22 @@ import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromComm
 import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import checkNameForm from "../x500/checkNameForm";
+import {
+    ObjectClassKind_auxiliary,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import {
+    DITContextUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import {
+    id_at_objectClass,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry";
+import readValues from "../database/entry/readValues";
+import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -275,7 +293,7 @@ async function modifyDN (
             ...tuple,
             await userWithinACIUserClass(
                 tuple[0],
-                conn.boundNameAndUID!, // FIXME:
+                conn.boundNameAndUID!,
                 targetDN,
                 EQUALITY_MATCHER,
                 isMemberOfGroup,
@@ -429,7 +447,7 @@ async function modifyDN (
                     ...tuple,
                     await userWithinACIUserClass(
                         tuple[0],
-                        conn.boundNameAndUID!, // FIXME:
+                        conn.boundNameAndUID!,
                         targetDN,
                         EQUALITY_MATCHER,
                         isMemberOfGroup,
@@ -543,7 +561,23 @@ async function modifyDN (
         const admPoint = target.immediateSuperior;
         assert(admPoint);
         if (!admPoint.dse.admPoint) {
-            throw new Error(); // FIXME:
+            throw new errors.ServiceError(
+                `Subentry with database ID ${target.dse.id} was not a child of `
+                + "an administrative point.",
+                new ServiceErrorData(
+                    ServiceProblem_ditError,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
         }
         const admPointDN = getDistinguishedName(admPoint);
         const now = new Date();
@@ -556,7 +590,7 @@ async function modifyDN (
                 validity_end: {
                     lte: now,
                 },
-                // accepted: true, // FIXME: Is this always set?
+                accepted: true,
                 OR: [
                     { // Local DSA initiated role A (meaning local DSA is superior.)
                         initiator: OperationalBindingInitiator.ROLE_A,
@@ -630,7 +664,7 @@ async function modifyDN (
                 validity_end: {
                     lte: now,
                 },
-                // accepted: true, // FIXME: Is this always set?
+                accepted: true,
                 OR: [
                     { // Local DSA initiated role B (meaning local DSA is subordinate.)
                         initiator: OperationalBindingInitiator.ROLE_B,
@@ -697,22 +731,319 @@ async function modifyDN (
         await checkIfNameIsAlreadyTakenInNSSR(ctx, superior.dse.nssr.nonSpecificKnowledge ?? [], destinationDN);
     }
 
-    // TODO: Name schema validation.
+    // For checking deleteOldRDN
+    const attributeTypesRequired: Set<IndexableOID> = new Set([
+        ...objectClasses
+            .flatMap((oc) => {
+                const spec = ctx.objectClasses.get(oc.toString());
+                return Array.from(spec?.mandatoryAttributes.values() ?? []);
+            }),
+    ]);
+    const attributeTypesForbidden: Set<IndexableOID> = new Set();
+
+    // Subschema validation
+    let newGoverningStructureRule: number | undefined;
+    const schemaSubentry = target.dse.subentry // Schema rules only apply to entries.
+        ? undefined
+        : await getSubschemaSubentry(ctx, superior);
+    if (!target.dse.subentry && schemaSubentry) { // Schema rules only apply to entries.
+        const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
+            .filter((rule) => !rule.obsolete)
+            .filter((rule) => (rule.superiorStructureRules === superior.dse.governingStructureRule))
+            .filter((rule) => {
+                const nf = ctx.nameForms.get(rule.nameForm.toString());
+                if (!nf) {
+                    return false;
+                }
+                if (
+                    target.dse.structuralObjectClass // This should be known for all local DSEs.
+                    && !nf.namedObjectClass.isEqualTo(target.dse.structuralObjectClass)
+                ) {
+                    return false;
+                }
+                return checkNameForm(newRDN, nf.mandatoryAttributes, nf.optionalAttributes);
+            });
+        if (structuralRules.length === 0) {
+            throw new errors.UpdateError(
+                "Entry not permitted here by any DIT structural rules.",
+                new UpdateErrorData(
+                    UpdateProblem_namingViolation,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        newGoverningStructureRule = structuralRules[0].ruleIdentifier;
+        const contentRule = (schemaSubentry.dse.subentry?.ditContentRules ?? [])
+            .filter((rule) => !rule.obsolete)
+            // .find(), because there should only be one per SOC.
+            .find((rule) => (
+                target.dse.structuralObjectClass
+                && rule.structuralObjectClass.isEqualTo(target.dse.structuralObjectClass)
+            ));
+        const auxiliaryClasses = objectClasses
+            .filter((oc) => ctx.objectClasses.get(oc.toString())?.kind == ObjectClassKind_auxiliary);
+        if (contentRule) {
+            const permittedAuxiliaries: Set<IndexableOID> = new Set(
+                contentRule.auxiliaries?.map((oid) => oid.toString()));
+            for (const ac of auxiliaryClasses) {
+                if (!permittedAuxiliaries.has(ac.toString())) {
+                    throw new errors.UpdateError(
+                        `Auxiliary class ${ac.toString()} not permitted by `
+                        + "DIT content rule for structural object class "
+                        + `${contentRule.structuralObjectClass.toString()}.`,
+                        new UpdateErrorData(
+                            UpdateProblem_objectClassViolation,
+                            [
+                                {
+                                    attribute: new Attribute(
+                                        id_at_objectClass,
+                                        [
+                                            _encodeObjectIdentifier(ac, DER),
+                                        ],
+                                        undefined,
+                                    ),
+                                },
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                updateError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+            }
+            contentRule.precluded?.forEach((type_) => attributeTypesForbidden.add(type_.toString()));
+            contentRule.mandatory?.forEach((type_) => attributeTypesRequired.add(type_.toString()));
+        } else { // There is no content rule defined.
+            /**
+             * From ITU Recommendation X.501 (2016), Section 13.8.1:
+             *
+             * > If no DIT content rule is present for a structural object
+             * > class, then entries of that class shall contain only the
+             * > attributes permitted by the structural object class definition.
+             *
+             * This implementation will simply check that there are no
+             * auxiliary classes at all. Theoretically, this could exclude
+             * auxiliary classes that have only optional attributes that overlap
+             * with those of the structural object class, but at that point,
+             * there is almost no point in including the auxiliary object class.
+             */
+            if (auxiliaryClasses.length > 0) {
+                throw new errors.UpdateError(
+                    "Auxiliary object classes are forbidden entirely, because "
+                    + "there are no relevant DIT content rules to permit them.",
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attribute: new Attribute(
+                                    id_at_objectClass,
+                                    auxiliaryClasses
+                                        .map((ac) => _encodeObjectIdentifier(ac, DER)),
+                                    undefined,
+                                ),
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+        const contextUseRules = (schemaSubentry.dse.subentry?.ditContextUse ?? [])
+            .filter((rule) => !rule.obsolete);
+        const contextRulesIndex: Map<IndexableOID, DITContextUseDescription> = new Map(
+            contextUseRules.map((rule) => [ rule.identifier.toString(), rule ]),
+        );
+        for (const atav of newRDN) {
+            const TYPE_OID: string = atav.type_.toString();
+            const applicableContextRule = contextRulesIndex.get(TYPE_OID);
+            if (!applicableContextRule) {
+                continue;
+            }
+            // It cannot be used in a name if it has mandatory contexts, because
+            // the ATAVs innately have no contexts.
+            if (applicableContextRule.information.mandatoryContexts?.length) {
+                throw new errors.UpdateError(
+                    `Attribute type ${atav.type_.toString()} cannot be used in `
+                    + "the new entry's name, because the applicable context "
+                    + "rules mandate the existence of a context for that type.",
+                    new UpdateErrorData(
+                        UpdateProblem_namingViolation,
+                        [
+                            {
+                                attributeType: atav.type_,
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+    } // End of subschema validation
+
+    const attributeTypesPermittedByObjectClasses: Set<IndexableOID> = new Set(
+        objectClasses
+            .flatMap((oc) => {
+                const spec = ctx.objectClasses.get(oc.toString());
+                return [
+                    ...Array.from(spec?.mandatoryAttributes.values() ?? []),
+                    ...Array.from(spec?.optionalAttributes.values() ?? []),
+                ];
+            }),
+    );
+    for (const atav of newRDN) {
+        const TYPE_OID: string = atav.type_.toString();
+        if (!attributeTypesPermittedByObjectClasses.has(TYPE_OID)) {
+            throw new errors.UpdateError(
+                `Attribute type ${atav.type_.toString()} not permitted `
+                + "by the object classes of the entry.",
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attributeType: atav.type_,
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (attributeTypesForbidden.has(TYPE_OID)) {
+            throw new errors.UpdateError(
+                `Attribute type ${atav.type_.toString()} not permitted `
+                + "by the new content rules for the entry.",
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attributeType: atav.type_,
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+    }
+
+    const typesInNewRDN: Set<IndexableOID> = new Set(newRDN.map((atav) => atav.type_.toString()));
+    if (data.deleteOldRDN) { // Make sure that mandatory attributes are not deleted.
+        for (const atav of oldRDN) {
+            const TYPE_OID: string = atav.type_.toString();
+            if (
+                !attributeTypesRequired.has(TYPE_OID)
+                || typesInNewRDN.has(TYPE_OID)
+            ) {
+                continue;
+            }
+            const matcher = EQUALITY_MATCHER(atav.type_);
+            const {
+                userAttributes,
+                operationalAttributes,
+            } = await readValues(ctx, target, new EntryInformationSelection(
+                {
+                    select: [ atav.type_ ],
+                },
+                undefined,
+                {
+                    select: [ atav.type_ ],
+                },
+                undefined,
+                undefined,
+                undefined,
+            ));
+            const values = [
+                ...userAttributes,
+                ...operationalAttributes,
+            ];
+            const allValuesDeleted: boolean = matcher
+                ? values
+                    .filter((value) => (value.contexts.size === 0))
+                    .every((value) => matcher(value.value, atav.value))
+                : (values.length <= 1);
+            if (allValuesDeleted) {
+                throw new errors.UpdateError(
+                    "Deleting the old RDN would delete a required attribute.",
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attributeType: atav.type_,
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+    }
+
     if (target.immediateSuperior?.subordinates?.length && (target.immediateSuperior !== superior)) {
         const entryIndex = target.immediateSuperior.subordinates
             .findIndex((child) => (child.dse.uuid === target.dse.uuid));
         target.immediateSuperior.subordinates.splice(entryIndex, 1); // Remove from the current parent.
         superior?.subordinates?.push(target); // Move to the new parent.
     }
-    await ctx.db.entry.update({
-        where: {
-            id: target.dse.id,
-        },
-        data: {
-            immediate_superior_id: superior.dse.id,
-            // rdn: rdnToJson(newRDN),
-        },
-    });
     await ctx.db.$transaction([
         ctx.db.entry.update({
             where: {
@@ -720,6 +1051,7 @@ async function modifyDN (
             },
             data: {
                 immediate_superior_id: superior.dse.id,
+                governingStructureRule: newGoverningStructureRule,
             },
         }),
         ctx.db.rDN.deleteMany({
@@ -751,9 +1083,15 @@ async function modifyDN (
                 value: oldATAV.value,
                 contexts: new Map(),
             };
-            await removeValues(ctx, target, [valueToDelete], []);
+            try {
+                await removeValues(ctx, target, [valueToDelete], conn.boundNameAndUID?.dn ?? []);
+            } catch (e) {
+                ctx.log.warn(`Failed to delete old RDN value having type ${oldATAV.type_.toString()}.`);
+            }
         }
     }
+
+    // FIXME: Move the updates to the HOB down here so that they happen AFTER the update.
 
     // TODO: Update shadows
     const result: ModifyDNResult = {

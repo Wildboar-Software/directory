@@ -151,8 +151,8 @@ import {
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry";
 
-const SUBSCHEMA: string = subschema["&id"].toString();
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
 function namingViolationErrorData (
@@ -715,24 +715,12 @@ async function addEntry (
 
     // Subschema validation
     let governingStructureRule: number | undefined;
-    if (!isSubentry) { // Schema rules only apply to entries.
+    const schemaSubentry = isSubentry // Schema rules only apply to entries.
+        ? undefined
+        : await getSubschemaSubentry(ctx, immediateSuperior);
+    if (!isSubentry && schemaSubentry) { // Schema rules only apply to entries.
         const newEntryIsANewSubschema = objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
-        const subentries = (await Promise.all(
-            state.admPoints.map((ap) => readChildren(
-                ctx,
-                ap,
-                undefined,
-                undefined,
-                undefined,
-                {
-                    subentry: true,
-                },
-            )),
-        )).flat();
-        const schemaSubentries = subentries // FIXME: Only get the closest subschema.
-            .filter((sub) => sub.dse.objectClass.has(SUBSCHEMA));
-        const structuralRules = schemaSubentries
-            .flatMap((sub) => sub.dse.subentry?.ditStructureRules ?? [])
+        const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
             .filter((rule) => !rule.obsolete)
             .filter((rule) => (
                 (
@@ -774,8 +762,7 @@ async function addEntry (
             );
         }
         governingStructureRule = structuralRules[0].ruleIdentifier;
-        const contentRule = schemaSubentries
-            .flatMap((sub) => sub.dse.subentry?.ditContentRules ?? [])
+        const contentRule = (schemaSubentry.dse.subentry?.ditContentRules ?? [])
             .filter((rule) => !rule.obsolete)
             // .find(), because there should only be one per SOC.
             .find((rule) => rule.structuralObjectClass.isEqualTo(structuralObjectClass));
@@ -937,8 +924,7 @@ async function addEntry (
             }
         }
 
-        const contextUseRules = schemaSubentries
-            .flatMap((sub) => sub.dse.subentry?.ditContextUse ?? [])
+        const contextUseRules = (schemaSubentry.dse.subentry?.ditContextUse ?? [])
             .filter((rule) => !rule.obsolete);
         const contextRulesIndex: Map<IndexableOID, DITContextUseDescription> = new Map(
             contextUseRules.map((rule) => [ rule.identifier.toString(), rule ]),

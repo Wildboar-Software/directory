@@ -73,6 +73,36 @@ import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministra
 import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
 import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
 import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
+import { subschemaSubentryList } from "@wildboar/x500/src/lib/modules/InformationFramework/subschemaSubentryList.oa";
+// import {
+//     id_oa_accessControlSubentryList,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-accessControlSubentryList.va";
+// import {
+//     id_oa_collectiveAttributeSubentryList,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveAttributeSubentryList.va";
+// import {
+//     id_oa_contextDefaultSubentryList,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-contextDefaultSubentryList.va";
+// import {
+//     id_oa_serviceAdminSubentryList,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-serviceAdminSubentryList.va";
+// import {
+//     id_oa_pwdAdminSubentryList,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-pwdAdminSubentryList.va";
+// import {
+//     id_oa_hasSubordinates,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hasSubordinates.va";
+// import {
+//     id_oa_collectiveExclusions,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+// contextAssertionDefaults
+// searchRules
+// subschemaTimestamp
+// pwdAttribute
+// hierarchyLevel
+// hierarchyBelow
+// hierarchyParent
+// hierarchyTop
 
 import {
     NameFormDescription,
@@ -121,6 +151,8 @@ import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptio
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
 import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry";
+import getDistinguishedName from "../x500/getDistinguishedName";
 
 export const readObjectClass: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
@@ -1150,6 +1182,30 @@ export const readStructuralObjectClass: SpecialAttributeDatabaseReader = async (
         {
             id: structuralObjectClass["&id"],
             value: _encodeObjectIdentifier(vertex.dse.structuralObjectClass, DER),
+            contexts: new Map(),
+        },
+    ];
+};
+
+export const readSubschemaSubentryList: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (vertex.dse.root) {
+        return []; // FIXME: Implement a hard-coded DSE.
+    }
+    if (vertex.dse.subentry) {
+        return [];
+    }
+    const subschema = await getSubschemaSubentry(ctx, vertex);
+    if (!subschema) {
+        return [];
+    }
+    const subschemaDN = getDistinguishedName(subschema);
+    return [
+        {
+            id: subschemaSubentryList["&id"],
+            value: _encode_DistinguishedName(subschemaDN, DER),
             contexts: new Map(),
         },
     ];

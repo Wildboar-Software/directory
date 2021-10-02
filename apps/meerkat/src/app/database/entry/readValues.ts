@@ -75,6 +75,7 @@ import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministra
 import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
 import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
 import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
+import { subschemaSubentryList } from "@wildboar/x500/src/lib/modules/InformationFramework/subschemaSubentryList.oa";
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
@@ -152,6 +153,7 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
 
     [ governingStructureRule["&id"].toString(), readers.readGoverningStructureRule ],
     [ structuralObjectClass["&id"].toString(), readers.readStructuralObjectClass ],
+    [ subschemaSubentryList["&id"].toString(), readers.readSubschemaSubentryList ],
 ]);
 
 export
