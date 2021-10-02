@@ -30,13 +30,9 @@ import {
 import {
     objectClass,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-// import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
 import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
 import { parent } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
 import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
-// import {
-//     administrativeRole,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -46,7 +42,7 @@ import {
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import { AttributeErrorData_problems_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
-import { AttributeProblem_undefinedAttributeType } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+import { AttributeProblem_contextViolation, AttributeProblem_undefinedAttributeType } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
@@ -163,8 +159,19 @@ import getEntryModificationStatistics from "../telemetry/getEntryModificationSta
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import validateObjectClasses from "../x500/validateObjectClasses";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import {
+    ObjectClassKind_auxiliary,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import {
+    DITContextUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+import {
+    id_at_objectClass,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
+type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
 
 const notPermittedData =  (ctx: Context, conn: ClientConnection) => new SecurityErrorData(
     SecurityProblem_insufficientAccessRights,
@@ -727,6 +734,8 @@ async function executeEntryModification (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    precludedAttributes: Set<IndexableOID>,
+    contextRuleIndex: ContextRulesIndex,
 ): Promise<PrismaPromise<any>[]> {
 
     const commonArguments = [
@@ -796,8 +805,92 @@ async function executeEntryModification (
         }
     };
 
+    const checkPreclusion = (attributeType: AttributeType) => {
+        if (precludedAttributes.has(attributeType.toString())) {
+            throw new errors.UpdateError(
+                `Attribute type ${attributeType.toString()} is precluded by `
+                + "the relevant DIT content rules.",
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attributeType,
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    };
+
+    const checkContextRule = (attribute: Attribute) => {
+        const rule = contextRuleIndex.get(attribute.type_.toString());
+        if (!rule) {
+            return;
+        }
+        if (rule.information.mandatoryContexts?.length && attribute.values.length) {
+            throw new errors.AttributeError(
+                `Attribute with type ${attribute.type_.toString()} has values `
+                + "with contexts when none are permitted by the relevant "
+                + "DIT context use rules.",
+                new AttributeErrorData(
+                    {
+                        rdnSequence: [],
+                    },
+                    [
+                        new AttributeErrorData_problems_Item(
+                            AttributeProblem_contextViolation,
+                            attribute.type_,
+                            undefined,
+                        ),
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+        const permittedContexts: Set<IndexableOID> = new Set([
+            ...rule.information.mandatoryContexts?.map((mc) => mc.toString()) ?? [],
+            ...rule.information.optionalContexts?.map((oc) => oc.toString()) ?? [],
+        ]);
+        for (const vwc of (attribute.valuesWithContext ?? [])) {
+            const unsatisfiedRequirements: Set<IndexableOID> = new Set(
+                rule.information.mandatoryContexts?.map((mc) => mc.toString()),
+            );
+            for (const context of vwc.contextList) {
+                const TYPE_OID: string = context.contextType.toString();
+                if (!permittedContexts.has(TYPE_OID)) {
+                    throw new Error();
+                }
+                unsatisfiedRequirements.delete(TYPE_OID);
+            }
+            if (unsatisfiedRequirements.size > 0) {
+                throw new Error(); // FIXME:
+            }
+        }
+    };
+
     if ("addAttribute" in mod) {
         check(mod.addAttribute.type_);
+        checkPreclusion(mod.addAttribute.type_);
+        checkContextRule(mod.addAttribute);
         return executeAddAttribute(mod.addAttribute, ...commonArguments);
     }
     else if ("removeAttribute" in mod) {
@@ -805,6 +898,8 @@ async function executeEntryModification (
     }
     else if ("addValues" in mod) {
         check(mod.addValues.type_);
+        checkPreclusion(mod.addValues.type_);
+        checkContextRule(mod.addValues);
         return executeAddValues(mod.addValues, ...commonArguments);
     }
     else if ("removeValues" in mod) {
@@ -819,6 +914,8 @@ async function executeEntryModification (
     }
     else if ("replaceValues" in mod) {
         check(mod.replaceValues.type_);
+        checkPreclusion(mod.replaceValues.type_);
+        checkContextRule(mod.replaceValues);
         return executeReplaceValues(mod.replaceValues, ...commonArguments);
     }
     else {
@@ -843,7 +940,7 @@ async function executeEntryModification (
  *
  * Continuing on the aforementioned example, the mere presence of an
  * `administrativeRole` attribute is what determines whether Meerkat DSA views
- * the entry as an
+ * the entry as an administrative point.
  *
  * @param ctx
  * @param target
@@ -955,6 +1052,26 @@ async function modifyEntry (
         }
     }
 
+    const requiredAttributes: Set<IndexableOID> = new Set();
+    const precludedAttributes: Set<IndexableOID> = new Set();
+    const permittedAuxiliaries: Set<IndexableOID> = new Set();
+    const contextRulesIndex: ContextRulesIndex = new Map();
+    const subschemaSubentry = await getSubschemaSubentry(ctx, target);
+    if (subschemaSubentry && !target.dse.subentry) {
+        const contentRule = (subschemaSubentry.dse.subentry?.ditContentRules ?? [])
+            .filter((rule) => !rule.obsolete)
+            // .find(), because there should only be one per SOC.
+            .find((rule) => (
+                target.dse.structuralObjectClass
+                && rule.structuralObjectClass.isEqualTo(target.dse.structuralObjectClass)
+            ));
+        contentRule?.mandatory?.forEach((ma) => requiredAttributes.add(ma.toString()));
+        contentRule?.precluded?.forEach((pa) => precludedAttributes.add(pa.toString()));
+        const contextUseRules = (subschemaSubentry.dse.subentry?.ditContextUse ?? [])
+            .filter((rule) => !rule.obsolete);
+        contextUseRules.forEach((rule) => contextRulesIndex.set(rule.identifier.toString(), rule));
+    }
+
     const pendingUpdates: PrismaPromise<any>[] = [];
     const delta: ValuesIndex = new Map();
     for (const mod of data.changes) {
@@ -969,12 +1086,13 @@ async function modifyEntry (
                 relevantTuples,
                 conn.authLevel,
                 EQUALITY_MATCHER,
+                precludedAttributes,
+                contextRulesIndex,
             )),
         );
         checkTimeLimit();
     }
 
-    const requiredAttributes: Set<IndexableOID> = new Set();
     const optionalAttributes: Set<IndexableOID> = new Set([
         id_oa_collectiveExclusions.toString(), // Permitted for every entry.
     ]);
@@ -1015,7 +1133,6 @@ async function modifyEntry (
         // modification of the structural object class, as long as it is
         // a subclass of the current structural object class.
         if (spec.kind === ObjectClassKind.structural) {
-            // TODO: What to do about abstract object classes?
             throw new errors.UpdateError(
                 `Cannot supplant structural object class with object class ${ocid.toString()}.`,
                 new UpdateErrorData(
@@ -1043,6 +1160,37 @@ async function modifyEntry (
                     undefined,
                 ),
             );
+        } else if (spec.kind === ObjectClassKind_auxiliary) {
+            if (permittedAuxiliaries.has(spec.id.toString())) {
+                throw new errors.UpdateError(
+                    `Auxiliary object class ${spec.id.toString()} is not `
+                    + "permitted by the relevant DIT content rules.",
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attribute: new Attribute(
+                                    id_at_objectClass,
+                                    [
+                                        _encodeObjectIdentifier(spec.id, DER),
+                                    ],
+                                    undefined,
+                                ),
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                );
+            }
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
         Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
@@ -1063,6 +1211,7 @@ async function modifyEntry (
         for (const ra of Array.from(requiredAttributes)) {
             const deltaValues = delta.get(ra);
             if (!deltaValues?.length) {
+                // FIXME: Blocked on implementing attribute count() driver.
                 const alreadyPresentValues = await ctx.db.attributeValue.count({
                     where: {
                         entry_id: target.dse.id,
