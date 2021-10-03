@@ -100,6 +100,7 @@ import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/Inform
 import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
@@ -332,7 +333,7 @@ async function findDSE (
     const candidateRefsEmpty_yes_branch = async (): Promise<Vertex | undefined> => {
         if (partialNameResolution === FALSE) {
             throw new errors.NameError(
-                "",
+                `No such object: ${encodeLDAPDN(ctx, needleDN)}.`,
                 new NameErrorData(
                     NameProblem_noSuchObject,
                     {
@@ -493,7 +494,7 @@ async function findDSE (
                     && (nextRDNToBeResolved === (i + 1))
                 ) {
                     throw new errors.ServiceError(
-                        "",
+                        "Unable to proceed.",
                         new ServiceErrorData(
                             ServiceProblem_unableToProceed,
                             [],
@@ -510,7 +511,7 @@ async function findDSE (
                     );
                 } else {
                     throw new errors.ServiceError(
-                        "",
+                        "Invalid reference.",
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],

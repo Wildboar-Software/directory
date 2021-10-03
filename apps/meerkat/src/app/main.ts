@@ -88,7 +88,8 @@ async function main (): Promise<void> {
 
     const idmServer = net.createServer((c) => {
         try {
-            ctx.log.info("IDM client connected.");
+            const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+            ctx.log.info(`IDM client connected from ${source}.`);
             const idm = new IDMConnection(c); // eslint-disable-line
 
             idm.events.on("bind", (idmBind: IdmBind) => {
@@ -102,7 +103,7 @@ async function main (): Promise<void> {
                     const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
                     new DOPConnection(ctx, idm, dba);
                 } else {
-                    console.log(`Unsupported protocol: ${idmBind.protocolID.toString()}.`);
+                    ctx.log.error(`Unsupported protocol: ${idmBind.protocolID.toString()}.`);
                 }
             });
 
@@ -125,8 +126,7 @@ async function main (): Promise<void> {
 
     });
     idmServer.on("error", (err) => {
-        // throw err;
-        ctx.log.error("IDM server error: ", err);
+        ctx.log.error(`IDM server error: ${err}`);
     });
 
     const idmPort = process.env.MEERKAT_IDM_PORT
@@ -134,11 +134,12 @@ async function main (): Promise<void> {
         : DEFAULT_IDM_TCP_PORT;
 
     idmServer.listen(idmPort, () => {
-        console.log(`IDM server listening on port ${idmPort}`);
+        ctx.log.info(`IDM server listening on port ${idmPort}.`);
     });
 
     const ldapServer = net.createServer((c) => {
-        console.log("LDAP client connected.");
+        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+        ctx.log.info(`LDAP client connected from ${source}.`);
         new LDAPConnection(ctx, c);
     });
 
@@ -147,7 +148,7 @@ async function main (): Promise<void> {
         : DEFAULT_LDAP_TCP_PORT;
 
     ldapServer.listen(ldapPort, async () => {
-        console.log(`LDAP server listening on port ${ldapPort}`);
+        ctx.log.info(`LDAP server listening on port ${ldapPort}.`);
     });
 
     if (process.env.MEERKAT_SERVER_TLS_CERT && process.env.MEERKAT_SERVER_TLS_KEY) {
@@ -155,14 +156,15 @@ async function main (): Promise<void> {
             cert: await fs.readFile(process.env.MEERKAT_SERVER_TLS_CERT),
             key: await fs.readFile(process.env.MEERKAT_SERVER_TLS_KEY),
         }, (c) => {
-            console.log("LDAPS client connected.");
+            const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+            ctx.log.info(`LDAPS client connected from ${source}.`);
             new LDAPConnection(ctx, c);
         });
         const ldapsPort = process.env.MEERKAT_LDAPS_PORT
             ? Number.parseInt(process.env.MEERKAT_LDAPS_PORT, 10)
             : DEFAULT_LDAPS_TCP_PORT;
         ldapsServer.listen(ldapsPort, async () => {
-            console.log(`LDAPS server listening on port ${ldapsPort}`);
+            ctx.log.info(`LDAPS server listening on port ${ldapsPort}`);
         });
     }
 
@@ -174,23 +176,21 @@ async function main (): Promise<void> {
         app.useStaticAssets(path.join(__dirname, 'assets', 'static'));
         app.setBaseViewsDir(path.join(__dirname, 'assets', 'views'));
         app.setViewEngine('hbs');
-        // const globalPrefix = 'api';
-        // app.setGlobalPrefix(globalPrefix);
         app.useGlobalPipes(new ValidationPipe({
             transform: true,
             skipMissingProperties: false,
             forbidNonWhitelisted: true,
         }));
-        const swaggerConfig = new DocumentBuilder()
-            .setTitle("Web Admin")
-            .setDescription('HTTP-based REST API for Meerkat DSA')
-            .setVersion('1.0')
-            .build();
-        const document = SwaggerModule.createDocument(app, swaggerConfig);
-        SwaggerModule.setup('documentation', app, document);
+        // const swaggerConfig = new DocumentBuilder()
+        //     .setTitle("Web Admin")
+        //     .setDescription('HTTP-based REST API for Meerkat DSA')
+        //     .setVersion('1.0')
+        //     .build();
+        // const document = SwaggerModule.createDocument(app, swaggerConfig);
+        // SwaggerModule.setup('documentation', app, document);
         const port = Number.parseInt(process.env.MEERKAT_WEB_ADMIN_PORT, 10);
         await app.listen(port, () => {
-            Logger.log('Listening at http://localhost:' + port);
+            ctx.log.info('Listening at http://localhost:' + port);
         });
     }
 

@@ -1,5 +1,8 @@
 import { randomUUID } from "crypto";
 import {
+    Logger,
+} from "winston";
+import {
     ObjectClassKind,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import type {
@@ -1027,7 +1030,7 @@ interface Context {
     dit: DITInfo;
     dsa: DSAInfo;
     config: Configuration;
-    log: typeof console;
+    log: Logger;
     db: PrismaClient;
     statistics: Statistics;
     telemetry: Telemetry;

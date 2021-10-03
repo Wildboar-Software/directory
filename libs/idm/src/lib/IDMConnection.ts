@@ -55,10 +55,7 @@ class IDMConnection {
         readonly s: net.Socket,
     ) {
         this.socket = s;
-        this.socket.on("end", (hadError: boolean) => {
-            console.log(hadError ? "Closing connection with error." : "Closed connection.");
-        });
-
+        // this.socket.on("end", () => {});
         this.socket.on("data", (data: Buffer) => {
             this.buffer = Buffer.concat([ this.buffer, data ]);
             while ((this.bufferIndex + this.awaitingBytes) <= this.buffer.length) {
@@ -185,7 +182,7 @@ class IDMConnection {
                 this.socket = new tls.TLSSocket(this.socket);
             }
         } else {
-            console.log("Unrecognized IDM PDU.");
+            // console.log("Unrecognized IDM PDU.");
         }
     }
 

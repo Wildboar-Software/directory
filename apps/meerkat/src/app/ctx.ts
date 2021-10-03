@@ -15,6 +15,7 @@ import { EventEmitter } from "stream";
 import { createPrivateKey } from "crypto";
 import * as fs from "fs";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
+import winston from "winston";
 
 if (!process.env.MEERKAT_SIGNING_CERT_CHAIN || !process.env.MEERKAT_SIGNING_KEY) {
     console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
@@ -93,11 +94,17 @@ const ctx: Context = {
     dit: {
         root,
     },
-    log: console,
+    log: winston.createLogger({
+        level: "info",
+        format: winston.format.cli(),
+        transports: [
+            new winston.transports.Console(),
+        ],
+    }),
     db: new PrismaClient(),
     telemetry: {
         sendEvent: (body: Record<string, any>) => {
-            console.log(body);
+            ctx.log.debug(body);
             // try {
             //     axios.post(telemetryURL, body, {
             //         headers: {

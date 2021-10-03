@@ -103,7 +103,7 @@ async function handleRequestAndErrors (
     try {
         await handleRequest(ctx, dop, request);
     } catch (e) {
-        console.error(e);
+        ctx.log.error(e);
         if (e instanceof AbandonError) {
             const code = _encode_Code(AbandonError.errcode, DER);
             const data = _encode_AbandonedData(e.data, DER);
@@ -169,7 +169,6 @@ class DOPConnection {
         readonly idm: IDMConnection,
         readonly bind: DirectoryBindArgument,
     ) {
-        console.log("DOP connection established.");
         const bindResult = new DirectoryBindResult(
             undefined,
             undefined,

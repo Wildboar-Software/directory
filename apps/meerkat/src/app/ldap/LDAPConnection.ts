@@ -76,9 +76,6 @@ async function handleRequest (
         //     conn.socket.write(toWriteBuffer);
         //     toWriteBuffer = Buffer.alloc(0);
         // }
-        // if (searchResEntry.objectName.length === 0) {
-        // console.log(searchResEntry.objectName);
-        // }
         conn.socket.write(_encode_LDAPMessage(resultMessage, BER).toBytes());
     };
     const unprotectedResult = getOptionallyProtectedValue(result.result);
@@ -120,7 +117,7 @@ async function handleRequestAndErrors (
     try {
         await handleRequest(ctx, conn, message);
     } catch (e) {
-        console.log(e);
+        ctx.log.error(e.message);
         const result: LDAPResult | undefined = dapErrorToLDAPResult(e);
         if (!result) {
             return; // No response is returned for abandoned operations in LDAP.
@@ -192,7 +189,6 @@ class LDAPConnection extends ClientConnection {
                 if (e instanceof ASN1TruncationError) {
                     return;
                 }
-                console.error(e);
                 // TODO: Close the connection.
                 return;
             }
@@ -200,8 +196,7 @@ class LDAPConnection extends ClientConnection {
             try {
                 message = _decode_LDAPMessage(el);
             } catch (e) {
-                console.error(e);
-                console.error(`Malformed LDAPMessage. ${this.buffer.toString("hex")}`);
+                ctx.log.error(`Malformed LDAPMessage. ${this.buffer.toString("hex")}`);
                 return;
             }
 
@@ -223,7 +218,10 @@ class LDAPConnection extends ClientConnection {
                         this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     })
                     .catch((e) => {
-                        ctx.log.error(e);
+                        ctx.log.error(e.message);
+                        if ("stack" in e) {
+                            ctx.log.error(e.stack);
+                        }
                         const res = new LDAPMessage(
                             message.messageID,
                             {
@@ -249,7 +247,7 @@ class LDAPConnection extends ClientConnection {
                     ),
                 };
             } else if ("abandonRequest" in message.protocolOp) {
-                console.log(`Abandon operation ${message.protocolOp.abandonRequest}`);
+                ctx.log.info(`Abandon operation ${message.protocolOp.abandonRequest}.`);
             } else if ("extendedReq" in message.protocolOp) {
                 const req = message.protocolOp.extendedReq;
                 const oid = decodeLDAPOID(req.requestName);
@@ -308,8 +306,6 @@ class LDAPConnection extends ClientConnection {
         this.socket.on("data", (data: Buffer): void => {
             this.handleData(ctx, data);
         });
-        this.socket.on("error", () => console.log("SOCKET ERROR"));
-        this.socket.on("drain", () => console.log("SOCKET DRAIN"));
     }
 
 }
