@@ -44,7 +44,6 @@ import createDatabaseReport from "./telemetry/createDatabaseReport";
 const DEFAULT_IDM_TCP_PORT: number = 4632;
 const DEFAULT_LDAP_TCP_PORT: number = 1389;
 const DEFAULT_LDAPS_TCP_PORT: number = 1636;
-const DEFAULT_WEB_ADMIN_PORT: number = 18080;
 
 export default
 async function main (): Promise<void> {
@@ -168,7 +167,7 @@ async function main (): Promise<void> {
     }
 
     // Web admin portal
-    {
+    if (process.env.WEB_ADMIN_PORT) {
         // I tried making AppModule a dynamic module that would take `ctx` as an argument, but that did not work. See:
         // See: https://github.com/nestjs/nest/issues/671
         const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -189,9 +188,7 @@ async function main (): Promise<void> {
             .build();
         const document = SwaggerModule.createDocument(app, swaggerConfig);
         SwaggerModule.setup('documentation', app, document);
-        const port = process.env.WEB_ADMIN_PORT
-            ? Number.parseInt(process.env.WEB_ADMIN_PORT, 10)
-            : DEFAULT_WEB_ADMIN_PORT;
+        const port = Number.parseInt(process.env.WEB_ADMIN_PORT, 10);
         await app.listen(port, () => {
             Logger.log('Listening at http://localhost:' + port);
         });

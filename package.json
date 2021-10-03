@@ -52,6 +52,7 @@
         "i18next-fs-backend": "^1.1.1",
         "is-debugging": "^1.0.1",
         "os-locale": "^5.0.0",
+        "passport": "^0.4.1",
         "pem-ts": "^2.0.1",
         "reflect-metadata": "^0.1.13",
         "sloc": "^0.2.1",

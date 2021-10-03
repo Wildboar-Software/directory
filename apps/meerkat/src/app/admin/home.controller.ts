@@ -1,4 +1,5 @@
 import type { Context } from "../types";
+import { CONTEXT } from "../constants";
 import { Controller, Get, Post, Render, Inject, Param, Res } from "@nestjs/common";
 import type { Response } from "express";
 import * as fs from "fs/promises";
@@ -10,7 +11,7 @@ const conformancePath = path.join(__dirname, "assets", "static", "conformance.md
 export class HomeController {
 
     constructor (
-        @Inject("CONTEXT") readonly ctx: Context,
+        @Inject(CONTEXT) readonly ctx: Context,
     ) {}
 
     @Get()

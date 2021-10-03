@@ -1,4 +1,5 @@
 import type { Context, Vertex } from "../types";
+import { CONTEXT } from "../constants";
 import type { Entry } from "@prisma/client";
 import { Controller, Get, Post, Render, Inject, Param, NotFoundException, Res } from "@nestjs/common";
 import type { Response } from "express";
@@ -230,11 +231,12 @@ function defaultEncoder (value: ASN1Element): string {
     return value.toString();
 }
 
+
 @Controller()
 export class DitController {
 
     constructor (
-        @Inject("CONTEXT") readonly ctx: Context,
+        @Inject(CONTEXT) readonly ctx: Context,
     ) {}
 
     @Get("/dsait/tree")
