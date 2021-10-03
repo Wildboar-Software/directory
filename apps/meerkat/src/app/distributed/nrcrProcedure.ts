@@ -50,7 +50,7 @@ async function nrcrProcedure (
     state: OperationDispatcherState,
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
-): Promise<OPCR | Error_ | null> {
+): Promise<OPCR | Error_> {
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -186,7 +186,15 @@ async function nrcrProcedure (
                         undefined,
                     ),
                 });
-                return null;
+                state.partialName = TRUE;
+                state.chainingArguments = cloneChainingArguments(state.chainingArguments, {
+                    operationProgress: new OperationProgress(
+                        OperationProgress_nameResolutionPhase_completed,
+                        undefined,
+                    ),
+                });
+                state.entrySuitable = TRUE;
+                // return null;
             } else {
                 throw new errors.NameError(
                     "Could not find object in any relevant NSSR DSA.",

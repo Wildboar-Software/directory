@@ -52,6 +52,7 @@ import {
 import {
     operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+import { ASN1Element } from "asn1-ts";
 
 export
 abstract class DirectoryError extends Error {
@@ -139,6 +140,18 @@ class OperationalBindingError extends DirectoryError {
     constructor (readonly message: string, readonly data: typeof operationalBindingError["&ParameterType"]) {
         super(message);
         Object.setPrototypeOf(this, OperationalBindingError.prototype);
+    }
+}
+
+export
+class ChainedError extends Error {
+    constructor (
+        readonly message: string,
+        readonly error?: ASN1Element,
+        readonly errcode?: Code,
+    ) {
+        super(message);
+        Object.setPrototypeOf(this, ChainedError.prototype);
     }
 }
 

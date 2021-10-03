@@ -158,124 +158,15 @@ extends
 export
 class OperationDispatcher {
 
-    private static async dispatchPreparedDSPRequest (
+    private static async operationEvaluation (
         ctx: Context,
+        state: OperationDispatcherState,
         conn: ClientConnection,
         req: Request,
-        preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
+        reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     ): Promise<OperationDispatcherReturn> {
         assert(req.opCode);
         assert(req.argument);
-        const reqData = getOptionallyProtectedValue(preparedRequest);
-        if (compareCode(req.opCode, abandon["&operationCode"]!)) {
-            const result = await doAbandon(ctx, conn, reqData);
-            return {
-                invokeId: req.invokeId,
-                opCode: req.opCode,
-                result: {
-                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                        new ChainingResults(
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                        ),
-                        result.result,
-                    ),
-                },
-                request: {
-                    operationCode: codeToString(req.opCode),
-                },
-                outcome: {
-                    result: {},
-                },
-            };
-        }
-        const targetObject = getSoughtObjectFromRequest(req);
-        if (!targetObject) {
-            throw new errors.SecurityError(
-                "No discernable targeted object.",
-                new SecurityErrorData(
-                    SecurityProblem_noInformation,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        id_errcode_securityError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            );
-        }
-        const chainingResults = new ChainingResults(
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        );
-        const state: OperationDispatcherState = {
-            NRcontinuationList: [],
-            SRcontinuationList: [],
-            admPoints: [],
-            referralRequests: [],
-            emptyHierarchySelect: false,
-            invokeId: req.invokeId,
-            operationCode: req.opCode,
-            operationArgument: reqData.argument,
-            chainingArguments: reqData.chainedArgument,
-            chainingResults,
-            foundDSE: ctx.dit.root,
-            entrySuitable: false,
-            partialName: false,
-        };
-        await findDSE(
-            ctx,
-            conn,
-            ctx.dit.root,
-            targetObject,
-            state,
-        );
-        if (!state.entrySuitable) {
-            if (!state.NRcontinuationList.length) {
-                throw new Error(); // FIXME:
-            }
-            const serviceControls = reqData.argument.set
-                .find((el) => (
-                    (el.tagClass === ASN1TagClass.context)
-                    && (el.tagNumber === 30)
-                ))?.inner;
-            const serviceControlOptions = serviceControls?.set
-                .find((el) => (
-                    (el.tagClass === ASN1TagClass.context)
-                    && (el.tagNumber === 0)
-                ))?.inner;
-            const chainingProhibited = (serviceControlOptions?.bitString?.[chainingProhibitedBit] === TRUE_BIT);
-            const partialNameResolution = (serviceControlOptions?.bitString?.[partialNameResolutionBit] === TRUE_BIT);
-            const nrcrResult = await nrcrProcedure(
-                ctx,
-                conn,
-                state,
-                chainingProhibited,
-                partialNameResolution,
-            );
-            if (!nrcrResult) {
-                throw new Error(); // FIXME:
-            }
-            if ("error" in nrcrResult) {
-                throw new Error(); // FIXME:
-            }
-            return {
-                invokeId: req.invokeId,
-                opCode: req.opCode,
-                foundDSE: state.foundDSE,
-                result: nrcrResult,
-            };
-        }
         const foundDN = getDistinguishedName(state.foundDSE);
         if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
             const outcome = await doAddEntry(ctx, conn, state);
@@ -706,7 +597,141 @@ class OperationDispatcher {
                 };
             }
         }
-        throw new Error();
+        throw new errors.UnknownOperationError();
+    }
+
+    private static async dispatchPreparedDSPRequest (
+        ctx: Context,
+        conn: ClientConnection,
+        req: Request,
+        preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
+    ): Promise<OperationDispatcherReturn> {
+        assert(req.opCode);
+        assert(req.argument);
+        const reqData = getOptionallyProtectedValue(preparedRequest);
+        if (compareCode(req.opCode, abandon["&operationCode"]!)) {
+            const result = await doAbandon(ctx, conn, reqData);
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: {
+                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                        new ChainingResults(
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ),
+                        result.result,
+                    ),
+                },
+                request: {
+                    operationCode: codeToString(req.opCode),
+                },
+                outcome: {
+                    result: {},
+                },
+            };
+        }
+        const targetObject = getSoughtObjectFromRequest(req);
+        if (!targetObject) {
+            throw new errors.SecurityError(
+                "No discernable targeted object.",
+                new SecurityErrorData(
+                    SecurityProblem_noInformation,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_securityError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+        const chainingResults = new ChainingResults(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const state: OperationDispatcherState = {
+            NRcontinuationList: [],
+            SRcontinuationList: [],
+            admPoints: [],
+            referralRequests: [],
+            emptyHierarchySelect: false,
+            invokeId: req.invokeId,
+            operationCode: req.opCode,
+            operationArgument: reqData.argument,
+            chainingArguments: reqData.chainedArgument,
+            chainingResults,
+            foundDSE: ctx.dit.root,
+            entrySuitable: false,
+            partialName: false,
+        };
+        await findDSE(
+            ctx,
+            conn,
+            ctx.dit.root,
+            targetObject,
+            state,
+        );
+        if (!state.entrySuitable) {
+            const serviceControls = reqData.argument.set
+                .find((el) => (
+                    (el.tagClass === ASN1TagClass.context)
+                    && (el.tagNumber === 30)
+                ))?.inner;
+            const serviceControlOptions = serviceControls?.set
+                .find((el) => (
+                    (el.tagClass === ASN1TagClass.context)
+                    && (el.tagNumber === 0)
+                ))?.inner;
+            const chainingProhibited = (serviceControlOptions?.bitString?.[chainingProhibitedBit] === TRUE_BIT);
+            const partialNameResolution = (serviceControlOptions?.bitString?.[partialNameResolutionBit] === TRUE_BIT);
+            const nrcrResult = await nrcrProcedure(
+                ctx,
+                conn,
+                state,
+                chainingProhibited,
+                partialNameResolution,
+            );
+            if (!nrcrResult) {
+                return OperationDispatcher.operationEvaluation(
+                    ctx,
+                    state,
+                    conn,
+                    req,
+                    reqData,
+                );
+            }
+            if ("error" in nrcrResult) {
+                throw new errors.ChainedError(
+                    "Chained error.",
+                    nrcrResult.error,
+                    nrcrResult.errcode,
+                );
+            }
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                foundDSE: state.foundDSE,
+                result: nrcrResult,
+            };
+        }
+        return OperationDispatcher.operationEvaluation(
+            ctx,
+            state,
+            conn,
+            req,
+            reqData,
+        );
     }
 
     public static async dispatchDAPRequest (
@@ -749,103 +774,17 @@ class OperationDispatcher {
         );
     }
 
-    public static async dispatchLocalSearchDSPRequest (
+    private static async localSearchOperationEvaluation (
         ctx: Context,
+        state: OperationDispatcherState,
         conn: ClientConnection,
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,
-        // authLevel: AuthenticationLevel,
-        // uniqueIdentifier?: UniqueIdentifier,
     ): Promise<SearchResultOrError> {
-        // Request validation not needed.
-        const data = getOptionallyProtectedValue(argument);
-        const encodedArgument = _encode_SearchArgument(argument, DER);
-        const targetObject = chaining.relatedEntry // The specification is not clear of what to do for targetObject.
-            ? data.joinArguments?.[chaining.relatedEntry]?.joinBaseObject.rdnSequence
-            : chaining.targetObject ?? data.baseObject.rdnSequence;
-        if (!targetObject) {
-            throw new errors.SecurityError(
-                "No discernable targeted object.",
-                new SecurityErrorData(
-                    SecurityProblem_noInformation,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        id_errcode_securityError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            );
-        }
-        const chainingResults = new ChainingResults(
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        );
-        const state: OperationDispatcherState = {
-            NRcontinuationList: [],
-            SRcontinuationList: [],
-            admPoints: [],
-            referralRequests: [],
-            emptyHierarchySelect: false,
-            invokeId: invokeId,
-            operationCode: search["&operationCode"]!,
-            operationArgument: encodedArgument,
-            chainingArguments: chaining,
-            chainingResults,
-            foundDSE: ctx.dit.root,
-            entrySuitable: false,
-            partialName: false,
-        };
-        await findDSE(
-            ctx,
-            conn,
-            ctx.dit.root,
-            targetObject,
-            state,
-        );
-        if (!state.entrySuitable) {
-            if (!state.NRcontinuationList.length) {
-                throw new Error(); // FIXME:
-            }
-            const serviceControlOptions = data.serviceControls?.options;
-            const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
-            const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
-            const nrcrResult = await nrcrProcedure(
-                ctx,
-                conn,
-                state,
-                chainingProhibited,
-                partialNameResolution,
-            );
-            if (!nrcrResult) {
-                throw new Error(); // FIXME:
-            } else if ("error" in nrcrResult) {
-                return nrcrResult;
-            } else {
-                const unprotectedResult = getOptionallyProtectedValue(nrcrResult);
-                const searchResult = _decode_SearchResult(unprotectedResult.result);
-                return {
-                    invokeId: {
-                        present: 1,
-                    },
-                    opCode: search["&operationCode"]!,
-                    chaining: unprotectedResult.chainedResult,
-                    result: searchResult,
-                };
-            }
-        }
         const foundDN = getDistinguishedName(state.foundDSE);
         const relatedEntryReturn: RelatedEntryReturn = {
-            chaining: chainingResults,
+            chaining: state.chainingResults,
             response: [],
             unexplored: [],
         };
@@ -978,6 +917,118 @@ class OperationDispatcher {
                 result,
             };
         }
+    }
+
+    public static async dispatchLocalSearchDSPRequest (
+        ctx: Context,
+        conn: ClientConnection,
+        invokeId: InvokeId,
+        argument: SearchArgument,
+        chaining: ChainingArguments,
+        // authLevel: AuthenticationLevel,
+        // uniqueIdentifier?: UniqueIdentifier,
+    ): Promise<SearchResultOrError> {
+        // Request validation not needed.
+        const data = getOptionallyProtectedValue(argument);
+        const encodedArgument = _encode_SearchArgument(argument, DER);
+        const targetObject = chaining.relatedEntry // The specification is not clear of what to do for targetObject.
+            ? data.joinArguments?.[chaining.relatedEntry]?.joinBaseObject.rdnSequence
+            : chaining.targetObject ?? data.baseObject.rdnSequence;
+        if (!targetObject) {
+            throw new errors.SecurityError(
+                "No discernable targeted object.",
+                new SecurityErrorData(
+                    SecurityProblem_noInformation,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_securityError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+        const chainingResults = new ChainingResults(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const state: OperationDispatcherState = {
+            NRcontinuationList: [],
+            SRcontinuationList: [],
+            admPoints: [],
+            referralRequests: [],
+            emptyHierarchySelect: false,
+            invokeId: invokeId,
+            operationCode: search["&operationCode"]!,
+            operationArgument: encodedArgument,
+            chainingArguments: chaining,
+            chainingResults,
+            foundDSE: ctx.dit.root,
+            entrySuitable: false,
+            partialName: false,
+        };
+        await findDSE(
+            ctx,
+            conn,
+            ctx.dit.root,
+            targetObject,
+            state,
+        );
+        if (!state.entrySuitable) {
+            const serviceControlOptions = data.serviceControls?.options;
+            const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
+            const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
+            const nrcrResult = await nrcrProcedure(
+                ctx,
+                conn,
+                state,
+                chainingProhibited,
+                partialNameResolution,
+            );
+            if (!nrcrResult) {
+                return OperationDispatcher.localSearchOperationEvaluation(
+                    ctx,
+                    state,
+                    conn,
+                    invokeId,
+                    argument,
+                    chaining,
+                );
+            } else if ("error" in nrcrResult) {
+                throw new errors.ChainedError(
+                    "Chained error.",
+                    nrcrResult.error,
+                    nrcrResult.errcode,
+                );
+            } else {
+                const unprotectedResult = getOptionallyProtectedValue(nrcrResult);
+                const searchResult = _decode_SearchResult(unprotectedResult.result);
+                return {
+                    invokeId: {
+                        present: 1,
+                    },
+                    opCode: search["&operationCode"]!,
+                    chaining: unprotectedResult.chainedResult,
+                    result: searchResult,
+                };
+            }
+        }
+        return OperationDispatcher.localSearchOperationEvaluation(
+            ctx,
+            state,
+            conn,
+            invokeId,
+            argument,
+            chaining,
+        );
     }
 
 }
