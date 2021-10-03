@@ -16,6 +16,7 @@ import { createPrivateKey } from "crypto";
 import * as fs from "fs";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import winston from "winston";
+import isDebugging from "is-debugging";
 
 if (!process.env.MEERKAT_SIGNING_CERT_CHAIN || !process.env.MEERKAT_SIGNING_KEY) {
     console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
@@ -95,7 +96,9 @@ const ctx: Context = {
         root,
     },
     log: winston.createLogger({
-        level: "info",
+        level: isDebugging
+            ? "debug"
+            : "info",
         format: winston.format.cli(),
         transports: [
             new winston.transports.Console(),

@@ -972,20 +972,6 @@ async function findDSE (
             if (dse_i.dse.admPoint.administrativeRole.has(autonomousArea)) {
                 state.admPoints.length = 0;
             }
-            [ // Specific areas supplant other specific areas of the same kind.
-                accessControlSpecificArea,
-                subschemaAdminSpecificArea,
-                collectiveAttributeSpecificArea,
-                contextDefaultSpecificArea,
-                serviceSpecificArea,
-                pwdAdminSpecificArea,
-            ]
-                .forEach((specificAreaType) => {
-                    if (dse_i.dse.admPoint?.administrativeRole.has(specificAreaType)) {
-                        state.admPoints = state.admPoints
-                            .filter((admPoint) => admPoint.dse.admPoint?.administrativeRole.has(specificAreaType));
-                    }
-                });
             // TODO: inner areas shall not be used if SAC is in place.
             // NOTE: This actually needs to be implemented elsewhere.
             state.admPoints.push(dse_i);

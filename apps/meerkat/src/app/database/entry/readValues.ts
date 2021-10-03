@@ -14,6 +14,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
 import attributeFromDatabaseAttribute from "../attributeFromDatabaseAttribute";
 import readCollectiveValues from "./readCollectiveValues";
+import getDistinguishedName from "../../x500/getDistinguishedName";
 import type {
     ContextSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
@@ -193,10 +194,16 @@ function addFriends (
     type_: OBJECT_IDENTIFIER,
 ): void {
     const friendship = relevantSubentries
-        .find((sub) => (
+        .filter((sub) => (
             sub.dse.objectClass.has(id_soc_subschema.toString())
             && sub.dse.subentry?.friendships
-        ))?.dse.subentry!.friendships?.find((fr) => fr.anchor.isEqualTo(type_));
+        ))
+        .sort((a, b) => {
+            const adn = getDistinguishedName(a);
+            const bdn = getDistinguishedName(b);
+            return (bdn.length - adn.length);
+        }) // Select the nearest subschema
+        [0]?.dse.subentry!.friendships?.find((fr) => fr.anchor.isEqualTo(type_));
     if (friendship) {
         for (const friend of friendship.friends) {
             if (!selectedUserAttributes.has(friend.toString())) {
