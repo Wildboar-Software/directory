@@ -16,13 +16,13 @@ import { createPrivateKey } from "crypto";
 import * as fs from "fs";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 
-if (!process.env.SIGNING_CERT_CHAIN || !process.env.SIGNING_KEY) {
+if (!process.env.MEERKAT_SIGNING_CERT_CHAIN || !process.env.MEERKAT_SIGNING_KEY) {
     console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
     process.exit(1);
 }
 
-const chainFile = fs.readFileSync(process.env.SIGNING_CERT_CHAIN, { encoding: "utf-8" });
-const keyFile = fs.readFileSync(process.env.SIGNING_KEY, { encoding: "utf-8" });
+const chainFile = fs.readFileSync(process.env.MEERKAT_SIGNING_CERT_CHAIN, { encoding: "utf-8" });
+const keyFile = fs.readFileSync(process.env.MEERKAT_SIGNING_KEY, { encoding: "utf-8" });
 const pkiPath = decodePkiPathFromPEM(chainFile);
 const dsaCert = pkiPath[pkiPath.length - 1];
 if (!dsaCert) {
@@ -45,30 +45,30 @@ const root: Vertex = {
 const ctx: Context = {
     config: {
         localQualifierPointsFor: {
-            usingStartTLS: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS
-                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS, 10)
+            usingStartTLS: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS
+                ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS, 10)
                 : 0,
-            usingTLS: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS
-                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS, 10)
+            usingTLS: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS
+                ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS, 10)
                 : 0,
-            usingSSLv3: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3
-                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3, 10)
+            usingSSLv3: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3
+                ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3, 10)
                 : 0,
-            usingTLSv1_0: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0
-                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0, 10)
+            usingTLSv1_0: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0
+                ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0, 10)
                 : 0,
-            usingTLSv1_1: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1
-                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1, 10)
+            usingTLSv1_1: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1
+                ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1, 10)
                 : 0,
-            usingTLSv1_2: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2
-                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2, 10)
+            usingTLSv1_2: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2
+                ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2, 10)
                 : 0,
-            usingTLSv1_3: process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3
-                ? Number.parseInt(process.env.LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3, 10)
+            usingTLSv1_3: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3
+                ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3, 10)
                 : 0,
         },
-        sentinelDomain: process.env.SENTINEL_DOMAIN,
-        administratorEmail: process.env.ADMINISTRATOR_EMAIL,
+        sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
+        administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
     },
     dsa: {
         accessPoint: new AccessPoint(

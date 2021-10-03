@@ -200,8 +200,8 @@ async function main() {
     };
     const socket = net.createConnection({
         host: "localhost",
-        port: process.env.IDM_PORT
-            ? Number.parseInt(process.env.IDM_PORT, 10)
+        port: process.env.MEERKAT_IDM_PORT
+            ? Number.parseInt(process.env.MEERKAT_IDM_PORT, 10)
             : 4632,
     });
     const idm = new IDMConnection(socket);

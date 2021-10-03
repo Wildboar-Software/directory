@@ -129,8 +129,8 @@ async function main (): Promise<void> {
         ctx.log.error("IDM server error: ", err);
     });
 
-    const idmPort = process.env.IDM_PORT
-        ? Number.parseInt(process.env.IDM_PORT, 10)
+    const idmPort = process.env.MEERKAT_IDM_PORT
+        ? Number.parseInt(process.env.MEERKAT_IDM_PORT, 10)
         : DEFAULT_IDM_TCP_PORT;
 
     idmServer.listen(idmPort, () => {
@@ -142,24 +142,24 @@ async function main (): Promise<void> {
         new LDAPConnection(ctx, c);
     });
 
-    const ldapPort = process.env.LDAP_PORT
-        ? Number.parseInt(process.env.LDAP_PORT, 10)
+    const ldapPort = process.env.MEERKAT_LDAP_PORT
+        ? Number.parseInt(process.env.MEERKAT_LDAP_PORT, 10)
         : DEFAULT_LDAP_TCP_PORT;
 
     ldapServer.listen(ldapPort, async () => {
         console.log(`LDAP server listening on port ${ldapPort}`);
     });
 
-    if (process.env.SERVER_TLS_CERT && process.env.SERVER_TLS_KEY) {
+    if (process.env.MEERKAT_SERVER_TLS_CERT && process.env.MEERKAT_SERVER_TLS_KEY) {
         const ldapsServer = tls.createServer({
-            cert: await fs.readFile(process.env.SERVER_TLS_CERT),
-            key: await fs.readFile(process.env.SERVER_TLS_KEY),
+            cert: await fs.readFile(process.env.MEERKAT_SERVER_TLS_CERT),
+            key: await fs.readFile(process.env.MEERKAT_SERVER_TLS_KEY),
         }, (c) => {
             console.log("LDAPS client connected.");
             new LDAPConnection(ctx, c);
         });
-        const ldapsPort = process.env.LDAPS_PORT
-            ? Number.parseInt(process.env.LDAPS_PORT, 10)
+        const ldapsPort = process.env.MEERKAT_LDAPS_PORT
+            ? Number.parseInt(process.env.MEERKAT_LDAPS_PORT, 10)
             : DEFAULT_LDAPS_TCP_PORT;
         ldapsServer.listen(ldapsPort, async () => {
             console.log(`LDAPS server listening on port ${ldapsPort}`);
@@ -167,7 +167,7 @@ async function main (): Promise<void> {
     }
 
     // Web admin portal
-    if (process.env.WEB_ADMIN_PORT) {
+    if (process.env.MEERKAT_WEB_ADMIN_PORT) {
         // I tried making AppModule a dynamic module that would take `ctx` as an argument, but that did not work. See:
         // See: https://github.com/nestjs/nest/issues/671
         const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -188,7 +188,7 @@ async function main (): Promise<void> {
             .build();
         const document = SwaggerModule.createDocument(app, swaggerConfig);
         SwaggerModule.setup('documentation', app, document);
-        const port = Number.parseInt(process.env.WEB_ADMIN_PORT, 10);
+        const port = Number.parseInt(process.env.MEERKAT_WEB_ADMIN_PORT, 10);
         await app.listen(port, () => {
             Logger.log('Listening at http://localhost:' + port);
         });
