@@ -202,7 +202,7 @@ async function main (): Promise<void> {
                 const fullRecord: string = record.join(" ").trim().toLowerCase();
                 switch (fullRecord) {
                 case ("meerkat:kill"): {
-                    ctx.log.error("Killed by sentinent.");
+                    ctx.log.error("Killed by sentinel.");
                     process.exit(503);
                     break;
                 }
