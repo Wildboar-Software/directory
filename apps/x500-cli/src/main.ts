@@ -21,6 +21,7 @@ import dap_add_residentialPerson from "./yargs/dap_add_residentialPerson";
 import dap_add_process from "./yargs/dap_add_process";
 import dap_add_device from "./yargs/dap_add_device";
 import dap_add_dmd from "./yargs/dap_add_dmd";
+import dap_mod_become_admpoint from "./yargs/dap_mod_become_admpoint";
 import dap_search_new from "./yargs/dap_search_new";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
@@ -43,7 +44,7 @@ yargs(process.argv.slice(2))
     .command("dap", "Directory Access Protocol", (dapYargs) => {
         dapYargs
             .command("add", "Add an entry", (addYargs) => {
-                addYargs
+                return addYargs
                     .command(dap_add_country(ctx))
                     .command(dap_add_locality(ctx))
                     .command(dap_add_person(ctx))
@@ -57,6 +58,18 @@ yargs(process.argv.slice(2))
                     .command(dap_add_device(ctx))
                     .command(dap_add_dmd(ctx))
                     .demandCommand()
+                    ;
+            })
+            .command("mod", "Modify an entry", (modYargs) => {
+                return modYargs
+                    .command("become",
+                    "Become an auxiliary class or DSE type",
+                    (becomeYargs) => {
+                        return becomeYargs
+                            .command(dap_mod_become_admpoint(ctx))
+                            .demandCommand()
+                            ;
+                    })
                     ;
             })
             .command("apw <object>", "Administer password", (apwYargs) => {
