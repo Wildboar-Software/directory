@@ -25,6 +25,7 @@ import dap_mod_become_admpoint from "./yargs/dap_mod_become_admpoint";
 import dap_search_new from "./yargs/dap_search_new";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
+import type { Connection } from "./types";
 
 loadLDAPSyntaxes(ctx);
 loadAttributeTypes(ctx);
@@ -40,6 +41,7 @@ yargs(process.argv.slice(2))
     }, async (argv) => {
         const connection = await bind(ctx, argv);
         await do_seedCountries(ctx, connection, argv);
+        await connection.close();
     })
     .command("dap", "Directory Access Protocol", (dapYargs) => {
         dapYargs
@@ -81,6 +83,7 @@ yargs(process.argv.slice(2))
             }, async (argv) => {
                 const connection = await bind(ctx, argv);
                 await do_administerPassword(ctx, connection, argv);
+                await connection.close();
             })
             .command("cpw <object>", "Change password", (cpwYargs) => {
                 return cpwYargs
@@ -91,6 +94,7 @@ yargs(process.argv.slice(2))
             }, async (argv) => {
                 const connection = await bind(ctx, argv);
                 await do_changePassword(ctx, connection, argv);
+                await connection.close();
             })
             .command(
                 "compare <object> <type> <value>",
@@ -110,6 +114,7 @@ yargs(process.argv.slice(2))
             }, async (argv) => {
                 const connection = await bind(ctx, argv);
                 await do_compare(ctx, connection, argv);
+                await connection.close();
             })
             .command("list <object>", "List entries", (listYargs) => {
                 listYargs
@@ -123,6 +128,7 @@ yargs(process.argv.slice(2))
             }, async (argv) => {
                 const connection = await bind(ctx, argv);
                 await do_list(ctx, connection, argv);
+                await connection.close();
             })
             .command("moddn <src> <dest>", "Move/Rename an entry", (modDNYargs) => {
                 return modDNYargs
@@ -136,6 +142,7 @@ yargs(process.argv.slice(2))
             }, async (argv) => {
                 const connection = await bind(ctx, argv);
                 await do_modifyDN(ctx, connection, argv);
+                await connection.close();
             })
             .command("read <object>", "Read an entry", (readYargs) => {
                 return readYargs
@@ -145,6 +152,7 @@ yargs(process.argv.slice(2))
             }, async (argv) => {
                 const connection = await bind(ctx, argv);
                 await do_read(ctx, connection, argv);
+                await connection.close();
             })
             .command("remove <object>", "Remove an entry", (removeYargs) => {
                 return removeYargs
@@ -154,6 +162,7 @@ yargs(process.argv.slice(2))
             }, async (argv) => {
                 const connection = await bind(ctx, argv);
                 await do_removeEntry(ctx, connection, argv);
+                await connection.close();
             })
             .command("search", "Search entries", (searchYargs) => {
                 searchYargs

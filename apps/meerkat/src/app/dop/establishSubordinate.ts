@@ -1,8 +1,13 @@
 import type { Context, Vertex } from "../types";
+import { DER } from "asn1-ts/dist/node/functional";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import connect from "../net/connect";
+import { connect, ConnectOptions } from "../net/connect";
+import type {
+    Connection,
+    WriteOperationOptions,
+} from "../net/Connection";
 import {
     establishOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
@@ -30,6 +35,9 @@ import {
 import {
     Validity,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/Validity.ta";
+import type {
+    RelativeDistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -38,27 +46,18 @@ import {
     Vertex as X500Vertex,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
 import {
-    administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
-import {
-    accessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
-import {
-    subentryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
-import {
-    entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import {
     SubentryInfo,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubentryInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import readChildren from "../dit/readChildren";
 import * as crypto from "crypto";
-import { DERElement, ObjectIdentifier } from "asn1-ts";
-import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import admPointEIS from "./admPointEIS";
+import subentryEIS from "./subentryEIS";
+import readAttributes from "../database/entry/readAttributes";
+import { addMilliseconds, differenceInMilliseconds } from "date-fns";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -158,19 +157,31 @@ import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 //     info [1] SET OF Attribute{{SupportedAttributes}},
 //     ... }
 
-const DER = () => new DERElement();
+// FIXME: Allow creation of alias+cp
+
+export
+interface EstablishSubordinateOptions extends ConnectOptions, WriteOperationOptions {
+    endTime?: Date;
+}
 
 export
 async function establishSubordinate (
     ctx: Context,
     immediateSuperior: Vertex,
     immediateSuperiorInfo: Attribute[] | undefined,
-    newEntry: Vertex,
+    newEntryRDN: RelativeDistinguishedName,
     newEntryInfo: Attribute[] | undefined,
     targetSystem: AccessPoint,
-    endTime?: Date,
+    options?: EstablishSubordinateOptions,
 ): Promise<ResultOrError> {
-    const conn = await connect(ctx, targetSystem, dop_ip["&id"]!);
+    const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
+    const startTime = new Date();
+    const timeoutTime: Date | undefined = connectionTimeout
+        ? addMilliseconds(startTime, connectionTimeout)
+        : undefined;
+    const conn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
+        timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
+    });
     if (!conn) {
         throw new Error();
     }
@@ -186,46 +197,35 @@ async function establishSubordinate (
         }
 
         if (current.dse.admPoint) {
-            admPointAttributes.push(new Attribute(
-                administrativeRole["&id"],
-                Array.from(current.dse.admPoint.administrativeRole)
-                    .map((ar) => ObjectIdentifier.fromString(ar))
-                    .map((ar) => administrativeRole.encoderFor["&Type"]!(ar, DER)),
-                undefined,
-            ));
-            if (current.dse.admPoint.accessControlScheme) {
-                admPointAttributes.push(new Attribute(
-                    accessControlScheme["&id"],
-                    [
-                        accessControlScheme.encoderFor["&Type"]!(current.dse.admPoint.accessControlScheme, DER),
-                    ],
-                    undefined,
-                ));
-            }
-            if (current.dse.admPoint.subentryACI) {
-                admPointAttributes.push(new Attribute(
-                    subentryACI["&id"],
-                    current.dse.admPoint.subentryACI
-                        .map((aci) => subentryACI.encoderFor["&Type"]!(aci, DER)),
-                    undefined,
-                ));
-            }
-            if (current.dse.entryACI) {
-                admPointAttributes.push(new Attribute(
-                    entryACI["&id"],
-                    current.dse.entryACI
-                        .map((aci) => entryACI.encoderFor["&Type"]!(aci, DER)),
-                    undefined,
-                ));
-            }
+            const {
+                userAttributes,
+                operationalAttributes,
+            } = await readAttributes(ctx, current, admPointEIS);
+            admPointAttributes.push(
+                ...userAttributes,
+                ...operationalAttributes,
+            );
 
             const subordinates = await readChildren(ctx, current);
-            subentryInfos.push(...subordinates
-                .filter((sub) => sub.dse.subentry)
-                .map((sub) => new SubentryInfo(
-                    sub.dse.rdn,
-                    getAttributesFromSubentry(sub),
-                )));
+            subentryInfos.push(
+                ...await Promise.all(
+                    subordinates
+                        .filter((sub) => sub.dse.subentry)
+                        .map(async (sub): Promise<SubentryInfo> => {
+                            const {
+                                userAttributes,
+                                operationalAttributes,
+                            } = await readAttributes(ctx, sub, subentryEIS);
+                            return new SubentryInfo(
+                                sub.dse.rdn,
+                                [
+                                    ...userAttributes,
+                                    ...operationalAttributes,
+                                ],
+                            );
+                        }),
+                ),
+            );
         }
 
         ditContext.push(new X500Vertex(
@@ -249,7 +249,7 @@ async function establishSubordinate (
         immediateSuperiorInfo,
     );
     const agreement = new HierarchicalAgreement(
-        newEntry.dse.rdn,
+        newEntryRDN,
         getDistinguishedName(immediateSuperior),
     );
 
@@ -262,27 +262,37 @@ async function establishSubordinate (
             ),
             ctx.dsa.accessPoint,
             {
-                roleA_initiates: _encode_SuperiorToSubordinate(sup2sub, () => new DERElement()),
+                roleA_initiates: _encode_SuperiorToSubordinate(sup2sub, DER),
             },
-            _encode_HierarchicalAgreement(agreement, () => new DERElement()),
-            endTime
+            _encode_HierarchicalAgreement(agreement, DER),
+            options?.endTime
                 ? new Validity(
                     {
                         now: null,
                     },
                     {
                         time: {
-                            generalizedTime: endTime,
+                            generalizedTime: options.endTime,
                         },
                     },
                 )
                 : undefined,
-            undefined,
+            createSecurityParameters(
+                ctx,
+                targetSystem.ae_title.rdnSequence,
+                establishOperationalBinding["&operationCode"],
+            ),
         ),
     };
+    const timeRemainingForOperation: number | undefined = timeoutTime
+        ? differenceInMilliseconds(timeoutTime, new Date())
+        : undefined;
     return conn.writeOperation({
         opCode: establishOperationalBinding["&operationCode"]!,
-        argument: _encode_EstablishOperationalBindingArgument(arg, () => new DERElement()),
-        // _encode_EstablishOperationalBindingArgument(arg, () => new DERElement()),
+        argument: _encode_EstablishOperationalBindingArgument(arg, DER),
+    }, {
+        timeLimitInMilliseconds: timeRemainingForOperation,
     });
 }
+
+export default establishSubordinate;

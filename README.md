@@ -1,253 +1,163 @@
 # Wildboar X.500 Directory Applications
 
-## Rules
+## What is an X.500 Directory?
 
-- When anything writes to the database, the verb used to describe it shall be "save."
-- When anything reads from the database, the verb used to describe it shall be "load."
-- When anything reads from an entry or attribute in memory, the verb used to describe it shall be "read."
-- When anything writes to an entry or attribute in memory, the verb used to describe it shall be "write."
+An X.500 directory is a distributed, hierarchical database whose characteristics
+are defined in the International Telecommunications Union's X.500 series of
+specifications (hence the name). ITU Recommendation X.500 is the introduction
+to X.500 directory services, as well as an index to the other X.500-series
+specifications; all versions except the 2019 can be read for free
+[here](https://www.itu.int/rec/T-REC-X.500/en).
 
-This is not to imply that these rules are current adhered to.
+The distributed database is called the "Directory Information Base" (DIB), and
+is composed of one or more hierarchical "trees" of information, called
+Directory Information Trees (DITs). Data is typically not shared between DITs:
+each DIT is more-or-less isolated from each other DIT. Each DIT contains
+"entries" which are named groups of attributes that describe a real-world object
+such as a person, a car, a city, etc. These attributes can be things like
+"first name," "manufacturer," "phone number," and so on.
 
-## Projects
+Any data can be stored in an X.500 directory, but its original purpose was to
+store information about people--particularly information pertaining to
+telecommunications, such as phone numbers and fax numbers--so that there could
+be a global, distributed white pages and yellow pages. Schema and access
+controls can be used to limit who can do what, when, where, and how in the
+directory. X.500 directories may support replication and caching of read-only;
+this feature is called "shadowing."
 
-<!-- - [ ] Architecture decision: each meerkat directory will house one single naming context -->
+The X.500 directory service is provided by one or more Directory System Agents
+(DSAs) that cooperate to serve the distributed database. "DSA" is basically the
+X.500 term for a directory server. Each DSA may hold an entire directory
+information tree, or just a subset of it. Requests made to a DSA may be routed
+to other cooperating DSAs to provide the totality of the directory service.
 
-- [ ] Put object classes in the database
-- [ ] Put name forms in the database
-- [ ] Put friends in the database
-- [ ] Lock down control over the `uniqueIdentifier` attribute
-  - [ ] This is a "user" attribute, but the unique identifier must be totally unique for security purposes!
-- [ ] `readEntry()` deprecation
-- [ ] `findEntry()` refactor
-  - [ ] Return the number of RDNs that matched, whether aliases were derefed.
-  - [ ] Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
-  - [ ] Drill into database if entries are not in memory.
-  - [ ] Ignore entries whose deletionTimestamp is set.
-  - [ ] Return referrals / continuation references.
-  - [ ] Rename to `findEntryLocally()`
-- [ ] If an entry cannot be found locally, perform distributed procedures.
-- [ ] X.500 Library
-  - [ ] `getApplicableValues()` (see `canJoin.ts`)
-  - [ ] `isLeafEntry()`
-  - [ ] `isCompoundEntry()`
-  - [ ] `evaluateRDNAgainstNameForm(rdn: RDN, nf: NAME_FORM)`
-  - [ ] `evaluateEntryAgainstContentRule(entry: EntryInformation, cr: CONTENT_RULE)`
-  - [ ] `validateObjectClasses()`
-- [ ] Applications
-  - [ ] Meerkat Directory Server (A lightweight, in-memory, FOSS X.500 directory server)
-    - [ ] Add a `subordinatesReader` string to entries that allows them to lookup a callback for reading subordinates.
-    - [ ] Technical Debt
-      - [ ] Reverse the distinguished names (I think I got it completely backwards.)
-      - [ ] Use Base64 UUIDs (better performance, because fewer characters to compare)
-      - [ ] Combined matching rules, per ITU Recommendation X.501 (2016), Section 13.5.2.
-      - [ ] Canonical Filtering Form, per Annex Q of X.501 (2016)
-      - [ ] According to Section 7.3.1, it sounds like all the critical extension bits must always be set...
-      - [ ] I think you can remove all of the code that checks if extension bits are set.
-      - [ ] Set `aliasDereferenced` in `CommonResults`
-      - [ ] Use `notification` in `CommonResults`
-      - [ ] Service administration
-      - [ ] Schema administration
-      - [ ] Authentication
-      - [ ] `readChildren(entry)` which can read either the children in memory, or those in the database.
-      - [ ] `writeAttributes(entry, attributes)` which takes care of:
-        - [ ] Operational attributes
-        - [ ] Single-valued attributes
-        - [ ] Collective attributes
-        - [ ] Compound entries (marking parents as object class `parent`)
-      - [x] `readUserAttributes(entry)`
-      - [x] `readAllAttributes(entry)`
-    - [ ] Lightweight Directory Access Protocol
-      - [x] `bind`
-      - [x] `unbind`
-      - [ ] `search`
-      - [x] `modify`
-      - [x] `add`
-      - [x] `del`
-      - [x] `modDN`
-      - [x] `compare`
-      - [ ] `abandon`
-      - [x] `extendedReq`
-      - [x] `startTLS`
-    - [ ] Administration Portal
-      - [ ] DIT View
-      - [ ] View Entry
-        - [ ] Human View
-        - [ ] XML View
-        - [ ] JSON View
-        - [ ] LDIF View
-        - [ ] VCF View
-      - [ ] Hierarchical Operational Binding Management
-      - [ ] Shadow Operational Binding Management
-    - [ ] gRPC API
-    - [ ] Directory Access Protocol
-      - [ ] Operations
-        - [ ] `directoryBind`
-        - [x] `abandon`
-        - [ ] `administerPassword`
-        - [x] `addEntry`
-        - [ ] `changePassword`
-        - [x] `compare`
-        - [x] `modifyDN`
-        - [x] `modifyEntry`
-        - [x] `list`
-        - [x] `read`
-        - [x] `removeEntry`
-        - [ ] `search`
-    - [ ] Directory System Protocol
-      - [ ] Operations
-        - [ ] `dSABind`
-        - [ ] `chainedRead`
-        - [ ] `chainedCompare`
-        - [ ] `chainedAbandon`
-        - [ ] `chainedList`
-        - [ ] `chainedSearch`
-        - [ ] `chainedAddEntry`
-        - [ ] `chainedRemoveEntry`
-        - [ ] `chainedModifyEntry`
-        - [ ] `chainedModifyDN`
-        - [ ] `chainedAdministerPassword`
-        - [ ] `chainedChangePassword`
-        - [ ] `chainedLdapTransport`
-        - [ ] `chainedLinkedLDAP`
-      - [ ] Directory Information Shadowing Protocol
-        - [ ] Operations
-          - [ ] `requestShadowUpdate`
-          - [ ] `updateShadow`
-          - [ ] `coordinateShadowUpdate`
-      - [ ] Directory Operational Binding Management Protocol
-        - [ ] Operations
-          - [ ] `establishOperationalBinding`
-          - [ ] `modifyOperationalBinding`
-          - [ ] `terminateOperationalBinding`
-  - [ ] Wildboar Directory Server (An enterprise-grade X.500 directory server)
-    - [ ] CMIP Support
-    - [ ] SNMP Support
-    - [ ] Webhooks Support
-    - [ ] All authentication methods
-    - [ ] Directory Access Protocol
-      - [ ] Operations
-        - [ ] `directoryBind`
-          - [ ] SASL
-            - [ ] `PLAIN`
-            - [ ] `EXTERNAL`?
-            - [ ] `ANONYMOUS`?
-        - [x] `abandon`
-        - [ ] `administerPassword`
-        - [x] `addEntry`
-        - [ ] `changePassword`
-        - [ ] `compare`
-        - [ ] `modifyDN`
-        - [ ] `modifyEntry`
-        - [ ] `list`
-        - [ ] `read`
-        - [x] `removeEntry`
-        - [ ] `search`
-    - [ ] Directory System Protocol
-      - [ ] Operations
-        - [ ] `dSABind`
-        - [ ] `chainedRead`
-        - [ ] `chainedCompare`
-        - [ ] `chainedAbandon`
-        - [ ] `chainedList`
-        - [ ] `chainedSearch`
-        - [ ] `chainedAddEntry`
-        - [ ] `chainedRemoveEntry`
-        - [ ] `chainedModifyEntry`
-        - [ ] `chainedModifyDN`
-        - [ ] `chainedAdministerPassword`
-        - [ ] `chainedChangePassword`
-        - [ ] `chainedLdapTransport`
-        - [ ] `chainedLinkedLDAP`
-      - [ ] Directory Information Shadowing Protocol
-        - [ ] Operations
-          - [ ] `requestShadowUpdate`
-          - [ ] `updateShadow`
-          - [ ] `coordinateShadowUpdate`
-      - [ ] Directory Operational Binding Management Protocol
-        - [ ] Operations
-          - [ ] `establishOperationalBinding`
-          - [ ] `modifyOperationalBinding`
-          - [ ] `terminateOperationalBinding`
-  - [ ] X500 Command Line Interface
-    - [ ] `x500 dap add` (Basically, a subcommand for every structural class)
-      - [ ] `x500 dap add entry`
-        - [ ] `x500 dap add entry cRLDistributionPoint`
-        - [x] `x500 dap add entry country`
-        - [x] `x500 dap add entry locality`
-        - [x] `x500 dap add entry organization`
-        - [x] `x500 dap add entry organizationalUnit`
-        - [x] `x500 dap add entry person`
-        - [x] `x500 dap add entry organizationalPerson`
-        - [x] `x500 dap add entry organizationalRole`
-        - [x] `x500 dap add entry group`
-          - Creates a `groupOfNames` or `groupOfUniqueNames` depending on options
-        - [x] `x500 dap add entry residentialPerson`
-        - [x] `x500 dap add entry applicationProcess`
-        - [x] ~~`x500 dap add entry applicationEntity`~~ (`PresentationAddress` difficulties.)
-        - [x] ~~`x500 dap add entry dSA`~~ (Inherits from `applicationEntity`.)
-        - [x] `x500 dap add entry device`
-        - [x] `x500 dap add entry dMD`
-        - [ ] `x500 dap add entry oidC1obj`
-        - [ ] `x500 dap add entry oidC2obj`
-        - [ ] `x500 dap add entry oidCobj`
-        - [ ] `x500 dap add entry oidRoot`
-        - [ ] `x500 dap add entry oidArc`
-        - [ ] `x500 dap add entry urnCobj`
-      - [ ] `x500 dap add subentry`
-      - [ ] `x500 dap add alias`
-      - [ ] `x500 dap add glue`
-      - [ ] `x500 dap add subr`
-    - [x] `x500 dap apwd`
-    - [x] `x500 dap cpwd`
-    - [x] `x500 dap compare`
-    - [x] `x500 dap list`
-    - [x] `x500 dap moddn`
-    - [ ] `x500 dap mod` (Basically, a subcommand for every auxiliary class)
-      - [ ] `x500 dap mod become accessControlSubentry`
-      - [ ] `x500 dap mod become collectiveAttributeSubentry`
-      - [ ] `x500 dap mod become contextAssertionSubentry`
-      - [ ] `x500 dap mod become serviceAdminSubentry`
-      - [ ] `x500 dap mod become pwdAdminSubentry`
-      - [ ] `x500 dap mod become subschema`
-      - [ ] `x500 dap mod become pmiUser`
-      - [ ] `x500 dap mod become pmiAA`
-      - [ ] `x500 dap mod become pmiSOA`
-      - [ ] `x500 dap mod become attCertCRLDistributionPt`
-      - [ ] `x500 dap mod become pmiDelegationPath`
-      - [ ] `x500 dap mod become privilegePolicy`
-      - [ ] `x500 dap mod become protectedPrivilegePolicy`
-      - [ ] `x500 dap mod become pkiUser`
-      - [ ] `x500 dap mod become pkiCA`
-      - [ ] `x500 dap mod become deltaCRL`
-      - [ ] `x500 dap mod become cpCps`
-      - [ ] `x500 dap mod become pkiCertPath`
-      - [ ] `x500 dap mod become strongAuthenticationUser`
-      - [ ] `x500 dap mod become userSecurityInformation`
-      - [ ] `x500 dap mod become userPwdClass`
-      - [ ] `x500 dap mod become certificationAuthority`
-      - [ ] `x500 dap mod become isoTagInfo`
-      - [ ] `x500 dap mod become isoTagType`
-      - [ ] `x500 dap mod become epcTagInfoObj`
-      - [ ] `x500 dap mod become epcTagTypeObj`
-      - [ ] `x500 dap mod admpoint set role=accesscontrol`
-      - [ ] `x500 dap mod subtree`
-      - [ ] `x500 dap mod add aci`
-      - [ ] `x500 dap mod rm aci`
-      - [ ] `x500 dap mod hierarchy add parent`
-      - [ ] `x500 dap mod hierarchy emancipate`
-      - [ ] `x500 dap mod family makechild`
-      - [ ] `x500 dap mod group add`
-      - [ ] `x500 dap mod group rm`
-      - [ ] `x500 dap mod add pkc`
-      - [ ] `x500 dap mod add ac`
-      - [ ] `x500 dap mod add crl`
-    - [x] `x500 dap read`
-    - [x] `x500 dap rm`
-    - [ ] `x500 dap search`
-  - [ ] X500 Studio
-- [ ] Libraries
-  - [ ] IDM
-  - [ ] X.500 Client
-  - [ ] X.500 Server
-  - [ ] X.500 Extensions
+A Directory User Agent (DUA) is a client application that interacts directly
+with a DSA to provide a user with the services of the directory. A DUA is to the
+directory what email clients like Thunderbird, iMail, or Microsoft Outlook are
+to email.
+
+## How is an X.500 directory used?
+
+X.500 directories expose functionality that you would expect from a database:
+the ability read entries, write entries, search for entries, list entries,
+modify entries, rename entries, and delete entries.
+
+An X.500 directory is accessed through the Directory Access Protocol (DAP) or
+through the Lightweight Directory Access Protocol (LDAP). Behind the scenes,
+DSAs cooperate with each other to provide directory services to users through
+the Directory System Protocol (DSP). The Directory Operational Binding
+Management Protocol (DOP) may be used to manage agreements between DSAs, which
+pertains to things like replication and the assumption of responsibility for
+subsets of the directory information tree that the DSAs cooperate to provide.
+The Directory Information Shadowing Protocol (DISP) may be used to replicate
+entries from "master" DSAs into read-only copies in "shadow" DSAs, which may or
+may not be out of date.
+
+X.500 directory usage is highly configurable. Users of an X.500 directory can:
+
+- Use advanced filters to search for data.
+- Specify time limits, size limits, and other limits on the results returned.
+- Demand a given quality of service, such as the priority of a particular
+  request, or indicate whether potentially out-of-date shadow copies will
+  suffice.
+- Display certain information depending on context, such as
+  displaying the French name of an entry for French users and the English name
+  for English users.
+
+The Lightweight Directory Access Protocol (LDAP) is a simpler alternative to the
+Directory Access Protocol (DAP). It was implemented because the Directory Access
+Protocol was deemed as too complicated by some. Notably, much of the data that
+the DAP represents as binary data is represented as UTF-8 strings in LDAP.
+
+Almost no implementations of a user-friendly DUA exist, but many LDAP clients
+exist. [Apache Directory Studio](https://directory.apache.org/studio/) is a good
+one.
+
+## What is Meerkat DSA?
+
+Meerkat DSA is an X.500 DSA created by
+[Wildboar Software](https://wildboarsoftware.com/en). This version is free and
+open source, but there is a proprietary version that adds enterprise features.
+Meerkat DSA is written in TypeScript, runs on NodeJS, and currently uses MySQL
+as a data store, but support for other common DBMSs is intended for future
+releases.
+
+The goals of Meerkat DSA are:
+
+- To provide a feature-complete X.500 directory service.
+- To be secure enough for enterprise usage.
+- To be scalable enough for enterprise usage.
+- To be performant enough for non-analytical uses.
+- To store X.500 data in a format that can be used independently of Meerkat DSA.
+  This means that data shall be stored in a widely-used DBMS, such as MySQL,
+  rather than in some format that is only defined for use by Meerkat DSA.
+- To be extensible such that it can be configured for storing nearly any kind of
+  information.
+
+The non-goals of Meerkat DSA are:
+
+- To be the fastest / most efficient way to search for information.
+- To handle rapidly-changing data and/or real-time data.
+- To be a compact / storage-efficient data store. (Storage is cheap.)
+
+## Why Should I use an X.500 Directory?
+
+There is no one-size-fits-all best data store for all data. Some data should be
+stored in a relational database, some data should be stored in a document
+oriented database, and some data should not be stored at all! If what you are
+trying to store fits a few of these descriptions, it might be a good candidate
+for storage in an X.500 directory:
+
+- The data is innately hierarchical.
+- The data is read from more often than it is written to.
+- The data needs to be browseable by name.
+- The data needs to be annotated with contextual information, such as
+  language, time, certainty, etc.
+- The data needs to be protected with fine-grained access control.
+- The data needs to be distributed across multiple organizations that cannot
+  or should not trust each other entirely.
+- The data pertains to people and/or contact information.
+- The data contains authentication information that will integrate with
+  digital services, such as websites and enterprise applications, to provide
+  single sign-on (SSO) or reduced sign-on (RSO).
+
+Data that fits these descriptions would **not** be good candidates for storage
+in an X.500 directory:
+
+- The data rapidly changes.
+- Transactions are need to ensure that multiple things either happen or do not
+  happen as a unit.
+- The primary use case for the data is for it to be analyzed and/or summarized.
+- Giant binary objects.
+
+Here are examples of data that are good candidates for storage in an X.500
+directory:
+
+- A database of all employees in your company.
+- Electronic health records.
+- A list of your customers.
+- DNS records.
+- Makes and models of automobiles.
+- Countries, states, counties, cities, neighborhoods, buildings.
+- Universities, schools, hospitals, governments, law enforcement
+  offices, parks.
+- A taxonomical or cladistic hierarchy of organisms.
+- Data about songs, movies, books, and other media.
+  - But _not_ the songs, movies, and books themselves!
+
+Here are examples of data that are _not_ good candidates for storage in an X.500
+directory:
+
+- Financial transactions.
+- Real-time GPS tracking data.
+- Time-series data, such as system logs.
+- Images, movies, audio.
+  - X.500 directories are innately not well-suited for storing large files.
+
+## Projects in this Monorepo
+
+- Meerkat Directory Server
+- X.500 CLI
+- IDM TypeScript Library
+- Meerkat Types TypeScript Library
+- X.500 Directory Studio

@@ -46,9 +46,10 @@ function create (ctx: Context): CommandModule {
                 .array("streetAddress")
                 ;
         },
-        handler: async (argv: Record<string, any>): Promise<void> => {
+        handler: async (argv): Promise<void> => {
             const connection = await bind(ctx, argv);
             await addEntry(ctx, connection, argv);
+            await connection.close();
         },
     };
 }

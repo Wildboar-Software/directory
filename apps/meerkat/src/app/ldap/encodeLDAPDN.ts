@@ -6,7 +6,10 @@ import type { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFram
 export
 function encodeLDAPDN (ctx: Context, dn: RDNSequence): Uint8Array {
     return Buffer.from(stringifyRDNSequence(
-        dn.map((rdn) => rdn.map((atav) => [ atav.type_, atav.value ])),
+        dn
+            .reverse()
+            .map((rdn) => rdn
+                .map((atav) => [ atav.type_, atav.value ])),
         (attrType: OBJECT_IDENTIFIER) => {
             const attr = ctx.attributes.get(attrType.toString());
             if (!attr?.ldapSyntax) {
@@ -19,7 +22,9 @@ function encodeLDAPDN (ctx: Context, dn: RDNSequence): Uint8Array {
             return (value: ASN1Element) => Buffer.from(syntax_.encoder!(value)).toString("utf-8");
         },
         (type_: OBJECT_IDENTIFIER): string | undefined => {
-            return undefined; // FIXME:
+            return ctx.attributes.get(type_.toString())
+                ?.ldapNames
+                ?.sort((a, b) => a.length - b.length)[0];
         },
     ));
 }

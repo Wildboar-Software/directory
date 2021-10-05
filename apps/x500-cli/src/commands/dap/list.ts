@@ -14,9 +14,15 @@ import {
     ListResult,
     _decode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+import {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    ServiceControls,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
 import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
@@ -33,10 +39,29 @@ async function do_list (
         {
             rdnSequence: objectName,
         },
+        // {
+        //     newRequest: new PagedResultsRequest_newRequest(
+        //         10,
+        //         undefined,
+        //         undefined,
+        //         undefined,
+        //         19,
+        //     ),
+        // },
         undefined,
         argv.listFamily,
         [],
-        undefined,
+        new ServiceControls(
+            undefined,
+            undefined,
+            10, // timeLimit
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        ),
         undefined,
         undefined,
         undefined,
@@ -76,7 +101,8 @@ async function do_list (
     if ("listInfo" in resData) {
         resData.listInfo.subordinates
             .map((sub) => stringifyDN(ctx, [ sub.rdn ]))
-            .forEach((str) => ctx.log.info(str));
+            .forEach((str, i) => ctx.log.info(`#${(i + 1).toString().padStart(4, "0")}: ${str}`));
+        ctx.log.info("End of list.");
     } else if ("uncorrelatedListInfo" in resData) {
         ctx.log.warn("Uncorrelated info."); // FIXME:
     } else {

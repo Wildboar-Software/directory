@@ -48,9 +48,7 @@ import { pwdMinTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPoli
 import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa"
 import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa"
 import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa"
-import { DERElement } from "asn1-ts";
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
 
 export
 function getAttributesFromSubentry (

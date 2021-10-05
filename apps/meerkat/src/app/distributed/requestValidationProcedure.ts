@@ -52,8 +52,8 @@ import { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import { assert } from "console";
-
+import { strict as assert } from "assert";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -434,13 +434,13 @@ async function requestValidationProcedure (
 ): Promise<Chain> {
     assert(req.opCode);
     assert(req.argument);
-    if (ctx.dsa.hibernatingSince) {
+    if (ctx.dsa.hibernatingSince || ctx.dsa.sentinelTriggeredHibernation) {
         throw new errors.ServiceError(
             "Request denied. Hibernating.",
             new ServiceErrorData(
                 ServiceProblem_busy,
                 [],
-                undefined,
+                undefined, // Intentionally not including more information.
                 undefined,
                 undefined,
                 undefined,
@@ -479,8 +479,8 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_unwillingToPerform, // TODO: Is this correct?
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(ctx), // TODO:
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -506,8 +506,8 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_loopDetected,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(ctx), // TODO:
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),

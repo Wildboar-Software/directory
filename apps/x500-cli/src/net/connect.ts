@@ -21,7 +21,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
-import { DERElement } from "asn1-ts";
 import * as net from "net";
 import * as tls from "tls";
 import { EventEmitter } from "stream";
@@ -32,8 +31,7 @@ import destringifyDN from "../utils/destringifyDN";
 import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { strict as assert } from "assert";
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
 
 export
 async function connect (
@@ -97,7 +95,7 @@ async function connect (
         const encoded = _encode_IDM_PDU(pdu, DER);
         await new Promise((resolve, reject) => {
             idm.events.once("bindError", (err) => {
-                reject(err.error);
+                reject(err);
             });
             idm.events.once("bindResult", (result) => {
                 resolve(result);

@@ -30,7 +30,7 @@ import type {
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { ASN1Element, BERElement, packBits, DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Element, BERElement, packBits } from "asn1-ts";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
@@ -49,16 +49,15 @@ import {
 import {
     SuperiorToSubordinateModification,
     _decode_SuperiorToSubordinateModification,
-    // _encode_SuperiorToSubordinateModification,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinateModification.ta";
-// import {
-//     SubordinateToSuperior,
-//     _decode_SubordinateToSuperior,
-//     _encode_SubordinateToSuperior,
-// } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-
-const DER = () => new DERElement();
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { DER } from "asn1-ts/dist/node/functional";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    id_err_operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -106,10 +105,8 @@ async function modifyOperationalBinding (
     conn: DOPConnection,
     arg: ModifyOperationalBindingArgument,
 ): Promise<ModifyOperationalBindingResult> {
-    const data: ModifyOperationalBindingArgumentData = ("signed" in arg)
-        ? arg.signed.toBeSigned
-        : arg.unsigned;
-
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+    const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
     const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
         new Promise<boolean>((resolve) => {
             ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
@@ -128,8 +125,13 @@ async function modifyOperationalBinding (
                 undefined,
                 undefined,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -171,8 +173,13 @@ async function modifyOperationalBinding (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -184,7 +191,7 @@ async function modifyOperationalBinding (
         where: {
             binding_identifier: data.bindingID.identifier,
             binding_type: {
-                equals: data.bindingType.nodes,
+                equals: data.bindingType.toString(),
             },
             access_point_id: {
                 in: permittedAPs,
@@ -202,8 +209,13 @@ async function modifyOperationalBinding (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -244,9 +256,10 @@ async function modifyOperationalBinding (
     const sp = data.securityParameters;
     const created = await ctx.db.operationalBinding.create({
         data: {
+            supply_contexts: "", // FIXME: Make this null.
             previous_id: opBinding.id as unknown as undefined, // FIXME: WTF is going on here?
             outbound: false,
-            binding_type: data.bindingType.nodes,
+            binding_type: data.bindingType.toString(),
             binding_identifier: data.newBindingID.identifier,
             binding_version: data.newBindingID.version,
             agreement_ber: data.newAgreement
@@ -314,7 +327,7 @@ async function modifyOperationalBinding (
             if (!compareDistinguishedName(
                 agreement.immediateSuperior,
                 init.contextPrefixInfo.map((rdn) => rdn.rdn),
-                (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
+                NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
                     "Operational binding contextPrefixInfo did not match immediateSuperior.",
@@ -325,8 +338,13 @@ async function modifyOperationalBinding (
                             undefined,
                             undefined,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -348,8 +366,13 @@ async function modifyOperationalBinding (
                             undefined,
                             undefined,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -375,8 +398,13 @@ async function modifyOperationalBinding (
                         undefined,
                         undefined,
                         [],
-                        undefined,
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            undefined,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -387,9 +415,6 @@ async function modifyOperationalBinding (
     } else {
         throw NOT_SUPPORTED_ERROR;
     }
-    return {
-        null_: null,
-    };
 }
 
 export default modifyOperationalBinding;

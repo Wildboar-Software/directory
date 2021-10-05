@@ -16,7 +16,8 @@
     "strictNullChecks": true,
     "baseUrl": ".",
     "paths": {
-      "@wildboar/idm": ["libs/idm/src/index.ts"]
+      "@wildboar/idm": ["libs/idm/src/index.ts"],
+      "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

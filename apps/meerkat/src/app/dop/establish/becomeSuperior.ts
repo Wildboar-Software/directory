@@ -20,9 +20,7 @@ import {
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
-import writeEntryAttributes from "../../database/writeEntryAttributes";
-import entryFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
-import valuesFromAttribute from "../../memory/valuesFromAttribute";
+import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "../../errors";
 import {
@@ -42,8 +40,12 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import createEntry from "../../database/createEntry";
 
 // TODO: If context prefix initialization fails, undo all changes.
 export
@@ -61,8 +63,13 @@ async function becomeSubordinate (
                 undefined,
                 undefined,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -78,8 +85,13 @@ async function becomeSubordinate (
                     undefined,
                     undefined,
                     [],
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
@@ -96,8 +108,13 @@ async function becomeSubordinate (
                 undefined,
                 undefined,
                 [],
-                undefined,
-                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -105,19 +122,15 @@ async function becomeSubordinate (
     }
 
     if (superior.dse.nssr) {
-        // Follow procedures in clause 19.1.5.
+        // TODO: Follow procedures in clause 19.1.5.
     }
 
-    const createdEntry = await ctx.db.entry.create({
-        data: {
-            dit_id: ctx.dit.id,
-            immediate_superior_id: superior.dse.id,
-            rdn: rdnToJson(agreement.rdn),
-            creatorsName: [],
-            modifiersName: [],
+    const subr = await createEntry(
+        ctx,
+        superior,
+        agreement.rdn,
+        {
             subr: true,
-            alias: sub2sup.alias,
-            sa: sub2sup.alias,
             AccessPoint: {
                 createMany: {
                     data: sub2sup.accessPoints
@@ -129,13 +142,12 @@ async function becomeSubordinate (
                             ber: Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes()),
                         }))
                         : [],
-                }
-            }
+                },
+            },
         },
-    });
-    const subr = await entryFromDatabaseEntry(ctx, superior, createdEntry, true);
-    const values = sub2sup.entryInfo?.flatMap((attr) => valuesFromAttribute(attr)) ?? [];
-    await writeEntryAttributes(ctx, subr, values);
+        sub2sup.entryInfo?.flatMap((attr) => valuesFromAttribute(attr)) ?? [],
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+    );
 
     const immediateSuperiorInfo: Attribute[] = [
         new Attribute(
@@ -150,14 +162,12 @@ async function becomeSubordinate (
                 )),
             undefined,
         ),
-
     ];
     if (superior.dse.entryACI) {
         // This means that the OB needs modification if the superior's entryACI changes.
         immediateSuperiorInfo.push(new Attribute(
             entryACI["&id"],
-            superior.dse.entryACI
-                .map((aci) => _encode_ACIItem(aci, DER)),
+            superior.dse.entryACI.map((aci) => _encode_ACIItem(aci, DER)),
             undefined,
         ));
     }

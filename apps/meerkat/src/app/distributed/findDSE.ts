@@ -1,13 +1,10 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Vertex } from "../types";
-import type {
-    CommonArguments,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
+import type { Context, DIT, Vertex, ClientConnection } from "../types";
 import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
-import type {
+import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import {
@@ -29,12 +26,8 @@ import {
     ServiceControlOptions_partialNameResolution,
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
+    ServiceControlOptions_subentries,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import {
-    SearchArgumentData_subset_baseObject,
-    SearchArgumentData_subset_oneLevel,
-    SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import {
     ReferenceType,
     ReferenceType_supplier,
@@ -44,67 +37,98 @@ import {
     ReferenceType_cross,
     ReferenceType_superior,
     ReferenceType_nonSpecificSubordinate,
+    ReferenceType_ditBridge,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
-import {
-    _decode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-import type {
-    Filter,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1Element } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
-import readEntryAttributes from "../database/readEntryAttributes";
-import { specificKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/specificKnowledge.oa";
-import { superiorKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
-import { nonSpecificKnowledge } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/nonSpecificKnowledge.oa";
 import * as errors from "../errors";
-import { ServiceErrorData, ServiceProblem_invalidReference, ServiceProblem_loopDetected, ServiceProblem_unableToProceed } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import { NameProblem_aliasDereferencingProblem, NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+import {
+    ServiceProblem_timeLimitExceeded,
+    ServiceProblem_loopDetected,
+    ServiceProblem_unableToProceed,
+    ServiceProblem_invalidReference,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    NameProblem_aliasDereferencingProblem,
+    NameProblem_noSuchObject,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import type { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import { strict as assert } from "assert";
-import { id_opcode_administerPassword } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-administerPassword.va";
-import { id_opcode_addEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
-import { id_opcode_changePassword } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-changePassword.va";
-import { id_opcode_compare } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
-import { id_opcode_modifyDN } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-modifyDN.va";
-import { id_opcode_modifyEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-modifyEntry.va";
-import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
-import { id_opcode_read } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va";
-import { id_opcode_removeEntry } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-removeEntry.va";
-import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
-import getMatchingRulesFromFilter from "@wildboar/x500/src/lib/utils/getMatchingRulesFromFilter";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import checkSuitabilityProcedure from "./checkSuitability";
+import {
+    id_opcode_list,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
+import {
+    id_opcode_search,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
+import getRelevantSubentries from "../dit/getRelevantSubentries";
+import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
+import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
+import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import bacACDF, {
+    PERMISSION_CATEGORY_BROWSE,
+    PERMISSION_CATEGORY_RETURN_DN,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
+import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import getIsGroupMember from "../authz/getIsGroupMember";
+import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    nameError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import type { OperationDispatcherState } from "./OperationDispatcher";
+import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import { id_ar_accessControlSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+import { id_ar_subschemaAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
+import { id_ar_collectiveAttributeSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
+import { id_ar_contextDefaultSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
+
+const autonomousArea: string = id_ar_autonomousArea.toString();
+const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
+const subschemaAdminSpecificArea: string = id_ar_subschemaAdminSpecificArea.toString();
+const collectiveAttributeSpecificArea: string = id_ar_collectiveAttributeSpecificArea.toString();
+const contextDefaultSpecificArea: string = id_ar_contextDefaultSpecificArea.toString();
+const serviceSpecificArea: string = id_ar_serviceSpecificArea.toString();
+const pwdAdminSpecificArea: string = id_ar_pwdAdminSpecificArea.toString();
 
 const MAX_DEPTH: number = 10000;
 
-interface FindDSEReturn {
-
-}
-
-// TODO: X.500
-function isModificationOperation (operationType: Code): boolean {
-    return (
-        compareCode(id_opcode_administerPassword, operationType)
-        || compareCode(id_opcode_addEntry, operationType)
-        || compareCode(id_opcode_changePassword, operationType)
-        || compareCode(id_opcode_modifyDN, operationType)
-        || compareCode(id_opcode_modifyEntry, operationType)
-        || compareCode(id_opcode_removeEntry, operationType)
-    );
+async function someSubordinatesAreCP (
+    ctx: Context,
+    vertex: Vertex,
+): Promise<boolean> {
+    return Boolean(await ctx.db.entry.findFirst({
+        where: {
+            immediate_superior_id: vertex.dse.id,
+            cp: true,
+            deleteTimestamp: null,
+        },
+        select: {},
+    }));
 }
 
 function makeContinuationRefFromSupplierKnowledge (
     cp: Vertex,
     needleDN: DistinguishedName,
-    aliasedRDNs: number | undefined,
     nextRDNToBeResolved: number | undefined,
 ): ContinuationReference {
     assert(cp.dse.cp);
@@ -113,7 +137,7 @@ function makeContinuationRefFromSupplierKnowledge (
         {
             rdnSequence: needleDN,
         },
-        aliasedRDNs,
+        undefined,
         new OperationProgress(
             OperationProgress_nameResolutionPhase_proceeding,
             nextRDNToBeResolved,
@@ -152,56 +176,101 @@ function makeContinuationRefFromSupplierKnowledge (
 export
 async function findDSE (
     ctx: Context,
+    conn: ClientConnection,
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
-    chainArgs: ChainingArguments,
-    commonArgs: CommonArguments | undefined, // This won't be present with LDAP Requests
-    argument: ASN1Element,
-    operationType: Code,
-    NRcontinuationList: ContinuationReference[],
-    admPoints: Vertex[],
-): Promise<Vertex | undefined> {
+    state: OperationDispatcherState,
+    // state.chainingArguments: ChainingArguments,
+    // argument: ASN1Element,
+    // operationType: Code,
+    // NRcontinuationList: ContinuationReference[],
+    // admPoints: Vertex[],
+): Promise<void> {
+    const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
+        ? getDateFromTime(state.chainingArguments.timeLimit)
+        : undefined;
+    const checkTimeLimit = () => {
+        if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
+            throw new errors.ServiceError(
+                "Could not complete operation in time.",
+                new ServiceErrorData(
+                    ServiceProblem_timeLimitExceeded,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    };
     /**
      * This procedural deviation is needed. Without it, the subordinates of the
      * root DSE will be searched for an entry with a zero-length RDN!
      */
     if (needleDN.length === 0) {
-        return ctx.dit.root;
+        state.entrySuitable = true;
+        return;
     }
     let i: number = 0;
     let dse_i: Vertex = haystackVertex;
-    let aliasDereferenced: boolean = false;
     let nssrEncountered: boolean = false;
-    let nameResolutionPhase: OperationProgress_nameResolutionPhase | undefined = chainArgs
-        .operationProgress?.nameResolutionPhase;
-    let nextRDNToBeResolved: number = chainArgs.operationProgress?.nextRDNToBeResolved ?? 0;
+    let nameResolutionPhase: OperationProgress_nameResolutionPhase = state.chainingArguments
+        .operationProgress?.nameResolutionPhase ?? OperationProgress_nameResolutionPhase_notStarted;
+    let nextRDNToBeResolved: number = state.chainingArguments.operationProgress?.nextRDNToBeResolved ?? 0;
     const m: number = needleDN.length;
     let lastEntryFound: number = 0; // The last RDN whose DSE was of type entry.
     let dse_lastEntryFound: Vertex | undefined = undefined;
     let lastCP: Vertex | undefined;
-    let aliasedRDNs: number = 0;
     const candidateRefs: ContinuationReference[] = [];
+
+    const serviceControls = state.operationArgument.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 30)
+        ))?.inner;
+    const serviceControlOptions = serviceControls?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 0)
+        ))?.inner;
+    // You don't even need to decode this. Just determining that it exists is sufficient.
+    const manageDSAITPlaneRefElement = serviceControls?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 6)
+        ));
 
     // Service controls
     const manageDSAIT: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const dontDereferenceAliases: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
     const partialNameResolution: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_partialNameResolution] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_partialNameResolution] === TRUE_BIT);
     const dontUseCopy: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
-        commonArgs?.serviceControls?.options?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
+        serviceControlOptions?.bitString?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
+    const subentries: boolean = (
+        serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
-    // Variables not defined explicitly, but still referenced by the specification:
-    let partialNameResolved: boolean = false;
+    /**
+     * This is used to set the EntryInformation.partialName.
+     */
+    let partialName: boolean = false;
+    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
 
     const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
-            NRcontinuationList.push(...candidateRefs);
+            state.NRcontinuationList.push(...candidateRefs);
             return undefined; // entry unsuitable
         } else {
             return candidateRefsEmpty_yes_branch();
@@ -214,7 +283,7 @@ async function findDSE (
                 ctx.log.warn("DIT invalid: shadow copy not under a context prefix.");
                 return undefined;
             }
-            const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, aliasedRDNs, nextRDNToBeResolved);
+            const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, lastEntryFound);
             candidateRefs.push(cr);
             nextRDNToBeResolved = i;
             return undefined; // Entry unsuitable.
@@ -224,12 +293,12 @@ async function findDSE (
                 {
                     rdnSequence: needleDN,
                 },
-                aliasedRDNs,
+                undefined,
                 new OperationProgress(
                     OperationProgress_nameResolutionPhase_proceeding,
-                    i,
+                    lastEntryFound + 1,
                 ),
-                undefined, // FIXME:
+                undefined,
                 ReferenceType_nonSpecificSubordinate,
                 dse_lastEntryFound?.dse.nssr.nonSpecificKnowledge
                     .map((nsk) => {
@@ -255,30 +324,35 @@ async function findDSE (
             );
             candidateRefs.push(cr);
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
-            NRcontinuationList.push(...candidateRefs);
+            state.NRcontinuationList.push(...candidateRefs);
             return undefined;
         }
         return node_candidateRefs_empty_2();
     };
 
     const candidateRefsEmpty_yes_branch = async (): Promise<Vertex | undefined> => {
-        if (partialNameResolution) {
+        if (partialNameResolution === FALSE) {
             throw new errors.NameError(
-                "",
+                `No such object: ${encodeLDAPDN(ctx, needleDN)}.`,
                 new NameErrorData(
                     NameProblem_noSuchObject,
                     {
                         rdnSequence: needleDN.slice(0, i),
                     },
                     [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        nameError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
-                    undefined,
-                    aliasDereferenced,
                     undefined,
                 ),
             );
         } else {
-            partialNameResolved = true;
+            partialName = true;
             nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
             return dse_i;
         }
@@ -288,7 +362,7 @@ async function findDSE (
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
             // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
-            NRcontinuationList.push(...candidateRefs);
+            state.NRcontinuationList.push(...candidateRefs);
             return undefined; // entry unsuitable
         } else {
             return candidateRefsEmpty_yes_branch();
@@ -297,86 +371,73 @@ async function findDSE (
 
     const targetNotFoundSubprocedure_notStarted_branch = async (): Promise<Vertex | undefined> => {
         if (lastEntryFound === 0) {
-            if (ctx.dit.root.dse.supr) {
-                // Make continuation reference
-                const { operationalAttributes } = await readEntryAttributes(ctx, ctx.dit.root, {
-                    attributesSelect: [ superiorKnowledge["&id"] ],
-                    contextSelection: undefined,
-                    returnContexts: false,
-                    includeOperationalAttributes: true,
-                });
-                const superiorKnowledgeAttributes = operationalAttributes
-                    .filter((oa) => oa.id.isEqualTo(superiorKnowledge["&id"]));
-                const knowledges = superiorKnowledgeAttributes
-                    .map((sk) => superiorKnowledge.decoderFor["&Type"]!(sk.value));
-                knowledges.forEach((k): void => {
-                    const cr = new ContinuationReference(
-                        {
-                            rdnSequence: needleDN,
-                        },
-                        aliasedRDNs,
-                        new OperationProgress(
-                            OperationProgress_nameResolutionPhase_proceeding,
-                            i,
-                        ),
-                        i,
-                        ReferenceType_superior,
-                        [
-                            new AccessPointInformation(
-                                k.ae_title,
-                                k.address,
-                                k.protocolInformation,
-                                undefined,
-                                undefined,
-                                undefined,
-                            ),
-                        ],
-                        undefined, // FIXME:
+            if (ctx.dit.root.dse.supr) { // If this is NOT a first-level DSA.
+                // REVIEW: superiorKnowledge is a multi-valued attribute. Should you create multiple CRs?
+                const superior = ctx.dit.root.dse.supr.superiorKnowledge[0];
+                assert(superior);
+                const cr = new ContinuationReference(
+                    {
+                        rdnSequence: needleDN,
+                    },
+                    undefined,
+                    new OperationProgress(
+                        OperationProgress_nameResolutionPhase_notStarted,
                         undefined,
-                        undefined, // Return to DUA not supported.
-                        nssrEncountered,
-                    );
-                    candidateRefs.push(cr);
-                });
+                    ),
+                    undefined,
+                    ReferenceType_superior,
+                    [
+                        new AccessPointInformation(
+                            superior.ae_title,
+                            superior.address,
+                            superior.protocolInformation,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ),
+                    ],
+                    undefined,
+                    undefined,
+                    undefined, // Return to DUA not supported.
+                    undefined,
+                );
+                candidateRefs.push(cr);
                 return candidateRefsEmpty1_Branch();
-            } else { // Root DSE is not of type subr
-                if (m === 0) { // REVIEW: This seems like it would prohibit any operation other than list or search on the root DSE.
-                    // Actually, I think we'd only get here if the root DSE is not a top-level root DSE.
+            } else { // Root DSE is not of type subr (meaning that this IS a first-level DSA.)
+                if (m === 0) { // ...and the operation was directed at the root DSE.
+                    // Step 5.
                     if (
-                        compareCode(operationType, list["&operationCode"]!)
-                        || compareCode(operationType, search["&operationCode"]!)
+                        compareCode(state.operationCode, list["&operationCode"]!)
+                        || compareCode(state.operationCode, search["&operationCode"]!)
                     ) {
-                        nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
+                        nameResolutionPhase = OperationProgress_nameResolutionPhase_completed; // TODO: I think you have to return the modified chaningArgs.
                         return dse_i; // Entry suitable.
                     } else {
                         throw new errors.NameError(
-                            "",
+                            // REVIEW: This seems incorrect to me... What about read or modifyEntry?
+                            "Only a list or search operation may target the root DSE.",
                             new NameErrorData(
                                 NameProblem_noSuchObject,
                                 {
                                     rdnSequence: [],
                                 },
                                 [],
-                                undefined,
-                                undefined,
-                                aliasDereferenced,
+                                createSecurityParameters(
+                                    ctx,
+                                    conn.boundNameAndUID?.dn,
+                                    undefined,
+                                    nameError["&errorCode"],
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                state.chainingArguments.aliasDereferenced,
                                 undefined,
                             ),
                         );
                     }
                 } else { // m !== 0
-                    assert(ctx.dit.root.dse.nssr); // Seems to be assumed at this point.
-                    const { operationalAttributes } = await readEntryAttributes(ctx, dse_i, {
-                        attributesSelect: [ specificKnowledge["&id"] ],
-                        contextSelection: undefined,
-                        returnContexts: false,
-                        includeOperationalAttributes: true,
-                    });
-                    const nonSpecificKnowledgeAttributes = operationalAttributes
-                        .filter((oa) => oa.id.isEqualTo(nonSpecificKnowledge["&id"]));
-                    const knowledges = nonSpecificKnowledgeAttributes
-                        .map((sk) => nonSpecificKnowledge.decoderFor["&Type"]!(sk.value));
-                    knowledges.forEach((knowledge): void => {
+                    // In a first-level DSA, the root DSE should have an NSSR.
+                    // Basically, a root DSE will always have a type of either subr or nssr.
+                    (ctx.dit.root.dse.nssr?.nonSpecificKnowledge ?? []).forEach((knowledge): void => {
                         const [ masters, shadows ] = splitIntoMastersAndShadows(knowledge);
                         const recommendedAP = shadows[0] ?? masters[0];
                         if (!recommendedAP) {
@@ -386,12 +447,12 @@ async function findDSE (
                             {
                                 rdnSequence: needleDN,
                             },
-                            aliasedRDNs,
+                            undefined,
                             new OperationProgress(
                                 OperationProgress_nameResolutionPhase_proceeding,
                                 1,
                             ),
-                            i, // TODO: Review
+                            undefined,
                             ReferenceType_nonSpecificSubordinate,
                             [
                                 new AccessPointInformation(
@@ -403,9 +464,9 @@ async function findDSE (
                                     [ ...shadows.slice(1), ...masters.slice(1) ],
                                 ),
                             ],
-                            undefined, // FIXME:
                             undefined,
-                            undefined, // Return to DUA not supported.
+                            undefined,
+                            undefined,
                             nssrEncountered,
                         );
                         candidateRefs.push(cr);
@@ -429,28 +490,38 @@ async function findDSE (
                     return node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false();
                 }
                 if (
-                    (chainArgs.referenceType === ReferenceType_nonSpecificSubordinate)
+                    (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate)
                     && (nextRDNToBeResolved === (i + 1))
                 ) {
                     throw new errors.ServiceError(
-                        "",
+                        "Unable to proceed.",
                         new ServiceErrorData(
                             ServiceProblem_unableToProceed,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
                     );
                 } else {
                     throw new errors.ServiceError(
-                        "",
+                        "Invalid reference.",
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
@@ -463,8 +534,13 @@ async function findDSE (
                     new ServiceErrorData(
                         ServiceProblem_invalidReference,
                         [],
-                        undefined,
-                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
                     ),
@@ -476,77 +552,26 @@ async function findDSE (
         }
     };
 
-    const checkSuitabilityProcedure = async (): Promise<boolean> => {
-        const dse = dse_i;
-        if (!dse.dse.shadow) {
-            // TODO: Check critical extensions
-            return true;
-        }
-        if (isModificationOperation(operationType)) {
-            return false; // You cannot modify a shadow copy.
-        }
-        if (dontUseCopy) {
-            return false; // The user specifically demanded a non-shadow copy.
-        }
-        if (copyShallDo) {
-            // TODO: Check critical extensions
-            return true;
-        }
-        if (compareCode(operationType, id_opcode_list)) {
-            return Boolean(dse.dse.shadow.subordinateCompleteness);
-        } else if (compareCode(operationType, id_opcode_read)) {
-            return true; // FIXME: This might be passable for now, but it is technically incorrect.
-            // I don't know how to tell if the shadow copy is missing attributes
-            // that are present in the master, or if there are no such attributes at all.
-        } else if (compareCode(operationType, id_opcode_search)) {
-            const searchArgs = _decode_SearchArgument(argument);
-            const searchArgData = getOptionallyProtectedValue(searchArgs);
-            if (searchArgData.searchAliases && dse.dse.alias) {
-                return !chainArgs.excludeShadows;
-            }
-            const mrs = searchArgData.filter
-                ? getMatchingRulesFromFilter(searchArgData.filter)
-                : [];
-            if (mrs.map((mr) => mr.toString()).some((mr) => !(
-                ctx.equalityMatchingRules.get(mr)
-                ?? ctx.orderingMatchingRules.get(mr)
-                ?? ctx.substringsMatchingRules.get(mr)
-            ))) { // Matching rule not understood
-                return false;
-            }
-            if (
-                (searchArgData.subset === SearchArgumentData_subset_oneLevel)
-                || (searchArgData.subset === SearchArgumentData_subset_wholeSubtree)
-            ) {
-                if (chainArgs.excludeShadows) {
-                    return false;
-                }
-                // TODO: Check that shadowed information can satisfy search.
-                return true;
-            } else if (searchArgData.subset === SearchArgumentData_subset_baseObject) {
-                // TODO: Check if all attributes are present.
-                return true;
-            } else {
-                return false; // TODO: Review. What to do?
-            }
-        } else if (compareCode(operationType, id_opcode_compare)) {
-            // TODO: Bail out if matching rules are not supported by DSA.
-            // TODO: Check if all attributes requested are present.
-            return true;
-        } else {
-            return false; // TODO: Review. What to do?
-        }
-    };
-
     const targetFoundSubprocedure = async (): Promise<Vertex | undefined> => {
-        if (await checkSuitabilityProcedure()) {
+        const suitable: boolean = checkSuitabilityProcedure(
+            ctx,
+            dse_i,
+            state.operationCode,
+            dontUseCopy,
+            copyShallDo,
+            state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
+            state.operationArgument,
+        );
+        if (suitable) {
             nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
+            state.entrySuitable = true;
+            state.foundDSE = dse_i;
             return dse_i;
         } else {
             nameResolutionPhase = OperationProgress_nameResolutionPhase_proceeding;
-            nextRDNToBeResolved = i;
+            nextRDNToBeResolved = m;
             assert(lastCP);
-            const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, aliasedRDNs, nextRDNToBeResolved);
+            const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, nextRDNToBeResolved);
             candidateRefs.push(cr);
             return undefined;
         }
@@ -555,43 +580,146 @@ async function findDSE (
     let iterations: number = 0;
     while (iterations < MAX_DEPTH) {
         iterations++;
-        const children = await readChildren(ctx, dse_i);
         if (i === m) {
             // I pretty much don't understand this entire section.
             if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
-                return targetNotFoundSubprocedure();
+                await targetNotFoundSubprocedure();
+                return;
             }
-            if (commonArgs?.serviceControls?.manageDSAITPlaneRef || manageDSAIT) {
-                return dse_i;
+            if (manageDSAITPlaneRefElement || manageDSAIT) {
+                state.foundDSE = dse_i;
+                state.entrySuitable = true;
+                return;
             }
-            if (
-                (chainArgs.referenceType === ReferenceType_supplier)
-                || (chainArgs.referenceType === ReferenceType_master)
-            ) {
-                return targetNotFoundSubprocedure();
-            }
+            // This is present in the diagram, but not the text.
+            // if (
+            //     (state.chainingArguments.referenceType === ReferenceType_supplier)
+            //     || (state.chainingArguments.referenceType === ReferenceType_master)
+            // ) {
+            //     return targetNotFoundSubprocedure();
+            // }
             // I don't understand why we do this.
-            const someChildrenAreCP: boolean = (children.some((child) => child.dse.cp));
-            return someChildrenAreCP
-                ? dse_i
-                : targetNotFoundSubprocedure();
+            // Name resolution phase MUST be completed at this point.
+            if (
+                !compareCode(state.operationCode, id_opcode_list)
+                && !compareCode(state.operationCode, id_opcode_search)
+            ) {
+                state.foundDSE = dse_i;
+                state.entrySuitable = true;
+                return;
+            }
+            if (!await someSubordinatesAreCP(ctx, dse_i)) {
+                await targetNotFoundSubprocedure();
+            }
+            state.foundDSE = dse_i;
+            state.entrySuitable = true;
+            return;
         }
         const needleRDN = needleDN[i];
-        let rdnMatched: boolean = false
-        for (const child of children) {
-            rdnMatched = compareRDN(
-                needleRDN,
-                child.dse.rdn,
-                (attributeType: OBJECT_IDENTIFIER) => ctx.attributes.get(attributeType.toString())?.namingMatcher,
-            );
+        let rdnMatched: boolean = false;
+        const accessControlScheme = state.admPoints
+            .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+        const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
+        let cursorId: number | undefined;
+        let subordinatesInBatch = await readChildren(
+            ctx,
+            dse_i,
+            100,
+            undefined,
+            cursorId,
+            {
+                subentry: subentries,
+            },
+        );
+        while (subordinatesInBatch.length) {
+            for (const child of subordinatesInBatch) {
+                cursorId = child.dse.id;
+                checkTimeLimit();
+                const childDN = getDistinguishedName(child);
+                const relevantSubentries: Vertex[] = (await Promise.all(
+                    state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+                )).flat();
+                const targetACI = [
+                    ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
+                        ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                        : []),
+                    ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
+                        ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                        : []),
+                    ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                        ? child.dse.entryACI ?? []
+                        : []),
+                ];
+                const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                    .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+                const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                    acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                        ...tuple,
+                        await userWithinACIUserClass(
+                            tuple[0],
+                            conn.boundNameAndUID!, // FIXME:
+                            childDN,
+                            EQUALITY_MATCHER,
+                            isMemberOfGroup,
+                        ),
+                    ]),
+                ))
+                    .filter((tuple) => (tuple[5] > 0));
+                if (accessControlScheme) { // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                    const {
+                        authorized,
+                    } = bacACDF(
+                        relevantTuples,
+                        conn.authLevel,
+                        {
+                            entry: Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString),
+                        },
+                        [
+                            PERMISSION_CATEGORY_BROWSE,
+                            PERMISSION_CATEGORY_RETURN_DN,
+                        ],
+                        EQUALITY_MATCHER,
+                    );
+                    if (!authorized) {
+                        /**
+                         * We ignore entries for which browse and returnDN permissions
+                         * are not granted. This is not specified in the Find DSE
+                         * procedure, but it is important for preventing information
+                         * disclosure vulnerabilities.
+                         */
+                        continue;
+                    }
+                }
+
+                rdnMatched = compareRDN(
+                    needleRDN,
+                    child.dse.rdn,
+                    getNamingMatcherGetter(ctx),
+                );
+                if (rdnMatched) {
+                    i++;
+                    dse_i = child;
+                    break;
+                }
+            }
             if (rdnMatched) {
-                i++;
-                dse_i = child;
                 break;
             }
+            subordinatesInBatch = await readChildren(
+                ctx,
+                dse_i,
+                100,
+                undefined,
+                cursorId,
+                {
+                    subentry: subentries,
+                },
+            );
         }
         if (!rdnMatched) {
-            return targetNotFoundSubprocedure();
+            await targetNotFoundSubprocedure();
+            return;
         }
         /**
          * This is not explicitly required by the specification, but it seems to
@@ -601,18 +729,23 @@ async function findDSE (
             nssrEncountered = true;
         }
         if (
-            (i === chainArgs.operationProgress?.nextRDNToBeResolved)
+            (i === state.chainingArguments.operationProgress?.nextRDNToBeResolved)
             // Is checking for shadow enough to determine if !master?
-            || (chainArgs.nameResolveOnMaster && dse_i.dse.shadow)
+            || (state.chainingArguments.nameResolveOnMaster && dse_i.dse.shadow)
         ) {
             throw new errors.ServiceError(
                 "Could not resolve name on master.",
                 new ServiceErrorData(
                     ServiceProblem_unableToProceed,
                     [],
-                    undefined,
-                    undefined,
-                    aliasDereferenced,
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -620,7 +753,8 @@ async function findDSE (
         if (dse_i.dse.alias) {
             if (dontDereferenceAliases) {
                 if (i === m) {
-                    return targetFoundSubprocedure();
+                    await targetFoundSubprocedure();
+                    return;
                 } else {
                     throw new errors.NameError(
                         "Reached an alias above the sought object, and dereferencing was prohibited.",
@@ -630,49 +764,83 @@ async function findDSE (
                                 rdnSequence: getDistinguishedName(dse_i),
                             },
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                nameError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             false,
                             undefined,
                         ),
                     );
                 }
             } else {
-                aliasDereferenced = true;
-                nameResolutionPhase = OperationProgress_nameResolutionPhase_notStarted;
                 const newN = [
-                    // ...(dse_i.aliasedEntry ? getDistinguishedName(dse_i.aliasedEntry) : []), // FIXME:
+                    ...dse_i.dse.alias.aliasedEntryName,
                     ...needleDN.slice(i), // RDNs N(i + 1) to N(m)
                 ];
-                aliasedRDNs = 1;
+                const newChaining: ChainingArguments = new ChainingArguments(
+                    state.chainingArguments.originator,
+                    newN,
+                    new OperationProgress(
+                        OperationProgress_nameResolutionPhase_notStarted,
+                        undefined,
+                    ),
+                    state.chainingArguments.traceInformation,
+                    TRUE, // aliasDereferenced
+                    undefined, // Specifically told not to set aliasedRDNs.
+                    state.chainingArguments.returnCrossRefs,
+                    state.chainingArguments.referenceType,
+                    state.chainingArguments.info,
+                    state.chainingArguments.timeLimit,
+                    state.chainingArguments.securityParameters,
+                    state.chainingArguments.entryOnly,
+                    state.chainingArguments.uniqueIdentifier,
+                    state.chainingArguments.authenticationLevel,
+                    state.chainingArguments.exclusions,
+                    state.chainingArguments.excludeShadows,
+                    state.chainingArguments.nameResolveOnMaster,
+                    state.chainingArguments.operationIdentifier,
+                    state.chainingArguments.searchRuleId,
+                    state.chainingArguments.chainedRelaxation,
+                    state.chainingArguments.relatedEntry,
+                    state.chainingArguments.dspPaging,
+                    state.chainingArguments.excludeWriteableCopies,
+                );
+                state.chainingArguments = newChaining;
                 return findDSE(
                     ctx,
+                    conn,
                     haystackVertex,
                     newN,
-                    chainArgs,
-                    commonArgs,
-                    argument,
-                    operationType,
-                    NRcontinuationList,
-                    admPoints,
+                    state,
                 );
             }
         }
         if (dse_i.dse.subentry) {
             if (i === m) {
-                return targetFoundSubprocedure();
+                await targetFoundSubprocedure();
+                return;
             } else {
                 throw new errors.NameError(
                     "No DSEs to find beneath a subentry.",
                     new NameErrorData(
                         NameProblem_noSuchObject,
                         {
-                            rdnSequence: needleDN.slice(0, i),
+                            rdnSequence: [], // REVIEW: information disclosure.
+                            // rdnSequence: needleDN.slice(0, i),
                         },
                         [],
-                        undefined,
-                        undefined,
-                        aliasDereferenced,
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            nameError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -681,32 +849,50 @@ async function findDSE (
         if (dse_i.dse.entry) {
             if (i === m) {
                 if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
-                    return targetFoundSubprocedure();
+                    await targetFoundSubprocedure();
+                    return;
                 }
-                if (commonArgs?.serviceControls?.manageDSAITPlaneRef || manageDSAIT) {
-                    return dse_i;
+                if (manageDSAITPlaneRefElement || manageDSAIT) {
+                    state.foundDSE = dse_i;
+                    state.entrySuitable = true;
+                    return;
                 }
                 if (
-                    (chainArgs.referenceType === ReferenceType_supplier)
-                    || (chainArgs.referenceType === ReferenceType_master)
+                    (state.chainingArguments.referenceType === ReferenceType_supplier)
+                    || (state.chainingArguments.referenceType === ReferenceType_master)
                 ) {
-                    return targetFoundSubprocedure();
+                    await targetFoundSubprocedure();
+                    return;
                 }
-                const someSubordinatesAreCP = children.some((child) => child.dse.cp);
-                if (!someSubordinatesAreCP) {
+                if (
+                    !compareCode(state.operationCode, id_opcode_list)
+                    && !compareCode(state.operationCode, id_opcode_search)
+                ) {
+                    state.foundDSE = dse_i;
+                    state.entrySuitable = true;
+                    return;
+                }
+                if (!await someSubordinatesAreCP(ctx, dse_i)) {
                     throw new errors.ServiceError(
                         "",
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],
-                            undefined,
-                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
                             undefined,
                             undefined,
                         ),
                     );
                 }
-                return dse_i; // Entry suitable
+                state.foundDSE = dse_i;
+                state.entrySuitable = true;
+                return;
             } else {
                 lastEntryFound = i;
                 dse_lastEntryFound = dse_i;
@@ -716,79 +902,79 @@ async function findDSE (
             dse_i.dse.subr
             || dse_i.dse.xr
             || dse_i.dse.immSupr
+            || dse_i.dse.ditBridge
         ) {
-            const { operationalAttributes } = await readEntryAttributes(ctx, dse_i, {
-                attributesSelect: [ specificKnowledge["&id"] ],
-                contextSelection: undefined,
-                returnContexts: false,
-                includeOperationalAttributes: true,
+            const knowledges = dse_i.dse.subr?.specificKnowledge
+                ?? dse_i.dse.xr?.specificKnowledge
+                ?? dse_i.dse.immSupr?.specificKnowledge
+                ?? dse_i.dse.ditBridge?.ditBridgeKnowledge.flatMap((dbk) => dbk.accessPoints);
+            const referenceType: ReferenceType = ((): ReferenceType => {
+                if (dse_i.dse.subr) {
+                    return ReferenceType_subordinate;
+                }
+                if (dse_i.dse.immSupr) {
+                    return ReferenceType_immediateSuperior;
+                }
+                if (dse_i.dse.ditBridge) {
+                    return ReferenceType_ditBridge;
+                }
+                return ReferenceType_cross;
+            })();
+            const masters: MasterOrShadowAccessPoint[] = [];
+            const shadows: MasterOrShadowAccessPoint[] = [];
+            knowledges!.forEach((mosap) => {
+                if (mosap.category === MasterOrShadowAccessPoint_category_master) {
+                    masters.push(mosap);
+                } else if (mosap.category === MasterOrShadowAccessPoint_category_shadow) {
+                    shadows.push(mosap);
+                }
             });
-            const specificKnowledgeAttributes = operationalAttributes
-                .filter((oa) => oa.id.isEqualTo(specificKnowledge["&id"]));
-            const knowledges = specificKnowledgeAttributes
-                .map((sk) => specificKnowledge.decoderFor["&Type"]!(sk.value));
-            knowledges
-                .forEach((k): void => {
-                    const referenceType: ReferenceType = ((): ReferenceType => {
-                        if (dse_i.dse.subr) {
-                            return ReferenceType_subordinate;
-                        }
-                        if (dse_i.dse.immSupr) {
-                            return ReferenceType_immediateSuperior;
-                        }
-                        return ReferenceType_cross;
-                    })();
-                    const masters: MasterOrShadowAccessPoint[] = [];
-                    const shadows: MasterOrShadowAccessPoint[] = [];
-                    k.forEach((mosap) => {
-                        if (mosap.category === MasterOrShadowAccessPoint_category_master) {
-                            masters.push(mosap);
-                        } else if (mosap.category === MasterOrShadowAccessPoint_category_shadow) {
-                            shadows.push(mosap);
-                        }
-                    });
-                    const mainAP = masters.pop() ?? shadows.pop();
-                    if (!mainAP) {
-                        return;
-                    }
-                    const cr = new ContinuationReference(
-                        { // REVIEW: This might be technically incorrect.
-                            rdnSequence: getDistinguishedName(dse_i), // Also requires Access Control checking
-                        },
-                        aliasedRDNs,
-                        new OperationProgress(
-                            OperationProgress_nameResolutionPhase_proceeding,
-                            i,
-                        ),
-                        i,
-                        referenceType,
-                        [
-                            new AccessPointInformation(
-                                mainAP.ae_title,
-                                mainAP.address,
-                                mainAP.protocolInformation,
-                                mainAP.category,
-                                mainAP.chainingRequired,
-                                [ ...shadows, ...masters ]
-                                    .map((ap) => new MasterOrShadowAccessPoint(
-                                        ap.ae_title,
-                                        ap.address,
-                                        ap.protocolInformation,
-                                        ap.category,
-                                        ap.chainingRequired,
-                                    )),
-                            ),
-                        ],
-                        undefined, // FIXME:
-                        undefined,
-                        undefined, // Return to DUA not supported.
-                        nssrEncountered,
-                    );
-                    candidateRefs.push(cr);
-                });
+            const mainAP = masters.pop() ?? shadows.pop();
+            if (!mainAP) {
+                return;
+            }
+            const cr = new ContinuationReference(
+                { // REVIEW: This might be technically incorrect.
+                    rdnSequence: getDistinguishedName(dse_i), // Also requires Access Control checking
+                },
+                undefined,
+                new OperationProgress(
+                    OperationProgress_nameResolutionPhase_proceeding,
+                    i,
+                ),
+                i,
+                referenceType,
+                [
+                    new AccessPointInformation(
+                        mainAP.ae_title,
+                        mainAP.address,
+                        mainAP.protocolInformation,
+                        mainAP.category,
+                        mainAP.chainingRequired,
+                        [ ...shadows, ...masters ]
+                            .map((ap) => new MasterOrShadowAccessPoint(
+                                ap.ae_title,
+                                ap.address,
+                                ap.protocolInformation,
+                                ap.category,
+                                ap.chainingRequired,
+                            )),
+                    ),
+                ],
+                undefined,
+                undefined,
+                undefined, // Return to DUA not supported.
+                nssrEncountered,
+            );
+            candidateRefs.push(cr);
         }
         if (dse_i.dse.admPoint) {
-            admPoints.push(dse_i);
+            if (dse_i.dse.admPoint.administrativeRole.has(autonomousArea)) {
+                state.admPoints.length = 0;
+            }
+            // TODO: inner areas shall not be used if SAC is in place.
+            // NOTE: This actually needs to be implemented elsewhere.
+            state.admPoints.push(dse_i);
         }
         if (dse_i.dse.cp && dse_i.dse.shadow) {
             lastCP = dse_i;
@@ -799,9 +985,14 @@ async function findDSE (
         new ServiceErrorData(
             ServiceProblem_loopDetected,
             [],
-            undefined,
-            undefined,
-            aliasDereferenced,
+            createSecurityParameters(
+                ctx,
+                conn.boundNameAndUID?.dn,
+                undefined,
+                serviceError["&errorCode"],
+            ),
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            state.chainingArguments.aliasDereferenced,
             undefined,
         ),
     );

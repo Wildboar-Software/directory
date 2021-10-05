@@ -10,41 +10,19 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import {
-    administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
-import {
-    accessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
-import {
-    subentryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
-import {
-    entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import {
-    prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
-import {
-    ACIItem,
-    _decode_ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import {
     MasterOrShadowAccessPoint,
     _encode_MasterOrShadowAccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
 import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
-import { OBJECT_IDENTIFIER, DERElement } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
-import writeACI from "../../database/writeACI";
-import writeEntryAttributes from "../../database/writeEntryAttributes";
-import entryFromDatabaseEntry from "../../database/entryFromDatabaseEntry";
-import valuesFromAttribute from "../../memory/valuesFromAttribute";
-import { ACIScope, Knowledge } from "@prisma/client";
-
-const DER = () => new DERElement();
+import valuesFromAttribute from "../../x500/valuesFromAttribute";
+import { Knowledge } from "@prisma/client";
+import { DER } from "asn1-ts/dist/node/functional";
+import createEntry from "../../database/createEntry";
+import addValues from "../../database/entry/addValues";
 
 // TODO: If context prefix initialization fails, undo all changes.
 export
@@ -61,52 +39,15 @@ async function becomeSubordinate (
         const existingEntry = await findEntry(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
             immSuprAccessPoints = vertex.accessPoints;
-            const administrativeRoles: OBJECT_IDENTIFIER[] = vertex.admPointInfo
-                ?.filter((attr) => attr.type_.isEqualTo(administrativeRole["&id"]))
-                .flatMap((attr) => [
-                    ...attr.values,
-                    ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-                ])
-                .map((value) => value.objectIdentifier) ?? [];
-            const accessControlSchemeOIDs: OBJECT_IDENTIFIER[] = vertex.admPointInfo
-                ?.filter((attr) => attr.type_.isEqualTo(accessControlScheme["&id"]))
-                .flatMap((attr) => [
-                    ...attr.values,
-                    ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-                ])
-                .map((value) => value.objectIdentifier) ?? [];
-            const subentryACIs: ACIItem[] = vertex.admPointInfo
-                ?.filter((attr) => attr.type_.isEqualTo(subentryACI["&id"]))
-                .flatMap((attr) => [
-                    ...attr.values,
-                    ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-                ])
-                .map((value) => _decode_ACIItem(value)) ?? [];
-            const entryACIs: ACIItem[] = vertex.admPointInfo
-                ?.filter((attr) => attr.type_.isEqualTo(entryACI["&id"]))
-                .flatMap((attr) => [
-                    ...attr.values,
-                    ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-                ])
-                .map((value) => _decode_ACIItem(value)) ?? [];
             const immSupr: boolean = Boolean(immSuprAccessPoints && last);
-            const createdEntry = await ctx.db.entry.create({
-                data: {
-                    dit_id: ctx.dit.id,
-                    rdn: rdnToJson(vertex.rdn),
-                    immediate_superior_id: currentRoot.dse.id,
+            const createdEntry = await createEntry(
+                ctx,
+                currentRoot,
+                vertex.rdn,
+                {
                     glue: (!vertex.admPointInfo && !vertex.accessPoints),
                     rhob: Boolean(vertex.admPointInfo),
-                    admPoint: Boolean(vertex.admPointInfo),
                     immSupr,
-                    creatorsName: [],
-                    modifiersName: [],
-                    administrativeRole: administrativeRoles.length
-                        ? administrativeRoles.map((ar) => ar.toString())
-                        : undefined,
-                    accessControlScheme: (accessControlSchemeOIDs.length === 1)
-                        ? accessControlSchemeOIDs.toString()
-                        : undefined,
                     AccessPoint: immSupr
                         ? {
                             createMany: {
@@ -123,77 +64,45 @@ async function becomeSubordinate (
                         }
                         : undefined,
                 },
-            });
-            for (const aci of entryACIs) {
-                await writeACI(ctx, createdEntry.id, aci, ACIScope.ENTRY);
-            }
-            for (const aci of subentryACIs) {
-                await writeACI(ctx, createdEntry.id, aci, ACIScope.SUBENTRY);
-            }
-            currentRoot = await entryFromDatabaseEntry(ctx, currentRoot, createdEntry, true);
-            currentRoot.dse.entryACI = entryACIs;
-            if (currentRoot.dse.admPoint && subentryACIs.length) {
-                currentRoot.dse.admPoint.subentryACI = subentryACIs;
-            }
+                vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
+                [],
+            );
+            currentRoot = createdEntry;
             for (const subentry of (vertex.subentries ?? [])) {
-                const entryACIs_for_subentry: ACIItem[] = subentry.info
-                    ?.filter((attr) => attr.type_.isEqualTo(entryACI["&id"]))
-                    .flatMap((attr) => [
-                        ...attr.values,
-                        ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-                    ])
-                    .map((value) => _decode_ACIItem(value)) ?? [];
-                const prescriptiveACIs: ACIItem[] = subentry.info
-                    ?.filter((attr) => attr.type_.isEqualTo(prescriptiveACI["&id"]))
-                    .flatMap((attr) => [
-                        ...attr.values,
-                        ...(attr.valuesWithContext ?? []).map((vwc) => vwc.value),
-                    ])
-                    .map((value) => _decode_ACIItem(value)) ?? [];
-                const createdSubentry = await ctx.db.entry.create({
-                    data: {
-                        dit_id: ctx.dit.id,
-                        rdn: rdnToJson(subentry.rdn),
-                        immediate_superior_id: createdEntry.id,
+                await createEntry(
+                    ctx,
+                    currentRoot,
+                    subentry.rdn,
+                    {
                         subentry: true,
-                        creatorsName: [],
-                        modifiersName: [],
                     },
-                });
-                for (const aci of entryACIs_for_subentry) {
-                    await writeACI(ctx, createdSubentry.id, aci, ACIScope.ENTRY);
-                }
-                for (const aci of prescriptiveACIs) {
-                    await writeACI(ctx, createdSubentry.id, aci, ACIScope.SUBENTRY);
-                }
+                    subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                    [],
+                );
             }
         } else {
             currentRoot = existingEntry;
         }
     }
-    const createdCP = await ctx.db.entry.create({
-        data: {
-            dit_id: ctx.dit.id,
-            rdn: rdnToJson(agreement.rdn),
-            immediate_superior_id: currentRoot.dse.id,
+    const createdCP = await createEntry(
+        ctx,
+        currentRoot,
+        agreement.rdn,
+        {
             cp: true,
             immSupr: false, // This is supposed to be on the superior of this entry.
-            supr: false, // This is supposed to be on the Root DSE.
             entry: true,
-            alias: false, // This should be flipped by `writeEntryAttributes()`, if applicable.
-            creatorsName: [],
-            modifiersName: [],
         },
-    });
-    const subr = await entryFromDatabaseEntry(ctx, currentRoot, createdCP, true);
-    if (sup2sub.immediateSuperiorInfo) {
-        const values = sup2sub.immediateSuperiorInfo.flatMap((attr) => valuesFromAttribute(attr));
-        await writeEntryAttributes(ctx, currentRoot.immediateSuperior!, values);
-    }
-    if (sup2sub.entryInfo) {
-        const values = sup2sub.entryInfo.flatMap((attr) => valuesFromAttribute(attr));
-        await writeEntryAttributes(ctx, subr, values);
-    }
+        sup2sub.entryInfo?.flatMap(valuesFromAttribute) ?? [],
+    );
+    await ctx.db.$transaction(
+        await addValues(
+            ctx,
+            currentRoot.immediateSuperior!,
+            sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
+            [],
+        ),
+    );
     // TODO: Update the knowledge references of the root DSE (supr) if the highest NC has changed.
     const myAccessPoint = ctx.dsa.accessPoint;
     return new SubordinateToSuperior(
@@ -220,7 +129,7 @@ async function becomeSubordinate (
              * so how could it possibly have shadows at that time?
              */
         ],
-        Boolean(subr.dse.alias),
+        Boolean(createdCP.dse.alias),
         sup2sub.entryInfo,
         undefined,
     );

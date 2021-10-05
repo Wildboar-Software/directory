@@ -21,6 +21,9 @@ import { BER } from "asn1-ts/dist/node/functional";
 import {
     IdmBindResult,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindResult.ta";
+import {
+    IdmBindError,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -52,16 +55,7 @@ class IDMConnection {
         readonly s: net.Socket,
     ) {
         this.socket = s;
-        this.socket.on("error", (e: Error) => {
-            console.error(e.message);
-            this.socket.removeAllListeners();
-            process.exit(0);
-        });
-
-        this.socket.on("end", (hadError: boolean) => {
-            console.log(hadError ? "Closing connection with error." : "Closed connection.");
-        });
-
+        // this.socket.on("end", () => {});
         this.socket.on("data", (data: Buffer) => {
             this.buffer = Buffer.concat([ this.buffer, data ]);
             while ((this.bufferIndex + this.awaitingBytes) <= this.buffer.length) {
@@ -188,7 +182,7 @@ class IDMConnection {
                 this.socket = new tls.TLSSocket(this.socket);
             }
         } else {
-            console.log("Unrecognized IDM PDU.");
+            // console.log("Unrecognized IDM PDU.");
         }
     }
 
@@ -233,6 +227,23 @@ class IDMConnection {
         const bindResult = new IdmBindResult(protocolID, respondingAETitle, result);
         const idm: IDM_PDU = {
             bindResult,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeBindError (
+        protocolID: OBJECT_IDENTIFIER,
+        error: ASN1Element,
+        respondingAETitle?: GeneralName,
+    ): Promise<void> {
+        const bindError = new IdmBindError(
+            protocolID,
+            respondingAETitle,
+            undefined, // aETitleError
+            error,
+        );
+        const idm: IDM_PDU = {
+            bindError,
         };
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }

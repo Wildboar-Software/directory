@@ -1,4 +1,4 @@
-import {
+import type {
     ContinuationReference,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 

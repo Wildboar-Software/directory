@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>DSE Details - Meerkat DSA</title>
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            @media screen and (prefers-color-scheme: light) {
+                body {
+                    background-color: white;
+                    color: black;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>DSE Details</h1>
+        <hr />
+        <nav>
+            <ul>
+                <li>
+                    <a href="/">Back to Home</a>
+                </li>
+                {{#if superiorUUID}}
+                    <li>
+                        <a href="/dsait/dse/{{superiorUUID}}">Go to Immediate Superior</a>
+                    </li>
+                {{/if}}
+            </ul>
+        </nav>
+        <hr />
+        <h2>Actions</h2>
+        <form action="/dsait/dse/{{entryUUID}}/delete" method="POST" >
+            <button type="submit">Delete</button>
+        </form>
+        <hr />
+        <h2>Details</h2>
+        <hr />
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Relative Distinguished Name</td>
+                    <td>{{rdn}}</td>
+                </tr>
+                <tr>
+                    <td>Flags</td>
+                    <td>{{flags}}</td>
+                </tr>
+                <tr>
+                    <td>createdTimestamp</td>
+                    <td>{{createdTimestamp}}</td>
+                </tr>
+                <tr>
+                    <td>modifyTimestamp</td>
+                    <td>{{modifyTimestamp}}</td>
+                </tr>
+                <tr>
+                    <td>creatorsName</td>
+                    <td>{{creatorsName}}</td>
+                </tr>
+                <tr>
+                    <td>modifiersName</td>
+                    <td>{{modifiersName}}</td>
+                </tr>
+                {{#if deleteTimestamp}}
+                    <tr>
+                        <td>deleteTimestamp</td>
+                        <td>{{deleteTimestamp}}</td>
+                    </tr>
+                {{/if}}
+            </tbody>
+        </table>
+        <h2>Attribute Values</h2>
+        <hr />
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Value</th>
+                    <th>Contexts</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each attributes}}
+                <tr>
+                    <td>{{[0]}}</td>
+                    <td>{{[1]}}</td>
+                    <td>{{[2]}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </body>
+</html>

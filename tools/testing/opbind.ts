@@ -23,7 +23,7 @@ import {
     _encode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import * as crypto from "crypto";
-import { ASN1Construction, ObjectIdentifier, ASN1TagClass, ASN1UniversalType, DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
@@ -72,8 +72,7 @@ import {
 import * as net from "net";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 const { IDMConnection } = require("../../dist/libs/idm/src/index");
-
-const DER = () => new DERElement();
+import { DER } from "asn1-ts/dist/node/functional";
 
 const US = new AttributeTypeAndValue(
     countryName["&id"],
@@ -192,17 +191,17 @@ async function main() {
                 [],
             ),
             {
-                roleA_initiates: _encode_SuperiorToSubordinate(sup2sub, () => new DERElement()),
+                roleA_initiates: _encode_SuperiorToSubordinate(sup2sub, DER),
             },
-            _encode_HierarchicalAgreement(agreement, () => new DERElement()),
+            _encode_HierarchicalAgreement(agreement, DER),
             undefined,
             undefined,
         ),
     };
     const socket = net.createConnection({
         host: "localhost",
-        port: process.env.IDM_PORT
-            ? Number.parseInt(process.env.IDM_PORT, 10)
+        port: process.env.MEERKAT_IDM_PORT
+            ? Number.parseInt(process.env.MEERKAT_IDM_PORT, 10)
             : 4632,
     });
     const idm = new IDMConnection(socket);

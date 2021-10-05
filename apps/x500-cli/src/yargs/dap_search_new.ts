@@ -1,6 +1,7 @@
 import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
+import search_new from "../commands/dap/search_new";
 
 export
 function create (ctx: Context): CommandModule {
@@ -155,6 +156,8 @@ function create (ctx: Context): CommandModule {
         },
         handler: async (argv) => {
             const connection = await bind(ctx, argv);
+            await search_new(ctx, connection, argv);
+            await connection.close();
         },
     };
 }
