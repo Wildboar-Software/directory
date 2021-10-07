@@ -56,6 +56,13 @@ import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministra
 import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
 import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
 import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
+import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/namingContexts.oa";
+import { altServer } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/altServer.oa";
+import { supportedExtension } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedExtension.oa";
+import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
+import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
+import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
+import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
 
 // Attribute Removers
 import * as removers from "../specialAttributeRemovers";
@@ -116,6 +123,14 @@ const specialAttributeDatabaseRemovers: Map<IndexableOID, SpecialAttributeDataba
 
     [ governingStructureRule["&id"].toString(), removers.removeGoverningStructureRule ],
     [ structuralObjectClass["&id"].toString(), removers.removeStructuralObjectClass ],
+
+    [ namingContexts["&id"].toString(), removers.removeNamingContexts ],
+    [ altServer["&id"].toString(), removers.removeAltServer ],
+    [ supportedExtension["&id"].toString(), removers.removeSupportedExtension ],
+    [ supportedControl["&id"].toString(), removers.removeSupportedControl ],
+    [ supportedSASLMechanisms["&id"].toString(), removers.removeSupportedSASLMechanisms ],
+    [ supportedLDAPVersion["&id"].toString(), removers.removeSupportedLDAPVersion ],
+    [ supportedFeatures["&id"].toString(), removers.removeSupportedFeatures ],
 ]);
 
 export

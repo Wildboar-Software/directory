@@ -3,6 +3,7 @@ import type {
     Vertex,
     Value,
     SpecialAttributeDatabaseReader,
+    IndexableOID,
 } from "../types";
 import { ASN1UniversalType, BERElement, DERElement, ObjectIdentifier } from "asn1-ts";
 import {
@@ -146,6 +147,13 @@ import {
 import {
     LdapSyntaxDescription,
 } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
+import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/namingContexts.oa";
+// import { altServer } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/altServer.oa";
+// import { supportedExtension } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedExtension.oa";
+// import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
+// import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
+import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
+// import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
 import readDITContentRuleDescriptions from "./readers/readDITContentRuleDescriptions";
 import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptions";
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
@@ -153,6 +161,17 @@ import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
 import getSubschemaSubentry from "../dit/getSubschemaSubentry";
 import getDistinguishedName from "../x500/getDistinguishedName";
+import {
+    id_op_binding_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+import { OperationalBindingInitiator } from "@prisma/client";
+import {
+    HierarchicalAgreement,
+    _decode_HierarchicalAgreement,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+
+const SUBSCHEMA: string = subschema["&id"].toString();
 
 export const readObjectClass: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
@@ -917,6 +936,9 @@ export const readDITStructureRules: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
     return (await readDITStructureRuleDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
             id: dITStructureRules["&id"],
@@ -927,7 +949,11 @@ export const readDITStructureRules: SpecialAttributeDatabaseReader = async (
 
 export const readNameForms: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
+    vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
     return Array.from(ctx.nameForms.values())
         .map((nf) => new NameFormDescription(
             nf.namedObjectClass,
@@ -957,6 +983,9 @@ export const readDITContentRules: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
     return (await readDITContentRuleDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
             id: dITContentRules["&id"],
@@ -967,8 +996,14 @@ export const readDITContentRules: SpecialAttributeDatabaseReader = async (
 
 export const readObjectClasses: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
+    vertex: Vertex,
 ): Promise<Value[]> => {
-    return Array.from(ctx.objectClasses.values())
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
+    return Array.from(ctx.objectClasses.entries())
+        .filter(([ k ]) => (k.indexOf(".") === -1)) // Dedupes entries by only using OIDs, not descriptors.
+        .map(([ , v ]) => v)
         .map((oc) => new ObjectClassDescription(
             oc.id,
             oc.name?.map((name) => ({
@@ -999,8 +1034,14 @@ export const readObjectClasses: SpecialAttributeDatabaseReader = async (
 
 export const readAttributeTypes: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
+    vertex: Vertex,
 ): Promise<Value[]> => {
-    return Array.from(ctx.attributes.values())
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
+    return Array.from(ctx.attributes.entries())
+        .filter(([ k ]) => (k.indexOf(".") > -1)) // Dedupes entries by only using OIDs, not descriptors.
+        .map(([ , v ]) => v)
         .map((attr) => new AttributeTypeDescription(
             attr.id,
             attr.name?.map((name) => ({
@@ -1039,6 +1080,9 @@ export const readFriends: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
     return (await readFriendsDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
             id: friends["&id"],
@@ -1049,7 +1093,11 @@ export const readFriends: SpecialAttributeDatabaseReader = async (
 
 export const readContextTypes: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
+    vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
     return Array.from(ctx.contextTypes.values())
         .map((info) => new ContextDescription(
             info.id,
@@ -1084,6 +1132,9 @@ export const readDITContextUse: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
     return (await readDITContextUseDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
             id: dITContextUse["&id"],
@@ -1094,12 +1145,18 @@ export const readDITContextUse: SpecialAttributeDatabaseReader = async (
 
 export const readMatchingRules: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
+    vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
     return [
-        ...Array.from(ctx.equalityMatchingRules.values()),
-        ...Array.from(ctx.orderingMatchingRules.values()),
-        ...Array.from(ctx.substringsMatchingRules.values()),
+        ...Array.from(ctx.equalityMatchingRules.entries()),
+        ...Array.from(ctx.orderingMatchingRules.entries()),
+        ...Array.from(ctx.substringsMatchingRules.entries()),
     ]
+        .filter(([ k ]) => (k.indexOf(".") > -1)) // Dedupes entries by only using OIDs, not descriptors.
+        .map(([ , v ]) => v)
         .map((mr) => new MatchingRuleDescription(
             mr.id,
             mr.name?.map((name) => ({
@@ -1128,6 +1185,9 @@ export const readMatchingRuleUse: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
     return (await readMatchingRuleUseDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
             id: matchingRuleUse["&id"],
@@ -1138,8 +1198,14 @@ export const readMatchingRuleUse: SpecialAttributeDatabaseReader = async (
 
 export const readLdapSyntaxes: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
+    vertex: Vertex,
 ): Promise<Value[]> => {
-    return Array.from(ctx.ldapSyntaxes.values())
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
+        return [];
+    }
+    return Array.from(ctx.ldapSyntaxes.entries())
+        .filter(([ k ]) => (k.indexOf(".") > -1)) // Dedupes entries by only using OIDs, not descriptors.
+        .map(([ , v ]) => v)
         .map((syntax) => new LdapSyntaxDescription(
             syntax.id,
             syntax.description
@@ -1191,7 +1257,7 @@ export const readSubschemaSubentryList: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    if (vertex.dse.root) {
+    if (vertex.dse.root && !vertex.immediateSuperior) {
         return []; // FIXME: Implement a hard-coded DSE.
     }
     if (vertex.dse.subentry) {
@@ -1209,4 +1275,87 @@ export const readSubschemaSubentryList: SpecialAttributeDatabaseReader = async (
             contexts: new Map(),
         },
     ];
+};
+
+export const readNamingContexts: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (vertex.immediateSuperior || !vertex.dse.root) {
+        return [];
+    }
+    const now = new Date();
+    const obs = await ctx.db.operationalBinding.findMany({
+        where: {
+            binding_type: id_op_binding_hierarchical.toString(),
+            validity_start: {
+                gte: now,
+            },
+            validity_end: {
+                lte: now,
+            },
+            accepted: true,
+            OR: [
+                { // Local DSA initiated role B (meaning local DSA is subordinate.)
+                    initiator: OperationalBindingInitiator.ROLE_B,
+                    outbound: true,
+                },
+                { // Remote DSA initiated role A (meaning local DSA is subordinate again.)
+                    initiator: OperationalBindingInitiator.ROLE_A,
+                    outbound: false,
+                },
+            ],
+        },
+        select: {
+            agreement_ber: true,
+        },
+    });
+    return [
+        ...obs.map((ob): Value => {
+            const argreementElement = new BERElement();
+            argreementElement.fromBytes(ob.agreement_ber);
+            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
+            return {
+                id: namingContexts["&id"],
+                value: namingContexts.encoderFor["&Type"]!([ ...agreement.immediateSuperior, agreement.rdn ], DER),
+                contexts: new Map(),
+            };
+        }),
+    ];
+};
+
+export const readAltServer: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
+    return [];
+};
+
+export const readSupportedExtension: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
+    return [];
+};
+
+export const readSupportedControl: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
+    return [];
+};
+
+export const readSupportedSASLMechanisms: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
+    return [];
+};
+
+export const readSupportedLDAPVersion: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (vertex.immediateSuperior || !vertex.dse.root) {
+        return [];
+    }
+    return [
+        {
+            id: supportedLDAPVersion["&id"],
+            value: supportedLDAPVersion.encoderFor["&Type"]!(3, DER),
+            contexts: new Map(),
+        },
+    ];
+};
+
+export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
+    return [];
 };

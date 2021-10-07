@@ -49,7 +49,9 @@ export default
 async function main (): Promise<void> {
     const packageJSON = await import("package.json")
         .catch(() => undefined);
-    const versionSlug = packageJSON?.default.version.replace(/\./g, "-");
+    const versionSlug = packageJSON?.default
+        ? packageJSON?.default.version.replace(/\./g, "-")
+        : packageJSON?.version.replace(/\./g, "-");
 
     await loadDIT(ctx);
     // The ordering of these is important.

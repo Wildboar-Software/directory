@@ -42,6 +42,8 @@ import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstract
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+import { ldapTransport } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ldapTransport.oa";
+import { linkedLDAP } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/linkedLDAP.oa";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
 import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
@@ -106,6 +108,8 @@ import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
 import getSearchResultStatistics from "../telemetry/getSearchResultStatistics";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
+import { BER } from "asn1-ts/dist/node/functional";
 
 export
 type SearchResultOrError = {
@@ -262,6 +266,35 @@ class OperationDispatcher {
                     ...outcome.stats.outcome,
                 },
                 foundDSE: state.foundDSE,
+            };
+        }
+        else if (compareCode(req.opCode, ldapTransport["&operationCode"]!)) {
+            const arg = ldapTransport.decoderFor["&ArgumentType"]!(state.operationArgument);
+            const data = getOptionallyProtectedValue(arg);
+            const dapRequest = ldapRequestToDAPRequest(ctx, data.ldapMessage);
+            return OperationDispatcher.dispatchDAPRequest(
+                ctx,
+                conn,
+                {
+                    invokeId: req.invokeId,
+                    opCode: req.opCode,
+                    argument: dapRequest.argument,
+                },
+            );
+        }
+        else if (compareCode(req.opCode, linkedLDAP["&operationCode"]!)) {
+            // Automatically returns NULL no matter what, because Meerkat DSA
+            // will not issue ldapTransport requests. It will just make LDAP
+            // requests or the equivalent DAP requests.
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: {
+                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                        state.chainingResults,
+                        linkedLDAP.encoderFor["&ResultType"]!(null, BER),
+                    ),
+                },
             };
         }
         else if (compareCode(req.opCode, list["&operationCode"]!)) {

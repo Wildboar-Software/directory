@@ -58,6 +58,13 @@ import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministra
 import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
 import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
 import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
+import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/namingContexts.oa";
+import { altServer } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/altServer.oa";
+import { supportedExtension } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedExtension.oa";
+import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
+import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
+import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
+import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
 
 // Attribute Adders
 import * as adders from "../specialAttributeAdders";
@@ -119,6 +126,14 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
 
     [ governingStructureRule["&id"].toString(), adders.addGoverningStructureRule ],
     [ structuralObjectClass["&id"].toString(), adders.addStructuralObjectClass ],
+
+    [ namingContexts["&id"].toString(), adders.addNamingContexts ],
+    [ altServer["&id"].toString(), adders.addAltServer ],
+    [ supportedExtension["&id"].toString(), adders.addSupportedExtension ],
+    [ supportedControl["&id"].toString(), adders.addSupportedControl ],
+    [ supportedSASLMechanisms["&id"].toString(), adders.addSupportedSASLMechanisms ],
+    [ supportedLDAPVersion["&id"].toString(), adders.addSupportedLDAPVersion ],
+    [ supportedFeatures["&id"].toString(), adders.addSupportedFeatures ],
 ]);
 
 export

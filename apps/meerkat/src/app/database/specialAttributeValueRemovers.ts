@@ -658,3 +658,10 @@ export const removeLdapSyntaxes: SpecialAttributeDatabaseEditor = NOOP;
 
 export const removeGoverningStructureRule: SpecialAttributeDatabaseEditor = NOOP;
 export const removeStructuralObjectClass: SpecialAttributeDatabaseEditor = NOOP;
+export const removeNamingContexts: SpecialAttributeDatabaseEditor = NOOP;
+export const removeAltServer: SpecialAttributeDatabaseEditor = NOOP;
+export const removeSupportedExtension: SpecialAttributeDatabaseEditor = NOOP;
+export const removeSupportedControl: SpecialAttributeDatabaseEditor = NOOP;
+export const removeSupportedSASLMechanisms: SpecialAttributeDatabaseEditor = NOOP;
+export const removeSupportedLDAPVersion: SpecialAttributeDatabaseEditor = NOOP;
+export const removeSupportedFeatures: SpecialAttributeDatabaseEditor = NOOP;

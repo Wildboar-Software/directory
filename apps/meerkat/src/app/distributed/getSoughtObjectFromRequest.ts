@@ -16,6 +16,8 @@ import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstract
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+import { ldapTransport } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ldapTransport.oa";
+import { linkedLDAP } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/linkedLDAP.oa";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
 import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
@@ -64,6 +66,19 @@ function getSoughtObjectFromRequest (
         const arg = modifyEntry.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         return data.object.rdnSequence;
+    }
+    else if (compareCode(ldapTransport["&operationCode"]!, req.opCode)) {
+        const arg = ldapTransport.decoderFor["&ArgumentType"]!(req.argument);
+        const data = getOptionallyProtectedValue(arg);
+        if ("addRequest" in data.ldapMessage.protocolOp) {
+            return data.object.slice(0, -1);
+        }
+        return data.object;
+    }
+    else if (compareCode(linkedLDAP["&operationCode"]!, req.opCode)) {
+        const arg = linkedLDAP.decoderFor["&ArgumentType"]!(req.argument);
+        const data = getOptionallyProtectedValue(arg);
+        return data.object;
     }
     else if (compareCode(list["&operationCode"]!, req.opCode)) {
         const arg = list.decoderFor["&ArgumentType"]!(req.argument);

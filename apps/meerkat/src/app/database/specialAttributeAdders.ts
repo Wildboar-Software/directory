@@ -1171,6 +1171,12 @@ export const addMatchingRuleUse: SpecialAttributeDatabaseEditor = async (
 };
 
 export const addLdapSyntaxes: SpecialAttributeDatabaseEditor = NOOP;
-
 export const addGoverningStructureRule: SpecialAttributeDatabaseEditor = NOOP;
 export const addStructuralObjectClass: SpecialAttributeDatabaseEditor = NOOP;
+export const addNamingContexts: SpecialAttributeDatabaseEditor = NOOP;
+export const addAltServer: SpecialAttributeDatabaseEditor = NOOP;
+export const addSupportedExtension: SpecialAttributeDatabaseEditor = NOOP;
+export const addSupportedControl: SpecialAttributeDatabaseEditor = NOOP;
+export const addSupportedSASLMechanisms: SpecialAttributeDatabaseEditor = NOOP;
+export const addSupportedLDAPVersion: SpecialAttributeDatabaseEditor = NOOP;
+export const addSupportedFeatures: SpecialAttributeDatabaseEditor = NOOP;

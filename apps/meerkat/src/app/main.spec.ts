@@ -29,7 +29,7 @@ function frame (ber: ASN1Element): Buffer {
 }
 
 describe("Meerkat directory server", () => {
-    it("starts successfully", async (done) => {
+    it.skip("starts successfully", async (done) => {
         const PORT: number = 23230;
         Object.assign(process.env, {
             PORT: PORT.toString(10),

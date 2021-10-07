@@ -47,6 +47,8 @@ import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import * as localEncoders from "../ldap/syntaxEncoders";
+import * as localDecoders from "../ldap/syntaxDecoders";
 
 export
 function loadLDAPSyntaxes (ctx: Context): void {
@@ -94,6 +96,8 @@ function loadLDAPSyntaxes (ctx: Context): void {
             ctx.ldapSyntaxes.set(syntax.id.toString(), syntax);
         });
 
+    ctx.ldapSyntaxes.get(attributeTypeDescription["&id"]!.toString())!.decoder = localDecoders.getAttributeTypesDecoder(ctx);
+    ctx.ldapSyntaxes.get(attributeTypeDescription["&id"]!.toString())!.encoder = localEncoders.attributeTypes;
     ctx.ldapSyntaxes.get(bitString["&id"]!.toString())!.decoder = decoders.bitString;
     ctx.ldapSyntaxes.get(bitString["&id"]!.toString())!.encoder = encoders.bitString;
     ctx.ldapSyntaxes.get(boolean_["&id"]!.toString())!.decoder = decoders.boolean_;
@@ -112,8 +116,10 @@ function loadLDAPSyntaxes (ctx: Context): void {
     ctx.ldapSyntaxes.get(deliveryMethod["&id"]!.toString())!.encoder = encoders.deliveryMethod;
     ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!.decoder = decoders.directoryString;
     ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!.encoder = encoders.directoryString;
-    // dITContentRuleDescription
-    // dITStructureRuleDescription
+    ctx.ldapSyntaxes.get(dITContentRuleDescription["&id"]!.toString())!.decoder = localDecoders.getDITContentRulesDecoder(ctx);
+    ctx.ldapSyntaxes.get(dITContentRuleDescription["&id"]!.toString())!.encoder = localEncoders.dITContentRules;
+    ctx.ldapSyntaxes.get(dITStructureRuleDescription["&id"]!.toString())!.decoder = localDecoders.getDITStructureRulesDecoder(ctx);
+    ctx.ldapSyntaxes.get(dITStructureRuleDescription["&id"]!.toString())!.encoder = localEncoders.dITStructureRules;
     // enhancedGuide
     // facsimileTelephoneNr
     // fax
@@ -122,18 +128,22 @@ function loadLDAPSyntaxes (ctx: Context): void {
     // guide
     ctx.ldapSyntaxes.get(ia5String["&id"]!.toString())!.decoder = decoders.ia5String;
     ctx.ldapSyntaxes.get(ia5String["&id"]!.toString())!.encoder = encoders.ia5String;
-    // integer
+    ctx.ldapSyntaxes.get(integer["&id"]!.toString())!.decoder = decoders.integer;
+    ctx.ldapSyntaxes.get(integer["&id"]!.toString())!.encoder = encoders.integer;
     // jpeg
     ctx.ldapSyntaxes.get(jpeg["&id"]!.toString())!.decoder = decoders.jpeg;
     ctx.ldapSyntaxes.get(jpeg["&id"]!.toString())!.encoder = encoders.jpeg;
-    // matchingRuleDescription
-    // matchingRuleUseDescription
+    ctx.ldapSyntaxes.get(matchingRuleDescription["&id"]!.toString())!.decoder = localDecoders.getMatchingRulesDecoder(ctx);
+    ctx.ldapSyntaxes.get(matchingRuleDescription["&id"]!.toString())!.encoder = localEncoders.matchingRules;
+    ctx.ldapSyntaxes.get(matchingRuleUseDescription["&id"]!.toString())!.decoder = localDecoders.getMatchingRuleUseDecoder(ctx);
+    ctx.ldapSyntaxes.get(matchingRuleUseDescription["&id"]!.toString())!.encoder = localEncoders.matchingRuleUse;
     // nameAndOptionalUID
-    // nameFormDescription
-    // numericString
+    ctx.ldapSyntaxes.get(nameFormDescription["&id"]!.toString())!.decoder = localDecoders.getNameFormsDecoder(ctx);
+    ctx.ldapSyntaxes.get(nameFormDescription["&id"]!.toString())!.encoder = localEncoders.nameForms;
     ctx.ldapSyntaxes.get(numericString["&id"]!.toString())!.decoder = decoders.numericString;
     ctx.ldapSyntaxes.get(numericString["&id"]!.toString())!.encoder = encoders.numericString;
-    // objectClassDescription
+    ctx.ldapSyntaxes.get(objectClassDescription["&id"]!.toString())!.decoder = localDecoders.getObjectClassesDecoder(ctx);
+    ctx.ldapSyntaxes.get(objectClassDescription["&id"]!.toString())!.encoder = localEncoders.objectClasses;
     ctx.ldapSyntaxes.get(oid["&id"]!.toString())!.decoder = (value: Uint8Array): ASN1Element => {
         const desc = normalizeAttributeDescription(value);
         const id = ctx.nameToObjectIdentifier.get(desc);
@@ -165,7 +175,8 @@ function loadLDAPSyntaxes (ctx: Context): void {
     // telexNr
     ctx.ldapSyntaxes.get(utcTime["&id"]!.toString())!.decoder = decoders.utcTime;
     ctx.ldapSyntaxes.get(utcTime["&id"]!.toString())!.encoder = encoders.utcTime;
-    // ldapSyntaxDescription
+    ctx.ldapSyntaxes.get(ldapSyntaxDescription["&id"]!.toString())!.decoder = localDecoders.ldapSyntaxes;
+    ctx.ldapSyntaxes.get(ldapSyntaxDescription["&id"]!.toString())!.encoder = localEncoders.ldapSyntaxes;
     // substringAssertion
 
     ctx.ldapSyntaxes.set("cn", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);

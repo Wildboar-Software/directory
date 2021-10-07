@@ -501,3 +501,10 @@ export const removeLdapSyntaxes: SpecialAttributeDatabaseRemover = NOOP;
 
 export const removeGoverningStructureRule: SpecialAttributeDatabaseRemover = NOOP;
 export const removeStructuralObjectClass: SpecialAttributeDatabaseRemover = NOOP;
+export const removeNamingContexts: SpecialAttributeDatabaseRemover = NOOP;
+export const removeAltServer: SpecialAttributeDatabaseRemover = NOOP;
+export const removeSupportedExtension: SpecialAttributeDatabaseRemover = NOOP;
+export const removeSupportedControl: SpecialAttributeDatabaseRemover = NOOP;
+export const removeSupportedSASLMechanisms: SpecialAttributeDatabaseRemover = NOOP;
+export const removeSupportedLDAPVersion: SpecialAttributeDatabaseRemover = NOOP;
+export const removeSupportedFeatures: SpecialAttributeDatabaseRemover = NOOP;

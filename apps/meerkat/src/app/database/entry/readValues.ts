@@ -77,6 +77,13 @@ import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ld
 import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
 import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
 import { subschemaSubentryList } from "@wildboar/x500/src/lib/modules/InformationFramework/subschemaSubentryList.oa";
+import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/namingContexts.oa";
+import { altServer } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/altServer.oa";
+import { supportedExtension } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedExtension.oa";
+import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
+import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
+import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
+import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
@@ -155,6 +162,14 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     [ governingStructureRule["&id"].toString(), readers.readGoverningStructureRule ],
     [ structuralObjectClass["&id"].toString(), readers.readStructuralObjectClass ],
     [ subschemaSubentryList["&id"].toString(), readers.readSubschemaSubentryList ],
+
+    [ namingContexts["&id"].toString(), readers.readNamingContexts ],
+    [ altServer["&id"].toString(), readers.readAltServer ],
+    [ supportedExtension["&id"].toString(), readers.readSupportedExtension ],
+    [ supportedControl["&id"].toString(), readers.readSupportedControl ],
+    [ supportedSASLMechanisms["&id"].toString(), readers.readSupportedSASLMechanisms ],
+    [ supportedLDAPVersion["&id"].toString(), readers.readSupportedLDAPVersion ],
+    [ supportedFeatures["&id"].toString(), readers.readSupportedFeatures ],
 ]);
 
 export

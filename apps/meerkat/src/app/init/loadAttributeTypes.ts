@@ -1,35 +1,8 @@
-import type { Context, AttributeInfo } from "../types";
+import type { Context } from "../types";
 import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
 import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
 import attributeFromInformationObject from "./attributeFromInformationObject";
-import { ObjectIdentifier } from "asn1-ts";
-import { AttributeUsage, AttributeTypeDescription } from "@prisma/client";
-import {
-    AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-
-function attributeTypeFromDatabaseEntry (dbe: AttributeTypeDescription): AttributeInfo {
-    return {
-        id: ObjectIdentifier.fromString(dbe.identifier),
-        parent: dbe.derivation
-            ? ObjectIdentifier.fromString(dbe.derivation)
-            : undefined,
-        singleValued: !dbe.multiValued,
-        collective: dbe.collective,
-        dummy: dbe.dummy,
-        noUserModification: !dbe.userModifiable,
-        usage: AttributeUsage_userApplications,
-        obsolete: dbe.obsolete,
-        ldapSyntax: dbe.ldapSyntax
-            ? ObjectIdentifier.fromString(dbe.ldapSyntax)
-            : undefined,
-        ldapNames: dbe.ldapNames
-            ? dbe.ldapNames.split(" ")
-            : undefined,
-        ldapDescription: dbe.ldapDescription ?? undefined,
-        compatibleMatchingRules: new Set(),
-    };
-}
+import { AttributeUsage } from "@prisma/client";
 
 export
 async function loadAttributeTypes (ctx: Context): Promise<void> {
@@ -59,96 +32,6 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
             || (storedType.application !== AttributeUsage.USER_APPLICATIONS)
         ) {
             continue;
-        }
-        switch (storedType.attributeSyntax.trim()) {
-            case ("BOOLEAN"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("INTEGER"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("BIT STRING"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("OCTET STRING"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("NULL"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("OBJECT IDENTIFIER"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("GeneralizedTime"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("UTCTime"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("IA5String"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("NumericString"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("PrintableString"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("TelephoneNumber"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("DistinguishedName"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            case ("UnboundedDirectoryString"):
-            case ("DirectoryString"): {
-                ctx.attributes.set(storedType.identifier, {
-                    ...attributeTypeFromDatabaseEntry(storedType),
-                });
-                break;
-            }
-            default: {
-                continue;
-            }
         }
     }
 
