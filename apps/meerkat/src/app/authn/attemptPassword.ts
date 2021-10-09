@@ -8,7 +8,6 @@ import type {
     SimpleCredentials_password,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-password.ta";
 import compareAlgorithmIdentifier from "@wildboar/x500/src/lib/comparators/compareAlgorithmIdentifier";
-import compareUint8Arrays from "@wildboar/x500/src/lib/comparators/compareUint8Arrays";
 import { UserPwd_encrypted } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd-encrypted.ta";
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
 import { DERElement, ObjectIdentifier } from "asn1-ts";
@@ -71,7 +70,8 @@ async function attemptPassword (
         const v = userPwd;
         if ("encrypted" in a) {
             passwordIsCorrect = (
-                compareUint8Arrays(a.encrypted.encryptedString, v.encrypted.encryptedString)
+                (a.encrypted.encryptedString.length === v.encrypted.encryptedString.length)
+                && crypto.timingSafeEqual(userPwd.encrypted.encryptedString, v.encrypted.encryptedString)
                 && compareAlgorithmIdentifier(a.encrypted.algorithmIdentifier, v.encrypted.algorithmIdentifier)
             );
         } else if ("clear" in a) {
@@ -80,7 +80,10 @@ async function attemptPassword (
             if (!result) {
                 return undefined; // Algorithm not understood.
             }
-            return compareUint8Arrays(result, v.encrypted.encryptedString);
+            return (
+                (result.length === v.encrypted.encryptedString.length)
+                && crypto.timingSafeEqual(result, v.encrypted.encryptedString)
+            );
         } else {
             return undefined;
         }

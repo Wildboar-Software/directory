@@ -109,7 +109,7 @@ async function search_ii (
                     id_errcode_serviceError,
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -141,7 +141,7 @@ async function search_ii (
                                 abandoned["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );

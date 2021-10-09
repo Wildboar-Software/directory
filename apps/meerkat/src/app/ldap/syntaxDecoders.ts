@@ -58,6 +58,10 @@ import {
     LdapSyntaxDescription,
     _encode_LdapSyntaxDescription,
 } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
+import {
+    SubtreeSpecification,
+    _encode_SubtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 
 // export
 // const objectClasses: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
@@ -1052,4 +1056,22 @@ function ldapSyntaxes (value: Uint8Array): ASN1Element {
             : undefined,
     );
     return _encode_LdapSyntaxDescription(desc, DER);
+}
+
+
+export
+function getSubtreeSpecificationDecoder (
+    ctx: Context,
+): LDAPSyntaxDecoder {
+    return function (value: Uint8Array): ASN1Element {
+        const str = Buffer.from(value).toString("utf-8");
+        const ss = new SubtreeSpecification(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        return _encode_SubtreeSpecification(ss, DER);
+    };
 }

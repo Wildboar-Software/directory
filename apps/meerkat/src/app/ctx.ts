@@ -107,7 +107,9 @@ const ctx: Context = {
     db: new PrismaClient(),
     telemetry: {
         sendEvent: (body: Record<string, any>) => {
-            ctx.log.debug(body);
+            if (process.env.NODE_ENV === "development") {
+                console.debug(body);
+            }
             // try {
             //     axios.post(telemetryURL, body, {
             //         headers: {

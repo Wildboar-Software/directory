@@ -104,7 +104,7 @@ async function relatedEntryProcedure (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    chaining?.aliasDereferenced,
                     undefined,
                 ),
             );

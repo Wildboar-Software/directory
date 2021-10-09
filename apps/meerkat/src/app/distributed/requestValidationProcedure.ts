@@ -481,7 +481,7 @@ async function requestValidationProcedure (
                 [],
                 createSecurityParameters(ctx), // TODO:
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                chainedArgument.aliasDereferenced,
                 undefined,
             ),
         );
@@ -508,7 +508,7 @@ async function requestValidationProcedure (
                 [],
                 createSecurityParameters(ctx), // TODO:
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                chainedArgument.aliasDereferenced,
                 undefined,
             ),
         );

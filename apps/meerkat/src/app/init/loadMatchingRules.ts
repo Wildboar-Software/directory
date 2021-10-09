@@ -79,13 +79,16 @@ import {
     directoryStringFirstComponentMatch,
 } from "@wildboar/x500/src/lib/matching/equality/directoryStringFirstComponentMatch";
 import {
+    distinguishedNameMatch,
+} from "@wildboar/x500/src/lib/matching/equality/distinguishedNameMatch";
+import {
     dnsNameMatch,
 } from "@wildboar/x500/src/lib/matching/equality/dnsNameMatch";
 import {
     dualStringMatch,
 } from "@wildboar/x500/src/lib/matching/equality/dualStringMatch";
 import {
-    certificateMatch as enhancedCertificateMatch, // FIXME:
+    enhancedCertificateMatch,
 } from "@wildboar/x500/src/lib/matching/equality/enhancedCertificateMatch";
 import {
     extensionPresenceMatch,
@@ -132,6 +135,9 @@ import {
 import {
     objectIdentifierFirstComponentMatch,
 } from "@wildboar/x500/src/lib/matching/equality/objectIdentifierFirstComponentMatch";
+import {
+    objectIdentifierMatch,
+} from "@wildboar/x500/src/lib/matching/equality/objectIdentifierMatch";
 import {
     octetStringMatch,
 } from "@wildboar/x500/src/lib/matching/equality/octetStringMatch";
@@ -240,6 +246,26 @@ import {
 import {
     telephoneNumberSubstringsMatch,
 } from "@wildboar/x500/src/lib/matching/substring/telephoneNumberSubstringsMatch";
+import approx_acceptableCertPoliciesMatch from "../matching/approx/acceptableCertPoliciesMatch";
+import approx_algorithmIdentifierMatch from "../matching/approx/algorithmIdentifierMatch";
+import approx_attDescriptor from "../matching/approx/attDescriptor";
+import approx_bitStringMatch from "../matching/approx/bitStringMatch";
+import approx_caseIgnoreIA5Match from "../matching/approx/caseIgnoreIA5Match";
+import approx_caseIgnoreListMatch from "../matching/approx/caseIgnoreListMatch";
+import approx_caseIgnoreMatch from "../matching/approx/caseIgnoreMatch";
+import approx_directoryStringFirstComponentMatch from "../matching/approx/directoryStringFirstComponentMatch";
+import approx_distinguishedNameMatch from "../matching/approx/distinguishedNameMatch";
+import approx_dualStringMatch from "../matching/approx/dualStringMatch";
+import approx_generalizedTimeMatch from "../matching/approx/generalizedTimeMatch";
+import approx_integerFirstComponentMatch from "../matching/approx/integerFirstComponentMatch";
+import approx_integerMatch from "../matching/approx/integerMatch";
+import approx_intEmailMatch from "../matching/approx/intEmailMatch";
+import approx_jidMatch from "../matching/approx/jidMatch";
+import approx_objectIdentifierMatch from "../matching/approx/objectIdentifierMatch";
+import approx_pwdEncAlgMatch from "../matching/approx/pwdEncAlgMatch";
+import approx_uniqueMemberMatch from "../matching/approx/uniqueMemberMatch";
+import approx_uriMatch from "../matching/approx/uriMatch";
+import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch";
 
 function toInfo <Matcher> (
     mr: MATCHING_RULE,
@@ -253,6 +279,8 @@ function toInfo <Matcher> (
         matcher,
     };
 }
+
+// FIXME: Add distinguishedName match and objectIdentifer match.
 
 export
 function loadMatchingRules (ctx: Context): void {
@@ -282,6 +310,7 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.delegatedNameConstraintsMatch, delegatedNameConstraintsMatch ],
         [ x500mr.delegationPathMatch, delegationPathMatch ],
         [ x500mr.directoryStringFirstComponentMatch, directoryStringFirstComponentMatch ],
+        [ x500mr.distinguishedNameMatch, distinguishedNameMatch ],
         [ x500mr.dnsNameMatch, dnsNameMatch ],
         [ x500mr.dualStringMatch, dualStringMatch ],
         [ x500mr.enhancedCertificateMatch, enhancedCertificateMatch ],
@@ -300,6 +329,7 @@ function loadMatchingRules (ctx: Context): void {
         // [ x500mr.nullMatch, nullMatch ],
         [ x500mr.numericStringMatch, numericStringMatch ],
         [ x500mr.objectIdentifierFirstComponentMatch, objectIdentifierFirstComponentMatch ],
+        [ x500mr.objectIdentifierMatch, objectIdentifierMatch ],
         [ x500mr.octetStringMatch, octetStringMatch ],
         [ x500mr.pkiPathMatch, pkiPathMatch ],
         [ x500mr.policyMatch, policyMatch ],
@@ -354,6 +384,95 @@ function loadMatchingRules (ctx: Context): void {
         .forEach(([ mr, matcher ]) => {
             ctx.substringsMatchingRules.set(mr["&id"].toString(), toInfo(mr, matcher));
         });
+
+    ctx.approxMatchingRules.set(
+        x500mr.acceptableCertPoliciesMatch["&id"]!.toString(),
+        approx_acceptableCertPoliciesMatch,
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.algorithmIdentifierMatch["&id"]!.toString(),
+        approx_algorithmIdentifierMatch,
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.attDescriptor["&id"]!.toString(),
+        approx_attDescriptor,
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.bitStringMatch["&id"]!.toString(),
+        approx_bitStringMatch(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.caseExactIA5Match["&id"]!.toString(),
+        approx_caseIgnoreIA5Match(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.caseIgnoreIA5Match["&id"]!.toString(),
+        approx_caseIgnoreIA5Match(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.caseExactMatch["&id"]!.toString(),
+        approx_caseIgnoreMatch(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.caseIgnoreMatch["&id"]!.toString(),
+        approx_caseIgnoreMatch(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.caseIgnoreListMatch["&id"]!.toString(),
+        approx_caseIgnoreListMatch(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.directoryStringFirstComponentMatch["&id"]!.toString(),
+        approx_directoryStringFirstComponentMatch(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.distinguishedNameMatch["&id"]!.toString(),
+        approx_distinguishedNameMatch,
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.dualStringMatch["&id"]!.toString(),
+        approx_dualStringMatch(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.generalizedTimeMatch["&id"]!.toString(),
+        approx_generalizedTimeMatch(86_400_000),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.integerFirstComponentMatch["&id"]!.toString(),
+        approx_integerFirstComponentMatch(10),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.integerMatch["&id"]!.toString(),
+        approx_integerMatch(10),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.intEmailMatch["&id"]!.toString(),
+        approx_intEmailMatch(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.jidMatch["&id"]!.toString(),
+        approx_jidMatch(2),
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.objectIdentifierMatch["&id"]!.toString(),
+        approx_objectIdentifierMatch,
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.pwdEncAlgMatch["&id"]!.toString(),
+        approx_pwdEncAlgMatch,
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.uniqueMemberMatch["&id"]!.toString(),
+        approx_uniqueMemberMatch,
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.uriMatch["&id"]!.toString(),
+        approx_uriMatch,
+    );
+    ctx.approxMatchingRules.set(
+        x500mr.uTCTimeMatch["&id"]!.toString(),
+        approx_uTCTimeMatch(86_400_000),
+    );
 }
 
 export default loadMatchingRules;

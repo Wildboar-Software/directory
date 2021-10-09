@@ -224,7 +224,7 @@ async function search_i (
                     id_errcode_serviceError,
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -254,7 +254,7 @@ async function search_i (
                             id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -273,7 +273,7 @@ async function search_i (
                             id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -297,7 +297,7 @@ async function search_i (
                             id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -318,7 +318,7 @@ async function search_i (
                         abandoned["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -335,7 +335,7 @@ async function search_i (
                         id_errcode_serviceError,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -454,7 +454,7 @@ async function search_i (
                                 securityError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
@@ -474,7 +474,7 @@ async function search_i (
                                 nameError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
@@ -970,7 +970,7 @@ async function search_i (
                                 abandoned["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );

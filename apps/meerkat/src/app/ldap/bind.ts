@@ -18,7 +18,7 @@ import {
     LDAPResult_resultCode_authMethodNotSupported,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
 import * as crypto from "crypto";
-import attemptPassword from "../x500/attemptPassword";
+import attemptPassword from "../authn/attemptPassword";
 import readEntryPassword from "../database/readEntryPassword";
 import sleep from "../utils/sleep";
 import type { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
@@ -159,9 +159,9 @@ async function bind (
         if (!pwd) {
             return invalidCredentials;
         }
-        const authenticated = attemptPassword({
+        const authenticated = await attemptPassword(ctx, entry, {
             unprotected: suppliedPassword,
-        }, pwd);
+        });
         if (authenticated) {
             return {
                 ...ret,
@@ -195,9 +195,9 @@ async function bind (
                 if (!pwd) {
                     return invalidCredentials;
                 }
-                const authenticated = attemptPassword({
+                const authenticated = await attemptPassword(ctx, entry, {
                     unprotected: Buffer.from(passwd),
-                }, pwd);
+                });
                 if (authenticated) {
                     return {
                         ...ret,

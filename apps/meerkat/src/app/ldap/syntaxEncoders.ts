@@ -1,6 +1,8 @@
+import type { Context } from "../types";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import { ASN1Element } from "asn1-ts";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+import encodeLDAPDN from "./encodeLDAPDN";
 import type {
     UnboundedDirectoryString as UBS,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
@@ -41,6 +43,12 @@ import {
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import {
+    _decode_SubtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+import {
+    Refinement,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
 
 function escapeUBS (str: UBS): string {
     return directoryStringToString(str)
@@ -338,3 +346,65 @@ const nameForms: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
     }
     return Buffer.from(`( ${fields.join(" ")} )`, "utf-8");
 };
+
+function refinementToString (ref: Refinement): string {
+    if ("item" in ref) {
+        return `item:${ref.item.toString()}`;
+    } else if ("and" in ref) {
+        return `and:{ ${ref.and.map(refinementToString).join(", ")} }`;
+    } else if ("or" in ref) {
+        return `or:{ ${ref.or.map(refinementToString).join(", ")} }`;
+    } else if ("not" in ref) {
+        return `not:${refinementToString(ref)}`;
+    } else {
+        throw new Error();
+    }
+}
+
+export
+function getSubtreeSpecificationEncoder (
+    ctx: Context,
+): LDAPSyntaxEncoder {
+    return (value: ASN1Element): Uint8Array => {
+        const ss = _decode_SubtreeSpecification(value);
+        const fields: string[] = [];
+        if (ss.base) {
+            const escapedLocalName: string = Buffer.from(encodeLDAPDN(ctx, ss.base))
+                .toString("utf-8")
+                .replace(/"/g, "\"\"");
+            fields.push(`base "${escapedLocalName}"`);
+        }
+        if (ss.specificExclusions) {
+            const seStr = ss.specificExclusions
+                .map((se) => {
+                    if ("chopBefore" in se) {
+                        const escapedLocalName: string = Buffer
+                            .from(encodeLDAPDN(ctx, se.chopBefore))
+                            .toString("utf-8")
+                            .replace(/"/g, "\"\"");
+                        return `chopBefore:"${escapedLocalName}"`;
+                    } else if ("chopAfter" in se) {
+                        const escapedLocalName: string = Buffer
+                            .from(encodeLDAPDN(ctx, se.chopAfter))
+                            .toString("utf-8")
+                            .replace(/"/g, "\"\"");
+                        return `chopAfter:"${escapedLocalName}"`;
+                    } else {
+                        throw new Error();
+                    }
+                })
+                .join(", ");
+            fields.push(`specificExclusions { ${seStr} }`);
+        }
+        if (ss.minimum) {
+            fields.push(`minimum ${ss.minimum}`);
+        }
+        if (ss.maximum) {
+            fields.push(`maximum ${ss.maximum}`);
+        }
+        if (ss.specificationFilter) {
+            fields.push(`specificationFilter ${refinementToString(ss.specificationFilter)}`);
+        }
+        return Buffer.from(`{ ${fields.join(", ")} }`, "utf-8");
+    };
+}

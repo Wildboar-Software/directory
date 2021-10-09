@@ -108,7 +108,7 @@ async function removeEntry (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -175,7 +175,7 @@ async function removeEntry (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );

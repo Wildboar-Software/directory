@@ -53,6 +53,7 @@ import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 export
 async function apinfoProcedure (
@@ -116,9 +117,14 @@ async function apinfoProcedure (
                 new ServiceErrorData(
                     ServiceProblem_loopDetected,
                     [],
-                    undefined,
-                    undefined,
-                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    req.chaining.aliasDereferenced,
                     undefined,
                 ),
             );

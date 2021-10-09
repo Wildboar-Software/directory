@@ -110,6 +110,8 @@ import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcome
 import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
 import { BER } from "asn1-ts/dist/node/functional";
+import failover from "../utils/failover";
+import emptyChainingResults from "../x500/emptyChainingResults";
 
 export
 type SearchResultOrError = {
@@ -337,12 +339,7 @@ class OperationDispatcher {
                     opCode: req.opCode,
                     result: {
                         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            new ChainingResults(
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                            ),
+                            emptyChainingResults(),
                             _encode_ListResult(newResult, DER),
                         ),
                     },
@@ -392,8 +389,8 @@ class OperationDispatcher {
         else if (compareCode(req.opCode, search["&operationCode"]!)) {
             const argument = _decode_SearchArgument(reqData.argument);
             const data = getOptionallyProtectedValue(argument);
-            const requestStats: RequestStatistics = {
-                operationCode: codeToString(req.opCode),
+            const requestStats: RequestStatistics | undefined = failover(() => ({
+                operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: data.baseObject.rdnSequence.length,
                 subset: data.subset,
@@ -424,7 +421,7 @@ class OperationDispatcher {
                     ? data.joinArguments.map(getJoinArgumentStatistics)
                     : undefined,
                 joinType: data.joinType,
-            };
+            }), undefined);
             const chainingResults = new ChainingResults(
                 undefined,
                 undefined,
@@ -513,18 +510,13 @@ class OperationDispatcher {
                     opCode: search["&operationCode"]!,
                     result: {
                         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            new ChainingResults(
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                            ),
+                            emptyChainingResults(),
                             _encode_SearchResult(result, DER),
                         ),
                     },
                     request: requestStats,
                     outcome: {
-                        result: {
+                        result: failover(() => ({
                             search: getSearchResultStatistics(result),
                             poq: (
                                 ("searchInfo" in unprotectedResult)
@@ -532,7 +524,7 @@ class OperationDispatcher {
                             )
                                 ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
                                 : undefined,
-                        },
+                        }), undefined),
                     },
                     foundDSE: state.foundDSE,
                 };
@@ -605,18 +597,13 @@ class OperationDispatcher {
                     opCode: search["&operationCode"]!,
                     result: {
                         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            new ChainingResults(
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                            ),
+                            emptyChainingResults(),
                             _encode_SearchResult(result, DER),
                         ),
                     },
                     request: requestStats,
                     outcome: {
-                        result: {
+                        result: failover(() => ({
                             search: getSearchResultStatistics(result),
                             poq: (
                                 ("searchInfo" in unprotectedResult)
@@ -624,7 +611,7 @@ class OperationDispatcher {
                             )
                                 ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
                                 : undefined,
-                        },
+                        }), undefined),
                     },
                     foundDSE: state.foundDSE,
                 };
@@ -649,12 +636,7 @@ class OperationDispatcher {
                 opCode: req.opCode,
                 result: {
                     unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                        new ChainingResults(
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                        ),
+                        emptyChainingResults(),
                         result.result,
                     ),
                 },
@@ -682,17 +664,12 @@ class OperationDispatcher {
                         id_errcode_securityError,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    reqData.chainedArgument.aliasDereferenced,
                     undefined,
                 ),
             );
         }
-        const chainingResults = new ChainingResults(
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        );
+        const chainingResults = emptyChainingResults();
         const state: OperationDispatcherState = {
             NRcontinuationList: [],
             SRcontinuationList: [],
@@ -857,7 +834,7 @@ class OperationDispatcher {
                             search["&operationCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 },
@@ -982,17 +959,12 @@ class OperationDispatcher {
                         id_errcode_securityError,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    chaining.aliasDereferenced,
                     undefined,
                 ),
             );
         }
-        const chainingResults = new ChainingResults(
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        );
+        const chainingResults = emptyChainingResults();
         const state: OperationDispatcherState = {
             NRcontinuationList: [],
             SRcontinuationList: [],

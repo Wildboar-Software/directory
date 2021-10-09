@@ -1,4 +1,5 @@
-import { Context, Vertex, ClientConnection } from "../types";
+import { Context, Vertex, ClientConnection, OperationStatistics } from "../types";
+import * as errors from "../errors";
 import * as net from "net";
 import * as tls from "tls";
 import { BERElement, ASN1TruncationError, ObjectIdentifier } from "asn1-ts";
@@ -40,12 +41,15 @@ import dapReplyToLDAPResult from "../distributed/dapReplyToLDAPResult";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import dapErrorToLDAPResult from "../distributed/dapErrorToLDAPResult";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import codeToString from "../x500/codeToString";
+import getServerStatistics from "../telemetry/getServerStatistics";
+import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 
 async function handleRequest (
     ctx: Context,
     conn: ClientConnection, // eslint-disable-line
     message: LDAPMessage,
-    // stats: OperationStatistics,
+    stats: OperationStatistics,
 ): Promise<void> {
     const dapRequest = ldapRequestToDAPRequest(ctx, message);
     const result = await OperationDispatcher.dispatchDAPRequest(
@@ -85,9 +89,9 @@ async function handleRequest (
         result: unprotectedResult.result,
     }, message.messageID, onEntry);
     conn.socket.write(_encode_LDAPMessage(ldapResult, BER).toBytes());
-    // stats.request = result.request ?? stats.request;
-    // stats.outcome = result.outcome ?? stats.outcome;
-    // ctx.statistics.operations.push(stats);
+    stats.request = result.request ?? stats.request;
+    stats.outcome = result.outcome ?? stats.outcome;
+    ctx.statistics.operations.push(stats);
 }
 
 async function handleRequestAndErrors (
@@ -95,19 +99,18 @@ async function handleRequestAndErrors (
     conn: ClientConnection, // eslint-disable-line
     message: LDAPMessage,
 ): Promise<void> {
-    // const stats: OperationStatistics = {
-    //     type: "op",
-    //     inbound: true,
-    //     server: getServerStatistics(),
-    //     connection: getConnectionStatistics(dap),
-    //     // idm?: IDMTransportStatistics;
-    //     bind: {
-    //         protocol: dap_ip["&id"]!.toString(),
-    //     },
-    //     request: {
-    //         operationCode: codeToString(request.opcode),
-    //     },
-    // };
+    const stats: OperationStatistics = {
+        type: "op",
+        inbound: true,
+        server: getServerStatistics(),
+        connection: getConnectionStatistics(conn),
+        bind: {
+            protocol: "ldap",
+        },
+        request: {
+            operationCode: Object.keys(message.protocolOp)[0],
+        },
+    };
     // const now = new Date();
     // dap.invocations.set(request.invokeID, {
     //     invokeId: request.invokeID,
@@ -115,9 +118,21 @@ async function handleRequestAndErrors (
     //     startTime: new Date(),
     // });
     try {
-        await handleRequest(ctx, conn, message);
+        await handleRequest(ctx, conn, message, stats);
     } catch (e) {
         ctx.log.error(e.message);
+        if (!stats.outcome) {
+            stats.outcome = {};
+        }
+        if (!stats.outcome.error) {
+            stats.outcome.error = {};
+        }
+        if (e instanceof Error) {
+            stats.outcome.error.stack = e.stack;
+        }
+        if (e instanceof errors.DirectoryError) {
+            stats.outcome.error.code = codeToString(e.getErrCode());
+        }
         const result: LDAPResult | undefined = dapErrorToLDAPResult(e);
         if (!result) {
             return; // No response is returned for abandoned operations in LDAP.
@@ -143,18 +158,6 @@ async function handleRequestAndErrors (
         } else {
             return;
         }
-        // if (!stats.outcome) {
-        //     stats.outcome = {};
-        // }
-        // if (!stats.outcome.error) {
-        //     stats.outcome.error = {};
-        // }
-        // if (e instanceof Error) {
-        //     stats.outcome.error.stack = e.stack;
-        // }
-        // if (e instanceof errors.DirectoryError) {
-        //     stats.outcome.error.code = codeToString(e.getErrCode());
-        // }
     } finally {
         // dap.invocations.set(request.invokeID, {
         //     invokeId: request.invokeID,
@@ -162,9 +165,9 @@ async function handleRequestAndErrors (
         //     startTime: now,
         //     resultTime: new Date(),
         // });
-        // for (const opstat of ctx.statistics.operations) {
-        //     ctx.telemetry.sendEvent(opstat);
-        // }
+        for (const opstat of ctx.statistics.operations) {
+            ctx.telemetry.sendEvent(opstat);
+        }
     }
 }
 

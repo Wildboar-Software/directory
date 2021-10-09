@@ -41,7 +41,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
+import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import * as errors from "../errors";
 import {
@@ -79,7 +79,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_RETURN_DN,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import createSecurityParameters from "../x500/createSecurityParameters";
@@ -92,23 +91,11 @@ import {
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
-import { id_ar_accessControlSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
-import { id_ar_subschemaAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
-import { id_ar_collectiveAttributeSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
-import { id_ar_contextDefaultSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
-import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
-import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
-const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
-const subschemaAdminSpecificArea: string = id_ar_subschemaAdminSpecificArea.toString();
-const collectiveAttributeSpecificArea: string = id_ar_collectiveAttributeSpecificArea.toString();
-const contextDefaultSpecificArea: string = id_ar_contextDefaultSpecificArea.toString();
-const serviceSpecificArea: string = id_ar_serviceSpecificArea.toString();
-const pwdAdminSpecificArea: string = id_ar_pwdAdminSpecificArea.toString();
 
 const MAX_DEPTH: number = 10000;
 
@@ -203,7 +190,7 @@ async function findDSE (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -260,10 +247,6 @@ async function findDSE (
     const subentries: boolean = (
         serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
-    /**
-     * This is used to set the EntryInformation.partialName.
-     */
-    let partialName: boolean = false;
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
 
     const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
@@ -347,13 +330,13 @@ async function findDSE (
                         nameError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         } else {
-            partialName = true;
-            nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
+            state.partialName = true;
+            nameResolutionPhase = OperationProgress_nameResolutionPhase_completed; // FIXME:
             return dse_i;
         }
     };
@@ -505,7 +488,7 @@ async function findDSE (
                                 serviceError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
@@ -522,7 +505,7 @@ async function findDSE (
                                 serviceError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
@@ -541,7 +524,7 @@ async function findDSE (
                             serviceError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -658,7 +641,7 @@ async function findDSE (
                         ...tuple,
                         await userWithinACIUserClass(
                             tuple[0],
-                            conn.boundNameAndUID!, // FIXME:
+                            conn.boundNameAndUID!,
                             childDN,
                             EQUALITY_MATCHER,
                             isMemberOfGroup,
@@ -885,7 +868,7 @@ async function findDSE (
                                 serviceError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );

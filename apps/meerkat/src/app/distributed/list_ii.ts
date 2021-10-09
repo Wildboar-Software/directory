@@ -177,7 +177,7 @@ async function list_ii (
                         nameError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -204,7 +204,7 @@ async function list_ii (
                             serviceError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -223,7 +223,7 @@ async function list_ii (
                             serviceError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -247,7 +247,7 @@ async function list_ii (
                             serviceError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -268,7 +268,7 @@ async function list_ii (
                         abandoned["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -285,7 +285,7 @@ async function list_ii (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -331,7 +331,7 @@ async function list_ii (
                                 abandoned["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
@@ -448,7 +448,7 @@ async function list_ii (
                     serviceError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );

@@ -1,5 +1,5 @@
 import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT, FALSE_BIT } from "asn1-ts";
+import { ObjectIdentifier, TRUE_BIT, FALSE_BIT } from "asn1-ts";
 import * as errors from "../errors";
 import {
     _decode_ReadArgument,
@@ -43,7 +43,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_EXPORT,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import type { ModifyRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights.ta";
@@ -140,7 +139,7 @@ async function read (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -247,7 +246,7 @@ async function read (
                 id_opcode_read,
             ),
             ctx.dsa.accessPoint.ae_title.rdnSequence,
-            undefined,
+            state.chainingArguments.aliasDereferenced,
             undefined,
         ),
     };

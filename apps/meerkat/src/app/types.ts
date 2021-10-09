@@ -981,7 +981,7 @@ interface OperationStatistics extends Partial<WithRequestStatistics>, Partial<Wi
     connection?: ConnectionStatistics;
     idm?: IDMTransportStatistics;
     bind?: {
-        protocol: IndexableOID;
+        protocol: IndexableOID | "ldap";
         callingAETitleLength?: number;
         calledAETitleLength?: number;
         credentials?: CredentialStatistics;
@@ -1054,7 +1054,11 @@ interface Context {
     equalityMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
     orderingMatchingRules: Map<IndexableOID, MatchingRuleInfo<OrderingMatcher>>;
     substringsMatchingRules: Map<IndexableOID, MatchingRuleInfo<SubstringsMatcher>>;
-    approxMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
+    /**
+     * This maps the object identifiers of equality matching rules to
+     * approximate matching rule, if there is one available.
+     */
+    approxMatchingRules: Map<IndexableOID, EqualityMatcher>;
     contextTypes: Map<IndexableOID, ContextTypeInfo>;
     matchingRulesSuitableForNaming: Set<IndexableOID>;
     /**

@@ -156,7 +156,7 @@ import failover from "../utils/failover";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
-function namingViolationErrorData (
+function namingViolationErrorData ( // FIXME: Remove.
     ctx: Context,
     conn: ClientConnection,
     attributeTypes: AttributeType[],
@@ -215,7 +215,7 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -235,7 +235,7 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -267,7 +267,7 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -287,7 +287,7 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -356,7 +356,7 @@ async function addEntry (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -387,7 +387,7 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -408,7 +408,7 @@ async function addEntry (
                     serviceError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -448,7 +448,7 @@ async function addEntry (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -494,7 +494,7 @@ async function addEntry (
                             securityError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -549,7 +549,7 @@ async function addEntry (
                             securityError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -581,7 +581,7 @@ async function addEntry (
                     attributeError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -601,7 +601,7 @@ async function addEntry (
                     serviceError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -638,7 +638,7 @@ async function addEntry (
                             updateError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -1086,7 +1086,7 @@ async function addEntry (
                     securityError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -1104,7 +1104,7 @@ async function addEntry (
                     serviceError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );

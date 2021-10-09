@@ -219,7 +219,7 @@ async function modifyDN (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -238,7 +238,7 @@ async function modifyDN (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -262,7 +262,7 @@ async function modifyDN (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -332,7 +332,7 @@ async function modifyDN (
                             securityError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -367,7 +367,7 @@ async function modifyDN (
                             securityError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -395,7 +395,7 @@ async function modifyDN (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -417,7 +417,7 @@ async function modifyDN (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -484,7 +484,7 @@ async function modifyDN (
                             securityError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -506,7 +506,7 @@ async function modifyDN (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -526,7 +526,7 @@ async function modifyDN (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -550,7 +550,7 @@ async function modifyDN (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );

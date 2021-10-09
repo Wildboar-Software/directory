@@ -68,7 +68,7 @@ async function nrcrProcedure (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -90,7 +90,7 @@ async function nrcrProcedure (
                     referral["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -160,7 +160,7 @@ async function nrcrProcedure (
                                         serviceError["&errorCode"],
                                     ),
                                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                    undefined,
+                                    state.chainingArguments.aliasDereferenced,
                                     undefined,
                                 ),
                             );
@@ -211,7 +211,7 @@ async function nrcrProcedure (
                             nameError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -230,7 +230,7 @@ async function nrcrProcedure (
                 serviceError["&errorCode"],
             ),
             ctx.dsa.accessPoint.ae_title.rdnSequence,
-            undefined,
+            state.chainingArguments.aliasDereferenced,
             undefined,
         ),
     );

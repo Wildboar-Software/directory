@@ -1,5 +1,5 @@
 import type { Context, Vertex, ClientConnection, OperationReturn } from "../types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -34,7 +34,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_MODIFY,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import {
@@ -180,7 +179,7 @@ async function administerPassword (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );

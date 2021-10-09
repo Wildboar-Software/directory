@@ -17,12 +17,15 @@ import destringifyRDNSequence from "@wildboar/ldap/src/lib/destringifiers/RDNSeq
  * @returns
  */
 export
-function decodeLDAPDN (ctx: Context, dn: Uint8Array): RDNSequence {
+function decodeLDAPDN (ctx: Context, dn: Uint8Array | string): RDNSequence {
     if (dn.length === 0) {
         return [];
     }
+    const dnStr: string = (typeof dn === "string")
+        ? dn
+        : Buffer.from(dn).toString("utf-8");
     return Array.from(destringifyRDNSequence(
-        Buffer.from(dn).toString("utf-8"),
+        dnStr,
         (attrDesc: string) => {
             const attrType = normalizeAttributeDescription(Buffer.from(attrDesc));
             const attr = ctx.attributes.get(attrType);

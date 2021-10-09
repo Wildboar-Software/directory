@@ -186,7 +186,7 @@ const notPermittedData =  (ctx: Context, conn: ClientConnection) => new Security
         securityError["&errorCode"],
     ),
     ctx.dsa.accessPoint.ae_title.rdnSequence,
-    undefined,
+    undefined, // FIXME:
     undefined,
 );
 
@@ -975,7 +975,7 @@ async function modifyEntry (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -1046,7 +1046,7 @@ async function modifyEntry (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -1125,7 +1125,7 @@ async function modifyEntry (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -1157,7 +1157,7 @@ async function modifyEntry (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -1187,7 +1187,7 @@ async function modifyEntry (
                             updateError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -1241,7 +1241,7 @@ async function modifyEntry (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -1274,7 +1274,7 @@ async function modifyEntry (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -1300,7 +1300,7 @@ async function modifyEntry (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -1340,7 +1340,7 @@ async function modifyEntry (
                             updateError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -1384,7 +1384,7 @@ async function modifyEntry (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );

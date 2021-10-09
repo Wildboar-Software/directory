@@ -4,7 +4,7 @@ import {
 import { LDAPSyntaxInfo } from "../types";
 
 export
-function attributeFromInformationObject (io: SYNTAX_NAME): LDAPSyntaxInfo {
+function ldapSyntaxFromInformationObject (io: SYNTAX_NAME): LDAPSyntaxInfo {
     if (!io["&id"]) {
         throw new Error();
     }
@@ -14,4 +14,4 @@ function attributeFromInformationObject (io: SYNTAX_NAME): LDAPSyntaxInfo {
     };
 }
 
-export default attributeFromInformationObject;
+export default ldapSyntaxFromInformationObject;

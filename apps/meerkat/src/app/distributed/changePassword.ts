@@ -1,5 +1,5 @@
 import type { Context, Vertex, ClientConnection, OperationReturn } from "../types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "asn1-ts";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -35,7 +35,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_MODIFY,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import {
@@ -52,8 +51,6 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import codeToString from "../x500/codeToString";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 // changePassword OPERATION ::= {
@@ -183,7 +180,7 @@ async function changePassword (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -207,7 +204,7 @@ async function changePassword (
                     securityError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
