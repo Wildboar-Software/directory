@@ -110,6 +110,7 @@ import {
 import getSubschemaSubentry from "../dit/getSubschemaSubentry";
 import readValues from "../database/entry/readValues";
 import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+import failover from "../utils/failover";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -1114,14 +1115,14 @@ async function modifyDN (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_modifyDN),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
                 newRDNLength: data.newRDN.length,
                 newSuperiorNameLength: data.newSuperior?.length,
                 deleteOldRDN: data.deleteOldRDN,
-            },
+            }), undefined),
         },
     };
 }

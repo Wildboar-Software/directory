@@ -74,6 +74,7 @@ import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import failover from "../utils/failover";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -381,12 +382,12 @@ async function compare (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_compare),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
                 ava: getStatisticsFromAttributeValueAssertion(data.purported),
-            },
+            }), undefined),
         },
     };
 }

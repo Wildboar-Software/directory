@@ -62,6 +62,7 @@ import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import failover from "../utils/failover";
 
 export
 async function read (
@@ -267,7 +268,7 @@ async function read (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_read),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
@@ -275,7 +276,7 @@ async function read (
                     ? getEntryInformationSelectionStatistics(data.selection)
                     : undefined,
                 modifyRightsRequest: data.modifyRightsRequest,
-            },
+            }), undefined),
         },
     };
 }

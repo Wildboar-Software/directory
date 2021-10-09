@@ -152,6 +152,7 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import getSubschemaSubentry from "../dit/getSubschemaSubentry";
+import failover from "../utils/failover";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -1215,14 +1216,14 @@ async function addEntry (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_addEntry),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
                 targetSystemNSAPs: data.targetSystem
                     ? Array.from(accessPointToNSAPStrings(data.targetSystem))
                     : undefined,
-            },
+            }), undefined),
         },
     };
 }

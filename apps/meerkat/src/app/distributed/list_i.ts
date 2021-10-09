@@ -104,6 +104,7 @@ import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFrom
 import getListResultStatistics from "../telemetry/getListResultStatistics";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import failover from "../utils/failover";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -615,7 +616,7 @@ async function list_i (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_list),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
@@ -623,15 +624,15 @@ async function list_i (
                 prr: data.pagedResults
                     ? getStatisticsFromPagedResultsRequest(data.pagedResults)
                     : undefined,
-            },
-            outcome: {
+            }), undefined),
+            outcome: failover(() => ({
                 result: {
                     list: getListResultStatistics(result),
                     poq: (("listInfo" in result.unsigned) && result.unsigned.listInfo.partialOutcomeQualifier)
                         ? getPartialOutcomeQualifierStatistics(result.unsigned.listInfo.partialOutcomeQualifier)
                         : undefined,
                 },
-            },
+            }), undefined),
         },
     };
 }

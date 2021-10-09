@@ -169,6 +169,7 @@ import {
     id_at_objectClass,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
 import getSubschemaSubentry from "../dit/getSubschemaSubentry";
+import failover from "../utils/failover";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1563,7 +1564,17 @@ async function modifyEntry (
                     _encode_ModifyEntryResult(result, DER),
                 ),
             },
-            stats: {},
+            stats: {
+                request: failover(() => ({
+                    operationCode: codeToString(id_opcode_modifyEntry),
+                    ...getStatisticsFromCommonArguments(data),
+                    targetNameLength: targetDN.length,
+                    modifications: data.changes.map(getEntryModificationStatistics),
+                    eis: data.selection
+                        ? getEntryInformationSelectionStatistics(data.selection)
+                        : undefined,
+                }), undefined),
+            },
         };
     }
 
@@ -1587,7 +1598,7 @@ async function modifyEntry (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_modifyEntry),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
@@ -1595,7 +1606,7 @@ async function modifyEntry (
                 eis: data.selection
                     ? getEntryInformationSelectionStatistics(data.selection)
                     : undefined,
-            },
+            }), undefined),
         },
     };
 }

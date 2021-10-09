@@ -77,6 +77,7 @@ import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import failover from "../utils/failover";
 
 // TODO: subentries
 
@@ -370,11 +371,11 @@ async function removeEntry (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_removeEntry),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
-            },
+            }), undefined),
         },
     };
 }
