@@ -1,4 +1,5 @@
 import type { Context } from "../types";
+import * as errors from "../errors";
 import { BOOLEAN, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -18,6 +19,7 @@ import {
     ServiceProblem_unavailable,
     ServiceProblem_unwillingToPerform,
     ServiceProblem_invalidReference,
+    ServiceProblem_loopDetected,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
@@ -44,6 +46,13 @@ import {
     ReferenceType_nonSpecificSubordinate as nssr,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
+import {
+    TraceItem,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
 
 export
 async function apinfoProcedure (
@@ -51,20 +60,7 @@ async function apinfoProcedure (
     api: AccessPointInformation,
     req: ChainedRequest,
 ): Promise<ResultOrError | null> {
-    // TODO: Loop AVOIDANCE, not loop DETECTION.
-    // if (loopDetected(chaining.traceInformation)) {
-    //     throw new errors.ServiceError(
-    //         "Loop detected.",
-    //         new ServiceErrorData(
-    //             ServiceProblem_loopDetected,
-    //             [],
-    //             undefined,
-    //             undefined,
-    //             undefined,
-    //             undefined,
-    //         ),
-    //     );
-    // }
+    // Loop avoidance is handled below.
     const serviceControls = req.argument?.set
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
@@ -100,6 +96,33 @@ async function apinfoProcedure (
         ...api.additionalPoints ?? [],
     ];
     for (const ap of accessPoints) {
+        const tenativeTrace: TraceItem[] = [
+            ...req.chaining.traceInformation,
+            new TraceItem(
+                {
+                    rdnSequence: ap.ae_title.rdnSequence,
+                },
+                req.chaining.targetObject
+                    ? {
+                        rdnSequence: req.chaining.targetObject,
+                    }
+                    : undefined,
+                req.chaining.operationProgress ?? ChainingArguments._default_value_for_operationProgress,
+            ),
+        ];
+        if (loopDetected(tenativeTrace)) {
+            throw new errors.ServiceError(
+                "Loop detected.",
+                new ServiceErrorData(
+                    ServiceProblem_loopDetected,
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
         // TODO: Check if localScope.
         if (
             (ap.category === MasterOrShadowAccessPoint_category_shadow)
