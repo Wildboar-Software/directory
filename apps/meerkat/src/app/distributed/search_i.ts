@@ -162,6 +162,7 @@ import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromComm
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
+import getApproxMatcherGetter from "../x500/getApproxMatcherGetter";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -562,9 +563,7 @@ async function search_i (
         getEqualityMatcher: getEqualityMatcherGetter(ctx),
         getOrderingMatcher: getOrderingMatcherGetter(ctx),
         getSubstringsMatcher: getSubstringsMatcherGetter(ctx),
-        getApproximateMatcher: (attributeType: OBJECT_IDENTIFIER): ApproxMatcher | undefined => {
-            return undefined; // TODO:
-        },
+        getApproximateMatcher: getApproxMatcherGetter(ctx),
         getContextMatcher: (contextType: OBJECT_IDENTIFIER): ContextMatcher | undefined => {
             return ctx.contextTypes.get(contextType.toString())?.matcher;
         },
