@@ -159,6 +159,9 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    administrativeRole,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -842,7 +845,11 @@ async function addEntry (
                 contentRule.mandatory?.map((oid) => oid.toString()));
             const precludedAttributes: Set<IndexableOID> = new Set(
                 contentRule.precluded?.map((oid) => oid.toString()));
+            let administrativeRolePresent: boolean = false;
             for (const attr of data.entry) {
+                if (attr.type_.isEqualTo(administrativeRole["&id"]) && (attr.values.length > 0)) {
+                    administrativeRolePresent = true;
+                }
                 mandatoryAttributesRemaining.delete(attr.type_.toString());
                 if (precludedAttributes.has(attr.type_.toString())) {
                     throw new errors.UpdateError(
@@ -867,6 +874,35 @@ async function addEntry (
                         ),
                     );
                 }
+            }
+            if (
+                ( // If this is a first-level entry.
+                    immediateSuperior.dse.root
+                    || (immediateSuperior.dse.rdn.length === 0)
+                )
+                && !administrativeRolePresent
+            ) {
+                throw new errors.UpdateError(
+                    "First-level entries must be administrative points.",
+                    new UpdateErrorData(
+                        UpdateProblem_namingViolation,
+                        [
+                            {
+                                attributeType: administrativeRole["&id"],
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
             }
             if (mandatoryAttributesRemaining.size > 0) {
                 throw new errors.UpdateError(
