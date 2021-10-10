@@ -94,6 +94,12 @@ import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/Information
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -215,6 +221,9 @@ async function findDSE (
     let dse_lastEntryFound: Vertex | undefined = undefined;
     let lastCP: Vertex | undefined;
     const candidateRefs: ContinuationReference[] = [];
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
 
     const serviceControls = state.operationArgument.set
         .find((el) => (
@@ -617,6 +626,25 @@ async function findDSE (
         while (subordinatesInBatch.length) {
             for (const child of subordinatesInBatch) {
                 cursorId = child.dse.id;
+                if (op?.abandonTime) {
+                    op.events.emit("abandon");
+                    throw new errors.AbandonError(
+                        "Abandoned.",
+                        new AbandonedData(
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                abandoned["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
                 checkTimeLimit();
                 const childDN = getDistinguishedName(child);
                 const relevantSubentries: Vertex[] = (await Promise.all(

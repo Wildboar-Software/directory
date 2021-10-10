@@ -78,6 +78,12 @@ import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromComm
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import failover from "../utils/failover";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 // TODO: subentries
 
@@ -91,6 +97,9 @@ async function removeEntry (
     const target = state.foundDSE;
     const argument = _decode_RemoveEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -286,7 +295,7 @@ async function removeEntry (
                 validity_end: {
                     lte: now,
                 },
-                // accepted: true, // FIXME: Is this always set?
+                accepted: true,
                 OR: [
                     { // Local DSA initiated role B (meaning local DSA is subordinate.)
                         initiator: OperationalBindingInitiator.ROLE_B,
@@ -350,6 +359,30 @@ async function removeEntry (
         // TODO: It is not clear what "Section 6" refers to.
     }
     // TODO: Step 7: Update shadows.
+
+    if (op?.abandonTime) {
+        op.events.emit("abandon");
+        throw new errors.AbandonError(
+            "Abandoned.",
+            new AbandonedData(
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    abandoned["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
+    }
+    // FIXME: actually delete the entry BEFORE updating the HOBs.
     await deleteEntry(ctx, target);
 
     return {

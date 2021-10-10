@@ -62,6 +62,12 @@ import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromComm
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import failover from "../utils/failover";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 export
 async function read (
@@ -72,6 +78,9 @@ async function read (
     const target = state.foundDSE;
     const argument = _decode_ReadArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
     const targetDN = getDistinguishedName(target);
@@ -146,6 +155,28 @@ async function read (
         }
     }
 
+    if (op?.abandonTime) {
+        op.events.emit("abandon");
+        throw new errors.AbandonError(
+            "Abandoned.",
+            new AbandonedData(
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    abandoned["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
+    }
     const permittedEntryInfo = await readPermittedEntryInformation(
         ctx,
         target,

@@ -42,6 +42,12 @@ import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractS
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 export
 async function nrcrProcedure (
@@ -51,6 +57,9 @@ async function nrcrProcedure (
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
 ): Promise<OPCR | Error_> {
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -102,6 +111,25 @@ async function nrcrProcedure (
         opCode: state.operationCode,
     };
     for (const cref of state.NRcontinuationList) {
+        if (op?.abandonTime) {
+            op.events.emit("abandon");
+            throw new errors.AbandonError(
+                "Abandoned.",
+                new AbandonedData(
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         assert(cref.accessPoints[0]);
         checkTimeLimit();
         // /**
@@ -115,7 +143,7 @@ async function nrcrProcedure (
         //  */
         const isNSSR = (cref.accessPoints.length > 1);
         if (!isNSSR) {
-            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req);
+            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req, conn, state);
             if (!outcome) {
                 continue;
             } else if (("result" in outcome) && outcome.result) {
@@ -126,8 +154,27 @@ async function nrcrProcedure (
         }
         let allServiceErrors: boolean = true;
         for (const ap of cref.accessPoints) {
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    "Abandoned.",
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            abandoned["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
             try {
-                const outcome: ResultOrError | null = await apinfoProcedure(ctx, ap, req);
+                const outcome: ResultOrError | null = await apinfoProcedure(ctx, ap, req, conn, state);
                 if (!outcome) {
                     continue;
                 }
@@ -148,7 +195,7 @@ async function nrcrProcedure (
                             }
                             continue;
                         } else if (errorData.problem === ServiceProblem_invalidReference) {
-                            throw new errors.ServiceError(
+                            throw new errors.ServiceError( // FIXME: This is swallowed by the try-catch loop.
                                 "DIT Error.",
                                 new ServiceErrorData(
                                     ServiceProblem_ditError,

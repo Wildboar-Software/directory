@@ -273,7 +273,7 @@ class OperationDispatcher {
         else if (compareCode(req.opCode, ldapTransport["&operationCode"]!)) {
             const arg = ldapTransport.decoderFor["&ArgumentType"]!(state.operationArgument);
             const data = getOptionallyProtectedValue(arg);
-            const dapRequest = ldapRequestToDAPRequest(ctx, data.ldapMessage);
+            const dapRequest = ldapRequestToDAPRequest(ctx, conn, data.ldapMessage);
             return OperationDispatcher.dispatchDAPRequest(
                 ctx,
                 conn,
@@ -437,7 +437,14 @@ class OperationDispatcher {
                 response: [],
                 unexplored: [],
             };
-            await relatedEntryProcedure(ctx, conn, req.invokeId, relatedEntryReturn, argument, reqData.chainedArgument);
+            await relatedEntryProcedure(
+                ctx,
+                conn,
+                state,
+                relatedEntryReturn,
+                argument,
+                reqData.chainedArgument,
+            );
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // Search (II)
@@ -798,7 +805,7 @@ class OperationDispatcher {
             response: [],
             unexplored: [],
         };
-        await relatedEntryProcedure(ctx, conn, invokeId, relatedEntryReturn, argument, chaining);
+        await relatedEntryProcedure(ctx, conn, state, relatedEntryReturn, argument, chaining);
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         if (nameResolutionPhase === completed) { // Search (II)

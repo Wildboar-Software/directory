@@ -66,6 +66,9 @@ async function search_ii (
 ): Promise<void> {
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
     const serviceControlOptions = data.serviceControls?.options;
     const dontUseCopy: boolean = (serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
@@ -126,26 +129,24 @@ async function search_ii (
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             cursorId = subordinate.dse.id;
-            if ("present" in state.invokeId) {
-                const op = conn.invocations.get(state.invokeId.present);
-                if (op?.abandonTime) {
-                    throw new errors.AbandonError(
-                        "Abandoned.",
-                        new AbandonedData(
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    "Abandoned.",
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
                             undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                conn.boundNameAndUID?.dn,
-                                undefined,
-                                abandoned["&errorCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            state.chainingArguments.aliasDereferenced,
-                            undefined,
+                            abandoned["&errorCode"],
                         ),
-                    );
-                }
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
             }
             if (!subordinate.dse.cp) {
                 continue;

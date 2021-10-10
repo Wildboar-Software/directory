@@ -111,6 +111,12 @@ import getSubschemaSubentry from "../dit/getSubschemaSubentry";
 import readValues from "../database/entry/readValues";
 import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 import failover from "../utils/failover";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -245,6 +251,9 @@ async function modifyDN (
     }
     const argument = _decode_ModifyDNArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -729,7 +738,13 @@ async function modifyDN (
         && superior.dse.nssr
     ) { // Continue at step 5.
         // Follow instructions in 19.1.5. These are the only steps unique to this DSE type.
-        await checkIfNameIsAlreadyTakenInNSSR(ctx, superior.dse.nssr.nonSpecificKnowledge ?? [], destinationDN);
+        await checkIfNameIsAlreadyTakenInNSSR(
+            ctx,
+            conn,
+            state,
+            superior.dse.nssr.nonSpecificKnowledge ?? [],
+            destinationDN,
+        );
     }
 
     // For checking deleteOldRDN
@@ -1039,6 +1054,28 @@ async function modifyDN (
         }
     }
 
+    if (op?.abandonTime) {
+        op.events.emit("abandon");
+        throw new errors.AbandonError(
+            "Abandoned.",
+            new AbandonedData(
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    abandoned["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
+    }
     if (target.immediateSuperior?.subordinates?.length && (target.immediateSuperior !== superior)) {
         const entryIndex = target.immediateSuperior.subordinates
             .findIndex((child) => (child.dse.uuid === target.dse.uuid));

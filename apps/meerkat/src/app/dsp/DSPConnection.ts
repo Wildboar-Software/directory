@@ -1,4 +1,9 @@
-import { Context, ClientConnection, OperationStatistics } from "../types";
+import {
+    Context,
+    ClientConnection,
+    OperationStatistics,
+    OperationInvocationInfo,
+} from "../types";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Socket } from "net";
@@ -50,6 +55,7 @@ import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "../x500/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+import { EventEmitter } from "events";
 
 async function handleRequest (
     ctx: Context,
@@ -97,11 +103,13 @@ async function handleRequestAndErrors (
         },
     };
     const now = new Date();
-    dsp.invocations.set(request.invokeID, {
+    const info: OperationInvocationInfo = {
         invokeId: request.invokeID,
         operationCode: request.opcode,
         startTime: new Date(),
-    });
+        events: new EventEmitter(),
+    };
+    dsp.invocations.set(request.invokeID, info);
     try {
         await handleRequest(ctx, dsp, request, stats);
     } catch (e) {
@@ -176,9 +184,7 @@ async function handleRequestAndErrors (
         }
     } finally {
         dsp.invocations.set(request.invokeID, {
-            invokeId: request.invokeID,
-            operationCode: request.opcode,
-            startTime: now,
+            ...info,
             resultTime: new Date(),
         });
         for (const opstat of ctx.statistics.operations) {

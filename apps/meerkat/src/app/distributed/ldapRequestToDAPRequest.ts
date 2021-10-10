@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context, ClientConnection } from "../types";
 import * as errors from "../errors";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
@@ -6,18 +6,21 @@ import type {
     LDAPMessage,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
 import { randomInt } from "crypto";
+import { AbandonArgument, _encode_AbandonArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
 import { AddEntryArgument, _encode_AddEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
 import { CompareArgument, _encode_CompareArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
 import { ModifyDNArgument, _encode_ModifyDNArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
 import { ModifyEntryArgument, _encode_ModifyEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
 import { RemoveEntryArgument, _encode_RemoveEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
 import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+import { AbandonArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgumentData.ta";
 import { AddEntryArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
 import { CompareArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
 import { ModifyDNArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
 import { ModifyEntryArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
 import { RemoveEntryArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
 import { SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
@@ -317,7 +320,11 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
 }
 
 export
-function ldapRequestToDAPRequest (ctx: Context, req: LDAPMessage): Request {
+function ldapRequestToDAPRequest (
+    ctx: Context,
+    conn: ClientConnection,
+    req: LDAPMessage,
+): Request {
     const invokeId: InvokeId = {
         present: randomInt(MAX_INVOKE_ID),
     };
@@ -620,7 +627,23 @@ function ldapRequestToDAPRequest (ctx: Context, req: LDAPMessage): Request {
         };
     }
     else if ("abandonRequest" in req.protocolOp) {
-        throw new Error();
+        const messageID = req.protocolOp.abandonRequest;
+        const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(messageID);
+        if (abandonedOperationInvokeID === undefined) {
+            throw new Error();
+        }
+        const ar: AbandonArgument = {
+            unsigned: new AbandonArgumentData(
+                {
+                    present: abandonedOperationInvokeID,
+                },
+            ),
+        };
+        return {
+            invokeId,
+            opCode: abandon["&operationCode"],
+            argument: _encode_AbandonArgument(ar, DER),
+        };
     }
     else if ("extendedReq" in req.protocolOp) {
         throw new Error();

@@ -142,6 +142,7 @@ import {
 import {
     LdapSyntaxDescription,
 } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
+import { EventEmitter } from "events";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -1146,9 +1147,21 @@ interface OperationInvocationInfo {
     startTime: Date;
 
     /**
+     * Theoretically, this could be used for reporting progress, returning LDAP
+     * search results, or something else, but for now, it is just used by an
+     * operation to acknowledge abandonment.
+     */
+    events: EventEmitter;
+
+    /**
      * This field exists to indicate the abandonment of an operation.
      */
     abandonTime?: Date;
+
+    /**
+     * Point of no return.
+     */
+    pointOfNoReturnTime?: Date;
 
     /**
      * This field exists so that AbandonError.tooLate can be used.
@@ -1184,6 +1197,11 @@ abstract class ClientConnection {
      * request has been abandoned).
      */
     public readonly invocations: Map<number, OperationInvocationInfo> = new Map(); // number is the InvokeId.present.
+
+    // This is needed in both LDAP and DAP connections, because DAP could relay
+    // LDAP messages through the ldapTransport and linkedLDAP operations.
+    public readonly messageIDToInvokeID: Map<number, number> = new Map();
+    public readonly invokeIDToMessageID: Map<number, number> = new Map();
 }
 
 export

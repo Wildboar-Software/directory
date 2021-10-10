@@ -186,6 +186,9 @@ async function search_i (
 ): Promise<void> {
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
 
     /**
      * NOTE: Joins are going to be ENTIRELY UNSUPPORTED, because many details
@@ -954,26 +957,24 @@ async function search_i (
     let limitExceeded: LimitProblem | undefined;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
-            if ("present" in state.invokeId) {
-                const op = conn.invocations.get(state.invokeId.present);
-                if (op?.abandonTime) {
-                    throw new errors.AbandonError(
-                        "Abandoned.",
-                        new AbandonedData(
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    "Abandoned.",
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
                             undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                conn.boundNameAndUID?.dn,
-                                undefined,
-                                abandoned["&errorCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            state.chainingArguments.aliasDereferenced,
-                            undefined,
+                            abandoned["&errorCode"],
                         ),
-                    );
-                }
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
                 limitExceeded = LimitProblem_timeLimitExceeded;

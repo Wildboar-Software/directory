@@ -47,11 +47,15 @@ import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 
 async function handleRequest (
     ctx: Context,
-    conn: ClientConnection, // eslint-disable-line
+    conn: LDAPConnection,
     message: LDAPMessage,
     stats: OperationStatistics,
 ): Promise<void> {
-    const dapRequest = ldapRequestToDAPRequest(ctx, message);
+    const dapRequest = ldapRequestToDAPRequest(ctx, conn, message);
+    if ("present" in dapRequest.invokeId) {
+        conn.messageIDToInvokeID.set(message.messageID, dapRequest.invokeId.present);
+        conn.invokeIDToMessageID.set(dapRequest.invokeId.present, message.messageID);
+    }
     const result = await OperationDispatcher.dispatchDAPRequest(
         ctx,
         conn,
@@ -96,7 +100,7 @@ async function handleRequest (
 
 async function handleRequestAndErrors (
     ctx: Context,
-    conn: ClientConnection, // eslint-disable-line
+    conn: LDAPConnection,
     message: LDAPMessage,
 ): Promise<void> {
     const stats: OperationStatistics = {
@@ -159,6 +163,11 @@ async function handleRequestAndErrors (
             return;
         }
     } finally {
+        const invokeID = conn.messageIDToInvokeID.get(message.messageID);
+        if (invokeID) {
+            conn.invokeIDToMessageID.delete(invokeID);
+        }
+        conn.messageIDToInvokeID.delete(message.messageID);
         // dap.invocations.set(request.invokeID, {
         //     invokeId: request.invokeID,
         //     operationCode: request.opcode,
@@ -249,8 +258,6 @@ class LDAPConnection extends ClientConnection {
                         false,
                     ),
                 };
-            } else if ("abandonRequest" in message.protocolOp) {
-                ctx.log.info(`Abandon operation ${message.protocolOp.abandonRequest}.`);
             } else if ("extendedReq" in message.protocolOp) {
                 const req = message.protocolOp.extendedReq;
                 const oid = decodeLDAPOID(req.requestName);

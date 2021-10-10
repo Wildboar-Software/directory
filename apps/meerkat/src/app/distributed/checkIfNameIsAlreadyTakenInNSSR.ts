@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context, ClientConnection } from "../types";
 import type {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
@@ -59,17 +59,48 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     updateError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import type { OperationDispatcherState } from "./OperationDispatcher";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 export
 async function checkIfNameIsAlreadyTakenInNSSR (
     ctx: Context,
+    conn: ClientConnection,
+    state: OperationDispatcherState,
     nonSpecificKnowledges: MasterAndShadowAccessPoints[],
     destinationDN: DistinguishedName,
 ): Promise<void> {
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     for (const nsk of nonSpecificKnowledges) {
         const [ masters ] = splitIntoMastersAndShadows(nsk);
         // TODO: Use only IDM endpoints.
         for (const accessPoint of masters) {
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    "Abandoned.",
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            abandoned["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
             const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, undefined);
             if (!client) {
                 continue;

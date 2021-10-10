@@ -75,6 +75,12 @@ import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromComm
 import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import failover from "../utils/failover";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -102,6 +108,9 @@ async function compare (
     const target = state.foundDSE;
     const argument = _decode_CompareArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const typeAndSuperTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, data.purported.type_));
     const targetDN = getDistinguishedName(target);
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
@@ -170,6 +179,25 @@ async function compare (
             );
         }
         for (const type_ of typeAndSuperTypes) {
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    "Abandoned.",
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            abandoned["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
             const {
                 authorized,
             } = bacACDF(
@@ -252,6 +280,25 @@ async function compare (
     let matchedType: AttributeType | undefined;
     let matched: boolean = false;
     for (const value of values) {
+        if (op?.abandonTime) {
+            op.events.emit("abandon");
+            throw new errors.AbandonError(
+                "Abandoned.",
+                new AbandonedData(
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         if (!matcher(data.purported.assertion, value.value)) {
             continue;
         }
@@ -343,6 +390,9 @@ async function compare (
         }
         matched = true;
         break;
+    }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
     }
 
     const result: CompareResult = {

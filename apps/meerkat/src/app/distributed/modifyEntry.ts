@@ -170,6 +170,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
 import getSubschemaSubentry from "../dit/getSubschemaSubentry";
 import failover from "../utils/failover";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -958,6 +964,9 @@ async function modifyEntry (
     const target = state.foundDSE;
     const argument = _decode_ModifyEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -1076,6 +1085,26 @@ async function modifyEntry (
     const pendingUpdates: PrismaPromise<any>[] = [];
     const delta: ValuesIndex = new Map();
     for (const mod of data.changes) {
+        if (op?.abandonTime) {
+            op.events.emit("abandon");
+            throw new errors.AbandonError(
+                "Abandoned.",
+                new AbandonedData(
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        checkTimeLimit();
         pendingUpdates.push(
             ...(await executeEntryModification(
                 ctx,
@@ -1091,7 +1120,6 @@ async function modifyEntry (
                 contextRulesIndex,
             )),
         );
-        checkTimeLimit();
     }
 
     const optionalAttributes: Set<IndexableOID> = new Set([
@@ -1391,6 +1419,28 @@ async function modifyEntry (
         }
     }
 
+    if (op?.abandonTime) {
+        op.events.emit("abandon");
+        throw new errors.AbandonError(
+            "Abandoned.",
+            new AbandonedData(
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    abandoned["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
+    }
     checkTimeLimit();
     await ctx.db.$transaction(pendingUpdates);
     const dbe = await ctx.db.entry.findUnique({
