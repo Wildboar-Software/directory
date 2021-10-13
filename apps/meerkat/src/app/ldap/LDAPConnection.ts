@@ -175,7 +175,7 @@ async function handleRequestAndErrors (
         //     resultTime: new Date(),
         // });
         for (const opstat of ctx.statistics.operations) {
-            ctx.telemetry.sendEvent(opstat);
+            // ctx.telemetry.sendEvent(opstat);
         }
     }
 }

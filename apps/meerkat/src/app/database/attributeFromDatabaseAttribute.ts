@@ -7,7 +7,6 @@ async function attributeFromDatabaseAttribute (
     ctx: Context,
     attr: AttributeValue & { ContextValue: ContextValue[] },
 ): Promise<Value> {
-    // TODO: Convert OIDs in the database to Int[]
     const value = new BERElement();
     value.fromBytes(attr.ber);
     const contexts: Value["contexts"] = new Map();

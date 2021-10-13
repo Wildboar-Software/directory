@@ -86,6 +86,15 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import {
+    Attribute_valuesWithContext_Item,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+import {
+    Context as X500Context,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import {
+    ldapAttributeOptionContext,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapAttributeOptionContext.oa";
 
 const MAX_INVOKE_ID: number = 2147483648;
 
@@ -499,17 +508,43 @@ function ldapRequestToDAPRequest (
                 req.protocolOp.addRequest.attributes
                     .map((attr): Attribute | undefined => {
                         const desc = normalizeAttributeDescription(attr.type_);
+                        const options: string[] = Buffer.from(attr.type_)
+                            .toString("utf-8")
+                            .split(";")
+                            .slice(1)
+                            .map((opt) => opt.trim().replace(/[^A-Za-z0-9-]/g, ""))
+                            ;
                         const spec = ctx.attributes.get(desc);
                         const decoder = getLDAPDecoder(ctx, desc);
                         if (!decoder) {
                             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
                         }
                         try {
-                            return new Attribute(
-                                spec!.id,
-                                attr.vals.map(decoder),
-                                undefined,
-                            );
+                            if (options.length) {
+                                return new Attribute(
+                                    spec!.id,
+                                    [],
+                                    attr.vals
+                                        .map((val) => new Attribute_valuesWithContext_Item(
+                                            decoder(val),
+                                            [
+                                                new X500Context(
+                                                    ldapAttributeOptionContext["&id"],
+                                                    [
+                                                        ldapAttributeOptionContext.encoderFor["&Type"]!(options, DER),
+                                                    ],
+                                                    false,
+                                                ),
+                                            ],
+                                        )),
+                                );
+                            } else {
+                                return new Attribute(
+                                    spec!.id,
+                                    attr.vals.map(decoder),
+                                    undefined,
+                                );
+                            }
                         } catch (e) {
                             ctx.log.warn(`Could not encode attribute type ${desc}: ${e}`);
                             return undefined;

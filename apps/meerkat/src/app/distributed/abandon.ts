@@ -80,7 +80,7 @@ async function abandon (
             ),
         );
     }
-    if (op.pointOfNoReturnTime || op.resultTime || op.abandonTime) {
+    if (op.pointOfNoReturnTime || op.abandonTime) {
         throw new errors.AbandonFailedError(
             `Too late to abandon operation ${invokeID}.`,
             new AbandonFailedData(

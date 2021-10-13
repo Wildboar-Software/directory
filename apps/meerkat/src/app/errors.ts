@@ -57,9 +57,7 @@ import { ASN1Element } from "asn1-ts";
 export
 abstract class DirectoryError extends Error {
     public static readonly errcode: Code;
-    public getErrCode (): Code {
-        return DirectoryError.errcode;
-    }
+    public abstract getErrCode (): Code;
 }
 
 export
@@ -68,6 +66,9 @@ class AbandonError extends DirectoryError {
     constructor (readonly message: string, readonly data: AbandonedData) {
         super(message);
         Object.setPrototypeOf(this, AbandonError.prototype);
+    }
+    public getErrCode (): Code {
+        return AbandonError.errcode;
     }
 }
 
@@ -78,6 +79,9 @@ class AbandonFailedError extends DirectoryError {
         super(message);
         Object.setPrototypeOf(this, AbandonFailedError.prototype);
     }
+    public getErrCode (): Code {
+        return AbandonFailedError.errcode;
+    }
 }
 
 export
@@ -86,6 +90,9 @@ class AttributeError extends DirectoryError {
     constructor (readonly message: string, readonly data: AttributeErrorData) {
         super(message);
         Object.setPrototypeOf(this, AttributeError.prototype);
+    }
+    public getErrCode (): Code {
+        return AttributeError.errcode;
     }
 }
 
@@ -96,6 +103,9 @@ class NameError extends DirectoryError {
         super(message);
         Object.setPrototypeOf(this, NameError.prototype);
     }
+    public getErrCode (): Code {
+        return NameError.errcode;
+    }
 }
 
 export
@@ -104,6 +114,9 @@ class ReferralError extends DirectoryError {
     constructor (readonly message: string, readonly data: ReferralData) {
         super(message);
         Object.setPrototypeOf(this, ReferralError.prototype);
+    }
+    public getErrCode (): Code {
+        return ReferralError.errcode;
     }
 }
 
@@ -114,6 +127,9 @@ class SecurityError extends DirectoryError {
         super(message);
         Object.setPrototypeOf(this, SecurityError.prototype);
     }
+    public getErrCode (): Code {
+        return SecurityError.errcode;
+    }
 }
 
 export
@@ -122,6 +138,9 @@ class ServiceError extends DirectoryError {
     constructor (readonly message: string, readonly data: ServiceErrorData) {
         super(message);
         Object.setPrototypeOf(this, ServiceError.prototype);
+    }
+    public getErrCode (): Code {
+        return ServiceError.errcode;
     }
 }
 
@@ -132,6 +151,9 @@ class UpdateError extends DirectoryError {
         super(message);
         Object.setPrototypeOf(this, UpdateError.prototype);
     }
+    public getErrCode (): Code {
+        return UpdateError.errcode;
+    }
 }
 
 export
@@ -140,6 +162,9 @@ class OperationalBindingError extends DirectoryError {
     constructor (readonly message: string, readonly data: typeof operationalBindingError["&ParameterType"]) {
         super(message);
         Object.setPrototypeOf(this, OperationalBindingError.prototype);
+    }
+    public getErrCode (): Code {
+        return OperationalBindingError.errcode;
     }
 }
 
