@@ -53,6 +53,9 @@ import codeToString from "../x500/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { EventEmitter } from "events";
+import {
+    IdmReject_reason_duplicateInvokeIDRequest,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 
 async function handleRequest (
     ctx: Context,
@@ -105,6 +108,10 @@ async function handleRequestAndErrors (
         startTime: new Date(),
         events: new EventEmitter(),
     };
+    if (dap.invocations.has(request.invokeID)) {
+        await dap.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        return;
+    }
     dap.invocations.set(request.invokeID, info);
     try {
         await handleRequest(ctx, dap, request, stats);
@@ -180,10 +187,7 @@ async function handleRequestAndErrors (
             // TODO: Don't you need to actually close the connection?
         }
     } finally {
-        dap.invocations.set(request.invokeID, {
-            ...info,
-            resultTime: new Date(),
-        });
+        dap.invocations.delete(request.invokeID);
         for (const opstat of ctx.statistics.operations) {
             ctx.telemetry.sendEvent(opstat);
         }

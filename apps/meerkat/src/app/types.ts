@@ -1162,11 +1162,6 @@ interface OperationInvocationInfo {
      * Point of no return.
      */
     pointOfNoReturnTime?: Date;
-
-    /**
-     * This field exists so that AbandonError.tooLate can be used.
-     */
-    resultTime?: Date;
 }
 
 export
