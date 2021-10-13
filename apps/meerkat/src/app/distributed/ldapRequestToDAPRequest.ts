@@ -83,6 +83,9 @@ import {
     ModifyRequest_changes_change_operation_delete_,
     ModifyRequest_changes_change_operation_replace,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyRequest-changes-change-operation.ta";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 
 const MAX_INVOKE_ID: number = 2147483648;
 
@@ -165,6 +168,17 @@ function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification):
                 spec.id,
                 mod.modification.vals.map(decoder),
                 undefined,
+            ),
+        };
+    }
+    case (3): { // increment
+        if (mod.modification.vals.length !== 1) {
+            throw new Error();
+        }
+        return {
+            alterValues: new AttributeTypeAndValue(
+                spec.id,
+                decoder(mod.modification.vals[0]),
             ),
         };
     }

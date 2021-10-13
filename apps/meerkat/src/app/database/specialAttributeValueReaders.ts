@@ -153,7 +153,7 @@ import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/
 // import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
 // import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
 import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
-// import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
+import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
 import readDITContentRuleDescriptions from "./readers/readDITContentRuleDescriptions";
 import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptions";
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
@@ -1357,5 +1357,11 @@ export const readSupportedLDAPVersion: SpecialAttributeDatabaseReader = async (
 };
 
 export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
-    return [];
+    return [
+        { // LDAP Increment.
+            id: supportedFeatures["&id"],
+            value: _encodeObjectIdentifier(new ObjectIdentifier([ 1, 3, 6, 1, 1, 14 ]), DER),
+            contexts: new Map(),
+        },
+    ];
 };
