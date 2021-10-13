@@ -1026,14 +1026,15 @@ async function addEntry (
             const mandatoryContextsRemaining: Set<IndexableOID> = new Set(
                 applicableRule.information.mandatoryContexts?.map((con) => con.toString()),
             );
-            const permittedContexts: Set<IndexableOID> = new Set([
-                ...applicableRule.information.mandatoryContexts?.map((con) => con.toString()) ?? [],
-                ...applicableRule.information.optionalContexts?.map((con) => con.toString()) ?? [],
-            ]);
+            const permittedContexts: OBJECT_IDENTIFIER[] = [
+                ...applicableRule.information.mandatoryContexts ?? [],
+                ...applicableRule.information.optionalContexts ?? [],
+            ];
+            const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((con) => con.toString()));
             for (const context of attr.contexts.values()) {
                 const ID: string = context.id.toString();
                 mandatoryContextsRemaining.delete(ID);
-                if (!permittedContexts.has(ID)) {
+                if (!permittedContextsIndex.has(ID)) {
                     throw new errors.AttributeError(
                         `Context type ${ID} not permitted by applicable DIT context use rules.`,
                         new AttributeErrorData(
@@ -1062,35 +1063,64 @@ async function addEntry (
                 }
             }
             if (mandatoryContextsRemaining.size > 0) {
-                // throw new Error(); // FIXME:
-                throw new errors.AttributeError(
-                    "These context types are required by applicable DIT "
-                    + "context use rules are missing the following context "
-                    + "types: "
-                    + Array.from(mandatoryContextsRemaining.values()),
-                    new AttributeErrorData(
-                        {
-                            rdnSequence: targetDN,
-                        },
-                        [
-                            new AttributeErrorData_problems_Item(
-                                AttributeProblem_contextViolation,
-                                attr.id,
-                                attr.value,
+                /**
+                 * If every mandatory context has a default value defined, we do not
+                 * need to fail: the default value will be applied and this
+                 * requirement will be satisfied.
+                 */
+                const everyRequiredContextHasADefaultValue: boolean = applicableRule
+                    .information
+                    .mandatoryContexts
+                    ?.every((mc) => !!ctx.contextTypes.get(mc.toString())?.defaultValue) ?? true;
+                if (!everyRequiredContextHasADefaultValue) {
+                    throw new errors.AttributeError(
+                        "These context types are required by applicable DIT "
+                        + "context use rules are missing the following context "
+                        + "types: "
+                        + Array.from(mandatoryContextsRemaining.values()),
+                        new AttributeErrorData(
+                            {
+                                rdnSequence: targetDN,
+                            },
+                            [
+                                new AttributeErrorData_problems_Item(
+                                    AttributeProblem_contextViolation,
+                                    attr.id,
+                                    attr.value,
+                                ),
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                attributeError["&errorCode"],
                             ),
-                        ],
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
-                            attributeError["&errorCode"],
                         ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        state.chainingArguments.aliasDereferenced,
-                        undefined,
-                    ),
-                );
+                    );
+                }
+            }
+            // Add default context values.
+            for (const ct of permittedContexts) { // TODO: This is O(n^2).
+                const CTYPE_OID: string = ct.toString();
+                const spec = ctx.contextTypes.get(CTYPE_OID);
+                if (!spec) {
+                    throw new Error(); // FIXME: Context type not understood.
+                }
+                if (!spec.defaultValue) {
+                    continue;
+                }
+                const defaultValueGetter = spec.defaultValue;
+                if (!attr.contexts.has(CTYPE_OID)) {
+                    attr.contexts.set(CTYPE_OID, {
+                        id: ct,
+                        fallback: true,
+                        values: [ defaultValueGetter() ],
+                    });
+                }
             }
         }
     }

@@ -176,6 +176,12 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    Context as X500Context,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import {
+    Attribute_valuesWithContext_Item,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -839,52 +845,75 @@ async function executeEntryModification (
         }
     };
 
-    const checkContextRule = (attribute: Attribute) => {
+    /**
+     * This function both checks that the DIT context use rules are satisfied
+     * and applies default context values, if there are any defined. These are
+     * separate features, but it turns out that they innately share a lot of
+     * code, so it will preferable to merge these two features into a single
+     * function.
+     *
+     * Note that we do not handle the default context value post-processing
+     * steps described in ITU Recommendation X.501 (2016), Section 13.9.2. As
+     * far as I can see, these only exist to save storage space.
+     */
+    const handleContextRule = (attribute: Attribute): Attribute => {
         const rule = contextRuleIndex.get(attribute.type_.toString());
         if (!rule) {
-            return;
+            return attribute;
         }
         if (rule.information.mandatoryContexts?.length && attribute.values.length) {
-            throw new errors.AttributeError(
-                `Attribute with type ${attribute.type_.toString()} has values `
-                + "with contexts when none are permitted by the relevant "
-                + "DIT context use rules.",
-                new AttributeErrorData(
-                    {
-                        rdnSequence: [],
-                    },
-                    [
-                        new AttributeErrorData_problems_Item(
-                            AttributeProblem_contextViolation,
-                            attribute.type_,
+            /**
+             * If every mandatory context has a default value defined, we do not
+             * need to fail: the default value will be applied and this
+             * requirement will be satisfied.
+             */
+            const everyRequiredContextHasADefaultValue: boolean = rule
+                .information
+                .mandatoryContexts
+                .every((mc) => !!ctx.contextTypes.get(mc.toString())?.defaultValue);
+            if (!everyRequiredContextHasADefaultValue) {
+                throw new errors.AttributeError(
+                    `Attribute with type ${attribute.type_.toString()} has values `
+                    + "with contexts when none are permitted by the relevant "
+                    + "DIT context use rules.",
+                    new AttributeErrorData(
+                        {
+                            rdnSequence: [],
+                        },
+                        [
+                            new AttributeErrorData_problems_Item(
+                                AttributeProblem_contextViolation,
+                                attribute.type_,
+                                undefined,
+                            ),
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
                             undefined,
+                            updateError["&errorCode"],
                         ),
-                    ],
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
-                        updateError["&errorCode"],
+                        undefined,
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            );
+                );
+            }
         }
-        const permittedContexts: Set<IndexableOID> = new Set([
-            ...rule.information.mandatoryContexts?.map((mc) => mc.toString()) ?? [],
-            ...rule.information.optionalContexts?.map((oc) => oc.toString()) ?? [],
-        ]);
+        const permittedContexts: OBJECT_IDENTIFIER[] = [
+            ...(rule.information.mandatoryContexts ?? []),
+            ...(rule.information.optionalContexts ?? []),
+        ];
+        const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((pc) => pc.toString()));
         for (const vwc of (attribute.valuesWithContext ?? [])) {
             const unsatisfiedRequirements: Set<IndexableOID> = new Set(
                 rule.information.mandatoryContexts?.map((mc) => mc.toString()),
             );
             for (const context of vwc.contextList) {
                 const TYPE_OID: string = context.contextType.toString();
-                if (!permittedContexts.has(TYPE_OID)) {
-                    throw new Error();
+                if (!permittedContextsIndex.has(TYPE_OID)) {
+                    throw new Error(); // FIXME:
                 }
                 unsatisfiedRequirements.delete(TYPE_OID);
             }
@@ -892,13 +921,68 @@ async function executeEntryModification (
                 throw new Error(); // FIXME:
             }
         }
+
+        /**
+         * Everything from here onwards adds default context values to the
+         * attribute, per ITU Recommendation X.501 (2016), Section 13.9.2.
+         */
+        let current: Attribute = attribute.valuesWithContext?.length
+            ? attribute
+            : new Attribute(
+                attribute.type_,
+                attribute.values,
+                []
+            );
+        for (const ct of permittedContexts) { // TODO: This is O(n^2).
+            const spec = ctx.contextTypes.get(ct.toString());
+            if (!spec) {
+                throw new Error(); // FIXME: Context type not understood.
+            }
+            if (!spec.defaultValue) {
+                continue;
+            }
+            const defaultValueGetter = spec.defaultValue;
+            for (const vwc of (current.valuesWithContext ?? [])) {
+                const hasContextOfThisType: boolean = vwc.contextList
+                    .some((context) => (context.contextType.isEqualTo(ct)));
+                if (hasContextOfThisType) {
+                    continue;
+                }
+                vwc.contextList.push(new X500Context(
+                    ct,
+                    [ defaultValueGetter() ],
+                    true, // The specification is not clear on whether the default context value should be a fallback.
+                ));
+            }
+            // We do not need to track which values to remove: they will all be
+            // removed, because, if we've made it this far in the code, we've
+            // established that there will be default context values to apply.
+            for (const value of current.values) {
+                current.valuesWithContext!.push(new Attribute_valuesWithContext_Item(
+                    value,
+                    [
+                        new X500Context(
+                            ct,
+                            [ defaultValueGetter() ],
+                            true, // The specification is not clear on whether the default context value should be a fallback.
+                        ),
+                    ],
+                ));
+            }
+            current = new Attribute(
+                attribute.type_,
+                [],
+                attribute.valuesWithContext,
+            );
+        }
+        return current;
     };
 
     if ("addAttribute" in mod) {
         check(mod.addAttribute.type_);
         checkPreclusion(mod.addAttribute.type_);
-        checkContextRule(mod.addAttribute);
-        return executeAddAttribute(mod.addAttribute, ...commonArguments);
+        const attrWithDefaultContexts = handleContextRule(mod.addAttribute);
+        return executeAddAttribute(attrWithDefaultContexts, ...commonArguments);
     }
     else if ("removeAttribute" in mod) {
         return executeRemoveAttribute(mod.removeAttribute, ...commonArguments);
@@ -906,8 +990,8 @@ async function executeEntryModification (
     else if ("addValues" in mod) {
         check(mod.addValues.type_);
         checkPreclusion(mod.addValues.type_);
-        checkContextRule(mod.addValues);
-        return executeAddValues(mod.addValues, ...commonArguments);
+        const attrWithDefaultContexts = handleContextRule(mod.addValues);
+        return executeAddValues(attrWithDefaultContexts, ...commonArguments);
     }
     else if ("removeValues" in mod) {
         return executeRemoveValues(mod.removeValues, ...commonArguments);
@@ -922,8 +1006,8 @@ async function executeEntryModification (
     else if ("replaceValues" in mod) {
         check(mod.replaceValues.type_);
         checkPreclusion(mod.replaceValues.type_);
-        checkContextRule(mod.replaceValues);
-        return executeReplaceValues(mod.replaceValues, ...commonArguments);
+        const attrWithDefaultContexts = handleContextRule(mod.replaceValues);
+        return executeReplaceValues(attrWithDefaultContexts, ...commonArguments);
     }
     else {
         return []; // Any other alternative not understood.
