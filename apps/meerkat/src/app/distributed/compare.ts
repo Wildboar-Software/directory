@@ -341,6 +341,7 @@ async function compare (
                     sc,
                     Object.values(value.contexts).map(contextFromStoredContext),
                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                 ));
             if (matched) {
                 break;
@@ -366,6 +367,7 @@ async function compare (
                                     ca,
                                     Object.values(value.contexts).map(contextFromStoredContext),
                                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                 ));
                         } else if ("preference" in sc.contextAssertions) {
                             // REVIEW: I _think_ this is fine. See X.511, Section 7.6.3.
@@ -374,6 +376,7 @@ async function compare (
                                     ca,
                                     Object.values(value.contexts).map(contextFromStoredContext),
                                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                 ));
                         } else {
                             return false; // FIXME: Not understood. What to do?
