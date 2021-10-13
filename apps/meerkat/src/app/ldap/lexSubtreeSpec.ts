@@ -6,6 +6,11 @@ import type {
     ChopSpecification_specificExclusions_Item,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ChopSpecification-specificExclusions-Item.ta";
 import decodeLDAPDN from "./decodeLDAPDN";
+import type {
+    Refinement,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+import isDigit from "../utils/isDigit";
+import { ObjectIdentifier } from "asn1-ts";
 
 const BASE_STRING: string = "base";
 const SPEX_STRING: string = "specificExclusions";
@@ -14,6 +19,139 @@ const MAX_STRING: string = "maximum";
 const FILTER_STRING: string = "specificationFilter";
 const CHOP_BEFORE: string = "chopBefore";
 const CHOP_AFTER: string = "chopAfter";
+
+interface RefinementLexingReturn {
+    readonly refinement: Refinement;
+    readonly charsRead: number;
+}
+
+function lexRefinement (ctx: Context, input: string): RefinementLexingReturn {
+    let index: number = 0;
+
+    const skipOverWhitespace = () => {
+        while (/\s/.test(input.charAt(index))) {
+            index++;
+        }
+    };
+
+    if (input.startsWith("{")) {
+        index++;
+        skipOverWhitespace();
+    }
+    if (input.startsWith("and", index)) {
+        index += 3;
+        skipOverWhitespace();
+        if (input.charAt(index) !== ":") {
+            throw new Error();
+        }
+        index++;
+        skipOverWhitespace();
+        if (input.charAt(index) !== "{") {
+            throw new Error();
+        }
+        index++;
+        skipOverWhitespace();
+        const subrefinements: Refinement[] = [];
+        while ((input.charAt(index) !== "}") && (index < input.length)) {
+            const sub = lexRefinement(ctx, input.slice(index));
+            subrefinements.push(sub.refinement);
+            index += sub.charsRead;
+            skipOverWhitespace();
+            if (input.charAt(index) === ",") {
+                index++;
+            }
+            skipOverWhitespace();
+        }
+        index++;
+        return {
+            refinement: {
+                and: subrefinements,
+            },
+            charsRead: index,
+        };
+    } else if (input.startsWith("or", index)) {
+        index += 2;
+        skipOverWhitespace();
+        if (input.charAt(index) !== ":") {
+            throw new Error();
+        }
+        index++;
+        skipOverWhitespace();
+        if (input.charAt(index) !== "{") {
+            throw new Error();
+        }
+        index++;
+        skipOverWhitespace();
+        const subrefinements: Refinement[] = [];
+        while ((input.charAt(index) !== "}") && (index < input.length)) {
+            const sub = lexRefinement(ctx, input.slice(index));
+            subrefinements.push(sub.refinement);
+            index += sub.charsRead;
+            skipOverWhitespace();
+            if (input.charAt(index) === ",") {
+                index++;
+            }
+            skipOverWhitespace();
+        }
+        index++;
+        return {
+            refinement: {
+                or: subrefinements,
+            },
+            charsRead: index,
+        };
+    } else if (input.startsWith("not", index)) {
+        index += 3;
+        skipOverWhitespace();
+        if (input.charAt(index) !== ":") {
+            throw new Error();
+        }
+        index++;
+        skipOverWhitespace();
+        const sub = lexRefinement(ctx, input.slice(index));
+        return {
+            refinement: {
+                not: sub.refinement,
+            },
+            charsRead: (index + sub.charsRead),
+        };
+    } else if (input.startsWith("item", index)) {
+        index += 4;
+        skipOverWhitespace();
+        if (input.charAt(index) !== ":") {
+            throw new Error();
+        }
+        index++;
+        skipOverWhitespace();
+        const oidStart: number = index;
+        while (/[A-Za-z0-9.-]/.test(input.charAt(index))) {
+            index++;
+        }
+        const oidEnd: number = index;
+        const descriptor: string = input.slice(oidStart, oidEnd);
+        if (isDigit(descriptor.charCodeAt(0))) {
+            return {
+                refinement: {
+                    item: ObjectIdentifier.fromString(descriptor),
+                },
+                charsRead: index,
+            };
+        } else {
+            const oid = ctx.nameToObjectIdentifier.get(descriptor);
+            if (!oid) {
+                throw new Error();
+            }
+            return {
+                refinement: {
+                    item: oid,
+                },
+                charsRead: index,
+            };
+        }
+    } else {
+        throw new Error(); // Not understood alternative.
+    }
+}
 
 /**
  * See: https://datatracker.ietf.org/doc/html/rfc3672#appendix-A
@@ -41,17 +179,23 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
             }
         };
 
-        const skipOverName = () => {
+        const readName = (): string => { // FIXME: Escaping double quotes is not working.
+            let ret: string = "";
             while (index < toParse.length) {
-                if (toParse.charAt(index) === "\"") {
+                const char = toParse.charAt(index);
+                if (char === "\"") {
                     if (toParse.charAt(index + 1) === "\"") {
                         index++;
+                        ret += '"';
                     } else {
                         break;
                     }
+                } else {
+                    ret += char;
                 }
                 index++;
             }
+            return ret;
         };
 
         const skipOverInteger = () => {
@@ -70,14 +214,12 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
                 throw new Error(index.toString());
             }
             index++;
-            const startOfBase: number = index;
-            skipOverName();
-            const endOfBase = index;
-            if (endOfBase >= toParse.length) {
-                throw new Error(index.toString());
-            }
-            base = toParse.slice(startOfBase, endOfBase);
+            base = readName();
             index++; // To skip past the closing quotation mark.
+            skipOverWhitespace();
+            if (toParse.charAt(index) === ",") {
+                index++;
+            }
             skipOverWhitespace();
         }
 
@@ -93,10 +235,13 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
             while (index < toParse.length) {
                 skipOverWhitespace();
                 const startOfSpex: number = index;
+                let exclusion: string = "";
                 if (toParse.slice(index, index + CHOP_BEFORE.length) === CHOP_BEFORE) {
                     index += CHOP_BEFORE.length;
+                    exclusion += CHOP_BEFORE + ":";
                 } else if (toParse.slice(index, index + CHOP_AFTER.length) === CHOP_AFTER) {
                     index += CHOP_AFTER.length;
+                    exclusion += CHOP_AFTER + ":";
                 } else if (toParse.charAt(index) === "}") {
                     index++;
                     break;
@@ -113,12 +258,16 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
                     throw new Error(index.toString());
                 }
                 index++;
-                skipOverName();
+                exclusion += readName();
                 index++;
-                spex.push(toParse.slice(startOfSpex, index));
+                spex.push(exclusion);
                 if (toParse.charAt(index) === ",") {
                     index++;
                 }
+            }
+            skipOverWhitespace();
+            if (toParse.charAt(index) === ",") {
+                index++;
             }
             skipOverWhitespace();
         }
@@ -131,6 +280,11 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
             skipOverInteger();
             const intEnd: number = index;
             min = Number.parseInt(toParse.slice(intStart, intEnd), 10);
+            skipOverWhitespace();
+            if (toParse.charAt(index) === ",") {
+                index++;
+            }
+            skipOverWhitespace();
         }
 
         // maximum
@@ -141,6 +295,11 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
             skipOverInteger();
             const intEnd: number = index;
             max = Number.parseInt(toParse.slice(intStart, intEnd), 10);
+            skipOverWhitespace();
+            if (toParse.charAt(index) === ",") {
+                index++;
+            }
+            skipOverWhitespace();
         }
 
         // specificationFilter
@@ -150,13 +309,6 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
             filter = toParse.slice(index);
         }
 
-        // return {
-        //     base,
-        //     spex,
-        //     min,
-        //     max,
-        //     filter,
-        // };
         return new SubtreeSpecification(
             decodeLDAPDN(ctx, base),
             spex.length
@@ -181,7 +333,9 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
                 : undefined,
             min,
             max,
-            undefined,
+            (filter.length > 10)
+                ? lexRefinement(ctx, filter).refinement
+                : undefined,
         );
     }
 }
