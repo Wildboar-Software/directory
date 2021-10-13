@@ -130,7 +130,7 @@ import {
 //     nullMatch,
 // } from "@wildboar/x500/src/lib/matching/equality/nullMatch";
 import {
-    numeringStringMatch as numericStringMatch, // FIXME:
+    numericStringMatch,
 } from "@wildboar/x500/src/lib/matching/equality/numericStringMatch";
 import {
     objectIdentifierFirstComponentMatch,
@@ -279,8 +279,6 @@ function toInfo <Matcher> (
         matcher,
     };
 }
-
-// FIXME: Add distinguishedName match and objectIdentifer match.
 
 export
 function loadMatchingRules (ctx: Context): void {
