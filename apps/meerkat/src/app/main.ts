@@ -1,7 +1,7 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import type { ClientConnection } from "./types";
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as net from "net";
 import * as tls from "tls";
@@ -9,6 +9,9 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { ObjectIdentifier } from "asn1-ts";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+import {
+    Abort_reasonNotSpecified,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import { IDMConnection } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
@@ -88,31 +91,45 @@ async function main (): Promise<void> {
         });
     }
 
+    const associations: Map<net.Socket, ClientConnection> = new Map();
     const idmServer = net.createServer((c) => {
         try {
             const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
             ctx.log.info(`IDM client connected from ${source}.`);
-            const idm = new IDMConnection(c); // eslint-disable-line
-
+            const idm = new IDMConnection(c);
             idm.events.on("bind", (idmBind: IdmBind) => {
+                const existingAssociation = associations.get(c);
+                if (existingAssociation) {
+                    ctx.log.error(`Connection ${source} tried to double-bind with protocol ${idmBind.protocolID.toString()}.`);
+                    idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.close());
+                    return;
+                }
                 if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
                     const dba = _decode_DirectoryBindArgument(idmBind.argument);
-                    new DAPConnection(ctx, idm, dba); // eslint-disable-line
+                    const conn = new DAPConnection(ctx, idm, dba);
+                    if (conn.boundNameAndUID) {
+                        associations.set(c, conn);
+                    }
                 } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
                     const dba = _decode_DSABindArgument(idmBind.argument);
-                    new DSPConnection(ctx, idm, dba);
+                    const conn = new DSPConnection(ctx, idm, dba);
+                    if (conn.boundNameAndUID) {
+                        associations.set(c, conn);
+                    }
                 } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
                     const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
-                    new DOPConnection(ctx, idm, dba);
+                    const conn = new DOPConnection(ctx, idm, dba);
+                    if (conn.boundNameAndUID) {
+                        associations.set(c, conn);
+                    }
                 } else {
                     ctx.log.error(`Unsupported protocol: ${idmBind.protocolID.toString()}.`);
                 }
             });
-
             idm.events.on("unbind", () => {
-                c.end();
+                // c.end(); You don't actually have to close the TCP connection. It could be recycled.
+                associations.delete(c);
             });
-
         } catch (e) {
             ctx.log.error("Unhandled exception: ", e);
         }
@@ -120,10 +137,12 @@ async function main (): Promise<void> {
         c.on("error", (e) => {
             ctx.log.error("Connection error: ", e);
             c.end();
+            associations.delete(c);
         });
 
         c.on("close", () => {
             ctx.log.info("Socket closed.");
+            associations.delete(c);
         });
 
     });
@@ -142,7 +161,13 @@ async function main (): Promise<void> {
     const ldapServer = net.createServer((c) => {
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
         ctx.log.info(`LDAP client connected from ${source}.`);
-        new LDAPConnection(ctx, c);
+        const conn = new LDAPConnection(ctx, c);
+        if (conn.boundNameAndUID) {
+            associations.set(c, conn);
+        }
+        c.on("end", () => {
+            associations.delete(c);
+        });
     });
 
     const ldapPort = process.env.MEERKAT_LDAP_PORT
@@ -160,7 +185,13 @@ async function main (): Promise<void> {
         }, (c) => {
             const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
             ctx.log.info(`LDAPS client connected from ${source}.`);
-            new LDAPConnection(ctx, c);
+            const conn = new LDAPConnection(ctx, c);
+            if (conn.boundNameAndUID) {
+                associations.set(c, conn);
+            }
+            c.on("end", () => {
+                associations.delete(c);
+            });
         });
         const ldapsPort = process.env.MEERKAT_LDAPS_PORT
             ? Number.parseInt(process.env.MEERKAT_LDAPS_PORT, 10)
@@ -183,13 +214,6 @@ async function main (): Promise<void> {
             skipMissingProperties: false,
             forbidNonWhitelisted: true,
         }));
-        // const swaggerConfig = new DocumentBuilder()
-        //     .setTitle("Web Admin")
-        //     .setDescription('HTTP-based REST API for Meerkat DSA')
-        //     .setVersion('1.0')
-        //     .build();
-        // const document = SwaggerModule.createDocument(app, swaggerConfig);
-        // SwaggerModule.setup('documentation', app, document);
         const port = Number.parseInt(process.env.MEERKAT_WEB_ADMIN_PORT, 10);
         await app.listen(port, () => {
             ctx.log.info('Listening at http://localhost:' + port);

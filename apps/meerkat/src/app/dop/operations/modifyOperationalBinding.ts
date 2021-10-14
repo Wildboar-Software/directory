@@ -58,6 +58,7 @@ import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import becomeSubordinate from "../establish/becomeSubordinate";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -256,7 +257,6 @@ async function modifyOperationalBinding (
     const sp = data.securityParameters;
     const created = await ctx.db.operationalBinding.create({
         data: {
-            supply_contexts: "", // FIXME: Make this null.
             previous_id: opBinding.id as unknown as undefined, // FIXME: WTF is going on here?
             outbound: false,
             binding_type: data.bindingType.toString(),
@@ -354,7 +354,8 @@ async function modifyOperationalBinding (
             // Delete context prefix up until and including the CP entry.
             // Create the new context, exactly like before.
             // Reparent subordinate entry.
-            // TODO: const reply = await becomeSubordinate(ctx, agreement, init);
+            // const reply = await becomeSubordinate(ctx, agreement, init);
+            // TODO: I think you need to implement a modifySubordinate(). The above will not suffice.
             const approved: boolean = await getApproval(created.uuid);
             if (!approved) {
                 throw new errors.OperationalBindingError(
@@ -411,7 +412,6 @@ async function modifyOperationalBinding (
                 },
             );
         }
-
     } else {
         throw NOT_SUPPORTED_ERROR;
     }

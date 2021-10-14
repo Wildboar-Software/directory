@@ -27,6 +27,15 @@ import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
+    UpdateErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    UpdateProblem_entryAlreadyExists,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import { OpBindingErrorParam } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
@@ -101,18 +110,17 @@ async function becomeSubordinate (
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
     const existing = await findEntry(ctx, ctx.dit.root, itinerantDN, false);
     if (existing) {
-        throw new errors.SecurityError(
+        throw new errors.UpdateError(
             "Entry already exists.",
-            new SecurityErrorData(
-                SecurityProblem_insufficientAccessRights,
-                undefined,
+            new UpdateErrorData(
+                UpdateProblem_entryAlreadyExists,
                 undefined,
                 [],
                 createSecurityParameters(
                     ctx,
                     undefined,
                     undefined,
-                    securityError["&errorCode"],
+                    updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,

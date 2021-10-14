@@ -1,4 +1,4 @@
-import { Context } from "../types";
+import { Context, ClientConnection } from "../types";
 import { DER } from "asn1-ts/dist/node/functional";
 import { IDMConnection } from "@wildboar/idm";
 import type {
@@ -146,9 +146,7 @@ async function handleRequestAndErrors (
 
 
 export default
-class DOPConnection {
-    public readonly id = uuid();
-    public readonly pagedResultsRequests: Map<string, [ request: PagedResultsRequest_newRequest, pageIndex: number ]> = new Map([]);
+class DOPConnection extends ClientConnection {
     public get v1 (): boolean {
         return (this.bind.versions?.[Versions_v1] === TRUE_BIT);
     }
@@ -169,12 +167,13 @@ class DOPConnection {
         readonly idm: IDMConnection,
         readonly bind: DirectoryBindArgument,
     ) {
+        super();
         const bindResult = new DirectoryBindResult(
             undefined,
             undefined,
             undefined,
         );
-        // Check bind credentials.
+        // TODO: Check bind credentials.
         idm.writeBindResult(dop_ip["&id"]!, _encode_DirectoryBindResult(bindResult, DER));
         idm.events.on("request", this.handleRequest.bind(this));
         idm.events.on("unbind", this.handleUnbind.bind(this));

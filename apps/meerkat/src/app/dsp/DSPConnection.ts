@@ -224,8 +224,8 @@ class DSPConnection extends ClientConnection {
         const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
         doBind(ctx, idm.s, bind)
             .then((outcome) => {
-                this.boundEntry = undefined;
-                this.boundNameAndUID = undefined;
+                this.boundEntry = outcome.boundVertex;
+                this.boundNameAndUID = outcome.boundNameAndUID;
                 this.authLevel = outcome.authLevel;
                 if (outcome.failedAuthentication) {
                     const err: typeof directoryBindError["&ParameterType"] = {

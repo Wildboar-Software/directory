@@ -30,6 +30,15 @@ import createEntry from "../../database/createEntry";
 
 // NOTE: This is for RECEIVING an update to the CP, not creating one.
 // TODO: If context prefix initialization fails, undo all changes.
+/**
+ * @deprecated This is not used anywhere.
+ * @param ctx
+ * @param oldAgreement
+ * @param newAgreement
+ * @param init
+ * @param mod
+ * @returns
+ */
 export
 async function updateContextPrefix (
     ctx: Context,
