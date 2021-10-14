@@ -143,6 +143,7 @@ import {
     LdapSyntaxDescription,
 } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
 import { EventEmitter } from "events";
+import type { i18n } from "i18next";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -1028,6 +1029,7 @@ interface ContextTypeInfo {
 
 export
 interface Context {
+    i18n: i18n,
     dit: DITInfo;
     dsa: DSAInfo;
     config: Configuration;

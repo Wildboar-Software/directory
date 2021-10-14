@@ -441,7 +441,7 @@ async function list_ii (
 
     if (fromDAP && (listItems.length === 0)) {
         throw new errors.ServiceError(
-            "Null result from DAP list operation",
+            "Null result from DAP list operation.",
             new ServiceErrorData(
                 ServiceProblem_invalidReference,
                 [],

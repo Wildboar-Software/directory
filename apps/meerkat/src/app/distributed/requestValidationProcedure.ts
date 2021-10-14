@@ -436,7 +436,7 @@ async function requestValidationProcedure (
     assert(req.argument);
     if (ctx.dsa.hibernatingSince || ctx.dsa.sentinelTriggeredHibernation) {
         throw new errors.ServiceError(
-            "Request denied. Hibernating.",
+            "Hibernating.",
             new ServiceErrorData(
                 ServiceProblem_busy,
                 [],

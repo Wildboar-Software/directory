@@ -17,6 +17,7 @@ import * as fs from "fs";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import winston from "winston";
 import isDebugging from "is-debugging";
+import i18n from "i18next";
 
 if (!process.env.MEERKAT_SIGNING_CERT_CHAIN || !process.env.MEERKAT_SIGNING_KEY) {
     console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
@@ -45,6 +46,7 @@ const root: Vertex = {
     },
 };
 const ctx: Context = {
+    i18n,
     config: {
         localQualifierPointsFor: {
             usingStartTLS: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS

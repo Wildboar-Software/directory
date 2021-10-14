@@ -166,7 +166,7 @@ async function administerPassword (
             || !authorizedToModifyUserPwd
         ) {
             throw new errors.SecurityError(
-                "Not permitted to modify entry with changePassword operation.",
+                "Not permitted to modify entry with administerPassword operation.",
                 new SecurityErrorData(
                     SecurityProblem_noInformation,
                     undefined,

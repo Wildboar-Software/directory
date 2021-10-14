@@ -205,7 +205,7 @@ async function addEntry (
     const immediateSuperior = state.foundDSE;
     if (immediateSuperior.dse.alias) {
         throw new errors.UpdateError(
-            "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
+            "Cannot add an entry beneath an alias.",
             namingViolationErrorData(ctx, conn, []),
         );
     }
@@ -605,25 +605,25 @@ async function addEntry (
         );
     }
 
-    const useOfContexts = (data.criticalExtensions?.[EXT_BIT_USE_OF_CONTEXTS] === TRUE_BIT);
-    if (!useOfContexts && (attributesUsingContexts.length > 0)) {
-        throw new errors.ServiceError(
-            "Use of contexts was not enabled by the request.",
-            new ServiceErrorData(
-                ServiceProblem_unavailable,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    serviceError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
+    // const useOfContexts = (data.criticalExtensions?.[EXT_BIT_USE_OF_CONTEXTS] === TRUE_BIT);
+    // if (!useOfContexts && (attributesUsingContexts.length > 0)) {
+    //     throw new errors.ServiceError(
+    //         "Use of contexts was not enabled by the request.",
+    //         new ServiceErrorData(
+    //             ServiceProblem_unavailable,
+    //             [],
+    //             createSecurityParameters(
+    //                 ctx,
+    //                 conn.boundNameAndUID?.dn,
+    //                 undefined,
+    //                 serviceError["&errorCode"],
+    //             ),
+    //             ctx.dsa.accessPoint.ae_title.rdnSequence,
+    //             state.chainingArguments.aliasDereferenced,
+    //             undefined,
+    //         ),
+    //     );
+    // }
 
     objectClasses
         .map((oc) => ctx.objectClasses.get(oc.toString()))
@@ -661,7 +661,7 @@ async function addEntry (
                     ),
                 );
             }
-            // Optional attributes are not checked.
+            // FIXME: Optional attributes are not checked.
         });
 
     const rdnAttributes: Set<IndexableOID> = new Set();

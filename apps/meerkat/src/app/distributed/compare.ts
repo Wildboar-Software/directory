@@ -160,7 +160,7 @@ async function compare (
         );
         if (!authorizedToEntry) {
             throw new errors.SecurityError(
-                "Not permitted to modify entry with changePassword operation.",
+                "Not authorized to read this entry.",
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,

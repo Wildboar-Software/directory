@@ -135,7 +135,7 @@ async function read (
         );
         if (!authorized) {
             throw new errors.SecurityError(
-                "Not permitted to create this entry.",
+                "Not permitted to read this entry.",
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,

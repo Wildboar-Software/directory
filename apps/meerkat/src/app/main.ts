@@ -60,17 +60,17 @@ async function main (): Promise<void> {
     // The ordering of these is important.
     // Loading LDAP syntaxes before attribute types allows us to use the names instead of OIDs.
     await loadObjectClasses(ctx);
-    ctx.log.debug("Loaded object classes.");
+    ctx.log.debug(ctx.i18n.t("log:loaded_object_classes"));
     loadLDAPSyntaxes(ctx);
-    ctx.log.debug("Loaded LDAP syntaxes.");
+    ctx.log.debug(ctx.i18n.t("log:loaded_ldap_syntaxes"));
     await loadAttributeTypes(ctx);
-    ctx.log.debug("Loaded attribute types.");
+    ctx.log.debug(ctx.i18n.t("log:loaded_attribute_types"));
     await loadObjectIdentifierNames(ctx);
-    ctx.log.debug("Loaded object identifier names.");
+    ctx.log.debug(ctx.i18n.t("log:loaded_oid_names"));
     loadMatchingRules(ctx);
-    ctx.log.debug("Loaded matching rules.");
+    ctx.log.debug(ctx.i18n.t("log:loaded_matching_rules"));
     loadContextTypes(ctx);
-    ctx.log.debug("Loaded context types.");
+    ctx.log.debug(ctx.i18n.t("log:loaded_context_types"));
 
     const nameForms = await ctx.db.nameForm.findMany();
     for (const nameForm of nameForms) {
@@ -93,14 +93,20 @@ async function main (): Promise<void> {
 
     const associations: Map<net.Socket, ClientConnection> = new Map();
     const idmServer = net.createServer((c) => {
+        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
         try {
-            const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
-            ctx.log.info(`IDM client connected from ${source}.`);
+            ctx.log.info(ctx.i18n.t("log:transport_established", {
+                source,
+                transport: "IDM",
+            }));
             const idm = new IDMConnection(c);
             idm.events.on("bind", (idmBind: IdmBind) => {
                 const existingAssociation = associations.get(c);
                 if (existingAssociation) {
-                    ctx.log.error(`Connection ${source} tried to double-bind with protocol ${idmBind.protocolID.toString()}.`);
+                    ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
+                        source,
+                        protocol: idmBind.protocolID.toString(),
+                    }))
                     idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.close());
                     return;
                 }
@@ -123,7 +129,9 @@ async function main (): Promise<void> {
                         associations.set(c, conn);
                     }
                 } else {
-                    ctx.log.error(`Unsupported protocol: ${idmBind.protocolID.toString()}.`);
+                    ctx.log.error(ctx.i18n.t("log:unsupported_protocol", {
+                        protocol: idmBind.protocolID.toString(),
+                    }));
                 }
             });
             idm.events.on("unbind", () => {
@@ -131,23 +139,33 @@ async function main (): Promise<void> {
                 associations.delete(c);
             });
         } catch (e) {
-            ctx.log.error("Unhandled exception: ", e);
+            ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
+                e: e.message,
+            }));
         }
 
         c.on("error", (e) => {
-            ctx.log.error("Connection error: ", e);
+            ctx.log.error(ctx.i18n.t("log:socket_error", {
+                source,
+                e: e.message,
+            }));
             c.end();
             associations.delete(c);
         });
 
         c.on("close", () => {
-            ctx.log.info("Socket closed.");
+            ctx.log.info(ctx.i18n.t("log:socket_closed", {
+                source,
+            }));
             associations.delete(c);
         });
 
     });
     idmServer.on("error", (err) => {
-        ctx.log.error(`IDM server error: ${err}`);
+        ctx.log.error(ctx.i18n.t("log:server_error", {
+            protocol: "IDM",
+            e: err.message,
+        }));
     });
 
     const idmPort = process.env.MEERKAT_IDM_PORT
@@ -155,12 +173,18 @@ async function main (): Promise<void> {
         : DEFAULT_IDM_TCP_PORT;
 
     idmServer.listen(idmPort, () => {
-        ctx.log.info(`IDM server listening on port ${idmPort}.`);
+        ctx.log.info(ctx.i18n.t("log:listening", {
+            protocol: "IDM",
+            port: idmPort,
+        }));
     });
 
     const ldapServer = net.createServer((c) => {
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
-        ctx.log.info(`LDAP client connected from ${source}.`);
+        ctx.log.info(ctx.i18n.t("log:transport_established", {
+            source,
+            transport: "LDAP",
+        }));
         const conn = new LDAPConnection(ctx, c);
         if (conn.boundNameAndUID) {
             associations.set(c, conn);
@@ -175,7 +199,10 @@ async function main (): Promise<void> {
         : DEFAULT_LDAP_TCP_PORT;
 
     ldapServer.listen(ldapPort, async () => {
-        ctx.log.info(`LDAP server listening on port ${ldapPort}.`);
+        ctx.log.info(ctx.i18n.t("log:listening", {
+            protocol: "LDAP",
+            port: ldapPort,
+        }));
     });
 
     if (process.env.MEERKAT_SERVER_TLS_CERT && process.env.MEERKAT_SERVER_TLS_KEY) {
@@ -184,7 +211,10 @@ async function main (): Promise<void> {
             key: await fs.readFile(process.env.MEERKAT_SERVER_TLS_KEY),
         }, (c) => {
             const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
-            ctx.log.info(`LDAPS client connected from ${source}.`);
+            ctx.log.info(ctx.i18n.t("log:transport_established", {
+                source,
+                transport: "LDAPS",
+            }));
             const conn = new LDAPConnection(ctx, c);
             if (conn.boundNameAndUID) {
                 associations.set(c, conn);
@@ -197,7 +227,10 @@ async function main (): Promise<void> {
             ? Number.parseInt(process.env.MEERKAT_LDAPS_PORT, 10)
             : DEFAULT_LDAPS_TCP_PORT;
         ldapsServer.listen(ldapsPort, async () => {
-            ctx.log.info(`LDAPS server listening on port ${ldapsPort}`);
+            ctx.log.info(ctx.i18n.t("log:listening", {
+                protocol: "LDAPS",
+                port: ldapsPort,
+            }));
         });
     }
 
@@ -216,7 +249,10 @@ async function main (): Promise<void> {
         }));
         const port = Number.parseInt(process.env.MEERKAT_WEB_ADMIN_PORT, 10);
         await app.listen(port, () => {
-            ctx.log.info('Listening at http://localhost:' + port);
+            ctx.log.info(ctx.i18n.t("log:listening", {
+                protocol: "HTTP",
+                port: port,
+            }));
         });
     }
 
@@ -228,11 +264,12 @@ async function main (): Promise<void> {
                 const fullRecord: string = record.join(" ").trim().toLowerCase();
                 switch (fullRecord) {
                 case ("meerkat:kill"): {
-                    ctx.log.error("Killed by sentinel.");
+                    ctx.log.error(ctx.i18n.t("log:killed_by_sentinel"));
                     process.exit(503);
                     break;
                 }
                 case ("meerkat:hibernate"): {
+                    ctx.log.error(ctx.i18n.t("log:hibernated_by_sentinel"));
                     ctx.dsa.sentinelTriggeredHibernation = new Date();
                     break;
                 }
@@ -258,7 +295,7 @@ async function main (): Promise<void> {
         for (const record of records) {
             const fullRecord: string = record.join(" ").trim().toLowerCase();
             if (fullRecord === versionSlug) {
-                ctx.log.info("An update is available for Meerkat DSA.");
+                ctx.log.info(ctx.i18n.t("log:update_available"));
             }
         }
     }
@@ -286,6 +323,10 @@ async function main (): Promise<void> {
             return;
         }
         setTimeout(() => terminate(ctx, ob.id), Math.max(differenceInMilliseconds(ob.terminated_time, now), 1000));
+        ctx.log.warn(ctx.i18n.t("log:terminating_ob", {
+            obid: ob.id,
+            time: ob.terminated_time.toISOString(),
+        }));
         ctx.log.warn(`Terminating operational binding ${ob.id} at ${ob.terminated_time.toISOString()}.`);
     });
 }
