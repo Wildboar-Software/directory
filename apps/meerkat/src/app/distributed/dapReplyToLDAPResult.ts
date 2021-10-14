@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type { ASN1Element, INTEGER } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Result } from "@wildboar/x500/src/lib/types/Result";

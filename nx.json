@@ -32,6 +32,9 @@
     "meerkat": {
       "tags": []
     },
+    "meerkat-types": {
+      "tags": []
+    },
     "x500-cli": {
       "tags": []
     }

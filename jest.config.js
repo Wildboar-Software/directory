@@ -4,5 +4,6 @@ module.exports = {
     '<rootDir>/libs/idm',
     '<rootDir>/apps/x500-cli',
     '<rootDir>/libs/ldap-socket',
+    '<rootDir>/libs/meerkat-types',
   ],
 };

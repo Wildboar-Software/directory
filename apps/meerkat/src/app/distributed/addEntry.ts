@@ -1,5 +1,5 @@
-import { Context, IndexableOID, Value, Vertex, ClientConnection, OperationReturn } from "../types";
-import * as errors from "../errors";
+import { Context, IndexableOID, Value, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_AddEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";

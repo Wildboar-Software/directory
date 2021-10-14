@@ -4,7 +4,7 @@ import type {
     Value,
     SpecialAttributeDatabaseReader,
     IndexableOID,
-} from "../types";
+} from "@wildboar/meerkat-types";
 import { ASN1UniversalType, BERElement, DERElement, ObjectIdentifier } from "asn1-ts";
 import {
     DER,

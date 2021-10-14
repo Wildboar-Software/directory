@@ -1,4 +1,4 @@
-import type { Context } from "../../types";
+import type { Context } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -22,7 +22,7 @@ import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
-import * as errors from "../../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";

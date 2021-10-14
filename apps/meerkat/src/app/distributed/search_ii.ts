@@ -1,5 +1,5 @@
-import type { Context, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "../types";
-import * as errors from "../errors";
+import type { Context, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { TRUE_BIT, TRUE } from "asn1-ts";
 import {
     SearchArgument,

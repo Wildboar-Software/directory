@@ -5,7 +5,7 @@ import { ASN1Element, DERElement } from "asn1-ts";
 import {
     Context,
     AttributeInfo,
-} from "../types";
+} from "@wildboar/meerkat-types";
 
 const DEFAULT_WRITER = async (ctx: Context, value: ASN1Element): Promise<void> => {
     ctx.log.info(value.value.toString());

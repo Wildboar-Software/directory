@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 
 export
 async function deleteEntry (

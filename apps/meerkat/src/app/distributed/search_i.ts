@@ -1,5 +1,5 @@
-import type { Context, Vertex, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "../types";
-import * as errors from "../errors";
+import type { Context, Vertex, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
 import {

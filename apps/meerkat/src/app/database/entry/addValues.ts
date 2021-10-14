@@ -5,7 +5,7 @@ import type {
     Value,
     SpecialAttributeDatabaseEditor,
     PendingUpdates,
-} from "../../types";
+} from "@wildboar/meerkat-types";
 import { ASN1Construction } from "asn1-ts";
 import type { PrismaPromise, Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";

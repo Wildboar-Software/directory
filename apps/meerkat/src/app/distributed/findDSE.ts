@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Vertex, ClientConnection } from "../types";
+import type { Context, DIT, Vertex, ClientConnection } from "@wildboar/meerkat-types";
 import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
@@ -43,7 +43,7 @@ import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     ServiceProblem_timeLimitExceeded,
     ServiceProblem_loopDetected,

@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
 
 export

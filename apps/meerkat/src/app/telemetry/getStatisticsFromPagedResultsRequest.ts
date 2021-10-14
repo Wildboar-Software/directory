@@ -1,6 +1,6 @@
 import type {
     PagedResultsRequestStatistics,
-} from "../types";
+} from "@wildboar/meerkat-types";
 import type {
     PagedResultsRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";

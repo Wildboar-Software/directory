@@ -4,7 +4,7 @@ import type {
     IndexableOID,
     SpecialAttributeDatabaseRemover,
     PendingUpdates,
-} from "../../types";
+} from "@wildboar/meerkat-types";
 import type { PrismaPromise } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";

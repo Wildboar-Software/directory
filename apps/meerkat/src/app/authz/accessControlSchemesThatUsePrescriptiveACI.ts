@@ -10,7 +10,7 @@ import {
 import {
     rule_and_simple_access_control,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/rule-and-simple-access-control.va";
-import { IndexableOID } from "../types";
+import { IndexableOID } from "@wildboar/meerkat-types";
 
 export
 const accessControlSchemesThatUsePrescriptiveACI: Set<IndexableOID> = new Set([

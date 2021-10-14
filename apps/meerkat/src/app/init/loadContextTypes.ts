@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import contextTypeFromInformationObject from "./contextTypeFromInformationObject";
 import * as x500c from "@wildboar/x500/src/lib/collections/contexts";
 import type {

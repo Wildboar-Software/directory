@@ -4,7 +4,7 @@ import type {
     Value,
     SpecialAttributeDatabaseEditor,
     PendingUpdates,
-} from "../types";
+} from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 // import {
 //     ACIItem,

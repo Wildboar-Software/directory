@@ -1,6 +1,6 @@
-import type { Context, ClientConnection, OPCR } from "../types";
+import type { Context, ClientConnection, OPCR } from "@wildboar/meerkat-types";
 import { BOOLEAN, TRUE } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     OperationProgress,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";

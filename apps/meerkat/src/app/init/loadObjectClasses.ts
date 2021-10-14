@@ -1,4 +1,4 @@
-import { Context } from "../types";
+import { Context } from "@wildboar/meerkat-types";
 import objectClassFromInformationObject from "./objectClassFromInformationObject";
 import * as x500oc from "@wildboar/x500/src/lib/collections/objectClasses";
 import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";

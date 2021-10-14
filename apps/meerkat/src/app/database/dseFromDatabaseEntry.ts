@@ -1,6 +1,6 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
-import type { Context, DSE } from "../types";
+import type { Context, DSE } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import { ACIScope, ACIItem as DatabaseACIItem } from "@prisma/client";
 import {

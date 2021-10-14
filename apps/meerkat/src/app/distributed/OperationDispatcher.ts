@@ -1,4 +1,4 @@
-import type { ClientConnection, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "../types";
+import type { ClientConnection, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "@wildboar/meerkat-types";
 import type DSPConnection from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import {
@@ -17,7 +17,7 @@ import {
     _decode_SearchResult,
     _encode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import requestValidationProcedure from "./requestValidationProcedure";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import getSoughtObjectFromRequest from "./getSoughtObjectFromRequest";

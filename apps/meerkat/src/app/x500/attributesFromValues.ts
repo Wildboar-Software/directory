@@ -1,4 +1,4 @@
-import type { IndexableOID, Value } from "../types";
+import type { IndexableOID, Value } from "@wildboar/meerkat-types";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";

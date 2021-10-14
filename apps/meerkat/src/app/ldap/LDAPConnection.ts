@@ -1,5 +1,5 @@
-import { Context, Vertex, ClientConnection, OperationStatistics } from "../types";
-import * as errors from "../errors";
+import { Context, Vertex, ClientConnection, OperationStatistics } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import * as net from "net";
 import * as tls from "tls";
 import { BERElement, ASN1TruncationError, ObjectIdentifier } from "asn1-ts";

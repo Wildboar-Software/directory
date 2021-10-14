@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 
 export
 async function createDatabaseReport (ctx: Context): Promise<Record<string, any>> {

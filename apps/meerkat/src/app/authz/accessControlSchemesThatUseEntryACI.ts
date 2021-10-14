@@ -4,7 +4,7 @@ import {
 import {
     rule_and_basic_access_control,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/rule-and-basic-access-control.va";
-import { IndexableOID } from "../types";
+import { IndexableOID } from "@wildboar/meerkat-types";
 
 export
 const accessControlSchemesThatUseEntryACI: Set<IndexableOID> = new Set([

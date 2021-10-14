@@ -1,4 +1,4 @@
-import type { SearchResultStatistics } from "../types";
+import type { SearchResultStatistics } from "@wildboar/meerkat-types";
 import type { SearchResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 

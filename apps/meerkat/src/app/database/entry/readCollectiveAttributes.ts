@@ -1,7 +1,7 @@
 import type {
     Context,
     Vertex,
-} from "../../types";
+} from "@wildboar/meerkat-types";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";

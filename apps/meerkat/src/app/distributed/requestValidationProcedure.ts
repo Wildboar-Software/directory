@@ -1,5 +1,5 @@
-import type { Context } from "../types";
-import * as errors from "../errors";
+import type { Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { addSeconds } from "date-fns";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";

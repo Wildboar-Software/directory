@@ -1,4 +1,4 @@
-import type { Context, BindReturn } from "../types";
+import type { Context, BindReturn } from "@wildboar/meerkat-types";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {

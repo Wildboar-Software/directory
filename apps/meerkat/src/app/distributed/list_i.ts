@@ -1,6 +1,6 @@
-import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
+import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import {
     ListArgument,

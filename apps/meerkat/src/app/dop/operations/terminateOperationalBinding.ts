@@ -1,6 +1,6 @@
-import type { Context } from "../../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type DOPConnection from "../DOPConnection";
-import * as errors from "../../errors";
+import * as errors from "@wildboar/meerkat-types";
 import type {
     TerminateOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";

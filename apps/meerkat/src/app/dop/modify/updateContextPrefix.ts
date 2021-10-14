@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";

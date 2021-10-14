@@ -2,7 +2,7 @@ import type {
     Context,
     Vertex,
     Value,
-} from "../../types";
+} from "@wildboar/meerkat-types";
 import readCollectiveAttributes from "./readCollectiveAttributes";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 

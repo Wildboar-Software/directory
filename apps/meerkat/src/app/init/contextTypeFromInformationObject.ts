@@ -1,4 +1,4 @@
-import type { ContextTypeInfo } from "../types";
+import type { ContextTypeInfo } from "@wildboar/meerkat-types";
 import { TRUE } from "asn1-ts";
 import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
 import type {

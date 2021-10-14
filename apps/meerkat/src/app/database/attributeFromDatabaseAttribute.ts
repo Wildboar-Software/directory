@@ -1,4 +1,4 @@
-import type { Context, Value } from "../types";
+import type { Context, Value } from "@wildboar/meerkat-types";
 import type { AttributeValue, ContextValue } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
 

@@ -1,4 +1,4 @@
-import { Context, Vertex } from "./types";
+import { Context, Vertex } from "@wildboar/meerkat-types";
 import { v4 as uuid } from "uuid";
 import {
     AccessPoint,

@@ -1,5 +1,5 @@
-import type { Context } from "../types";
-import * as errors from "../errors";
+import type { Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import { TRUE_BIT, FALSE, ObjectIdentifier } from "asn1-ts";
 import { LDAPMessage } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";

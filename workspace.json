@@ -123,6 +123,38 @@
         }
       }
     },
+    "meerkat-types": {
+      "root": "libs/meerkat-types",
+      "sourceRoot": "libs/meerkat-types/src",
+      "projectType": "library",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/meerkat-types",
+            "tsConfig": "libs/meerkat-types/tsconfig.lib.json",
+            "packageJson": "libs/meerkat-types/package.json",
+            "main": "libs/meerkat-types/src/index.ts",
+            "assets": ["libs/meerkat-types/*.md"]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/meerkat-types/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/meerkat-types"],
+          "options": {
+            "jestConfig": "libs/meerkat-types/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
     "x500-cli": {
       "root": "apps/x500-cli",
       "sourceRoot": "apps/x500-cli/src",

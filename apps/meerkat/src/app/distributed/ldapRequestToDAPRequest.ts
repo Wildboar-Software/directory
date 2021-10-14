@@ -1,5 +1,5 @@
-import type { Context, ClientConnection } from "../types";
-import * as errors from "../errors";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type {

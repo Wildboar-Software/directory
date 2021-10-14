@@ -1,4 +1,4 @@
-import type { Context, Vertex, ClientConnection } from "../types";
+import type { Context, Vertex, ClientConnection } from "@wildboar/meerkat-types";
 import { BOOLEAN, TRUE } from "asn1-ts";
 import isPrefix from "../x500/isPrefix";
 import {

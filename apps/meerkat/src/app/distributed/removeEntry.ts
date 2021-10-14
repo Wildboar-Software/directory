@@ -1,6 +1,6 @@
-import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
+import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_RemoveEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";

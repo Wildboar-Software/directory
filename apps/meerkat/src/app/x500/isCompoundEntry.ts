@@ -1,4 +1,4 @@
-import type { Vertex } from "../types";
+import type { Vertex } from "@wildboar/meerkat-types";
 import {
     id_oc_parent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";

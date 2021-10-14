@@ -1,4 +1,4 @@
-import type { Context, BindReturn } from "../types";
+import type { Context, BindReturn } from "@wildboar/meerkat-types";
 import type {
     BindRequest,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindRequest.ta";

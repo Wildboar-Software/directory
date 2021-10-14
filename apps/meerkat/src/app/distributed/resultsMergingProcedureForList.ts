@@ -1,6 +1,6 @@
-import type { Context, ClientConnection } from "../types";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     ListResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";

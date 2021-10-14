@@ -1,4 +1,4 @@
-import type { Value, StoredContext } from "../types";
+import type { Value, StoredContext } from "@wildboar/meerkat-types";
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";

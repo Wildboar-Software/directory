@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import { CONTEXT } from "../constants";
 import type { Entry } from "@prisma/client";
 import { Controller, Get, Post, Render, Inject, Param, NotFoundException, Res } from "@nestjs/common";

@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import { ASN1Element } from "asn1-ts";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";

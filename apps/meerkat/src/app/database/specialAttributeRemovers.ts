@@ -3,7 +3,7 @@ import type {
     Vertex,
     SpecialAttributeDatabaseRemover,
     PendingUpdates,
-} from "../types";
+} from "@wildboar/meerkat-types";
 // import { pwdStartTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
 // import { pwdExpiryTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
 // import { pwdEndTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEndTime.oa";

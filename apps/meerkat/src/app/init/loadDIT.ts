@@ -1,4 +1,4 @@
-import type { Context, DIT } from "../types";
+import type { Context, DIT } from "@wildboar/meerkat-types";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import { randomBytes } from "crypto";
 

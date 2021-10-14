@@ -17,7 +17,8 @@
     "baseUrl": ".",
     "paths": {
       "@wildboar/idm": ["libs/idm/src/index.ts"],
-      "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"]
+      "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"],
+      "@wildboar/meerkat-types": ["libs/meerkat-types/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

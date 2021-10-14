@@ -1,4 +1,4 @@
-import type { Context, MatchingRuleInfo } from "../types";
+import type { Context, MatchingRuleInfo } from "@wildboar/meerkat-types";
 import type {
     MATCHING_RULE,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca";

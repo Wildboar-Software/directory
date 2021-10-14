@@ -1,5 +1,5 @@
-import type { ClientConnection, Context } from "../types";
-import * as errors from "../errors";
+import type { ClientConnection, Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";

@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "@wildboar/meerkat-types";
 import {
     addEntry,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";

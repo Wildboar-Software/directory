@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "@wildboar/meerkat-types";
 import {
     TRUE_BIT,
     FALSE_BIT,

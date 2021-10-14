@@ -1,4 +1,4 @@
-import type { CommonArgumentsStatistics, TypeAndContextAssertionStatistics } from "../types";
+import type { CommonArgumentsStatistics, TypeAndContextAssertionStatistics } from "@wildboar/meerkat-types";
 import type {
     CommonArguments,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";

@@ -1,4 +1,4 @@
-import type { AttributeInfo } from "../types";
+import type { AttributeInfo } from "@wildboar/meerkat-types";
 import type {
     ATTRIBUTE,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";

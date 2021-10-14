@@ -1,5 +1,5 @@
-import type { Context } from "../types";
-import * as errors from "../errors";
+import type { Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import { _encodeObjectIdentifier, DER } from "asn1-ts/dist/node/functional";
 import {

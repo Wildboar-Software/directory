@@ -1,5 +1,5 @@
-import type { Context, ClientConnection } from "../types";
-import * as errors from "../errors";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { BOOLEAN, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";

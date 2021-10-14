@@ -1,6 +1,6 @@
-import { Context, StoredContext, Vertex, ClientConnection, OperationReturn } from "../types";
+import { Context, StoredContext, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_CompareArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";

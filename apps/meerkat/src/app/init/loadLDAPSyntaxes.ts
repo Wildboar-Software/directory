@@ -1,4 +1,4 @@
-import { Context } from "../types";
+import { Context } from "@wildboar/meerkat-types";
 import { ASN1Element } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject";

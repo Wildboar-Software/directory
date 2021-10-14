@@ -4,8 +4,8 @@ import {
     PagedResultsRequestState,
     OperationStatistics,
     OperationInvocationInfo,
-} from "../types";
-import * as errors from "../errors";
+} from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { IDMConnection } from "@wildboar/idm";
 import versions from "./versions";
 import type {

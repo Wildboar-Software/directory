@@ -1,4 +1,4 @@
-import type { Context, Vertex, Value } from "../types";
+import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
 import { Prisma } from "@prisma/client";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import type {

@@ -1,4 +1,4 @@
-import type { Context } from "../../types";
+import type { Context } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";

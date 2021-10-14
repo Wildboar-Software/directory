@@ -5,8 +5,8 @@ import {
     Value,
     ClientConnection,
     OperationReturn,
-} from "../types";
-import * as errors from "../errors";
+} from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_ModifyEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";

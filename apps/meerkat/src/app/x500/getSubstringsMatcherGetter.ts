@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
 import type {
     AttributeType,

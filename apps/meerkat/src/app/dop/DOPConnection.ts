@@ -1,4 +1,4 @@
-import { Context, ClientConnection } from "../types";
+import { Context, ClientConnection } from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import { IDMConnection } from "@wildboar/idm";
 import type {
@@ -20,7 +20,7 @@ import {
     ServiceError,
     UpdateError,
     UnknownOperationError,
-} from "../errors";
+} from "@wildboar/meerkat-types";
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";

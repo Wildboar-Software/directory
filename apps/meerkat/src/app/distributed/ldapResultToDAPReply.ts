@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import {
     LDAPResult_resultCode,
     LDAPResult_resultCode_compareTrue,

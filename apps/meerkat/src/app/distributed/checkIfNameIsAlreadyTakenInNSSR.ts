@@ -1,10 +1,10 @@
-import type { Context, ClientConnection } from "../types";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import type {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
 import { TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
     _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as _encode_ChainedArgument,

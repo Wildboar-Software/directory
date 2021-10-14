@@ -4,7 +4,7 @@ import type {
     Value,
     SpecialAttributeDatabaseEditor,
     PendingUpdates,
-} from "../types";
+} from "@wildboar/meerkat-types";
 import {
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";

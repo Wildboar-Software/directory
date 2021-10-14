@@ -1,6 +1,6 @@
-import type { Context, Vertex, ClientConnection, OperationReturn } from "../types";
+import type { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     AdministerPasswordArgument,

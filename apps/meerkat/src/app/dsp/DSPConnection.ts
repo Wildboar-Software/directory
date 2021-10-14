@@ -3,8 +3,8 @@ import {
     ClientConnection,
     OperationStatistics,
     OperationInvocationInfo,
-} from "../types";
-import * as errors from "../errors";
+} from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Socket } from "net";
 import { IDMConnection } from "@wildboar/idm";

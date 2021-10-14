@@ -1,7 +1,7 @@
 import type {
     EntryInformationSelectionStatistics,
     ContextAssertionStatistics,
-} from "../types";
+} from "@wildboar/meerkat-types";
 import type {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";

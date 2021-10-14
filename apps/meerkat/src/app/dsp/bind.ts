@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {

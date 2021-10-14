@@ -1,4 +1,4 @@
-import { Context } from "../types";
+import { Context } from "@wildboar/meerkat-types";
 import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject";
 import { attributeTypeDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/attributeTypeDescription.oa";
 import { bitString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/bitString.oa";

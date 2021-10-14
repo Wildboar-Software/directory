@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";

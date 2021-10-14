@@ -1,7 +1,7 @@
-import { Context, Vertex, Value, ClientConnection, OperationReturn, IndexableOID } from "../types";
+import { Context, Vertex, Value, ClientConnection, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
 import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_ModifyDNArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
