@@ -498,7 +498,6 @@ export const removeMatchingRuleUse: SpecialAttributeDatabaseRemover = async (
 };
 
 export const removeLdapSyntaxes: SpecialAttributeDatabaseRemover = NOOP;
-
 export const removeGoverningStructureRule: SpecialAttributeDatabaseRemover = NOOP;
 export const removeStructuralObjectClass: SpecialAttributeDatabaseRemover = NOOP;
 export const removeNamingContexts: SpecialAttributeDatabaseRemover = NOOP;
@@ -508,3 +507,11 @@ export const removeSupportedControl: SpecialAttributeDatabaseRemover = NOOP;
 export const removeSupportedSASLMechanisms: SpecialAttributeDatabaseRemover = NOOP;
 export const removeSupportedLDAPVersion: SpecialAttributeDatabaseRemover = NOOP;
 export const removeSupportedFeatures: SpecialAttributeDatabaseRemover = NOOP;
+export const removeAccessControlSubentryList: SpecialAttributeDatabaseRemover = NOOP;
+export const removeCollectiveAttributeSubentryList: SpecialAttributeDatabaseRemover = NOOP;
+export const removeContextDefaultSubentryList: SpecialAttributeDatabaseRemover = NOOP;
+export const removeServiceAdminSubentryList: SpecialAttributeDatabaseRemover = NOOP;
+export const removePwdAdminSubentryList: SpecialAttributeDatabaseRemover = NOOP;
+export const removeSubschemaSubentryList: SpecialAttributeDatabaseRemover = NOOP;
+export const removeHasSubordinates: SpecialAttributeDatabaseRemover = NOOP;
+export const removeCollectiveExclusions: SpecialAttributeDatabaseRemover = NOOP;

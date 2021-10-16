@@ -64,6 +64,30 @@ import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchem
 import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
 import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
 import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
+import {
+    id_oa_accessControlSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-accessControlSubentryList.va";
+import {
+    id_oa_collectiveAttributeSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveAttributeSubentryList.va";
+import {
+    id_oa_contextDefaultSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-contextDefaultSubentryList.va";
+import {
+    id_oa_serviceAdminSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-serviceAdminSubentryList.va";
+import {
+    id_oa_pwdAdminSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-pwdAdminSubentryList.va";
+import {
+    id_oa_subschemaSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-subschemaSubentryList.va";
+import {
+    id_oa_hasSubordinates,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hasSubordinates.va";
+import {
+    id_oa_collectiveExclusions,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
 
 // Attribute Removers
 import * as removers from "../specialAttributeValueRemovers";
@@ -77,7 +101,6 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     // [ id_aca_entryACI.toString(), writeEntryACI ],
     // [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
     // [ id_aca_subentryACI.toString(), writeSubentryACI ],
-
     // [ pwdStartTime["&id"]!.toString(), removers.removePwdStartTime ],
     [ pwdExpiryTime["&id"]!.toString(), removers.removePwdExpiryTime ],
     [ pwdEndTime["&id"]!.toString(), removers.removePwdEndTime ],
@@ -104,12 +127,9 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ pwdHistorySlots["&id"]!.toString(), removers.removePwdHistorySlots ],
     [ pwdRecentlyExpiredDuration["&id"]!.toString(), removers.removePwdRecentlyExpiredDuration ],
     // [ pwdEncAlg["&id"]!.toString(), removers.removePwdEncAlg ],
-
     [ userPwd["&id"]!.toString(), removers.removeUserPwd ],
     [ userPassword["&id"]!.toString(), removers.removeUserPassword ],
-
     [ uniqueIdentifier["&id"].toString(), removers.removeUniqueIdentifier ], // Has significance for BAC
-
     [ dITStructureRules["&id"].toString(), removers.removeDITStructureRules ],
     [ nameForms["&id"].toString(), removers.removeNameForms ],
     [ dITContentRules["&id"].toString(), removers.removeDITContentRules ],
@@ -121,10 +141,8 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ matchingRules["&id"].toString(), removers.removeMatchingRules ],
     [ matchingRuleUse["&id"].toString(), removers.removeMatchingRuleUse ],
     [ ldapSyntaxes["&id"].toString(), removers.removeLdapSyntaxes ],
-
     [ governingStructureRule["&id"].toString(), removers.removeGoverningStructureRule ],
     [ structuralObjectClass["&id"].toString(), removers.removeStructuralObjectClass ],
-
     [ namingContexts["&id"].toString(), removers.removeNamingContexts ],
     [ altServer["&id"].toString(), removers.removeAltServer ],
     [ supportedExtension["&id"].toString(), removers.removeSupportedExtension ],
@@ -132,6 +150,14 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ supportedSASLMechanisms["&id"].toString(), removers.removeSupportedSASLMechanisms ],
     [ supportedLDAPVersion["&id"].toString(), removers.removeSupportedLDAPVersion ],
     [ supportedFeatures["&id"].toString(), removers.removeSupportedFeatures ],
+    [ id_oa_accessControlSubentryList.toString(), removers.removeAccessControlSubentryList ],
+    [ id_oa_collectiveAttributeSubentryList.toString(), removers.removeCollectiveAttributeSubentryList ],
+    [ id_oa_contextDefaultSubentryList.toString(), removers.removeContextDefaultSubentryList ],
+    [ id_oa_serviceAdminSubentryList.toString(), removers.removeServiceAdminSubentryList ],
+    [ id_oa_pwdAdminSubentryList.toString(), removers.removePwdAdminSubentryList ],
+    [ id_oa_subschemaSubentryList.toString(), removers.removeSubschemaSubentryList ],
+    [ id_oa_hasSubordinates.toString(), removers.removeHasSubordinates ],
+    [ id_oa_collectiveExclusions.toString(), removers.removeCollectiveExclusions ],
 ]);
 
 export

@@ -163,6 +163,7 @@ import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
 import getApproxMatcherGetter from "../x500/getApproxMatcherGetter";
+import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -813,9 +814,20 @@ async function search_i (
             (target.dse.subentry && subentries)
             || (!target.dse.subentry && !subentries)
         ) {
+            /**
+             * See IETF RFC 4512, Section 5.1: This is how an LDAP client can
+             * read the Root DSE.
+             */
+            const searchingForRootDSE: boolean = Boolean(
+                !target.immediateSuperior
+                && target.dse.root
+                && ("item" in filter)
+                && ("present" in filter.item)
+                && filter.item.present.isEqualTo(objectClass["&id"])
+            );
             // Entry ACI is checked above.
             const match = evaluateFilter(filter, entryInfo, filterOptions);
-            if (match) {
+            if (match || searchingForRootDSE) {
                 if (ret.skipsRemaining > 0) {
                     ret.skipsRemaining--;
                     return;

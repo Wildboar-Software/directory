@@ -84,6 +84,30 @@ import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchem
 import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
 import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
 import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
+import {
+    id_oa_accessControlSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-accessControlSubentryList.va";
+import {
+    id_oa_collectiveAttributeSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveAttributeSubentryList.va";
+import {
+    id_oa_contextDefaultSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-contextDefaultSubentryList.va";
+import {
+    id_oa_serviceAdminSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-serviceAdminSubentryList.va";
+import {
+    id_oa_pwdAdminSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-pwdAdminSubentryList.va";
+import {
+    id_oa_subschemaSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-subschemaSubentryList.va";
+import {
+    id_oa_hasSubordinates,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hasSubordinates.va";
+import {
+    id_oa_collectiveExclusions,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
@@ -110,11 +134,9 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     [ administrativeRole["&id"]!.toString(), readers.readAdministrativeRole ],
     [ subtreeSpecification["&id"]!.toString(), readers.readSubtreeSpecification ],
     [ accessControlScheme["&id"]!.toString(), readers.readAccessControlScheme ],
-
     // [ id_aca_entryACI.toString(), writeEntryACI ],
     // [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
     // [ id_aca_subentryACI.toString(), writeSubentryACI ],
-
     [ pwdStartTime["&id"]!.toString(), readers.readPwdStartTime ],
     [ pwdExpiryTime["&id"]!.toString(), readers.readPwdExpiryTime ],
     [ pwdEndTime["&id"]!.toString(), readers.readPwdEndTime ],
@@ -141,12 +163,9 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     [ pwdHistorySlots["&id"]!.toString(), readers.readPwdHistorySlots ],
     [ pwdRecentlyExpiredDuration["&id"]!.toString(), readers.readPwdRecentlyExpiredDuration ],
     // [ pwdEncAlg["&id"]!.toString(), readers.readPwdEncAlg ],
-
     [ userPwd["&id"]!.toString(), readers.readUserPwd ],
     [ userPassword["&id"]!.toString(), readers.readUserPassword ],
-
     [ uniqueIdentifier["&id"].toString(), readers.readUniqueIdentifier ], // Has significance for Basic Access Control
-
     [ dITStructureRules["&id"].toString(), readers.readDITStructureRules ],
     [ nameForms["&id"].toString(), readers.readNameForms ],
     [ dITContentRules["&id"].toString(), readers.readDITContentRules ],
@@ -158,11 +177,9 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     [ matchingRules["&id"].toString(), readers.readMatchingRules ],
     [ matchingRuleUse["&id"].toString(), readers.readMatchingRuleUse ],
     [ ldapSyntaxes["&id"].toString(), readers.readLdapSyntaxes ],
-
     [ governingStructureRule["&id"].toString(), readers.readGoverningStructureRule ],
     [ structuralObjectClass["&id"].toString(), readers.readStructuralObjectClass ],
     [ subschemaSubentryList["&id"].toString(), readers.readSubschemaSubentryList ],
-
     [ namingContexts["&id"].toString(), readers.readNamingContexts ],
     [ altServer["&id"].toString(), readers.readAltServer ],
     [ supportedExtension["&id"].toString(), readers.readSupportedExtension ],
@@ -170,6 +187,14 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     [ supportedSASLMechanisms["&id"].toString(), readers.readSupportedSASLMechanisms ],
     [ supportedLDAPVersion["&id"].toString(), readers.readSupportedLDAPVersion ],
     [ supportedFeatures["&id"].toString(), readers.readSupportedFeatures ],
+    [ id_oa_accessControlSubentryList.toString(), readers.readAccessControlSubentryList ],
+    [ id_oa_collectiveAttributeSubentryList.toString(), readers.readCollectiveAttributeSubentryList ],
+    [ id_oa_contextDefaultSubentryList.toString(), readers.readContextDefaultSubentryList ],
+    [ id_oa_serviceAdminSubentryList.toString(), readers.readServiceAdminSubentryList ],
+    [ id_oa_pwdAdminSubentryList.toString(), readers.readPwdAdminSubentryList ],
+    [ id_oa_subschemaSubentryList.toString(), readers.readSubschemaSubentryList ],
+    [ id_oa_hasSubordinates.toString(), readers.readHasSubordinates ],
+    [ id_oa_collectiveExclusions.toString(), readers.readCollectiveExclusions ],
 ]);
 
 export
@@ -319,14 +344,14 @@ async function readValues (
 
     for (const reader of userAttributeReaderToExecute) {
         try {
-            userAttributes.push(...await reader(ctx, entry));
+            userAttributes.push(...await reader(ctx, entry, relevantSubentries));
         } catch (e) {
             continue;
         }
     }
     for (const reader of operationalAttributeReadersToExecute) {
         try {
-            operationalAttributes.push(...await reader(ctx, entry));
+            operationalAttributes.push(...await reader(ctx, entry, relevantSubentries));
         } catch (e) {
             continue;
         }

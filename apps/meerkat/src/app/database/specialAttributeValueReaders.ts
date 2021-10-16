@@ -3,7 +3,6 @@ import type {
     Vertex,
     Value,
     SpecialAttributeDatabaseReader,
-    IndexableOID,
 } from "@wildboar/meerkat-types";
 import { ASN1UniversalType, BERElement, DERElement, ObjectIdentifier } from "asn1-ts";
 import {
@@ -32,17 +31,17 @@ import { pwdStartTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdS
 import { pwdExpiryTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
 import { pwdEndTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEndTime.oa";
 import { pwdFails } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
-import { pwdFailureTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
+// import { pwdFailureTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
 import { pwdGracesUsed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGracesUsed.oa";
-import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
-import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+// import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+// import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
 import { pwdModifyEntryAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
 import { pwdChangeAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
 import { pwdMaxAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxAge.oa";
 import { pwdExpiryAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryAge.oa";
 import { pwdMinLength } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinLength.oa";
-import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
-import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
+// import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
+// import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
 import { pwdDictionaries } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdDictionaries.oa";
 import { pwdExpiryWarning } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryWarning.oa";
 import { pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGraces.oa";
@@ -53,9 +52,9 @@ import { pwdMaxTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPoli
 import { pwdMinTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinTimeInHistory.oa";
 import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
 import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
-import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
+// import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
-import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+// import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
 import { createTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
 import { modifyTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/modifyTimestamp.oa";
@@ -75,27 +74,46 @@ import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ld
 import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
 import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
 import { subschemaSubentryList } from "@wildboar/x500/src/lib/modules/InformationFramework/subschemaSubentryList.oa";
-// import {
-//     id_oa_accessControlSubentryList,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-accessControlSubentryList.va";
-// import {
-//     id_oa_collectiveAttributeSubentryList,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveAttributeSubentryList.va";
-// import {
-//     id_oa_contextDefaultSubentryList,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-contextDefaultSubentryList.va";
-// import {
-//     id_oa_serviceAdminSubentryList,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-serviceAdminSubentryList.va";
-// import {
-//     id_oa_pwdAdminSubentryList,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-pwdAdminSubentryList.va";
-// import {
-//     id_oa_hasSubordinates,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hasSubordinates.va";
-// import {
-//     id_oa_collectiveExclusions,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import {
+    id_oa_accessControlSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-accessControlSubentryList.va";
+import {
+    id_oa_collectiveAttributeSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveAttributeSubentryList.va";
+import {
+    id_oa_contextDefaultSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-contextDefaultSubentryList.va";
+import {
+    id_oa_serviceAdminSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-serviceAdminSubentryList.va";
+import {
+    id_oa_pwdAdminSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-pwdAdminSubentryList.va";
+import {
+    id_oa_subschemaSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-subschemaSubentryList.va";
+import {
+    id_oa_hasSubordinates,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hasSubordinates.va";
+import {
+    id_oa_collectiveExclusions,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import {
+    accessControlSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
+import {
+    collectiveAttributeSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
+import {
+    contextAssertionSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
+import {
+    serviceAdminSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
+import {
+    pwdAdminSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+
 // contextAssertionDefaults
 // searchRules
 // subschemaTimestamp
@@ -123,9 +141,9 @@ import {
 import {
     AttributeTypeInformation,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeInformation.ta";
-import {
-    MatchingRuleUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
+// import {
+//     MatchingRuleUseDescription,
+// } from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
 import {
     MatchingRuleDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleDescription.ta";
@@ -135,15 +153,15 @@ import {
 import {
     ContextInformation,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextInformation.ta";
-import {
-    FriendsDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
-import {
-    DITContextUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
-import {
-    DITContextUseInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
+// import {
+//     FriendsDescription,
+// } from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
+// import {
+//     DITContextUseDescription,
+// } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+// import {
+//     DITContextUseInformation,
+// } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
 import {
     LdapSyntaxDescription,
 } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
@@ -159,7 +177,6 @@ import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptio
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
 import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
-import getSubschemaSubentry from "../dit/getSubschemaSubentry";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     id_op_binding_hierarchical,
@@ -170,8 +187,14 @@ import {
     _decode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
+const accessControlSubentryOID: string = accessControlSubentry["&id"].toString();
+const collectiveAttributeSubentryOID: string = collectiveAttributeSubentry["&id"].toString();
+const contextAssertionSubentryOID: string = contextAssertionSubentry["&id"].toString();
+const serviceAdminSubentryOID: string = serviceAdminSubentry["&id"].toString();
+const pwdAdminSubentryOID: string = pwdAdminSubentry["&id"].toString();
 
 export const readObjectClass: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
@@ -1253,30 +1276,6 @@ export const readStructuralObjectClass: SpecialAttributeDatabaseReader = async (
     ];
 };
 
-export const readSubschemaSubentryList: SpecialAttributeDatabaseReader = async (
-    ctx: Readonly<Context>,
-    vertex: Vertex,
-): Promise<Value[]> => {
-    if (vertex.dse.root && !vertex.immediateSuperior) {
-        return []; // FIXME: Implement a hard-coded DSE.
-    }
-    if (vertex.dse.subentry) {
-        return [];
-    }
-    const subschema = await getSubschemaSubentry(ctx, vertex);
-    if (!subschema) {
-        return [];
-    }
-    const subschemaDN = getDistinguishedName(subschema);
-    return [
-        {
-            id: subschemaSubentryList["&id"],
-            value: _encode_DistinguishedName(subschemaDN, DER),
-            contexts: new Map(),
-        },
-    ];
-};
-
 export const readNamingContexts: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
@@ -1356,7 +1355,13 @@ export const readSupportedLDAPVersion: SpecialAttributeDatabaseReader = async (
     ];
 };
 
-export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
+export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (vertex.immediateSuperior || !vertex.dse.root) {
+        return [];
+    }
     return [
         { // LDAP Increment.
             id: supportedFeatures["&id"],
@@ -1364,4 +1369,152 @@ export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (): P
             contexts: new Map(),
         },
     ];
+};
+
+export const readSubschemaSubentryList: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    relevantSubentries?: Vertex[],
+): Promise<Value[]> => {
+    if (!vertex.immediateSuperior && vertex.dse.root) {
+        return [
+            { // Special "virtual entry" containing the subschema.
+                id: subschemaSubentryList["&id"],
+                value: _encode_DistinguishedName([
+                    [
+                        new AttributeTypeAndValue(
+                            new ObjectIdentifier([ 2, 5, 4, 3 ]), // CN
+                            _encodeUTF8String("subschema", DER),
+                        ),
+                    ],
+                ], DER),
+                contexts: new Map(),
+            },
+        ];
+    }
+    const subschema = relevantSubentries?.find((sub) => sub.dse.objectClass.has(SUBSCHEMA));
+    if (!subschema) {
+        return [];
+    }
+    return [
+        {
+            id: id_oa_subschemaSubentryList,
+            value: _encode_DistinguishedName(getDistinguishedName(subschema), DER),
+            contexts: new Map(),
+        },
+    ];
+};
+
+
+export const readAccessControlSubentryList: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    relevantSubentries?: Vertex[],
+): Promise<Value[]> => {
+    return relevantSubentries
+        ?.filter((sub) => sub.dse.objectClass.has(accessControlSubentryOID))
+        .map(getDistinguishedName)
+        .map((dn) => ({
+            id: id_oa_accessControlSubentryList,
+            value: _encode_DistinguishedName(dn, DER),
+            contexts: new Map(),
+        })) ?? [];
+};
+
+export const readCollectiveAttributeSubentryList: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    relevantSubentries?: Vertex[],
+): Promise<Value[]> => {
+    return relevantSubentries
+        ?.filter((sub) => sub.dse.objectClass.has(collectiveAttributeSubentryOID))
+        .map(getDistinguishedName)
+        .map((dn) => ({
+            id: id_oa_collectiveAttributeSubentryList,
+            value: _encode_DistinguishedName(dn, DER),
+            contexts: new Map(),
+        })) ?? [];
+};
+
+export const readContextDefaultSubentryList: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    relevantSubentries?: Vertex[],
+): Promise<Value[]> => {
+    return relevantSubentries
+        ?.filter((sub) => sub.dse.objectClass.has(contextAssertionSubentryOID))
+        .map(getDistinguishedName)
+        .map((dn) => ({
+            id: id_oa_contextDefaultSubentryList,
+            value: _encode_DistinguishedName(dn, DER),
+            contexts: new Map(),
+        })) ?? [];
+};
+
+export const readServiceAdminSubentryList: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    relevantSubentries?: Vertex[],
+): Promise<Value[]> => {
+    return relevantSubentries
+        ?.filter((sub) => sub.dse.objectClass.has(serviceAdminSubentryOID))
+        .map(getDistinguishedName)
+        .map((dn) => ({
+            id: id_oa_serviceAdminSubentryList,
+            value: _encode_DistinguishedName(dn, DER),
+            contexts: new Map(),
+        })) ?? [];
+};
+
+export const readPwdAdminSubentryList: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    relevantSubentries?: Vertex[],
+): Promise<Value[]> => {
+    return relevantSubentries
+        ?.filter((sub) => sub.dse.objectClass.has(pwdAdminSubentryOID))
+        .map(getDistinguishedName)
+        .map((dn) => ({
+            id: id_oa_pwdAdminSubentryList,
+            value: _encode_DistinguishedName(dn, DER),
+            contexts: new Map(),
+        })) ?? [];
+};
+
+export const readHasSubordinates: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    const sub = await ctx.db.entry.findFirst({
+        where: {
+            immediate_superior_id: vertex.dse.id,
+        },
+        select: {},
+    });
+    return [
+        {
+            id: id_oa_hasSubordinates,
+            value: _encodeBoolean(Boolean(sub), DER),
+            contexts: new Map(),
+        },
+    ];
+};
+
+export const readCollectiveExclusions: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    const cexs = await ctx.db.entryCollectiveExclusion.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        select: {
+            collectiveExclusion: true,
+        },
+    });
+    return cexs.map((cex) => ({
+        id: id_oa_collectiveExclusions,
+        value: _encodeObjectIdentifier(ObjectIdentifier.fromString(cex.collectiveExclusion), DER),
+        contexts: new Map(),
+    }));
 };

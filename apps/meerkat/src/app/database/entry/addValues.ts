@@ -65,6 +65,30 @@ import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchem
 import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
 import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
 import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
+import {
+    id_oa_accessControlSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-accessControlSubentryList.va";
+import {
+    id_oa_collectiveAttributeSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveAttributeSubentryList.va";
+import {
+    id_oa_contextDefaultSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-contextDefaultSubentryList.va";
+import {
+    id_oa_serviceAdminSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-serviceAdminSubentryList.va";
+import {
+    id_oa_pwdAdminSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-pwdAdminSubentryList.va";
+import {
+    id_oa_subschemaSubentryList,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-subschemaSubentryList.va";
+import {
+    id_oa_hasSubordinates,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-hasSubordinates.va";
+import {
+    id_oa_collectiveExclusions,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
 
 // Attribute Adders
 import * as adders from "../specialAttributeAdders";
@@ -105,13 +129,11 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ pwdRecentlyExpiredDuration["&id"]!.toString(), adders.addPwdRecentlyExpiredDuration ],
     // [ pwdEncAlg["&id"]!.toString(), adders.addPwdEncAlg ],
 
-    // NOTE: These may be removed. Passwords should be administered through the
+    // TODO: These may be removed. Passwords should be administered through the
     // administerPassword and changePassword operations.
     [ userPwd["&id"]!.toString(), adders.addUserPwd ],
     [ userPassword["&id"]!.toString(), adders.addUserPassword ],
-
     [ uniqueIdentifier["&id"].toString(), adders.addUniqueIdentifier ], // Has significance for Basic Access Control
-
     [ dITStructureRules["&id"].toString(), adders.addDITStructureRules ],
     [ nameForms["&id"].toString(), adders.addNameForms ],
     [ dITContentRules["&id"].toString(), adders.addDITContentRules ],
@@ -123,10 +145,8 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ matchingRules["&id"].toString(), adders.addMatchingRules ],
     [ matchingRuleUse["&id"].toString(), adders.addMatchingRuleUse ],
     [ ldapSyntaxes["&id"].toString(), adders.addLdapSyntaxes ],
-
     [ governingStructureRule["&id"].toString(), adders.addGoverningStructureRule ],
     [ structuralObjectClass["&id"].toString(), adders.addStructuralObjectClass ],
-
     [ namingContexts["&id"].toString(), adders.addNamingContexts ],
     [ altServer["&id"].toString(), adders.addAltServer ],
     [ supportedExtension["&id"].toString(), adders.addSupportedExtension ],
@@ -134,6 +154,14 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ supportedSASLMechanisms["&id"].toString(), adders.addSupportedSASLMechanisms ],
     [ supportedLDAPVersion["&id"].toString(), adders.addSupportedLDAPVersion ],
     [ supportedFeatures["&id"].toString(), adders.addSupportedFeatures ],
+    [ id_oa_accessControlSubentryList.toString(), adders.addAccessControlSubentryList ],
+    [ id_oa_collectiveAttributeSubentryList.toString(), adders.addCollectiveAttributeSubentryList ],
+    [ id_oa_contextDefaultSubentryList.toString(), adders.addContextDefaultSubentryList ],
+    [ id_oa_serviceAdminSubentryList.toString(), adders.addServiceAdminSubentryList ],
+    [ id_oa_pwdAdminSubentryList.toString(), adders.addPwdAdminSubentryList ],
+    [ id_oa_subschemaSubentryList.toString(), adders.addSubschemaSubentryList ],
+    [ id_oa_hasSubordinates.toString(), adders.addHasSubordinates ],
+    [ id_oa_collectiveExclusions.toString(), adders.addCollectiveExclusions ],
 ]);
 
 export

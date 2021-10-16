@@ -394,7 +394,7 @@ interface DSE {
     uuid: UUID;
     uniqueIdentifier?: BIT_STRING;
     rdn: RelativeDistinguishedName;
-    objectClass: Set<IndexableOID>
+    objectClass: Set<IndexableOID>;
     governingStructureRule?: number;
     structuralObjectClass?: OBJECT_IDENTIFIER;
     hierarchy?: HierarchyInfo;
@@ -1105,6 +1105,7 @@ export
 type SpecialAttributeDatabaseReader = (
     ctx: Readonly<Context>,
     entry: Vertex,
+    relevantSubentries?: Vertex[],
 ) => Promise<Value[]>;
 
 export

@@ -93,7 +93,6 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import {
     AbandonedData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
@@ -208,6 +207,7 @@ async function findDSE (
      */
     if (needleDN.length === 0) {
         state.entrySuitable = true;
+        state.foundDSE = ctx.dit.root;
         return;
     }
     let i: number = 0;
