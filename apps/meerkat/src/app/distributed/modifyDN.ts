@@ -213,7 +213,7 @@ async function modifyDN (
     const target = state.foundDSE;
     if (!withinThisDSA(target)) {
         throw new errors.UpdateError(
-            "Target not within this DSA.",
+            ctx.i18n.t("err:target_not_within_this_dsa"),
             new UpdateErrorData(
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
@@ -232,7 +232,7 @@ async function modifyDN (
     }
     if (!target.immediateSuperior || !withinThisDSA(target.immediateSuperior)) {
         throw new errors.UpdateError(
-            "Target's immediate superior not within this DSA.",
+            ctx.i18n.t("err:target_superior_not_within_this_dsa"),
             new UpdateErrorData(
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
@@ -260,7 +260,7 @@ async function modifyDN (
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -328,7 +328,7 @@ async function modifyDN (
             );
             if (!authorizedToEntry) {
                 throw new errors.SecurityError(
-                    "Not permitted to modify entry RDN.",
+                    ctx.i18n.t("err:not_authz_modify_rdn"),
                     new SecurityErrorData(
                         SecurityProblem_insufficientAccessRights,
                         undefined,
@@ -363,7 +363,7 @@ async function modifyDN (
             );
             if (!authorizedToEntry) {
                 throw new errors.SecurityError(
-                    "Not permitted to export entry.",
+                    ctx.i18n.t("err:not_authz_export"),
                     new SecurityErrorData(
                         SecurityProblem_insufficientAccessRights,
                         undefined,
@@ -392,7 +392,7 @@ async function modifyDN (
     ];
     if ((data.object.length === 0) || (destinationDN.length === 0)) {
         throw new errors.UpdateError(
-            "The zero-RDN entry is the automatically-managed root DSE and may not be edited.",
+            ctx.i18n.t("err:root_dse_cannot_be_moved"),
             new UpdateErrorData(
                 UpdateProblem_namingViolation,
                 undefined,
@@ -414,7 +414,7 @@ async function modifyDN (
         : null; // `null` means we did not try.
     if (newSuperior === undefined) { // `undefined` means we tried and failed.
         throw new errors.UpdateError(
-            "New superior not within this DSA.",
+            ctx.i18n.t("err:new_superior_not_within_this_dsa"),
             new UpdateErrorData(
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
@@ -480,7 +480,7 @@ async function modifyDN (
             );
             if (!authorizedToEntry) {
                 throw new errors.SecurityError(
-                    "Not permitted to import entry.",
+                    ctx.i18n.t("err:not_authz_import"),
                     new SecurityErrorData(
                         SecurityProblem_insufficientAccessRights,
                         undefined,
@@ -503,7 +503,7 @@ async function modifyDN (
 
     if (!withinThisDSA(superior)) { // `undefined` means we tried and failed.
         throw new errors.UpdateError(
-            "New superior not within this DSA.",
+            ctx.i18n.t("err:new_superior_not_within_this_dsa"),
             new UpdateErrorData(
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
@@ -523,7 +523,7 @@ async function modifyDN (
     if (data.newSuperior) { // Step 3.
         if (!allSubordinatesWithinThisDSA(ctx, target)) {
             throw new errors.UpdateError(
-                "Entry to move has subordinates external to this DSA.",
+                ctx.i18n.t("err:entry_has_external_subordinates"),
                 new UpdateErrorData(
                     UpdateProblem_affectsMultipleDSAs,
                     undefined,
@@ -547,7 +547,7 @@ async function modifyDN (
     // This is, at least implicitly, a part of steps 5, 6, and 7.
     if (await findEntry(ctx, superior, [ newRDN ])) {
         throw new errors.UpdateError(
-            "Entry already exists.",
+            ctx.i18n.t("err:entry_already_exists"),
             new UpdateErrorData(
                 UpdateProblem_entryAlreadyExists,
                 undefined,
@@ -572,8 +572,9 @@ async function modifyDN (
         assert(admPoint);
         if (!admPoint.dse.admPoint) {
             throw new errors.ServiceError(
-                `Subentry with database ID ${target.dse.id} was not a child of `
-                + "an administrative point.",
+                ctx.i18n.t("err:subentry_not_child_of_admpoint", {
+                    uuid: target.dse.uuid,
+                }),
                 new ServiceErrorData(
                     ServiceProblem_ditError,
                     [],
@@ -640,7 +641,10 @@ async function modifyDN (
                 ];
                 const subr = await findEntry(ctx, ctx.dit.root, subrDN);
                 if (!subr) {
-                    ctx.log.warn(`Subordinate entry for agreement ${bindingID.identifier} (version ${bindingID.version}) not found.`);
+                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
+                        obid: bindingID.identifier.toString(),
+                        version: bindingID.version.toString(),
+                    }));
                     continue;
                 }
                 assert(subr.immediateSuperior);
@@ -655,10 +659,18 @@ async function modifyDN (
                     accessPoint,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }
@@ -726,10 +738,18 @@ async function modifyDN (
                     accessPoint,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }
@@ -781,7 +801,7 @@ async function modifyDN (
             });
         if (structuralRules.length === 0) {
             throw new errors.UpdateError(
-                "Entry not permitted here by any DIT structural rules.",
+                ctx.i18n.t("err:no_dit_structural_rules"),
                 new UpdateErrorData(
                     UpdateProblem_namingViolation,
                     undefined,
@@ -814,9 +834,10 @@ async function modifyDN (
             for (const ac of auxiliaryClasses) {
                 if (!permittedAuxiliaries.has(ac.toString())) {
                     throw new errors.UpdateError(
-                        `Auxiliary class ${ac.toString()} not permitted by `
-                        + "DIT content rule for structural object class "
-                        + `${contentRule.structuralObjectClass.toString()}.`,
+                        ctx.i18n.t("err:aux_oc_not_permitted_by_dit_content_rule", {
+                            aoc: ac.toString(),
+                            soc: contentRule.structuralObjectClass.toString(),
+                        }),
                         new UpdateErrorData(
                             UpdateProblem_objectClassViolation,
                             [
@@ -862,8 +883,10 @@ async function modifyDN (
              */
             if (auxiliaryClasses.length > 0) {
                 throw new errors.UpdateError(
-                    "Auxiliary object classes are forbidden entirely, because "
-                    + "there are no relevant DIT content rules to permit them.",
+                    ctx.i18n.t("err:aux_oc_forbidden_because_no_dit_content_rules", {
+                        oids: auxiliaryClasses.map((oid) => oid.toString()).join(", "),
+                        soc: target.dse.structuralObjectClass?.toString(),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         [
@@ -905,9 +928,14 @@ async function modifyDN (
             // the ATAVs innately have no contexts.
             if (applicableContextRule.information.mandatoryContexts?.length) {
                 throw new errors.UpdateError(
-                    `Attribute type ${atav.type_.toString()} cannot be used in `
-                    + "the new entry's name, because the applicable context "
-                    + "rules mandate the existence of a context for that type.",
+                    ctx.i18n.t("err:rdn_attribute_type_requires_contexts", {
+                        oid: atav.type_.toString(),
+                        oids: applicableContextRule
+                            .information
+                            .mandatoryContexts
+                            .map((oid) => oid.toString())
+                            .join(", "),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_namingViolation,
                         [
@@ -945,8 +973,9 @@ async function modifyDN (
         const TYPE_OID: string = atav.type_.toString();
         if (!attributeTypesPermittedByObjectClasses.has(TYPE_OID)) {
             throw new errors.UpdateError(
-                `Attribute type ${atav.type_.toString()} not permitted `
-                + "by the object classes of the entry.",
+                ctx.i18n.t("err:attribute_type_not_permitted_by_oc", {
+                    oids: atav.type_.toString(),
+                }),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
                     [
@@ -969,8 +998,10 @@ async function modifyDN (
         }
         if (attributeTypesForbidden.has(TYPE_OID)) {
             throw new errors.UpdateError(
-                `Attribute type ${atav.type_.toString()} not permitted `
-                + "by the new content rules for the entry.",
+                ctx.i18n.t("err:attr_type_precluded", {
+                    oid: atav.type_.toString(),
+                    soc: target.dse.structuralObjectClass?.toString(),
+                }),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
                     [
@@ -1030,7 +1061,7 @@ async function modifyDN (
                 : (values.length <= 1);
             if (allValuesDeleted) {
                 throw new errors.UpdateError(
-                    "Deleting the old RDN would delete a required attribute.",
+                    ctx.i18n.t("err:deleting_old_rdn_deletes_required_attribute"),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         [
@@ -1057,7 +1088,7 @@ async function modifyDN (
     if (op?.abandonTime) {
         op.events.emit("abandon");
         throw new errors.AbandonError(
-            "Abandoned.",
+            ctx.i18n.t("err:abandoned"),
             new AbandonedData(
                 undefined,
                 [],
@@ -1124,7 +1155,10 @@ async function modifyDN (
             try {
                 await removeValues(ctx, target, [valueToDelete], conn.boundNameAndUID?.dn ?? []);
             } catch (e) {
-                ctx.log.warn(`Failed to delete old RDN value having type ${oldATAV.type_.toString()}.`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_delete_old_rdn", {
+                    oid: oldATAV.type_.toString(),
+                    uuid: target.dse.uuid,
+                }));
             }
         }
     }

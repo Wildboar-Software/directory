@@ -436,7 +436,7 @@ async function requestValidationProcedure (
     assert(req.argument);
     if (ctx.dsa.hibernatingSince || ctx.dsa.sentinelTriggeredHibernation) {
         throw new errors.ServiceError(
-            "Hibernating.",
+            ctx.i18n.t("err:hibernating"),
             new ServiceErrorData(
                 ServiceProblem_busy,
                 [],
@@ -475,7 +475,9 @@ async function requestValidationProcedure (
         && (chainedArgument.operationProgress.nextRDNToBeResolved > chainedArgument.targetObject.length)
     ) {
         throw new errors.ServiceError(
-            `Invalid nextRDNToBeResolved ${chainedArgument.operationProgress?.nextRDNToBeResolved}.`,
+            ctx.i18n.t("err:invalid_nextrdntoberesolved", {
+                next: chainedArgument.operationProgress?.nextRDNToBeResolved,
+            }),
             new ServiceErrorData(
                 ServiceProblem_unwillingToPerform, // TODO: Is this correct?
                 [],
@@ -502,7 +504,7 @@ async function requestValidationProcedure (
     }
     if (loopDetected(chainedArgument.traceInformation)) {
         throw new errors.ServiceError(
-            "Loop detected.",
+            ctx.i18n.t("err:loop_detected"),
             new ServiceErrorData(
                 ServiceProblem_loopDetected,
                 [],

@@ -49,7 +49,7 @@ function hierarchySelectionProcedure (
         );
     }
     throw new errors.ServiceError(
-        "Hierarchy selections not supported.",
+        ctx.i18n.t("err:hierarchy_selections_not_supported"),
         new ServiceErrorData(
             ServiceProblem_requestedServiceNotAvailable,
             [],

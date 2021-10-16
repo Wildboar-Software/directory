@@ -167,7 +167,7 @@ async function changePassword (
             || !authorizedToModifyUserPwd
         ) {
             throw new errors.SecurityError(
-                "Not permitted to modify entry with changePassword operation.",
+                ctx.i18n.t("err:not_authz_cpw"),
                 new SecurityErrorData(
                     SecurityProblem_noInformation,
                     undefined,
@@ -191,7 +191,7 @@ async function changePassword (
     });
     if (!oldPasswordIsCorrect) {
         throw new errors.SecurityError(
-            "Old password incorrect in changePassword operation.",
+            ctx.i18n.t("err:old_password_incorrect"),
             new SecurityErrorData(
                 SecurityProblem_noInformation,
                 undefined,

@@ -327,6 +327,5 @@ async function main (): Promise<void> {
             obid: ob.id,
             time: ob.terminated_time.toISOString(),
         }));
-        ctx.log.warn(`Terminating operational binding ${ob.id} at ${ob.terminated_time.toISOString()}.`);
     });
 }

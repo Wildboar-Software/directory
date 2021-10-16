@@ -176,7 +176,7 @@ async function list_i (
         if (!authorized) {
             // Non-disclosure of the target object is at least addressed in X.501 RBAC!
             throw new errors.NameError(
-                "Not permitted to list the target entry.",
+                ctx.i18n.t("err:not_authz_list"),
                 new NameErrorData(
                     NameProblem_noSuchObject,
                     {
@@ -206,7 +206,9 @@ async function list_i (
             const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
             if ((pi < 0) || !Number.isSafeInteger(pi)) {
                 throw new errors.ServiceError(
-                    `Paginated query page index ${pi} is invalid.`,
+                    ctx.i18n.t("err:page_number_invalid", {
+                        pi,
+                    }),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -225,7 +227,9 @@ async function list_i (
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
             if ((nr.pageSize < 1) || !Number.isSafeInteger(nr.pageSize)) {
                 throw new errors.ServiceError(
-                    `Paginated query page size ${nr.pageSize} is invalid.`,
+                    ctx.i18n.t("err:page_size_invalid", {
+                        ps: nr.pageSize,
+                    }),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -249,7 +253,7 @@ async function list_i (
             const paging = conn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
-                    `Paginated query reference '${queryReference.slice(0, 32)}' is invalid.`,
+                    ctx.i18n.t("err:paginated_query_ref_invalid"),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -270,7 +274,7 @@ async function list_i (
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             throw new errors.AbandonError(
-                `Abandoned paginated query identified by query reference '${queryReference.slice(0, 32)}'.`,
+                ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
                     AbandonedProblem_pagingAbandoned,
                     [],
@@ -287,7 +291,7 @@ async function list_i (
             );
         } else {
             throw new errors.ServiceError(
-                "Unrecognized paginated query syntax.",
+                ctx.i18n.t("err:unrecognized_paginated_query_syntax"),
                 new ServiceErrorData(
                     ServiceProblem_unavailable,
                     [],
@@ -352,7 +356,7 @@ async function list_i (
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
-                    "Abandoned.",
+                    ctx.i18n.t("err:abandoned"),
                     new AbandonedData(
                         undefined,
                         [],

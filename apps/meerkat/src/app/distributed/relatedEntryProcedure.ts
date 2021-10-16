@@ -102,7 +102,7 @@ async function relatedEntryProcedure (
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -127,7 +127,7 @@ async function relatedEntryProcedure (
         if (op?.abandonTime) {
             op.events.emit("abandon");
             throw new errors.AbandonError(
-                "Abandoned.",
+                ctx.i18n.t("err:abandoned"),
                 new AbandonedData(
                     undefined,
                     [],

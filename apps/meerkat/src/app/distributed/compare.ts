@@ -160,7 +160,7 @@ async function compare (
         );
         if (!authorizedToEntry) {
             throw new errors.SecurityError(
-                "Not authorized to read this entry.",
+                ctx.i18n.t("err:not_authz_read"),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
@@ -182,7 +182,7 @@ async function compare (
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
-                    "Abandoned.",
+                    ctx.i18n.t("err:abandoned"),
                     new AbandonedData(
                         undefined,
                         [],
@@ -214,7 +214,9 @@ async function compare (
             );
             if (!authorized) {
                 throw new errors.SecurityError(
-                    `Not permitted to compare or read attribute type ${type_.toString()}.`,
+                    ctx.i18n.t("err:not_authz_read_or_compare_attr", {
+                        oid: type_.toString(),
+                    }),
                     new SecurityErrorData(
                         SecurityProblem_insufficientAccessRights,
                         undefined,
@@ -237,7 +239,9 @@ async function compare (
     const matcher = EQUALITY_MATCHER(data.purported.type_);
     if (!matcher) {
         throw new errors.ServiceError(
-            `Equality matching rule used by type ${data.purported.type_.toString()} not understood.`,
+            ctx.i18n.t("err:no_equality_matching_rule_defined_for_type", {
+                oid: data.purported.type_.toString(),
+            }),
             new ServiceErrorData(
                 ServiceProblem_unsupportedMatchingUse,
                 [],
@@ -283,7 +287,7 @@ async function compare (
         if (op?.abandonTime) {
             op.events.emit("abandon");
             throw new errors.AbandonError(
-                "Abandoned.",
+                ctx.i18n.t("err:abandoned"),
                 new AbandonedData(
                     undefined,
                     [],

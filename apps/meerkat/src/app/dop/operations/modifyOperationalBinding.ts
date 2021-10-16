@@ -166,7 +166,9 @@ async function modifyOperationalBinding (
 
     if (permittedAPs.length === 0) {
         throw new errors.OperationalBindingError(
-            `No operational binding with identifier ${data.bindingID.identifier}.`,
+            ctx.i18n.t("err:no_ob_with_id", {
+                id: data.bindingID.identifier,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidID,
@@ -202,7 +204,9 @@ async function modifyOperationalBinding (
 
     if (!opBinding) {
         throw new errors.OperationalBindingError(
-            `No operational binding with identifier ${data.bindingID.identifier}.`,
+            ctx.i18n.t("err:no_ob_with_id", {
+                id: data.bindingID.identifier,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidID,
@@ -330,7 +334,7 @@ async function modifyOperationalBinding (
                 NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
-                    "Operational binding contextPrefixInfo did not match immediateSuperior.",
+                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
                     {
                         unsigned: new OpBindingErrorParam(
                             OpBindingErrorParam_problem_invalidAgreement,
@@ -359,7 +363,7 @@ async function modifyOperationalBinding (
             const approved: boolean = await getApproval(created.uuid);
             if (!approved) {
                 throw new errors.OperationalBindingError(
-                    "Operational binding rejected.",
+                    ctx.i18n.t("err:ob_rejected"),
                     {
                         unsigned: new OpBindingErrorParam(
                             OpBindingErrorParam_problem_invalidAgreement,
@@ -391,7 +395,7 @@ async function modifyOperationalBinding (
             };
         } else {
             throw new errors.OperationalBindingError(
-                "Operational binding initiator format unrecognized.",
+                ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
                 {
                     unsigned: new OpBindingErrorParam(
                         OpBindingErrorParam_problem_invalidAgreement,

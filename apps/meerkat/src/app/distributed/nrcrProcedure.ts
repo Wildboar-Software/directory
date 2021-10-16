@@ -66,7 +66,7 @@ async function nrcrProcedure (
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -88,7 +88,7 @@ async function nrcrProcedure (
     if (chainingProhibited) { // TODO: Permit local DSA policy to prohibit chaining.
         // TODO: Permit configuration of what to do here.
         throw new errors.ReferralError( // TODO: If this is called from LDAP, an LDAP referral must be returned.
-            "Referral",
+            ctx.i18n.t("err:referral"),
             new ReferralData(
                 state.NRcontinuationList[0],
                 [],
@@ -114,7 +114,7 @@ async function nrcrProcedure (
         if (op?.abandonTime) {
             op.events.emit("abandon");
             throw new errors.AbandonError(
-                "Abandoned.",
+                ctx.i18n.t("err:abandoned"),
                 new AbandonedData(
                     undefined,
                     [],
@@ -157,7 +157,7 @@ async function nrcrProcedure (
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
-                    "Abandoned.",
+                    ctx.i18n.t("err:abandoned"),
                     new AbandonedData(
                         undefined,
                         [],
@@ -196,7 +196,7 @@ async function nrcrProcedure (
                             continue;
                         } else if (errorData.problem === ServiceProblem_invalidReference) {
                             throw new errors.ServiceError( // FIXME: This is swallowed by the try-catch loop.
-                                "DIT Error.",
+                                ctx.i18n.t("err:dit_error"),
                                 new ServiceErrorData(
                                     ServiceProblem_ditError,
                                     [],
@@ -244,7 +244,7 @@ async function nrcrProcedure (
                 // return null;
             } else {
                 throw new errors.NameError(
-                    "Could not find object in any relevant NSSR DSA.",
+                    ctx.i18n.t("err:entry_not_found_in_nssr"),
                     new NameErrorData(
                         NameProblem_noSuchObject,
                         {
@@ -266,7 +266,7 @@ async function nrcrProcedure (
         }
     }
     throw new errors.ServiceError(
-        "Name could not be resolved.",
+        ctx.i18n.t("err:name_not_resolved"),
         new ServiceErrorData(
             ServiceProblem_unableToProceed, // TODO: Not sure this is the right error.
             [],

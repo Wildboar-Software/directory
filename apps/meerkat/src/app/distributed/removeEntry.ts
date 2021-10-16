@@ -106,7 +106,7 @@ async function removeEntry (
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -171,7 +171,7 @@ async function removeEntry (
         );
         if (!authorizedToRemoveEntry) {
             throw new errors.SecurityError(
-                "Not permitted to remove entry.",
+                ctx.i18n.t("err:not_authz_remove_entry"),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
@@ -256,7 +256,10 @@ async function removeEntry (
                 ];
                 const subr = await findEntry(ctx, ctx.dit.root, subrDN);
                 if (!subr) {
-                    ctx.log.warn(`Subordinate entry for agreement ${bindingID.identifier} (version ${bindingID.version}) not found.`);
+                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
+                        obid: bindingID.identifier.toString(),
+                        version: bindingID.version.toString(),
+                    }));
                     continue;
                 }
                 assert(subr.immediateSuperior);
@@ -271,10 +274,18 @@ async function removeEntry (
                     accessPoint,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }
@@ -345,10 +356,18 @@ async function removeEntry (
                     bindingID,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to terminate HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }
@@ -363,7 +382,7 @@ async function removeEntry (
     if (op?.abandonTime) {
         op.events.emit("abandon");
         throw new errors.AbandonError(
-            "Abandoned.",
+            ctx.i18n.t("err:abandoned"),
             new AbandonedData(
                 undefined,
                 [],

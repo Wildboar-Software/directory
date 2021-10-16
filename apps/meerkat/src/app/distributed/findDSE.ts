@@ -185,7 +185,7 @@ async function findDSE (
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -272,7 +272,9 @@ async function findDSE (
     const node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false = async (): Promise<Vertex | undefined> => {
         if (dse_i.dse.shadow?.subordinateCompleteness === false) {
             if (!lastCP) {
-                ctx.log.warn("DIT invalid: shadow copy not under a context prefix.");
+                ctx.log.warn(ctx.i18n.t("log:shadow_not_under_cp", {
+                    id: dse_i.dse.uuid,
+                }));
                 return undefined;
             }
             const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, lastEntryFound);
@@ -325,7 +327,7 @@ async function findDSE (
     const candidateRefsEmpty_yes_branch = async (): Promise<Vertex | undefined> => {
         if (partialNameResolution === FALSE) {
             throw new errors.NameError(
-                `No such object: ${encodeLDAPDN(ctx, needleDN)}.`,
+                ctx.i18n.t("err:entry_not_found"),
                 new NameErrorData(
                     NameProblem_noSuchObject,
                     {
@@ -407,7 +409,7 @@ async function findDSE (
                     } else {
                         throw new errors.NameError(
                             // REVIEW: This seems incorrect to me... What about read or modifyEntry?
-                            "Only a list or search operation may target the root DSE.",
+                            ctx.i18n.t("err:can_only_list_or_search_root"),
                             new NameErrorData(
                                 NameProblem_noSuchObject,
                                 {
@@ -486,7 +488,7 @@ async function findDSE (
                     && (nextRDNToBeResolved === (i + 1))
                 ) {
                     throw new errors.ServiceError(
-                        "Unable to proceed.",
+                        ctx.i18n.t("err:unable_to_proceed"),
                         new ServiceErrorData(
                             ServiceProblem_unableToProceed,
                             [],
@@ -503,7 +505,7 @@ async function findDSE (
                     );
                 } else {
                     throw new errors.ServiceError(
-                        "Invalid reference.",
+                        ctx.i18n.t("err:invalid_reference"),
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],
@@ -522,7 +524,7 @@ async function findDSE (
             }
             case (OperationProgress_nameResolutionPhase_completed): {
                 throw new errors.ServiceError(
-                    "",
+                    "", // FIXME:
                     new ServiceErrorData(
                         ServiceProblem_invalidReference,
                         [],
@@ -629,7 +631,7 @@ async function findDSE (
                 if (op?.abandonTime) {
                     op.events.emit("abandon");
                     throw new errors.AbandonError(
-                        "Abandoned.",
+                        ctx.i18n.t("err:abandoned"),
                         new AbandonedData(
                             undefined,
                             [],
@@ -745,7 +747,7 @@ async function findDSE (
             || (state.chainingArguments.nameResolveOnMaster && dse_i.dse.shadow)
         ) {
             throw new errors.ServiceError(
-                "Could not resolve name on master.",
+                ctx.i18n.t("err:could_not_resolve_name_on_master"),
                 new ServiceErrorData(
                     ServiceProblem_unableToProceed,
                     [],
@@ -768,7 +770,7 @@ async function findDSE (
                     return;
                 } else {
                     throw new errors.NameError(
-                        "Reached an alias above the sought object, and dereferencing was prohibited.",
+                        ctx.i18n.t("err:reached_alias_above_target"),
                         new NameErrorData(
                             NameProblem_aliasDereferencingProblem,
                             { // FIXME: Check authorization to see this.
@@ -836,7 +838,7 @@ async function findDSE (
                 return;
             } else {
                 throw new errors.NameError(
-                    "No DSEs to find beneath a subentry.",
+                    ctx.i18n.t("err:reached_subentry_above_target"),
                     new NameErrorData(
                         NameProblem_noSuchObject,
                         {
@@ -885,7 +887,7 @@ async function findDSE (
                 }
                 if (!await someSubordinatesAreCP(ctx, dse_i)) {
                     throw new errors.ServiceError(
-                        "",
+                        "", // FIXME:
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],
@@ -992,7 +994,7 @@ async function findDSE (
         }
     }
     throw new errors.ServiceError(
-        "Loop detected in Find DSE procedure.",
+        ctx.i18n.t("err:loop_detected"),
         new ServiceErrorData(
             ServiceProblem_loopDetected,
             [],

@@ -159,7 +159,12 @@ class DOPConnection extends ClientConnection {
     }
 
     private async handleUnbind (): Promise<void> {
-        this.ctx.log.info("Unbound.");
+        // FIXME: Make this like DAPConnection.
+        this.ctx.log.info(this.ctx.i18n.t("log:connection_unbound", {
+            ctype: "",
+            cid: "",
+            protocol: "DOP",
+        }));
     }
 
     constructor (

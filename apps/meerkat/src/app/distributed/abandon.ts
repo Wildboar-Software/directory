@@ -42,7 +42,7 @@ async function abandon (
     const data = getOptionallyProtectedValue(argument);
     if (!("present" in data.invokeID)) {
         throw new errors.AbandonFailedError(
-            "No invokeID specified.",
+            ctx.i18n.t("err:no_invoke_id_specified"),
             new AbandonFailedData(
                 AbandonProblem_cannotAbandon,
                 data.invokeID,
@@ -63,7 +63,9 @@ async function abandon (
     const op = conn.invocations.get(invokeID);
     if (!op) {
         throw new errors.AbandonFailedError(
-            `Invocation ${invokeID} cound not be found.`,
+            ctx.i18n.t("err:invocation_not_found", {
+                id: invokeID,
+            }),
             new AbandonFailedData(
                 AbandonProblem_noSuchOperation,
                 data.invokeID,
@@ -82,7 +84,9 @@ async function abandon (
     }
     if (op.pointOfNoReturnTime || op.abandonTime) {
         throw new errors.AbandonFailedError(
-            `Too late to abandon operation ${invokeID}.`,
+            ctx.i18n.t("err:too_late_to_abandon", {
+                id: invokeID,
+            }),
             new AbandonFailedData(
                 AbandonProblem_tooLate,
                 data.invokeID,
@@ -114,7 +118,9 @@ async function abandon (
     ]);
     if (acknowledgement !== invokeID) {
         throw new errors.AbandonFailedError(
-            `Too late to abandon operation ${invokeID}.`,
+            ctx.i18n.t("err:too_late_to_abandon", {
+                id: invokeID,
+            }),
             new AbandonFailedData(
                 AbandonProblem_tooLate,
                 data.invokeID,

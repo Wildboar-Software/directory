@@ -266,7 +266,7 @@ function checkPermissionToAddValues (
     );
     if (!authorizedForAttributeType) {
         throw new errors.SecurityError(
-            "Modification not permitted.", // TODO: Make more specific.
+            ctx.i18n.t("err:not_authz_mod"),
             notPermittedData(ctx, conn),
         );
     }
@@ -289,7 +289,7 @@ function checkPermissionToAddValues (
         );
         if (!authorizedForValue) {
             throw new errors.SecurityError(
-                "Modification not permitted.", // TODO: Make more specific.
+                ctx.i18n.t("err:not_authz_mod"),
                 notPermittedData(ctx, conn),
             );
         }
@@ -355,7 +355,7 @@ async function executeRemoveAttribute (
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
-                "Modification not permitted.", // TODO: Make more specific.
+                ctx.i18n.t("err:not_authz_mod"),
                 notPermittedData(ctx, conn),
             );
         }
@@ -423,7 +423,7 @@ async function executeRemoveValues (
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
-                "Modification not permitted.", // TODO: Make more specific.
+                ctx.i18n.t("err:not_authz_mod"),
                 notPermittedData(ctx, conn),
             );
         }
@@ -446,7 +446,7 @@ async function executeRemoveValues (
             );
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
-                    "Modification not permitted.", // TODO: Make more specific.
+                    ctx.i18n.t("err:not_authz_mod"),
                     notPermittedData(ctx, conn),
                 );
             }
@@ -495,7 +495,7 @@ async function executeAlterValues (
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
-                "Modification not permitted.", // TODO: Make more specific.
+                ctx.i18n.t("err:not_authz_mod"),
                 notPermittedData(ctx, conn),
             );
         }
@@ -550,7 +550,7 @@ async function executeAlterValues (
             );
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
-                    "Modification not permitted.", // TODO: Make more specific.
+                    ctx.i18n.t("err:not_authz_mod"),
                     notPermittedData(ctx, conn),
                 );
             }
@@ -616,7 +616,7 @@ async function executeResetValue (
             );
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
-                    "Modification not permitted.", // TODO: Make more specific.
+                    ctx.i18n.t("err:not_authz_mod"),
                     notPermittedData(ctx, conn),
                 );
             }
@@ -674,7 +674,7 @@ async function executeReplaceValues (
         );
         if (!authorizedForValue) {
             throw new errors.SecurityError(
-                "Modification not permitted.", // TODO: Make more specific.
+                ctx.i18n.t("err:not_authz_mod"),
                 notPermittedData(ctx, conn),
             );
         }
@@ -705,7 +705,7 @@ async function executeReplaceValues (
             );
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
-                    "Modification not permitted.", // TODO: Make more specific.
+                    ctx.i18n.t("err:not_authz_mod"),
                     notPermittedData(ctx, conn),
                 );
             }
@@ -771,7 +771,9 @@ async function executeEntryModification (
         const spec = ctx.attributes.get(TYPE_OID);
         if (!spec) {
             throw new errors.AttributeError(
-                `Attribute type ${TYPE_OID} not understood.`,
+                ctx.i18n.t("err:unrecognized_attribute_type", {
+                    oids: TYPE_OID,
+                }),
                 new AttributeErrorData(
                     {
                         rdnSequence: getDistinguishedName(entry),
@@ -798,7 +800,9 @@ async function executeEntryModification (
         }
         if (spec?.noUserModification) {
             throw new errors.SecurityError(
-                `Attribute type ${TYPE_OID} may not be modified.`,
+                ctx.i18n.t("err:no_user_modification", {
+                    oid: TYPE_OID,
+                }),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
@@ -821,8 +825,9 @@ async function executeEntryModification (
     const checkPreclusion = (attributeType: AttributeType) => {
         if (precludedAttributes.has(attributeType.toString())) {
             throw new errors.UpdateError(
-                `Attribute type ${attributeType.toString()} is precluded by `
-                + "the relevant DIT content rules.",
+                ctx.i18n.t("err:attr_type_precluded", {
+                    oid: attributeType.toString(),
+                }),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
                     [
@@ -873,9 +878,10 @@ async function executeEntryModification (
                 .every((mc) => !!ctx.contextTypes.get(mc.toString())?.defaultValue);
             if (!everyRequiredContextHasADefaultValue) {
                 throw new errors.AttributeError(
-                    `Attribute with type ${attribute.type_.toString()} has values `
-                    + "with contexts when none are permitted by the relevant "
-                    + "DIT context use rules.",
+                    ctx.i18n.t("err:missing_required_context_types", {
+                        attr: attribute.type_.toString(),
+                        oids: rule.information.mandatoryContexts.map((mc) => mc.toString()).join(", "),
+                    }),
                     new AttributeErrorData(
                         {
                             rdnSequence: [],
@@ -1057,7 +1063,7 @@ async function modifyEntry (
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -1172,7 +1178,7 @@ async function modifyEntry (
         if (op?.abandonTime) {
             op.events.emit("abandon");
             throw new errors.AbandonError(
-                "Abandoned.",
+                ctx.i18n.t("err:abandoned"),
                 new AbandonedData(
                     undefined,
                     [],
@@ -1215,7 +1221,9 @@ async function modifyEntry (
         const spec = ctx.objectClasses.get(ocid.toString());
         if (!spec) {
             throw new errors.UpdateError(
-                `Object class ${ocid.toString()} not understood.`,
+                ctx.i18n.t("err:unrecognized_object_class", {
+                    oid: ocid.toString(),
+                }),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
                     [
@@ -1242,12 +1250,22 @@ async function modifyEntry (
                 ),
             );
         }
-        // TODO: Even though not mandated by the specification, tolerate
-        // modification of the structural object class, as long as it is
-        // a subclass of the current structural object class.
+        /**
+         * NOTE: You cannot even tolerate modifications that make the entry a
+         * subclass of the original structural object class for these reasons
+         * (inclusively):
+         *
+         * 1. ITU Recommendation X.501 (2016), Section 8.3.2 specifically
+         *    forbids it.
+         * 2. Entries are constrained by where they can be placed in the DIT by
+         *    their structural object class, with no supertyping or subtying
+         *    being taken into consideration.
+         */
         if (spec.kind === ObjectClassKind.structural) {
             throw new errors.UpdateError(
-                `Cannot supplant structural object class with object class ${ocid.toString()}.`,
+                ctx.i18n.t("err:cannot_change_soc", {
+                    oid: ocid.toString(),
+                }),
                 new UpdateErrorData(
                     UpdateProblem_objectClassModificationProhibited,
                     [
@@ -1276,8 +1294,10 @@ async function modifyEntry (
         } else if (spec.kind === ObjectClassKind_auxiliary) {
             if (permittedAuxiliaries.has(spec.id.toString())) {
                 throw new errors.UpdateError(
-                    `Auxiliary object class ${spec.id.toString()} is not `
-                    + "permitted by the relevant DIT content rules.",
+                    ctx.i18n.t("err:aux_oc_not_permitted_by_dit_content_rule", {
+                        aoc: spec.id.toString(),
+                        soc: target.dse.structuralObjectClass?.toString(),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         [
@@ -1312,7 +1332,8 @@ async function modifyEntry (
     for (const ocid of alreadyPresentObjectClasses) {
         const spec = ctx.objectClasses.get(ocid.toString());
         if (!spec) {
-            ctx.log.warn(`Object has unrecognized object class ${ocid.toString()}.`);
+            // ctx.log.warn(`Object has unrecognized object class ${ocid.toString()}.`);
+            // FIXME: Throw.
             continue;
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
@@ -1372,7 +1393,9 @@ async function modifyEntry (
         if (nonPermittedAttributeTypes.size > 0) {
             const nonPermitted: string[] = Array.from(nonPermittedAttributeTypes);
             throw new errors.UpdateError(
-                `No object class permits attribute types: ${nonPermitted.join(" ")}`,
+                ctx.i18n.t("err:attribute_type_not_permitted_by_oc", {
+                    oids: nonPermitted.join(", "),
+                }),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
                     nonPermitted
@@ -1400,7 +1423,7 @@ async function modifyEntry (
         ];
         if (!validateObjectClasses(ctx, objectClasses)) {
             throw new errors.UpdateError(
-                `Invalid object classes: ${objectClasses.map((oc) => oc.toString()).join(" ")}`,
+                ctx.i18n.t("err:invalid_object_classes"),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
                     undefined,
@@ -1430,7 +1453,7 @@ async function modifyEntry (
                 .some((oc) => oc.isEqualTo(parent["&id"]));
             if (hasParentObjectClass) {
                 throw new errors.UpdateError(
-                    "Object class 'parent' may not be added directly.",
+                    ctx.i18n.t("err:cannot_add_object_class_parent"),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         [
@@ -1473,7 +1496,7 @@ async function modifyEntry (
          */
         if (hasChildObjectClass && hasAliasObjectClass) {
             throw new errors.UpdateError(
-                "Object may not have object class 'alias' and 'child' simultaneously.",
+                ctx.i18n.t("err:cannot_be_alias_and_child"),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
                     [
@@ -1506,7 +1529,7 @@ async function modifyEntry (
     if (op?.abandonTime) {
         op.events.emit("abandon");
         throw new errors.AbandonError(
-            "Abandoned.",
+            ctx.i18n.t("err:abandoned"),
             new AbandonedData(
                 undefined,
                 [],
@@ -1535,7 +1558,9 @@ async function modifyEntry (
     if (dbe) {
         target.dse = await dseFromDatabaseEntry(ctx, dbe);
     } else {
-        ctx.log.warn(`Database entry ${target.dse.uuid} was deleted while it was being modified.`);
+        ctx.log.warn(ctx.i18n.t("log:entry_deleted_while_being_modified", {
+            id: target.dse.uuid,
+        }));
     }
 
     // Update relevant hierarchical operational bindings
@@ -1595,7 +1620,10 @@ async function modifyEntry (
                 ];
                 const subr = await findEntry(ctx, ctx.dit.root, subrDN);
                 if (!subr) {
-                    ctx.log.warn(`Subordinate entry for agreement ${bindingID.identifier} (version ${bindingID.version}) not found.`);
+                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
+                        obid: bindingID.identifier.toString(),
+                        version: bindingID.version.toString(),
+                    }));
                     continue;
                 }
                 assert(subr.immediateSuperior);
@@ -1610,10 +1638,18 @@ async function modifyEntry (
                     accessPoint,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }

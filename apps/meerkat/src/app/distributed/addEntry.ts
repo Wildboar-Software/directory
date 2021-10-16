@@ -35,16 +35,12 @@ import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
 import { ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT, BERElement } from "asn1-ts";
-import {
-    EXT_BIT_USE_OF_CONTEXTS,
-} from "../x500/extensions";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     ServiceErrorData,
-    ServiceProblem_unavailable,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     _encode_AddEntryResult,
@@ -205,7 +201,7 @@ async function addEntry (
     const immediateSuperior = state.foundDSE;
     if (immediateSuperior.dse.alias) {
         throw new errors.UpdateError(
-            "Cannot add an entry beneath an alias.",
+            ctx.i18n.t("err:add_entry_beneath_alias"),
             namingViolationErrorData(ctx, conn, []),
         );
     }
@@ -215,7 +211,7 @@ async function addEntry (
     const objectClassValues = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
     if (objectClassValues.length === 0) {
         throw new errors.UpdateError(
-            "Object class attribute not found.",
+            ctx.i18n.t("err:object_class_not_found"),
             new UpdateErrorData(
                 UpdateProblem_objectClassViolation,
                 undefined,
@@ -235,7 +231,7 @@ async function addEntry (
     const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
     if (!validateObjectClasses(ctx, objectClasses)) {
         throw new errors.UpdateError(
-            `Invalid object classes: ${objectClasses.map((oc) => oc.toString()).join(" ")}`,
+            ctx.i18n.t("err:invalid_object_classes"),
             new UpdateErrorData(
                 UpdateProblem_objectClassViolation,
                 undefined,
@@ -267,7 +263,7 @@ async function addEntry (
     const isSubentry: boolean = objectClasses.some((oc) => oc.isEqualTo(id_sc_subentry));
     if (isSubentry && !immediateSuperior.dse.admPoint) {
         throw new errors.UpdateError(
-            "Cannot place a subentry below a DSE that is not an administrative point.",
+            ctx.i18n.t("err:cannot_add_subentry_below_non_admpoint"),
             new UpdateErrorData(
                 UpdateProblem_namingViolation,
                 undefined,
@@ -287,7 +283,7 @@ async function addEntry (
 
     if (isSubentry && data.targetSystem) {
         throw new errors.UpdateError(
-            "Cannot place a subentry in another DSA.",
+            ctx.i18n.t("err:cannot_add_subentry_in_another_dsa"),
             new UpdateErrorData(
                 UpdateProblem_affectsMultipleDSAs,
                 undefined,
@@ -355,7 +351,7 @@ async function addEntry (
         );
         if (!authorized) {
             throw new errors.SecurityError(
-                "Not permitted to create this entry.",
+                ctx.i18n.t("err:not_authz_to_add_entry"),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
@@ -378,7 +374,7 @@ async function addEntry (
     const rdn = getRDN(data.object.rdnSequence);
     if (!rdn) {
         throw new errors.UpdateError(
-            "The Root DSE may not be added.",
+            ctx.i18n.t("err:root_dse_may_not_be_added"),
             namingViolationErrorData(ctx, conn, []),
         );
     }
@@ -387,7 +383,7 @@ async function addEntry (
         .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
     if (entryAlreadyExists) {
         throw new errors.UpdateError(
-            "Entry already exists.",
+            ctx.i18n.t("err:entry_already_exists"),
             new UpdateErrorData(
                 UpdateProblem_entryAlreadyExists,
                 undefined,
@@ -415,7 +411,7 @@ async function addEntry (
     }
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         throw new errors.ServiceError(
-            "Could not complete operation in time.",
+            ctx.i18n.t("err:time_limit"),
             new ServiceErrorData(
                 ServiceProblem_timeLimitExceeded,
                 [],
@@ -455,7 +451,7 @@ async function addEntry (
             }; // TODO: This strips the remote DSA's signature!
         } else {
             throw new errors.ServiceError(
-                "Could not add entry to remote DSA via targetSystem.",
+                ctx.i18n.t("err:could_not_add_entry_to_remote_dsa"),
                 new ServiceErrorData(
                     ServiceProblem_unwillingToPerform,
                     [],
@@ -499,7 +495,9 @@ async function addEntry (
             );
             if (!authorizedToAddAttributeType) {
                 throw new errors.SecurityError(
-                    `Not permitted to create an attribute of type ${type_}.`,
+                    ctx.i18n.t("err:not_authz_to_create_attr_type", {
+                        type: type_,
+                    }),
                     new SecurityErrorData(
                         SecurityProblem_insufficientAccessRights,
                         undefined,
@@ -554,7 +552,9 @@ async function addEntry (
             );
             if (!authorizedToAddAttributeValue) {
                 throw new errors.SecurityError(
-                    `Not permitted to create an attribute value of type ${attr.id.toString()}.`,
+                    ctx.i18n.t("err:not_authz_to_create_attr_value", {
+                        type: attr.id.toString(),
+                    }),
                     new SecurityErrorData(
                         SecurityProblem_insufficientAccessRights,
                         undefined,
@@ -583,7 +583,9 @@ async function addEntry (
 
     if (unrecognizedAttributes.length > 0) {
         throw new errors.AttributeError(
-            `Unrecognized attributes: ${unrecognizedAttributes.map((at) => at.toString()).join(", ")}.`,
+            ctx.i18n.t("err:unrecognized_attribute_type", {
+                oids: unrecognizedAttributes.map((at) => at.toString()).join(", "),
+            }),
             new AttributeErrorData(
                 data.object,
                 unrecognizedAttributes.map((at) => new AttributeErrorData_problems_Item(
@@ -629,9 +631,10 @@ async function addEntry (
         .map((oc) => ctx.objectClasses.get(oc.toString()))
         .forEach((oc, i) => {
             if (!oc) {
-                ctx.log.warn(
-                    `Object class ${objectClassValues[i]?.value.objectIdentifier} not understood.`,
-                );
+                // ctx.log.warn(
+                //     `Object class ${objectClassValues[i]?.value.objectIdentifier} not understood.`,
+                // );
+                // FIXME: Throw error: object class not recognized.
                 return;
             }
             const missingMandatoryAttributes: ObjectIdentifier[] = Array
@@ -642,7 +645,9 @@ async function addEntry (
                 ));
             if (missingMandatoryAttributes.length > 0) {
                 throw new errors.UpdateError(
-                    `Missing mandatory attributes: ${missingMandatoryAttributes.map((ma) => ma.toString())}.`,
+                    ctx.i18n.t("err:missing_mandatory_attributes", {
+                        oids: missingMandatoryAttributes.map((ma) => ma.toString()),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         missingMandatoryAttributes.map((at) => ({
@@ -702,32 +707,36 @@ async function addEntry (
 
     if (duplicatedAFDNs.length > 0) {
         throw new errors.UpdateError(
-            "Attributes of the following types in the RDNs of the entry were "
-            + `duplicated: ${duplicatedAFDNs.join(", ")}`,
+            ctx.i18n.t("err:rdn_types_duplicated", {
+                oids: duplicatedAFDNs.join(", "),
+            }),
             namingViolationErrorData(ctx, conn, duplicatedAFDNs),
         );
     }
 
     if (unrecognizedAFDNs.length > 0) {
         throw new errors.UpdateError(
-            "Attributes of the following types in the RDNs of the entry were "
-            + `not recognized, and therefore cannot be used for naming: ${unrecognizedAFDNs.join(", ")}`,
+            ctx.i18n.t("err:rdn_types_unrecognized", {
+                oids: unrecognizedAFDNs.join(", "),
+            }),
             namingViolationErrorData(ctx, conn, unrecognizedAFDNs),
         );
     }
 
     if (cannotBeUsedInNameAFDNs.length > 0) {
         throw new errors.UpdateError(
-            "Attributes of the following types in the RDNs of the entry are "
-            + `innately not suitable for naming: ${cannotBeUsedInNameAFDNs.join(", ")}`,
+            ctx.i18n.t("err:rdn_types_prohibited_in_naming", {
+                oids: cannotBeUsedInNameAFDNs.join(", "),
+            }),
             namingViolationErrorData(ctx, conn, cannotBeUsedInNameAFDNs),
         );
     }
 
     if (unmatchedAFDNs.length > 0) {
         throw new errors.UpdateError(
-            "Attributes of the following types in the RDNs of the entry did not "
-            + `have matching values in the attributes: ${unmatchedAFDNs.join(", ")}`,
+            ctx.i18n.t("err:rdn_values_not_present_in_entry", {
+                oids: unmatchedAFDNs.join(", "),
+            }),
             namingViolationErrorData(ctx, conn, unmatchedAFDNs),
         );
     }
@@ -763,7 +772,7 @@ async function addEntry (
             });
         if (structuralRules.length === 0) {
             throw new errors.UpdateError(
-                "Entry not permitted here by any DIT structural rules.",
+                ctx.i18n.t("err:no_dit_structural_rules"),
                 new UpdateErrorData(
                     UpdateProblem_namingViolation,
                     undefined,
@@ -793,9 +802,10 @@ async function addEntry (
             for (const ac of auxiliaryClasses) {
                 if (!permittedAuxiliaries.has(ac.toString())) {
                     throw new errors.UpdateError(
-                        `Auxiliary class ${ac.toString()} not permitted by `
-                        + "DIT content rule for structural object class "
-                        + `${contentRule.structuralObjectClass.toString()}.`,
+                        ctx.i18n.t("err:aux_oc_not_permitted_by_dit_content_rule", {
+                            aoc: ac.toString(),
+                            soc: structuralObjectClass.toString(),
+                        }),
                         new UpdateErrorData(
                             UpdateProblem_objectClassViolation,
                             [
@@ -853,7 +863,10 @@ async function addEntry (
                 mandatoryAttributesRemaining.delete(attr.type_.toString());
                 if (precludedAttributes.has(attr.type_.toString())) {
                     throw new errors.UpdateError(
-                        `Attribute type ${attr.type_.toString()} precluded by relevant the relevant DIT content rule.`,
+                        ctx.i18n.t("err:attr_type_precluded", {
+                            oid: attr.type_.toString(),
+                            soc: structuralObjectClass.toString(),
+                        }),
                         new UpdateErrorData(
                             UpdateProblem_objectClassViolation,
                             [
@@ -883,7 +896,7 @@ async function addEntry (
                 && !administrativeRolePresent
             ) {
                 throw new errors.UpdateError(
-                    "First-level entries must be administrative points.",
+                    ctx.i18n.t("err:first_level_entries_must_be_admpoint"),
                     new UpdateErrorData(
                         UpdateProblem_namingViolation,
                         [
@@ -906,10 +919,10 @@ async function addEntry (
             }
             if (mandatoryAttributesRemaining.size > 0) {
                 throw new errors.UpdateError(
-                    "Missing these mandatory attributes, which are required by "
-                    + "relevant DIT content rules: "
-                    + Array.from(mandatoryAttributesRemaining.values())
-                        .join(" "),
+                    ctx.i18n.t("err:dit_content_rule_missing_mandatory_attributes", {
+                        soc: structuralObjectClass.toString(),
+                        oids: Array.from(mandatoryAttributesRemaining.values()).join(" "),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         Array.from(mandatoryAttributesRemaining.values())
@@ -947,8 +960,10 @@ async function addEntry (
 
             if (auxiliaryClasses.length > 0) {
                 throw new errors.UpdateError(
-                    "Auxiliary object classes are forbidden entirely, because "
-                    + "there are no relevant DIT content rules to permit them.",
+                    ctx.i18n.t("err:aux_oc_forbidden_because_no_dit_content_rules", {
+                        oids: auxiliaryClasses.map((oid) => oid.toString()).join(", "),
+                        soc: structuralObjectClass.toString(),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         [
@@ -994,8 +1009,7 @@ async function addEntry (
             if (!applicableRule) {
                 if (attr.contexts.size > 0) {
                     throw new errors.AttributeError(
-                        "No contexts are permitted due to an absence of DIT "
-                        + "context use rules that permit them.",
+                        ctx.i18n.t("err:no_contexts_permitted"),
                         new AttributeErrorData(
                             {
                                 rdnSequence: targetDN,
@@ -1036,7 +1050,10 @@ async function addEntry (
                 mandatoryContextsRemaining.delete(ID);
                 if (!permittedContextsIndex.has(ID)) {
                     throw new errors.AttributeError(
-                        `Context type ${ID} not permitted by applicable DIT context use rules.`,
+                        ctx.i18n.t("err:context_type_prohibited_by_context_use_rule", {
+                            ct: ID,
+                            at: attr.id.toString(),
+                        }),
                         new AttributeErrorData(
                             {
                                 rdnSequence: targetDN,
@@ -1074,10 +1091,10 @@ async function addEntry (
                     ?.every((mc) => !!ctx.contextTypes.get(mc.toString())?.defaultValue) ?? true;
                 if (!everyRequiredContextHasADefaultValue) {
                     throw new errors.AttributeError(
-                        "These context types are required by applicable DIT "
-                        + "context use rules are missing the following context "
-                        + "types: "
-                        + Array.from(mandatoryContextsRemaining.values()),
+                        ctx.i18n.t("err:missing_required_context_types", {
+                            attr: attr.id.toString(),
+                            oids: Array.from(mandatoryContextsRemaining.values()).join(", "),
+                        }),
                         new AttributeErrorData(
                             {
                                 rdnSequence: targetDN,
@@ -1154,7 +1171,9 @@ async function addEntry (
     // NOTE: "aliased entry exists" X.511 specifically says this does not have to be checked.
     } else if (nonUserApplicationAttributes.length > 0) {
         throw new errors.SecurityError(
-            "Operational attributes may not be managed without setting the manageDSAIT flag.",
+            ctx.i18n.t("err:missing_managedsait_flag", {
+                oids: nonUserApplicationAttributes.map((oid) => oid.toString()).join(", "),
+            }),
             new SecurityErrorData(
                 SecurityProblem_insufficientAccessRights,
                 undefined,
@@ -1174,7 +1193,7 @@ async function addEntry (
     }
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         throw new errors.ServiceError(
-            "Could not complete operation in time.",
+            ctx.i18n.t("err:time_limit"),
             new ServiceErrorData(
                 ServiceProblem_timeLimitExceeded,
                 [],
@@ -1194,7 +1213,7 @@ async function addEntry (
     if (op?.abandonTime) {
         op.events.emit("abandon");
         throw new errors.AbandonError(
-            "Abandoned.",
+            ctx.i18n.t("err:abandoned"),
             new AbandonedData(
                 undefined,
                 [],
@@ -1277,7 +1296,10 @@ async function addEntry (
                 ];
                 const subr = await findEntry(ctx, ctx.dit.root, subrDN);
                 if (!subr) {
-                    ctx.log.warn(`Subordinate entry for agreement ${bindingID.identifier} (version ${bindingID.version}) not found.`);
+                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
+                        obid: bindingID.identifier.toString(),
+                        version: bindingID.version.toString(),
+                    }));
                     continue;
                 }
                 assert(subr.immediateSuperior);
@@ -1292,10 +1314,18 @@ async function addEntry (
                     accessPoint,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }

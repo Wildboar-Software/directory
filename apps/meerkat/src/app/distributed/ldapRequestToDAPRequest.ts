@@ -546,7 +546,10 @@ function ldapRequestToDAPRequest (
                                 );
                             }
                         } catch (e) {
-                            ctx.log.warn(`Could not decode LDAP attribute type ${desc}: ${e}`);
+                            ctx.log.warn(ctx.i18n.t("log:could_not_decode_ldap_attribute", {
+                                desc,
+                                e: e.message,
+                            }));
                             return undefined;
                         }
                     })

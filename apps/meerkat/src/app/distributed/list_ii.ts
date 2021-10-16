@@ -1,5 +1,5 @@
 import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -46,7 +46,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_RETURN_DN,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import { NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
@@ -166,7 +165,7 @@ async function list_ii (
         if (!authorized) {
             // Non-disclosure of the target object is at least addressed in X.501 RBAC!
             throw new errors.NameError(
-                "Not permitted to list the target entry.",
+                ctx.i18n.t("err:not_authz_list"),
                 new NameErrorData(
                     NameProblem_noSuchObject,
                     {
@@ -196,7 +195,9 @@ async function list_ii (
             const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
             if ((pi < 0) || !Number.isSafeInteger(pi)) {
                 throw new errors.ServiceError(
-                    `Paginated query page index ${pi} is invalid.`,
+                    ctx.i18n.t("err:page_number_invalid", {
+                        pi,
+                    }),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -215,7 +216,9 @@ async function list_ii (
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
             if ((nr.pageSize < 1) || !Number.isSafeInteger(nr.pageSize)) {
                 throw new errors.ServiceError(
-                    `Paginated query page size ${nr.pageSize} is invalid.`,
+                    ctx.i18n.t("err:page_size_invalid", {
+                        ps: nr.pageSize,
+                    }),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -239,7 +242,7 @@ async function list_ii (
             const paging = conn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
-                    `Paginated query reference '${queryReference.slice(0, 32)}' is invalid.`,
+                    ctx.i18n.t("err:paginated_query_ref_invalid"),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -260,7 +263,7 @@ async function list_ii (
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             throw new errors.AbandonError(
-                `Abandoned paginated query identified by query reference '${queryReference.slice(0, 32)}'.`,
+                ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
                     AbandonedProblem_pagingAbandoned,
                     [],
@@ -277,7 +280,7 @@ async function list_ii (
             );
         } else {
             throw new errors.ServiceError(
-                "Unrecognized paginated query syntax.",
+                ctx.i18n.t("err:unrecognized_paginated_query_syntax"),
                 new ServiceErrorData(
                     ServiceProblem_unavailable,
                     [],
@@ -322,7 +325,7 @@ async function list_ii (
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
-                    "Abandoned.",
+                    ctx.i18n.t("err:abandoned"),
                     new AbandonedData(
                         undefined,
                         [],
@@ -441,7 +444,7 @@ async function list_ii (
 
     if (fromDAP && (listItems.length === 0)) {
         throw new errors.ServiceError(
-            "Null result from DAP list operation.",
+            ctx.i18n.t("err:null_result_from_dap_list"),
             new ServiceErrorData(
                 ServiceProblem_invalidReference,
                 [],

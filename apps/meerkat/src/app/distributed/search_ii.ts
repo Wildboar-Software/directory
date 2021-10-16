@@ -101,7 +101,7 @@ async function search_ii (
      */
     if (data.joinArguments) {
         throw new errors.ServiceError(
-            "Joins are entirely unsupported by this server.",
+            ctx.i18n.t("err:joins_unsupported"),
             new ServiceErrorData(
                 ServiceProblem_unwillingToPerform,
                 [],
@@ -132,7 +132,7 @@ async function search_ii (
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
-                    "Abandoned.",
+                    ctx.i18n.t("err:abandoned"),
                     new AbandonedData(
                         undefined,
                         [],

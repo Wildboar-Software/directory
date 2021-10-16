@@ -66,6 +66,7 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 export
 async function checkIfNameIsAlreadyTakenInNSSR (
@@ -85,7 +86,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
-                    "Abandoned.",
+                    ctx.i18n.t("err:abandoned"),
                     new AbandonedData(
                         undefined,
                         [],
@@ -197,7 +198,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 });
                 if ("result" in response) {
                     throw new errors.UpdateError(
-                        "Entry already exists (among an NSSR).",
+                        ctx.i18n.t("err:entry_already_exists_in_nssr"),
                         new UpdateErrorData(
                             UpdateProblem_entryAlreadyExists,
                             undefined,
@@ -217,7 +218,10 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     break; // Breaks the inner for loop.
                 }
             } catch (e) {
-                ctx.log.warn(`Failed to access master access point: ${e}`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_access_master", {
+                    dsa: encodeLDAPDN(ctx, accessPoint.ae_title.rdnSequence),
+                    e: e.message,
+                }));
                 continue;
             }
         }

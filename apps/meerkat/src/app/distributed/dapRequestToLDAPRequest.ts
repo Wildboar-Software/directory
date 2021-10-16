@@ -125,7 +125,9 @@ function getLDAPEncoder (ctx: Context, type_: AttributeType): LDAPSyntaxEncoder 
 
 function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string, AttributeErrorData ] {
     return [
-        `Attribute type ${type_.toString()} could not be encoded for LDAP.`,
+        ctx.i18n.t("err:attribute_type_cannot_be_encoded_to_ldap", {
+            oid: type_.toString(),
+        }),
         new AttributeErrorData(
             {
                 rdnSequence: [],
@@ -214,7 +216,9 @@ function convert_dap_mod_to_ldap_mod (ctx: Context, mod: EntryModification): LDA
     }
     else if ("alterValues" in mod) {
         throw new errors.ServiceError(
-            `Cannot use alterValues modification for type ${mod.alterValues.type_.toString()} with an LDAP server.`,
+            ctx.i18n.t("err:cannot_use_altervalues_in_ldap", {
+                oid: mod.alterValues.type_.toString(),
+            }),
             new ServiceErrorData(
                 ServiceProblem_notSupportedByLDAP,
                 [],
@@ -232,7 +236,9 @@ function convert_dap_mod_to_ldap_mod (ctx: Context, mod: EntryModification): LDA
     }
     else if ("resetValue" in mod) {
         throw new errors.ServiceError(
-            `Cannot use resetValue modification for type ${mod.resetValue.toString()} with an LDAP server.`,
+            ctx.i18n.t("err:cannot_use_resetvalue_in_ldap", {
+                oid: mod.resetValue.toString(),
+            }),
             new ServiceErrorData(
                 ServiceProblem_notSupportedByLDAP,
                 [],
@@ -421,7 +427,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     const messageId: number = randomInt(MAX_LDAP_MESSAGE_ID);
     if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
         throw new errors.ServiceError(
-            "Cannot use the administerPassword operation on an LDAP server.",
+            ctx.i18n.t("err:cannot_use_apw_in_ldap"),
             new ServiceErrorData(
                 ServiceProblem_notSupportedByLDAP,
                 [],
@@ -471,7 +477,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
         throw new errors.ServiceError(
-            "Cannot use the changePassword operation on an LDAP server.",
+            ctx.i18n.t("err:cannot_use_cpw_in_ldap"),
             new ServiceErrorData(
                 ServiceProblem_notSupportedByLDAP,
                 [],

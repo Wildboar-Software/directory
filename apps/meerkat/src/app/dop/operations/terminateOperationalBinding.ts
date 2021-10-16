@@ -101,7 +101,9 @@ async function terminateOperationalBinding (
 
     if (permittedAPs.length === 0) {
         throw new errors.OperationalBindingError(
-            `No operational binding with identifier ${data.bindingID.identifier}.`,
+            ctx.i18n.t("err:no_ob_with_id", {
+                id: data.bindingID.identifier,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidID,
@@ -139,7 +141,9 @@ async function terminateOperationalBinding (
 
     if (opBindings.length === 0) {
         throw new errors.OperationalBindingError(
-            `No operational binding with identifier ${data.bindingID.identifier}.`,
+            ctx.i18n.t("err:no_ob_with_id", {
+                id: data.bindingID.identifier,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidID,

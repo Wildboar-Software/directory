@@ -166,7 +166,7 @@ async function administerPassword (
             || !authorizedToModifyUserPwd
         ) {
             throw new errors.SecurityError(
-                "Not permitted to modify entry with administerPassword operation.",
+                ctx.i18n.t("err:not_authz_apw"),
                 new SecurityErrorData(
                     SecurityProblem_noInformation,
                     undefined,

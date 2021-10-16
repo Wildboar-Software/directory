@@ -135,7 +135,7 @@ async function read (
         );
         if (!authorized) {
             throw new errors.SecurityError(
-                "Not permitted to read this entry.",
+                ctx.i18n.t("err:not_authz_read"),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
@@ -158,7 +158,7 @@ async function read (
     if (op?.abandonTime) {
         op.events.emit("abandon");
         throw new errors.AbandonError(
-            "Abandoned.",
+            ctx.i18n.t("err:abandoned"),
             new AbandonedData(
                 undefined,
                 [],

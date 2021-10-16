@@ -113,7 +113,7 @@ async function apinfoProcedure (
         if (op?.abandonTime) {
             op.events.emit("abandon");
             throw new errors.AbandonError(
-                "Abandoned.",
+                ctx.i18n.t("err:abandoned"),
                 new AbandonedData(
                     undefined,
                     [],
@@ -145,7 +145,7 @@ async function apinfoProcedure (
         ];
         if (loopDetected(tenativeTrace)) {
             throw new errors.ServiceError(
-                "Loop detected.",
+                ctx.i18n.t("err:loop_detected"),
                 new ServiceErrorData(
                     ServiceProblem_loopDetected,
                     [],
@@ -221,7 +221,9 @@ async function apinfoProcedure (
                 }
             } else {
                 if (!result.opCode) {
-                    ctx.log.warn(`This DSA returned a result with no opCode, which might have been malicious: `, api.ae_title);
+                    ctx.log.warn(ctx.i18n.t("log:dsa_returned_no_opcode", {
+                        dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+                    }));
                     continue;
                 }
                 return {
@@ -231,7 +233,9 @@ async function apinfoProcedure (
                 };
             }
         } catch (e) {
-            ctx.log.warn(`Unable to access DSA ${encodeLDAPDN(ctx, api.ae_title.rdnSequence)}.`);
+            ctx.log.warn(ctx.i18n.t("log:could_not_write_operation_to_dsa", {
+                dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+            }));
             continue;
         }
     }

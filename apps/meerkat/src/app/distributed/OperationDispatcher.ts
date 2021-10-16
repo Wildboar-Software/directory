@@ -658,7 +658,7 @@ class OperationDispatcher {
         const targetObject = getSoughtObjectFromRequest(req);
         if (!targetObject) {
             throw new errors.SecurityError(
-                "No discernable targeted object.",
+                ctx.i18n.t("err:no_discernable_target_object"),
                 new SecurityErrorData(
                     SecurityProblem_noInformation,
                     undefined,
@@ -730,7 +730,7 @@ class OperationDispatcher {
             }
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
-                    "Chained error.",
+                    ctx.i18n.t("err:chained_error"),
                     nrcrResult.error,
                     nrcrResult.errcode,
                 );
@@ -953,7 +953,7 @@ class OperationDispatcher {
             : chaining.targetObject ?? data.baseObject.rdnSequence;
         if (!targetObject) {
             throw new errors.SecurityError(
-                "No discernable targeted object.",
+                ctx.i18n.t("err:no_discernable_target_object"),
                 new SecurityErrorData(
                     SecurityProblem_noInformation,
                     undefined,
@@ -1016,7 +1016,7 @@ class OperationDispatcher {
                 );
             } else if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
-                    "Chained error.",
+                    ctx.i18n.t("err:chained_error"),
                     nrcrResult.error,
                     nrcrResult.errcode,
                 );

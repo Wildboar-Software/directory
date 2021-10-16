@@ -66,7 +66,7 @@ async function becomeSubordinate (
     const superior = await findEntry(ctx, ctx.dit.root, agreement.immediateSuperior, false);
     if (!superior) {
         throw new errors.SecurityError(
-            "No such superior or not authorized to know about it.",
+            ctx.i18n.t("err:no_such_superior"),
             new SecurityErrorData(
                 SecurityProblem_insufficientAccessRights,
                 undefined,
@@ -86,7 +86,7 @@ async function becomeSubordinate (
     }
     if (superior.dse.shadow || superior.dse.subentry || superior.dse.alias) {
         throw new errors.OperationalBindingError(
-            "Parent DSE is not of a permissible DSE type.",
+            ctx.i18n.t("err:parent_dse_not_permissible"),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_roleAssignment,
@@ -111,7 +111,7 @@ async function becomeSubordinate (
     const existing = await findEntry(ctx, ctx.dit.root, itinerantDN, false);
     if (existing) {
         throw new errors.UpdateError(
-            "Entry already exists.",
+            ctx.i18n.t("err:entry_already_exists"),
             new UpdateErrorData(
                 UpdateProblem_entryAlreadyExists,
                 undefined,

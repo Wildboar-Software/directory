@@ -229,7 +229,9 @@ async function dseFromDatabaseEntry (
                     .map((rdn: Record<string, string>) => rdnFromJson(rdn)),
             };
         } else {
-            ctx.log.warn("Alias entry found without corresponding alias attribute.");
+            ctx.log.warn(ctx.i18n.t("log:alias_but_no_aen", {
+                id: dbe.entryUUID,
+            }));
         }
     }
 

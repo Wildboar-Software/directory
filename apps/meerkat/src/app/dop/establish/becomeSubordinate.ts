@@ -99,7 +99,7 @@ async function becomeSubordinate (
     const existing = await findEntry(ctx, ctx.dit.root, itinerantDN, false);
     if (existing) {
         throw new errors.UpdateError(
-            "Entry already exists.",
+            ctx.i18n.t("err:entry_already_exists"),
             new UpdateErrorData(
                 UpdateProblem_entryAlreadyExists,
                 undefined,

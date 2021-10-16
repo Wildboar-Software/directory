@@ -208,7 +208,7 @@ class LDAPConnection extends ClientConnection {
             try {
                 message = _decode_LDAPMessage(el);
             } catch (e) {
-                ctx.log.error(`Malformed LDAPMessage. ${this.buffer.toString("hex")}`);
+                ctx.log.error(ctx.i18n.t("log:malformed_ldapmessage"));
                 return;
             }
 
