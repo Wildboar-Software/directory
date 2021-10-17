@@ -1,5 +1,6 @@
 import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import { DERElement, ObjectIdentifier } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type {
@@ -8,6 +9,8 @@ import type {
 import { randomInt } from "crypto";
 import { AbandonArgument, _encode_AbandonArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
 import { AddEntryArgument, _encode_AddEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+import { AdministerPasswordArgument, _encode_AdministerPasswordArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
+import { ChangePasswordArgument, _encode_ChangePasswordArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta";
 import { CompareArgument, _encode_CompareArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
 import { ModifyDNArgument, _encode_ModifyDNArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
 import { ModifyEntryArgument, _encode_ModifyEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
@@ -15,6 +18,8 @@ import { RemoveEntryArgument, _encode_RemoveEntryArgument } from "@wildboar/x500
 import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import { AbandonArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgumentData.ta";
 import { AddEntryArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+import { AdministerPasswordArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta";
+import { ChangePasswordArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgumentData.ta";
 import { CompareArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
 import { ModifyDNArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
 import { ModifyEntryArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
@@ -22,6 +27,8 @@ import { RemoveEntryArgumentData } from "@wildboar/x500/src/lib/modules/Director
 import { SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
@@ -95,6 +102,10 @@ import {
 import {
     ldapAttributeOptionContext,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapAttributeOptionContext.oa";
+import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 const MAX_INVOKE_ID: number = 2147483648;
 
@@ -698,7 +709,63 @@ function ldapRequestToDAPRequest (
         };
     }
     else if ("extendedReq" in req.protocolOp) {
-        throw new Error();
+        const oid = ObjectIdentifier.fromString(Buffer.from(req.protocolOp.extendedReq.requestName).toString("utf-8"));
+        if (oid.isEqualTo(modifyPassword)) {
+            if (!req.protocolOp.extendedReq.requestValue) {
+                throw new Error(); // TODO:
+            }
+            const passwdModifyRequestElement = new DERElement();
+            passwdModifyRequestElement.fromBytes(req.protocolOp.extendedReq.requestValue);
+            const elements = passwdModifyRequestElement.sequence;
+            const userIdentityElement = elements.find((el) => (el.tagNumber === 0));
+            const oldPasswd = elements.find((el) => (el.tagNumber === 1))?.octetString;
+            const newPasswd = elements.find((el) => (el.tagNumber === 2))?.octetString;
+            const dn: DistinguishedName | undefined = userIdentityElement
+                ? decodeLDAPDN(ctx, userIdentityElement.octetString)
+                : conn.boundNameAndUID?.dn;
+            if (!dn) {
+                throw new Error();
+            }
+            if (!newPasswd) {
+                throw new Error(); // Not specified what to do if no new password is provided.
+            }
+            if (oldPasswd) { // Create changePassword request
+                const dapReq: ChangePasswordArgument = {
+                    unsigned: new ChangePasswordArgumentData(
+                        dn,
+                        {
+                            clear: Buffer.from(oldPasswd).toString("utf-8"),
+                        },
+                        {
+                            clear: Buffer.from(newPasswd).toString("utf-8"),
+                        },
+                    ),
+                };
+                const argument = _encode_ChangePasswordArgument(dapReq, DER);
+                return {
+                    invokeId,
+                    opCode: changePassword["&operationCode"],
+                    argument,
+                };
+            } else { // Create administerPassword request
+                const dapReq: AdministerPasswordArgument = {
+                    unsigned: new AdministerPasswordArgumentData(
+                        dn,
+                        {
+                            clear: Buffer.from(newPasswd).toString("utf-8"),
+                        },
+                    ),
+                };
+                const argument = _encode_AdministerPasswordArgument(dapReq, DER);
+                return {
+                    invokeId,
+                    opCode: administerPassword["&operationCode"],
+                    argument,
+                };
+            }
+        } else {
+            throw new Error(); // We don't recognize the extended request.
+        }
     } else {
         throw new Error();
     }

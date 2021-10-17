@@ -50,6 +50,7 @@ import {
 import {
     PartialAttribute,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
 
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
@@ -229,8 +230,30 @@ async function handleRequestAndErrors (
         } else if ("searchRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { searchResDone: result }, undefined);
             conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+        } else if ("extendedReq" in message.protocolOp) {
+            const oid = decodeLDAPOID(message.protocolOp.extendedReq.requestName);
+            if (oid.isEqualTo(modifyPassword)) {
+                const emptySeq = BERElement.fromSequence([]);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        extendedResp: new ExtendedResponse(
+                            result.resultCode,
+                            result.matchedDN,
+                            result.diagnosticMessage,
+                            result.referral,
+                            message.protocolOp.extendedReq.requestName,
+                            emptySeq.toBytes(),
+                        ),
+                    },
+                    undefined,
+                );
+                conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else {
+                return;
+            }
         } else {
-            return;
+            return; // FIXME: Return some other error.
         }
     } finally {
         const invokeID = conn.messageIDToInvokeID.get(message.messageID);
@@ -328,7 +351,10 @@ class LDAPConnection extends ClientConnection {
                         false,
                     ),
                 };
-            } else if ("extendedReq" in message.protocolOp) {
+            } else if (
+                ("extendedReq" in message.protocolOp)
+                && !decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(modifyPassword)
+            ) {
                 const req = message.protocolOp.extendedReq;
                 const oid = decodeLDAPOID(req.requestName);
                 if (oid.isEqualTo(startTLS)) {

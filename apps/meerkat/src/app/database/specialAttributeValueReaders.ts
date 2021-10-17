@@ -167,7 +167,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
 import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/namingContexts.oa";
 // import { altServer } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/altServer.oa";
-// import { supportedExtension } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedExtension.oa";
+import { supportedExtension } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedExtension.oa";
 // import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
 // import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
 import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
@@ -188,6 +188,14 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
+import {
+    modifyPassword,
+    startTLS,
+} from "@wildboar/ldap/src/lib/extensions";
+import {
+    modifyIncrement,
+    trueFalseFilters,
+} from "@wildboar/ldap/src/lib/feature";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 const accessControlSubentryOID: string = accessControlSubentry["&id"].toString();
@@ -1327,8 +1335,25 @@ export const readAltServer: SpecialAttributeDatabaseReader = async (): Promise<V
     return [];
 };
 
-export const readSupportedExtension: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
-    return [];
+export const readSupportedExtension: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (vertex.immediateSuperior || !vertex.dse.root) {
+        return [];
+    }
+    return [
+        {
+            id: supportedExtension["&id"],
+            value: _encodeObjectIdentifier(modifyPassword, DER),
+            contexts: new Map(),
+        },
+        {
+            id: supportedExtension["&id"],
+            value: _encodeObjectIdentifier(startTLS, DER),
+            contexts: new Map(),
+        },
+    ];
 };
 
 export const readSupportedControl: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
@@ -1363,9 +1388,14 @@ export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (
         return [];
     }
     return [
-        { // LDAP Increment.
+        {
             id: supportedFeatures["&id"],
-            value: _encodeObjectIdentifier(new ObjectIdentifier([ 1, 3, 6, 1, 1, 14 ]), DER),
+            value: _encodeObjectIdentifier(modifyIncrement, DER),
+            contexts: new Map(),
+        },
+        {
+            id: supportedFeatures["&id"],
+            value: _encodeObjectIdentifier(trueFalseFilters, DER),
             contexts: new Map(),
         },
     ];

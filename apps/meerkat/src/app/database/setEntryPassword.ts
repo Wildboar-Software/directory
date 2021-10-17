@@ -1,6 +1,6 @@
 
 
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, ClientConnection, Vertex } from "@wildboar/meerkat-types";
 import type { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import encryptPassword from "../x500/encryptPassword";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
@@ -8,6 +8,7 @@ import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 export
 async function setEntryPassword (
     ctx: Context,
+    conn: ClientConnection,
     vertex: Vertex,
     pwd: UserPwd,
 ): Promise<void> {
@@ -64,6 +65,10 @@ async function setEntryPassword (
     } else {
         throw new Error();
     }
+    ctx.log.info(ctx.i18n.t("log:password_changed", {
+        cid: conn.id,
+        uuid: vertex.dse.uuid,
+    }));
 }
 
 export default setEntryPassword;

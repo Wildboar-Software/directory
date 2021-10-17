@@ -22,6 +22,7 @@ import attemptPassword from "../authn/attemptPassword";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     SecurityProblem_noInformation,
+    SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -190,10 +191,14 @@ async function changePassword (
         userPwd: data.oldPwd,
     });
     if (!oldPasswordIsCorrect) {
+        ctx.log.warn(ctx.i18n.t("log:change_password_incorrect", {
+            cid: conn.id,
+            uuid: target.dse.uuid,
+        }));
         throw new errors.SecurityError(
             ctx.i18n.t("err:old_password_incorrect"),
             new SecurityErrorData(
-                SecurityProblem_noInformation,
+                SecurityProblem_invalidCredentials,
                 undefined,
                 undefined,
                 [],
@@ -209,7 +214,7 @@ async function changePassword (
             ),
         );
     }
-    await setEntryPassword(ctx, target, data.newPwd);
+    await setEntryPassword(ctx, conn, target, data.newPwd);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for
     entries in this DSA. Meerkat DSA will take a principled stance and refuse

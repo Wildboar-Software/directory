@@ -1,11 +1,11 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import type { INTEGER } from "asn1-ts";
+import { INTEGER, DERElement } from "asn1-ts";
 import type { Result } from "@wildboar/x500/src/lib/types/Result";
 import { LDAPMessage } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-// import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-// import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 // import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
@@ -37,6 +37,11 @@ import type {
     LDAPDN,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPDN.ta";
 import getPartialAttributesFromEntryInformation from "../ldap/getPartialAttributesFromEntryInformation";
+import {
+    ExtendedResponse,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
+import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
+import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 
 async function getSearchResultEntries (
     ctx: Context,
@@ -95,6 +100,26 @@ async function dapReplyToLDAPResult (
                     foundDN,
                     Buffer.from("Success", "utf-8"),
                     undefined,
+                ),
+            },
+            undefined,
+        );
+    }
+    if (
+        compareCode(res.opCode, administerPassword["&operationCode"]!)
+        || compareCode(res.opCode, changePassword["&operationCode"]!)
+    ) {
+        const emptySeq = DERElement.fromSequence([]);
+        return new LDAPMessage(
+            messageId,
+            {
+                extendedResp: new ExtendedResponse(
+                    LDAPResult_resultCode_success,
+                    foundDN,
+                    Buffer.from("Success", "utf-8"), // FIXME: Make "Success" an i18n string.
+                    undefined,
+                    encodeLDAPOID(modifyPassword),
+                    emptySeq.toBytes(),
                 ),
             },
             undefined,

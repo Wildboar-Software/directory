@@ -21,6 +21,7 @@ import setEntryPassword from "../database/setEntryPassword";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     SecurityProblem_noInformation,
+    SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -168,7 +169,7 @@ async function administerPassword (
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_apw"),
                 new SecurityErrorData(
-                    SecurityProblem_noInformation,
+                    SecurityProblem_invalidCredentials,
                     undefined,
                     undefined,
                     [],
@@ -185,7 +186,7 @@ async function administerPassword (
             );
         }
     }
-    await setEntryPassword(ctx, target, data.newPwd);
+    await setEntryPassword(ctx, conn, target, data.newPwd);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for
     entries in this DSA. Meerkat DSA will take a principled stance and refuse

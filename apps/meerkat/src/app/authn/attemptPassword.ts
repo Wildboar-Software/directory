@@ -20,7 +20,7 @@ async function attemptPassword (
 ): Promise<boolean | undefined> {
     const password = await ctx.db.password.findUnique({
         where: {
-            id: vertex.dse.id,
+            entry_id: vertex.dse.id,
         },
     });
     if (!password) {
