@@ -548,9 +548,6 @@ class OperationDispatcher {
                     argument,
                     response,
                 );
-                if (state.foundDSE.dse.rdn.length === 0) {
-                    console.log(response.results);
-                }
                 const localResult: SearchResult = {
                     unsigned: {
                         searchInfo: new SearchResultData_searchInfo(

@@ -1,4 +1,4 @@
-import type { Context, Connection } from "@wildboar/meerkat-types";
+import type { Context, Connection } from "../types";
 import {
     IDM_PDU,
     _encode_IDM_PDU,

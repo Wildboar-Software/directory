@@ -1,4 +1,4 @@
-import type { Connection, Context } from "@wildboar/meerkat-types";
+import type { Connection, Context } from "../../../types";
 import destringifyDN from "../../../utils/destringifyDN";
 import {
     Attribute,

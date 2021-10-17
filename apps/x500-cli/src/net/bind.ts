@@ -1,4 +1,4 @@
-import type { Context, Connection } from "@wildboar/meerkat-types";
+import type { Context, Connection } from "../types";
 import * as fs from "fs";
 import * as readline from "readline";
 import MutableWriteable from "../utils/MutableWriteable";

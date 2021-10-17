@@ -1,4 +1,4 @@
-import type { Connection, Context } from "@wildboar/meerkat-types";
+import type { Connection, Context } from "../../types";
 import {
     TRUE_BIT,
     FALSE_BIT,
@@ -25,12 +25,6 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import {
-    DSEType,
-    DSEType_admPoint,
-    DSEType_entry,
-    DSEType_subentry,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
 import * as selat from "@wildboar/x500/src/lib/collections/attributes";
 import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
 import {
@@ -67,7 +61,7 @@ import {
     _encodeObjectIdentifier,
     _encodePrintableString,
     _encodeUTF8String,
-    _encodeNumericString,
+    // _encodeNumericString,
 } from "asn1-ts/dist/node/functional";
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
@@ -106,8 +100,8 @@ function addCountryArgument (
     iso2c: string,
 ): AddEntryArgument {
     const c2 = _encodePrintableString(iso2c, DER);
-    const c3 = _encodePrintableString(countries.alpha2ToAlpha3(iso2c), DER);
-    const n = _encodeNumericString(countries.alpha2ToNumeric(iso2c), DER);
+    // const c3 = _encodePrintableString(countries.alpha2ToAlpha3(iso2c), DER);
+    // const n = _encodeNumericString(countries.alpha2ToNumeric(iso2c), DER);
     const dn: DistinguishedName = [
         ...baseObject,
         [
@@ -117,15 +111,7 @@ function addCountryArgument (
             ),
         ],
     ];
-    const dseType: DSEType = new Uint8ClampedArray(Array(10).fill(FALSE_BIT));
-    dseType[DSEType_entry] = TRUE_BIT;
-    dseType[DSEType_admPoint] = TRUE_BIT;
     const attributes: Attribute[] = [
-        new Attribute(
-            selat.dseType["&id"]!,
-            [selat.dseType.encoderFor["&Type"]!(dseType, DER)],
-            undefined,
-        ),
         new Attribute(
             selat.administrativeRole["&id"]!,
             [
@@ -137,13 +123,7 @@ function addCountryArgument (
             selat.objectClass["&id"],
             [
                 _encodeObjectIdentifier(seloc.country["&id"]!, DER),
-                _encodeObjectIdentifier(seloc.organization["&id"]!, DER),
             ],
-            undefined,
-        ),
-        new Attribute(
-            selat.organizationName["&id"]!,
-            [_encodeUTF8String(iso2c + " Government", DER)],
             undefined,
         ),
         new Attribute(
@@ -151,16 +131,16 @@ function addCountryArgument (
             [c2],
             undefined,
         ),
-        new Attribute(
-            selat.countryCode3c["&id"]!,
-            [c3],
-            undefined,
-        ),
-        new Attribute(
-            selat.countryCode3n["&id"]!,
-            [n],
-            undefined,
-        ),
+        // new Attribute(
+        //     selat.countryCode3c["&id"]!,
+        //     [c3],
+        //     undefined,
+        // ),
+        // new Attribute(
+        //     selat.countryCode3n["&id"]!,
+        //     [n],
+        //     undefined,
+        // ),
     ];
     return {
         unsigned: new AddEntryArgumentData(
@@ -207,14 +187,7 @@ function addCountrySubentryArgument (
             ),
         ],
     ];
-    const dseType: DSEType = new Uint8ClampedArray(Array(10).fill(FALSE_BIT));
-    dseType[DSEType_subentry] = TRUE_BIT;
     const attributes: Attribute[] = [
-        new Attribute(
-            selat.dseType["&id"],
-            [selat.dseType.encoderFor["&Type"]!(dseType, DER)],
-            undefined,
-        ),
         new Attribute(
             selat.objectClass["&id"],
             [
@@ -230,9 +203,9 @@ function addCountrySubentryArgument (
         ),
         new Attribute(
             selat.subtreeSpecification["&id"],
-            [ // TODO: X.500 everythingBelow(DN)
+            [
                 _encode_SubtreeSpecification(new SubtreeSpecification(
-                    dn.slice(0, -1),
+                    undefined,
                     undefined,
                     undefined,
                     undefined,

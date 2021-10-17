@@ -862,8 +862,23 @@ async function search_i (
         }
     } else if (!entryOnly) /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
         if (
-            (target.dse.subentry && subentries)
-            || (!target.dse.subentry && !subentries)
+            (
+                (target.dse.subentry && subentries)
+                || (!target.dse.subentry && !subentries)
+            )
+            /**
+             * Per IETF RFC 4512:
+             *
+             * > The root DSE SHALL NOT be included if the client performs a
+             * > subtree search starting from the root.
+             *
+             * Unfortunately, I can't find any evidence of this being required
+             * by X.500 directories. However, this behavior makes sense: you
+             * should not include the root DSE in search results for searches
+             * that do not explicitly target it, because, in some sense, the
+             * root DSE is not a "real" entry in the DIT.
+             */
+            && !(!target.immediateSuperior && target.dse.root)
         ) {
             // Entry ACI is checked above.
             const match = evaluateFilter(filter, entryInfo, filterOptions);

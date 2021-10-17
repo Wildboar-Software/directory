@@ -17,6 +17,7 @@
     "not_authz_to_create_attr_value": "Not authorized to create one of the values of attribute type {{type}}.",
     "unrecognized_attribute_type": "Unrecognized attribute types: {{oids}}.",
     "unrecognized_object_class": "Unrecognized object class {{oid}}.",
+    "unrecognized_context_type": "Unrecognized context type: {{oid}}.",
     "missing_mandatory_attributes": "Missing mandatory attribute(s): {{oids}}",
     "rdn_types_duplicated": "Attributes of the following types in the RDN of the entry were duplicated: {{oids}}.",
     "rdn_types_unrecognized": "Attributes of the following types in the RDN of the entry were unrecognized by the performing DSA: {{oids}}.",
@@ -64,7 +65,7 @@
     "attribute_type_not_permitted_by_oc": "Attribute types {{oids}} not permitted by the entry's object classes.",
     "deleting_old_rdn_deletes_required_attribute": "Deleting the old RDN would delete a required attribute.",
     "not_authz_mod": "Not authorized to perform modification {{mod}}.",
-    "no_user_modification": "Attribute type {{oid}} may never be modified, even by administrators.",
+    "no_user_modification": "The following attribute types may never be modified, even by administrators: {{oids}}",
     "not_authz_modify_entry": "Not authorized to modify the target entry.",
     "cannot_change_soc": "Cannot change supplant target entry's structural object class with {{oid}}.",
     "cannot_add_object_class_parent": "Object class 'parent' cannot be added directly. The subordinate must be made a child, then the parent object class will be added to its immediate superior automatically.",
@@ -98,5 +99,8 @@
     "reached_alias_above_target": "Reached an alias above the target object, and dereferencing was prohibited.",
     "reached_subentry_above_target": "Reached a subentry above the target object. The object could not possibly exist.",
     "hierarchy_selections_not_supported": "Hierarchy selections not supported by this DSA.",
-    "no_such_superior": "No such superior or not authorized to know about it."
+    "no_such_superior": "No such superior or not authorized to know about it.",
+    "cannot_add_dummy_attr": "The following attributes are dummy attribute types, and therefore may not be added to an entry: {{oids}}",
+    "cannot_add_collective_attr": "The following attributes are collective attribute types, and therefore may not be added to a non-subentry: {{oids}}",
+    "cannot_add_obsolete_attr": "The following attributes are obsolete, and therefore may not be added to an entry: {{oids}}"
 }

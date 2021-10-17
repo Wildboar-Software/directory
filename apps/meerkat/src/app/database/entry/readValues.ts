@@ -165,7 +165,6 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     // [ pwdEncAlg["&id"]!.toString(), readers.readPwdEncAlg ],
     [ userPwd["&id"]!.toString(), readers.readUserPwd ],
     [ userPassword["&id"]!.toString(), readers.readUserPassword ],
-    [ uniqueIdentifier["&id"].toString(), readers.readUniqueIdentifier ], // Has significance for Basic Access Control
     [ dITStructureRules["&id"].toString(), readers.readDITStructureRules ],
     [ nameForms["&id"].toString(), readers.readNameForms ],
     [ dITContentRules["&id"].toString(), readers.readDITContentRules ],

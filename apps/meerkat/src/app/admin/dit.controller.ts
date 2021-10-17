@@ -33,6 +33,24 @@ import deleteEntry from "../database/deleteEntry";
 import escape from "escape-html";
 import type { DistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/DistinguishedName.ta";
 import findEntry from "../x500/findEntry";
+import {
+    EntryInformationSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+
+const selectAllInfo = new EntryInformationSelection(
+    {
+        allUserAttributes: null,
+    },
+    undefined,
+    {
+        allOperationalAttributes: null,
+    },
+    {
+        allContexts: null,
+    },
+    true,
+    undefined, // TODO: Family selection
+);
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
@@ -274,7 +292,7 @@ export class DitController {
             userAttributes,
             operationalAttributes,
             collectiveValues,
-        } = await readValues(this.ctx, vertex);
+        } = await readValues(this.ctx, vertex, selectAllInfo);
         const attributes: [ string, string, string ][] = [
             ...userAttributes,
             ...operationalAttributes,

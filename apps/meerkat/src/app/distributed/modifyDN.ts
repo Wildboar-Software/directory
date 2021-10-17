@@ -117,6 +117,7 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import extensibleObject from "../ldap/extensibleObject";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -279,6 +280,7 @@ async function modifyDN (
     };
     const targetDN = getDistinguishedName(target);
     const objectClasses: OBJECT_IDENTIFIER[] = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
+    const isExtensible: boolean = target.dse.objectClass.has(extensibleObject.toString());
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
@@ -971,7 +973,8 @@ async function modifyDN (
     );
     for (const atav of newRDN) {
         const TYPE_OID: string = atav.type_.toString();
-        if (!attributeTypesPermittedByObjectClasses.has(TYPE_OID)) {
+        // NOTE: This will not respect the extensibleObject OC if it was added through the RDN.
+        if (!attributeTypesPermittedByObjectClasses.has(TYPE_OID) && !isExtensible) {
             throw new errors.UpdateError(
                 ctx.i18n.t("err:attribute_type_not_permitted_by_oc", {
                     oids: atav.type_.toString(),

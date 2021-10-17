@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import search_new from "../commands/dap/search_new";

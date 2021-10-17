@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types";
 import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
 import stringifyLDAPDN from "@wildboar/ldap/src/lib/stringifiers/RDNSequence";
 import type {

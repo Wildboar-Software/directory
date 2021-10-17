@@ -7,6 +7,7 @@ import {
     OperationReturn,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import { TRUE_BIT } from "asn1-ts";
 import {
     _decode_ModifyEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
@@ -42,7 +43,11 @@ import {
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import { AttributeErrorData_problems_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
-import { AttributeProblem_contextViolation, AttributeProblem_undefinedAttributeType } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+import {
+    AttributeProblem_contextViolation,
+    AttributeProblem_undefinedAttributeType,
+    AttributeProblem_constraintViolation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
@@ -136,6 +141,9 @@ import {
     ServiceProblem_timeLimitExceeded
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
+    ServiceControlOptions_manageDSAIT,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
@@ -163,6 +171,9 @@ import {
     ObjectClassKind_auxiliary,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import {
+    AttributeUsage_userApplications,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import {
     DITContextUseDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
 import {
@@ -182,11 +193,26 @@ import {
 import {
     Attribute_valuesWithContext_Item,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+import extensibleObject from "../ldap/extensibleObject";
+import attributeTypesPermittedForEveryEntry from "../x500/attributeTypesPermittedForEveryEntry";
+import {
+    administrativeRole,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+// import {
+//     id_oc_parent,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
+// import {
+//     id_oc_child,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
 
-const notPermittedData =  (ctx: Context, conn: ClientConnection) => new SecurityErrorData(
+const notPermittedData =  (
+    ctx: Context,
+    conn: ClientConnection,
+    aliasDereferenced?: boolean,
+) => new SecurityErrorData(
     SecurityProblem_insufficientAccessRights,
     undefined,
     undefined,
@@ -198,7 +224,7 @@ const notPermittedData =  (ctx: Context, conn: ClientConnection) => new Security
         securityError["&errorCode"],
     ),
     ctx.dsa.accessPoint.ae_title.rdnSequence,
-    undefined, // FIXME:
+    aliasDereferenced,
     undefined,
 );
 
@@ -246,6 +272,7 @@ function checkPermissionToAddValues (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    aliasDereferenced?: boolean,
 ): void {
     if (!accessControlScheme) {
         return;
@@ -267,7 +294,7 @@ function checkPermissionToAddValues (
     if (!authorizedForAttributeType) {
         throw new errors.SecurityError(
             ctx.i18n.t("err:not_authz_mod"),
-            notPermittedData(ctx, conn),
+            notPermittedData(ctx, conn, aliasDereferenced),
         );
     }
     for (const value of values) {
@@ -290,9 +317,184 @@ function checkPermissionToAddValues (
         if (!authorizedForValue) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_mod"),
-                notPermittedData(ctx, conn),
+                notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
+    }
+}
+
+function checkAbilityToModifyAttributeType (
+    ctx: Context,
+    conn: ClientConnection,
+    attributeType: AttributeType,
+    entry: Vertex,
+    targetDN: DistinguishedName,
+    isSubentry: boolean,
+    manageDSAIT: boolean,
+    isRemoving: boolean, // For accomodating obsolete attribute types.
+    aliasDereferenced?: boolean,
+): void {
+    const TYPE_OID: string = attributeType.toString();
+    const spec = ctx.attributes.get(TYPE_OID);
+    if (!spec) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:unrecognized_attribute_type", {
+                oids: TYPE_OID,
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: getDistinguishedName(entry),
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_undefinedAttributeType,
+                        attributeType,
+                        undefined,
+                    ),
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if ((spec.usage !== AttributeUsage_userApplications) && !manageDSAIT) {
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:missing_managedsait_flag", {
+                oids: spec.id.toString(),
+            }),
+            new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (spec.noUserModification) {
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:no_user_modification", {
+                oids: TYPE_OID,
+            }),
+            new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (spec.dummy) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:cannot_add_dummy_attr", {
+                oids: spec.id.toString(),
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: targetDN,
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        spec.id,
+                        undefined,
+                    ),
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (spec.collective && !isSubentry) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:cannot_add_collective_attr", {
+                oids: spec.id.toString(),
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: targetDN,
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        spec.id,
+                        undefined,
+                    ),
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (spec.obsolete && !isRemoving) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:cannot_add_obsolete_attr", {
+                oids: spec.id.toString(),
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: targetDN,
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        spec.id,
+                        undefined,
+                    ),
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
     }
 }
 
@@ -306,6 +508,7 @@ async function executeAddAttribute (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     checkPermissionToAddValues(
         mod,
@@ -315,6 +518,7 @@ async function executeAddAttribute (
         relevantACDFTuples,
         authLevel,
         equalityMatcherGetter,
+        aliasDereferenced,
     );
     const values = valuesFromAttribute(mod);
     const TYPE_OID: IndexableOID = mod.type_.toString();
@@ -337,6 +541,7 @@ async function executeRemoveAttribute (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     delta.delete(mod.toString());
     if (accessControlScheme) {
@@ -356,7 +561,7 @@ async function executeRemoveAttribute (
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_mod"),
-                notPermittedData(ctx, conn),
+                notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
     }
@@ -374,6 +579,7 @@ async function executeAddValues (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     checkPermissionToAddValues(
         mod,
@@ -383,6 +589,7 @@ async function executeAddValues (
         relevantACDFTuples,
         authLevel,
         equalityMatcherGetter,
+        aliasDereferenced,
     );
     const values = valuesFromAttribute(mod);
     const TYPE_OID: IndexableOID = mod.type_.toString();
@@ -405,6 +612,7 @@ async function executeRemoveValues (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     const values = valuesFromAttribute(mod);
     if (accessControlScheme) {
@@ -424,7 +632,7 @@ async function executeRemoveValues (
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_mod"),
-                notPermittedData(ctx, conn),
+                notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
         for (const value of values) {
@@ -447,7 +655,7 @@ async function executeRemoveValues (
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_mod"),
-                    notPermittedData(ctx, conn),
+                    notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }
         }
@@ -475,6 +683,7 @@ async function executeAlterValues (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     if (!isAcceptableTypeForAlterValues(mod.value)) {
         throw new Error();
@@ -496,7 +705,7 @@ async function executeAlterValues (
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_mod"),
-                notPermittedData(ctx, conn),
+                notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
     }
@@ -551,7 +760,7 @@ async function executeAlterValues (
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_mod"),
-                    notPermittedData(ctx, conn),
+                    notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }
         }
@@ -578,6 +787,7 @@ async function executeResetValue (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     const where = {
         entry_id: entry.dse.id,
@@ -617,13 +827,14 @@ async function executeResetValue (
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_mod"),
-                    notPermittedData(ctx, conn),
+                    notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }
         }
     }
-    // TODO: This will not update operational attributes, but that might not
-    // matter, because it only remove values having some context.
+    // This will not update operational attributes, but that does not
+    // matter, because it only remove values having some context, and per X.501,
+    // operational attributes are forbidden from having contexts.
     const TYPE_OID: IndexableOID = mod.toString();
     { // Updating the delta values
         const deltaValues = delta.get(TYPE_OID);
@@ -651,6 +862,7 @@ async function executeReplaceValues (
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
+    aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
@@ -675,7 +887,7 @@ async function executeReplaceValues (
         if (!authorizedForValue) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_mod"),
-                notPermittedData(ctx, conn),
+                notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
         const rows = await ctx.db.attributeValue.findMany({
@@ -706,7 +918,7 @@ async function executeReplaceValues (
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_mod"),
-                    notPermittedData(ctx, conn),
+                    notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }
         }
@@ -719,6 +931,201 @@ async function executeReplaceValues (
         ...(await addValues(ctx, entry, values, [])),
     ];
 }
+
+/**
+ * This function both checks that the DIT context use rules are satisfied
+ * and applies default context values, if there are any defined. These are
+ * separate features, but it turns out that they innately share a lot of
+ * code, so it will preferable to merge these two features into a single
+ * function.
+ *
+ * Note that we do not handle the default context value post-processing
+ * steps described in ITU Recommendation X.501 (2016), Section 13.9.2. As
+ * far as I can see, these only exist to save storage space.
+ */
+function handleContextRule (
+    ctx: Context,
+    conn: ClientConnection,
+    targetDN: DistinguishedName,
+    attribute: Attribute,
+    contextRuleIndex: ContextRulesIndex,
+    aliasDereferenced?: boolean,
+): Attribute {
+    const rule = contextRuleIndex.get(attribute.type_.toString());
+    if (!rule) {
+        return attribute;
+    }
+    if (rule.information.mandatoryContexts?.length && attribute.values.length) {
+        /**
+         * If every mandatory context has a default value defined, we do not
+         * need to fail: the default value will be applied and this
+         * requirement will be satisfied.
+         */
+        const everyRequiredContextHasADefaultValue: boolean = rule
+            .information
+            .mandatoryContexts
+            .every((mc) => !!ctx.contextTypes.get(mc.toString())?.defaultValue);
+        if (!everyRequiredContextHasADefaultValue) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:missing_required_context_types", {
+                    attr: attribute.type_.toString(),
+                    oids: rule.information.mandatoryContexts.map((mc) => mc.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    {
+                        rdnSequence: [],
+                    },
+                    [
+                        new AttributeErrorData_problems_Item(
+                            AttributeProblem_contextViolation,
+                            attribute.type_,
+                            undefined,
+                        ),
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
+    }
+    const permittedContexts: OBJECT_IDENTIFIER[] = [
+        ...(rule.information.mandatoryContexts ?? []),
+        ...(rule.information.optionalContexts ?? []),
+    ];
+    const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((pc) => pc.toString()));
+    for (const vwc of (attribute.valuesWithContext ?? [])) {
+        const mandatoryContextsRemaining: Set<IndexableOID> = new Set(
+            rule.information.mandatoryContexts?.map((mc) => mc.toString()),
+        );
+        for (const context of vwc.contextList) {
+            const TYPE_OID: string = context.contextType.toString();
+            if (!permittedContextsIndex.has(TYPE_OID)) {
+                throw new errors.AttributeError(
+                    ctx.i18n.t("err:context_type_prohibited_by_context_use_rule", {
+                        ct: TYPE_OID,
+                        at: attribute.type_.toString(),
+                    }),
+                    new AttributeErrorData(
+                        {
+                            rdnSequence: targetDN,
+                        },
+                        [
+                            new AttributeErrorData_problems_Item(
+                                AttributeProblem_contextViolation,
+                                attribute.type_,
+                                vwc.value,
+                            ),
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            attributeError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+            mandatoryContextsRemaining.delete(TYPE_OID);
+        }
+        if (mandatoryContextsRemaining.size > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:missing_required_context_types", {
+                    attr: attribute.type_.toString(),
+                    oids: Array.from(mandatoryContextsRemaining.values()).join(", "),
+                }),
+                new AttributeErrorData(
+                    {
+                        rdnSequence: targetDN,
+                    },
+                    [
+                        new AttributeErrorData_problems_Item(
+                            AttributeProblem_contextViolation,
+                            attribute.type_,
+                            vwc.value,
+                        ),
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+    }
+
+    /**
+     * Everything from here onwards adds default context values to the
+     * attribute, per ITU Recommendation X.501 (2016), Section 13.9.2.
+     */
+    let current: Attribute = attribute.valuesWithContext?.length
+        ? attribute
+        : new Attribute(
+            attribute.type_,
+            attribute.values,
+            []
+        );
+    for (const ct of permittedContexts) { // TODO: This is O(n^2).
+        const spec = ctx.contextTypes.get(ct.toString());
+        if (!spec) {
+            continue; // This is intentional. This is not supposed to throw.
+        }
+        if (!spec.defaultValue) {
+            continue; // This is intentional. This is not supposed to throw.
+        }
+        const defaultValueGetter = spec.defaultValue;
+        for (const vwc of (current.valuesWithContext ?? [])) {
+            const hasContextOfThisType: boolean = vwc.contextList
+                .some((context) => (context.contextType.isEqualTo(ct)));
+            if (hasContextOfThisType) {
+                continue;
+            }
+            vwc.contextList.push(new X500Context(
+                ct,
+                [ defaultValueGetter() ],
+                true, // The specification is not clear on whether the default context value should be a fallback.
+            ));
+        }
+        // We do not need to track which values to remove: they will all be
+        // removed, because, if we've made it this far in the code, we've
+        // established that there will be default context values to apply.
+        for (const value of current.values) {
+            current.valuesWithContext!.push(new Attribute_valuesWithContext_Item(
+                value,
+                [
+                    new X500Context(
+                        ct,
+                        [ defaultValueGetter() ],
+                        true, // The specification is not clear on whether the default context value should be a fallback.
+                    ),
+                ],
+            ));
+        }
+        current = new Attribute(
+            attribute.type_,
+            [],
+            attribute.valuesWithContext,
+        );
+    }
+    return current;
+};
 
 /**
  * From ITU Recommendation X.501 (2016), Section 13.4.7:
@@ -741,6 +1148,7 @@ async function executeEntryModification (
     ctx: Context,
     conn: ClientConnection,
     entry: Vertex,
+    targetDN: DistinguishedName,
     mod: EntryModification,
     delta: ValuesIndex,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
@@ -749,6 +1157,9 @@ async function executeEntryModification (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     precludedAttributes: Set<IndexableOID>,
     contextRuleIndex: ContextRulesIndex,
+    isSubentry: boolean,
+    manageDSAIT: boolean,
+    aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
 
     const commonArguments = [
@@ -760,66 +1171,32 @@ async function executeEntryModification (
         relevantACDFTuples,
         authLevel,
         equalityMatcherGetter,
+        aliasDereferenced,
     ] as const;
 
-    /**
-     * This only needs to be called for alternatives that write new
-     * attributes or attribute values.
-     */
-    const check = (attributeType: AttributeType) => {
-        const TYPE_OID: string = attributeType.toString();
-        const spec = ctx.attributes.get(TYPE_OID);
-        if (!spec) {
-            throw new errors.AttributeError(
-                ctx.i18n.t("err:unrecognized_attribute_type", {
-                    oids: TYPE_OID,
-                }),
-                new AttributeErrorData(
-                    {
-                        rdnSequence: getDistinguishedName(entry),
-                    },
-                    [
-                        new AttributeErrorData_problems_Item(
-                            AttributeProblem_undefinedAttributeType,
-                            attributeType,
-                            undefined,
-                        ),
-                    ],
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        attributeError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            );
-        }
-        if (spec?.noUserModification) {
-            throw new errors.SecurityError(
-                ctx.i18n.t("err:no_user_modification", {
-                    oid: TYPE_OID,
-                }),
-                new SecurityErrorData(
-                    SecurityProblem_insufficientAccessRights,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        securityError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            );
-        }
+    const check = (attributeType: AttributeType, isRemoving: boolean) => {
+        checkAbilityToModifyAttributeType(
+            ctx,
+            conn,
+            attributeType,
+            entry,
+            targetDN,
+            isSubentry,
+            manageDSAIT,
+            isRemoving,
+            aliasDereferenced,
+        );
+    };
+
+    const checkContextRule = (attribute: Attribute): Attribute => {
+        return handleContextRule(
+            ctx,
+            conn,
+            targetDN,
+            attribute,
+            contextRuleIndex,
+            aliasDereferenced,
+        );
     };
 
     const checkPreclusion = (attributeType: AttributeType) => {
@@ -850,169 +1227,38 @@ async function executeEntryModification (
         }
     };
 
-    /**
-     * This function both checks that the DIT context use rules are satisfied
-     * and applies default context values, if there are any defined. These are
-     * separate features, but it turns out that they innately share a lot of
-     * code, so it will preferable to merge these two features into a single
-     * function.
-     *
-     * Note that we do not handle the default context value post-processing
-     * steps described in ITU Recommendation X.501 (2016), Section 13.9.2. As
-     * far as I can see, these only exist to save storage space.
-     */
-    const handleContextRule = (attribute: Attribute): Attribute => {
-        const rule = contextRuleIndex.get(attribute.type_.toString());
-        if (!rule) {
-            return attribute;
-        }
-        if (rule.information.mandatoryContexts?.length && attribute.values.length) {
-            /**
-             * If every mandatory context has a default value defined, we do not
-             * need to fail: the default value will be applied and this
-             * requirement will be satisfied.
-             */
-            const everyRequiredContextHasADefaultValue: boolean = rule
-                .information
-                .mandatoryContexts
-                .every((mc) => !!ctx.contextTypes.get(mc.toString())?.defaultValue);
-            if (!everyRequiredContextHasADefaultValue) {
-                throw new errors.AttributeError(
-                    ctx.i18n.t("err:missing_required_context_types", {
-                        attr: attribute.type_.toString(),
-                        oids: rule.information.mandatoryContexts.map((mc) => mc.toString()).join(", "),
-                    }),
-                    new AttributeErrorData(
-                        {
-                            rdnSequence: [],
-                        },
-                        [
-                            new AttributeErrorData_problems_Item(
-                                AttributeProblem_contextViolation,
-                                attribute.type_,
-                                undefined,
-                            ),
-                        ],
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            undefined,
-                            updateError["&errorCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
-                    ),
-                );
-            }
-        }
-        const permittedContexts: OBJECT_IDENTIFIER[] = [
-            ...(rule.information.mandatoryContexts ?? []),
-            ...(rule.information.optionalContexts ?? []),
-        ];
-        const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((pc) => pc.toString()));
-        for (const vwc of (attribute.valuesWithContext ?? [])) {
-            const unsatisfiedRequirements: Set<IndexableOID> = new Set(
-                rule.information.mandatoryContexts?.map((mc) => mc.toString()),
-            );
-            for (const context of vwc.contextList) {
-                const TYPE_OID: string = context.contextType.toString();
-                if (!permittedContextsIndex.has(TYPE_OID)) {
-                    throw new Error(); // FIXME:
-                }
-                unsatisfiedRequirements.delete(TYPE_OID);
-            }
-            if (unsatisfiedRequirements.size > 0) {
-                throw new Error(); // FIXME:
-            }
-        }
-
-        /**
-         * Everything from here onwards adds default context values to the
-         * attribute, per ITU Recommendation X.501 (2016), Section 13.9.2.
-         */
-        let current: Attribute = attribute.valuesWithContext?.length
-            ? attribute
-            : new Attribute(
-                attribute.type_,
-                attribute.values,
-                []
-            );
-        for (const ct of permittedContexts) { // TODO: This is O(n^2).
-            const spec = ctx.contextTypes.get(ct.toString());
-            if (!spec) {
-                throw new Error(); // FIXME: Context type not understood.
-            }
-            if (!spec.defaultValue) {
-                continue;
-            }
-            const defaultValueGetter = spec.defaultValue;
-            for (const vwc of (current.valuesWithContext ?? [])) {
-                const hasContextOfThisType: boolean = vwc.contextList
-                    .some((context) => (context.contextType.isEqualTo(ct)));
-                if (hasContextOfThisType) {
-                    continue;
-                }
-                vwc.contextList.push(new X500Context(
-                    ct,
-                    [ defaultValueGetter() ],
-                    true, // The specification is not clear on whether the default context value should be a fallback.
-                ));
-            }
-            // We do not need to track which values to remove: they will all be
-            // removed, because, if we've made it this far in the code, we've
-            // established that there will be default context values to apply.
-            for (const value of current.values) {
-                current.valuesWithContext!.push(new Attribute_valuesWithContext_Item(
-                    value,
-                    [
-                        new X500Context(
-                            ct,
-                            [ defaultValueGetter() ],
-                            true, // The specification is not clear on whether the default context value should be a fallback.
-                        ),
-                    ],
-                ));
-            }
-            current = new Attribute(
-                attribute.type_,
-                [],
-                attribute.valuesWithContext,
-            );
-        }
-        return current;
-    };
-
     if ("addAttribute" in mod) {
-        check(mod.addAttribute.type_);
+        check(mod.addAttribute.type_, false);
         checkPreclusion(mod.addAttribute.type_);
-        const attrWithDefaultContexts = handleContextRule(mod.addAttribute);
+        const attrWithDefaultContexts = checkContextRule(mod.addAttribute);
         return executeAddAttribute(attrWithDefaultContexts, ...commonArguments);
     }
     else if ("removeAttribute" in mod) {
+        check(mod.removeAttribute, true);
         return executeRemoveAttribute(mod.removeAttribute, ...commonArguments);
     }
     else if ("addValues" in mod) {
-        check(mod.addValues.type_);
+        check(mod.addValues.type_, false);
         checkPreclusion(mod.addValues.type_);
-        const attrWithDefaultContexts = handleContextRule(mod.addValues);
+        const attrWithDefaultContexts = checkContextRule(mod.addValues);
         return executeAddValues(attrWithDefaultContexts, ...commonArguments);
     }
     else if ("removeValues" in mod) {
+        check(mod.removeValues.type_, true);
         return executeRemoveValues(mod.removeValues, ...commonArguments);
     }
     else if ("alterValues" in mod) {
-        check(mod.alterValues.type_);
+        check(mod.alterValues.type_, false);
         return executeAlterValues(mod.alterValues, ...commonArguments);
     }
     else if ("resetValue" in mod) {
+        check(mod.resetValue, true);
         return executeResetValue(mod.resetValue, ...commonArguments);
     }
     else if ("replaceValues" in mod) {
-        check(mod.replaceValues.type_);
+        check(mod.replaceValues.type_, false);
         checkPreclusion(mod.replaceValues.type_);
-        const attrWithDefaultContexts = handleContextRule(mod.replaceValues);
+        const attrWithDefaultContexts = checkContextRule(mod.replaceValues);
         return executeReplaceValues(attrWithDefaultContexts, ...commonArguments);
     }
     else {
@@ -1080,6 +1326,23 @@ async function modifyEntry (
             );
         }
     };
+    /**
+     * From ITU X.501 (2016), Section 13.3.2:
+     *
+     * > There shall be one value of the objectClass attribute for the entry's
+     * > structural object class and a value for each of its superclasses. top
+     * > may be omitted.
+     *
+     * This means that we can determine if this potential new entry is a
+     * subentry by checking that the `subentry` object class is present.
+     */
+    const isSubentry: boolean = Boolean(target.dse.subentry);
+    const isAlias: boolean = Boolean(target.dse.alias);
+    const isExtensible: boolean = target.dse.objectClass.has(extensibleObject.toString()); // TODO: Support this being added.
+    // const isParent: boolean = target.dse.objectClass.has(id_oc_parent.toString());
+    // const isChild: boolean = target.dse.objectClass.has(id_oc_child.toString());
+    const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
+    const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
@@ -1104,7 +1367,7 @@ async function modifyEntry (
             ...tuple,
             await userWithinACIUserClass(
                 tuple[0],
-                conn.boundNameAndUID!, // FIXME:
+                conn.boundNameAndUID!,
                 targetDN,
                 EQUALITY_MATCHER,
                 isMemberOfGroup,
@@ -1200,6 +1463,7 @@ async function modifyEntry (
                 ctx,
                 conn,
                 target,
+                targetDN,
                 mod,
                 delta,
                 accessControlScheme,
@@ -1208,13 +1472,20 @@ async function modifyEntry (
                 EQUALITY_MATCHER,
                 precludedAttributes,
                 contextRulesIndex,
+                Boolean(target.dse.subentry),
+                manageDSAIT,
+                state.chainingArguments.aliasDereferenced,
             )),
         );
     }
 
-    const optionalAttributes: Set<IndexableOID> = new Set([
-        id_oa_collectiveExclusions.toString(), // Permitted for every entry.
-    ]);
+    const optionalAttributes: Set<IndexableOID> = new Set(
+        attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
+    );
+    if (isEntry) {
+        optionalAttributes.add(id_oa_collectiveExclusions.toString());
+        optionalAttributes.add(administrativeRole["&id"].toString());
+    }
     const addedObjectClasses = delta.get(objectClass["&id"].toString())
         ?.map((value) => value.value.objectIdentifier) ?? [];
     for (const ocid of addedObjectClasses) {
@@ -1291,39 +1562,40 @@ async function modifyEntry (
                     undefined,
                 ),
             );
-        } else if (spec.kind === ObjectClassKind_auxiliary) {
-            if (permittedAuxiliaries.has(spec.id.toString())) {
-                throw new errors.UpdateError(
-                    ctx.i18n.t("err:aux_oc_not_permitted_by_dit_content_rule", {
-                        aoc: spec.id.toString(),
-                        soc: target.dse.structuralObjectClass?.toString(),
-                    }),
-                    new UpdateErrorData(
-                        UpdateProblem_objectClassViolation,
-                        [
-                            {
-                                attribute: new Attribute(
-                                    id_at_objectClass,
-                                    [
-                                        _encodeObjectIdentifier(spec.id, DER),
-                                    ],
-                                    undefined,
-                                ),
-                            },
-                        ],
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            undefined,
-                            updateError["&errorCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        state.chainingArguments.aliasDereferenced,
+        } else if (
+            (spec.kind === ObjectClassKind_auxiliary)
+            && !permittedAuxiliaries.has(spec.id.toString())
+        ) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:aux_oc_not_permitted_by_dit_content_rule", {
+                    aoc: spec.id.toString(),
+                    soc: target.dse.structuralObjectClass?.toString(),
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attribute: new Attribute(
+                                id_at_objectClass,
+                                [
+                                    _encodeObjectIdentifier(spec.id, DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
                         undefined,
+                        updateError["&errorCode"],
                     ),
-                );
-            }
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
         Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
@@ -1332,8 +1604,12 @@ async function modifyEntry (
     for (const ocid of alreadyPresentObjectClasses) {
         const spec = ctx.objectClasses.get(ocid.toString());
         if (!spec) {
-            // ctx.log.warn(`Object has unrecognized object class ${ocid.toString()}.`);
-            // FIXME: Throw.
+            // Note that we do not throw here, because that would make it
+            // impossible to modify an entry that has an unrecognized object
+            // class.
+            ctx.log.warn(ctx.i18n.t("log:entry_has_unrecognized_object_class", {
+                oid: ocid.toString(),
+            }));
             continue;
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
@@ -1380,7 +1656,9 @@ async function modifyEntry (
             );
         }
     }
-    { // Check optional attributes
+    const addsExtensibleObjectClass: boolean = addedObjectClasses
+        .some((oc) => oc.isEqualTo(extensibleObject["&id"]));
+    if (!isExtensible && !addsExtensibleObjectClass) { // Check optional attributes
         const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
         for (const type_ of Array.from(delta.keys())) {
             if (!optionalAttributes.has(type_.toString())) {
@@ -1449,7 +1727,7 @@ async function modifyEntry (
          * > a child object class value. It may not be directly administered.
          */
         {
-            const hasParentObjectClass: boolean = objectClasses
+            const hasParentObjectClass: boolean = addedObjectClasses
                 .some((oc) => oc.isEqualTo(parent["&id"]));
             if (hasParentObjectClass) {
                 throw new errors.UpdateError(
@@ -1481,7 +1759,6 @@ async function modifyEntry (
                 );
             }
         }
-
 
         const hasChildObjectClass: boolean = objectClasses
             .some((oc) => oc.isEqualTo(child["&id"]));
