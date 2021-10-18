@@ -144,6 +144,9 @@ async function handleRequest (
         return;
     }
     const dapRequest = ldapRequestToDAPRequest(ctx, conn, message);
+    if (!dapRequest) {
+        return;
+    }
     if ("present" in dapRequest.invokeId) {
         conn.messageIDToInvokeID.set(message.messageID, dapRequest.invokeId.present);
         conn.invokeIDToMessageID.set(dapRequest.invokeId.present, message.messageID);

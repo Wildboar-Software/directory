@@ -358,7 +358,7 @@ function ldapRequestToDAPRequest (
     ctx: Context,
     conn: ClientConnection,
     req: LDAPMessage,
-): Request {
+): Request | null {
     const invokeId: InvokeId = {
         present: randomInt(MAX_INVOKE_ID),
     };
@@ -693,7 +693,7 @@ function ldapRequestToDAPRequest (
         const messageID = req.protocolOp.abandonRequest;
         const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(messageID);
         if (abandonedOperationInvokeID === undefined) {
-            throw new Error();
+            return null;
         }
         const ar: AbandonArgument = {
             unsigned: new AbandonArgumentData(

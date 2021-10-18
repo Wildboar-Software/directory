@@ -829,7 +829,11 @@ export const readUserPassword: SpecialAttributeDatabaseReader = async (
         where: {
             entry_id: vertex.dse.id,
         },
-        select: {},
+        select: {
+            // Select statements cannot be null in Prisma, so we just select
+            // something so we can ignore it.
+            id: true,
+        },
     });
     if (hasPassword) {
         const emptyValue = new DERElement();
@@ -870,7 +874,11 @@ export const readUserPwd: SpecialAttributeDatabaseReader = async (
         where: {
             entry_id: vertex.dse.id,
         },
-        select: {},
+        // Select statements cannot be null in Prisma, so we just select
+        // something so we can ignore it.
+        select: {
+            id: true,
+        },
     });
     if (hasPassword) {
         const pwd: UserPwd = {
@@ -1519,7 +1527,9 @@ export const readHasSubordinates: SpecialAttributeDatabaseReader = async (
         where: {
             immediate_superior_id: vertex.dse.id,
         },
-        select: {},
+        select: {
+            id: true,
+        },
     });
     return [
         {

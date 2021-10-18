@@ -114,7 +114,11 @@ async function someSubordinatesAreCP (
             cp: true,
             deleteTimestamp: null,
         },
-        select: {},
+        select: {
+            // Select statements cannot be null in Prisma, so we just select
+            // something so we can ignore it.
+            id: true,
+        },
     }));
 }
 
@@ -524,7 +528,7 @@ async function findDSE (
             }
             case (OperationProgress_nameResolutionPhase_completed): {
                 throw new errors.ServiceError(
-                    "", // FIXME:
+                    "7E66876A-D4C5-48FF-815A-93B096F19BB4", // FIXME:
                     new ServiceErrorData(
                         ServiceProblem_invalidReference,
                         [],
@@ -887,7 +891,7 @@ async function findDSE (
                 }
                 if (!await someSubordinatesAreCP(ctx, dse_i)) {
                     throw new errors.ServiceError(
-                        "", // FIXME:
+                        "788EC688-D82A-444A-A2F7-457B80753ADD", // FIXME:
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],
