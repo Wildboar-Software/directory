@@ -1,6 +1,15 @@
 import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
-import { DERElement, ObjectIdentifier } from "asn1-ts";
+import {
+    DERElement,
+    ObjectIdentifier,
+    FALSE_BIT,
+    TRUE_BIT,
+    BIT_STRING,
+    BERElement,
+    OCTET_STRING,
+    INTEGER,
+} from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type {
@@ -103,9 +112,41 @@ import {
     ldapAttributeOptionContext,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapAttributeOptionContext.oa";
 import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
+import {
+    subentries as subentriesOID,
+    managedDSAIT as manageDSAITOID,
+    dontUseCopy as dontUseCopyOID,
+    postread as postreadOID,
+    sortRequest as sortRequestOID,
+    simpledPagedResults as sprOID,
+} from "@wildboar/ldap/src/lib/controls";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
+import {
+    ServiceControlOptions,
+    ServiceControlOptions_dontUseCopy,
+    ServiceControlOptions_manageDSAIT,
+    ServiceControlOptions_subentries,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import {
+    EXT_BIT_MANAGE_DSA_IT,
+    EXT_BIT_SUBENTRIES,
+} from "@wildboar/x500/src/lib/dap/extensions";
+import type {
+    Control,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
+import {
+    AttributeSelection,
+    _decode_AttributeSelection,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeSelection.ta";
+import {
+    SortKey,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
+import {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 
 const MAX_INVOKE_ID: number = 2147483648;
 
@@ -353,6 +394,65 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
     }
 }
 
+function convertAttributeSelectiontoEIS (
+    ctx: Context,
+    selection: AttributeSelection,
+    typesOnly?: boolean,
+): EntryInformationSelection {
+    const returnAllUserAttributesExclusively: boolean = (selection.length === 0); // Case #1
+    const returnAllUserAttributesInclusively: boolean = selection
+        .some((attr) => (attr[0] === 0x2A)); // Case #2
+    const returnNoAttributes: boolean = (
+        (selection.length === 1)
+        && !Buffer.compare(selection[0], Buffer.from([ 0x31, 0x2E, 0x31 ]))
+    ); // Case #3
+    const returnAllOperationalAttributes: boolean = selection
+        .some((attr) => (attr[0] === 0x2B)); // See: https://www.rfc-editor.org/rfc/rfc3673.html
+    const selectedAttributes: AttributeType[] = selection
+        .map((attr) => {
+            const desc = normalizeAttributeDescription(attr);
+            const spec = ctx.attributes.get(desc);
+            return spec?.id;
+        })
+            .filter((id): id is AttributeType => !!id);
+    return new EntryInformationSelection(
+        (returnAllUserAttributesExclusively || returnAllUserAttributesInclusively)
+            ? {
+                allUserAttributes: null,
+            }
+            : returnNoAttributes
+                ? {
+                    select: [],
+                }
+                : {
+                    select: selectedAttributes,
+                },
+        typesOnly
+            ? EntryInformationSelection_infoTypes_attributeTypesOnly
+            : EntryInformationSelection_infoTypes_attributeTypesAndValues,
+        ((): EntryInformationSelection["extraAttributes"] => {
+            if (returnNoAttributes || returnAllUserAttributesExclusively) {
+                return undefined;
+            } else if (returnAllOperationalAttributes) {
+                return {
+                    allOperationalAttributes: null,
+                };
+            } else if (returnAllUserAttributesInclusively) {
+                return {
+                    select: selectedAttributes,
+                };
+            } else {
+                return {
+                    select: selectedAttributes,
+                };
+            }
+        })(),
+        undefined,
+        false,
+        undefined,
+    );
+}
+
 export
 function ldapRequestToDAPRequest (
     ctx: Context,
@@ -362,6 +462,64 @@ function ldapRequestToDAPRequest (
     const invokeId: InvokeId = {
         present: randomInt(MAX_INVOKE_ID),
     };
+    let subentriesControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc3672.html
+    let managedDSAITControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc3296.html
+    let dontUseCopyControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc6171.html
+    let postreadControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc4527.html
+    let sortRequestControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc2891.html
+    let simplePagedResultsControl: Control | undefined;
+    for (const control of req.controls ?? []) {
+        const oid = decodeLDAPOID(control.controlType);
+        switch (oid.toString()) {
+            case (subentriesOID.toString()): {
+                subentriesControl = control;
+                break;
+            }
+            case (manageDSAITOID.toString()): {
+                managedDSAITControl = control;
+                break;
+            }
+            case (dontUseCopyOID.toString()): {
+                dontUseCopyControl = control;
+                break;
+            }
+            case (postreadOID.toString()): {
+                postreadControl = control;
+                break;
+            }
+            case (sortRequestOID.toString()): {
+                sortRequestControl = control;
+                break;
+            }
+            case (sprOID.toString()): {
+                simplePagedResultsControl = control;
+                break;
+            }
+            default: {
+                if (control.criticality) {
+                    throw new Error(); // FIXME: What kind of error?
+                }
+            }
+        }
+    }
+
+    const manageDSAIT: boolean = Boolean(managedDSAITControl);
+    const dontUseCopy: boolean = Boolean(dontUseCopyControl);
+
+    const critex: BIT_STRING = new Uint8ClampedArray((new Array(36)).fill(FALSE_BIT));
+    const sco: ServiceControlOptions = new Uint8ClampedArray((new Array(14)).fill(FALSE_BIT));
+    if (subentriesControl?.controlValue?.[2] === 0xFF) {
+        sco[ServiceControlOptions_subentries] = TRUE_BIT;
+        critex[EXT_BIT_SUBENTRIES] = TRUE_BIT;
+    }
+    if (manageDSAIT) {
+        sco[ServiceControlOptions_manageDSAIT] = TRUE_BIT;
+        critex[EXT_BIT_MANAGE_DSA_IT] = TRUE_BIT;
+    }
+    if (dontUseCopy) {
+        sco[ServiceControlOptions_dontUseCopy] = TRUE_BIT;
+    }
+
     if ("bindRequest" in req.protocolOp) {
         throw new Error();
     }
@@ -369,61 +527,54 @@ function ldapRequestToDAPRequest (
         throw new Error();
     }
     else if ("searchRequest" in req.protocolOp) {
-        const attrs = req.protocolOp.searchRequest.attributes;
-        const returnAllUserAttributesExclusively: boolean = (attrs.length === 0); // Case #1
-        const returnAllUserAttributesInclusively: boolean = attrs.some((attr) => attr[0] === 0x2A); // Case #2
-        const returnNoAttributes: boolean = (
-            (attrs.length === 1)
-            && (attrs[0].length === 3)
-            && (attrs[0][0] === 0x31) // 1
-            && (attrs[0][1] === 0x2E) // .
-            && (attrs[0][2] === 0x31) // 1
-        ); // Case #3
-        const selectedAttributes: AttributeType[] = attrs
-            .filter((attr) => (attr.length > 1))
-            .map((attr) => {
-                const desc = normalizeAttributeDescription(attr);
-                if (desc === "1.1") {
-                    return null;
-                }
-                const spec = ctx.attributes.get(desc);
-                return spec?.id;
-            })
-                .filter((id): id is AttributeType => !!id);
-        const eis: EntryInformationSelection = new EntryInformationSelection(
-            (returnAllUserAttributesExclusively || returnAllUserAttributesInclusively)
-                ? {
-                    allUserAttributes: null,
-                }
-                : returnNoAttributes
-                    ? {
-                        select: [],
-                    }
-                    : {
-                        select: selectedAttributes,
-                    },
-            req.protocolOp.searchRequest.typesOnly
-                ? EntryInformationSelection_infoTypes_attributeTypesOnly
-                : EntryInformationSelection_infoTypes_attributeTypesAndValues,
-            ((): EntryInformationSelection["extraAttributes"] => {
-                if (returnNoAttributes || returnAllUserAttributesExclusively) {
-                    return undefined;
-                } else if (returnAllUserAttributesInclusively) {
-                    return {
-                        allOperationalAttributes: null,
-                    };
-                } else if (selectedAttributes) {
-                    return {
-                        select: selectedAttributes ?? [],
-                    };
-                } else {
-                    return undefined;
-                }
-            })(),
-            undefined,
-            false,
-            undefined,
-        );
+        const attrs: AttributeSelection = req.protocolOp.searchRequest.attributes;
+        const eis = convertAttributeSelectiontoEIS(ctx, attrs, req.protocolOp.searchRequest.typesOnly);
+        let reverse: boolean = false;
+        let sortKey: SortKey | undefined;
+        let queryReference: OCTET_STRING | undefined;
+        let pageSize: INTEGER | undefined;
+        if (simplePagedResultsControl?.controlValue) {
+            const el = new BERElement();
+            el.fromBytes(simplePagedResultsControl.controlValue);
+            // See: https://www.rfc-editor.org/rfc/rfc2696.html
+            // realSearchControlValue ::= SEQUENCE {
+            //     size            INTEGER (0..maxInt),
+            //     cookie          OCTET STRING }
+            const [ sizeElement, cookieElement ] = el.sequence;
+            pageSize = sizeElement.integer;
+            queryReference = cookieElement.value.length
+                ? cookieElement.octetString
+                : undefined;
+        }
+        if (sortRequestControl?.controlValue) {
+            const el = new BERElement();
+            el.fromBytes(sortRequestControl.controlValue);
+            const sortKeysInControl = el.sequence;
+            if (sortKeysInControl.length) {
+                // From https://www.rfc-editor.org/rfc/rfc2891.html
+                // SortKeyList ::= SEQUENCE OF SEQUENCE {
+                //     attributeType   AttributeDescription,
+                //     orderingRule    [0] MatchingRuleId OPTIONAL,
+                //     reverseOrder    [1] BOOLEAN DEFAULT FALSE }
+                const skElements = sortKeysInControl[0].sequence;
+                const attributeTypeDesc = Buffer.from(skElements[0].octetString).toString("utf-8");
+                const orderingRuleDesc: string | undefined = (skElements[1]?.tagNumber === 0)
+                    ? Buffer.from(skElements[1].octetString).toString("utf-8")
+                    : undefined;
+                reverse = skElements
+                    .find((ske) => (ske.tagNumber === 1))?.boolean ?? false;
+                const attrSpec = ctx.attributes.get(attributeTypeDesc);
+                if (attrSpec) {
+                    const mrSpec = orderingRuleDesc
+                        ? ctx.orderingMatchingRules.get(orderingRuleDesc)
+                        : undefined;
+                    sortKey = new SortKey(
+                        attrSpec?.id,
+                        mrSpec?.id,
+                    );
+                } // TODO: What to do if the attribute type was not understood?
+            }
+        }
         const dapReq: SearchArgument = {
             unsigned: new SearchArgumentData(
                 {
@@ -435,7 +586,20 @@ function ldapRequestToDAPRequest (
                     : undefined,
                 Boolean(req.protocolOp.searchRequest.derefAliases),
                 eis,
-                undefined,
+                ((queryReference !== undefined) && { queryReference })
+                    || ((sortKey !== undefined) || (pageSize !== undefined))
+                        ? {
+                            newRequest: new PagedResultsRequest_newRequest(
+                                pageSize ?? 10_000_000,
+                                sortKey
+                                    ? [ sortKey ]
+                                    : undefined,
+                                reverse,
+                                undefined,
+                                undefined,
+                            ),
+                        }
+                        : undefined,
                 undefined,
                 undefined,
                 undefined,
@@ -447,11 +611,15 @@ function ldapRequestToDAPRequest (
                 undefined,
                 [],
                 new ServiceControls(
+                    sco,
+                    // (req.protocolOp.searchRequest.timeLimit > 0)
+                    //     ? req.protocolOp.searchRequest.timeLimit
+                    //     : undefined,
                     undefined,
+                    // (req.protocolOp.searchRequest.sizeLimit > 0)
+                    //     ? req.protocolOp.searchRequest.sizeLimit
+                    //     : undefined,
                     undefined,
-                    // req.protocolOp.searchRequest.timeLimit,
-                    undefined,
-                    // req.protocolOp.searchRequest.sizeLimit,
                     undefined,
                     undefined,
                     undefined,
@@ -480,15 +648,32 @@ function ldapRequestToDAPRequest (
         };
     }
     else if ("modifyRequest" in req.protocolOp) {
+        let eis: EntryInformationSelection | undefined;
+        if (postreadControl?.controlValue) {
+            const el = new BERElement();
+            el.fromBytes(postreadControl.controlValue);
+            const selection: AttributeSelection = _decode_AttributeSelection(el);
+            eis = convertAttributeSelectiontoEIS(ctx, selection, false);
+        }
         const dapReq: ModifyEntryArgument = {
             unsigned: new ModifyEntryArgumentData(
                 {
                     rdnSequence: decodeLDAPDN(ctx, req.protocolOp.modifyRequest.object),
                 },
                 req.protocolOp.modifyRequest.changes.map((c) => convert_ldap_mod_to_dap_mod(ctx, c)),
-                undefined,
+                eis,
                 [],
-                undefined,
+                new ServiceControls(
+                    sco,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -567,7 +752,17 @@ function ldapRequestToDAPRequest (
                         .filter((attr): attr is Attribute => !!attr),
                 undefined,
                 [],
-                undefined,
+                new ServiceControls(
+                    sco,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -595,7 +790,17 @@ function ldapRequestToDAPRequest (
                     rdnSequence: decodeLDAPDN(ctx, req.protocolOp.delRequest),
                 },
                 [],
-                undefined,
+                new ServiceControls(
+                    sco,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -626,7 +831,17 @@ function ldapRequestToDAPRequest (
                     ? decodeLDAPDN(ctx, req.protocolOp.modDNRequest.newSuperior)
                     : undefined,
                 [],
-                undefined,
+                new ServiceControls(
+                    sco,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -668,7 +883,17 @@ function ldapRequestToDAPRequest (
                     undefined,
                 ),
                 [],
-                undefined,
+                new ServiceControls(
+                    sco,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
                 undefined,
                 undefined,
                 undefined,
@@ -691,7 +916,9 @@ function ldapRequestToDAPRequest (
     }
     else if ("abandonRequest" in req.protocolOp) {
         const messageID = req.protocolOp.abandonRequest;
+        ctx.log.debug(`Abandoning LDAP message ${messageID}.`);
         const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(messageID);
+        ctx.log.debug(`Abandoning invoke ID ${abandonedOperationInvokeID} which corresponds to LDAP message ${messageID}.`);
         if (abandonedOperationInvokeID === undefined) {
             return null;
         }

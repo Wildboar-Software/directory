@@ -87,6 +87,7 @@ import {
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import entryUUID from "../../schema/attributes/entryUUID";
 
 // Attribute Removers
 import * as removers from "../specialAttributeRemovers";
@@ -157,6 +158,7 @@ const specialAttributeDatabaseRemovers: Map<IndexableOID, SpecialAttributeDataba
     [ id_oa_subschemaSubentryList.toString(), removers.removeSubschemaSubentryList ],
     [ id_oa_hasSubordinates.toString(), removers.removeHasSubordinates ],
     [ id_oa_collectiveExclusions.toString(), removers.removeCollectiveExclusions ],
+    [ entryUUID.id.toString(), removers.removeEntryUUID ],
 ]);
 
 export

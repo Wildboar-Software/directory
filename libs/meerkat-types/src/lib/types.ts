@@ -484,6 +484,7 @@ interface Configuration {
     };
     sentinelDomain?: string;
     administratorEmail?: string;
+    bulkInsertMode: boolean;
 }
 
 export
@@ -1087,35 +1088,6 @@ interface PendingUpdates {
 }
 
 export
-type SpecialAttributeMemoryEditor = (
-    ctx: Readonly<Context>,
-    entry: Vertex,
-    value: Value,
-) => Promise<void>;
-
-export
-type SpecialAttributeDatabaseEditor = (
-    ctx: Readonly<Context>,
-    entry: Vertex,
-    value: Value,
-    pendingUpdates: PendingUpdates,
-) => Promise<void>;
-
-export
-type SpecialAttributeDatabaseReader = (
-    ctx: Readonly<Context>,
-    entry: Vertex,
-    relevantSubentries?: Vertex[],
-) => Promise<Value[]>;
-
-export
-type SpecialAttributeDatabaseRemover = (
-    ctx: Readonly<Context>,
-    entry: Vertex,
-    pendingUpdates: PendingUpdates,
-) => Promise<void>;
-
-export
 interface PagedResultsRequestState {
     /**
      * The original paged results request.
@@ -1208,4 +1180,96 @@ interface BindReturn {
     boundNameAndUID?: NameAndOptionalUID;
     authLevel: AuthenticationLevel;
     failedAuthentication: boolean;
+}
+
+export
+type SpecialAttributeDatabaseEditor = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+) => Promise<void>;
+
+export
+type SpecialAttributeDatabaseReader = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    relevantSubentries?: Vertex[],
+) => Promise<Value[]>;
+
+export
+type SpecialAttributeDatabaseRemover = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    pendingUpdates: PendingUpdates,
+) => Promise<void>;
+
+export
+type SpecialAttributeCounter = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+) => Promise<number>;
+
+export
+type SpecialAttributeDetector = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+) => Promise<boolean>;
+
+export
+type SpecialAttributeValueDetector = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    value: Value,
+) => Promise<boolean>;
+
+export
+type SpecialAttributeContextGetter = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+) => Promise<StoredContext[]>;
+
+export
+type SpecialAttributeEntryGetter = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+) => Promise<Vertex | null>;
+
+export
+class AttributeTypeDatabaseDriver {
+    constructor (
+        public readonly readValues: SpecialAttributeDatabaseReader,
+        public readonly addValues: SpecialAttributeDatabaseEditor,
+        public readonly removeValues: SpecialAttributeDatabaseEditor,
+        public readonly removeAttribute: SpecialAttributeDatabaseRemover,
+        private readonly _countValues?: SpecialAttributeCounter,
+        private readonly _isPresent?: SpecialAttributeDetector,
+        public readonly getContexts?: SpecialAttributeContextGetter,
+        public readonly hasValue?: SpecialAttributeValueDetector, // So you don't have to read all values into memory just to determine if one exists.
+        public readonly getEntry?: SpecialAttributeEntryGetter,
+    ) {}
+
+    public async countValues (
+        ctx: Readonly<Context>,
+        entry: Vertex,
+    ): Promise<number> {
+        if (this._countValues) {
+            return this._countValues(ctx, entry);
+        } else {
+            return (await this.readValues(ctx, entry)).length;
+        }
+    }
+
+    public async isPresent (
+        ctx: Readonly<Context>,
+        entry: Vertex,
+    ): Promise<boolean> {
+        if (this._isPresent) {
+            return this._isPresent(ctx, entry);
+        } else if (this._countValues) {
+            return ((await this._countValues(ctx, entry)) > 0);
+        } else {
+            return ((await this.readValues(ctx, entry)).length > 0);
+        }
+    }
 }

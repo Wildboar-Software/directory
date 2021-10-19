@@ -89,6 +89,7 @@ import {
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import entryUUID from "../../schema/attributes/entryUUID";
 
 // Attribute Adders
 import * as adders from "../specialAttributeAdders";
@@ -162,6 +163,7 @@ const specialAttributeDatabaseWriters: Map<IndexableOID, SpecialAttributeDatabas
     [ id_oa_subschemaSubentryList.toString(), adders.addSubschemaSubentryList ],
     [ id_oa_hasSubordinates.toString(), adders.addHasSubordinates ],
     [ id_oa_collectiveExclusions.toString(), adders.addCollectiveExclusions ],
+    [ entryUUID.id.toString(), adders.addEntryUUID ],
 ]);
 
 export

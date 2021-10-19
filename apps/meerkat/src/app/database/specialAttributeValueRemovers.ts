@@ -672,3 +672,4 @@ export const removePwdAdminSubentryList: SpecialAttributeDatabaseEditor = NOOP;
 export const removeSubschemaSubentryList: SpecialAttributeDatabaseEditor = NOOP;
 export const removeHasSubordinates: SpecialAttributeDatabaseEditor = NOOP;
 export const removeCollectiveExclusions: SpecialAttributeDatabaseEditor = NOOP;
+export const removeEntryUUID: SpecialAttributeDatabaseEditor = NOOP;

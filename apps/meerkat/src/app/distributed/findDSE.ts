@@ -625,9 +625,6 @@ async function findDSE (
             100,
             undefined,
             cursorId,
-            {
-                subentry: subentries,
-            },
         );
         while (subordinatesInBatch.length) {
             for (const child of subordinatesInBatch) {
@@ -729,9 +726,6 @@ async function findDSE (
                 100,
                 undefined,
                 cursorId,
-                {
-                    subentry: subentries,
-                },
             );
         }
         if (!rdnMatched) {
@@ -746,7 +740,7 @@ async function findDSE (
             nssrEncountered = true;
         }
         if (
-            (i === state.chainingArguments.operationProgress?.nextRDNToBeResolved)
+            (i === nextRDNToBeResolved)
             // Is checking for shadow enough to determine if !master?
             || (state.chainingArguments.nameResolveOnMaster && dse_i.dse.shadow)
         ) {
@@ -869,6 +863,7 @@ async function findDSE (
                     await targetFoundSubprocedure();
                     return;
                 }
+                // if (true) {
                 if (manageDSAITPlaneRefElement || manageDSAIT) {
                     state.foundDSE = dse_i;
                     state.entrySuitable = true;

@@ -108,6 +108,7 @@ import {
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import entryUUID from "../../schema/attributes/entryUUID";
 
 // Attribute Adders
 import * as readers from "../specialAttributeValueReaders";
@@ -123,7 +124,7 @@ const userAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseRe
     [ objectClass["&id"]!.toString(), readers.readObjectClass ],
     [ userPwd["&id"]!.toString(), readers.readUserPwd ],
     [ userPassword["&id"]!.toString(), readers.readUserPassword ],
-    [ uniqueIdentifier["&id"].toString(), readers.readUniqueIdentifier ], // Has significance for Basic Access Control
+    [ uniqueIdentifier["&id"].toString(), readers.readUniqueIdentifier ],
 ]);
 
 const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseReader> = new Map([
@@ -194,6 +195,7 @@ const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDat
     [ id_oa_subschemaSubentryList.toString(), readers.readSubschemaSubentryList ],
     [ id_oa_hasSubordinates.toString(), readers.readHasSubordinates ],
     [ id_oa_collectiveExclusions.toString(), readers.readCollectiveExclusions ],
+    [ entryUUID.id.toString(), readers.readEntryUUID ],
 ]);
 
 export

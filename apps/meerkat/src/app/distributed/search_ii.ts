@@ -1,4 +1,4 @@
-import type { Context, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "@wildboar/meerkat-types";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { TRUE_BIT, TRUE } from "asn1-ts";
 import {
@@ -17,12 +17,6 @@ import {
 import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import type {
-    ChainingResults,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import {
-    EntryInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 import {
     AbandonedData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
@@ -36,7 +30,7 @@ import {
 import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import search_i from "./search_i";
+import search_i, { SearchIReturn } from "./search_i";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     ServiceErrorData,
@@ -51,18 +45,12 @@ import {
 const SEARCH_II_PAGE_SIZE: number = 100;
 
 export
-interface SearchIIReturn extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
-    chaining: ChainingResults;
-    results: EntryInformation[];
-}
-
-export
 async function search_ii (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
     argument: SearchArgument,
-    ret: SearchIIReturn,
+    ret: SearchIReturn,
 ): Promise<void> {
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);

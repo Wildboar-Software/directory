@@ -1,5 +1,5 @@
-import { Context } from "@wildboar/meerkat-types";
-import { ASN1Element } from "asn1-ts";
+import type { Context } from "@wildboar/meerkat-types";
+import type { ASN1Element } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject";
 import { attributeTypeDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/attributeTypeDescription.oa";
@@ -42,6 +42,7 @@ import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import decodeLDAPDN from "../ldap/decodeLDAPDN";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import { uuid } from "@wildboar/ldap/src/lib/syntaxes";
 import {
     DistinguishedName,
     _decode_DistinguishedName,
@@ -96,6 +97,13 @@ function loadLDAPSyntaxes (ctx: Context): void {
             ctx.ldapSyntaxes.set(syntax.id.toString(), syntax);
         });
 
+    ctx.ldapSyntaxes.set(uuid.toString(), {
+        id: uuid,
+        description: "UUID",
+        decoder: decoders.uuid,
+        encoder: encoders.uuid,
+    });
+
     ctx.ldapSyntaxes.get(attributeTypeDescription["&id"]!.toString())!.decoder = localDecoders.getAttributeTypesDecoder(ctx);
     ctx.ldapSyntaxes.get(attributeTypeDescription["&id"]!.toString())!.encoder = localEncoders.attributeTypes;
     ctx.ldapSyntaxes.get(bitString["&id"]!.toString())!.decoder = decoders.bitString;
@@ -148,7 +156,7 @@ function loadLDAPSyntaxes (ctx: Context): void {
         const desc = normalizeAttributeDescription(value);
         const id = ctx.nameToObjectIdentifier.get(desc);
         if (!id) {
-            throw new Error();
+            throw new Error(desc);
         }
         return _encodeObjectIdentifier(id, DER);
     };

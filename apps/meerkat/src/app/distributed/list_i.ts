@@ -77,6 +77,7 @@ import {
 import {
     ServiceProblem_invalidQueryReference,
     ServiceProblem_unavailable,
+    ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     PartialOutcomeQualifier,
@@ -308,7 +309,24 @@ async function list_i (
             );
         }
     }
-
+    if (pagingRequest?.sortKeys && (pagingRequest.sortKeys.length > 1)) {
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:only_one_sort_key"),
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const SRcontinuationList: ContinuationReference[] = [];
     const listItems: ListItem[] = [];
     const pageNumber: number = pagingRequest?.pageNumber ?? 0;

@@ -77,7 +77,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { SearchIReturn } from "./search_i";
-import type { SearchIIReturn } from "./search_ii";
 import { ChainingResults } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import type { Error_ } from "@wildboar/x500/src/lib/types/Error_";
 import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
@@ -274,6 +273,9 @@ class OperationDispatcher {
             const arg = ldapTransport.decoderFor["&ArgumentType"]!(state.operationArgument);
             const data = getOptionallyProtectedValue(arg);
             const dapRequest = ldapRequestToDAPRequest(ctx, conn, data.ldapMessage);
+            if (!dapRequest) {
+                throw new Error();
+            }
             return OperationDispatcher.dispatchDAPRequest(
                 ctx,
                 conn,
@@ -448,7 +450,7 @@ class OperationDispatcher {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // Search (II)
-                const response: SearchIIReturn = {
+                const response: SearchIReturn = {
                     results: [],
                     chaining: relatedEntryReturn.chaining,
                 };
@@ -459,8 +461,6 @@ class OperationDispatcher {
                     argument,
                     response,
                 );
-                // const poq: PartialOutcomeQualifier =
-                // FIXME: Use response.poq!
                 const localResult: SearchResult = {
                     unsigned: {
                         searchInfo: new SearchResultData_searchInfo(
@@ -468,18 +468,18 @@ class OperationDispatcher {
                                 rdnSequence: foundDN,
                             },
                             response.results,
-                            relatedEntryReturn.unexplored.length
+                            (response.poq || relatedEntryReturn.unexplored.length)
                                 ? new PartialOutcomeQualifier(
-                                    undefined,
+                                    response.poq?.limitProblem,
                                     relatedEntryReturn.unexplored,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
+                                    response.poq?.unavailableCriticalExtensions,
+                                    response.poq?.unknownErrors,
+                                    response.poq?.queryReference,
+                                    response.poq?.overspecFilter,
+                                    response.poq?.notification,
+                                    response.poq?.entryCount,
                                 )
-                                : undefined, // FIXME
+                                : undefined,
                             undefined,
                             [],
                             createSecurityParameters(
@@ -555,18 +555,18 @@ class OperationDispatcher {
                                 rdnSequence: foundDN,
                             },
                             response.results,
-                            relatedEntryReturn.unexplored.length
+                            (response.poq || relatedEntryReturn.unexplored.length)
                                 ? new PartialOutcomeQualifier(
-                                    undefined,
+                                    response.poq?.limitProblem,
                                     relatedEntryReturn.unexplored,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
+                                    response.poq?.unavailableCriticalExtensions,
+                                    response.poq?.unknownErrors,
+                                    response.poq?.queryReference,
+                                    response.poq?.overspecFilter,
+                                    response.poq?.notification,
+                                    response.poq?.entryCount,
                                 )
-                                : undefined, // FIXME
+                                : undefined,
                             undefined,
                             [],
                             createSecurityParameters(
@@ -809,7 +809,7 @@ class OperationDispatcher {
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         if (nameResolutionPhase === completed) { // Search (II)
-            const response: SearchIIReturn = {
+            const response: SearchIReturn = {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
             };
@@ -821,18 +821,18 @@ class OperationDispatcher {
                             rdnSequence: foundDN,
                         },
                         response.results,
-                        relatedEntryReturn.unexplored.length
+                        (response.poq || relatedEntryReturn.unexplored.length)
                             ? new PartialOutcomeQualifier(
-                                undefined,
+                                response.poq?.limitProblem,
                                 relatedEntryReturn.unexplored,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
+                                response.poq?.unavailableCriticalExtensions,
+                                response.poq?.unknownErrors,
+                                response.poq?.queryReference,
+                                response.poq?.overspecFilter,
+                                response.poq?.notification,
+                                response.poq?.entryCount,
                             )
-                            : undefined, // FIXME
+                            : undefined,
                         undefined,
                         [],
                         createSecurityParameters(
@@ -884,18 +884,18 @@ class OperationDispatcher {
                             rdnSequence: foundDN,
                         },
                         response.results,
-                        relatedEntryReturn.unexplored.length
+                        (response.poq || relatedEntryReturn.unexplored.length)
                             ? new PartialOutcomeQualifier(
-                                undefined,
+                                response.poq?.limitProblem,
                                 relatedEntryReturn.unexplored,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
+                                response.poq?.unavailableCriticalExtensions,
+                                response.poq?.unknownErrors,
+                                response.poq?.queryReference,
+                                response.poq?.overspecFilter,
+                                response.poq?.notification,
+                                response.poq?.entryCount,
                             )
-                            : undefined, // FIXME
+                            : undefined,
                         undefined,
                         [],
                         createSecurityParameters(

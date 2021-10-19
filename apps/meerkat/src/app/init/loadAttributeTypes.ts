@@ -3,6 +3,7 @@ import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
 import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
 import attributeFromInformationObject from "./attributeFromInformationObject";
 import { AttributeUsage } from "@prisma/client";
+import entryUUID from "../schema/attributes/entryUUID";
 
 export
 async function loadAttributeTypes (ctx: Context): Promise<void> {
@@ -40,6 +41,9 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         .forEach((attr) => {
             ctx.collectiveAttributes.add(attr.id.toString());
         });
+
+    ctx.attributes.set(entryUUID.id.toString(), entryUUID);
+    ctx.attributes.set("entryUUID", entryUUID);
 
     Object.entries(x500at).forEach(([ name, attr ]) => {
         ctx.nameToObjectIdentifier.set(name, attr["&id"]);

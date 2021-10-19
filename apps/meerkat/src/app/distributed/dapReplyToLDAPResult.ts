@@ -1,5 +1,11 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import { INTEGER, DERElement } from "asn1-ts";
+import {
+    DERElement,
+    ASN1TagClass,
+    ASN1Construction,
+    ASN1UniversalType,
+} from "asn1-ts";
+import { DER } from "asn1-ts/dist/node/functional";
 import type { Result } from "@wildboar/x500/src/lib/types/Result";
 import { LDAPMessage } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
@@ -23,6 +29,7 @@ import {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
 import {
     SearchResultEntry,
+    _encode_SearchResultEntry,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -42,6 +49,16 @@ import {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
 import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
+import {
+    Control,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
+import {
+    postread as postreadOID,
+    sortRequest as sortRequestOID,
+    simpledPagedResults as sprOID,
+    sortResponse as sortResponseOID,
+} from "@wildboar/ldap/src/lib/controls";
+import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
 
 async function getSearchResultEntries (
     ctx: Context,
@@ -81,7 +98,7 @@ export
 async function dapReplyToLDAPResult (
     ctx: Context,
     res: Result,
-    messageId: INTEGER,
+    req: LDAPMessage,
     onEntry: (entry: SearchResultEntry) => Promise<void>,
     foundDSE?: Vertex,
 ): Promise<LDAPMessage> {
@@ -91,9 +108,27 @@ async function dapReplyToLDAPResult (
     const foundDN: LDAPDN = foundDSE // TODO: Make empty if it matches the target object.
         ? encodeLDAPDN(ctx, getDistinguishedName(foundDSE))
         : new Uint8Array();
+
+    let sortRequestControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc2891.html
+    let simplePagedResultsControl: Control | undefined;
+    for (const control of req.controls ?? []) {
+        const oid = decodeLDAPOID(control.controlType);
+        switch (oid.toString()) {
+            case (sortRequestOID.toString()): {
+                sortRequestControl = control;
+                break;
+            }
+            case (sprOID.toString()): {
+                simplePagedResultsControl = control;
+                break;
+            }
+            default: continue;
+        }
+    }
+
     if (compareCode(res.opCode, addEntry["&operationCode"]!)) {
         return new LDAPMessage(
-            messageId,
+            req.messageID,
             {
                 addResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
@@ -111,7 +146,7 @@ async function dapReplyToLDAPResult (
     ) {
         const emptySeq = DERElement.fromSequence([]);
         return new LDAPMessage(
-            messageId,
+            req.messageID,
             {
                 extendedResp: new ExtendedResponse(
                     LDAPResult_resultCode_success,
@@ -129,7 +164,7 @@ async function dapReplyToLDAPResult (
         const result = compare.decoderFor["&ResultType"]!(res.result!);
         const data = getOptionallyProtectedValue(result);
         return new LDAPMessage(
-            messageId,
+            req.messageID,
             {
                 compareResponse: new LDAPResult(
                     data.matched
@@ -145,7 +180,7 @@ async function dapReplyToLDAPResult (
     }
     if (compareCode(res.opCode, modifyDN["&operationCode"]!)) {
         return new LDAPMessage(
-            messageId,
+            req.messageID,
             {
                 modDNResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
@@ -158,8 +193,22 @@ async function dapReplyToLDAPResult (
         );
     }
     if (compareCode(res.opCode, modifyEntry["&operationCode"]!)) {
+        const result = modifyEntry.decoderFor["&ResultType"]!(res.result!);
+        let sre: SearchResultEntry | undefined;
+        if ("information" in result) {
+            const data = getOptionallyProtectedValue(result.information);
+            if (data.entry) {
+                const dn: LDAPDN = encodeLDAPDN(ctx, data.entry.name.rdnSequence);
+                const attrs: PartialAttribute[] = getPartialAttributesFromEntryInformation(
+                    ctx, data.entry.information ?? []);
+                sre = new SearchResultEntry(
+                    dn,
+                    attrs,
+                );
+            }
+        }
         return new LDAPMessage(
-            messageId,
+            req.messageID,
             {
                 modifyResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
@@ -168,7 +217,15 @@ async function dapReplyToLDAPResult (
                     undefined,
                 ),
             },
-            undefined,
+            sre
+                ? [
+                    new Control(
+                        encodeLDAPOID(postreadOID),
+                        false,
+                        _encode_SearchResultEntry(sre, DER).toBytes(),
+                    ),
+                ]
+                : undefined,
         );
     }
     if (compareCode(res.opCode, read["&operationCode"]!)) {
@@ -181,7 +238,7 @@ async function dapReplyToLDAPResult (
         );
         await onEntry(entry);
         return new LDAPMessage(
-            messageId,
+            req.messageID,
             {
                 searchResDone: new LDAPResult(
                     LDAPResult_resultCode_success,
@@ -195,7 +252,7 @@ async function dapReplyToLDAPResult (
     }
     if (compareCode(res.opCode, removeEntry["&operationCode"]!)) {
         return new LDAPMessage(
-            messageId,
+            req.messageID,
             {
                 delResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
@@ -209,9 +266,66 @@ async function dapReplyToLDAPResult (
     }
     if (compareCode(res.opCode, search["&operationCode"]!)) {
         const result = search.decoderFor["&ResultType"]!(res.result!);
+        const data = getOptionallyProtectedValue(result);
         await getSearchResultEntries(ctx, result, onEntry);
+        const responseControls: Control[] = [];
+        if (sortRequestControl) {
+            responseControls.push(                    new Control(
+                encodeLDAPOID(sortResponseOID),
+                false,
+                DERElement.fromSequence([
+                    // We ALWAYS report a success in sorting because Meerkat DSA
+                    // will throw an error if more than one sort key is used.
+                    new DERElement(
+                        ASN1TagClass.universal,
+                        ASN1Construction.primitive,
+                        ASN1UniversalType.enumerated,
+                        0, // Success in sorting.
+                    ),
+                ]).toBytes(),
+            ));
+        }
+        if (
+            simplePagedResultsControl
+            && ("searchInfo" in data)
+            && data.searchInfo.partialOutcomeQualifier
+        ) {
+            responseControls.push(new Control(
+                encodeLDAPOID(sprOID),
+                false,
+                DERElement.fromSequence([
+                    /**
+                     * From IETF RFC 2696, Section 3:
+                     *
+                     * > Servers that cannot provide such an estimate MAY set
+                     * > this size to zero (0).
+                     */
+                    new DERElement(
+                        ASN1TagClass.universal,
+                        ASN1Construction.primitive,
+                        ASN1UniversalType.integer,
+                        0,
+                    ),
+                    /**
+                     * From IETF RFC 2696, Section 3:
+                     *
+                     * > The cookie MUST be set to an empty value if there are
+                     * > no more entries to return (i.e., the page of search
+                     * > results returned was the last)
+                     */
+                    new DERElement(
+                        ASN1TagClass.universal,
+                        ASN1Construction.primitive,
+                        ASN1UniversalType.octetString,
+                        data.searchInfo.partialOutcomeQualifier.queryReference
+                            ? data.searchInfo.partialOutcomeQualifier.queryReference
+                            : new Uint8Array(),
+                    ),
+                ]).toBytes(),
+            ));
+        }
         return new LDAPMessage(
-            messageId,
+            req.messageID,
             {
                 searchResDone: new LDAPResult(
                     LDAPResult_resultCode_success,
@@ -220,7 +334,9 @@ async function dapReplyToLDAPResult (
                     undefined,
                 ),
             },
-            undefined,
+            responseControls?.length
+                ? responseControls
+                : undefined,
         );
     } else {
         throw new Error();

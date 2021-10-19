@@ -31,10 +31,6 @@ import {
 import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
-import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
-import type ApproxMatcher from "@wildboar/x500/src/lib/types/ApproxMatcher";
 import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500/src/lib/utils/evaluateFilter";
@@ -147,7 +143,6 @@ import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
 import {
-    LimitProblem,
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
@@ -157,13 +152,12 @@ import {
     id_errcode_serviceError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
-import codeToString from "../x500/codeToString";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
 import getApproxMatcherGetter from "../x500/getApproxMatcherGetter";
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import LDAPConnection from "../ldap/LDAPConnection";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -241,6 +235,7 @@ async function search_i (
     const targetDN = getDistinguishedName(target);
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
     let page: number = 0;
+    let cursorId: number | undefined;
     let queryReference: string | undefined;
     if (data.pagedResults) {
         if ("newRequest" in data.pagedResults) {
@@ -311,10 +306,12 @@ async function search_i (
                     ),
                 );
             }
-            pagingRequest = paging[0];
-            page = paging[1];
+            pagingRequest = paging.request;
+            page = paging.pageIndex;
+            cursorId = paging.cursorId;
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
+            conn.pagedResultsRequests.delete(queryReference); // FIXME: Do this in list too.
             throw new errors.AbandonError(
                 ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
@@ -813,6 +810,21 @@ async function search_i (
         if (
             (target.dse.subentry && subentries)
             || (!target.dse.subentry && !subentries)
+            || (
+                /**
+                 * NOTE: LDAP behaves a little differently from X.500
+                 * directories in this regard: subentries can be read without
+                 * using the subentries control if they are specified as the
+                 * `baseObject` of a search.
+                 *
+                 * This matters, too. I discovered this because Apache Directory
+                 * Studio does not send the subentries control when you are
+                 * actually trying to read the subentry itself--it only sends it
+                 * when you are querying its superior.
+                 */
+                (conn instanceof LDAPConnection)
+                && (subset === SearchArgumentData_subset_baseObject)
+            )
         ) {
             /**
              * See IETF RFC 4512, Section 5.1: This is how an LDAP client can
@@ -957,8 +969,25 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
+    if (pagingRequest?.sortKeys && (pagingRequest.sortKeys.length > 1)) {
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:only_one_sort_key"),
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_serviceError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const useSortedSearch: boolean = Boolean(pagingRequest?.sortKeys?.length);
-    let cursorId: number | undefined;
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
         return useSortedSearch
             ? await (async () => {
@@ -982,13 +1011,12 @@ async function search_i (
                 pageSize,
                 undefined,
                 cursorId,
-                {
-                    subentry: subentries,
-                },
+                // {
+                //     subentry: subentries,
+                // },
             );
     };
     let subordinatesInBatch = await getNextBatchOfSubordinates();
-    let limitExceeded: LimitProblem | undefined;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             if (op?.abandonTime) {
@@ -1011,7 +1039,18 @@ async function search_i (
                 );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
-                limitExceeded = LimitProblem_timeLimitExceeded;
+                ret.poq = new PartialOutcomeQualifier(
+                    LimitProblem_timeLimitExceeded,
+                    undefined,
+                    undefined,
+                    undefined,
+                    queryReference
+                        ? Buffer.from(queryReference, "base64")
+                        : undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                );
                 break;
             }
             if (!useSortedSearch) {
@@ -1068,6 +1107,17 @@ async function search_i (
                     entryOnly: TRUE,
                 })
                 : state.chainingArguments;
+            if (
+                (ret.poq?.limitProblem !== undefined)
+                && queryReference
+                && pagingRequest
+            ) {
+                conn.pagedResultsRequests.set(queryReference, {
+                    request: pagingRequest,
+                    pageIndex: page + 1,
+                    cursorId,
+                });
+            }
             await search_i(
                 ctx,
                 conn,
@@ -1080,18 +1130,13 @@ async function search_i (
                 ret,
             );
         }
-        if (limitExceeded !== undefined) {
+        if (ret.poq?.limitProblem !== undefined) {
             break;
         }
         subordinatesInBatch = await getNextBatchOfSubordinates();
     }
-
-    if (queryReference && pagingRequest) {
-        conn.pagedResultsRequests.set(queryReference, {
-            request: pagingRequest,
-            pageIndex: page + 1,
-            cursorId,
-        });
+    if (queryReference) {
+        conn.pagedResultsRequests.delete(queryReference);
     }
 }
 

@@ -55,8 +55,8 @@ import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
     return [ // Different ways of representing the same DN.
-        "2.5.4.3=subschema",
         "cn=subschema",
+        "2.5.4.3=subschema",
         "cn=#0C09737562736368656d61",
         "2.5.4.3=#0C09737562736368656d61",
     ].includes(dnstr);
@@ -97,6 +97,7 @@ async function handleRequest (
     message: LDAPMessage,
     stats: OperationStatistics,
 ): Promise<void> {
+    ctx.log.debug(`Received LDAP request ${message.messageID} of type ${Object.keys(message.protocolOp)[0]}.`);
     // let toWriteBuffer: Buffer = Buffer.alloc(0);
     // let resultsBuffered: number = 0;
     const onEntry = async (searchResEntry: SearchResultEntry): Promise<void> => {
@@ -124,7 +125,7 @@ async function handleRequest (
         && isRootSubschemaDN(message.protocolOp.searchRequest.baseObject)
     ) {
         const entry = new SearchResultEntry(
-            message.protocolOp.searchRequest.baseObject,
+            Buffer.from("cn=subschema", "utf-8"),
             rootSubschemaPseudoVertexAttributes,
         );
         await onEntry(entry);
@@ -165,7 +166,7 @@ async function handleRequest (
         invokeId: dapRequest.invokeId, // TODO: I think this is unnecessary.
         opCode: dapRequest.opCode,
         result: unprotectedResult.result,
-    }, message.messageID, onEntry);
+    }, message, onEntry);
     conn.socket.write(_encode_LDAPMessage(ldapResult, BER).toBytes());
     stats.request = result.request ?? stats.request;
     stats.outcome = result.outcome ?? stats.outcome;
@@ -264,6 +265,7 @@ async function handleRequestAndErrors (
             conn.invokeIDToMessageID.delete(invokeID);
         }
         conn.messageIDToInvokeID.delete(message.messageID);
+        // ctx.log.debug(`Finished operation ${invokeID} / ${message.messageID}.`);
         // dap.invocations.set(request.invokeID, {
         //     invokeId: request.invokeID,
         //     operationCode: request.opcode,

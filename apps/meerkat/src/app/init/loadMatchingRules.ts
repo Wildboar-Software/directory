@@ -266,6 +266,9 @@ import approx_pwdEncAlgMatch from "../matching/approx/pwdEncAlgMatch";
 import approx_uniqueMemberMatch from "../matching/approx/uniqueMemberMatch";
 import approx_uriMatch from "../matching/approx/uriMatch";
 import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch";
+import entryUUID from "../schema/attributes/entryUUID";
+import uuidMatch from "../matching/equality/uuidMatch";
+import uuidOrderingMatch from "../matching/ordering/uuidOrderingMatch";
 
 function toInfo <Matcher> (
     mr: MATCHING_RULE,
@@ -470,6 +473,24 @@ function loadMatchingRules (ctx: Context): void {
     ctx.approxMatchingRules.set(
         x500mr.uTCTimeMatch["&id"]!.toString(),
         approx_uTCTimeMatch(86_400_000),
+    );
+    ctx.equalityMatchingRules.set(
+        entryUUID.equalityMatchingRule!.toString(),
+        {
+            id: entryUUID.equalityMatchingRule!,
+            matcher: uuidMatch,
+            obsolete: false,
+            name: ["uuidMatch"],
+        },
+    );
+    ctx.orderingMatchingRules.set(
+        entryUUID.orderingMatchingRule!.toString(),
+        {
+            id: entryUUID.orderingMatchingRule!,
+            matcher: uuidOrderingMatch,
+            obsolete: false,
+            name: ["uuidMatch"],
+        },
     );
 }
 

@@ -73,6 +73,7 @@ const ctx: Context = {
         },
         sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
         administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
+        bulkInsertMode: (process.env.MEERKAT_BULK_INSERT_MODE === "1"),
     },
     dsa: {
         accessPoint: new AccessPoint(

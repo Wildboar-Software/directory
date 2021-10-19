@@ -4,7 +4,14 @@ import type {
     Value,
     SpecialAttributeDatabaseReader,
 } from "@wildboar/meerkat-types";
-import { ASN1UniversalType, BERElement, DERElement, ObjectIdentifier } from "asn1-ts";
+import {
+    ASN1TagClass,
+    ASN1Construction,
+    ASN1UniversalType,
+    BERElement,
+    DERElement,
+    ObjectIdentifier,
+} from "asn1-ts";
 import {
     DER,
     _encodeObjectIdentifier,
@@ -168,7 +175,7 @@ import {
 import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/namingContexts.oa";
 // import { altServer } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/altServer.oa";
 import { supportedExtension } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedExtension.oa";
-// import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
+import { supportedControl } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
 // import { supportedSASLMechanisms } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
 import { supportedLDAPVersion } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
 import { supportedFeatures } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
@@ -195,7 +202,17 @@ import {
 import {
     modifyIncrement,
     trueFalseFilters,
+    allOpAttrs,
 } from "@wildboar/ldap/src/lib/feature";
+import {
+    simpledPagedResults,
+    sortRequest,
+    sortResponse,
+    postread,
+    subentries,
+    managedDSAIT,
+    dontUseCopy,
+} from "@wildboar/ldap/src/lib/controls";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 const accessControlSubentryOID: string = accessControlSubentry["&id"].toString();
@@ -1364,8 +1381,32 @@ export const readSupportedExtension: SpecialAttributeDatabaseReader = async (
     ];
 };
 
-export const readSupportedControl: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
-    return [];
+export const readSupportedControl: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (vertex.immediateSuperior || !vertex.dse.root) {
+        return [];
+    }
+    return [
+        /** FIXME: Re-enable this when pagination is fixed.
+         * Simple paginated results was removed TEMPORARILY from the advertised
+         * supported features because pagination was deeply broken and needed
+         * complete re-implementation.
+         */
+        // simpledPagedResults,
+        sortRequest,
+        sortResponse,
+        postread,
+        subentries,
+        managedDSAIT,
+        dontUseCopy,
+    ]
+        .map((oid) => ({
+            id: supportedControl["&id"],
+            value: _encodeObjectIdentifier(oid, DER),
+            contexts: new Map(),
+        }));
 };
 
 export const readSupportedSASLMechanisms: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
@@ -1404,6 +1445,11 @@ export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (
         {
             id: supportedFeatures["&id"],
             value: _encodeObjectIdentifier(trueFalseFilters, DER),
+            contexts: new Map(),
+        },
+        {
+            id: supportedFeatures["&id"],
+            value: _encodeObjectIdentifier(allOpAttrs, DER),
             contexts: new Map(),
         },
     ];
@@ -1557,4 +1603,22 @@ export const readCollectiveExclusions: SpecialAttributeDatabaseReader = async (
         value: _encodeObjectIdentifier(ObjectIdentifier.fromString(cex.collectiveExclusion), DER),
         contexts: new Map(),
     }));
+};
+
+export const readEntryUUID: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    return [
+        {
+            id: new ObjectIdentifier([ 1, 3, 6, 1, 1, 16, 4 ]),
+            value: new DERElement(
+                ASN1TagClass.universal,
+                ASN1Construction.primitive,
+                ASN1UniversalType.octetString,
+                Buffer.from(vertex.dse.uuid.replace(/-/g, ""), "hex"),
+            ),
+            contexts: new Map(),
+        },
+    ];
 };

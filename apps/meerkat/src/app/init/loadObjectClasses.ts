@@ -15,15 +15,18 @@ import {
     ObjectClassKind_structural,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import { ObjectIdentifier } from "asn1-ts";
+import type {
+    OBJECT_CLASS,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
 
-const additionalObjectClasses = [
-    subentry,
-    accessControlSubentry,
-    collectiveAttributeSubentry,
-    contextAssertionSubentry,
-    serviceAdminSubentry,
-    pwdAdminSubentry,
-];
+const additionalObjectClasses: Record<string, OBJECT_CLASS> = {
+    "subentry": subentry,
+    "accessControlSubentry": accessControlSubentry,
+    "collectiveAttributeSubentry": collectiveAttributeSubentry,
+    "contextAssertionSubentry": contextAssertionSubentry,
+    "serviceAdminSubentry": serviceAdminSubentry,
+    "pwdAdminSubentry": pwdAdminSubentry,
+};
 
 function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     switch (ock) {
@@ -42,12 +45,11 @@ function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
 
 export
 async function loadObjectClasses (ctx: Context): Promise<void> {
-    additionalObjectClasses
-        .map(objectClassFromInformationObject)
-        .forEach((oc) => {
-            ctx.objectClasses.set(oc.id.toString(), oc);
-        });
-    Object.values(x500oc)
+    const objectClassInfoObjects = [
+        ...Object.values(x500oc),
+        ...Object.values(additionalObjectClasses),
+    ];
+    objectClassInfoObjects
         .map(objectClassFromInformationObject)
         .forEach((oc) => {
             ctx.objectClasses.set(oc.id.toString(), oc);
@@ -73,6 +75,13 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
     // });
 
     Object.entries(x500oc).forEach(([ name, oc ]) => {
+        ctx.nameToObjectIdentifier.set(name, oc["&id"]);
+        oc["&ldapName"]?.map((ldapName) => {
+            ctx.nameToObjectIdentifier.set(ldapName, oc["&id"]);
+        });
+        ctx.objectIdentifierToName.set(oc["&id"].toString(), name);
+    });
+    Object.entries(additionalObjectClasses).forEach(([ name, oc ]) => {
         ctx.nameToObjectIdentifier.set(name, oc["&id"]);
         oc["&ldapName"]?.map((ldapName) => {
             ctx.nameToObjectIdentifier.set(ldapName, oc["&id"]);

@@ -1188,3 +1188,4 @@ export const addPwdAdminSubentryList: SpecialAttributeDatabaseEditor = NOOP;
 export const addSubschemaSubentryList: SpecialAttributeDatabaseEditor = NOOP;
 export const addHasSubordinates: SpecialAttributeDatabaseEditor = NOOP;
 export const addCollectiveExclusions: SpecialAttributeDatabaseEditor = NOOP;
+export const addEntryUUID: SpecialAttributeDatabaseEditor = NOOP;
