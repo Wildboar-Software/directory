@@ -314,7 +314,7 @@ async function compare (
                 conn.authLevel,
                 {
                     value: new AttributeTypeAndValue(
-                        value.id,
+                        value.type,
                         value.value,
                     ),
                 },
@@ -333,7 +333,7 @@ async function compare (
                 matched = true;
                 break;
             }
-            if (value.contexts.size === 0) {
+            if (value.contexts && (value.contexts.size === 0)) {
                 matched = true;
                 break;
             }
@@ -343,7 +343,7 @@ async function compare (
             matched = acs.selectedContexts
                 .every((sc): boolean => evaluateContextAssertion(
                     sc,
-                    Object.values(value.contexts).map(contextFromStoredContext),
+                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                 ));
@@ -369,7 +369,7 @@ async function compare (
                             return sc.contextAssertions.all
                                 .every((ca): boolean => evaluateContextAssertion(
                                     ca,
-                                    Object.values(value.contexts).map(contextFromStoredContext),
+                                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
                                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                 ));
@@ -378,7 +378,7 @@ async function compare (
                             return sc.contextAssertions.preference
                                 .some((ca): boolean => evaluateContextAssertion(
                                     ca,
-                                    Object.values(value.contexts).map(contextFromStoredContext),
+                                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
                                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                 ));

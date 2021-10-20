@@ -20,7 +20,7 @@ type Names = String
 model Entry {
   id                    Int    @id @default(autoincrement())
   immediate_superior_id Int?
-  immediate_superior    Entry? @relation(fields: [immediate_superior_id], references: [id])
+  immediate_superior    Entry? @relation(name: "superior", fields: [immediate_superior_id], references: [id])
 
   // DSE Types
   //   root          Boolean @default(false) // Indicated by having no immediate superior.
@@ -57,9 +57,6 @@ model Entry {
   creatorsName     Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
   modifiersName    Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
 
-  // Technically a userApplications attribute, but still has operational uses.
-  uniqueIdentifier Bytes? // DER-encoded bitstring value (not tag and length bytes)
-
   // LDAP operational attributes
   // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
   entryUUID String @default(uuid()) // @db.Uuid
@@ -83,7 +80,7 @@ model Entry {
   // Storage parameters
   keep_children_in_database Boolean @default(false)
 
-  Entry                      Entry[]                      @relation("EntryToEntry")
+  Entry                      Entry?                       @relation("superior")
   ACIItem                    ACIItem[]
   Clearance                  Clearance[]
   MatchingRuleUse            MatchingRuleUse[]
@@ -126,6 +123,16 @@ model Entry {
   SearchRule       SearchRule[]
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
+  UniqueIdentifier UniqueIdentifier[]
+}
+
+// Technically a userApplications attribute, but still has operational uses.
+// It is also multi-valued.
+model UniqueIdentifier {
+  id               Int   @id @default(autoincrement())
+  entry_id         Int
+  entry            Entry @relation(fields: [entry_id], references: [id])
+  uniqueIdentifier Bytes // DER-encoded bitstring value (not tag and length bytes)
 }
 
 // model UtmCoordinate {
@@ -503,7 +510,7 @@ enum ObjectClassKind {
 //     ID                    &id }
 // Also satisfies NameFormDescription
 model NameForm {
-  id                  Int                @id @default(autoincrement())
+  id                  Int     @id @default(autoincrement())
   namedObjectClass    OID
   mandatoryAttributes OIDs // OIDs
   optionalAttributes  OIDs? // OIDs
@@ -512,7 +519,7 @@ model NameForm {
   identifier          OID
   name                Names?
   description         String?
-  obsolete            Boolean            @default(false)
+  obsolete            Boolean @default(false)
 
   @@unique([identifier])
   @@index([namedObjectClass])
@@ -792,7 +799,7 @@ enum ShadowedKnowledgeType {
 model OperationalBinding {
   id                 Int                         @id @default(autoincrement())
   previous_id        Int?                        @unique // For when an OB gets modified.
-  previous           OperationalBinding?         @relation(fields: [previous_id], references: [id])
+  previous           OperationalBinding?         @relation(name: "previous", fields: [previous_id], references: [id])
   outbound           Boolean
   uuid               String                      @default(uuid()) // @db.Uuid
   binding_type       OID
@@ -856,7 +863,7 @@ model OperationalBinding {
   last_ob_problem     Int?      @db.SmallInt
   last_shadow_problem Int?      @db.SmallInt
 
-  OperationalBinding OperationalBinding[] @relation("OperationalBindingToOperationalBinding")
+  OperationalBinding OperationalBinding[] @relation("previous")
   @@unique([uuid])
   @@unique([binding_type, binding_identifier, binding_version, terminated_time])
   @@index([validity_end, validity_start])

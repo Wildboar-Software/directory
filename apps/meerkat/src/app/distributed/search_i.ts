@@ -514,7 +514,7 @@ async function search_i (
             {
                 select: filteredAttributes
                     .filter((attr) => {
-                        const spec = ctx.attributes.get(attr.toString());
+                        const spec = ctx.attributeTypes.get(attr.toString());
                         if (!spec) {
                             return true; // We assume all unrecognized attributes are user attributes.
                         }
@@ -525,7 +525,7 @@ async function search_i (
             {
                 select: filteredAttributes
                     .filter((attr) => {
-                        const spec = ctx.attributes.get(attr.toString());
+                        const spec = ctx.attributeTypes.get(attr.toString());
                         if (!spec) {
                             return false; // We assume all unrecognized attributes are user attributes.
                         }
@@ -708,7 +708,7 @@ async function search_i (
                             conn.authLevel,
                             {
                                 value: new AttributeTypeAndValue(
-                                    value.id,
+                                    value.type,
                                     value.value,
                                 ),
                             },

@@ -218,7 +218,7 @@ async function addEntry (
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const values: Value[] = data.entry.flatMap(valuesFromAttribute);
-    const objectClassValues = values.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
+    const objectClassValues = values.filter((attr) => attr.type.isEqualTo(id_at_objectClass));
     if (objectClassValues.length === 0) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:object_class_not_found"),
@@ -554,7 +554,7 @@ async function addEntry (
 
     const attrsFromDN: Value[] = rdn
         .map((atav): Value => ({
-            id: atav.type_,
+            type: atav.type_,
             value: atav.value,
             contexts: new Map([]),
         }));
@@ -608,7 +608,7 @@ async function addEntry (
                 conn.authLevel,
                 {
                     value: new AttributeTypeAndValue(
-                        value.id,
+                        value.type,
                         value.value,
                     ),
                 },
@@ -620,7 +620,7 @@ async function addEntry (
             if (!authorizedToAddAttributeValue) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_create_attr_value", {
-                        type: value.id.toString(),
+                        type: value.type.toString(),
                     }),
                     new SecurityErrorData(
                         SecurityProblem_insufficientAccessRights,
@@ -649,7 +649,7 @@ async function addEntry (
     const collectiveAttributes: AttributeType[] = [];
     const obsoleteAttributes: AttributeType[] = [];
     for (const attr of data.entry) {
-        const spec = ctx.attributes.get(attr.type_.toString());
+        const spec = ctx.attributeTypes.get(attr.type_.toString());
         if (!spec) {
             unrecognizedAttributes.push(attr.type_);
             continue;
@@ -909,30 +909,30 @@ async function addEntry (
 
     attrsFromDN
         .forEach((afdn): void => {
-            const oid: string = afdn.id.toString();
+            const oid: string = afdn.type.toString();
             if (rdnAttributes.has(oid)) {
-                duplicatedAFDNs.push(afdn.id);
+                duplicatedAFDNs.push(afdn.type);
                 return;
             } else {
                 rdnAttributes.add(oid);
             }
-            const spec = ctx.attributes.get(afdn.id.toString());
+            const spec = ctx.attributeTypes.get(afdn.type.toString());
             if (!spec) {
-                unrecognizedAFDNs.push(afdn.id);
+                unrecognizedAFDNs.push(afdn.type);
                 return;
             }
-            const matcher = getNamingMatcherGetter(ctx)(afdn.id);
+            const matcher = getNamingMatcherGetter(ctx)(afdn.type);
             if (!matcher) {
-                cannotBeUsedInNameAFDNs.push(afdn.id);
+                cannotBeUsedInNameAFDNs.push(afdn.type);
                 return;
             }
             const someAttributeMatched = values.some((attr) => (
-                (attr.contexts.size === 0)
-                && attr.id.isEqualTo(afdn.id)
+                (!attr.contexts || (attr.contexts.size === 0))
+                && attr.type.isEqualTo(afdn.type)
                 && matcher(attr.value, afdn.value)
             ));
             if (!someAttributeMatched) {
-                unmatchedAFDNs.push(afdn.id);
+                unmatchedAFDNs.push(afdn.type);
                 return;
             }
         });
@@ -1229,7 +1229,7 @@ async function addEntry (
             contextUseRules.map((rule) => [ rule.identifier.toString(), rule ]),
         );
         for (const attr of values) {
-            const applicableRule = contextRulesIndex.get(attr.id.toString())
+            const applicableRule = contextRulesIndex.get(attr.type.toString())
                 ?? contextRulesIndex.get(ALL_ATTRIBUTE_TYPES);
             /**
              * From ITU Recommendation X.501 (2016), Section 13.10.1:
@@ -1239,7 +1239,7 @@ async function addEntry (
              * > contain no context lists.
              */
             if (!applicableRule) {
-                if (attr.contexts.size > 0) {
+                if (attr.contexts && (attr.contexts.size > 0)) {
                     throw new errors.AttributeError(
                         ctx.i18n.t("err:no_contexts_permitted"),
                         new AttributeErrorData(
@@ -1249,7 +1249,7 @@ async function addEntry (
                             [
                                 new AttributeErrorData_problems_Item(
                                     AttributeProblem_contextViolation,
-                                    attr.id,
+                                    attr.type,
                                     attr.value,
                                 ),
                             ],
@@ -1277,14 +1277,14 @@ async function addEntry (
                 ...applicableRule.information.optionalContexts ?? [],
             ];
             const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((con) => con.toString()));
-            for (const context of attr.contexts.values()) {
+            for (const context of attr.contexts?.values() ?? []) {
                 const ID: string = context.id.toString();
                 mandatoryContextsRemaining.delete(ID);
                 if (!permittedContextsIndex.has(ID)) {
                     throw new errors.AttributeError(
                         ctx.i18n.t("err:context_type_prohibited_by_context_use_rule", {
                             ct: ID,
-                            at: attr.id.toString(),
+                            at: attr.type.toString(),
                         }),
                         new AttributeErrorData(
                             {
@@ -1293,7 +1293,7 @@ async function addEntry (
                             [
                                 new AttributeErrorData_problems_Item(
                                     AttributeProblem_contextViolation,
-                                    attr.id,
+                                    attr.type,
                                     attr.value,
                                 ),
                             ],
@@ -1324,7 +1324,7 @@ async function addEntry (
                 if (!everyRequiredContextHasADefaultValue) {
                     throw new errors.AttributeError(
                         ctx.i18n.t("err:missing_required_context_types", {
-                            attr: attr.id.toString(),
+                            attr: attr.type.toString(),
                             oids: Array.from(mandatoryContextsRemaining.values()).join(", "),
                         }),
                         new AttributeErrorData(
@@ -1334,7 +1334,7 @@ async function addEntry (
                             [
                                 new AttributeErrorData_problems_Item(
                                     AttributeProblem_contextViolation,
-                                    attr.id,
+                                    attr.type,
                                     attr.value,
                                 ),
                             ],
@@ -1363,7 +1363,10 @@ async function addEntry (
                     continue; // This is intentional. This is not supposed to throw.
                 }
                 const defaultValueGetter = spec.defaultValue;
-                if (!attr.contexts.has(CTYPE_OID)) {
+                if (!attr.contexts?.has(CTYPE_OID)) {
+                    if (!attr.contexts) {
+                        attr.contexts = new Map();
+                    }
                     attr.contexts.set(CTYPE_OID, {
                         id: ct,
                         fallback: true,

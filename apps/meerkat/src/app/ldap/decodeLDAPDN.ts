@@ -28,7 +28,7 @@ function decodeLDAPDN (ctx: Context, dn: Uint8Array | string): RDNSequence {
         dnStr,
         (attrDesc: string) => {
             const attrType = normalizeAttributeDescription(Buffer.from(attrDesc));
-            const attr = ctx.attributes.get(attrType);
+            const attr = ctx.attributeTypes.get(attrType);
             if (!attr?.ldapSyntax) {
                 throw new Error(attrDesc.toString());
             }

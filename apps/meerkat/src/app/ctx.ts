@@ -135,7 +135,7 @@ const ctx: Context = {
     objectIdentifierToName: new Map(),
     nameToObjectIdentifier: new Map(),
     objectClasses: new Map(),
-    attributes: new Map(),
+    attributeTypes: new Map(),
     equalityMatchingRules: new Map(),
     orderingMatchingRules: new Map(),
     substringsMatchingRules: new Map(),

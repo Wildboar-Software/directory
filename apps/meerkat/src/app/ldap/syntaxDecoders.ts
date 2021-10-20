@@ -257,7 +257,7 @@ function getNameFormsDecoder (
                             if (isDigit(tokens[t].charCodeAt(0))) {
                                 mandatories.push(ObjectIdentifier.fromString(tokens[t]));
                             } else {
-                                const spec = ctx.attributes.get(tokens[t]);
+                                const spec = ctx.attributeTypes.get(tokens[t]);
                                 if (!spec) {
                                     throw new Error();
                                 }
@@ -269,7 +269,7 @@ function getNameFormsDecoder (
                         if (isDigit(tokens[t].charCodeAt(0))) {
                             mandatories.push(ObjectIdentifier.fromString(tokens[t]));
                         } else {
-                            const spec = ctx.attributes.get(tokens[t]);
+                            const spec = ctx.attributeTypes.get(tokens[t]);
                             if (!spec) {
                                 throw new Error();
                             }
@@ -425,7 +425,7 @@ function getDITContentRulesDecoder (
                             if (isDigit(tokens[t].charCodeAt(0))) {
                                 mandatory.push(ObjectIdentifier.fromString(tokens[t]));
                             } else {
-                                const spec = ctx.attributes.get(tokens[t]);
+                                const spec = ctx.attributeTypes.get(tokens[t]);
                                 if (!spec) {
                                     throw new Error();
                                 }
@@ -437,7 +437,7 @@ function getDITContentRulesDecoder (
                         if (isDigit(tokens[t].charCodeAt(0))) {
                             mandatory.push(ObjectIdentifier.fromString(tokens[t]));
                         } else {
-                            const spec = ctx.attributes.get(tokens[t]);
+                            const spec = ctx.attributeTypes.get(tokens[t]);
                             if (!spec) {
                                 throw new Error();
                             }
@@ -641,7 +641,7 @@ function getObjectClassesDecoder (
                         if (isDigit(tokens[t].charCodeAt(0))) {
                             mandatories.push(ObjectIdentifier.fromString(tokens[t]));
                         } else {
-                            const spec = ctx.attributes.get(tokens[t]);
+                            const spec = ctx.attributeTypes.get(tokens[t]);
                             if (!spec) {
                                 throw new Error();
                             }
@@ -653,7 +653,7 @@ function getObjectClassesDecoder (
                     if (isDigit(tokens[t].charCodeAt(0))) {
                         mandatories.push(ObjectIdentifier.fromString(tokens[t]));
                     } else {
-                        const spec = ctx.attributes.get(tokens[t]);
+                        const spec = ctx.attributeTypes.get(tokens[t]);
                         if (!spec) {
                             throw new Error();
                         }

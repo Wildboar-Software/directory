@@ -36,7 +36,7 @@ function getPartialAttributesFromEntryInformation (
     return infoItems.flatMap((einfo) => {
         if ("attributeType" in einfo) {
             const attrType = einfo.attributeType;
-            const attrSpec = ctx.attributes.get(attrType.toString());
+            const attrSpec = ctx.attributeTypes.get(attrType.toString());
             if (!attrSpec) {
                 return undefined;
             }
@@ -48,7 +48,7 @@ function getPartialAttributesFromEntryInformation (
             );
         } else if ("attribute" in einfo) {
             const attrType = einfo.attribute.type_;
-            const attrSpec = ctx.attributes.get(attrType.toString());
+            const attrSpec = ctx.attributeTypes.get(attrType.toString());
             if (!attrSpec?.ldapSyntax) {
                 // ctx.log.warn(`No LDAP syntax defined for attribute ${attrType.toString()}.`);
                 return undefined;

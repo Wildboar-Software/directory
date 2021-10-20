@@ -1,6 +1,5 @@
 import type { Context, DIT } from "@wildboar/meerkat-types";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
-import { randomBytes } from "crypto";
 
 const ROOT_DSE_NAME = [];
 
@@ -37,10 +36,6 @@ async function loadDIT (
                 deleteTimestamp: null,
                 creatorsName: ROOT_DSE_NAME,
                 modifiersName: ROOT_DSE_NAME,
-                uniqueIdentifier: Buffer.concat([
-                    Buffer.from([ 0 ]),
-                    randomBytes(8),
-                ]),
             },
         });
         ctx.log.warn(ctx.i18n.t("log:created_root_dse", {

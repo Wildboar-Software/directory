@@ -9,7 +9,7 @@ import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 
 export
 function getPartialAttributeFromAttribute (ctx: Context, attr: Attribute): PartialAttribute | undefined {
-    const spec = ctx.attributes.get(attr.type_.toString());
+    const spec = ctx.attributeTypes.get(attr.type_.toString());
     if (!spec?.ldapSyntax) {
         return undefined;
     }

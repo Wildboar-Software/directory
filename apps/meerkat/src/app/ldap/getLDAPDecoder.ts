@@ -8,7 +8,7 @@ import {
 export
 function getLDAPDecoder (ctx: Context, type_: LDAPOID): LDAPSyntaxDecoder | undefined {
     const desc = normalizeAttributeDescription(type_);
-    const spec = ctx.attributes.get(desc);
+    const spec = ctx.attributeTypes.get(desc);
     if (!spec?.ldapSyntax) {
         return undefined;
     }

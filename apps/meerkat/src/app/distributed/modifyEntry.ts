@@ -305,7 +305,7 @@ function checkPermissionToAddValues (
             authLevel,
             {
                 value: new AttributeTypeAndValue(
-                    value.id,
+                    value.type,
                     value.value,
                 ),
             },
@@ -335,7 +335,7 @@ function checkAbilityToModifyAttributeType (
     aliasDereferenced?: boolean,
 ): void {
     const TYPE_OID: string = attributeType.toString();
-    const spec = ctx.attributes.get(TYPE_OID);
+    const spec = ctx.attributeTypes.get(TYPE_OID);
     if (!spec) {
         throw new errors.AttributeError(
             ctx.i18n.t("err:unrecognized_attribute_type", {
@@ -643,7 +643,7 @@ async function executeRemoveValues (
                 authLevel,
                 {
                     value: new AttributeTypeAndValue(
-                        value.id,
+                        value.type,
                         value.value,
                     ),
                 },
@@ -747,7 +747,7 @@ async function executeAlterValues (
                 authLevel,
                 {
                     value: new AttributeTypeAndValue(
-                        value.id,
+                        value.type,
                         value.value,
                     ),
                 },
@@ -840,7 +840,7 @@ async function executeResetValue (
         const deltaValues = delta.get(TYPE_OID);
         if (deltaValues) {
             const newDeltaValues = deltaValues
-                .filter((dv) => !Array.from(dv.contexts.values())
+                .filter((dv) => !Array.from(dv.contexts?.values() ?? [])
                     .some((context) => (context.fallback === false)));
             delta.set(TYPE_OID, newDeltaValues);
         }
@@ -1662,7 +1662,7 @@ async function modifyEntry (
         const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
         for (const type_ of Array.from(delta.keys())) {
             if (!optionalAttributes.has(type_.toString())) {
-                if (target.dse.subentry && ctx.attributes.get(type_.toString())?.collective) {
+                if (target.dse.subentry && ctx.attributeTypes.get(type_.toString())?.collective) {
                     continue; // You can write any collective attribute to a subentry.
                 }
                 nonPermittedAttributeTypes.add(type_);

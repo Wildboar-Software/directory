@@ -26,7 +26,7 @@ async function attributeFromDatabaseAttribute (
         }
     });
     return {
-        id: new ObjectIdentifier(attr.type.split(".").map((node) => Number.parseInt(node))),
+        type: new ObjectIdentifier(attr.type.split(".").map((node) => Number.parseInt(node))),
         value,
         contexts,
     };

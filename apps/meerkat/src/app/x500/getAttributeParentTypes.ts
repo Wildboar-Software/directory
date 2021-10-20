@@ -12,7 +12,7 @@ function *getAttributeParentTypes (
     yield type_;
     let current: AttributeType | undefined = type_;
     while (current) {
-        const spec = ctx.attributes.get(current.toString());
+        const spec = ctx.attributeTypes.get(current.toString());
         if (!spec?.parent) {
             return;
         }

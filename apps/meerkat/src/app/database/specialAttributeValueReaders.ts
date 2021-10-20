@@ -229,9 +229,8 @@ export const readObjectClass: SpecialAttributeDatabaseReader = async (
         .map(ObjectIdentifier.fromString)
         .map((oid) => _encodeObjectIdentifier(oid, DER))
         .map((value): Value => ({
-            id: objectClass["&id"]!,
+            type: objectClass["&id"]!,
             value,
-            contexts: new Map(),
         }));
 };
 
@@ -246,9 +245,8 @@ export const readAdministrativeRole: SpecialAttributeDatabaseReader = async (
         .map(ObjectIdentifier.fromString)
         .map((oid) => _encodeObjectIdentifier(oid, DER))
         .map((value): Value => ({
-            id: administrativeRole["&id"]!,
+            type: administrativeRole["&id"]!,
             value,
-            contexts: new Map(),
         }));
 }
 
@@ -261,9 +259,8 @@ export const readAccessControlScheme: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: accessControlScheme["&id"],
+            type: accessControlScheme["&id"],
             value: _encodeObjectIdentifier(vertex.dse.admPoint.accessControlScheme, DER),
-            contexts: new Map(),
         },
     ];
 }
@@ -285,9 +282,8 @@ export const readSubtreeSpecification: SpecialAttributeDatabaseReader = async (
             const value = new BERElement();
             value.fromBytes(entity.ber);
             return {
-                id: subtreeSpecification["&id"],
+                type: subtreeSpecification["&id"],
                 value,
-                contexts: new Map(),
             };
         });
 }
@@ -306,9 +302,8 @@ export const readPwdStartTime: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdStartTime["&id"],
+            type: pwdStartTime["&id"],
             value: _encodeGeneralizedTime(value.pwdStartTime, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -327,9 +322,8 @@ export const readPwdExpiryTime: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdExpiryTime["&id"],
+            type: pwdExpiryTime["&id"],
             value: _encodeGeneralizedTime(value.pwdExpiryTime, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -348,9 +342,8 @@ export const readPwdEndTime: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdEndTime["&id"],
+            type: pwdEndTime["&id"],
             value: _encodeGeneralizedTime(value.pwdEndTime, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -369,9 +362,8 @@ export const readPwdFails: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdFails["&id"],
+            type: pwdFails["&id"],
             value: _encodeInteger(value.pwdFails, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -390,9 +382,8 @@ export const readPwdFailureTime: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdStartTime["&id"],
+            type: pwdStartTime["&id"],
             value: _encodeGeneralizedTime(value.pwdFailureTime, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -411,9 +402,8 @@ export const readPwdGracesUsed: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdGracesUsed["&id"],
+            type: pwdGracesUsed["&id"],
             value: _encodeInteger(value.pwdGracesUsed, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -432,9 +422,8 @@ export const readPwdGracesUsed: SpecialAttributeDatabaseReader = async (
 //     }
 //     return [
 //         {
-//             id: pwdStartTime["&id"],
+//             type: pwdStartTime["&id"],
 //             value: _encodeGeneralizedTime(value.pwdStartTime, DER),
-//             contexts: new Map(),
 //         },
 //     ];
 // };
@@ -453,9 +442,8 @@ export const readPwdGracesUsed: SpecialAttributeDatabaseReader = async (
 //     }
 //     return [
 //         {
-//             id: pwdStartTime["&id"],
+//             type: pwdStartTime["&id"],
 //             value: _encodeGeneralizedTime(value.pwdStartTime, DER),
-//             contexts: new Map(),
 //         },
 //     ];
 // };
@@ -474,9 +462,8 @@ export const readPwdModifyEntryAllowed: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdModifyEntryAllowed["&id"],
+            type: pwdModifyEntryAllowed["&id"],
             value: _encodeBoolean(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -495,9 +482,8 @@ export const readPwdChangeAllowed: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdChangeAllowed["&id"],
+            type: pwdChangeAllowed["&id"],
             value: _encodeBoolean(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -516,9 +502,8 @@ export const readPwdMaxAge: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdMaxAge["&id"],
+            type: pwdMaxAge["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -537,9 +522,8 @@ export const readPwdExpiryAge: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdExpiryAge["&id"],
+            type: pwdExpiryAge["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -558,9 +542,8 @@ export const readPwdMinLength: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdMinLength["&id"],
+            type: pwdMinLength["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -579,10 +562,9 @@ export const readPwdMinLength: SpecialAttributeDatabaseReader = async (
 //     }
 //     return [
 //         {
-//             id: pwdMinLength["&id"],
+//             type: pwdMinLength["&id"],
 //             value: _encodeInteger(value.value, DER),
-//             contexts: new Map(),
-//         },
+// //         },
 //     ];
 // };
 
@@ -600,10 +582,9 @@ export const readPwdMinLength: SpecialAttributeDatabaseReader = async (
 //     }
 //     return [
 //         {
-//             id: pwdMinLength["&id"],
+//             type: pwdMinLength["&id"],
 //             value: _encodeInteger(value.value, DER),
-//             contexts: new Map(),
-//         },
+// //         },
 //     ];
 // };
 
@@ -620,9 +601,8 @@ export const readPwdDictionaries: SpecialAttributeDatabaseReader = async (
         return [];
     }
     return values.map((value) => ({
-        id: pwdDictionaries["&id"],
+        type: pwdDictionaries["&id"],
         value: _encodeUTF8String(value.value, DER),
-        contexts: new Map(),
     }));
 };
 
@@ -640,9 +620,8 @@ export const readPwdExpiryWarning: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdExpiryWarning["&id"],
+            type: pwdExpiryWarning["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -661,9 +640,8 @@ export const readPwdGraces: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdGraces["&id"],
+            type: pwdGraces["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -682,9 +660,8 @@ export const readPwdFailureDuration: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdFailureDuration["&id"],
+            type: pwdFailureDuration["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -703,9 +680,8 @@ export const readPwdLockoutDuration: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdLockoutDuration["&id"],
+            type: pwdLockoutDuration["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -724,9 +700,8 @@ export const readPwdMaxFailures: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdMaxFailures["&id"],
+            type: pwdMaxFailures["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -745,9 +720,8 @@ export const readPwdMaxTimeInHistory: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdMaxTimeInHistory["&id"],
+            type: pwdMaxTimeInHistory["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -766,9 +740,8 @@ export const readPwdMinTimeInHistory: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdMinTimeInHistory["&id"],
+            type: pwdMinTimeInHistory["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -787,9 +760,8 @@ export const readPwdHistorySlots: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: pwdHistorySlots["&id"],
+            type: pwdHistorySlots["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -808,9 +780,8 @@ export const readPwdRecentlyExpiredDuration: SpecialAttributeDatabaseReader = as
     }
     return [
         {
-            id: pwdRecentlyExpiredDuration["&id"],
+            type: pwdRecentlyExpiredDuration["&id"],
             value: _encodeInteger(value.value, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -857,10 +828,9 @@ export const readUserPassword: SpecialAttributeDatabaseReader = async (
         emptyValue.tagNumber = ASN1UniversalType.octetString;
         return [
             {
-                id: userPassword["&id"],
+                type: userPassword["&id"],
                 value: emptyValue,
-                contexts: new Map(),
-            },
+                },
         ];
     } else {
         return [];
@@ -903,10 +873,9 @@ export const readUserPwd: SpecialAttributeDatabaseReader = async (
         };
         return [
             {
-                id: userPassword["&id"],
+                type: userPassword["&id"],
                 value: _encode_UserPwd(pwd, DER),
-                contexts: new Map(),
-            },
+                },
         ];
     } else {
         return [];
@@ -917,17 +886,21 @@ export const readUniqueIdentifier: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    if (vertex.dse.uniqueIdentifier) {
-        return [
-            {
-                id: uniqueIdentifier["&id"],
-                value: _encodeBitString(vertex.dse.uniqueIdentifier, DER),
-                contexts: new Map(),
-            },
-        ];
-    } else {
-        return [];
-    }
+    return (await ctx.db.uniqueIdentifier.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }))
+        .map((dbuid) => {
+            const el = new DERElement();
+            el.value = dbuid.uniqueIdentifier;
+            el.tagClass = ASN1TagClass.universal;
+            el.tagNumber = ASN1UniversalType.bitString;
+            return {
+                type: uniqueIdentifier["&id"],
+                value: el,
+            };
+        });
 };
 
 export const readCreateTimestamp: SpecialAttributeDatabaseReader = async (
@@ -936,9 +909,8 @@ export const readCreateTimestamp: SpecialAttributeDatabaseReader = async (
 ): Promise<Value[]> => {
     return [
         {
-            id: createTimestamp["&id"],
+            type: createTimestamp["&id"],
             value: _encodeGeneralizedTime(vertex.dse.createdTimestamp, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -949,9 +921,8 @@ export const readModifyTimestamp: SpecialAttributeDatabaseReader = async (
 ): Promise<Value[]> => {
     return [
         {
-            id: modifyTimestamp["&id"],
+            type: modifyTimestamp["&id"],
             value: _encodeGeneralizedTime(vertex.dse.modifyTimestamp, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -965,9 +936,8 @@ export const readCreatorsName: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: creatorsName["&id"],
+            type: creatorsName["&id"],
             value: _encode_DistinguishedName(vertex.dse.creatorsName.rdnSequence, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -981,9 +951,8 @@ export const readModifiersName: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: modifiersName["&id"],
+            type: modifiersName["&id"],
             value: _encode_DistinguishedName(vertex.dse.modifiersName.rdnSequence, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -997,9 +966,8 @@ export const readDITStructureRules: SpecialAttributeDatabaseReader = async (
     }
     return (await readDITStructureRuleDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
-            id: dITStructureRules["&id"],
+            type: dITStructureRules["&id"],
             value: dITStructureRules.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1029,9 +997,8 @@ export const readNameForms: SpecialAttributeDatabaseReader = async (
             ),
         ))
         .map((value) => ({
-            id: nameForms["&id"],
+            type: nameForms["&id"],
             value: nameForms.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1044,9 +1011,8 @@ export const readDITContentRules: SpecialAttributeDatabaseReader = async (
     }
     return (await readDITContentRuleDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
-            id: dITContentRules["&id"],
+            type: dITContentRules["&id"],
             value: dITContentRules.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1082,9 +1048,8 @@ export const readObjectClasses: SpecialAttributeDatabaseReader = async (
             ),
         ))
         .map((value) => ({
-            id: objectClasses["&id"],
+            type: objectClasses["&id"],
             value: objectClasses.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1095,7 +1060,7 @@ export const readAttributeTypes: SpecialAttributeDatabaseReader = async (
     if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
         return [];
     }
-    return Array.from(ctx.attributes.entries())
+    return Array.from(ctx.attributeTypes.entries())
         .filter(([ k ]) => (k.indexOf(".") > -1)) // Dedupes entries by only using OIDs, not descriptors.
         .map(([ , v ]) => v)
         .map((attr) => new AttributeTypeDescription(
@@ -1126,9 +1091,8 @@ export const readAttributeTypes: SpecialAttributeDatabaseReader = async (
             ),
         ))
         .map((value) => ({
-            id: attributeTypes["&id"],
+            type: attributeTypes["&id"],
             value: attributeTypes.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1141,9 +1105,8 @@ export const readFriends: SpecialAttributeDatabaseReader = async (
     }
     return (await readFriendsDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
-            id: friends["&id"],
+            type: friends["&id"],
             value: friends.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1178,9 +1141,8 @@ export const readContextTypes: SpecialAttributeDatabaseReader = async (
             ),
         ))
         .map((value) => ({
-            id: contextTypes["&id"],
+            type: contextTypes["&id"],
             value: contextTypes.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1193,9 +1155,8 @@ export const readDITContextUse: SpecialAttributeDatabaseReader = async (
     }
     return (await readDITContextUseDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
-            id: dITContextUse["&id"],
+            type: dITContextUse["&id"],
             value: dITContextUse.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1231,9 +1192,8 @@ export const readMatchingRules: SpecialAttributeDatabaseReader = async (
                 : undefined,
         ))
         .map((value) => ({
-            id: matchingRules["&id"],
+            type: matchingRules["&id"],
             value: matchingRules.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1246,9 +1206,8 @@ export const readMatchingRuleUse: SpecialAttributeDatabaseReader = async (
     }
     return (await readMatchingRuleUseDescriptions(ctx, vertex.dse.id))
         .map((value) => ({
-            id: matchingRuleUse["&id"],
+            type: matchingRuleUse["&id"],
             value: matchingRuleUse.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1271,9 +1230,8 @@ export const readLdapSyntaxes: SpecialAttributeDatabaseReader = async (
                 : undefined,
         ))
         .map((value) => ({
-            id: ldapSyntaxes["&id"],
+            type: ldapSyntaxes["&id"],
             value: ldapSyntaxes.encoderFor["&Type"]!(value, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1286,9 +1244,8 @@ export const readGoverningStructureRule: SpecialAttributeDatabaseReader = async 
     }
     return [
         {
-            id: governingStructureRule["&id"],
+            type: governingStructureRule["&id"],
             value: governingStructureRule.encoderFor["&Type"]!(vertex.dse.governingStructureRule, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -1302,9 +1259,8 @@ export const readStructuralObjectClass: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: structuralObjectClass["&id"],
+            type: structuralObjectClass["&id"],
             value: _encodeObjectIdentifier(vertex.dse.structuralObjectClass, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -1348,10 +1304,9 @@ export const readNamingContexts: SpecialAttributeDatabaseReader = async (
             argreementElement.fromBytes(ob.agreement_ber);
             const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
             return {
-                id: namingContexts["&id"],
+                type: namingContexts["&id"],
                 value: namingContexts.encoderFor["&Type"]!([ ...agreement.immediateSuperior, agreement.rdn ], DER),
-                contexts: new Map(),
-            };
+                };
         }),
     ];
 };
@@ -1369,14 +1324,12 @@ export const readSupportedExtension: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: supportedExtension["&id"],
+            type: supportedExtension["&id"],
             value: _encodeObjectIdentifier(modifyPassword, DER),
-            contexts: new Map(),
         },
         {
-            id: supportedExtension["&id"],
+            type: supportedExtension["&id"],
             value: _encodeObjectIdentifier(startTLS, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -1403,9 +1356,8 @@ export const readSupportedControl: SpecialAttributeDatabaseReader = async (
         dontUseCopy,
     ]
         .map((oid) => ({
-            id: supportedControl["&id"],
+            type: supportedControl["&id"],
             value: _encodeObjectIdentifier(oid, DER),
-            contexts: new Map(),
         }));
 };
 
@@ -1422,9 +1374,8 @@ export const readSupportedLDAPVersion: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: supportedLDAPVersion["&id"],
+            type: supportedLDAPVersion["&id"],
             value: supportedLDAPVersion.encoderFor["&Type"]!(3, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -1438,19 +1389,16 @@ export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: supportedFeatures["&id"],
+            type: supportedFeatures["&id"],
             value: _encodeObjectIdentifier(modifyIncrement, DER),
-            contexts: new Map(),
         },
         {
-            id: supportedFeatures["&id"],
+            type: supportedFeatures["&id"],
             value: _encodeObjectIdentifier(trueFalseFilters, DER),
-            contexts: new Map(),
         },
         {
-            id: supportedFeatures["&id"],
+            type: supportedFeatures["&id"],
             value: _encodeObjectIdentifier(allOpAttrs, DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -1463,7 +1411,7 @@ export const readSubschemaSubentryList: SpecialAttributeDatabaseReader = async (
     if (!vertex.immediateSuperior && vertex.dse.root) {
         return [
             { // Special "virtual entry" containing the subschema.
-                id: subschemaSubentryList["&id"],
+                type: subschemaSubentryList["&id"],
                 value: _encode_DistinguishedName([
                     [
                         new AttributeTypeAndValue(
@@ -1472,8 +1420,7 @@ export const readSubschemaSubentryList: SpecialAttributeDatabaseReader = async (
                         ),
                     ],
                 ], DER),
-                contexts: new Map(),
-            },
+                },
         ];
     }
     const subschema = relevantSubentries?.find((sub) => sub.dse.objectClass.has(SUBSCHEMA));
@@ -1482,9 +1429,8 @@ export const readSubschemaSubentryList: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            id: id_oa_subschemaSubentryList,
+            type: id_oa_subschemaSubentryList,
             value: _encode_DistinguishedName(getDistinguishedName(subschema), DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -1499,9 +1445,8 @@ export const readAccessControlSubentryList: SpecialAttributeDatabaseReader = asy
         ?.filter((sub) => sub.dse.objectClass.has(accessControlSubentryOID))
         .map(getDistinguishedName)
         .map((dn) => ({
-            id: id_oa_accessControlSubentryList,
+            type: id_oa_accessControlSubentryList,
             value: _encode_DistinguishedName(dn, DER),
-            contexts: new Map(),
         })) ?? [];
 };
 
@@ -1514,9 +1459,8 @@ export const readCollectiveAttributeSubentryList: SpecialAttributeDatabaseReader
         ?.filter((sub) => sub.dse.objectClass.has(collectiveAttributeSubentryOID))
         .map(getDistinguishedName)
         .map((dn) => ({
-            id: id_oa_collectiveAttributeSubentryList,
+            type: id_oa_collectiveAttributeSubentryList,
             value: _encode_DistinguishedName(dn, DER),
-            contexts: new Map(),
         })) ?? [];
 };
 
@@ -1529,9 +1473,8 @@ export const readContextDefaultSubentryList: SpecialAttributeDatabaseReader = as
         ?.filter((sub) => sub.dse.objectClass.has(contextAssertionSubentryOID))
         .map(getDistinguishedName)
         .map((dn) => ({
-            id: id_oa_contextDefaultSubentryList,
+            type: id_oa_contextDefaultSubentryList,
             value: _encode_DistinguishedName(dn, DER),
-            contexts: new Map(),
         })) ?? [];
 };
 
@@ -1544,9 +1487,8 @@ export const readServiceAdminSubentryList: SpecialAttributeDatabaseReader = asyn
         ?.filter((sub) => sub.dse.objectClass.has(serviceAdminSubentryOID))
         .map(getDistinguishedName)
         .map((dn) => ({
-            id: id_oa_serviceAdminSubentryList,
+            type: id_oa_serviceAdminSubentryList,
             value: _encode_DistinguishedName(dn, DER),
-            contexts: new Map(),
         })) ?? [];
 };
 
@@ -1559,9 +1501,8 @@ export const readPwdAdminSubentryList: SpecialAttributeDatabaseReader = async (
         ?.filter((sub) => sub.dse.objectClass.has(pwdAdminSubentryOID))
         .map(getDistinguishedName)
         .map((dn) => ({
-            id: id_oa_pwdAdminSubentryList,
+            type: id_oa_pwdAdminSubentryList,
             value: _encode_DistinguishedName(dn, DER),
-            contexts: new Map(),
         })) ?? [];
 };
 
@@ -1579,9 +1520,8 @@ export const readHasSubordinates: SpecialAttributeDatabaseReader = async (
     });
     return [
         {
-            id: id_oa_hasSubordinates,
+            type: id_oa_hasSubordinates,
             value: _encodeBoolean(Boolean(sub), DER),
-            contexts: new Map(),
         },
     ];
 };
@@ -1599,9 +1539,8 @@ export const readCollectiveExclusions: SpecialAttributeDatabaseReader = async (
         },
     });
     return cexs.map((cex) => ({
-        id: id_oa_collectiveExclusions,
+        type: id_oa_collectiveExclusions,
         value: _encodeObjectIdentifier(ObjectIdentifier.fromString(cex.collectiveExclusion), DER),
-        contexts: new Map(),
     }));
 };
 
@@ -1611,14 +1550,13 @@ export const readEntryUUID: SpecialAttributeDatabaseReader = async (
 ): Promise<Value[]> => {
     return [
         {
-            id: new ObjectIdentifier([ 1, 3, 6, 1, 1, 16, 4 ]),
+            type: new ObjectIdentifier([ 1, 3, 6, 1, 1, 16, 4 ]),
             value: new DERElement(
                 ASN1TagClass.universal,
                 ASN1Construction.primitive,
                 ASN1UniversalType.octetString,
                 Buffer.from(vertex.dse.uuid.replace(/-/g, ""), "hex"),
             ),
-            contexts: new Map(),
         },
     ];
 };

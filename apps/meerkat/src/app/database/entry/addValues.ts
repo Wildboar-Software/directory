@@ -183,7 +183,7 @@ async function addValues (
     await Promise.all(
         attributes
             .map((attr) => specialAttributeDatabaseWriters
-                .get(attr.id.toString())?.(ctx, entry, attr, pendingUpdates)),
+                .get(attr.type.toString())?.(ctx, entry, attr, pendingUpdates)),
     );
     return [
         ctx.db.entry.update({
@@ -194,11 +194,11 @@ async function addValues (
         }),
         ...pendingUpdates.otherWrites,
         ...attributes
-            .filter((attr) => !specialAttributeDatabaseWriters.has(attr.id.toString()))
+            .filter((attr) => !specialAttributeDatabaseWriters.has(attr.type.toString()))
             .map((attr) => ctx.db.attributeValue.create({
                 data: {
                     entry_id: entry.dse.id,
-                    type: attr.id.toString(),
+                    type: attr.type.toString(),
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
@@ -207,7 +207,7 @@ async function addValues (
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {
-                            data: Array.from(attr.contexts.values())
+                            data: Array.from(attr.contexts?.values() ?? [])
                                 .flatMap((context) => context.values.map((cv) => ({
                                     entry_id: entry.dse.id,
                                     type: context.id.toString(),

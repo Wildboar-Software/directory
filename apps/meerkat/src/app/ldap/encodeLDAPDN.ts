@@ -11,7 +11,7 @@ function encodeLDAPDN (ctx: Context, dn: RDNSequence): Uint8Array {
             .map((rdn) => rdn
                 .map((atav) => [ atav.type_, atav.value ])),
         (attrType: OBJECT_IDENTIFIER) => {
-            const attr = ctx.attributes.get(attrType.toString());
+            const attr = ctx.attributeTypes.get(attrType.toString());
             if (!attr?.ldapSyntax) {
                 throw new Error(attrType.toString());
             }
@@ -22,7 +22,7 @@ function encodeLDAPDN (ctx: Context, dn: RDNSequence): Uint8Array {
             return (value: ASN1Element) => Buffer.from(syntax_.encoder!(value)).toString("utf-8");
         },
         (type_: OBJECT_IDENTIFIER): string | undefined => {
-            return ctx.attributes.get(type_.toString())
+            return ctx.attributeTypes.get(type_.toString())
                 ?.ldapNames
                 ?.sort((a, b) => a.length - b.length)[0];
         },

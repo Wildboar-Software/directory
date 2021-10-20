@@ -112,7 +112,7 @@ const DEFAULT_LDAP_FILTER: LDAPFilter = {
 };
 
 function getLDAPEncoder (ctx: Context, type_: AttributeType): LDAPSyntaxEncoder | null {
-    const spec = ctx.attributes.get(type_.toString());
+    const spec = ctx.attributeTypes.get(type_.toString());
     if (!spec?.ldapSyntax) {
         return null;
     }
@@ -301,7 +301,7 @@ function convertDAPFilterItemToLDAPFilterItem (ctx: Context, fi: DAPFilterItem):
         if (!fi.substrings.type_) {
             return NOT_UNDERSTOOD;
         }
-        const spec = ctx.attributes.get(fi.substrings.type_.toString());
+        const spec = ctx.attributeTypes.get(fi.substrings.type_.toString());
         if (!spec?.ldapSyntax) {
             return NOT_UNDERSTOOD;
         }
@@ -359,7 +359,7 @@ function convertDAPFilterItemToLDAPFilterItem (ctx: Context, fi: DAPFilterItem):
         if (!fi.extensibleMatch.type_) {
             return NOT_UNDERSTOOD;
         }
-        const spec = ctx.attributes.get(fi.extensibleMatch.type_.toString());
+        const spec = ctx.attributeTypes.get(fi.extensibleMatch.type_.toString());
         if (!spec?.ldapSyntax) {
             return NOT_UNDERSTOOD;
         }
@@ -452,7 +452,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
                 addRequest: new AddRequest(
                     encodeLDAPDN(ctx, data.object.rdnSequence),
                     data.entry.map((attr) => {
-                        const spec = ctx.attributes.get(attr.type_.toString());
+                        const spec = ctx.attributeTypes.get(attr.type_.toString());
                         if (!spec?.ldapSyntax) {
                             throw new Error(); // FIXME:
                         }
@@ -496,7 +496,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     else if (compareCode(req.opCode, compare["&operationCode"]!)) {
         const arg = compare.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
-        const spec = ctx.attributes.get(data.purported.type_.toString());
+        const spec = ctx.attributeTypes.get(data.purported.type_.toString());
         if (!spec?.ldapSyntax) {
             throw new Error(); // FIXME:
         }

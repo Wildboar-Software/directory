@@ -88,7 +88,7 @@ async function readPermittedEntryInformation (
                         authLevel,
                         {
                             value: new AttributeTypeAndValue(
-                                value.id,
+                                value.type,
                                 value.value,
                             ),
                         },

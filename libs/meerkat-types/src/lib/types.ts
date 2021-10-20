@@ -183,7 +183,7 @@ interface AttributeInfo {
     id: OBJECT_IDENTIFIER;
     name?: string[];
     description?: string;
-    obsolete: boolean;
+    obsolete?: boolean;
     parent?: OBJECT_IDENTIFIER;
     /**
      * From ITU Recommendation X.501 (2016), Section 8.9.5:
@@ -203,16 +203,17 @@ interface AttributeInfo {
     equalityMatchingRule?: OBJECT_IDENTIFIER;
     orderingMatchingRule?: OBJECT_IDENTIFIER;
     substringsMatchingRule?: OBJECT_IDENTIFIER;
-    singleValued: boolean;
-    collective: boolean;
-    dummy: boolean;
-    noUserModification: boolean;
+    singleValued?: boolean;
+    collective?: boolean;
+    dummy?: boolean;
+    noUserModification?: boolean;
     usage: AttributeUsage;
     ldapSyntax?: OBJECT_IDENTIFIER;
     ldapNames?: LDAPName[];
     ldapDescription?: string;
     compatibleMatchingRules: Set<IndexableOID>;
     syntax?: string;
+    driver?: AttributeTypeDatabaseDriver;
 }
 
 export
@@ -246,10 +247,13 @@ interface StoredContext {
 
 export
 interface Value {
-    // TODO: Add id field to enhance performance of deletion and replacement.
-    id: AttributeType; // TODO: Rename to "type"
+    /**
+     * The ID of the value in the attributevalue table, if applicable.
+     */
+    id?: number;
+    type: AttributeType; // TODO: Rename to "type"
     value: ANY;
-    contexts: Map<IndexableOID, StoredContext>;
+    contexts?: Map<IndexableOID, StoredContext>;
 }
 
 export
@@ -392,7 +396,7 @@ export
 interface DSE {
     id: number; // Database primary key ID.
     uuid: UUID;
-    uniqueIdentifier?: BIT_STRING;
+    uniqueIdentifier?: BIT_STRING[];
     rdn: RelativeDistinguishedName;
     objectClass: Set<IndexableOID>;
     governingStructureRule?: number;
@@ -1053,7 +1057,7 @@ interface Context {
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
     /* Note that there cannot be a single attributes hierarchy like there is
     with structural classes. */
-    attributes: Map<IndexableOID, AttributeInfo>;
+    attributeTypes: Map<IndexableOID, AttributeInfo>;
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
     equalityMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
     orderingMatchingRules: Map<IndexableOID, MatchingRuleInfo<OrderingMatcher>>;
@@ -1224,52 +1228,19 @@ type SpecialAttributeValueDetector = (
 ) => Promise<boolean>;
 
 export
-type SpecialAttributeContextGetter = (
-    ctx: Readonly<Context>,
-    entry: Vertex,
-) => Promise<StoredContext[]>;
-
-export
 type SpecialAttributeEntryGetter = (
     ctx: Readonly<Context>,
     entry: Vertex,
 ) => Promise<Vertex | null>;
 
 export
-class AttributeTypeDatabaseDriver {
-    constructor (
-        public readonly readValues: SpecialAttributeDatabaseReader,
-        public readonly addValues: SpecialAttributeDatabaseEditor,
-        public readonly removeValues: SpecialAttributeDatabaseEditor,
-        public readonly removeAttribute: SpecialAttributeDatabaseRemover,
-        private readonly _countValues?: SpecialAttributeCounter,
-        private readonly _isPresent?: SpecialAttributeDetector,
-        public readonly getContexts?: SpecialAttributeContextGetter,
-        public readonly hasValue?: SpecialAttributeValueDetector, // So you don't have to read all values into memory just to determine if one exists.
-        public readonly getEntry?: SpecialAttributeEntryGetter,
-    ) {}
-
-    public async countValues (
-        ctx: Readonly<Context>,
-        entry: Vertex,
-    ): Promise<number> {
-        if (this._countValues) {
-            return this._countValues(ctx, entry);
-        } else {
-            return (await this.readValues(ctx, entry)).length;
-        }
-    }
-
-    public async isPresent (
-        ctx: Readonly<Context>,
-        entry: Vertex,
-    ): Promise<boolean> {
-        if (this._isPresent) {
-            return this._isPresent(ctx, entry);
-        } else if (this._countValues) {
-            return ((await this._countValues(ctx, entry)) > 0);
-        } else {
-            return ((await this.readValues(ctx, entry)).length > 0);
-        }
-    }
+interface AttributeTypeDatabaseDriver {
+    readonly readValues: SpecialAttributeDatabaseReader;
+    readonly addValues: SpecialAttributeDatabaseEditor;
+    readonly removeValues: SpecialAttributeDatabaseEditor;
+    readonly removeAttribute: SpecialAttributeDatabaseRemover;
+    readonly countValues?: SpecialAttributeCounter;
+    readonly isPresent?: SpecialAttributeDetector;
+    readonly hasValue?: SpecialAttributeValueDetector; // So you don't have to read all values into memory just to determine if one exists.
+    readonly getEntry?: SpecialAttributeEntryGetter;
 }

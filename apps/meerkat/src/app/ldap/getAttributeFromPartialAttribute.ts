@@ -10,7 +10,7 @@ import {
 export
 function getAttributeFromPartialAttribute (ctx: Context, attr: PartialAttribute): Attribute | undefined {
     const desc = normalizeAttributeDescription(attr.type_);
-    const spec = ctx.attributes.get(desc);
+    const spec = ctx.attributeTypes.get(desc);
     if (!spec?.ldapSyntax) {
         return undefined;
     }

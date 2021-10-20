@@ -371,7 +371,7 @@ async function readValues (
                     return true;
                 }
                 // Collective attributes cannot be operational attributes.
-                return selectedUserAttributes.has(attr.id.toString());
+                return selectedUserAttributes.has(attr.type.toString());
             });
 
     // FIXME: Fully implement this!

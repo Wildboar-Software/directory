@@ -9,7 +9,7 @@ function getOrderingMatcherGetter (
     ctx: Context,
 ): (attributeType: AttributeType) => OrderingMatcher | undefined {
     const ret = function (attributeType: AttributeType): OrderingMatcher | undefined {
-        const spec = ctx.attributes.get(attributeType.toString());
+        const spec = ctx.attributeTypes.get(attributeType.toString());
         if (!spec) {
             return undefined;
         }

@@ -86,13 +86,16 @@ async function dseFromDatabaseEntry (
         uuid: dbe.entryUUID,
         rdn,
         objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
-        uniqueIdentifier: dbe.uniqueIdentifier
-            ? (() => {
+        uniqueIdentifier: (await ctx.db.uniqueIdentifier.findMany({
+            where: {
+                entry_id: dbe.id,
+            },
+        }))
+            .map((dbuid) => {
                 const el = new BERElement();
-                el.value = dbe.uniqueIdentifier;
+                el.value = dbuid.uniqueIdentifier;
                 return el.bitString;
-            })()
-            : undefined,
+            }),
         structuralObjectClass: dbe.structuralObjectClass
             ? ObjectIdentifier.fromString(dbe.structuralObjectClass)
             : undefined,

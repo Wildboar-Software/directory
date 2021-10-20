@@ -10,10 +10,10 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     Object.values(x500at)
         .map(attributeFromInformationObject)
         .forEach((attr) => {
-            ctx.attributes.set(attr.id.toString(), attr);
+            ctx.attributeTypes.set(attr.id.toString(), attr);
             attr.ldapNames?.forEach((ldapName: string): void => {
-                ctx.attributes.set(ldapName.trim(), attr);
-                ctx.attributes.set(ldapName.trim().toLowerCase(), attr);
+                ctx.attributeTypes.set(ldapName.trim(), attr);
+                ctx.attributeTypes.set(ldapName.trim().toLowerCase(), attr);
                 if (!attr.ldapSyntax) {
                     return;
                 }
@@ -36,14 +36,14 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         }
     }
 
-    Array.from(ctx.attributes.values())
+    Array.from(ctx.attributeTypes.values())
         .filter((attr) => attr.collective)
         .forEach((attr) => {
             ctx.collectiveAttributes.add(attr.id.toString());
         });
 
-    ctx.attributes.set(entryUUID.id.toString(), entryUUID);
-    ctx.attributes.set("entryUUID", entryUUID);
+    ctx.attributeTypes.set(entryUUID.id.toString(), entryUUID);
+    ctx.attributeTypes.set("entryUUID", entryUUID);
 
     Object.entries(x500at).forEach(([ name, attr ]) => {
         ctx.nameToObjectIdentifier.set(name, attr["&id"]);

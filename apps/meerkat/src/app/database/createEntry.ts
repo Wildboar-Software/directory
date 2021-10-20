@@ -27,7 +27,7 @@ async function createEntry (
     modifier: DistinguishedName = [],
 ): Promise<Vertex> {
     const objectClasses = values
-        .filter((value) => value.id.isEqualTo(objectClass["&id"]))
+        .filter((value) => value.type.isEqualTo(objectClass["&id"]))
         .map((value) => value.value.objectIdentifier);
     // This entry is intentionally created as deleted first, in case the transaction fails.
     const isSubentry = objectClasses.some((oc) => oc.isEqualTo(subentry["&id"]));
@@ -56,10 +56,14 @@ async function createEntry (
             structuralObjectClass: entryInit.structuralObjectClass
                 ?? getStructuralObjectClass(ctx, objectClasses).toString(),
             governingStructureRule: entryInit.governingStructureRule,
-            uniqueIdentifier: Buffer.concat([
-                Buffer.from([ 0 ]),
-                randomBytes(8),
-            ]),
+            UniqueIdentifier: {
+                create: {
+                    uniqueIdentifier: Buffer.concat([
+                        Buffer.from([ 0 ]),
+                        randomBytes(8),
+                    ]),
+                },
+            },
         },
     });
     await ctx.db.$transaction(rdn.map((atav) => ctx.db.rDN.create({

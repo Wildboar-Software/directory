@@ -16,7 +16,7 @@ function getEntryInfoItemFromPartialAttribute (
 ): EntryInformation_information_Item | undefined {
     if (typesOnly) {
         const desc = normalizeAttributeDescription(partattr.type_);
-        const spec = ctx.attributes.get(desc);
+        const spec = ctx.attributeTypes.get(desc);
         return spec?.id
             ? {
                 attributeType: spec.id,

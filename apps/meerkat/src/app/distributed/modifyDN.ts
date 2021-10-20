@@ -1059,7 +1059,7 @@ async function modifyDN (
             ];
             const allValuesDeleted: boolean = matcher
                 ? values
-                    .filter((value) => (value.contexts.size === 0))
+                    .filter((value) => (!value.contexts || (value.contexts.size === 0)))
                     .every((value) => matcher(value.value, atav.value))
                 : (values.length <= 1);
             if (allValuesDeleted) {
@@ -1151,7 +1151,7 @@ async function modifyDN (
                 }
             }
             const valueToDelete: Value = {
-                id: oldATAV.type_,
+                type: oldATAV.type_,
                 value: oldATAV.value,
                 contexts: new Map(),
             };

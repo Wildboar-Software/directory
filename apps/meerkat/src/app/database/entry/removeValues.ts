@@ -179,7 +179,7 @@ async function removeValues (
     await Promise.all(
         attributes
             .map((attr) => specialAttributeDatabaseWriters
-                .get(attr.id.toString())?.(ctx, entry, attr, pendingUpdates)),
+                .get(attr.type.toString())?.(ctx, entry, attr, pendingUpdates)),
     );
     return [
         ctx.db.entry.update({
@@ -190,11 +190,11 @@ async function removeValues (
         }),
         ...pendingUpdates.otherWrites,
         ...attributes
-            .filter((attr) => !specialAttributeDatabaseWriters.has(attr.id.toString()))
+            .filter((attr) => !specialAttributeDatabaseWriters.has(attr.type.toString()))
             .map((attr) => ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: entry.dse.id,
-                    type: attr.id.toString(),
+                    type: attr.type.toString(),
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
