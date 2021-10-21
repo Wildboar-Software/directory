@@ -139,7 +139,7 @@ async function handleRequest (
             {
                 searchResDone: new LDAPResult(
                     LDAPResult_resultCode_success,
-                    message.protocolOp.searchRequest.baseObject,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"),
                     undefined,
                 ),
@@ -221,7 +221,7 @@ async function handleRequestAndErrors (
         if (e instanceof errors.DirectoryError) {
             stats.outcome.error.code = codeToString(e.getErrCode());
         }
-        const result: LDAPResult | undefined = dapErrorToLDAPResult(e, cancelOp);
+        const result: LDAPResult | undefined = dapErrorToLDAPResult(ctx, e, cancelOp);
         if (!result) {
             return; // No response is returned for abandoned operations in LDAP.
         }

@@ -108,6 +108,7 @@ async function main (): Promise<void> {
                         protocol: idmBind.protocolID.toString(),
                     }))
                     idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.close());
+                    associations.delete(c);
                     return;
                 }
                 if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {

@@ -1,3 +1,4 @@
+import type { Context } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import {
     LDAPResult,
@@ -119,6 +120,10 @@ import {
     // UpdateProblem_passwordInHistory,
     // UpdateProblem_noPasswordSlot,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 function ldapErr (code: number, message: string): LDAPResult {
     return new LDAPResult(
@@ -129,8 +134,21 @@ function ldapErr (code: number, message: string): LDAPResult {
     );
 }
 
+function ldapErrWithDN (ctx: Context, code: number, message: string, dn: DistinguishedName): LDAPResult {
+    return new LDAPResult(
+        code,
+        encodeLDAPDN(ctx, dn),
+        Buffer.from(message, "utf-8"),
+        undefined,
+    );
+}
+
 export
-function dapErrorToLDAPResult (e: Error, isCancel: boolean): LDAPResult | undefined {
+function dapErrorToLDAPResult (
+    ctx: Context,
+    e: Error,
+    isCancel: boolean,
+): LDAPResult | undefined {
     if (e instanceof errors.AbandonError) {
         // stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
         if (isCancel) {
@@ -180,7 +198,12 @@ function dapErrorToLDAPResult (e: Error, isCancel: boolean): LDAPResult | undefi
     } else if (e instanceof errors.NameError) {
         switch (e.data.problem) {
             case (NameProblem_noSuchObject):
-                return ldapErr(LDAPResult_resultCode_noSuchObject, e.message);
+                return ldapErrWithDN(
+                    ctx,
+                    LDAPResult_resultCode_noSuchObject,
+                    e.message,
+                    e.data.matched.rdnSequence,
+                );
             case (NameProblem_invalidAttributeSyntax):
                 return ldapErr(LDAPResult_resultCode_invalidAttributeSyntax, e.message);
             case (NameProblem_aliasProblem):

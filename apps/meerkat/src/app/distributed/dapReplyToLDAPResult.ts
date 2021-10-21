@@ -109,9 +109,6 @@ async function dapReplyToLDAPResult (
     if (!res.opCode || !res.result) {
         throw new Error(); // FIXME:
     }
-    const foundDN: LDAPDN = foundDSE // TODO: Make empty if it matches the target object.
-        ? encodeLDAPDN(ctx, getDistinguishedName(foundDSE))
-        : new Uint8Array();
 
     let sortRequestControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc2891.html
     let simplePagedResultsControl: Control | undefined;
@@ -136,7 +133,7 @@ async function dapReplyToLDAPResult (
             {
                 addResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
-                    foundDN,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"),
                     undefined,
                 ),
@@ -154,7 +151,7 @@ async function dapReplyToLDAPResult (
             {
                 extendedResp: new ExtendedResponse(
                     LDAPResult_resultCode_success,
-                    foundDN,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"), // FIXME: Make "Success" an i18n string.
                     undefined,
                     encodeLDAPOID(modifyPassword),
@@ -174,7 +171,7 @@ async function dapReplyToLDAPResult (
                     data.matched
                         ? LDAPResult_resultCode_compareTrue
                         : LDAPResult_resultCode_compareFalse,
-                    foundDN,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"),
                     undefined,
                 ),
@@ -188,7 +185,7 @@ async function dapReplyToLDAPResult (
             {
                 modDNResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
-                    foundDN,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"),
                     undefined,
                 ),
@@ -216,7 +213,7 @@ async function dapReplyToLDAPResult (
             {
                 modifyResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
-                    foundDN,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"),
                     undefined,
                 ),
@@ -236,6 +233,9 @@ async function dapReplyToLDAPResult (
         const result = read.decoderFor["&ResultType"]!(res.result!);
         const data = getOptionallyProtectedValue(result);
         const attrs: PartialAttribute[] = getPartialAttributesFromEntryInformation(ctx, data.entry.information ?? []);
+        const foundDN: LDAPDN = foundDSE
+            ? encodeLDAPDN(ctx, getDistinguishedName(foundDSE))
+            : new Uint8Array();
         const entry = new SearchResultEntry(
             foundDN,
             attrs,
@@ -246,7 +246,7 @@ async function dapReplyToLDAPResult (
             {
                 searchResDone: new LDAPResult(
                     LDAPResult_resultCode_success,
-                    foundDN,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"),
                     undefined,
                 ),
@@ -260,7 +260,7 @@ async function dapReplyToLDAPResult (
             {
                 delResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
-                    foundDN,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"),
                     undefined,
                 ),
@@ -333,7 +333,7 @@ async function dapReplyToLDAPResult (
             {
                 searchResDone: new LDAPResult(
                     LDAPResult_resultCode_success,
-                    foundDN,
+                    Buffer.alloc(0),
                     Buffer.from("Success", "utf-8"),
                     undefined,
                 ),

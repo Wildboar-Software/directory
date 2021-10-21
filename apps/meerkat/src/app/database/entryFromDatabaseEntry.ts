@@ -23,6 +23,7 @@ async function vertexFromDatabaseEntry (
         ? null
         : await Promise.all(
             (await ctx.db.entry.findMany({
+                take: 10_000_000,
                 where: {
                     immediate_superior_id: dbe.id,
                 },

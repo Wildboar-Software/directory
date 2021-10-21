@@ -80,7 +80,7 @@ model Entry {
   // Storage parameters
   keep_children_in_database Boolean @default(false)
 
-  Entry                      Entry?                       @relation("superior")
+  Entry                      Entry[]                       @relation("superior")
   ACIItem                    ACIItem[]
   Clearance                  Clearance[]
   MatchingRuleUse            MatchingRuleUse[]
