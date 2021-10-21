@@ -44,6 +44,17 @@ import {
     LDAPResult_resultCode_other,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
 import {
+    canceled,
+    cannotCancel,
+    tooLate,
+    noSuchOperation,
+} from "@wildboar/ldap/src/lib/resultCodes";
+import {
+    AbandonProblem_cannotAbandon,
+    AbandonProblem_noSuchOperation,
+    AbandonProblem_tooLate,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonProblem.ta";
+import {
     AttributeProblem_noSuchAttributeOrValue,
     AttributeProblem_invalidAttributeSyntax,
     AttributeProblem_undefinedAttributeType,
@@ -119,13 +130,28 @@ function ldapErr (code: number, message: string): LDAPResult {
 }
 
 export
-function dapErrorToLDAPResult (e: Error): LDAPResult | undefined {
+function dapErrorToLDAPResult (e: Error, isCancel: boolean): LDAPResult | undefined {
     if (e instanceof errors.AbandonError) {
         // stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
+        if (isCancel) {
+            return ldapErr(canceled, e.message);
+        }
         return undefined;
     } else if (e instanceof errors.AbandonFailedError) {
         // stats.outcome.error.problem = e.data.problem;
-        return undefined;
+        if (!isCancel) {
+            return undefined;
+        }
+        switch (e.data.problem) {
+        case (AbandonProblem_cannotAbandon):
+            return ldapErr(cannotCancel, e.message);
+        case (AbandonProblem_noSuchOperation):
+            return ldapErr(noSuchOperation, e.message);
+        case (AbandonProblem_tooLate):
+            return ldapErr(tooLate, e.message);
+        default:
+            return ldapErr(LDAPResult_resultCode_other, e.message);
+        }
     } else if (e instanceof errors.AttributeError) {
         // stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
         //     type: ap.type_.toString(),

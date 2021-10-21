@@ -9,6 +9,7 @@ import { DER } from "asn1-ts/dist/node/functional";
 import type { Result } from "@wildboar/x500/src/lib/types/Result";
 import { LDAPMessage } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
 import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
 import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
@@ -47,7 +48,6 @@ import getPartialAttributesFromEntryInformation from "../ldap/getPartialAttribut
 import {
     ExtendedResponse,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
-import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 import {
     Control,
@@ -58,6 +58,10 @@ import {
     simpledPagedResults as sprOID,
     sortResponse as sortResponseOID,
 } from "@wildboar/ldap/src/lib/controls";
+import {
+    cancel,
+    modifyPassword
+} from "@wildboar/ldap/src/lib/extensions";
 import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
 
 async function getSearchResultEntries (
@@ -337,6 +341,25 @@ async function dapReplyToLDAPResult (
             responseControls?.length
                 ? responseControls
                 : undefined,
+        );
+    } else if (
+        compareCode(res.opCode, abandon["&operationCode"]!)
+        && ("extendedReq" in req.protocolOp)
+        && decodeLDAPOID(req.protocolOp.extendedReq.requestName).isEqualTo(cancel)
+    ) {
+        return new LDAPMessage(
+            req.messageID,
+            {
+                extendedResp: new ExtendedResponse(
+                    LDAPResult_resultCode_success,
+                    Buffer.alloc(0),
+                    Buffer.from("Success.", "utf-8"),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            },
+            undefined,
         );
     } else {
         throw new Error();

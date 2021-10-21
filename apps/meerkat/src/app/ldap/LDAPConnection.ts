@@ -2,7 +2,7 @@ import { Context, Vertex, ClientConnection, OperationStatistics } from "@wildboa
 import * as errors from "@wildboar/meerkat-types";
 import * as net from "net";
 import * as tls from "tls";
-import { BERElement, ASN1TruncationError, ObjectIdentifier } from "asn1-ts";
+import { BERElement, ASN1TruncationError } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
     LDAPMessage,
@@ -32,7 +32,6 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
-import { startTLS } from "@wildboar/ldap/src/lib/extensions";
 import bind from "./bind";
 import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
@@ -50,7 +49,13 @@ import {
 import {
     PartialAttribute,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
-import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
+import {
+    modifyPassword,
+    whoAmI,
+    startTLS,
+    cancel,
+} from "@wildboar/ldap/src/lib/extensions";
+import encodeLDAPDN from "./encodeLDAPDN";
 
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
@@ -190,6 +195,10 @@ async function handleRequestAndErrors (
             operationCode: Object.keys(message.protocolOp)[0],
         },
     };
+    const cancelOp: boolean = (
+        ("extendedReq" in message.protocolOp)
+        && decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(cancel)
+    );
     // const now = new Date();
     // dap.invocations.set(request.invokeID, {
     //     invokeId: request.invokeID,
@@ -212,7 +221,7 @@ async function handleRequestAndErrors (
         if (e instanceof errors.DirectoryError) {
             stats.outcome.error.code = codeToString(e.getErrCode());
         }
-        const result: LDAPResult | undefined = dapErrorToLDAPResult(e);
+        const result: LDAPResult | undefined = dapErrorToLDAPResult(e, cancelOp);
         if (!result) {
             return; // No response is returned for abandoned operations in LDAP.
         }
@@ -374,8 +383,26 @@ class LDAPConnection extends ClientConnection {
                                 Buffer.alloc(0),
                                 Buffer.from("STARTTLS initiated.", "utf-8"),
                                 undefined,
-                                encodeLDAPOID(new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 1466, 20037 ])),
+                                encodeLDAPOID(startTLS),
                                 undefined,
+                            ),
+                        },
+                        undefined,
+                    );
+                    this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                } else if (oid.isEqualTo(whoAmI)) {
+                    const res = new LDAPMessage(
+                        message.messageID,
+                        {
+                            extendedResp: new ExtendedResponse(
+                                LDAPResult_resultCode_success,
+                                Buffer.alloc(0),
+                                Buffer.from("Success.", "utf-8"),
+                                undefined,
+                                undefined,
+                                this.boundNameAndUID
+                                    ? Buffer.from(`dn:${encodeLDAPDN(ctx, this.boundNameAndUID.dn)}`, "utf-8")
+                                    : Buffer.alloc(0), // Anonymous.
                             ),
                         },
                         undefined,

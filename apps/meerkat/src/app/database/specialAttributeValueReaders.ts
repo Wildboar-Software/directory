@@ -203,6 +203,7 @@ import {
     modifyIncrement,
     trueFalseFilters,
     allOpAttrs,
+    ocadLists,
 } from "@wildboar/ldap/src/lib/feature";
 import {
     simpledPagedResults,
@@ -1399,6 +1400,10 @@ export const readSupportedFeatures: SpecialAttributeDatabaseReader = async (
         {
             type: supportedFeatures["&id"],
             value: _encodeObjectIdentifier(allOpAttrs, DER),
+        },
+        {
+            type: supportedFeatures["&id"],
+            value: _encodeObjectIdentifier(ocadLists, DER),
         },
     ];
 };

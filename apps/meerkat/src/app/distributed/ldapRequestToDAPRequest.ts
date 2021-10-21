@@ -111,7 +111,10 @@ import {
 import {
     ldapAttributeOptionContext,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapAttributeOptionContext.oa";
-import { modifyPassword } from "@wildboar/ldap/src/lib/extensions";
+import {
+    modifyPassword,
+    cancel,
+} from "@wildboar/ldap/src/lib/extensions";
 import {
     subentries as subentriesOID,
     managedDSAIT as manageDSAITOID,
@@ -409,12 +412,21 @@ function convertAttributeSelectiontoEIS (
     const returnAllOperationalAttributes: boolean = selection
         .some((attr) => (attr[0] === 0x2B)); // See: https://www.rfc-editor.org/rfc/rfc3673.html
     const selectedAttributes: AttributeType[] = selection
-        .map((attr) => {
+        .flatMap((attr) => {
             const desc = normalizeAttributeDescription(attr);
+            if (desc.startsWith("@")) { // See: https://www.rfc-editor.org/rfc/rfc4529.html
+                const oc = ctx.objectClasses.get(desc.slice(1));
+                if (!oc) {
+                    return [];
+                }
+                return [
+                    ...Array.from(oc.mandatoryAttributes.values()).map(ObjectIdentifier.fromString),
+                    ...Array.from(oc.optionalAttributes.values()).map(ObjectIdentifier.fromString),
+                ];
+            }
             const spec = ctx.attributeTypes.get(desc);
-            return spec?.id;
-        })
-            .filter((id): id is AttributeType => !!id);
+            return spec ? [ spec.id ] : [];
+        });
     return new EntryInformationSelection(
         (returnAllUserAttributesExclusively || returnAllUserAttributesInclusively)
             ? {
@@ -990,6 +1002,33 @@ function ldapRequestToDAPRequest (
                     argument,
                 };
             }
+        } else if (oid.isEqualTo(cancel)) {
+            if (!req.protocolOp.extendedReq.requestValue) {
+                throw new Error(); // TODO:
+            }
+            const el = new BERElement();
+            el.fromBytes(req.protocolOp.extendedReq.requestValue);
+            const cancelIDElement = el.sequence[0];
+            if (!cancelIDElement) {
+                throw new Error();
+            }
+            const messageID: number = cancelIDElement.integer;
+            const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(messageID);
+            if (abandonedOperationInvokeID === undefined) {
+                return null;
+            }
+            const ar: AbandonArgument = {
+                unsigned: new AbandonArgumentData(
+                    {
+                        present: abandonedOperationInvokeID,
+                    },
+                ),
+            };
+            return {
+                invokeId,
+                opCode: abandon["&operationCode"],
+                argument: _encode_AbandonArgument(ar, DER),
+            };
         } else {
             throw new Error(); // We don't recognize the extended request.
         }
