@@ -142,7 +142,6 @@ const ctx: Context = {
     approxMatchingRules: new Map(),
     contextTypes: new Map(),
     matchingRulesSuitableForNaming: new Set(),
-    pagedResultsRequests: new Map(),
     ldapSyntaxes: new Map(),
     operationalBindingControlEvents: new EventEmitter(),
     collectiveAttributes: new Set(),

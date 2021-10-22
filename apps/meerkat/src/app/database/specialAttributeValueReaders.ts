@@ -1348,7 +1348,7 @@ export const readSupportedControl: SpecialAttributeDatabaseReader = async (
          * supported features because pagination was deeply broken and needed
          * complete re-implementation.
          */
-        // simpledPagedResults,
+        simpledPagedResults,
         sortRequest,
         sortResponse,
         postread,

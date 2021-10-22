@@ -189,6 +189,7 @@ async function list_ii (
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
     let page: number = 0;
     let queryReference: string | undefined;
+    let cursorId: number | undefined;
     if (data.pagedResults) {
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
@@ -258,8 +259,9 @@ async function list_ii (
                     ),
                 );
             }
-            pagingRequest = paging[0];
-            page = paging[1];
+            pagingRequest = paging.request;
+            page = paging.pageIndex;
+            cursorId = paging.cursorIds[0];
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             throw new errors.AbandonError(
@@ -305,7 +307,6 @@ async function list_ii (
     const pageSize: number = pagingRequest?.pageSize
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
-    let cursorId: number | undefined;
     let subordinatesInBatch = await readChildren(
         ctx,
         target,
@@ -438,7 +439,9 @@ async function list_ii (
         conn.pagedResultsRequests.set(queryReference, {
             request: pagingRequest,
             pageIndex: page + 1,
-            cursorId,
+            cursorIds: cursorId
+                ? [ cursorId ]
+                : [],
         });
     }
 

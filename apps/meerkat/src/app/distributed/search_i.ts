@@ -1,4 +1,11 @@
-import type { Context, Vertex, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "@wildboar/meerkat-types";
+import type {
+    Context,
+    Vertex,
+    ClientConnection,
+    WithRequestStatistics,
+    WithOutcomeStatistics,
+    PagedResultsRequestState,
+} from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -163,12 +170,26 @@ import LDAPConnection from "../ldap/LDAPConnection";
 
 const BYTES_IN_A_UUID: number = 16;
 
+/**
+ * "Why don't you just fetch `pageSize` number of entries?"
+ *
+ * Pagination fetches `pageSize` number of entries at _each level_ of search
+ * recursion. In other words, if you request a page size of 100, and, in the
+ * process, you recurse into the DIT ten layers deep, there will actually be
+ * 1000 entries loaded into memory at the deepest part. This means that a
+ * request could consume considerably higher memory than expected. To prevent
+ * this, a fixed page size is used. In the future, this may be configurable.
+ */
+const ENTRIES_PER_BATCH: number = 1000;
+
 export
-interface SearchIReturn extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
+interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
     chaining: ChainingResults;
     results: EntryInformation[];
     poq?: PartialOutcomeQualifier;
     skipsRemaining?: number;
+    depth: number;
+    paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
 }
 
 export
@@ -177,7 +198,7 @@ async function search_i (
     conn: ClientConnection,
     state: OperationDispatcherState,
     argument: SearchArgument,
-    ret: SearchIReturn,
+    searchState: SearchState,
 ): Promise<void> {
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
@@ -233,11 +254,8 @@ async function search_i (
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
-    let pagingRequest: PagedResultsRequest_newRequest | undefined;
-    let page: number = 0;
-    let cursorId: number | undefined;
-    let queryReference: string | undefined;
-    if (data.pagedResults) {
+    let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
+    if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
             const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
@@ -282,11 +300,19 @@ async function search_i (
                     ),
                 );
             }
-            queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
-            pagingRequest = data.pagedResults.newRequest;
-            page = ((data.pagedResults.newRequest.pageNumber ?? 1) - 1);
+            const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
+            const newPagingState: PagedResultsRequestState = {
+                cursorIds: [],
+                pageIndex: ((data.pagedResults.newRequest.pageNumber ?? 1) - 1),
+                request: data.pagedResults.newRequest,
+            };
+            searchState.paging = [ queryReference, newPagingState ];
+            if (conn.pagedResultsRequests.size >= 5) {
+                conn.pagedResultsRequests.clear();
+            }
+            conn.pagedResultsRequests.set(queryReference, newPagingState);
         } else if ("queryReference" in data.pagedResults) {
-            queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
+            const queryReference: string = Buffer.from(data.pagedResults.queryReference).toString("base64");
             const paging = conn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
@@ -306,11 +332,10 @@ async function search_i (
                     ),
                 );
             }
-            pagingRequest = paging.request;
-            page = paging.pageIndex;
-            cursorId = paging.cursorId;
+            searchState.paging = [ queryReference, paging ];
+            cursorId = searchState.paging[1].cursorIds[searchState.depth];
         } else if ("abandonQuery" in data.pagedResults) {
-            queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
+            const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             conn.pagedResultsRequests.delete(queryReference); // FIXME: Do this in list too.
             throw new errors.AbandonError(
                 ctx.i18n.t("err:abandoned_paginated_query"),
@@ -347,18 +372,18 @@ async function search_i (
             );
         }
     }
-    const pageNumber: number = pagingRequest?.pageNumber ?? 0;
-    const pageSize: number = pagingRequest?.pageSize
+    const pageNumber: number = searchState.paging?.[1].request.pageNumber ?? 0;
+    const pageSize: number = searchState.paging?.[1].request.pageSize
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
-        ret.poq = new PartialOutcomeQualifier(
+        searchState.poq = new PartialOutcomeQualifier(
             LimitProblem_timeLimitExceeded,
             undefined,
             undefined,
             undefined,
-            queryReference
-                ? Buffer.from(queryReference, "base64")
+            searchState.paging?.[0]
+                ? Buffer.from(searchState.paging[0], "base64")
                 : undefined,
             undefined,
             undefined,
@@ -366,14 +391,14 @@ async function search_i (
         );
         return;
     }
-    if (ret.results.length >= pageSize) {
-        ret.poq = new PartialOutcomeQualifier(
+    if (searchState.results.length >= pageSize) {
+        searchState.poq = new PartialOutcomeQualifier(
             LimitProblem_sizeLimitExceeded,
             undefined,
             undefined,
             undefined,
-            queryReference
-                ? Buffer.from(queryReference, "base64")
+            searchState.paging?.[0]
+                ? Buffer.from(searchState.paging[0], "base64")
                 : undefined,
             undefined,
             undefined,
@@ -381,8 +406,8 @@ async function search_i (
         );
         return;
     }
-    if (ret.skipsRemaining === undefined) {
-        ret.skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
+    if (searchState.skipsRemaining === undefined) {
+        searchState.skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
             ? (pageNumber * pageSize)
             : 0;
     }
@@ -625,13 +650,13 @@ async function search_i (
                 state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
             );
             if (suitable) {
-                if (ret.chaining.alreadySearched) {
-                    ret.chaining.alreadySearched.push(targetDN);
+                if (searchState.chaining.alreadySearched) {
+                    searchState.chaining.alreadySearched.push(targetDN);
                 } else {
-                    ret.chaining = new ChainingResults(
-                        ret.chaining.info,
-                        ret.chaining.crossReferences,
-                        ret.chaining.securityParameters,
+                    searchState.chaining = new ChainingResults(
+                        searchState.chaining.info,
+                        searchState.chaining.crossReferences,
+                        searchState.chaining.securityParameters,
                         [ targetDN ],
                     );
                 }
@@ -800,7 +825,7 @@ async function search_i (
             target,
             argument,
             state.chainingArguments,
-            ret,
+            searchState,
         );
         return;
     }
@@ -840,8 +865,8 @@ async function search_i (
             // Entry ACI is checked above.
             const match = evaluateFilter(filter, entryInfo, filterOptions);
             if (match || searchingForRootDSE) {
-                if (ret.skipsRemaining > 0) {
-                    ret.skipsRemaining--;
+                if (searchState.skipsRemaining > 0) {
+                    searchState.skipsRemaining--;
                     return;
                 }
                 const einfo = await readEntryInformation(
@@ -852,7 +877,7 @@ async function search_i (
                     data.operationContexts,
                 );
                 const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
-                ret.results.push(new EntryInformation(
+                searchState.results.push(new EntryInformation(
                     {
                         rdnSequence: targetDN,
                     },
@@ -895,8 +920,8 @@ async function search_i (
             // Entry ACI is checked above.
             const match = evaluateFilter(filter, entryInfo, filterOptions);
             if (match) {
-                if (ret.skipsRemaining > 0) {
-                    ret.skipsRemaining--;
+                if (searchState.skipsRemaining > 0) {
+                    searchState.skipsRemaining--;
                 } else {
                     const einfo = await readEntryInformation(
                         ctx,
@@ -906,7 +931,7 @@ async function search_i (
                         data.operationContexts,
                     );
                     const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
-                    ret.results.push(new EntryInformation(
+                    searchState.results.push(new EntryInformation(
                         {
                             rdnSequence: targetDN,
                         },
@@ -969,7 +994,7 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
-    if (pagingRequest?.sortKeys && (pagingRequest.sortKeys.length > 1)) {
+    if (searchState.paging?.[1].request.sortKeys && (searchState.paging[1].request.sortKeys.length > 1)) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:only_one_sort_key"),
             new ServiceErrorData(
@@ -987,7 +1012,7 @@ async function search_i (
             ),
         );
     }
-    const useSortedSearch: boolean = Boolean(pagingRequest?.sortKeys?.length);
+    const useSortedSearch: boolean = !!searchState.paging?.[1].request.sortKeys?.[0];
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
         return useSortedSearch
             ? await (async () => {
@@ -995,25 +1020,32 @@ async function search_i (
                 const newCursorId = await readChildrenSorted(
                     ctx,
                     target,
-                    pagingRequest!.sortKeys![0].type_,
+                    searchState.paging![1].request!.sortKeys![0].type_,
                     results,
-                    pagingRequest?.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
-                    pageSize,
+                    searchState.paging![1].request.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
+                    ENTRIES_PER_BATCH,
                     undefined,
                     cursorId,
                 );
+                if (searchState.paging?.[1].cursorIds) {
+                    if (newCursorId === undefined) {
+                        searchState.paging[1].cursorIds = searchState.paging[1].cursorIds.slice(0, searchState.depth);
+                    } else {
+                        searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
+                    }
+                }
                 cursorId = newCursorId;
                 return results;
             })()
             : await readChildren(
                 ctx,
                 target,
-                pageSize,
+                ENTRIES_PER_BATCH,
                 undefined,
                 cursorId,
-                // {
-                //     subentry: subentries,
-                // },
+                {
+                    subentry: subentries,
+                },
             );
     };
     let subordinatesInBatch = await getNextBatchOfSubordinates();
@@ -1039,22 +1071,25 @@ async function search_i (
                 );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
-                ret.poq = new PartialOutcomeQualifier(
+                searchState.poq = new PartialOutcomeQualifier(
                     LimitProblem_timeLimitExceeded,
                     undefined,
                     undefined,
                     undefined,
-                    queryReference
-                        ? Buffer.from(queryReference, "base64")
+                    searchState.paging?.[0]
+                        ? Buffer.from(searchState.paging[0], "base64")
                         : undefined,
                     undefined,
                     undefined,
                     undefined,
                 );
-                break;
+                return;
             }
             if (!useSortedSearch) {
                 cursorId = subordinate.dse.id;
+                if (searchState.paging?.[1].cursorIds) {
+                    searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
+                }
             }
             if (subentries && !subordinate.dse.subentry) {
                 continue;
@@ -1107,17 +1142,7 @@ async function search_i (
                     entryOnly: TRUE,
                 })
                 : state.chainingArguments;
-            if (
-                (ret.poq?.limitProblem !== undefined)
-                && queryReference
-                && pagingRequest
-            ) {
-                conn.pagedResultsRequests.set(queryReference, {
-                    request: pagingRequest,
-                    pageIndex: page + 1,
-                    cursorId,
-                });
-            }
+            searchState.depth++;
             await search_i(
                 ctx,
                 conn,
@@ -1127,16 +1152,19 @@ async function search_i (
                     foundDSE: subordinate,
                 }, // TODO: Are you sure you can always pass in the same admPoints?
                 argument,
-                ret,
+                searchState,
             );
-        }
-        if (ret.poq?.limitProblem !== undefined) {
-            break;
+            searchState.depth--;
+            if (searchState.poq) {
+                return;
+            }
         }
         subordinatesInBatch = await getNextBatchOfSubordinates();
     }
-    if (queryReference) {
-        conn.pagedResultsRequests.delete(queryReference);
+    // subordinatesInBatch.length === 0 beyond this point.
+    if ((searchState.depth === 0) && searchState.paging) {
+        conn.pagedResultsRequests.delete(searchState.paging[0]);
+        searchState.paging[1].cursorIds.pop();
     }
 }
 

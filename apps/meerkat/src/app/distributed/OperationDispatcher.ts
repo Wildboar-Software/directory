@@ -76,7 +76,7 @@ import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 import { DER } from "asn1-ts/dist/node/functional";
-import type { SearchIReturn } from "./search_i";
+import type { SearchState } from "./search_i";
 import { ChainingResults } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import type { Error_ } from "@wildboar/x500/src/lib/types/Error_";
 import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
@@ -450,9 +450,10 @@ class OperationDispatcher {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // Search (II)
-                const response: SearchIReturn = {
+                const response: SearchState = {
                     results: [],
                     chaining: relatedEntryReturn.chaining,
+                    depth: 0,
                 };
                 await search_ii(
                     ctx,
@@ -474,7 +475,9 @@ class OperationDispatcher {
                                     relatedEntryReturn.unexplored,
                                     response.poq?.unavailableCriticalExtensions,
                                     response.poq?.unknownErrors,
-                                    response.poq?.queryReference,
+                                    response.paging
+                                        ? Buffer.from(response.paging[0], "base64")
+                                        : response.poq?.queryReference,
                                     response.poq?.overspecFilter,
                                     response.poq?.notification,
                                     response.poq?.entryCount,
@@ -537,9 +540,10 @@ class OperationDispatcher {
                 };
             } else { // Search (I)
                 // Only Search (I) results in results merging.
-                const response: SearchIReturn = {
+                const response: SearchState = {
                     results: [],
                     chaining: relatedEntryReturn.chaining,
+                    depth: 0,
                 };
                 await search_i(
                     ctx,
@@ -561,7 +565,9 @@ class OperationDispatcher {
                                     relatedEntryReturn.unexplored,
                                     response.poq?.unavailableCriticalExtensions,
                                     response.poq?.unknownErrors,
-                                    response.poq?.queryReference,
+                                    response.paging
+                                        ? Buffer.from(response.paging[0], "base64")
+                                        : response.poq?.queryReference,
                                     response.poq?.overspecFilter,
                                     response.poq?.notification,
                                     response.poq?.entryCount,
@@ -809,9 +815,10 @@ class OperationDispatcher {
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         if (nameResolutionPhase === completed) { // Search (II)
-            const response: SearchIReturn = {
+            const response: SearchState = {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
+                depth: 0,
             };
             await search_ii(ctx, conn, state, argument, response);
             const localResult: SearchResult = {
@@ -827,7 +834,9 @@ class OperationDispatcher {
                                 relatedEntryReturn.unexplored,
                                 response.poq?.unavailableCriticalExtensions,
                                 response.poq?.unknownErrors,
-                                response.poq?.queryReference,
+                                response.paging
+                                    ? Buffer.from(response.paging[0], "base64")
+                                    : response.poq?.queryReference,
                                 response.poq?.overspecFilter,
                                 response.poq?.notification,
                                 response.poq?.entryCount,
@@ -872,9 +881,10 @@ class OperationDispatcher {
             };
         } else { // Search (I)
             // Only Search (I) results in results merging.
-            const response: SearchIReturn = {
+            const response: SearchState = {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
+                depth: 0,
             };
             await search_i(ctx, conn, state, argument, response);
             const localResult: SearchResult = {
@@ -890,7 +900,9 @@ class OperationDispatcher {
                                 relatedEntryReturn.unexplored,
                                 response.poq?.unavailableCriticalExtensions,
                                 response.poq?.unknownErrors,
-                                response.poq?.queryReference,
+                                response.paging
+                                    ? Buffer.from(response.paging[0], "base64")
+                                    : response.poq?.queryReference,
                                 response.poq?.overspecFilter,
                                 response.poq?.notification,
                                 response.poq?.entryCount,

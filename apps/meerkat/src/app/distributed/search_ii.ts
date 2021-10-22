@@ -1,6 +1,7 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientConnection, PagedResultsRequestState } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { TRUE_BIT, TRUE } from "asn1-ts";
+import * as crypto from "crypto";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
@@ -30,19 +31,35 @@ import {
 import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import search_i, { SearchIReturn } from "./search_i";
+import search_i, { SearchState } from "./search_i";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
+    id_errcode_serviceError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
+import {
+    ServiceProblem_invalidQueryReference,
     ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
-    id_errcode_serviceError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
+    AbandonedProblem_pagingAbandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
 
-const SEARCH_II_PAGE_SIZE: number = 100;
+const BYTES_IN_A_UUID: number = 16;
+
+/**
+ * "Why don't you just fetch `pageSize` number of entries?"
+ *
+ * Pagination fetches `pageSize` number of entries at _each level_ of search
+ * recursion. In other words, if you request a page size of 100, and, in the
+ * process, you recurse into the DIT ten layers deep, there will actually be
+ * 1000 entries loaded into memory at the deepest part. This means that a
+ * request could consume considerably higher memory than expected. To prevent
+ * this, a fixed page size is used. In the future, this may be configurable.
+ */
+ const ENTRIES_PER_BATCH: number = 1000;
 
 export
 async function search_ii (
@@ -50,7 +67,7 @@ async function search_ii (
     conn: ClientConnection,
     state: OperationDispatcherState,
     argument: SearchArgument,
-    ret: SearchIReturn,
+    searchState: SearchState,
 ): Promise<void> {
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
@@ -106,11 +123,129 @@ async function search_ii (
         );
     }
 
-    let cursorId: number | undefined;
+    let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
+    if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
+        if ("newRequest" in data.pagedResults) {
+            const nr = data.pagedResults.newRequest;
+            const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
+            if ((pi < 0) || !Number.isSafeInteger(pi)) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:page_number_invalid", {
+                        pi,
+                    }),
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_serviceError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+            // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
+            if ((nr.pageSize < 1) || !Number.isSafeInteger(nr.pageSize)) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:page_size_invalid", {
+                        ps: nr.pageSize,
+                    }),
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_serviceError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+            const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
+            const newPagingState: PagedResultsRequestState = {
+                cursorIds: [],
+                pageIndex: ((data.pagedResults.newRequest.pageNumber ?? 1) - 1),
+                request: data.pagedResults.newRequest,
+            };
+            searchState.paging = [ queryReference, newPagingState ];
+            if (conn.pagedResultsRequests.size >= 5) {
+                conn.pagedResultsRequests.clear();
+            }
+            conn.pagedResultsRequests.set(queryReference, newPagingState);
+        } else if ("queryReference" in data.pagedResults) {
+            const queryReference: string = Buffer.from(data.pagedResults.queryReference).toString("base64");
+            const paging = conn.pagedResultsRequests.get(queryReference);
+            if (!paging) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:paginated_query_ref_invalid"),
+                    new ServiceErrorData(
+                        ServiceProblem_invalidQueryReference,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_serviceError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+            searchState.paging = [ queryReference, paging ];
+            cursorId = searchState.paging[1].cursorIds[searchState.depth];
+        } else if ("abandonQuery" in data.pagedResults) {
+            const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
+            conn.pagedResultsRequests.delete(queryReference); // FIXME: Do this in list too.
+            throw new errors.AbandonError(
+                ctx.i18n.t("err:abandoned_paginated_query"),
+                new AbandonedData(
+                    AbandonedProblem_pagingAbandoned,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        } else {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:unrecognized_paginated_query_syntax"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_serviceError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+    }
+
     let subordinatesInBatch = await readChildren(
         ctx,
         target,
-        SEARCH_II_PAGE_SIZE,
+        ENTRIES_PER_BATCH,
         undefined,
         cursorId,
     );
@@ -187,18 +322,20 @@ async function search_ii (
                         data.familyGrouping,
                     ),
                 };
+            searchState.depth++;
             await search_i(
                 ctx,
                 conn,
                 state,
                 newArgument,
-                ret,
+                searchState,
             );
+            searchState.depth--;
         }
         subordinatesInBatch = await readChildren(
             ctx,
             target,
-            SEARCH_II_PAGE_SIZE,
+            ENTRIES_PER_BATCH,
             undefined,
             cursorId,
         );

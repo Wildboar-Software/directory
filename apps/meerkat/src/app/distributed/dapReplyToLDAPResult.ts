@@ -292,7 +292,6 @@ async function dapReplyToLDAPResult (
         if (
             simplePagedResultsControl
             && ("searchInfo" in data)
-            && data.searchInfo.partialOutcomeQualifier
         ) {
             responseControls.push(new Control(
                 encodeLDAPOID(sprOID),
@@ -321,7 +320,7 @@ async function dapReplyToLDAPResult (
                         ASN1TagClass.universal,
                         ASN1Construction.primitive,
                         ASN1UniversalType.octetString,
-                        data.searchInfo.partialOutcomeQualifier.queryReference
+                        data.searchInfo.partialOutcomeQualifier?.queryReference
                             ? data.searchInfo.partialOutcomeQualifier.queryReference
                             : new Uint8Array(),
                     ),

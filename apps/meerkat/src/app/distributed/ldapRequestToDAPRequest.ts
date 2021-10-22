@@ -147,6 +147,9 @@ import {
 import {
     SortKey,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
+import type {
+    PagedResultsRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
 import {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
@@ -587,6 +590,30 @@ function ldapRequestToDAPRequest (
                 } // TODO: What to do if the attribute type was not understood?
             }
         }
+        const prr: PagedResultsRequest | undefined = (() => {
+            if (queryReference) {
+                if (pageSize === 0) {
+                    return {
+                        abandonQuery: queryReference,
+                    };
+                }
+                return { queryReference };
+            }
+            if ((sortKey !== undefined) || (pageSize !== undefined)) {
+                return {
+                    newRequest: new PagedResultsRequest_newRequest(
+                        pageSize ?? 10_000_000,
+                        sortKey
+                            ? [ sortKey ]
+                            : undefined,
+                        reverse,
+                        undefined,
+                        undefined,
+                    ),
+                };
+            }
+            return undefined;
+        })();
         const dapReq: SearchArgument = {
             unsigned: new SearchArgumentData(
                 {
@@ -598,20 +625,7 @@ function ldapRequestToDAPRequest (
                     : undefined,
                 Boolean(req.protocolOp.searchRequest.derefAliases),
                 eis,
-                ((queryReference !== undefined) && { queryReference })
-                    || ((sortKey !== undefined) || (pageSize !== undefined))
-                        ? {
-                            newRequest: new PagedResultsRequest_newRequest(
-                                pageSize ?? 10_000_000,
-                                sortKey
-                                    ? [ sortKey ]
-                                    : undefined,
-                                reverse,
-                                undefined,
-                                undefined,
-                            ),
-                        }
-                        : undefined,
+                prr,
                 undefined,
                 undefined,
                 undefined,
@@ -624,14 +638,14 @@ function ldapRequestToDAPRequest (
                 [],
                 new ServiceControls(
                     sco,
-                    // (req.protocolOp.searchRequest.timeLimit > 0)
-                    //     ? req.protocolOp.searchRequest.timeLimit
-                    //     : undefined,
-                    undefined,
-                    // (req.protocolOp.searchRequest.sizeLimit > 0)
-                    //     ? req.protocolOp.searchRequest.sizeLimit
-                    //     : undefined,
-                    undefined,
+                    (req.protocolOp.searchRequest.timeLimit > 0)
+                        ? req.protocolOp.searchRequest.timeLimit
+                        : undefined,
+                    // undefined,
+                    (req.protocolOp.searchRequest.sizeLimit > 0)
+                        ? req.protocolOp.searchRequest.sizeLimit
+                        : undefined,
+                    // undefined,
                     undefined,
                     undefined,
                     undefined,
