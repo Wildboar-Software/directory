@@ -11,16 +11,16 @@
 //     SpecialAttributeDetector,
 //     SpecialAttributeValueDetector,
 // } from "@wildboar/meerkat-types";
-// // import {
-// //     DERElement,
-// //     ASN1TagClass,
-// //     ASN1UniversalType,
-// //     ObjectIdentifier,
-// // } from "asn1-ts";
-// // import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
-// // import {
-// //     objectClass,
-// // } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+// import {
+//     DERElement,
+//     ASN1TagClass,
+//     ASN1UniversalType,
+//     ObjectIdentifier,
+// } from "asn1-ts";
+// import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+// import {
+//     pwdVocabulary,
+// } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
 
 // export
 // const readValues: SpecialAttributeDatabaseReader = async (

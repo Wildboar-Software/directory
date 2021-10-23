@@ -108,6 +108,9 @@ const countValues: SpecialAttributeCounter = async (
     return ctx.db.password.count({
         where: {
             entry_id: vertex.dse.id,
+            pwdEndTime: {
+                not: null,
+            },
         },
     });
 };
@@ -117,32 +120,29 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return !!(await ctx.db.password.findFirst({
+    return !!(await ctx.db.password.count({
         where: {
             entry_id: vertex.dse.id,
-        },
-        select: {
-            id: true,
+            pwdEndTime: {
+                not: null,
+            },
         },
     }));
 };
 
-// export
-// const hasValue: SpecialAttributeValueDetector = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: Value,
-// ): Promise<boolean> => {
-//     return !!(await ctx.db.password.findFirst({
-//         where: {
-//             entry_id: vertex.dse.id,
-//             value:
-//         },
-//         select: {
-//             id: true,
-//         },
-//     }));
-// };
+export
+const hasValue: SpecialAttributeValueDetector = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+): Promise<boolean> => {
+    return !!(await ctx.db.password.count({
+        where: {
+            entry_id: vertex.dse.id,
+            pwdEndTime: value.value.generalizedTime,
+        },
+    }));
+};
 
 export
 const driver: AttributeTypeDatabaseDriver = {

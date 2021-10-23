@@ -101,21 +101,32 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return !!(await ctx.db.pwdExpiryAge.count({
+    return !!(await ctx.db.pwdExpiryAge.findFirst({
         where: {
             entry_id: vertex.dse.id,
+        },
+        select: {
+            id: true,
         },
     }));
 };
 
-// export
-// const hasValue: SpecialAttributeValueDetector = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: Value,
-// ): Promise<boolean> => {
-
-// };
+export
+const hasValue: SpecialAttributeValueDetector = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+): Promise<boolean> => {
+    return !!(await ctx.db.pwdExpiryAge.findFirst({
+        where: {
+            entry_id: vertex.dse.id,
+            value: value.value.integer,
+        },
+        select: {
+            id: true,
+        },
+    }));
+};
 
 export
 const driver: AttributeTypeDatabaseDriver = {
@@ -125,7 +136,7 @@ const driver: AttributeTypeDatabaseDriver = {
     removeAttribute,
     countValues,
     isPresent,
-    // hasValue,
+    hasValue,
 };
 
 export default driver;

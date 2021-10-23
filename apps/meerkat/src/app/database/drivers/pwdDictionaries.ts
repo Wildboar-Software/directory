@@ -84,7 +84,6 @@ export
 const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    relevantSubentries?: Vertex[],
 ): Promise<number> => {
     return ctx.db.pwdDictionaries.count({
         where: {
@@ -97,7 +96,6 @@ export
 const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    relevantSubentries?: Vertex[],
 ): Promise<boolean> => {
     return !!(await ctx.db.pwdDictionaries.count({
         where: {
