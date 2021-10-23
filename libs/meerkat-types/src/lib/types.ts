@@ -1207,12 +1207,14 @@ export
 type SpecialAttributeCounter = (
     ctx: Readonly<Context>,
     entry: Vertex,
+    relevantSubentries?: Vertex[],
 ) => Promise<number>;
 
 export
 type SpecialAttributeDetector = (
     ctx: Readonly<Context>,
     entry: Vertex,
+    relevantSubentries?: Vertex[],
 ) => Promise<boolean>;
 
 export
@@ -1220,6 +1222,7 @@ type SpecialAttributeValueDetector = (
     ctx: Readonly<Context>,
     entry: Vertex,
     value: Value,
+    relevantSubentries?: Vertex[],
 ) => Promise<boolean>;
 
 export
@@ -1231,8 +1234,8 @@ type SpecialAttributeEntryGetter = (
 export
 interface AttributeTypeDatabaseDriver {
     readonly readValues: SpecialAttributeDatabaseReader;
-    readonly addValues: SpecialAttributeDatabaseEditor;
-    readonly removeValues: SpecialAttributeDatabaseEditor;
+    readonly addValue: SpecialAttributeDatabaseEditor;
+    readonly removeValue: SpecialAttributeDatabaseEditor;
     readonly removeAttribute: SpecialAttributeDatabaseRemover;
     readonly countValues?: SpecialAttributeCounter;
     readonly isPresent?: SpecialAttributeDetector;

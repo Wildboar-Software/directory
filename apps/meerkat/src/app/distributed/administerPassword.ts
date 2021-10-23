@@ -186,7 +186,8 @@ async function administerPassword (
             );
         }
     }
-    await setEntryPassword(ctx, conn, target, data.newPwd);
+    const promises = await setEntryPassword(ctx, conn, target, data.newPwd);
+    await ctx.db.$transaction(promises);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for
     entries in this DSA. Meerkat DSA will take a principled stance and refuse

@@ -17,7 +17,6 @@ import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtend
 import bacACDF, {
     PERMISSION_CATEGORY_READ,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import attributesFromValues from "../../x500/attributesFromValues";
 import {

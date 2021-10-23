@@ -1343,11 +1343,6 @@ export const readSupportedControl: SpecialAttributeDatabaseReader = async (
         return [];
     }
     return [
-        /** FIXME: Re-enable this when pagination is fixed.
-         * Simple paginated results was removed TEMPORARILY from the advertised
-         * supported features because pagination was deeply broken and needed
-         * complete re-implementation.
-         */
         simpledPagedResults,
         sortRequest,
         sortResponse,

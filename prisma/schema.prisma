@@ -484,7 +484,7 @@ model SubtreeSpecification {
 
 model DitBridgeKnowledge {
   id              Int    @id @default(autoincrement())
-  domain_local_id String
+  domain_local_id String?
   ber             Bytes
 }
 
@@ -717,7 +717,7 @@ model SearchRule {
   // relaxation
   relaxation_minimum          Int     @default(1)
   relaxation_maximum          Int?
-  additionalControl           OIDs
+  additionalControl           OIDs?
   base_object_allowed         Boolean @default(true)
   one_level_allowed           Boolean @default(true)
   whole_subtree_allowed       Boolean @default(true)
@@ -725,7 +725,7 @@ model SearchRule {
   entry_limit_default         Int?
   entry_limit_max             Int?
   ber                         Bytes
-  name                        Names
+  name                        Names?
   description                 String?
 
   entry_id Int
@@ -950,4 +950,9 @@ model EntryAccessControlScheme {
   accessControlScheme OID
 
   @@unique([entry_id])
+}
+
+model AltServer {
+    id                  Int   @id @default(autoincrement())
+    uri                 String
 }
