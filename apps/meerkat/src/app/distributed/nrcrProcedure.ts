@@ -48,6 +48,7 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import getDistinguishedName from "../x500/getDistinguishedName";
 
 export
 async function nrcrProcedure (
@@ -248,7 +249,7 @@ async function nrcrProcedure (
                     new NameErrorData(
                         NameProblem_noSuchObject,
                         {
-                            rdnSequence: [],
+                            rdnSequence: getDistinguishedName(state.foundDSE),
                         },
                         [],
                         createSecurityParameters(

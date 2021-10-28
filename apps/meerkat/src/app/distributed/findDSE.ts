@@ -840,8 +840,7 @@ async function findDSE (
                     new NameErrorData(
                         NameProblem_noSuchObject,
                         {
-                            rdnSequence: [], // REVIEW: information disclosure.
-                            // rdnSequence: needleDN.slice(0, i),
+                            rdnSequence: getDistinguishedName(dse_i),
                         },
                         [],
                         createSecurityParameters(

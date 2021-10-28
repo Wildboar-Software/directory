@@ -169,7 +169,7 @@ async function list_ii (
                 new NameErrorData(
                     NameProblem_noSuchObject,
                     {
-                        rdnSequence: [],
+                        rdnSequence: targetDN.slice(0, -1),
                     },
                     [],
                     createSecurityParameters(
