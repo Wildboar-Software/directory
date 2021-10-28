@@ -7,6 +7,7 @@ import * as net from "net";
 import * as tls from "tls";
 import * as fs from "fs/promises";
 import * as path from "path";
+import * as os from "os";
 import { ObjectIdentifier } from "asn1-ts";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
 import {
@@ -92,11 +93,27 @@ async function main (): Promise<void> {
     }
 
     if (process.env.MEERKAT_INIT_JS) {
-        const mod = await import(/* webpackIgnore: true */ process.env.MEERKAT_INIT_JS);
+        const importPath = (os.platform() === "win32")
+            ? (() => {
+                const parsed = path.parse(path.join(process.cwd()));
+                if (path.isAbsolute(process.env.MEERKAT_INIT_JS)) {
+                    return process.env.MEERKAT_INIT_JS
+                        .replace(parsed.root, "/")
+                        .replace(/\\/g, "/");
+                }
+                return path.posix.join(
+                    process.cwd()
+                        .replace(parsed.root, "/")
+                        .replace(/\\/g, "/"),
+                    process.env.MEERKAT_INIT_JS,
+                );
+            })()
+            : process.cwd();
+        const mod = await import(/* webpackIgnore: true */ importPath);
         if (("default" in mod) && (typeof mod.default === "function")) {
-            return await mod.default(ctx);
+            await mod.default(ctx);
         } else if (("init" in mod) && (typeof mod.init === "function")) {
-            return await mod.init(ctx);
+            await mod.init(ctx);
         } else {
             ctx.log.warn(ctx.i18n.t("log:invalid_init_js"));
         }
