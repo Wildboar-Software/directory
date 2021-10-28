@@ -91,6 +91,17 @@ async function main (): Promise<void> {
         });
     }
 
+    if (process.env.MEERKAT_INIT_JS) {
+        const mod = await import(/* webpackIgnore: true */ process.env.MEERKAT_INIT_JS);
+        if (("default" in mod) && (typeof mod.default === "function")) {
+            return await mod.default(ctx);
+        } else if (("init" in mod) && (typeof mod.init === "function")) {
+            return await mod.init(ctx);
+        } else {
+            ctx.log.warn(ctx.i18n.t("log:invalid_init_js"));
+        }
+    }
+
     const associations: Map<net.Socket, ClientConnection> = new Map();
     const idmServer = net.createServer((c) => {
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;

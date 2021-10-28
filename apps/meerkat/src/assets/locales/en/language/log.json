@@ -44,5 +44,6 @@
     "entry_has_unrecognized_object_class": "Entry has unrecognized object class {{oid}}. It's required and optional attributes cannot be known.",
     "password_changed": "Connection {{cid}} changed the password for entry {{uuid}}.",
     "change_password_incorrect": "Connection {{cid}} supplied an incorrect password to changePassword operation on entry {{uuid}}.",
-    "family_subset_had_zero_members": "Family subset had zero members. This is not supposed to ever happen."
+    "family_subset_had_zero_members": "Family subset had zero members. This is not supposed to ever happen.",
+    "invalid_init_js": "Invalid MEERKAT_INIT_JS file. It must export a function named 'init' or 'default'."
 }
