@@ -5,6 +5,10 @@ import type {
     WithRequestStatistics,
     WithOutcomeStatistics,
     PagedResultsRequestState,
+    IndexableOID,
+    Value,
+    StoredContext,
+    DIT,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
@@ -165,6 +169,43 @@ import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
 import getApproxMatcherGetter from "../x500/getApproxMatcherGetter";
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
 import LDAPConnection from "../ldap/LDAPConnection";
+import readFamily from "../database/family/readFamily";
+import readEntryOnly from "../database/family/readEntryOnly";
+import readCompoundEntry from "../database/family/readCompoundEntry";
+import readStrands from "../database/family/readStrands";
+import {
+    FamilyGrouping_entryOnly,
+    FamilyGrouping_compoundEntry,
+    FamilyGrouping_strands,
+    // FamilyGrouping_multiStrand,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import {
+    // SearchControlOptions_searchAliases,
+    SearchControlOptions_matchedValuesOnly,
+    // SearchControlOptions_checkOverspecified,
+    // SearchControlOptions_performExactly,
+    // SearchControlOptions_includeAllAreas,
+    // SearchControlOptions_noSystemRelaxation,
+    // SearchControlOptions_dnAttribute,
+    // SearchControlOptions_matchOnResidualName,
+    // SearchControlOptions_entryCount,
+    // SearchControlOptions_useSubset,
+    SearchControlOptions_separateFamilyMembers,
+    // SearchControlOptions_searchFamily,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import {
+    EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import {
+    FamilyEntries,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntries.ta";
+import {
+    family_information,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
+import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -190,6 +231,17 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     skipsRemaining?: number;
     depth: number;
     paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
+}
+
+// Note that this does not scrutinize the root DSE for membership. It is assumed.
+function keepSubsetOfDITById (dit: DIT, idsToKeep: Set<number>): DIT {
+    return {
+        ...dit,
+        subordinates: dit.subordinates
+            ?.filter((sub) => idsToKeep.has(sub.dse.id))
+            .map((sub) => keepSubsetOfDITById(sub, idsToKeep))
+            ?? [],
+    };
 }
 
 export
@@ -249,6 +301,19 @@ async function search_i (
             ),
         );
     }
+
+    // const searchAliases: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchAliases]);
+    const matchedValuesOnly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchedValuesOnly]);
+    // const checkOverspecified: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_checkOverspecified]);
+    // const performExactly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_performExactly]);
+    // const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
+    // const noSystemRelaxation: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_noSystemRelaxation]);
+    // const dnAttribute: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_dnAttribute]);
+    // const matchOnResidualName: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchOnResidualName]);
+    // const entryCount: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_entryCount]);
+    // const useSubset: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_useSubset]);
+    const separateFamilyMembers: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_separateFamilyMembers]);
+    // const searchFamily: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchFamily]);
 
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -562,33 +627,37 @@ async function search_i (
             undefined,
         )
         : undefined;
-    const {
-        userAttributes,
-        operationalAttributes,
-        collectiveAttributes,
-    } = await readAttributes(ctx, target, eis, relevantSubentries, data.operationContexts);
-    const attributes = [
-        ...userAttributes,
-        ...operationalAttributes,
-        ...collectiveAttributes,
-    ];
-    infoItems.push(...attributes.map((attribute): EntryInformation_information_Item => ({
-        attribute,
-    })));
-    /**
-     * This is the entry information that is used for filtering, not necessarily
-     * what is returned by the search (via `selection`).
-     */
-    const entryInfo = new EntryInformation(
-        {
-            rdnSequence: targetDN,
-        },
-        undefined,
-        infoItems,
-        undefined,
-        undefined,
-        undefined,
-    );
+
+    const readFamilyMemberInfo = async (vertex: Vertex): Promise<EntryInformation> => {
+        const vertexDN = getDistinguishedName(vertex);
+        const {
+            userAttributes,
+            operationalAttributes,
+            collectiveAttributes,
+        } = await readAttributes(ctx, target, eis, relevantSubentries, data.operationContexts);
+        const attributes = [
+            ...userAttributes,
+            ...operationalAttributes,
+            ...collectiveAttributes,
+        ];
+        infoItems.push(...attributes.map((attribute): EntryInformation_information_Item => ({
+            attribute,
+        })));
+        /**
+         * This is the entry information that is used for filtering, not necessarily
+         * what is returned by the search (via `selection`).
+         */
+        return new EntryInformation(
+            {
+                rdnSequence: vertexDN,
+            },
+            undefined,
+            infoItems,
+            undefined,
+            undefined,
+            undefined,
+        );
+    };
     const filterOptions: EvaluateFilterSettings = {
         getEqualityMatcher: getEqualityMatcherGetter(ctx),
         getOrderingMatcher: getOrderingMatcherGetter(ctx),
@@ -829,6 +898,32 @@ async function search_i (
         );
         return;
     }
+    const familyGrouping = data.familyGrouping ?? SearchArgumentData._default_value_for_familyGrouping;
+    const familySubsetGetter: (vertex: Vertex) => IterableIterator<Vertex[]> = (() => {
+        switch (familyGrouping) {
+        case (FamilyGrouping_entryOnly): return readEntryOnly;
+        case (FamilyGrouping_compoundEntry): return readCompoundEntry;
+        case (FamilyGrouping_strands): return readStrands;
+        default: {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:unsupported_familygrouping"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_serviceError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        }
+    })();
     if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) {
         // Nothing needs to be done here. Proceed to step 6.
     } else if ((subset === SearchArgumentData_subset_baseObject) || entryOnly) {
@@ -863,40 +958,154 @@ async function search_i (
                 && filter.item.present.isEqualTo(objectClass["&id"])
             );
             // Entry ACI is checked above.
-            const match = evaluateFilter(filter, entryInfo, filterOptions);
-            if (match || searchingForRootDSE) {
-                if (searchState.skipsRemaining > 0) {
-                    searchState.skipsRemaining--;
+            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
+                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+                : null;
+            const family = await readFamily(ctx, target);
+            const familySubsets = familySubsetGetter(family);
+            for (const familySubset of familySubsets) {
+                if (familySubset.length === 0) {
+                    ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
+                    continue; // This should never happen, but just handling it in case it does.
+                }
+                const familyInfos = await Promise.all(
+                    familySubset.map((member) => readFamilyMemberInfo(member)),
+                );
+                const matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                const matched: boolean = (
+                    (matchedValues === true)
+                    || (Array.isArray(matchedValues) && !!matchedValues.length)
+                );
+                if (matched || searchingForRootDSE) {
+                    if (searchState.skipsRemaining > 0) {
+                        if (separateFamilyMembers) {
+                            searchState.skipsRemaining -= familySubset
+                                .filter((vertex) => (
+                                    !familySelect
+                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
+                                )).length;
+                        } else {
+                            searchState.skipsRemaining--;
+                        }
+                        return;
+                    }
+                    const einfos = await Promise.all(
+                        familySubset.map((member) => readEntryInformation(
+                            ctx,
+                            member,
+                            data.selection,
+                            relevantSubentries,
+                            data.operationContexts,
+                        )),
+                    );
+                    if (
+                        matchedValuesOnly
+                        && (Array.isArray(matchedValues) && matchedValues.length)
+                        && !typesOnly // This option would make no sense with matchedValuesOnly.
+                    ) {
+                        for (let i = 0; i < einfos.length; i++) {
+                            const matchedValuesAttributes = attributesFromValues(
+                                matchedValues
+                                    .filter((mv) => (mv.entryIndex === i))
+                                    .map((mv): Value => ({
+                                        ...mv,
+                                        contexts: mv.contexts
+                                            ? new Map(
+                                                mv.contexts.map((context): [ string, StoredContext ] => [
+                                                    context.contextType.toString(),
+                                                    {
+                                                        id: context.contextType,
+                                                        fallback: context.fallback ?? false,
+                                                        values: context.contextValues,
+                                                    },
+                                                ]),
+                                            )
+                                            : undefined,
+                                    })),
+                            );
+                            const matchedValuesTypes: Set<IndexableOID> = new Set(
+                                matchedValuesAttributes.map((mva) => mva.type_.toString()),
+                            );
+                            const einfo = einfos[i];
+                            einfos[i] = [
+                                ...einfo
+                                    .filter((e) => {
+                                        if ("attribute" in e) {
+                                            return !matchedValuesTypes.has(e.attribute.type_.toString());
+                                        } else if ("attributeType" in e) {
+                                            return !matchedValuesTypes.has(e.attributeType.toString());
+                                        } else {
+                                            return false;
+                                        }
+                                    }),
+                                ...matchedValuesAttributes.map((attribute) => ({ attribute })),
+                            ];
+                        }
+                    } // End of matchedValuesOnly handling.
+                    const filteredEinfos = einfos
+                        .map(filterUnauthorizedEntryInformation);
+                    if (separateFamilyMembers) {
+                        searchState.results.push(
+                            ...filteredEinfos
+                                .map((einfo, i) => [ einfo, familySubset[i] ] as const)
+                                .filter(([ , vertex ]) => (
+                                    !familySelect
+                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
+                                ))
+                                .map(([ [ incompleteEntry, permittedEinfo ], vertex ]) => new EntryInformation(
+                                    {
+                                        rdnSequence: getDistinguishedName(vertex),
+                                    },
+                                    Boolean(vertex.dse.shadow),
+                                    permittedEinfo,
+                                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                    undefined, // TODO: Review, but I think this will always be false.
+                                    undefined,
+                                )),
+                        );
+                        return;
+                    }
+                    if (familySubset.length > 1) {
+                        const subset = keepSubsetOfDITById(family, new Set(familySubset.map((member) => member.dse.id)));
+                        const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
+                            subset,
+                            (vertex: Vertex) => filteredEinfos[
+                                familySubset.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
+                        )
+                            .filter((fe) => (!familySelect || familySelect.has(fe.toString())));
+                        const familyInfoAttr: Attribute = new Attribute(
+                            family_information["&id"],
+                            familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
+                            undefined,
+                        );
+                        filteredEinfos[0][1].push({
+                            attribute: familyInfoAttr,
+                        });
+                    }
+                    searchState.results.push(
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(familySubset[0]),
+                            },
+                            Boolean(familySubset[0].dse.shadow),
+                            filteredEinfos[0][1],
+                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            undefined, // TODO: Review, but I think this will always be false.
+                            undefined,
+                        ),
+                    );
+                    if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
+                        hierarchySelectionProcedure(
+                            ctx,
+                            data.hierarchySelections,
+                            data.serviceControls?.serviceType,
+                        );
+                    }
                     return;
                 }
-                const einfo = await readEntryInformation(
-                    ctx,
-                    target,
-                    data.selection,
-                    relevantSubentries,
-                    data.operationContexts,
-                );
-                const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
-                searchState.results.push(new EntryInformation(
-                    {
-                        rdnSequence: targetDN,
-                    },
-                    Boolean(target.dse.shadow),
-                    permittedEinfo,
-                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                    undefined, // TODO: Review, but I think this will always be false.
-                    undefined,
-                ));
-                if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
-                    hierarchySelectionProcedure(
-                        ctx,
-                        data.hierarchySelections,
-                        data.serviceControls?.serviceType,
-                    );
-                }
             }
-            return;
         }
+        return;
     } else if (!entryOnly) /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
         if (
             (
@@ -918,29 +1127,140 @@ async function search_i (
             && !(!target.immediateSuperior && target.dse.root)
         ) {
             // Entry ACI is checked above.
-            const match = evaluateFilter(filter, entryInfo, filterOptions);
-            if (match) {
-                if (searchState.skipsRemaining > 0) {
-                    searchState.skipsRemaining--;
-                } else {
-                    const einfo = await readEntryInformation(
-                        ctx,
-                        target,
-                        data.selection,
-                        relevantSubentries,
-                        data.operationContexts,
+            // NOTE: This section of code is copy-pasted. There might be a way to de-duplicate.
+            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
+                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+                : null;
+            const family = await readFamily(ctx, target);
+            const familySubsets = familySubsetGetter(family);
+            for (const familySubset of familySubsets) {
+                if (familySubset.length === 0) {
+                    ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
+                    continue; // This should never happen, but just handling it in case it does.
+                }
+                const familyInfos = await Promise.all(
+                    familySubset.map((member) => readFamilyMemberInfo(member)),
+                );
+                const matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                const matched: boolean = (
+                    (matchedValues === true)
+                    || (Array.isArray(matchedValues) && !!matchedValues.length)
+                );
+                if (matched) {
+                    if (searchState.skipsRemaining > 0) {
+                        if (separateFamilyMembers) {
+                            searchState.skipsRemaining -= familySubset.length;
+                        } else {
+                            searchState.skipsRemaining--;
+                        }
+                        return;
+                    }
+                    const einfos = await Promise.all(
+                        familySubset.map((member) => readEntryInformation(
+                            ctx,
+                            member,
+                            data.selection,
+                            relevantSubentries,
+                            data.operationContexts,
+                        )),
                     );
-                    const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
-                    searchState.results.push(new EntryInformation(
-                        {
-                            rdnSequence: targetDN,
-                        },
-                        Boolean(target.dse.shadow),
-                        permittedEinfo,
-                        incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                        undefined, // TODO: Review, but I think this will always be false.
-                        undefined,
-                    ));
+                    if (
+                        matchedValuesOnly
+                        && (Array.isArray(matchedValues) && matchedValues.length)
+                        && !typesOnly // This option would make no sense with matchedValuesOnly.
+                    ) {
+                        for (let i = 0; i < einfos.length; i++) {
+                            const matchedValuesAttributes = attributesFromValues(
+                                matchedValues
+                                    .filter((mv) => (mv.entryIndex === i))
+                                    .map((mv): Value => ({
+                                        ...mv,
+                                        contexts: mv.contexts
+                                            ? new Map(
+                                                mv.contexts.map((context): [ string, StoredContext ] => [
+                                                    context.contextType.toString(),
+                                                    {
+                                                        id: context.contextType,
+                                                        fallback: context.fallback ?? false,
+                                                        values: context.contextValues,
+                                                    },
+                                                ]),
+                                            )
+                                            : undefined,
+                                    })),
+                            );
+                            const matchedValuesTypes: Set<IndexableOID> = new Set(
+                                matchedValuesAttributes.map((mva) => mva.type_.toString()),
+                            );
+                            const einfo = einfos[i];
+                            einfos[i] = [
+                                ...einfo
+                                    .filter((e) => {
+                                        if ("attribute" in e) {
+                                            return !matchedValuesTypes.has(e.attribute.type_.toString());
+                                        } else if ("attributeType" in e) {
+                                            return !matchedValuesTypes.has(e.attributeType.toString());
+                                        } else {
+                                            return false;
+                                        }
+                                    }),
+                                ...matchedValuesAttributes.map((attribute) => ({ attribute })),
+                            ];
+                        }
+                    } // End of matchedValuesOnly handling.
+                    const filteredEinfos = einfos
+                        .map(filterUnauthorizedEntryInformation);
+                    if (separateFamilyMembers) {
+                        searchState.results.push(
+                            ...filteredEinfos
+                                .map((einfo, i) => [ einfo, familySubset[i] ] as const)
+                                .filter(([ , vertex ]) => (
+                                    !familySelect
+                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
+                                ))
+                                .map(([ [ incompleteEntry, permittedEinfo ], vertex ]) => new EntryInformation(
+                                    {
+                                        rdnSequence: getDistinguishedName(vertex),
+                                    },
+                                    Boolean(vertex.dse.shadow),
+                                    permittedEinfo,
+                                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                    undefined, // TODO: Review, but I think this will always be false.
+                                    undefined,
+                                )),
+                        );
+                        return;
+                    } else {
+                        if (familySubset.length > 1) {
+                            const subset = keepSubsetOfDITById(family, new Set(familySubset.map((member) => member.dse.id)));
+                            const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
+                                subset,
+                                (vertex: Vertex) => filteredEinfos[
+                                    familySubset.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
+                            )
+                                .filter((fe) => (!familySelect || familySelect.has(fe.toString())));
+                            const familyInfoAttr: Attribute = new Attribute(
+                                family_information["&id"],
+                                familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
+                                undefined,
+                            );
+                            filteredEinfos[0][1].push({
+                                attribute: familyInfoAttr,
+                            });
+                        }
+                        searchState.results.push(
+                            new EntryInformation(
+                                {
+                                    rdnSequence: getDistinguishedName(familySubset[0]),
+                                },
+                                Boolean(familySubset[0].dse.shadow),
+                                filteredEinfos[0][1],
+                                filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                undefined, // TODO: Review, but I think this will always be false.
+                                undefined,
+                            ),
+                        );
+                    }
                     if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                         hierarchySelectionProcedure(
                             ctx,

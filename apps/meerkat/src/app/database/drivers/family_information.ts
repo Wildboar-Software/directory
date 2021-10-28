@@ -17,6 +17,13 @@ import {
 
 const PARENT: string = parent["&id"].toString();
 
+/**
+ * ITU Recommendation X.511 (2016), Section 7.7.2 states that the
+ * `family-information` attribute "cannot directly be selected by
+ * entryInformationSelection (any attempt to do so shall be ignored)"
+ *
+ * @returns
+ */
 export
 const readValues: SpecialAttributeDatabaseReader = async (): Promise<Value[]> => {
     return [];

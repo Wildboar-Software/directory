@@ -103,5 +103,6 @@
     "cannot_add_dummy_attr": "The following attributes are dummy attribute types, and therefore may not be added to an entry: {{oids}}",
     "cannot_add_collective_attr": "The following attributes are collective attribute types, and therefore may not be added to a non-subentry: {{oids}}",
     "cannot_add_obsolete_attr": "The following attributes are obsolete, and therefore may not be added to an entry: {{oids}}",
-    "only_one_sort_key": "Sorted search and list operations may only use one sort key in this DSA."
+    "only_one_sort_key": "Sorted search and list operations may only use one sort key in this DSA.",
+    "unsupported_familygrouping": "Unsupported familyGrouping option."
 }

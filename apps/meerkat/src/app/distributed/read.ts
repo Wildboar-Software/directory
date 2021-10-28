@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import { Context, Vertex, ClientConnection, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
 import { ObjectIdentifier, TRUE_BIT, FALSE_BIT } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -68,6 +68,24 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    FamilyReturn_memberSelect_contributingEntriesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
+import readFamily from "../database/family/readFamily";
+import readCompoundEntry from "../database/family/readCompoundEntry";
+import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
+import {
+    EntryInformation_information_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+import {
+    FamilyEntries,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntries.ta";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import {
+    family_information,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
 
 export
 async function read (
@@ -187,6 +205,47 @@ async function read (
         relevantSubentries,
         data.operationContexts,
     );
+
+    if (
+        data.selection?.familyReturn
+        && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
+    ) {
+        const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
+            ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+            : null;
+        const family = await readFamily(ctx, target);
+        const familyMembers: Vertex[] = readCompoundEntry(family).next().value;
+        const permittedEinfos = await Promise.all(
+            familyMembers
+                .slice(1) // Skip the first member, which is the read entry.
+                .map((member) => readPermittedEntryInformation(
+                    ctx,
+                    member,
+                    conn.authLevel,
+                    relevantTuples,
+                    accessControlScheme,
+                    data.selection,
+                    relevantSubentries,
+                    data.operationContexts,
+                )),
+        );
+        const permittedEinfoIndex: Map<number, EntryInformation_information_Item[]> = new Map(
+            permittedEinfos.map((einfo, i) => [ familyMembers[i].dse.id, einfo.information ]),
+        );
+        const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
+            family,
+            (vertex: Vertex) => permittedEinfoIndex.get(vertex.dse.id) ?? [],
+        )
+            .filter((fe) => (!familySelect || familySelect.has(fe.toString())));
+        const familyInfoAttr: Attribute = new Attribute(
+            family_information["&id"],
+            familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
+            undefined,
+        );
+        permittedEntryInfo.information.push({
+            attribute: familyInfoAttr,
+        });
+    }
 
     const modifyRights: ModifyRights = [];
     if (data.modifyRightsRequest && accessControlScheme) {

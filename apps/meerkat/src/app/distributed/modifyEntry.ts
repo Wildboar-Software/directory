@@ -204,6 +204,21 @@ import {
 // import {
 //     id_oc_child,
 // } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+import {
+    FamilyReturn_memberSelect_contributingEntriesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
+import readFamily from "../database/family/readFamily";
+import readCompoundEntry from "../database/family/readCompoundEntry";
+import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
+import {
+    EntryInformation_information_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+import {
+    FamilyEntries,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntries.ta";
+import {
+    family_information,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1935,8 +1950,8 @@ async function modifyEntry (
     // TODO: Update Shadows
 
     if (data.selection) {
-        const authorizedToModifyEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_READ ]);
-        if (!authorizedToModifyEntry) {
+        const authorizedToReadEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_READ ]);
+        if (!authorizedToReadEntry) {
             const result: ModifyEntryResult = {
                 null_: null,
             };
@@ -1969,6 +1984,46 @@ async function modifyEntry (
             relevantSubentries,
             data.operationContexts,
         );
+        if (
+            data.selection?.familyReturn
+            && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
+        ) {
+            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
+                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+                : null;
+            const family = await readFamily(ctx, target);
+            const familyMembers: Vertex[] = readCompoundEntry(family).next().value;
+            const permittedEinfos = await Promise.all(
+                familyMembers
+                    .slice(1) // Skip the first member, which is the read entry.
+                    .map((member) => readPermittedEntryInformation(
+                        ctx,
+                        member,
+                        conn.authLevel,
+                        relevantTuples,
+                        accessControlScheme,
+                        data.selection,
+                        relevantSubentries,
+                        data.operationContexts,
+                    )),
+            );
+            const permittedEinfoIndex: Map<number, EntryInformation_information_Item[]> = new Map(
+                permittedEinfos.map((einfo, i) => [ familyMembers[i].dse.id, einfo.information ]),
+            );
+            const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
+                family,
+                (vertex: Vertex) => permittedEinfoIndex.get(vertex.dse.id) ?? [],
+            )
+                .filter((fe) => (!familySelect || familySelect.has(fe.toString())));
+            const familyInfoAttr: Attribute = new Attribute(
+                family_information["&id"],
+                familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
+                undefined,
+            );
+            permittedEntryInfo.information.push({
+                attribute: familyInfoAttr,
+            });
+        }
         const result: ModifyEntryResult = {
             information: {
                 unsigned: new ModifyEntryResultData(
