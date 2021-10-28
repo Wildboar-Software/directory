@@ -74,6 +74,8 @@ const ctx: Context = {
         sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
         administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
         bulkInsertMode: (process.env.MEERKAT_BULK_INSERT_MODE === "1"),
+        bindMinSleepInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_MIN_SLEEP_MS ?? "") || 1000,
+        bindSleepRangeInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_SLEEP_RANGE_MS ?? "") || 1000,
     },
     dsa: {
         accessPoint: new AccessPoint(

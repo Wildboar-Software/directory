@@ -124,7 +124,7 @@ async function main (): Promise<void> {
                         associations.set(c, conn);
                     }
                 } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
-                    const dba = _decode_DirectoryBindArgument(idmBind.argument); // FIXME:
+                    const dba = _decode_DSABindArgument(idmBind.argument);
                     const conn = new DOPConnection(ctx, idm, dba);
                     if (conn.boundNameAndUID) {
                         associations.set(c, conn);

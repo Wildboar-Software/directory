@@ -8,8 +8,6 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import findEntry from "../x500/findEntry";
-import * as crypto from "crypto";
-import sleep from "../utils/sleep";
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
@@ -68,8 +66,6 @@ async function bind (
             failedAuthentication: false,
         };
     }
-    // Wait a random amount of time to prevent timing attacks.
-    sleep(crypto.randomInt(3000) + 1000);
     if ("simple" in arg.credentials) {
         const foundEntry = await findEntry(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {

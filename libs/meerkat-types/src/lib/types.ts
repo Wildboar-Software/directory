@@ -489,6 +489,8 @@ interface Configuration {
     sentinelDomain?: string;
     administratorEmail?: string;
     bulkInsertMode: boolean;
+    bindMinSleepInMilliseconds: number;
+    bindSleepRangeInMilliseconds: number;
 }
 
 export
