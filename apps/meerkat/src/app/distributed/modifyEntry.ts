@@ -27,6 +27,7 @@ import {
 import {
     UpdateProblem_objectClassViolation,
     UpdateProblem_objectClassModificationProhibited,
+    UpdateProblem_familyRuleViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     objectClass,
@@ -219,6 +220,12 @@ import {
 import {
     family_information,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
+import {
+    hierarchyParent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
+import {
+    id_oc_child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1798,6 +1805,43 @@ async function modifyEntry (
                                 [
                                     _encodeObjectIdentifier(alias["&id"], DER),
                                     _encodeObjectIdentifier(child["&id"], DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        const inHierarchy = await ctx.attributeTypes
+            .get(hierarchyParent["&id"].toString())!.driver!.isPresent!(ctx, target);
+        if (
+            hasChildObjectClass
+            && (delta.has(hierarchyParent["&id"].toString()) || inHierarchy)
+        ) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:child_cannot_be_in_hierarchy"),
+                new UpdateErrorData(
+                    UpdateProblem_familyRuleViolation,
+                    [
+                        {
+                            attributeType: hierarchyParent["&id"],
+                        },
+                        {
+                            attribute: new Attribute(
+                                id_at_objectClass,
+                                [
+                                    _encodeObjectIdentifier(id_oc_child, DER),
                                 ],
                                 undefined,
                             ),

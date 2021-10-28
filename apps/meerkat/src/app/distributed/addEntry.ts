@@ -29,6 +29,7 @@ import {
     UpdateProblem_entryAlreadyExists,
     UpdateProblem_namingViolation,
     UpdateProblem_affectsMultipleDSAs,
+    UpdateProblem_familyRuleViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     AttributeProblem_contextViolation,
@@ -173,6 +174,9 @@ import attributeTypesPermittedForEveryEntry from "../x500/attributeTypesPermitte
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import {
+    hierarchyParent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -668,6 +672,38 @@ async function addEntry (
         }
         if (spec.obsolete) {
             obsoleteAttributes.push(attr.type_);
+        }
+        if (attr.type_.isEqualTo(hierarchyParent["&id"]) && isChild) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:child_cannot_be_in_hierarchy"),
+                new UpdateErrorData(
+                    UpdateProblem_familyRuleViolation,
+                    [
+                        {
+                            attribute: attr,
+                        },
+                        {
+                            attribute: new Attribute(
+                                id_at_objectClass,
+                                [
+                                    _encodeObjectIdentifier(id_oc_child, DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
         }
     }
     if (unrecognizedAttributes.length > 0) {

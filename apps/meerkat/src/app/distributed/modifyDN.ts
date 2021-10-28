@@ -24,6 +24,7 @@ import {
     UpdateProblem_namingViolation,
     UpdateProblem_affectsMultipleDSAs,
     UpdateProblem_objectClassViolation,
+    UpdateProblem_familyRuleViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getRDN from "../x500/getRDN";
@@ -118,6 +119,12 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import extensibleObject from "../ldap/extensibleObject";
+import {
+    hierarchyParent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
+import {
+    id_oc_child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -1010,6 +1017,51 @@ async function modifyDN (
                     [
                         {
                             attributeType: atav.type_,
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (
+            atav.type_.isEqualTo(hierarchyParent["&id"])
+            && (
+                target.dse.objectClass.has(id_oc_child.toString())
+                || newRDN.find((atav1) => (
+                    atav1.type_.isEqualTo(id_at_objectClass)
+                    && atav1.value.objectIdentifier.isEqualTo(id_oc_child)
+                ))
+            )
+        ) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:child_cannot_be_in_hierarchy"),
+                new UpdateErrorData(
+                    UpdateProblem_familyRuleViolation,
+                    [
+                        {
+                            attribute: new Attribute(
+                                atav.type_,
+                                [ atav.value ],
+                                undefined,
+                            ),
+                        },
+                        {
+                            attribute: new Attribute(
+                                id_at_objectClass,
+                                [
+                                    _encodeObjectIdentifier(id_oc_child, DER),
+                                ],
+                                undefined,
+                            ),
                         },
                     ],
                     [],
