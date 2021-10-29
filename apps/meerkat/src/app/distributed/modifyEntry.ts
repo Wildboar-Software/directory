@@ -1831,6 +1831,36 @@ async function modifyEntry (
                 ),
             );
         }
+        if (target.dse.objectClass.has(parent["&id"].toString()) && hasAliasObjectClass) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:cannot_be_alias_and_parent"),
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attribute: new Attribute(
+                                objectClass["&id"],
+                                [
+                                    _encodeObjectIdentifier(alias["&id"], DER),
+                                    _encodeObjectIdentifier(parent["&id"], DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         const inHierarchy = await ctx.attributeTypes
             .get(hierarchyParent["&id"].toString())!.driver!.isPresent!(ctx, target);
         if (

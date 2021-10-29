@@ -70,6 +70,7 @@
     "cannot_change_soc": "Cannot change supplant target entry's structural object class with {{oid}}.",
     "cannot_add_object_class_parent": "Object class 'parent' cannot be added directly. The subordinate must be made a child, then the parent object class will be added to its immediate superior automatically.",
     "cannot_be_alias_and_child": "No entry can be an alias and child at the same time.",
+    "cannot_be_alias_and_parent": "No entry can be an alias and parent at the same time.",
     "referral": "Referred.",
     "referred_to": "Referred to {{url}}.",
     "dit_error": "DIT error.",

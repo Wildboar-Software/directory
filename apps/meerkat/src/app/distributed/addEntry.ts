@@ -343,6 +343,37 @@ async function addEntry (
         );
     }
 
+    if (isParent && isAlias) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:cannot_be_parent_and_child"),
+            new UpdateErrorData(
+                UpdateProblem_objectClassViolation,
+                [
+                    {
+                        attribute: new Attribute(
+                            id_at_objectClass,
+                            [
+                                _encodeObjectIdentifier(id_oc_alias, DER),
+                                _encodeObjectIdentifier(id_oc_parent, DER),
+                            ],
+                            undefined,
+                        ),
+                    },
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+
     const targetDN = data.object.rdnSequence;
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
         ? []
