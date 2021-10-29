@@ -244,6 +244,257 @@ function keepSubsetOfDITById (dit: DIT, idsToKeep: Set<number>): DIT {
     };
 }
 
+/* NOTE:
+The commented-out section below should not be used to pre-filter search results,
+because, in the search algorithm, when doing a subtree search, even if an entry
+does not match, its subordinates still must be searched.
+*/
+
+// function canFilterAttributeValueTable (
+//     ctx: Context,
+//     types: AttributeType[],
+// ): boolean {
+//     for (const t of types) {
+//         const spec = ctx.attributeTypes.get(t.toString());
+//         if (
+//             !spec
+//             || spec.driver
+//             || spec.noUserModification
+//             || spec.collective
+//             || spec.dummy
+//             || (spec.usage !== AttributeUsage_userApplications)
+//         ) {
+//             return false;
+//         }
+//     }
+//     return true;
+// }
+
+// function convertFilterItemToPrismaSelect (
+//     ctx: Context,
+//     filterItem: FilterItem,
+// ): Partial<Prisma.EntryWhereInput> | undefined {
+//     if ("equality" in filterItem) {
+//         const type_ = filterItem.equality.type_;
+//         if (type_.isEqualTo(objectClass["&id"])) {
+//             return {
+//                 EntryObjectClass: {
+//                     some: {
+//                         object_class: filterItem
+//                             .equality
+//                             .assertion
+//                             .objectIdentifier
+//                             .toString(),
+//                     },
+//                 },
+//             };
+//         }
+//         if (type_.isEqualTo(administrativeRole["&id"])) {
+//             return {
+//                 EntryAdministrativeRole: {
+//                     some: {
+//                         administrativeRole: filterItem
+//                             .equality
+//                             .assertion
+//                             .objectIdentifier
+//                             .toString(),
+//                     },
+//                 },
+//             };
+//         }
+//         if (type_.isEqualTo(accessControlScheme["&id"])) {
+//             return {
+//                 EntryAccessControlScheme: {
+//                     some: {
+//                         accessControlScheme: filterItem
+//                             .equality
+//                             .assertion
+//                             .objectIdentifier
+//                             .toString(),
+//                     },
+//                 },
+//             };
+//         }
+//         if (type_.isEqualTo(aliasedEntryName["&id"])) {
+//             return {
+//                 alias: true,
+//                 AliasEntry: {
+//                     some: {}, // REVIEW: I feel like this would crash. No way Prisma actually lets you do this.
+//                 },
+//             };
+//         }
+//         // if (type_.isEqualTo(hierarchyTop["&id"])) {
+
+//         // }
+//         // if (type_.isEqualTo(hierarchyLevel["&id"])) {
+
+//         // }
+//         // if (type_.isEqualTo(hierarchyBelow["&id"])) {
+
+//         // }
+//         // if (type_.isEqualTo(hierarchyParent["&id"])) {
+
+//         // }
+//         if (type_.isEqualTo(uniqueIdentifier["&id"])) {
+//             return {
+//                 UniqueIdentifier: {
+//                     some: {}, // REVIEW: I feel like this would crash. No way Prisma actually lets you do this.
+//                 },
+//             };
+//         }
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("substrings" in filterItem) {
+//         const type_ = filterItem.substrings.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("greaterOrEqual" in filterItem) {
+//         const type_ = filterItem.greaterOrEqual.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("lessOrEqual" in filterItem) {
+//         const type_ = filterItem.lessOrEqual.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("present" in filterItem) {
+//         const type_ = filterItem.present;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("approximateMatch" in filterItem) {
+//         const type_ = filterItem.approximateMatch.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("extensibleMatch" in filterItem) {
+//         const type_ = filterItem.extensibleMatch.type_;
+//         if (!type_) {
+//             return undefined;
+//         }
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("contextPresent" in filterItem) {
+//         const type_ = filterItem.contextPresent.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else {
+//         return undefined;
+//     }
+// }
+
+// function convertFilterToPrismaSelect (
+//     ctx: Context,
+//     filter: Filter,
+// ): Partial<Prisma.EntryWhereInput> | undefined {
+//     if ("item" in filter) {
+//         return convertFilterItemToPrismaSelect(ctx, filter.item);
+//     } else if ("and" in filter) {
+//         return {
+//             AND: filter.and
+//                 .map((sub) => convertFilterToPrismaSelect(ctx, sub))
+//                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
+//         };
+//     } else if ("or" in filter) {
+//         return {
+//             OR: filter.or
+//                 .map((sub) => convertFilterToPrismaSelect(ctx, sub))
+//                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
+//         };
+//     } else if ("not" in filter) {
+//         return {
+//             NOT: convertFilterToPrismaSelect(ctx, filter.not),
+//         };
+//     } else {
+//         return undefined;
+//     }
+// }
+
 export
 async function search_i (
     ctx: Context,
@@ -1364,6 +1615,9 @@ async function search_i (
                 undefined,
                 cursorId,
                 {
+                    // ...(data.filter
+                    //     ? convertFilterToPrismaSelect(ctx, data.filter)
+                    //     : {}),
                     subentry: subentries,
                 },
             );

@@ -625,6 +625,15 @@ async function findDSE (
             100,
             undefined,
             cursorId,
+            {
+                AND: needleRDN.map((atav) => ({
+                    RDN: {
+                        some: {
+                            type: atav.type_.toString(),
+                        },
+                    },
+                })),
+            },
         );
         while (subordinatesInBatch.length) {
             for (const child of subordinatesInBatch) {
