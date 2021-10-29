@@ -1367,9 +1367,11 @@ async function modifyEntry (
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
-    const relevantSubentries: Vertex[] = (await Promise.all(
-        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
-    )).flat();
+    const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
+        ? []
+        : (await Promise.all(
+            state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
@@ -1381,22 +1383,25 @@ async function modifyEntry (
             ? (target.dse.entryACI ?? [])
             : []),
     ];
-    const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
+        ? []
+        : (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
-    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-            ...tuple,
-            await userWithinACIUserClass(
-                tuple[0],
-                conn.boundNameAndUID!,
-                targetDN,
-                EQUALITY_MATCHER,
-                isMemberOfGroup,
-            ),
-        ]),
-    ))
-        .filter((tuple) => (tuple[5] > 0));
+    const relevantTuples: ACDFTupleExtended[] = ctx.config.bulkInsertMode
+        ? []
+        : (await Promise.all(
+            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    tuple[0],
+                    conn.boundNameAndUID!,
+                    targetDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        ))
+            .filter((tuple) => (tuple[5] > 0));
 
     const authorizedToEntry = (permissions: number[]): boolean => {
         const {
@@ -1413,7 +1418,7 @@ async function modifyEntry (
         return authorized;
     };
 
-    if (accessControlScheme) {
+    if (!ctx.config.bulkInsertMode && accessControlScheme) {
         const authorizedToModifyEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_MODIFY ]);
         if (!authorizedToModifyEntry) {
             throw new errors.SecurityError(
@@ -1442,7 +1447,7 @@ async function modifyEntry (
     const permittedAuxiliaries: Set<IndexableOID> = new Set();
     const contextRulesIndex: ContextRulesIndex = new Map();
     const subschemaSubentry = await getSubschemaSubentry(ctx, target);
-    if (subschemaSubentry && !target.dse.subentry) {
+    if (!ctx.config.bulkInsertMode && subschemaSubentry && !target.dse.subentry) {
         const contentRule = (subschemaSubentry.dse.subentry?.ditContentRules ?? [])
             .filter((rule) => !rule.obsolete)
             // .find(), because there should only be one per SOC.
@@ -1511,6 +1516,9 @@ async function modifyEntry (
     const addedObjectClasses = delta.get(objectClass["&id"].toString())
         ?.map((value) => value.value.objectIdentifier) ?? [];
     for (const ocid of addedObjectClasses) {
+        if (ctx.config.bulkInsertMode) {
+            continue;
+        }
         const spec = ctx.objectClasses.get(ocid.toString());
         if (!spec) {
             throw new errors.UpdateError(
@@ -1638,7 +1646,7 @@ async function modifyEntry (
         Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
     }
 
-    { // Check required attributes
+    if (!ctx.config.bulkInsertMode) { // Check required attributes
         const missingRequiredAttributeTypes: Set<IndexableOID> = new Set();
         for (const ra of Array.from(requiredAttributes)) {
             const deltaValues = delta.get(ra);
@@ -1680,7 +1688,7 @@ async function modifyEntry (
     }
     const addsExtensibleObjectClass: boolean = addedObjectClasses
         .some((oc) => oc.isEqualTo(extensibleObject["&id"]));
-    if (!isExtensible && !addsExtensibleObjectClass) { // Check optional attributes
+    if (!ctx.config.bulkInsertMode && !isExtensible && !addsExtensibleObjectClass) { // Check optional attributes
         const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
         for (const type_ of Array.from(delta.keys())) {
             if (!optionalAttributes.has(type_.toString())) {
@@ -1716,7 +1724,7 @@ async function modifyEntry (
         }
     }
 
-    { // Other validation.
+    if (!ctx.config.bulkInsertMode) { // Other validation.
         const objectClasses = [
             ...alreadyPresentObjectClasses,
             ...addedObjectClasses,
@@ -1900,7 +1908,7 @@ async function modifyEntry (
     }
 
     // Update relevant hierarchical operational bindings
-    if (target.dse.admPoint || target.dse.subentry) {
+    if (!ctx.config.bulkInsertMode && (target.dse.admPoint || target.dse.subentry)) {
         const admPoint: Vertex | undefined = target.dse.admPoint
             ? target
             : target.immediateSuperior;
@@ -1993,7 +2001,7 @@ async function modifyEntry (
 
     // TODO: Update Shadows
 
-    if (data.selection) {
+    if (!ctx.config.bulkInsertMode && data.selection) {
         const authorizedToReadEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_READ ]);
         if (!authorizedToReadEntry) {
             const result: ModifyEntryResult = {

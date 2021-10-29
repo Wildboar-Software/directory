@@ -1,4 +1,4 @@
-import type { ClientConnection } from "@wildboar/meerkat-types";
+import type { ClientConnection, Context } from "@wildboar/meerkat-types";
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -44,18 +44,79 @@ import {
     updatesDomain,
 } from "./constants";
 import createDatabaseReport from "./telemetry/createDatabaseReport";
+import semver from "semver";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;
 const DEFAULT_LDAP_TCP_PORT: number = 1389;
 const DEFAULT_LDAPS_TCP_PORT: number = 1636;
+
+async function checkForUpdates (ctx: Context, currentVersionString: string): Promise<void> {
+    const currentVersion = semver.parse(currentVersionString);
+    if (!currentVersion) {
+        return;
+    }
+    const records = await dns
+        .resolveTxt(`v${currentVersion.major}.` + updatesDomain)
+        .catch(() => []);
+    for (const record of records) {
+        const fullRecord: string = record.join(" ").trim().toLowerCase();
+        const fields: Record<string, string> = Object.fromEntries(
+            fullRecord
+                .split(";")
+                .filter((field) => !!field.length)
+                .map((field) => field.split("=")),
+        );
+        const secureVersion = semver.parse(fields["secure"] || "");
+        const latestVersion = semver.parse(fields["latest"] || "");
+        const latestMajor = Number.parseInt(fields["major"], 10) || 1;
+        const deprecated = fields["deprecated"];
+        const insecure = fields["insecure"];
+        if (insecure) {
+            ctx.log.warn(ctx.i18n.t("log:major_version_insecure"));
+            return;
+        }
+        if (deprecated) {
+            ctx.log.warn(ctx.i18n.t("log:major_version_deprecated"));
+            return;
+        }
+        if (latestMajor > currentVersion.major) {
+            ctx.log.info(ctx.i18n.t("log:major_update_available"));
+            return;
+        }
+        if (secureVersion) {
+            if (semver.gt(secureVersion, currentVersion)) {
+                ctx.log.warn(ctx.i18n.t("log:security_update_available", {
+                    version: fields["secure"],
+                }));
+                return;
+            }
+        }
+        if (latestVersion) {
+            if (latestVersion.minor > currentVersion.minor) {
+                ctx.log.info(ctx.i18n.t("log:minor_update_available", {
+                    version: fields["latest"],
+                }));
+                return;
+            } else if (
+                (latestVersion.minor === currentVersion.minor)
+                && (latestVersion.patch > currentVersion.patch)
+            ) {
+                ctx.log.info(ctx.i18n.t("log:patch_update_available", {
+                    version: fields["latest"],
+                }));
+                return;
+            }
+        }
+    }
+}
 
 export default
 async function main (): Promise<void> {
     const packageJSON = await import("package.json")
         .catch(() => undefined);
     const versionSlug = packageJSON?.default
-        ? packageJSON?.default.version.replace(/\./g, "-")
-        : packageJSON?.version.replace(/\./g, "-");
+        ? packageJSON?.default.version
+        : packageJSON?.version;
 
     await loadDIT(ctx);
     // The ordering of these is important.
@@ -318,15 +379,12 @@ async function main (): Promise<void> {
         } catch {} // eslint-disable-line
     }
 
-    { // Updates checking.
-        const records = await dns.resolveTxt(updatesDomain)
-            .catch(() => []);
-        for (const record of records) {
-            const fullRecord: string = record.join(" ").trim().toLowerCase();
-            if (fullRecord === versionSlug) {
-                ctx.log.info(ctx.i18n.t("log:update_available"));
-            }
-        }
+    if (versionSlug) {
+        checkForUpdates(ctx, versionSlug).catch();
+    }
+
+    if (ctx.config.bulkInsertMode) {
+        ctx.log.warn(ctx.i18n.t("log:bulk_insert_mode"));
     }
 
     setInterval(() => {

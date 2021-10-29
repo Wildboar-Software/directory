@@ -228,7 +228,6 @@ async function findDSE (
     const op = ("present" in state.invokeId)
         ? conn.invocations.get(state.invokeId.present)
         : undefined;
-
     const serviceControls = state.operationArgument.set
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
@@ -261,6 +260,7 @@ async function findDSE (
         serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
 
     const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
@@ -649,38 +649,38 @@ async function findDSE (
                     );
                 }
                 checkTimeLimit();
-                const childDN = getDistinguishedName(child);
-                const relevantSubentries: Vertex[] = (await Promise.all(
-                    state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
-                )).flat();
-                const targetACI = [
-                    ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
-                        ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                        : []),
-                    ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
-                        ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
-                        : []),
-                    ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                        ? child.dse.entryACI ?? []
-                        : []),
-                ];
-                const acdfTuples: ACDFTuple[] = (targetACI ?? [])
-                    .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-                const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
-                const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-                    acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                        ...tuple,
-                        await userWithinACIUserClass(
-                            tuple[0],
-                            conn.boundNameAndUID!,
-                            childDN,
-                            EQUALITY_MATCHER,
-                            isMemberOfGroup,
-                        ),
-                    ]),
-                ))
-                    .filter((tuple) => (tuple[5] > 0));
-                if (accessControlScheme) { // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                if (!ctx.config.bulkInsertMode && accessControlScheme) {
+                    const childDN = getDistinguishedName(child);
+                    const relevantSubentries: Vertex[] = (await Promise.all(
+                        state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+                    )).flat();
+                    const targetACI = [
+                        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
+                            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                            : []),
+                        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
+                            ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                            : []),
+                        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                            ? child.dse.entryACI ?? []
+                            : []),
+                    ];
+                    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                            ...tuple,
+                            await userWithinACIUserClass(
+                                tuple[0],
+                                conn.boundNameAndUID!,
+                                childDN,
+                                EQUALITY_MATCHER,
+                                isMemberOfGroup,
+                            ),
+                        ]),
+                    ))
+                        .filter((tuple) => (tuple[5] > 0));
                     const {
                         authorized,
                     } = bacACDF(

@@ -243,7 +243,7 @@ async function addEntry (
         );
     }
     const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
-    if (!validateObjectClasses(ctx, objectClasses)) {
+    if (!ctx.config.bulkInsertMode && !validateObjectClasses(ctx, objectClasses)) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:invalid_object_classes"),
             new UpdateErrorData(
@@ -344,9 +344,11 @@ async function addEntry (
     }
 
     const targetDN = data.object.rdnSequence;
-    const relevantSubentries: Vertex[] = (await Promise.all(
-        state.admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
-    )).flat();
+    const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
+        ? []
+        : (await Promise.all(
+            state.admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
+        )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
@@ -361,23 +363,26 @@ async function addEntry (
                 ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
                 : []),
         ];
-    const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
+        ? (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci))
+        : [];
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
-    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-            ...tuple,
-            await userWithinACIUserClass(
-                tuple[0],
-                conn.boundNameAndUID!, // This request is not allowed if the connection is not bound.
-                targetDN,
-                EQUALITY_MATCHER,
-                isMemberOfGroup,
-            ),
-        ]),
-    ))
-        .filter((tuple) => (tuple[5] > 0));
-    if (accessControlScheme) {
+    const relevantTuples: ACDFTupleExtended[] = ctx.config.bulkInsertMode
+        ? []
+        : (await Promise.all(
+            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    tuple[0],
+                    conn.boundNameAndUID!, // This request is not allowed if the connection is not bound.
+                    targetDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        ))
+            .filter((tuple) => (tuple[5] > 0));
+    if (!ctx.config.bulkInsertMode && accessControlScheme) {
         const {
             authorized,
         } = bacACDF(
@@ -465,29 +470,31 @@ async function addEntry (
             namingViolationErrorData(ctx, conn, [], state.chainingArguments.aliasDereferenced),
         );
     }
-    const existingSiblings = await readChildren(ctx, immediateSuperior);
-    const entryAlreadyExists: boolean = existingSiblings
-        .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
-    if (entryAlreadyExists) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:entry_already_exists"),
-            new UpdateErrorData(
-                UpdateProblem_entryAlreadyExists,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
+    if (!ctx.config.bulkInsertMode) {
+        const existingSiblings = await readChildren(ctx, immediateSuperior);
+        const entryAlreadyExists: boolean = existingSiblings
+            .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
+        if (entryAlreadyExists) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:entry_already_exists"),
+                new UpdateErrorData(
+                    UpdateProblem_entryAlreadyExists,
                     undefined,
-                    updateError["&errorCode"],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
                 ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
+            );
+        }
     }
-    if (immediateSuperior.dse.nssr) {
+    if (!ctx.config.bulkInsertMode && immediateSuperior.dse.nssr) {
         await checkIfNameIsAlreadyTakenInNSSR(
             ctx,
             conn,
@@ -556,307 +563,130 @@ async function addEntry (
         }
     }
 
-    const attrsFromDN: Value[] = rdn
-        .map((atav): Value => ({
-            type: atav.type_,
-            value: atav.value,
-            contexts: new Map([]),
-        }));
-
-    if (accessControlScheme) { // FIXME: Actually check that what follows applies to this scheme.
-        for (const attr of data.entry) {
-            const {
-                authorized: authorizedToAddAttributeType,
-            } = bacACDF(
-                relevantTuples,
-                conn.authLevel,
-                {
-                    attributeType: attr.type_,
-                },
-                [
-                    PERMISSION_CATEGORY_ADD,
-                ],
-                EQUALITY_MATCHER,
-            );
-            if (!authorizedToAddAttributeType) {
-                throw new errors.SecurityError(
-                    ctx.i18n.t("err:not_authz_to_create_attr_type", {
-                        type: attr.type_.toString(),
-                    }),
-                    new SecurityErrorData(
-                        SecurityProblem_insufficientAccessRights,
-                        undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            undefined,
-                            securityError["&errorCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        state.chainingArguments.aliasDereferenced,
-                        undefined,
-                    ),
-                );
-            }
-        }
-    }
-
-    for (const value of values) {
-        if (accessControlScheme) {
-            const {
-                authorized: authorizedToAddAttributeValue,
-            } = bacACDF(
-                relevantTuples,
-                conn.authLevel,
-                {
-                    value: new AttributeTypeAndValue(
-                        value.type,
-                        value.value,
-                    ),
-                },
-                [
-                    PERMISSION_CATEGORY_ADD,
-                ],
-                EQUALITY_MATCHER,
-            );
-            if (!authorizedToAddAttributeValue) {
-                throw new errors.SecurityError(
-                    ctx.i18n.t("err:not_authz_to_create_attr_value", {
-                        type: value.type.toString(),
-                    }),
-                    new SecurityErrorData(
-                        SecurityProblem_insufficientAccessRights,
-                        undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            undefined,
-                            securityError["&errorCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        state.chainingArguments.aliasDereferenced,
-                        undefined,
-                    ),
-                );
-            }
-        }
-    }
-
-    const unrecognizedAttributes: AttributeType[] = [];
     const nonUserApplicationAttributes: AttributeType[] = [];
-    const noUserModAttributes: AttributeType[] = [];
-    const dummyAttributes: AttributeType[] = [];
-    const collectiveAttributes: AttributeType[] = [];
-    const obsoleteAttributes: AttributeType[] = [];
-    for (const attr of data.entry) {
-        const spec = ctx.attributeTypes.get(attr.type_.toString());
-        if (!spec) {
-            unrecognizedAttributes.push(attr.type_);
-            continue;
-        }
-        if (spec.usage !== AttributeUsage_userApplications) {
-            nonUserApplicationAttributes.push(attr.type_);
-        }
-        if (spec.noUserModification) {
-            noUserModAttributes.push(attr.type_);
-        }
-        if (spec.dummy) {
-            dummyAttributes.push(attr.type_);
-        }
-        if (spec.collective) {
-            collectiveAttributes.push(attr.type_);
-        }
-        if (spec.obsolete) {
-            obsoleteAttributes.push(attr.type_);
-        }
-        if (attr.type_.isEqualTo(hierarchyParent["&id"]) && isChild) {
-            throw new errors.UpdateError(
-                ctx.i18n.t("err:child_cannot_be_in_hierarchy"),
-                new UpdateErrorData(
-                    UpdateProblem_familyRuleViolation,
+    if (!ctx.config.bulkInsertMode) {
+        if (accessControlScheme) { // FIXME: Actually check that what follows applies to this scheme.
+            for (const attr of data.entry) {
+                const {
+                    authorized: authorizedToAddAttributeType,
+                } = bacACDF(
+                    relevantTuples,
+                    conn.authLevel,
+                    {
+                        attributeType: attr.type_,
+                    },
                     [
-                        {
-                            attribute: attr,
-                        },
-                        {
-                            attribute: new Attribute(
-                                id_at_objectClass,
-                                [
-                                    _encodeObjectIdentifier(id_oc_child, DER),
-                                ],
-                                undefined,
-                            ),
-                        },
+                        PERMISSION_CATEGORY_ADD,
                     ],
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        updateError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
+                    EQUALITY_MATCHER,
+                );
+                if (!authorizedToAddAttributeType) {
+                    throw new errors.SecurityError(
+                        ctx.i18n.t("err:not_authz_to_create_attr_type", {
+                            type: attr.type_.toString(),
+                        }),
+                        new SecurityErrorData(
+                            SecurityProblem_insufficientAccessRights,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                securityError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+            }
         }
-    }
-    if (unrecognizedAttributes.length > 0) {
-        throw new errors.AttributeError(
-            ctx.i18n.t("err:unrecognized_attribute_type", {
-                oids: unrecognizedAttributes.map((at) => at.toString()).join(", "),
-            }),
-            new AttributeErrorData(
-                data.object,
-                unrecognizedAttributes.map((at) => new AttributeErrorData_problems_Item(
-                    AttributeProblem_undefinedAttributeType,
-                    at,
-                    undefined,
-                )),
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    attributeError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
-    if (noUserModAttributes.length > 0) {
-        throw new errors.AttributeError(
-            ctx.i18n.t("err:no_user_modification", {
-                oids: noUserModAttributes.map((at) => at.toString()).join(", "),
-            }),
-            new AttributeErrorData(
-                data.object,
-                noUserModAttributes.map((at) => new AttributeErrorData_problems_Item(
-                    AttributeProblem_constraintViolation,
-                    at,
-                    undefined,
-                )),
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    attributeError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
-    if (dummyAttributes.length > 0) {
-        throw new errors.AttributeError(
-            ctx.i18n.t("err:cannot_add_dummy_attr", {
-                oids: dummyAttributes.map((at) => at.toString()).join(", "),
-            }),
-            new AttributeErrorData(
-                data.object,
-                dummyAttributes.map((at) => new AttributeErrorData_problems_Item(
-                    AttributeProblem_constraintViolation,
-                    at,
-                    undefined,
-                )),
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    attributeError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
-    if (!isSubentry && (collectiveAttributes.length > 0)) {
-        throw new errors.AttributeError(
-            ctx.i18n.t("err:cannot_add_collective_attr", {
-                oids: collectiveAttributes.map((at) => at.toString()).join(", "),
-            }),
-            new AttributeErrorData(
-                data.object,
-                collectiveAttributes.map((at) => new AttributeErrorData_problems_Item(
-                    AttributeProblem_constraintViolation,
-                    at,
-                    undefined,
-                )),
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    attributeError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
-    if (obsoleteAttributes.length > 0) {
-        throw new errors.AttributeError(
-            ctx.i18n.t("err:cannot_add_obsolete_attr", {
-                oids: obsoleteAttributes.map((at) => at.toString()).join(", "),
-            }),
-            new AttributeErrorData(
-                data.object,
-                obsoleteAttributes.map((at) => new AttributeErrorData_problems_Item(
-                    AttributeProblem_constraintViolation,
-                    at,
-                    undefined,
-                )),
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    attributeError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
+        for (const value of values) {
+            if (accessControlScheme) {
+                const {
+                    authorized: authorizedToAddAttributeValue,
+                } = bacACDF(
+                    relevantTuples,
+                    conn.authLevel,
+                    {
+                        value: new AttributeTypeAndValue(
+                            value.type,
+                            value.value,
+                        ),
+                    },
+                    [
+                        PERMISSION_CATEGORY_ADD,
+                    ],
+                    EQUALITY_MATCHER,
+                );
+                if (!authorizedToAddAttributeValue) {
+                    throw new errors.SecurityError(
+                        ctx.i18n.t("err:not_authz_to_create_attr_value", {
+                            type: value.type.toString(),
+                        }),
+                        new SecurityErrorData(
+                            SecurityProblem_insufficientAccessRights,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                securityError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+            }
+        }
 
-    const missingMandatoryAttributes: Set<IndexableOID> = new Set();
-    const optionalAttributes: Set<IndexableOID> = new Set(
-        attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
-    );
-    if (isEntry) {
-        optionalAttributes.add(id_oa_collectiveExclusions.toString());
-        optionalAttributes.add(administrativeRole["&id"].toString());
-    }
-    objectClasses
-        .map((oc) => ctx.objectClasses.get(oc.toString()))
-        .forEach((oc, i) => {
-            if (!oc) {
-                const oid = objectClassValues[i].value.objectIdentifier;
+        const unrecognizedAttributes: AttributeType[] = [];
+        const noUserModAttributes: AttributeType[] = [];
+        const dummyAttributes: AttributeType[] = [];
+        const collectiveAttributes: AttributeType[] = [];
+        const obsoleteAttributes: AttributeType[] = [];
+        for (const attr of data.entry) {
+            const spec = ctx.attributeTypes.get(attr.type_.toString());
+            if (!spec) {
+                unrecognizedAttributes.push(attr.type_);
+                continue;
+            }
+            if (spec.usage !== AttributeUsage_userApplications) {
+                nonUserApplicationAttributes.push(attr.type_);
+            }
+            if (spec.noUserModification) {
+                noUserModAttributes.push(attr.type_);
+            }
+            if (spec.dummy) {
+                dummyAttributes.push(attr.type_);
+            }
+            if (spec.collective) {
+                collectiveAttributes.push(attr.type_);
+            }
+            if (spec.obsolete) {
+                obsoleteAttributes.push(attr.type_);
+            }
+            if (attr.type_.isEqualTo(hierarchyParent["&id"]) && isChild) {
                 throw new errors.UpdateError(
-                    ctx.i18n.t("err:unrecognized_object_class", {
-                        oid: oid.toString(),
-                    }),
+                    ctx.i18n.t("err:child_cannot_be_in_hierarchy"),
                     new UpdateErrorData(
-                        UpdateProblem_objectClassViolation,
+                        UpdateProblem_familyRuleViolation,
                         [
+                            {
+                                attribute: attr,
+                            },
                             {
                                 attribute: new Attribute(
                                     id_at_objectClass,
                                     [
-                                        _encodeObjectIdentifier(oid, DER),
+                                        _encodeObjectIdentifier(id_oc_child, DER),
                                     ],
                                     undefined,
                                 ),
@@ -875,30 +705,226 @@ async function addEntry (
                     ),
                 );
             }
-            for (const at of oc.mandatoryAttributes) {
-                missingMandatoryAttributes.add(at);
-                optionalAttributes.add(at);
-            }
-            for (const at of oc.optionalAttributes) {
-                optionalAttributes.add(at);
-            }
-        });
+        }
+        if (unrecognizedAttributes.length > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:unrecognized_attribute_type", {
+                    oids: unrecognizedAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    unrecognizedAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_undefinedAttributeType,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (noUserModAttributes.length > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:no_user_modification", {
+                    oids: noUserModAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    noUserModAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (dummyAttributes.length > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:cannot_add_dummy_attr", {
+                    oids: dummyAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    dummyAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (!isSubentry && (collectiveAttributes.length > 0)) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:cannot_add_collective_attr", {
+                    oids: collectiveAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    collectiveAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (obsoleteAttributes.length > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:cannot_add_obsolete_attr", {
+                    oids: obsoleteAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    obsoleteAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+    }
 
-    const attributeTypes: Set<IndexableOID> = new Set(data.entry.map((attr) => attr.type_.toString()));
-    for (const at of attributeTypes.values()) {
-        missingMandatoryAttributes.delete(at);
-        if (!isExtensible && !optionalAttributes.has(at)) {
+    const missingMandatoryAttributes: Set<IndexableOID> = new Set();
+    const optionalAttributes: Set<IndexableOID> = new Set(
+        attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
+    );
+    if (isEntry) {
+        optionalAttributes.add(id_oa_collectiveExclusions.toString());
+        optionalAttributes.add(administrativeRole["&id"].toString());
+    }
+    if (!ctx.config.bulkInsertMode) {
+        objectClasses
+            .map((oc) => ctx.objectClasses.get(oc.toString()))
+            .forEach((oc, i) => {
+                if (!oc) {
+                    const oid = objectClassValues[i].value.objectIdentifier;
+                    throw new errors.UpdateError(
+                        ctx.i18n.t("err:unrecognized_object_class", {
+                            oid: oid.toString(),
+                        }),
+                        new UpdateErrorData(
+                            UpdateProblem_objectClassViolation,
+                            [
+                                {
+                                    attribute: new Attribute(
+                                        id_at_objectClass,
+                                        [
+                                            _encodeObjectIdentifier(oid, DER),
+                                        ],
+                                        undefined,
+                                    ),
+                                },
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                updateError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+                for (const at of oc.mandatoryAttributes) {
+                    missingMandatoryAttributes.add(at);
+                    optionalAttributes.add(at);
+                }
+                for (const at of oc.optionalAttributes) {
+                    optionalAttributes.add(at);
+                }
+            });
+
+        const attributeTypes: Set<IndexableOID> = new Set(data.entry.map((attr) => attr.type_.toString()));
+        for (const at of attributeTypes.values()) {
+            missingMandatoryAttributes.delete(at);
+            if (!isExtensible && !optionalAttributes.has(at)) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:attribute_type_not_permitted_by_oc", {
+                        oids: at,
+                    }),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attributeType: ObjectIdentifier.fromString(at),
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+        if (missingMandatoryAttributes.size > 0) {
             throw new errors.UpdateError(
-                ctx.i18n.t("err:attribute_type_not_permitted_by_oc", {
-                    oids: at,
+                ctx.i18n.t("err:missing_mandatory_attributes", {
+                    oids: Array.from(missingMandatoryAttributes).join(", "),
                 }),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
-                    [
-                        {
-                            attributeType: ObjectIdentifier.fromString(at),
-                        },
-                    ],
+                    Array.from(missingMandatoryAttributes).map((at) => ({
+                        attributeType: ObjectIdentifier.fromString(at),
+                    })),
                     [],
                     createSecurityParameters(
                         ctx,
@@ -912,101 +938,83 @@ async function addEntry (
                 ),
             );
         }
-    }
-    if (missingMandatoryAttributes.size > 0) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:missing_mandatory_attributes", {
-                oids: Array.from(missingMandatoryAttributes).join(", "),
-            }),
-            new UpdateErrorData(
-                UpdateProblem_objectClassViolation,
-                Array.from(missingMandatoryAttributes).map((at) => ({
-                    attributeType: ObjectIdentifier.fromString(at),
-                })),
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    updateError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
 
-    const rdnAttributes: Set<IndexableOID> = new Set();
-    const duplicatedAFDNs: AttributeType[] = [];
-    const unrecognizedAFDNs: AttributeType[] = [];
-    const cannotBeUsedInNameAFDNs: AttributeType[] = [];
-    const unmatchedAFDNs: AttributeType[] = [];
+        const attrsFromDN: Value[] = rdn
+            .map((atav): Value => ({
+                type: atav.type_,
+                value: atav.value,
+                contexts: new Map([]),
+            }));
+        const rdnAttributes: Set<IndexableOID> = new Set();
+        const duplicatedAFDNs: AttributeType[] = [];
+        const unrecognizedAFDNs: AttributeType[] = [];
+        const cannotBeUsedInNameAFDNs: AttributeType[] = [];
+        const unmatchedAFDNs: AttributeType[] = [];
+        attrsFromDN
+            .forEach((afdn): void => {
+                const oid: string = afdn.type.toString();
+                if (rdnAttributes.has(oid)) {
+                    duplicatedAFDNs.push(afdn.type);
+                    return;
+                } else {
+                    rdnAttributes.add(oid);
+                }
+                const spec = ctx.attributeTypes.get(afdn.type.toString());
+                if (!spec) {
+                    unrecognizedAFDNs.push(afdn.type);
+                    return;
+                }
+                const matcher = getNamingMatcherGetter(ctx)(afdn.type);
+                if (!matcher) {
+                    cannotBeUsedInNameAFDNs.push(afdn.type);
+                    return;
+                }
+                const someAttributeMatched = values.some((attr) => (
+                    (!attr.contexts || (attr.contexts.size === 0))
+                    && attr.type.isEqualTo(afdn.type)
+                    && matcher(attr.value, afdn.value)
+                ));
+                if (!someAttributeMatched) {
+                    unmatchedAFDNs.push(afdn.type);
+                    return;
+                }
+            });
 
-    attrsFromDN
-        .forEach((afdn): void => {
-            const oid: string = afdn.type.toString();
-            if (rdnAttributes.has(oid)) {
-                duplicatedAFDNs.push(afdn.type);
-                return;
-            } else {
-                rdnAttributes.add(oid);
-            }
-            const spec = ctx.attributeTypes.get(afdn.type.toString());
-            if (!spec) {
-                unrecognizedAFDNs.push(afdn.type);
-                return;
-            }
-            const matcher = getNamingMatcherGetter(ctx)(afdn.type);
-            if (!matcher) {
-                cannotBeUsedInNameAFDNs.push(afdn.type);
-                return;
-            }
-            const someAttributeMatched = values.some((attr) => (
-                (!attr.contexts || (attr.contexts.size === 0))
-                && attr.type.isEqualTo(afdn.type)
-                && matcher(attr.value, afdn.value)
-            ));
-            if (!someAttributeMatched) {
-                unmatchedAFDNs.push(afdn.type);
-                return;
-            }
-        });
+        if (duplicatedAFDNs.length > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_types_duplicated", {
+                    oids: duplicatedAFDNs.join(", "),
+                }),
+                namingViolationErrorData(ctx, conn, duplicatedAFDNs, state.chainingArguments.aliasDereferenced),
+            );
+        }
 
-    if (duplicatedAFDNs.length > 0) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:rdn_types_duplicated", {
-                oids: duplicatedAFDNs.join(", "),
-            }),
-            namingViolationErrorData(ctx, conn, duplicatedAFDNs, state.chainingArguments.aliasDereferenced),
-        );
-    }
+        if (unrecognizedAFDNs.length > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_types_unrecognized", {
+                    oids: unrecognizedAFDNs.join(", "),
+                }),
+                namingViolationErrorData(ctx, conn, unrecognizedAFDNs, state.chainingArguments.aliasDereferenced),
+            );
+        }
 
-    if (unrecognizedAFDNs.length > 0) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:rdn_types_unrecognized", {
-                oids: unrecognizedAFDNs.join(", "),
-            }),
-            namingViolationErrorData(ctx, conn, unrecognizedAFDNs, state.chainingArguments.aliasDereferenced),
-        );
-    }
+        if (cannotBeUsedInNameAFDNs.length > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_types_prohibited_in_naming", {
+                    oids: cannotBeUsedInNameAFDNs.join(", "),
+                }),
+                namingViolationErrorData(ctx, conn, cannotBeUsedInNameAFDNs, state.chainingArguments.aliasDereferenced),
+            );
+        }
 
-    if (cannotBeUsedInNameAFDNs.length > 0) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:rdn_types_prohibited_in_naming", {
-                oids: cannotBeUsedInNameAFDNs.join(", "),
-            }),
-            namingViolationErrorData(ctx, conn, cannotBeUsedInNameAFDNs, state.chainingArguments.aliasDereferenced),
-        );
-    }
-
-    if (unmatchedAFDNs.length > 0) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:rdn_values_not_present_in_entry", {
-                oids: unmatchedAFDNs.join(", "),
-            }),
-            namingViolationErrorData(ctx, conn, unmatchedAFDNs, state.chainingArguments.aliasDereferenced),
-        );
+        if (unmatchedAFDNs.length > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_values_not_present_in_entry", {
+                    oids: unmatchedAFDNs.join(", "),
+                }),
+                namingViolationErrorData(ctx, conn, unmatchedAFDNs, state.chainingArguments.aliasDereferenced),
+            );
+        }
     }
 
     // Subschema validation
@@ -1510,7 +1518,7 @@ async function addEntry (
     immediateSuperior.subordinates?.push(newEntry);
 
     // Update relevant hierarchical operational bindings
-    if (newEntry.dse.admPoint || newEntry.dse.subentry) {
+    if (!ctx.config.bulkInsertMode && (newEntry.dse.admPoint || newEntry.dse.subentry)) {
         const admPoint: Vertex | undefined = newEntry.dse.admPoint
             ? newEntry
             : newEntry.immediateSuperior;
