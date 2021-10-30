@@ -99,6 +99,7 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -619,22 +620,116 @@ async function findDSE (
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
         let cursorId: number | undefined;
-        let subordinatesInBatch = await readChildren(
-            ctx,
-            dse_i,
-            100,
-            undefined,
-            cursorId,
-            {
-                AND: needleRDN.map((atav) => ({
-                    RDN: {
-                        some: {
-                            type: atav.type_.toString(),
+        /**
+         * What follows in this if statement is a byte-for-byte check for an
+         * entry having the exact RDN supplied by the query. This is intended to
+         * be a performance improvement by making the database do the work of
+         * finding the exact matching entry. However, a database query is not
+         * worth the overhead if there are only a few entries immediately
+         * subordinate to this entry. For this reason, this optimization is only
+         * used if the subordinates are not already loaded into memory or if
+         * there are a lot of immediate subordinates.
+         *
+         * (Empirically, it seems like this is only worth it if there are about
+         * 1000 immediate subordinates.)
+         */
+        if (!dse_i.subordinates || (dse_i.subordinates.length > 1000)) { // TODO: Make this configurable.
+            const match = await ctx.db.entry.findFirst({
+                where: {
+                    AND: [
+                        {
+                            immediate_superior_id: dse_i.dse.id,
+                            deleteTimestamp: null,
                         },
-                    },
-                })),
-            },
-        );
+                        ...needleRDN.map((atav) => ({
+                            RDN: {
+                                some: {
+                                    type: atav.type_.toString(),
+                                    value: Buffer.from(atav.value.toBytes()),
+                                },
+                            },
+                        })),
+                    ],
+                },
+            });
+            if (match) {
+                const matchedVertex = await vertexFromDatabaseEntry(ctx, dse_i, match, true);
+                // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                if (!ctx.config.bulkInsertMode && accessControlScheme) {
+                    const childDN = getDistinguishedName(matchedVertex);
+                    const relevantSubentries: Vertex[] = (await Promise.all(
+                        state.admPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
+                    )).flat();
+                    const targetACI = [
+                        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !matchedVertex.dse.subentry)
+                            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                            : []),
+                        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && matchedVertex.dse.subentry)
+                            ? matchedVertex.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                            : []),
+                        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                            ? matchedVertex.dse.entryACI ?? []
+                            : []),
+                    ];
+                    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                            ...tuple,
+                            await userWithinACIUserClass(
+                                tuple[0],
+                                conn.boundNameAndUID!,
+                                childDN,
+                                EQUALITY_MATCHER,
+                                isMemberOfGroup,
+                            ),
+                        ]),
+                    ))
+                        .filter((tuple) => (tuple[5] > 0));
+                    const {
+                        authorized,
+                    } = bacACDF(
+                        relevantTuples,
+                        conn.authLevel,
+                        {
+                            entry: Array
+                                .from(matchedVertex.dse.objectClass)
+                                .map(ObjectIdentifier.fromString),
+                        },
+                        [
+                            PERMISSION_CATEGORY_BROWSE,
+                            PERMISSION_CATEGORY_RETURN_DN,
+                        ],
+                        EQUALITY_MATCHER,
+                    );
+                    if (!authorized) {
+                        await targetNotFoundSubprocedure();
+                        return;
+                    }
+                }
+                i++;
+                rdnMatched = true;
+                dse_i = matchedVertex;
+            }
+        }
+        let subordinatesInBatch = rdnMatched
+            ? []
+            : await readChildren(
+                ctx,
+                dse_i,
+                100,
+                undefined,
+                cursorId,
+                {
+                    AND: needleRDN.map((atav) => ({
+                        RDN: {
+                            some: {
+                                type: atav.type_.toString(),
+                            },
+                        },
+                    })),
+                },
+            );
         while (subordinatesInBatch.length) {
             for (const child of subordinatesInBatch) {
                 cursorId = child.dse.id;
@@ -735,6 +830,15 @@ async function findDSE (
                 100,
                 undefined,
                 cursorId,
+                {
+                    AND: needleRDN.map((atav) => ({
+                        RDN: {
+                            some: {
+                                type: atav.type_.toString(),
+                            },
+                        },
+                    })),
+                },
             );
         }
         if (!rdnMatched) {
