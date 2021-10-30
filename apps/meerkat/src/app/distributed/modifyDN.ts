@@ -1077,6 +1077,74 @@ async function modifyDN (
                 ),
             );
         }
+        const spec = ctx.attributeTypes.get(atav.type_.toString());
+        if (!spec) {
+            throw new Error(); // FIXME: Attribute type not understood.
+        }
+        let hasValue: boolean = false;
+        if (spec.driver?.hasValue) {
+            hasValue = await spec.driver.hasValue(ctx, target, {
+                type: atav.type_,
+                value: atav.value,
+            }, relevantSubentries);
+        } else {
+            hasValue = !!(await ctx.db.attributeValue.findFirst({
+                where: {
+                    entry_id: target.dse.id,
+                    type: atav.type_.toString(),
+                    ber: Buffer.from(atav.value.toBytes()),
+                },
+            }));
+            if (!hasValue) {
+                const matchingRule = spec.equalityMatchingRule
+                    ? ctx.equalityMatchingRules.get(spec.equalityMatchingRule.toString())
+                    : undefined;
+                const matcher = matchingRule?.matcher;
+                const {
+                    userAttributes,
+                    operationalAttributes,
+                } = await readValues(ctx, target, new EntryInformationSelection(
+                    {
+                        select: [ atav.type_ ],
+                    },
+                    undefined,
+                    {
+                        select: [ atav.type_ ],
+                    },
+                    undefined,
+                    false,
+                    undefined,
+                ));
+                const attributes = [
+                    ...userAttributes,
+                    ...operationalAttributes,
+                ];
+                if (attributes.some((attr) => matcher && matcher(attr.value, atav.value))) {
+                    hasValue = true;
+                }
+            }
+        }
+        if (!hasValue) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_values_not_present_in_entry", {
+                    oids: atav.type_.toString(),
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_namingViolation,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
     }
 
     const typesInNewRDN: Set<IndexableOID> = new Set(newRDN.map((atav) => atav.type_.toString()));
