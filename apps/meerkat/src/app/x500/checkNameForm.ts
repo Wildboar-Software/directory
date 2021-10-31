@@ -1,4 +1,4 @@
-import type { IndexableOID } from "../types";
+import type { IndexableOID } from "@wildboar/meerkat-types";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     RelativeDistinguishedName as RDN,

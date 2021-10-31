@@ -1,6 +1,5 @@
-import type { ClientConnection, Context } from "../types";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
-import * as errors from "../errors";
+import type { ClientConnection, Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
@@ -42,6 +41,13 @@ import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import createSecurityParameters from "../x500/createSecurityParameters";
+import type { OperationDispatcherState } from "./OperationDispatcher";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 export
 interface RelatedEntryReturn {
@@ -82,18 +88,21 @@ export
 async function relatedEntryProcedure (
     ctx: Context,
     conn: ClientConnection,
-    invokeId: InvokeId,
+    state: OperationDispatcherState,
     ret: RelatedEntryReturn,
     argument: SearchArgument,
     chaining?: ChainingArguments,
 ): Promise<void> {
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = chaining?.timeLimit
         ? getDateFromTime(chaining.timeLimit)
         : undefined;
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -104,7 +113,7 @@ async function relatedEntryProcedure (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    chaining?.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -115,6 +124,25 @@ async function relatedEntryProcedure (
         return;
     }
     for (let i = 0; i < data.joinArguments.length; i++) {
+        if (op?.abandonTime) {
+            op.events.emit("abandon");
+            throw new errors.AbandonError(
+                ctx.i18n.t("err:abandoned"),
+                new AbandonedData(
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         checkTimeLimit();
         const jarg = data.joinArguments[i];
         const newChaining = createNewChainingArgument(i, chaining?.originator);
@@ -156,7 +184,7 @@ async function relatedEntryProcedure (
             const response = await OperationDispatcher.dispatchLocalSearchDSPRequest(
                 ctx,
                 conn,
-                invokeId,
+                state.invokeId,
                 newArgument,
                 newChaining,
             );

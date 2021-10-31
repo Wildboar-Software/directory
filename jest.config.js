@@ -1,8 +1,12 @@
+const { getJestProjects } = require('@nrwl/jest');
+
 module.exports = {
-  projects: [
-    '<rootDir>/apps/meerkat',
-    '<rootDir>/libs/idm',
-    '<rootDir>/apps/x500-cli',
-    '<rootDir>/libs/ldap-socket',
-  ],
+    projects: [
+        ...getJestProjects(),
+        '<rootDir>/apps/meerkat',
+        '<rootDir>/libs/idm',
+        '<rootDir>/apps/x500-cli',
+        '<rootDir>/libs/ldap-socket',
+        '<rootDir>/libs/meerkat-types',
+    ],
 };

@@ -1,4 +1,4 @@
-import type { ClientConnection, ConnectionStatistics } from "../types";
+import type { ClientConnection, ConnectionStatistics } from "@wildboar/meerkat-types";
 
 export
 function getConnectionStatistics (conn: ClientConnection): ConnectionStatistics {

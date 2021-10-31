@@ -1,5 +1,16 @@
-import type { Context, Vertex, ClientConnection, WithRequestStatistics, WithOutcomeStatistics } from "../types";
-import * as errors from "../errors";
+import type {
+    Context,
+    Vertex,
+    ClientConnection,
+    WithRequestStatistics,
+    WithOutcomeStatistics,
+    PagedResultsRequestState,
+    IndexableOID,
+    Value,
+    StoredContext,
+    DIT,
+} from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -31,10 +42,6 @@ import {
 import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
-import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
-import type ApproxMatcher from "@wildboar/x500/src/lib/types/ApproxMatcher";
 import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500/src/lib/utils/evaluateFilter";
@@ -147,7 +154,6 @@ import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
 import {
-    LimitProblem,
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
@@ -157,23 +163,337 @@ import {
     id_errcode_serviceError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
-import codeToString from "../x500/codeToString";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
+import getApproxMatcherGetter from "../x500/getApproxMatcherGetter";
+import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import LDAPConnection from "../ldap/LDAPConnection";
+import readFamily from "../database/family/readFamily";
+import readEntryOnly from "../database/family/readEntryOnly";
+import readCompoundEntry from "../database/family/readCompoundEntry";
+import readStrands from "../database/family/readStrands";
+import {
+    FamilyGrouping_entryOnly,
+    FamilyGrouping_compoundEntry,
+    FamilyGrouping_strands,
+    // FamilyGrouping_multiStrand,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import {
+    // SearchControlOptions_searchAliases,
+    SearchControlOptions_matchedValuesOnly,
+    // SearchControlOptions_checkOverspecified,
+    // SearchControlOptions_performExactly,
+    // SearchControlOptions_includeAllAreas,
+    // SearchControlOptions_noSystemRelaxation,
+    // SearchControlOptions_dnAttribute,
+    // SearchControlOptions_matchOnResidualName,
+    // SearchControlOptions_entryCount,
+    // SearchControlOptions_useSubset,
+    SearchControlOptions_separateFamilyMembers,
+    // SearchControlOptions_searchFamily,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import {
+    EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import {
+    FamilyEntries,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntries.ta";
+import {
+    family_information,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
+import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
 const BYTES_IN_A_UUID: number = 16;
 
+/**
+ * "Why don't you just fetch `pageSize` number of entries?"
+ *
+ * Pagination fetches `pageSize` number of entries at _each level_ of search
+ * recursion. In other words, if you request a page size of 100, and, in the
+ * process, you recurse into the DIT ten layers deep, there will actually be
+ * 1000 entries loaded into memory at the deepest part. This means that a
+ * request could consume considerably higher memory than expected. To prevent
+ * this, a fixed page size is used. In the future, this may be configurable.
+ */
+const ENTRIES_PER_BATCH: number = 1000;
+
 export
-interface SearchIReturn extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
+interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
     chaining: ChainingResults;
     results: EntryInformation[];
     poq?: PartialOutcomeQualifier;
     skipsRemaining?: number;
+    depth: number;
+    paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
 }
+
+// Note that this does not scrutinize the root DSE for membership. It is assumed.
+function keepSubsetOfDITById (dit: DIT, idsToKeep: Set<number>): DIT {
+    return {
+        ...dit,
+        subordinates: dit.subordinates
+            ?.filter((sub) => idsToKeep.has(sub.dse.id))
+            .map((sub) => keepSubsetOfDITById(sub, idsToKeep))
+            ?? [],
+    };
+}
+
+/* NOTE:
+The commented-out section below should not be used to pre-filter search results,
+because, in the search algorithm, when doing a subtree search, even if an entry
+does not match, its subordinates still must be searched.
+*/
+
+// function canFilterAttributeValueTable (
+//     ctx: Context,
+//     types: AttributeType[],
+// ): boolean {
+//     for (const t of types) {
+//         const spec = ctx.attributeTypes.get(t.toString());
+//         if (
+//             !spec
+//             || spec.driver
+//             || spec.noUserModification
+//             || spec.collective
+//             || spec.dummy
+//             || (spec.usage !== AttributeUsage_userApplications)
+//         ) {
+//             return false;
+//         }
+//     }
+//     return true;
+// }
+
+// function convertFilterItemToPrismaSelect (
+//     ctx: Context,
+//     filterItem: FilterItem,
+// ): Partial<Prisma.EntryWhereInput> | undefined {
+//     if ("equality" in filterItem) {
+//         const type_ = filterItem.equality.type_;
+//         if (type_.isEqualTo(objectClass["&id"])) {
+//             return {
+//                 EntryObjectClass: {
+//                     some: {
+//                         object_class: filterItem
+//                             .equality
+//                             .assertion
+//                             .objectIdentifier
+//                             .toString(),
+//                     },
+//                 },
+//             };
+//         }
+//         if (type_.isEqualTo(administrativeRole["&id"])) {
+//             return {
+//                 EntryAdministrativeRole: {
+//                     some: {
+//                         administrativeRole: filterItem
+//                             .equality
+//                             .assertion
+//                             .objectIdentifier
+//                             .toString(),
+//                     },
+//                 },
+//             };
+//         }
+//         if (type_.isEqualTo(accessControlScheme["&id"])) {
+//             return {
+//                 EntryAccessControlScheme: {
+//                     some: {
+//                         accessControlScheme: filterItem
+//                             .equality
+//                             .assertion
+//                             .objectIdentifier
+//                             .toString(),
+//                     },
+//                 },
+//             };
+//         }
+//         if (type_.isEqualTo(aliasedEntryName["&id"])) {
+//             return {
+//                 alias: true,
+//                 AliasEntry: {
+//                     some: {}, // REVIEW: I feel like this would crash. No way Prisma actually lets you do this.
+//                 },
+//             };
+//         }
+//         // if (type_.isEqualTo(hierarchyTop["&id"])) {
+
+//         // }
+//         // if (type_.isEqualTo(hierarchyLevel["&id"])) {
+
+//         // }
+//         // if (type_.isEqualTo(hierarchyBelow["&id"])) {
+
+//         // }
+//         // if (type_.isEqualTo(hierarchyParent["&id"])) {
+
+//         // }
+//         if (type_.isEqualTo(uniqueIdentifier["&id"])) {
+//             return {
+//                 UniqueIdentifier: {
+//                     some: {}, // REVIEW: I feel like this would crash. No way Prisma actually lets you do this.
+//                 },
+//             };
+//         }
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("substrings" in filterItem) {
+//         const type_ = filterItem.substrings.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("greaterOrEqual" in filterItem) {
+//         const type_ = filterItem.greaterOrEqual.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("lessOrEqual" in filterItem) {
+//         const type_ = filterItem.lessOrEqual.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("present" in filterItem) {
+//         const type_ = filterItem.present;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("approximateMatch" in filterItem) {
+//         const type_ = filterItem.approximateMatch.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("extensibleMatch" in filterItem) {
+//         const type_ = filterItem.extensibleMatch.type_;
+//         if (!type_) {
+//             return undefined;
+//         }
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else if ("contextPresent" in filterItem) {
+//         const type_ = filterItem.contextPresent.type_;
+//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
+//             return undefined;
+//         }
+//         return {
+//             AttributeValue: {
+//                 some: {
+//                     type: {
+//                         in: superTypes.map((st) => st.toString()),
+//                     },
+//                 },
+//             },
+//         };
+//     } else {
+//         return undefined;
+//     }
+// }
+
+// function convertFilterToPrismaSelect (
+//     ctx: Context,
+//     filter: Filter,
+// ): Partial<Prisma.EntryWhereInput> | undefined {
+//     if ("item" in filter) {
+//         return convertFilterItemToPrismaSelect(ctx, filter.item);
+//     } else if ("and" in filter) {
+//         return {
+//             AND: filter.and
+//                 .map((sub) => convertFilterToPrismaSelect(ctx, sub))
+//                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
+//         };
+//     } else if ("or" in filter) {
+//         return {
+//             OR: filter.or
+//                 .map((sub) => convertFilterToPrismaSelect(ctx, sub))
+//                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
+//         };
+//     } else if ("not" in filter) {
+//         return {
+//             NOT: convertFilterToPrismaSelect(ctx, filter.not),
+//         };
+//     } else {
+//         return undefined;
+//     }
+// }
 
 export
 async function search_i (
@@ -181,10 +501,13 @@ async function search_i (
     conn: ClientConnection,
     state: OperationDispatcherState,
     argument: SearchArgument,
-    ret: SearchIReturn,
+    searchState: SearchState,
 ): Promise<void> {
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
 
     /**
      * NOTE: Joins are going to be ENTIRELY UNSUPPORTED, because many details
@@ -213,7 +536,7 @@ async function search_i (
      */
     if (data.joinArguments) {
         throw new errors.ServiceError(
-            "Joins are entirely unsupported by this server.",
+            ctx.i18n.t("err:joins_unsupported"),
             new ServiceErrorData(
                 ServiceProblem_unwillingToPerform,
                 [],
@@ -224,26 +547,39 @@ async function search_i (
                     id_errcode_serviceError,
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
 
+    // const searchAliases: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchAliases]);
+    const matchedValuesOnly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchedValuesOnly]);
+    // const checkOverspecified: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_checkOverspecified]);
+    // const performExactly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_performExactly]);
+    // const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
+    // const noSystemRelaxation: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_noSystemRelaxation]);
+    // const dnAttribute: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_dnAttribute]);
+    // const matchOnResidualName: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchOnResidualName]);
+    // const entryCount: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_entryCount]);
+    // const useSubset: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_useSubset]);
+    const separateFamilyMembers: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_separateFamilyMembers]);
+    // const searchFamily: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchFamily]);
+
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
-    let pagingRequest: PagedResultsRequest_newRequest | undefined;
-    let page: number = 0;
-    let queryReference: string | undefined;
-    if (data.pagedResults) {
+    let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
+    if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
             const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
             if ((pi < 0) || !Number.isSafeInteger(pi)) {
                 throw new errors.ServiceError(
-                    `Paginated query page index ${pi} is invalid.`,
+                    ctx.i18n.t("err:page_number_invalid", {
+                        pi,
+                    }),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -254,7 +590,7 @@ async function search_i (
                             id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -262,7 +598,9 @@ async function search_i (
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
             if ((nr.pageSize < 1) || !Number.isSafeInteger(nr.pageSize)) {
                 throw new errors.ServiceError(
-                    `Paginated query page size ${nr.pageSize} is invalid.`,
+                    ctx.i18n.t("err:page_size_invalid", {
+                        ps: nr.pageSize,
+                    }),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -273,20 +611,28 @@ async function search_i (
                             id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
             }
-            queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
-            pagingRequest = data.pagedResults.newRequest;
-            page = ((data.pagedResults.newRequest.pageNumber ?? 1) - 1);
+            const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
+            const newPagingState: PagedResultsRequestState = {
+                cursorIds: [],
+                pageIndex: ((data.pagedResults.newRequest.pageNumber ?? 1) - 1),
+                request: data.pagedResults.newRequest,
+            };
+            searchState.paging = [ queryReference, newPagingState ];
+            if (conn.pagedResultsRequests.size >= 5) {
+                conn.pagedResultsRequests.clear();
+            }
+            conn.pagedResultsRequests.set(queryReference, newPagingState);
         } else if ("queryReference" in data.pagedResults) {
-            queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
+            const queryReference: string = Buffer.from(data.pagedResults.queryReference).toString("base64");
             const paging = conn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
-                    `Paginated query reference '${queryReference.slice(0, 32)}' is invalid.`,
+                    ctx.i18n.t("err:paginated_query_ref_invalid"),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -297,17 +643,18 @@ async function search_i (
                             id_errcode_serviceError,
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
             }
-            pagingRequest = paging[0];
-            page = paging[1];
+            searchState.paging = [ queryReference, paging ];
+            cursorId = searchState.paging[1].cursorIds[searchState.depth];
         } else if ("abandonQuery" in data.pagedResults) {
-            queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
+            const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
+            conn.pagedResultsRequests.delete(queryReference); // FIXME: Do this in list too.
             throw new errors.AbandonError(
-                `Abandoned paginated query identified by query reference '${queryReference.slice(0, 32)}'.`,
+                ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
                     AbandonedProblem_pagingAbandoned,
                     [],
@@ -318,13 +665,13 @@ async function search_i (
                         abandoned["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         } else {
             throw new errors.ServiceError(
-                "Unrecognized paginated query syntax.",
+                ctx.i18n.t("err:unrecognized_paginated_query_syntax"),
                 new ServiceErrorData(
                     ServiceProblem_unwillingToPerform,
                     [],
@@ -335,24 +682,24 @@ async function search_i (
                         id_errcode_serviceError,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         }
     }
-    const pageNumber: number = pagingRequest?.pageNumber ?? 0;
-    const pageSize: number = pagingRequest?.pageSize
+    const pageNumber: number = searchState.paging?.[1].request.pageNumber ?? 0;
+    const pageSize: number = searchState.paging?.[1].request.pageSize
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
-        ret.poq = new PartialOutcomeQualifier(
+        searchState.poq = new PartialOutcomeQualifier(
             LimitProblem_timeLimitExceeded,
             undefined,
             undefined,
             undefined,
-            queryReference
-                ? Buffer.from(queryReference, "base64")
+            searchState.paging?.[0]
+                ? Buffer.from(searchState.paging[0], "base64")
                 : undefined,
             undefined,
             undefined,
@@ -360,14 +707,14 @@ async function search_i (
         );
         return;
     }
-    if (ret.results.length >= pageSize) {
-        ret.poq = new PartialOutcomeQualifier(
+    if (searchState.results.length >= pageSize) {
+        searchState.poq = new PartialOutcomeQualifier(
             LimitProblem_sizeLimitExceeded,
             undefined,
             undefined,
             undefined,
-            queryReference
-                ? Buffer.from(queryReference, "base64")
+            searchState.paging?.[0]
+                ? Buffer.from(searchState.paging[0], "base64")
                 : undefined,
             undefined,
             undefined,
@@ -375,8 +722,8 @@ async function search_i (
         );
         return;
     }
-    if (ret.skipsRemaining === undefined) {
-        ret.skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
+    if (searchState.skipsRemaining === undefined) {
+        searchState.skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
             ? (pageNumber * pageSize)
             : 0;
     }
@@ -441,7 +788,7 @@ async function search_i (
             if (!authorizedToSearch) {
                 if (authorizedForDisclosure) {
                     throw new errors.SecurityError(
-                        "Not permitted to search the base object entry.",
+                        ctx.i18n.t("err:not_authz_search_base_object"),
                         new SecurityErrorData(
                             SecurityProblem_insufficientAccessRights,
                             undefined,
@@ -454,17 +801,17 @@ async function search_i (
                                 securityError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
                 } else {
                     throw new errors.NameError(
-                        "Not permitted to search the base object entry.",
+                        ctx.i18n.t("err:not_authz_search_base_object"),
                         new NameErrorData(
                             NameProblem_noSuchObject,
                             {
-                                rdnSequence: [],
+                                rdnSequence: targetDN.slice(0, -1),
                             },
                             [],
                             createSecurityParameters(
@@ -474,7 +821,7 @@ async function search_i (
                                 nameError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
@@ -508,7 +855,7 @@ async function search_i (
             {
                 select: filteredAttributes
                     .filter((attr) => {
-                        const spec = ctx.attributes.get(attr.toString());
+                        const spec = ctx.attributeTypes.get(attr.toString());
                         if (!spec) {
                             return true; // We assume all unrecognized attributes are user attributes.
                         }
@@ -519,7 +866,7 @@ async function search_i (
             {
                 select: filteredAttributes
                     .filter((attr) => {
-                        const spec = ctx.attributes.get(attr.toString());
+                        const spec = ctx.attributeTypes.get(attr.toString());
                         if (!spec) {
                             return false; // We assume all unrecognized attributes are user attributes.
                         }
@@ -531,42 +878,47 @@ async function search_i (
             undefined,
         )
         : undefined;
-    const {
-        userAttributes,
-        operationalAttributes,
-        collectiveAttributes,
-    } = await readAttributes(ctx, target, eis, relevantSubentries, data.operationContexts);
-    const attributes = [
-        ...userAttributes,
-        ...operationalAttributes,
-        ...collectiveAttributes,
-    ];
-    infoItems.push(...attributes.map((attribute): EntryInformation_information_Item => ({
-        attribute,
-    })));
-    /**
-     * This is the entry information that is used for filtering, not necessarily
-     * what is returned by the search (via `selection`).
-     */
-    const entryInfo = new EntryInformation(
-        {
-            rdnSequence: targetDN,
-        },
-        undefined,
-        infoItems,
-        undefined,
-        undefined,
-        undefined,
-    );
+
+    const readFamilyMemberInfo = async (vertex: Vertex): Promise<EntryInformation> => {
+        const vertexDN = getDistinguishedName(vertex);
+        const {
+            userAttributes,
+            operationalAttributes,
+            collectiveAttributes,
+        } = await readAttributes(ctx, target, eis, relevantSubentries, data.operationContexts);
+        const attributes = [
+            ...userAttributes,
+            ...operationalAttributes,
+            ...collectiveAttributes,
+        ];
+        infoItems.push(...attributes.map((attribute): EntryInformation_information_Item => ({
+            attribute,
+        })));
+        /**
+         * This is the entry information that is used for filtering, not necessarily
+         * what is returned by the search (via `selection`).
+         */
+        return new EntryInformation(
+            {
+                rdnSequence: vertexDN,
+            },
+            undefined,
+            infoItems,
+            undefined,
+            undefined,
+            undefined,
+        );
+    };
     const filterOptions: EvaluateFilterSettings = {
         getEqualityMatcher: getEqualityMatcherGetter(ctx),
         getOrderingMatcher: getOrderingMatcherGetter(ctx),
         getSubstringsMatcher: getSubstringsMatcherGetter(ctx),
-        getApproximateMatcher: (attributeType: OBJECT_IDENTIFIER): ApproxMatcher | undefined => {
-            return undefined; // TODO:
-        },
+        getApproximateMatcher: getApproxMatcherGetter(ctx),
         getContextMatcher: (contextType: OBJECT_IDENTIFIER): ContextMatcher | undefined => {
             return ctx.contextTypes.get(contextType.toString())?.matcher;
+        },
+        determineAbsentMatch: (contextType: OBJECT_IDENTIFIER): boolean => {
+            return ctx.contextTypes.get(contextType.toString())?.absentMatch ?? true;
         },
         isMatchingRuleCompatibleWithAttributeType: (mr: OBJECT_IDENTIFIER, at: OBJECT_IDENTIFIER): boolean => {
             return true; // FIXME:
@@ -618,13 +970,13 @@ async function search_i (
                 state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
             );
             if (suitable) {
-                if (ret.chaining.alreadySearched) {
-                    ret.chaining.alreadySearched.push(targetDN);
+                if (searchState.chaining.alreadySearched) {
+                    searchState.chaining.alreadySearched.push(targetDN);
                 } else {
-                    ret.chaining = new ChainingResults(
-                        ret.chaining.info,
-                        ret.chaining.crossReferences,
-                        ret.chaining.securityParameters,
+                    searchState.chaining = new ChainingResults(
+                        searchState.chaining.info,
+                        searchState.chaining.crossReferences,
+                        searchState.chaining.securityParameters,
                         [ targetDN ],
                     );
                 }
@@ -701,7 +1053,7 @@ async function search_i (
                             conn.authLevel,
                             {
                                 value: new AttributeTypeAndValue(
-                                    value.id,
+                                    value.type,
                                     value.value,
                                 ),
                             },
@@ -793,81 +1145,373 @@ async function search_i (
             target,
             argument,
             state.chainingArguments,
-            ret,
+            searchState,
         );
         return;
     }
+    const familyGrouping = data.familyGrouping ?? SearchArgumentData._default_value_for_familyGrouping;
+    const familySubsetGetter: (vertex: Vertex) => IterableIterator<Vertex[]> = (() => {
+        switch (familyGrouping) {
+        case (FamilyGrouping_entryOnly): return readEntryOnly;
+        case (FamilyGrouping_compoundEntry): return readCompoundEntry;
+        case (FamilyGrouping_strands): return readStrands;
+        default: {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:unsupported_familygrouping"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_serviceError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        }
+    })();
     if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) {
         // Nothing needs to be done here. Proceed to step 6.
     } else if ((subset === SearchArgumentData_subset_baseObject) || entryOnly) {
         if (
             (target.dse.subentry && subentries)
             || (!target.dse.subentry && !subentries)
+            || (
+                /**
+                 * NOTE: LDAP behaves a little differently from X.500
+                 * directories in this regard: subentries can be read without
+                 * using the subentries control if they are specified as the
+                 * `baseObject` of a search.
+                 *
+                 * This matters, too. I discovered this because Apache Directory
+                 * Studio does not send the subentries control when you are
+                 * actually trying to read the subentry itself--it only sends it
+                 * when you are querying its superior.
+                 */
+                (conn instanceof LDAPConnection)
+                && (subset === SearchArgumentData_subset_baseObject)
+            )
         ) {
+            /**
+             * See IETF RFC 4512, Section 5.1: This is how an LDAP client can
+             * read the Root DSE.
+             */
+            const searchingForRootDSE: boolean = Boolean(
+                !target.immediateSuperior
+                && target.dse.root
+                && ("item" in filter)
+                && ("present" in filter.item)
+                && filter.item.present.isEqualTo(objectClass["&id"])
+            );
             // Entry ACI is checked above.
-            const match = evaluateFilter(filter, entryInfo, filterOptions);
-            if (match) {
-                if (ret.skipsRemaining > 0) {
-                    ret.skipsRemaining--;
+            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
+                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+                : null;
+            const family = await readFamily(ctx, target);
+            const familySubsets = familySubsetGetter(family);
+            for (const familySubset of familySubsets) {
+                if (familySubset.length === 0) {
+                    ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
+                    continue; // This should never happen, but just handling it in case it does.
+                }
+                const familyInfos = await Promise.all(
+                    familySubset.map((member) => readFamilyMemberInfo(member)),
+                );
+                const matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                const matched: boolean = (
+                    (matchedValues === true)
+                    || (Array.isArray(matchedValues) && !!matchedValues.length)
+                );
+                if (matched || searchingForRootDSE) {
+                    if (searchState.skipsRemaining > 0) {
+                        if (separateFamilyMembers) {
+                            searchState.skipsRemaining -= familySubset
+                                .filter((vertex) => (
+                                    !familySelect
+                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
+                                )).length;
+                        } else {
+                            searchState.skipsRemaining--;
+                        }
+                        return;
+                    }
+                    const einfos = await Promise.all(
+                        familySubset.map((member) => readEntryInformation(
+                            ctx,
+                            member,
+                            data.selection,
+                            relevantSubentries,
+                            data.operationContexts,
+                        )),
+                    );
+                    if (
+                        matchedValuesOnly
+                        && (Array.isArray(matchedValues) && matchedValues.length)
+                        && !typesOnly // This option would make no sense with matchedValuesOnly.
+                    ) {
+                        for (let i = 0; i < einfos.length; i++) {
+                            const matchedValuesAttributes = attributesFromValues(
+                                matchedValues
+                                    .filter((mv) => (mv.entryIndex === i))
+                                    .map((mv): Value => ({
+                                        ...mv,
+                                        contexts: mv.contexts
+                                            ? new Map(
+                                                mv.contexts.map((context): [ string, StoredContext ] => [
+                                                    context.contextType.toString(),
+                                                    {
+                                                        id: context.contextType,
+                                                        fallback: context.fallback ?? false,
+                                                        values: context.contextValues,
+                                                    },
+                                                ]),
+                                            )
+                                            : undefined,
+                                    })),
+                            );
+                            const matchedValuesTypes: Set<IndexableOID> = new Set(
+                                matchedValuesAttributes.map((mva) => mva.type_.toString()),
+                            );
+                            const einfo = einfos[i];
+                            einfos[i] = [
+                                ...einfo
+                                    .filter((e) => {
+                                        if ("attribute" in e) {
+                                            return !matchedValuesTypes.has(e.attribute.type_.toString());
+                                        } else if ("attributeType" in e) {
+                                            return !matchedValuesTypes.has(e.attributeType.toString());
+                                        } else {
+                                            return false;
+                                        }
+                                    }),
+                                ...matchedValuesAttributes.map((attribute) => ({ attribute })),
+                            ];
+                        }
+                    } // End of matchedValuesOnly handling.
+                    const filteredEinfos = einfos
+                        .map(filterUnauthorizedEntryInformation);
+                    if (separateFamilyMembers) {
+                        searchState.results.push(
+                            ...filteredEinfos
+                                .map((einfo, i) => [ einfo, familySubset[i] ] as const)
+                                .filter(([ , vertex ]) => (
+                                    !familySelect
+                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
+                                ))
+                                .map(([ [ incompleteEntry, permittedEinfo ], vertex ]) => new EntryInformation(
+                                    {
+                                        rdnSequence: getDistinguishedName(vertex),
+                                    },
+                                    Boolean(vertex.dse.shadow),
+                                    permittedEinfo,
+                                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                    undefined, // TODO: Review, but I think this will always be false.
+                                    undefined,
+                                )),
+                        );
+                        return;
+                    }
+                    if (familySubset.length > 1) {
+                        const subset = keepSubsetOfDITById(family, new Set(familySubset.map((member) => member.dse.id)));
+                        const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
+                            subset,
+                            (vertex: Vertex) => filteredEinfos[
+                                familySubset.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
+                        )
+                            .filter((fe) => (!familySelect || familySelect.has(fe.toString())));
+                        const familyInfoAttr: Attribute = new Attribute(
+                            family_information["&id"],
+                            familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
+                            undefined,
+                        );
+                        filteredEinfos[0][1].push({
+                            attribute: familyInfoAttr,
+                        });
+                    }
+                    searchState.results.push(
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(familySubset[0]),
+                            },
+                            Boolean(familySubset[0].dse.shadow),
+                            filteredEinfos[0][1],
+                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            undefined, // TODO: Review, but I think this will always be false.
+                            undefined,
+                        ),
+                    );
+                    if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
+                        hierarchySelectionProcedure(
+                            ctx,
+                            data.hierarchySelections,
+                            data.serviceControls?.serviceType,
+                        );
+                    }
                     return;
                 }
-                const einfo = await readEntryInformation(
-                    ctx,
-                    target,
-                    data.selection,
-                    relevantSubentries,
-                    data.operationContexts,
-                );
-                const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
-                ret.results.push(new EntryInformation(
-                    {
-                        rdnSequence: targetDN,
-                    },
-                    Boolean(target.dse.shadow),
-                    permittedEinfo,
-                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                    undefined, // TODO: Review, but I think this will always be false.
-                    undefined,
-                ));
-                if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
-                    hierarchySelectionProcedure(
-                        ctx,
-                        data.hierarchySelections,
-                        data.serviceControls?.serviceType,
-                    );
-                }
             }
-            return;
         }
+        return;
     } else if (!entryOnly) /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
         if (
-            (target.dse.subentry && subentries)
-            || (!target.dse.subentry && !subentries)
+            (
+                (target.dse.subentry && subentries)
+                || (!target.dse.subentry && !subentries)
+            )
+            /**
+             * Per IETF RFC 4512:
+             *
+             * > The root DSE SHALL NOT be included if the client performs a
+             * > subtree search starting from the root.
+             *
+             * Unfortunately, I can't find any evidence of this being required
+             * by X.500 directories. However, this behavior makes sense: you
+             * should not include the root DSE in search results for searches
+             * that do not explicitly target it, because, in some sense, the
+             * root DSE is not a "real" entry in the DIT.
+             */
+            && !(!target.immediateSuperior && target.dse.root)
         ) {
             // Entry ACI is checked above.
-            const match = evaluateFilter(filter, entryInfo, filterOptions);
-            if (match) {
-                if (ret.skipsRemaining > 0) {
-                    ret.skipsRemaining--;
-                } else {
-                    const einfo = await readEntryInformation(
-                        ctx,
-                        target,
-                        data.selection,
-                        relevantSubentries,
-                        data.operationContexts,
+            // NOTE: This section of code is copy-pasted. There might be a way to de-duplicate.
+            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
+                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+                : null;
+            const family = await readFamily(ctx, target);
+            const familySubsets = familySubsetGetter(family);
+            for (const familySubset of familySubsets) {
+                if (familySubset.length === 0) {
+                    ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
+                    continue; // This should never happen, but just handling it in case it does.
+                }
+                const familyInfos = await Promise.all(
+                    familySubset.map((member) => readFamilyMemberInfo(member)),
+                );
+                const matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                const matched: boolean = (
+                    (matchedValues === true)
+                    || (Array.isArray(matchedValues) && !!matchedValues.length)
+                );
+                if (matched) {
+                    if (searchState.skipsRemaining > 0) {
+                        if (separateFamilyMembers) {
+                            searchState.skipsRemaining -= familySubset.length;
+                        } else {
+                            searchState.skipsRemaining--;
+                        }
+                        return;
+                    }
+                    const einfos = await Promise.all(
+                        familySubset.map((member) => readEntryInformation(
+                            ctx,
+                            member,
+                            data.selection,
+                            relevantSubentries,
+                            data.operationContexts,
+                        )),
                     );
-                    const [ incompleteEntry, permittedEinfo ] = filterUnauthorizedEntryInformation(einfo);
-                    ret.results.push(new EntryInformation(
-                        {
-                            rdnSequence: targetDN,
-                        },
-                        Boolean(target.dse.shadow),
-                        permittedEinfo,
-                        incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                        undefined, // TODO: Review, but I think this will always be false.
-                        undefined,
-                    ));
+                    if (
+                        matchedValuesOnly
+                        && (Array.isArray(matchedValues) && matchedValues.length)
+                        && !typesOnly // This option would make no sense with matchedValuesOnly.
+                    ) {
+                        for (let i = 0; i < einfos.length; i++) {
+                            const matchedValuesAttributes = attributesFromValues(
+                                matchedValues
+                                    .filter((mv) => (mv.entryIndex === i))
+                                    .map((mv): Value => ({
+                                        ...mv,
+                                        contexts: mv.contexts
+                                            ? new Map(
+                                                mv.contexts.map((context): [ string, StoredContext ] => [
+                                                    context.contextType.toString(),
+                                                    {
+                                                        id: context.contextType,
+                                                        fallback: context.fallback ?? false,
+                                                        values: context.contextValues,
+                                                    },
+                                                ]),
+                                            )
+                                            : undefined,
+                                    })),
+                            );
+                            const matchedValuesTypes: Set<IndexableOID> = new Set(
+                                matchedValuesAttributes.map((mva) => mva.type_.toString()),
+                            );
+                            const einfo = einfos[i];
+                            einfos[i] = [
+                                ...einfo
+                                    .filter((e) => {
+                                        if ("attribute" in e) {
+                                            return !matchedValuesTypes.has(e.attribute.type_.toString());
+                                        } else if ("attributeType" in e) {
+                                            return !matchedValuesTypes.has(e.attributeType.toString());
+                                        } else {
+                                            return false;
+                                        }
+                                    }),
+                                ...matchedValuesAttributes.map((attribute) => ({ attribute })),
+                            ];
+                        }
+                    } // End of matchedValuesOnly handling.
+                    const filteredEinfos = einfos
+                        .map(filterUnauthorizedEntryInformation);
+                    if (separateFamilyMembers) {
+                        searchState.results.push(
+                            ...filteredEinfos
+                                .map((einfo, i) => [ einfo, familySubset[i] ] as const)
+                                .filter(([ , vertex ]) => (
+                                    !familySelect
+                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
+                                ))
+                                .map(([ [ incompleteEntry, permittedEinfo ], vertex ]) => new EntryInformation(
+                                    {
+                                        rdnSequence: getDistinguishedName(vertex),
+                                    },
+                                    Boolean(vertex.dse.shadow),
+                                    permittedEinfo,
+                                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                    undefined, // TODO: Review, but I think this will always be false.
+                                    undefined,
+                                )),
+                        );
+                        return;
+                    } else {
+                        if (familySubset.length > 1) {
+                            const subset = keepSubsetOfDITById(family, new Set(familySubset.map((member) => member.dse.id)));
+                            const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
+                                subset,
+                                (vertex: Vertex) => filteredEinfos[
+                                    familySubset.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
+                            )
+                                .filter((fe) => (!familySelect || familySelect.has(fe.toString())));
+                            const familyInfoAttr: Attribute = new Attribute(
+                                family_information["&id"],
+                                familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
+                                undefined,
+                            );
+                            filteredEinfos[0][1].push({
+                                attribute: familyInfoAttr,
+                            });
+                        }
+                        searchState.results.push(
+                            new EntryInformation(
+                                {
+                                    rdnSequence: getDistinguishedName(familySubset[0]),
+                                },
+                                Boolean(familySubset[0].dse.shadow),
+                                filteredEinfos[0][1],
+                                filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                undefined, // TODO: Review, but I think this will always be false.
+                                undefined,
+                            ),
+                        );
+                    }
                     if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                         hierarchySelectionProcedure(
                             ctx,
@@ -921,8 +1565,25 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
-    const useSortedSearch: boolean = Boolean(pagingRequest?.sortKeys?.length);
-    let cursorId: number | undefined;
+    if (searchState.paging?.[1].request.sortKeys && (searchState.paging[1].request.sortKeys.length > 1)) {
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:only_one_sort_key"),
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_serviceError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    const useSortedSearch: boolean = !!searchState.paging?.[1].request.sortKeys?.[0];
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
         return useSortedSearch
             ? await (async () => {
@@ -930,58 +1591,79 @@ async function search_i (
                 const newCursorId = await readChildrenSorted(
                     ctx,
                     target,
-                    pagingRequest!.sortKeys![0].type_,
+                    searchState.paging![1].request!.sortKeys![0].type_,
                     results,
-                    pagingRequest?.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
-                    pageSize,
+                    searchState.paging![1].request.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
+                    ENTRIES_PER_BATCH,
                     undefined,
                     cursorId,
                 );
+                if (searchState.paging?.[1].cursorIds) {
+                    if (newCursorId === undefined) {
+                        searchState.paging[1].cursorIds = searchState.paging[1].cursorIds.slice(0, searchState.depth);
+                    } else {
+                        searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
+                    }
+                }
                 cursorId = newCursorId;
                 return results;
             })()
             : await readChildren(
                 ctx,
                 target,
-                pageSize,
+                ENTRIES_PER_BATCH,
                 undefined,
                 cursorId,
                 {
+                    // ...(data.filter
+                    //     ? convertFilterToPrismaSelect(ctx, data.filter)
+                    //     : {}),
                     subentry: subentries,
                 },
             );
     };
     let subordinatesInBatch = await getNextBatchOfSubordinates();
-    let limitExceeded: LimitProblem | undefined;
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
-            if ("present" in state.invokeId) {
-                const op = conn.invocations.get(state.invokeId.present);
-                if (op?.abandonTime) {
-                    throw new errors.AbandonError(
-                        "Abandoned.",
-                        new AbandonedData(
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    ctx.i18n.t("err:abandoned"),
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
                             undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                conn.boundNameAndUID?.dn,
-                                undefined,
-                                abandoned["&errorCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
+                            abandoned["&errorCode"],
                         ),
-                    );
-                }
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
-                limitExceeded = LimitProblem_timeLimitExceeded;
-                break;
+                searchState.poq = new PartialOutcomeQualifier(
+                    LimitProblem_timeLimitExceeded,
+                    undefined,
+                    undefined,
+                    undefined,
+                    searchState.paging?.[0]
+                        ? Buffer.from(searchState.paging[0], "base64")
+                        : undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                );
+                return;
             }
             if (!useSortedSearch) {
                 cursorId = subordinate.dse.id;
+                if (searchState.paging?.[1].cursorIds) {
+                    searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
+                }
             }
             if (subentries && !subordinate.dse.subentry) {
                 continue;
@@ -1034,6 +1716,7 @@ async function search_i (
                     entryOnly: TRUE,
                 })
                 : state.chainingArguments;
+            searchState.depth++;
             await search_i(
                 ctx,
                 conn,
@@ -1043,21 +1726,19 @@ async function search_i (
                     foundDSE: subordinate,
                 }, // TODO: Are you sure you can always pass in the same admPoints?
                 argument,
-                ret,
+                searchState,
             );
-        }
-        if (limitExceeded !== undefined) {
-            break;
+            searchState.depth--;
+            if (searchState.poq) {
+                return;
+            }
         }
         subordinatesInBatch = await getNextBatchOfSubordinates();
     }
-
-    if (queryReference && pagingRequest) {
-        conn.pagedResultsRequests.set(queryReference, {
-            request: pagingRequest,
-            pageIndex: page + 1,
-            cursorId,
-        });
+    // subordinatesInBatch.length === 0 beyond this point.
+    if ((searchState.depth === 0) && searchState.paging) {
+        conn.pagedResultsRequests.delete(searchState.paging[0]);
+        searchState.paging[1].cursorIds.pop();
     }
 }
 

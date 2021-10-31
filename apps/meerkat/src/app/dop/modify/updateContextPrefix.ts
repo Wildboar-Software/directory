@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -30,6 +30,15 @@ import createEntry from "../../database/createEntry";
 
 // NOTE: This is for RECEIVING an update to the CP, not creating one.
 // TODO: If context prefix initialization fails, undo all changes.
+/**
+ * @deprecated This is not used anywhere.
+ * @param ctx
+ * @param oldAgreement
+ * @param newAgreement
+ * @param init
+ * @param mod
+ * @returns
+ */
 export
 async function updateContextPrefix (
     ctx: Context,

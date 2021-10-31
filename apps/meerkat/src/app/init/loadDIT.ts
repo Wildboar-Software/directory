@@ -1,6 +1,5 @@
-import type { Context, DIT } from "../types";
+import type { Context, DIT } from "@wildboar/meerkat-types";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
-import { randomBytes } from "crypto";
 
 const ROOT_DSE_NAME = [];
 
@@ -9,14 +8,14 @@ async function loadDIT (
     ctx: Context,
 ): Promise<DIT> {
     const now = new Date();
-    ctx.log.info("Loading DIT into memory. This could take a while.");
+    ctx.log.info(ctx.i18n.t("log:loading_dit"));
     let rootDSE = await ctx.db.entry.findFirst({
         where: {
             immediate_superior_id: null,
         },
     });
     if (!rootDSE) {
-        ctx.log.warn("No root DSE found. Creating it.");
+        ctx.log.warn(ctx.i18n.t("log:no_root_dse"));
         rootDSE = await ctx.db.entry.create({
             data: {
                 immediate_superior_id: null,
@@ -37,16 +36,14 @@ async function loadDIT (
                 deleteTimestamp: null,
                 creatorsName: ROOT_DSE_NAME,
                 modifiersName: ROOT_DSE_NAME,
-                uniqueIdentifier: Buffer.concat([
-                    Buffer.from([ 0 ]),
-                    randomBytes(8),
-                ]),
             },
         });
-        ctx.log.warn(`Created Root DSE ${rootDSE.entryUUID}.`);
+        ctx.log.warn(ctx.i18n.t("log:created_root_dse", {
+            uuid: rootDSE.entryUUID,
+        }));
     }
     ctx.dit.root = await vertexFromDatabaseEntry(ctx, undefined, rootDSE);
-    ctx.log.info("DIT loaded into memory.");
+    ctx.log.info(ctx.i18n.t("log:dit_loaded"));
     return ctx.dit.root;
 }
 

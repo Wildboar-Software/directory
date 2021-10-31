@@ -1,10 +1,10 @@
-import type { Context } from "../types";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import type {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
 import { TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
     _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as _encode_ChainedArgument,
@@ -59,17 +59,49 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     updateError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import type { OperationDispatcherState } from "./OperationDispatcher";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 export
 async function checkIfNameIsAlreadyTakenInNSSR (
     ctx: Context,
+    conn: ClientConnection,
+    state: OperationDispatcherState,
     nonSpecificKnowledges: MasterAndShadowAccessPoints[],
     destinationDN: DistinguishedName,
 ): Promise<void> {
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     for (const nsk of nonSpecificKnowledges) {
         const [ masters ] = splitIntoMastersAndShadows(nsk);
         // TODO: Use only IDM endpoints.
         for (const accessPoint of masters) {
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    ctx.i18n.t("err:abandoned"),
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            abandoned["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
             const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, undefined);
             if (!client) {
                 continue;
@@ -166,7 +198,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 });
                 if ("result" in response) {
                     throw new errors.UpdateError(
-                        "Entry already exists (among an NSSR).",
+                        ctx.i18n.t("err:entry_already_exists_in_nssr"),
                         new UpdateErrorData(
                             UpdateProblem_entryAlreadyExists,
                             undefined,
@@ -186,7 +218,10 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     break; // Breaks the inner for loop.
                 }
             } catch (e) {
-                ctx.log.warn(`Failed to access master access point: ${e}`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_access_master", {
+                    dsa: encodeLDAPDN(ctx, accessPoint.ae_title.rdnSequence),
+                    e: e.message,
+                }));
                 continue;
             }
         }

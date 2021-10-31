@@ -1,5 +1,5 @@
-import { Context, IndexableOID, Value, Vertex, ClientConnection, OperationReturn } from "../types";
-import * as errors from "../errors";
+import { Context, IndexableOID, Value, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_AddEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
@@ -9,6 +9,15 @@ import {
 import {
     id_sc_subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
+import {
+    id_oc_alias,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-alias.va";
+import {
+    id_oc_parent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
+import {
+    id_oc_child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
@@ -20,10 +29,12 @@ import {
     UpdateProblem_entryAlreadyExists,
     UpdateProblem_namingViolation,
     UpdateProblem_affectsMultipleDSAs,
+    UpdateProblem_familyRuleViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     AttributeProblem_contextViolation,
     AttributeProblem_undefinedAttributeType,
+    AttributeProblem_constraintViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
     ServiceControlOptions_manageDSAIT,
@@ -35,16 +46,12 @@ import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
 import { ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT, BERElement } from "asn1-ts";
-import {
-    EXT_BIT_USE_OF_CONTEXTS,
-} from "../x500/extensions";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     ServiceErrorData,
-    ServiceProblem_unavailable,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     _encode_AddEntryResult,
@@ -152,6 +159,24 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import getSubschemaSubentry from "../dit/getSubschemaSubentry";
+import failover from "../utils/failover";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    administrativeRole,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+import extensibleObject from "../ldap/extensibleObject";
+import attributeTypesPermittedForEveryEntry from "../x500/attributeTypesPermittedForEveryEntry";
+import {
+    id_oa_collectiveExclusions,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import {
+    hierarchyParent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -159,6 +184,7 @@ function namingViolationErrorData (
     ctx: Context,
     conn: ClientConnection,
     attributeTypes: AttributeType[],
+    aliasDereferenced?: boolean,
 ): UpdateErrorData {
     return new UpdateErrorData(
         UpdateProblem_namingViolation,
@@ -173,7 +199,7 @@ function namingViolationErrorData (
             updateError["&errorCode"],
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
-        undefined,
+        aliasDereferenced,
         undefined,
     );
 }
@@ -186,23 +212,20 @@ async function addEntry (
 ): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const immediateSuperior = state.foundDSE;
-    if (immediateSuperior.dse.alias) {
-        throw new errors.UpdateError(
-            "New entry inserted below an entry of a forbidden DSE type, such as an alias.",
-            namingViolationErrorData(ctx, conn, []),
-        );
-    }
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
-    const attrs: Value[] = data.entry.flatMap(valuesFromAttribute);
-    const objectClassValues = attrs.filter((attr) => attr.id.isEqualTo(id_at_objectClass));
+    const values: Value[] = data.entry.flatMap(valuesFromAttribute);
+    const objectClassValues = values.filter((attr) => attr.type.isEqualTo(id_at_objectClass));
     if (objectClassValues.length === 0) {
         throw new errors.UpdateError(
-            "Object class attribute not found.",
+            ctx.i18n.t("err:object_class_not_found"),
             new UpdateErrorData(
                 UpdateProblem_objectClassViolation,
                 undefined,
@@ -214,15 +237,15 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
     const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
-    if (!validateObjectClasses(ctx, objectClasses)) {
+    if (!ctx.config.bulkInsertMode && !validateObjectClasses(ctx, objectClasses)) {
         throw new errors.UpdateError(
-            `Invalid object classes: ${objectClasses.map((oc) => oc.toString()).join(" ")}`,
+            ctx.i18n.t("err:invalid_object_classes"),
             new UpdateErrorData(
                 UpdateProblem_objectClassViolation,
                 undefined,
@@ -234,12 +257,13 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
     const structuralObjectClass = getStructuralObjectClass(ctx, objectClasses);
+    const objectClassesIndex: Set<IndexableOID> = new Set(objectClasses.map((oc) => oc.toString()));
 
     /**
      * From ITU X.501 (2016), Section 13.3.2:
@@ -251,13 +275,29 @@ async function addEntry (
      * This means that we can determine if this potential new entry is a
      * subentry by checking that the `subentry` object class is present.
      */
-    const isSubentry: boolean = objectClasses.some((oc) => oc.isEqualTo(id_sc_subentry));
-    if (isSubentry && !immediateSuperior.dse.admPoint) {
+    const isSubentry: boolean = objectClassesIndex.has(id_sc_subentry.toString());
+    const isAlias: boolean = objectClassesIndex.has(id_oc_alias.toString());
+    const isExtensible: boolean = objectClassesIndex.has(extensibleObject.toString());
+    const isParent: boolean = objectClassesIndex.has(id_oc_parent.toString());
+    const isChild: boolean = objectClassesIndex.has(id_oc_child.toString());
+    const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
+
+    if (isParent) {
         throw new errors.UpdateError(
-            "Cannot place a subentry below a DSE that is not an administrative point.",
+            ctx.i18n.t("err:cannot_add_object_class_parent"),
             new UpdateErrorData(
-                UpdateProblem_namingViolation,
-                undefined,
+                UpdateProblem_objectClassViolation,
+                [
+                    {
+                        attribute: new Attribute(
+                            id_at_objectClass,
+                            [
+                                _encodeObjectIdentifier(parent["&id"], DER),
+                            ],
+                            undefined,
+                        ),
+                    },
+                ],
                 [],
                 createSecurityParameters(
                     ctx,
@@ -266,18 +306,29 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
 
-    if (isSubentry && data.targetSystem) {
+    if (isChild && isAlias) {
         throw new errors.UpdateError(
-            "Cannot place a subentry in another DSA.",
+            ctx.i18n.t("err:cannot_be_alias_and_child"),
             new UpdateErrorData(
-                UpdateProblem_affectsMultipleDSAs,
-                undefined,
+                UpdateProblem_objectClassViolation,
+                [
+                    {
+                        attribute: new Attribute(
+                            id_at_objectClass,
+                            [
+                                _encodeObjectIdentifier(id_oc_alias, DER),
+                                _encodeObjectIdentifier(id_oc_child, DER),
+                            ],
+                            undefined,
+                        ),
+                    },
+                ],
                 [],
                 createSecurityParameters(
                     ctx,
@@ -286,16 +337,49 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
+            ),
+        );
+    }
+
+    if (isParent && isAlias) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:cannot_be_parent_and_child"),
+            new UpdateErrorData(
+                UpdateProblem_objectClassViolation,
+                [
+                    {
+                        attribute: new Attribute(
+                            id_at_objectClass,
+                            [
+                                _encodeObjectIdentifier(id_oc_alias, DER),
+                                _encodeObjectIdentifier(id_oc_parent, DER),
+                            ],
+                            undefined,
+                        ),
+                    },
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
 
     const targetDN = data.object.rdnSequence;
-    const relevantSubentries: Vertex[] = (await Promise.all(
-        state.admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
-    )).flat();
+    const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
+        ? []
+        : (await Promise.all(
+            state.admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
+        )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
@@ -310,23 +394,26 @@ async function addEntry (
                 ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
                 : []),
         ];
-    const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
+        ? (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci))
+        : [];
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
-    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-            ...tuple,
-            await userWithinACIUserClass(
-                tuple[0],
-                conn.boundNameAndUID!, // This request is not allowed if the connection is not bound.
-                targetDN,
-                EQUALITY_MATCHER,
-                isMemberOfGroup,
-            ),
-        ]),
-    ))
-        .filter((tuple) => (tuple[5] > 0));
-    if (accessControlScheme) {
+    const relevantTuples: ACDFTupleExtended[] = ctx.config.bulkInsertMode
+        ? []
+        : (await Promise.all(
+            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                ...tuple,
+                await userWithinACIUserClass(
+                    tuple[0],
+                    conn.boundNameAndUID!, // This request is not allowed if the connection is not bound.
+                    targetDN,
+                    EQUALITY_MATCHER,
+                    isMemberOfGroup,
+                ),
+            ]),
+        ))
+            .filter((tuple) => (tuple[5] > 0));
+    if (!ctx.config.bulkInsertMode && accessControlScheme) {
         const {
             authorized,
         } = bacACDF(
@@ -342,7 +429,7 @@ async function addEntry (
         );
         if (!authorized) {
             throw new errors.SecurityError(
-                "Not permitted to create this entry.",
+                ctx.i18n.t("err:not_authz_to_add_entry"),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
@@ -355,28 +442,24 @@ async function addEntry (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         }
     }
 
-    const rdn = getRDN(data.object.rdnSequence);
-    if (!rdn) {
+    if (immediateSuperior.dse.alias) {
         throw new errors.UpdateError(
-            "The Root DSE may not be added.",
-            namingViolationErrorData(ctx, conn, []),
+            ctx.i18n.t("err:add_entry_beneath_alias"),
+            namingViolationErrorData(ctx, conn, [], state.chainingArguments.aliasDereferenced),
         );
     }
-    const existingSiblings = await readChildren(ctx, immediateSuperior);
-    const entryAlreadyExists: boolean = existingSiblings
-        .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
-    if (entryAlreadyExists) {
+    if (isSubentry && !immediateSuperior.dse.admPoint) {
         throw new errors.UpdateError(
-            "Entry already exists.",
+            ctx.i18n.t("err:cannot_add_subentry_below_non_admpoint"),
             new UpdateErrorData(
-                UpdateProblem_entryAlreadyExists,
+                UpdateProblem_namingViolation,
                 undefined,
                 [],
                 createSecurityParameters(
@@ -386,17 +469,74 @@ async function addEntry (
                     updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
-    if (immediateSuperior.dse.nssr) {
-        await checkIfNameIsAlreadyTakenInNSSR(ctx, immediateSuperior.dse.nssr?.nonSpecificKnowledge ?? [], targetDN);
+    if (isSubentry && data.targetSystem) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:cannot_add_subentry_in_another_dsa"),
+            new UpdateErrorData(
+                UpdateProblem_affectsMultipleDSAs,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+
+    const rdn = getRDN(data.object.rdnSequence);
+    if (!rdn) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:root_dse_may_not_be_added"),
+            namingViolationErrorData(ctx, conn, [], state.chainingArguments.aliasDereferenced),
+        );
+    }
+    if (!ctx.config.bulkInsertMode) {
+        const existingSiblings = await readChildren(ctx, immediateSuperior);
+        const entryAlreadyExists: boolean = existingSiblings
+            .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
+        if (entryAlreadyExists) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:entry_already_exists"),
+                new UpdateErrorData(
+                    UpdateProblem_entryAlreadyExists,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+    }
+    if (!ctx.config.bulkInsertMode && immediateSuperior.dse.nssr) {
+        await checkIfNameIsAlreadyTakenInNSSR(
+            ctx,
+            conn,
+            state,
+            immediateSuperior.dse.nssr?.nonSpecificKnowledge ?? [],
+            targetDN,
+        );
     }
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         throw new errors.ServiceError(
-            "Could not complete operation in time.",
+            ctx.i18n.t("err:time_limit"),
             new ServiceErrorData(
                 ServiceProblem_timeLimitExceeded,
                 [],
@@ -407,7 +547,7 @@ async function addEntry (
                     serviceError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -436,7 +576,7 @@ async function addEntry (
             }; // TODO: This strips the remote DSA's signature!
         } else {
             throw new errors.ServiceError(
-                "Could not add entry to remote DSA via targetSystem.",
+                ctx.i18n.t("err:could_not_add_entry_to_remote_dsa"),
                 new ServiceErrorData(
                     ServiceProblem_unwillingToPerform,
                     [],
@@ -447,188 +587,142 @@ async function addEntry (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         }
     }
 
-    const attrsFromDN: Value[] = rdn
-        .map((atav): Value => ({
-            id: atav.type_,
-            value: atav.value,
-            contexts: new Map([]),
-        }));
-
-    const attributesByType: Map<IndexableOID, Value[]> = new Map();
-    if (accessControlScheme) { // FIXME: Actually check that what follows applies to this scheme.
-        for (const type_ of attributesByType.keys()) {
-            const typeOID = ObjectIdentifier.fromString(type_);
-            const {
-                authorized: authorizedToAddAttributeType,
-            } = bacACDF(
-                relevantTuples,
-                conn.authLevel,
-                {
-                    attributeType: typeOID,
-                },
-                [
-                    PERMISSION_CATEGORY_ADD,
-                ],
-                EQUALITY_MATCHER,
-            );
-            if (!authorizedToAddAttributeType) {
-                throw new errors.SecurityError(
-                    `Not permitted to create an attribute of type ${type_}.`,
-                    new SecurityErrorData(
-                        SecurityProblem_insufficientAccessRights,
-                        undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            undefined,
-                            securityError["&errorCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
-                    ),
-                );
-            }
-        }
-    }
     const nonUserApplicationAttributes: AttributeType[] = [];
-    const unrecognizedAttributes: AttributeType[] = [];
-    const attributesUsingContexts: AttributeType[] = [];
-    for (const attr of attrs) {
-        const ATTR_OID: string = attr.id.toString();
-        const current = attributesByType.get(ATTR_OID);
-        if (!current) {
-            attributesByType.set(ATTR_OID, [ attr ]);
-        } else {
-            current.push(attr);
-        }
-        const spec = ctx.attributes.get(ATTR_OID);
-        if (!spec) {
-            unrecognizedAttributes.push(attr.id);
-            continue;
-        }
-        if (accessControlScheme) {
-            const {
-                authorized: authorizedToAddAttributeValue,
-            } = bacACDF(
-                relevantTuples,
-                conn.authLevel,
-                {
-                    value: new AttributeTypeAndValue(
-                        attr.id,
-                        attr.value,
-                    ),
-                },
-                [
-                    PERMISSION_CATEGORY_ADD,
-                ],
-                EQUALITY_MATCHER,
-            );
-            if (!authorizedToAddAttributeValue) {
-                throw new errors.SecurityError(
-                    `Not permitted to create an attribute value of type ${attr.id.toString()}.`,
-                    new SecurityErrorData(
-                        SecurityProblem_insufficientAccessRights,
-                        undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
+    if (!ctx.config.bulkInsertMode) {
+        if (accessControlScheme) { // FIXME: Actually check that what follows applies to this scheme.
+            for (const attr of data.entry) {
+                const {
+                    authorized: authorizedToAddAttributeType,
+                } = bacACDF(
+                    relevantTuples,
+                    conn.authLevel,
+                    {
+                        attributeType: attr.type_,
+                    },
+                    [
+                        PERMISSION_CATEGORY_ADD,
+                    ],
+                    EQUALITY_MATCHER,
+                );
+                if (!authorizedToAddAttributeType) {
+                    throw new errors.SecurityError(
+                        ctx.i18n.t("err:not_authz_to_create_attr_type", {
+                            type: attr.type_.toString(),
+                        }),
+                        new SecurityErrorData(
+                            SecurityProblem_insufficientAccessRights,
                             undefined,
-                            securityError["&errorCode"],
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                securityError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
                         ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
-                    ),
-                );
+                    );
+                }
             }
         }
-        if (spec.usage !== AttributeUsage_userApplications) {
-            nonUserApplicationAttributes.push(attr.id);
-        }
-        if (attr.contexts.size > 0) {
-            attributesUsingContexts.push(attr.id);
-        }
-    }
-
-    if (unrecognizedAttributes.length > 0) {
-        throw new errors.AttributeError(
-            `Unrecognized attributes: ${unrecognizedAttributes.map((at) => at.toString()).join(", ")}.`,
-            new AttributeErrorData(
-                data.object,
-                unrecognizedAttributes.map((at) => new AttributeErrorData_problems_Item(
-                    AttributeProblem_undefinedAttributeType,
-                    at,
-                    undefined,
-                )),
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    attributeError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
-                undefined,
-            ),
-        );
-    }
-
-    const useOfContexts = (data.criticalExtensions?.[EXT_BIT_USE_OF_CONTEXTS] === TRUE_BIT);
-    if (!useOfContexts && (attributesUsingContexts.length > 0)) {
-        throw new errors.ServiceError(
-            "Use of contexts was not enabled by the request.",
-            new ServiceErrorData(
-                ServiceProblem_unavailable,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    serviceError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
-                undefined,
-            ),
-        );
-    }
-
-    objectClasses
-        .map((oc) => ctx.objectClasses.get(oc.toString()))
-        .forEach((oc, i) => {
-            if (!oc) {
-                ctx.log.warn(
-                    `Object class ${objectClassValues[i]?.value.objectIdentifier} not understood.`,
+        for (const value of values) {
+            if (accessControlScheme) {
+                const {
+                    authorized: authorizedToAddAttributeValue,
+                } = bacACDF(
+                    relevantTuples,
+                    conn.authLevel,
+                    {
+                        value: new AttributeTypeAndValue(
+                            value.type,
+                            value.value,
+                        ),
+                    },
+                    [
+                        PERMISSION_CATEGORY_ADD,
+                    ],
+                    EQUALITY_MATCHER,
                 );
-                return;
+                if (!authorizedToAddAttributeValue) {
+                    throw new errors.SecurityError(
+                        ctx.i18n.t("err:not_authz_to_create_attr_value", {
+                            type: value.type.toString(),
+                        }),
+                        new SecurityErrorData(
+                            SecurityProblem_insufficientAccessRights,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                securityError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
             }
-            const missingMandatoryAttributes: ObjectIdentifier[] = Array
-                .from(oc.mandatoryAttributes.values())
-                .filter((mandate): boolean => !attributesByType.has(mandate))
-                .map((mandate: string) => new ObjectIdentifier(
-                    mandate.split(".").map((node) => Number.parseInt(node)),
-                ));
-            if (missingMandatoryAttributes.length > 0) {
+        }
+
+        const unrecognizedAttributes: AttributeType[] = [];
+        const noUserModAttributes: AttributeType[] = [];
+        const dummyAttributes: AttributeType[] = [];
+        const collectiveAttributes: AttributeType[] = [];
+        const obsoleteAttributes: AttributeType[] = [];
+        for (const attr of data.entry) {
+            const spec = ctx.attributeTypes.get(attr.type_.toString());
+            if (!spec) {
+                unrecognizedAttributes.push(attr.type_);
+                continue;
+            }
+            if (spec.usage !== AttributeUsage_userApplications) {
+                nonUserApplicationAttributes.push(attr.type_);
+            }
+            if (spec.noUserModification) {
+                noUserModAttributes.push(attr.type_);
+            }
+            if (spec.dummy) {
+                dummyAttributes.push(attr.type_);
+            }
+            if (spec.collective) {
+                collectiveAttributes.push(attr.type_);
+            }
+            if (spec.obsolete) {
+                obsoleteAttributes.push(attr.type_);
+            }
+            if (attr.type_.isEqualTo(hierarchyParent["&id"]) && isChild) {
                 throw new errors.UpdateError(
-                    `Missing mandatory attributes: ${missingMandatoryAttributes.map((ma) => ma.toString())}.`,
+                    ctx.i18n.t("err:child_cannot_be_in_hierarchy"),
                     new UpdateErrorData(
-                        UpdateProblem_objectClassViolation,
-                        missingMandatoryAttributes.map((at) => ({
-                            attributeType: at,
-                        })),
+                        UpdateProblem_familyRuleViolation,
+                        [
+                            {
+                                attribute: attr,
+                            },
+                            {
+                                attribute: new Attribute(
+                                    id_at_objectClass,
+                                    [
+                                        _encodeObjectIdentifier(id_oc_child, DER),
+                                    ],
+                                    undefined,
+                                ),
+                            },
+                        ],
                         [],
                         createSecurityParameters(
                             ctx,
@@ -637,80 +731,321 @@ async function addEntry (
                             updateError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
             }
-            // Optional attributes are not checked.
-        });
-
-    const rdnAttributes: Set<IndexableOID> = new Set();
-    const duplicatedAFDNs: AttributeType[] = [];
-    const unrecognizedAFDNs: AttributeType[] = [];
-    const cannotBeUsedInNameAFDNs: AttributeType[] = [];
-    const unmatchedAFDNs: AttributeType[] = [];
-
-    attrsFromDN
-        .forEach((afdn): void => {
-            const oid: string = afdn.id.toString();
-            if (rdnAttributes.has(oid)) {
-                duplicatedAFDNs.push(afdn.id);
-                return;
-            } else {
-                rdnAttributes.add(oid);
-            }
-            const spec = ctx.attributes.get(afdn.id.toString());
-            if (!spec) {
-                unrecognizedAFDNs.push(afdn.id);
-                return;
-            }
-            const matcher = getNamingMatcherGetter(ctx)(afdn.id);
-            if (!matcher) {
-                cannotBeUsedInNameAFDNs.push(afdn.id);
-                return;
-            }
-            const someAttributeMatched = attrs.some((attr) => (
-                (attr.contexts.size === 0)
-                && attr.id.isEqualTo(afdn.id)
-                && matcher(attr.value, afdn.value)
-            ));
-            if (!someAttributeMatched) {
-                unmatchedAFDNs.push(afdn.id);
-                return;
-            }
-        });
-
-    if (duplicatedAFDNs.length > 0) {
-        throw new errors.UpdateError(
-            "Attributes of the following types in the RDNs of the entry were "
-            + `duplicated: ${duplicatedAFDNs.join(", ")}`,
-            namingViolationErrorData(ctx, conn, duplicatedAFDNs),
-        );
+        }
+        if (unrecognizedAttributes.length > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:unrecognized_attribute_type", {
+                    oids: unrecognizedAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    unrecognizedAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_undefinedAttributeType,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (noUserModAttributes.length > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:no_user_modification", {
+                    oids: noUserModAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    noUserModAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (dummyAttributes.length > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:cannot_add_dummy_attr", {
+                    oids: dummyAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    dummyAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (!isSubentry && (collectiveAttributes.length > 0)) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:cannot_add_collective_attr", {
+                    oids: collectiveAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    collectiveAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (obsoleteAttributes.length > 0) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:cannot_add_obsolete_attr", {
+                    oids: obsoleteAttributes.map((at) => at.toString()).join(", "),
+                }),
+                new AttributeErrorData(
+                    data.object,
+                    obsoleteAttributes.map((at) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        at,
+                        undefined,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
     }
 
-    if (unrecognizedAFDNs.length > 0) {
-        throw new errors.UpdateError(
-            "Attributes of the following types in the RDNs of the entry were "
-            + `not recognized, and therefore cannot be used for naming: ${unrecognizedAFDNs.join(", ")}`,
-            namingViolationErrorData(ctx, conn, unrecognizedAFDNs),
-        );
+    const missingMandatoryAttributes: Set<IndexableOID> = new Set();
+    const optionalAttributes: Set<IndexableOID> = new Set(
+        attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
+    );
+    if (isEntry) {
+        optionalAttributes.add(id_oa_collectiveExclusions.toString());
+        optionalAttributes.add(administrativeRole["&id"].toString());
     }
+    if (!ctx.config.bulkInsertMode) {
+        objectClasses
+            .map((oc) => ctx.objectClasses.get(oc.toString()))
+            .forEach((oc, i) => {
+                if (!oc) {
+                    const oid = objectClassValues[i].value.objectIdentifier;
+                    throw new errors.UpdateError(
+                        ctx.i18n.t("err:unrecognized_object_class", {
+                            oid: oid.toString(),
+                        }),
+                        new UpdateErrorData(
+                            UpdateProblem_objectClassViolation,
+                            [
+                                {
+                                    attribute: new Attribute(
+                                        id_at_objectClass,
+                                        [
+                                            _encodeObjectIdentifier(oid, DER),
+                                        ],
+                                        undefined,
+                                    ),
+                                },
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                updateError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+                for (const at of oc.mandatoryAttributes) {
+                    missingMandatoryAttributes.add(at);
+                    optionalAttributes.add(at);
+                }
+                for (const at of oc.optionalAttributes) {
+                    optionalAttributes.add(at);
+                }
+            });
 
-    if (cannotBeUsedInNameAFDNs.length > 0) {
-        throw new errors.UpdateError(
-            "Attributes of the following types in the RDNs of the entry are "
-            + `innately not suitable for naming: ${cannotBeUsedInNameAFDNs.join(", ")}`,
-            namingViolationErrorData(ctx, conn, cannotBeUsedInNameAFDNs),
-        );
-    }
+        const attributeTypes: Set<IndexableOID> = new Set(data.entry.map((attr) => attr.type_.toString()));
+        for (const at of attributeTypes.values()) {
+            missingMandatoryAttributes.delete(at);
+            if (!isExtensible && !optionalAttributes.has(at)) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:attribute_type_not_permitted_by_oc", {
+                        oids: at,
+                    }),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attributeType: ObjectIdentifier.fromString(at),
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+        if (missingMandatoryAttributes.size > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:missing_mandatory_attributes", {
+                    oids: Array.from(missingMandatoryAttributes).join(", "),
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    Array.from(missingMandatoryAttributes).map((at) => ({
+                        attributeType: ObjectIdentifier.fromString(at),
+                    })),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
 
-    if (unmatchedAFDNs.length > 0) {
-        throw new errors.UpdateError(
-            "Attributes of the following types in the RDNs of the entry did not "
-            + `have matching values in the attributes: ${unmatchedAFDNs.join(", ")}`,
-            namingViolationErrorData(ctx, conn, unmatchedAFDNs),
-        );
+        const attrsFromDN: Value[] = rdn
+            .map((atav): Value => ({
+                type: atav.type_,
+                value: atav.value,
+                contexts: new Map([]),
+            }));
+        const rdnAttributes: Set<IndexableOID> = new Set();
+        const duplicatedAFDNs: AttributeType[] = [];
+        const unrecognizedAFDNs: AttributeType[] = [];
+        const cannotBeUsedInNameAFDNs: AttributeType[] = [];
+        const unmatchedAFDNs: AttributeType[] = [];
+        attrsFromDN
+            .forEach((afdn): void => {
+                const oid: string = afdn.type.toString();
+                if (rdnAttributes.has(oid)) {
+                    duplicatedAFDNs.push(afdn.type);
+                    return;
+                } else {
+                    rdnAttributes.add(oid);
+                }
+                const spec = ctx.attributeTypes.get(afdn.type.toString());
+                if (!spec) {
+                    unrecognizedAFDNs.push(afdn.type);
+                    return;
+                }
+                const matcher = getNamingMatcherGetter(ctx)(afdn.type);
+                if (!matcher) {
+                    cannotBeUsedInNameAFDNs.push(afdn.type);
+                    return;
+                }
+                const someAttributeMatched = values.some((attr) => (
+                    (!attr.contexts || (attr.contexts.size === 0))
+                    && attr.type.isEqualTo(afdn.type)
+                    && matcher(attr.value, afdn.value)
+                ));
+                if (!someAttributeMatched) {
+                    unmatchedAFDNs.push(afdn.type);
+                    return;
+                }
+            });
+
+        if (duplicatedAFDNs.length > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_types_duplicated", {
+                    oids: duplicatedAFDNs.join(", "),
+                }),
+                namingViolationErrorData(ctx, conn, duplicatedAFDNs, state.chainingArguments.aliasDereferenced),
+            );
+        }
+
+        if (unrecognizedAFDNs.length > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_types_unrecognized", {
+                    oids: unrecognizedAFDNs.join(", "),
+                }),
+                namingViolationErrorData(ctx, conn, unrecognizedAFDNs, state.chainingArguments.aliasDereferenced),
+            );
+        }
+
+        if (cannotBeUsedInNameAFDNs.length > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_types_prohibited_in_naming", {
+                    oids: cannotBeUsedInNameAFDNs.join(", "),
+                }),
+                namingViolationErrorData(ctx, conn, cannotBeUsedInNameAFDNs, state.chainingArguments.aliasDereferenced),
+            );
+        }
+
+        if (unmatchedAFDNs.length > 0) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_values_not_present_in_entry", {
+                    oids: unmatchedAFDNs.join(", "),
+                }),
+                namingViolationErrorData(ctx, conn, unmatchedAFDNs, state.chainingArguments.aliasDereferenced),
+            );
+        }
     }
 
     // Subschema validation
@@ -744,7 +1079,7 @@ async function addEntry (
             });
         if (structuralRules.length === 0) {
             throw new errors.UpdateError(
-                "Entry not permitted here by any DIT structural rules.",
+                ctx.i18n.t("err:no_dit_structural_rules"),
                 new UpdateErrorData(
                     UpdateProblem_namingViolation,
                     undefined,
@@ -774,9 +1109,10 @@ async function addEntry (
             for (const ac of auxiliaryClasses) {
                 if (!permittedAuxiliaries.has(ac.toString())) {
                     throw new errors.UpdateError(
-                        `Auxiliary class ${ac.toString()} not permitted by `
-                        + "DIT content rule for structural object class "
-                        + `${contentRule.structuralObjectClass.toString()}.`,
+                        ctx.i18n.t("err:aux_oc_not_permitted_by_dit_content_rule", {
+                            aoc: ac.toString(),
+                            soc: structuralObjectClass.toString(),
+                        }),
                         new UpdateErrorData(
                             UpdateProblem_objectClassViolation,
                             [
@@ -826,11 +1162,18 @@ async function addEntry (
                 contentRule.mandatory?.map((oid) => oid.toString()));
             const precludedAttributes: Set<IndexableOID> = new Set(
                 contentRule.precluded?.map((oid) => oid.toString()));
+            let administrativeRolePresent: boolean = false;
             for (const attr of data.entry) {
+                if (attr.type_.isEqualTo(administrativeRole["&id"]) && (attr.values.length > 0)) {
+                    administrativeRolePresent = true;
+                }
                 mandatoryAttributesRemaining.delete(attr.type_.toString());
                 if (precludedAttributes.has(attr.type_.toString())) {
                     throw new errors.UpdateError(
-                        `Attribute type ${attr.type_.toString()} precluded by relevant the relevant DIT content rule.`,
+                        ctx.i18n.t("err:attr_type_precluded", {
+                            oid: attr.type_.toString(),
+                            soc: structuralObjectClass.toString(),
+                        }),
                         new UpdateErrorData(
                             UpdateProblem_objectClassViolation,
                             [
@@ -852,12 +1195,41 @@ async function addEntry (
                     );
                 }
             }
+            if (
+                ( // If this is a first-level entry.
+                    immediateSuperior.dse.root
+                    || (immediateSuperior.dse.rdn.length === 0)
+                )
+                && !administrativeRolePresent
+            ) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:first_level_entries_must_be_admpoint"),
+                    new UpdateErrorData(
+                        UpdateProblem_namingViolation,
+                        [
+                            {
+                                attributeType: administrativeRole["&id"],
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
             if (mandatoryAttributesRemaining.size > 0) {
                 throw new errors.UpdateError(
-                    "Missing these mandatory attributes, which are required by "
-                    + "relevant DIT content rules: "
-                    + Array.from(mandatoryAttributesRemaining.values())
-                        .join(" "),
+                    ctx.i18n.t("err:dit_content_rule_missing_mandatory_attributes", {
+                        soc: structuralObjectClass.toString(),
+                        oids: Array.from(mandatoryAttributesRemaining.values()).join(" "),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         Array.from(mandatoryAttributesRemaining.values())
@@ -895,8 +1267,10 @@ async function addEntry (
 
             if (auxiliaryClasses.length > 0) {
                 throw new errors.UpdateError(
-                    "Auxiliary object classes are forbidden entirely, because "
-                    + "there are no relevant DIT content rules to permit them.",
+                    ctx.i18n.t("err:aux_oc_forbidden_because_no_dit_content_rules", {
+                        oids: auxiliaryClasses.map((oid) => oid.toString()).join(", "),
+                        soc: structuralObjectClass.toString(),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_objectClassViolation,
                         [
@@ -929,8 +1303,8 @@ async function addEntry (
         const contextRulesIndex: Map<IndexableOID, DITContextUseDescription> = new Map(
             contextUseRules.map((rule) => [ rule.identifier.toString(), rule ]),
         );
-        for (const attr of attrs) {
-            const applicableRule = contextRulesIndex.get(attr.id.toString())
+        for (const attr of values) {
+            const applicableRule = contextRulesIndex.get(attr.type.toString())
                 ?? contextRulesIndex.get(ALL_ATTRIBUTE_TYPES);
             /**
              * From ITU Recommendation X.501 (2016), Section 13.10.1:
@@ -940,10 +1314,9 @@ async function addEntry (
              * > contain no context lists.
              */
             if (!applicableRule) {
-                if (attr.contexts.size > 0) {
+                if (attr.contexts && (attr.contexts.size > 0)) {
                     throw new errors.AttributeError(
-                        "No contexts are permitted due to an absence of DIT "
-                        + "context use rules that permit them.",
+                        ctx.i18n.t("err:no_contexts_permitted"),
                         new AttributeErrorData(
                             {
                                 rdnSequence: targetDN,
@@ -951,7 +1324,7 @@ async function addEntry (
                             [
                                 new AttributeErrorData_problems_Item(
                                     AttributeProblem_contextViolation,
-                                    attr.id,
+                                    attr.type,
                                     attr.value,
                                 ),
                             ],
@@ -974,16 +1347,20 @@ async function addEntry (
             const mandatoryContextsRemaining: Set<IndexableOID> = new Set(
                 applicableRule.information.mandatoryContexts?.map((con) => con.toString()),
             );
-            const permittedContexts: Set<IndexableOID> = new Set([
-                ...applicableRule.information.mandatoryContexts?.map((con) => con.toString()) ?? [],
-                ...applicableRule.information.optionalContexts?.map((con) => con.toString()) ?? [],
-            ]);
-            for (const context of attr.contexts.values()) {
+            const permittedContexts: OBJECT_IDENTIFIER[] = [
+                ...applicableRule.information.mandatoryContexts ?? [],
+                ...applicableRule.information.optionalContexts ?? [],
+            ];
+            const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((con) => con.toString()));
+            for (const context of attr.contexts?.values() ?? []) {
                 const ID: string = context.id.toString();
                 mandatoryContextsRemaining.delete(ID);
-                if (!permittedContexts.has(ID)) {
+                if (!permittedContextsIndex.has(ID)) {
                     throw new errors.AttributeError(
-                        `Context type ${ID} not permitted by applicable DIT context use rules.`,
+                        ctx.i18n.t("err:context_type_prohibited_by_context_use_rule", {
+                            ct: ID,
+                            at: attr.type.toString(),
+                        }),
                         new AttributeErrorData(
                             {
                                 rdnSequence: targetDN,
@@ -991,7 +1368,7 @@ async function addEntry (
                             [
                                 new AttributeErrorData_problems_Item(
                                     AttributeProblem_contextViolation,
-                                    attr.id,
+                                    attr.type,
                                     attr.value,
                                 ),
                             ],
@@ -1010,35 +1387,67 @@ async function addEntry (
                 }
             }
             if (mandatoryContextsRemaining.size > 0) {
-                // throw new Error(); // FIXME:
-                throw new errors.AttributeError(
-                    "These context types are required by applicable DIT "
-                    + "context use rules are missing the following context "
-                    + "types: "
-                    + Array.from(mandatoryContextsRemaining.values()),
-                    new AttributeErrorData(
-                        {
-                            rdnSequence: targetDN,
-                        },
-                        [
-                            new AttributeErrorData_problems_Item(
-                                AttributeProblem_contextViolation,
-                                attr.id,
-                                attr.value,
+                /**
+                 * If every mandatory context has a default value defined, we do not
+                 * need to fail: the default value will be applied and this
+                 * requirement will be satisfied.
+                 */
+                const everyRequiredContextHasADefaultValue: boolean = applicableRule
+                    .information
+                    .mandatoryContexts
+                    ?.every((mc) => !!ctx.contextTypes.get(mc.toString())?.defaultValue) ?? true;
+                if (!everyRequiredContextHasADefaultValue) {
+                    throw new errors.AttributeError(
+                        ctx.i18n.t("err:missing_required_context_types", {
+                            attr: attr.type.toString(),
+                            oids: Array.from(mandatoryContextsRemaining.values()).join(", "),
+                        }),
+                        new AttributeErrorData(
+                            {
+                                rdnSequence: targetDN,
+                            },
+                            [
+                                new AttributeErrorData_problems_Item(
+                                    AttributeProblem_contextViolation,
+                                    attr.type,
+                                    attr.value,
+                                ),
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                attributeError["&errorCode"],
                             ),
-                        ],
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
-                            attributeError["&errorCode"],
                         ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        state.chainingArguments.aliasDereferenced,
-                        undefined,
-                    ),
-                );
+                    );
+                }
+            }
+            // Add default context values.
+            for (const ct of permittedContexts) { // TODO: This is O(n^2).
+                const CTYPE_OID: string = ct.toString();
+                const spec = ctx.contextTypes.get(CTYPE_OID);
+                if (!spec) {
+                    continue; // This is intentional. This is not supposed to throw.
+                }
+                if (!spec.defaultValue) {
+                    continue; // This is intentional. This is not supposed to throw.
+                }
+                const defaultValueGetter = spec.defaultValue;
+                if (!attr.contexts?.has(CTYPE_OID)) {
+                    if (!attr.contexts) {
+                        attr.contexts = new Map();
+                    }
+                    attr.contexts.set(CTYPE_OID, {
+                        id: ct,
+                        fallback: true,
+                        values: [ defaultValueGetter() ],
+                    });
+                }
             }
         }
     }
@@ -1066,13 +1475,14 @@ async function addEntry (
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     // Only necessary if a specific DSA IT is to be managed.
     // const manageDSAITPlaneRef = data.serviceControls?.manageDSAITPlaneRef;
-
-    if (manageDSAIT) {
     // aliases are not allowed to point to other aliases
     // NOTE: "aliased entry exists" X.511 specifically says this does not have to be checked.
-    } else if (nonUserApplicationAttributes.length > 0) {
+
+    if (!manageDSAIT && (nonUserApplicationAttributes.length > 0)) {
         throw new errors.SecurityError(
-            "Operational attributes may not be managed without setting the manageDSAIT flag.",
+            ctx.i18n.t("err:missing_managedsait_flag", {
+                oids: nonUserApplicationAttributes.map((oid) => oid.toString()).join(", "),
+            }),
             new SecurityErrorData(
                 SecurityProblem_insufficientAccessRights,
                 undefined,
@@ -1085,14 +1495,14 @@ async function addEntry (
                     securityError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         throw new errors.ServiceError(
-            "Could not complete operation in time.",
+            ctx.i18n.t("err:time_limit"),
             new ServiceErrorData(
                 ServiceProblem_timeLimitExceeded,
                 [],
@@ -1103,19 +1513,43 @@ async function addEntry (
                     serviceError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
+
+    if (op?.abandonTime) {
+        op.events.emit("abandon");
+        throw new errors.AbandonError(
+            ctx.i18n.t("err:abandoned"),
+            new AbandonedData(
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    abandoned["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
+    }
+
     const newEntry = await createEntry(ctx, immediateSuperior, rdn, {
         governingStructureRule,
         structuralObjectClass: structuralObjectClass.toString(),
-    }, attrs, conn.boundNameAndUID?.dn);
+    }, values, conn.boundNameAndUID?.dn);
     immediateSuperior.subordinates?.push(newEntry);
 
     // Update relevant hierarchical operational bindings
-    if (newEntry.dse.admPoint || newEntry.dse.subentry) {
+    if (!ctx.config.bulkInsertMode && (newEntry.dse.admPoint || newEntry.dse.subentry)) {
         const admPoint: Vertex | undefined = newEntry.dse.admPoint
             ? newEntry
             : newEntry.immediateSuperior;
@@ -1171,7 +1605,10 @@ async function addEntry (
                 ];
                 const subr = await findEntry(ctx, ctx.dit.root, subrDN);
                 if (!subr) {
-                    ctx.log.warn(`Subordinate entry for agreement ${bindingID.identifier} (version ${bindingID.version}) not found.`);
+                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
+                        obid: bindingID.identifier.toString(),
+                        version: bindingID.version.toString(),
+                    }));
                     continue;
                 }
                 assert(subr.immediateSuperior);
@@ -1186,10 +1623,18 @@ async function addEntry (
                     accessPoint,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }
@@ -1215,14 +1660,14 @@ async function addEntry (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_addEntry),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
                 targetSystemNSAPs: data.targetSystem
                     ? Array.from(accessPointToNSAPStrings(data.targetSystem))
                     : undefined,
-            },
+            }), undefined),
         },
     };
 }

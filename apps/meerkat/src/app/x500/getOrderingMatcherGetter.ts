@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
 import type {
     AttributeType,
@@ -9,7 +9,7 @@ function getOrderingMatcherGetter (
     ctx: Context,
 ): (attributeType: AttributeType) => OrderingMatcher | undefined {
     const ret = function (attributeType: AttributeType): OrderingMatcher | undefined {
-        const spec = ctx.attributes.get(attributeType.toString());
+        const spec = ctx.attributeTypes.get(attributeType.toString());
         if (!spec) {
             return undefined;
         }

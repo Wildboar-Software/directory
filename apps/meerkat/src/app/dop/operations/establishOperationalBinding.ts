@@ -1,5 +1,5 @@
-import type { Context } from "../../types";
-import * as errors from "../../errors";
+import type { Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import type {
     EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
@@ -132,11 +132,7 @@ async function establishOperationalBinding (
 
     if (data.valid?.validFrom instanceof ASN1Element) {
         throw new errors.OperationalBindingError(
-            "Unrecognized operational binding start time format. ("
-            + `Tag class: ${data.valid?.validFrom.tagClass}, `
-            + `Construction ${data.valid?.validFrom.construction}, `
-            + `Tag number: ${data.valid?.validFrom.tagNumber}, `
-            + `Value length: ${data.valid?.validFrom.length})`,
+            ctx.i18n.t("err:unrecognized_ob_start_time_syntax"),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidStartTime,
@@ -159,11 +155,7 @@ async function establishOperationalBinding (
     }
     if (data.valid?.validUntil instanceof ASN1Element) {
         throw new errors.OperationalBindingError(
-            "Unrecognized operational binding end time format. ("
-            + `Tag class: ${data.valid?.validUntil.tagClass}, `
-            + `Construction ${data.valid?.validUntil.construction}, `
-            + `Tag number: ${data.valid?.validUntil.tagNumber}, `
-            + `Value length: ${data.valid?.validUntil.length})`,
+            ctx.i18n.t("err:unrecognized_ob_end_time_syntax"),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidEndTime,
@@ -203,7 +195,7 @@ async function establishOperationalBinding (
                 NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
-                    "Operational binding contextPrefixInfo did not match immediateSuperior.",
+                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
                     {
                         unsigned: new OpBindingErrorParam(
                             OpBindingErrorParam_problem_invalidAgreement,
@@ -305,7 +297,7 @@ async function establishOperationalBinding (
             const approved: boolean = await getApproval(created.uuid);
             if (!approved) {
                 throw new errors.OperationalBindingError(
-                    "Operational binding rejected.",
+                    ctx.i18n.t("err:ob_rejected"),
                     {
                         unsigned: new OpBindingErrorParam(
                             OpBindingErrorParam_problem_invalidAgreement,
@@ -369,7 +361,7 @@ async function establishOperationalBinding (
             };
         } else {
             throw new errors.OperationalBindingError(
-                "Operational binding initiator format unrecognized.",
+                ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
                 {
                     unsigned: new OpBindingErrorParam(
                         OpBindingErrorParam_problem_invalidAgreement,

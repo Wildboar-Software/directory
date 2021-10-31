@@ -1,6 +1,6 @@
-import type { Context } from "../../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type DOPConnection from "../DOPConnection";
-import * as errors from "../../errors";
+import * as errors from "@wildboar/meerkat-types";
 import type {
     TerminateOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
@@ -101,7 +101,9 @@ async function terminateOperationalBinding (
 
     if (permittedAPs.length === 0) {
         throw new errors.OperationalBindingError(
-            `No operational binding with identifier ${data.bindingID.identifier}.`,
+            ctx.i18n.t("err:no_ob_with_id", {
+                id: data.bindingID.identifier,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidID,
@@ -139,7 +141,9 @@ async function terminateOperationalBinding (
 
     if (opBindings.length === 0) {
         throw new errors.OperationalBindingError(
-            `No operational binding with identifier ${data.bindingID.identifier}.`,
+            ctx.i18n.t("err:no_ob_with_id", {
+                id: data.bindingID.identifier,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidID,

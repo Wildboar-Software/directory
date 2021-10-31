@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import { CONTEXT } from "../constants";
 import type { Entry } from "@prisma/client";
 import { Controller, Get, Post, Render, Inject, Param, NotFoundException, Res } from "@nestjs/common";
@@ -33,6 +33,24 @@ import deleteEntry from "../database/deleteEntry";
 import escape from "escape-html";
 import type { DistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/DistinguishedName.ta";
 import findEntry from "../x500/findEntry";
+import {
+    EntryInformationSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+
+const selectAllInfo = new EntryInformationSelection(
+    {
+        allUserAttributes: null,
+    },
+    undefined,
+    {
+        allOperationalAttributes: null,
+    },
+    {
+        allContexts: null,
+    },
+    true,
+    undefined, // TODO: Family selection
+);
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
@@ -56,7 +74,7 @@ const child: string = id_oc_child.toString();
 
 function encodeRDN (ctx: Context, rdn: RelativeDistinguishedName): string {
     const stringEncoderGetter: StringEncoderGetter = (syntax: OBJECT_IDENTIFIER): StringEncoder | undefined => {
-        const attrSpec = ctx.attributes.get(syntax.toString());
+        const attrSpec = ctx.attributeTypes.get(syntax.toString());
         if (!attrSpec?.ldapSyntax) {
             return undefined;
         }
@@ -71,7 +89,7 @@ function encodeRDN (ctx: Context, rdn: RelativeDistinguishedName): string {
     };
 
     const typeNameGetter = (type: OBJECT_IDENTIFIER): string | undefined => {
-        const attrSpec = ctx.attributes.get(type.toString());
+        const attrSpec = ctx.attributeTypes.get(type.toString());
         if (!attrSpec?.ldapNames || (attrSpec.ldapNames.length === 0)) {
             return undefined;
         }
@@ -274,7 +292,7 @@ export class DitController {
             userAttributes,
             operationalAttributes,
             collectiveValues,
-        } = await readValues(this.ctx, vertex);
+        } = await readValues(this.ctx, vertex, selectAllInfo);
         const attributes: [ string, string, string ][] = [
             ...userAttributes,
             ...operationalAttributes,
@@ -282,11 +300,11 @@ export class DitController {
         ]
             .map((attr) => [
                 ((): string => {
-                    const spec = this.ctx.attributes.get(attr.id.toString());
-                    return spec?.ldapNames?.[0] ?? attr.id.toString();
+                    const spec = this.ctx.attributeTypes.get(attr.type.toString());
+                    return spec?.ldapNames?.[0] ?? attr.type.toString();
                 })(),
                 ((): string => {
-                    const spec = this.ctx.attributes.get(attr.id.toString());
+                    const spec = this.ctx.attributeTypes.get(attr.type.toString());
                     if (!spec?.ldapSyntax) {
                         return defaultEncoder(attr.value);
                     }
@@ -297,7 +315,7 @@ export class DitController {
                     const encoder = ldapSyntax.encoder;
                     return Buffer.from(encoder(attr.value)).toString("utf-8");
                 })(),
-                Array.from(attr.contexts.values())
+                Array.from(attr.contexts?.values() ?? [])
                     .map((context) => context.id.toString())
                     .join(", "),
             ]);

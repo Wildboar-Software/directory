@@ -1,4 +1,4 @@
-import type { Vertex } from "../types";
+import type { Vertex } from "@wildboar/meerkat-types";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";

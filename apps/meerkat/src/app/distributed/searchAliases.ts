@@ -1,4 +1,4 @@
-import type { Context, Vertex, ClientConnection } from "../types";
+import type { Context, Vertex, ClientConnection } from "@wildboar/meerkat-types";
 import { BOOLEAN, TRUE } from "asn1-ts";
 import isPrefix from "../x500/isPrefix";
 import {
@@ -17,7 +17,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import OperationDispatcher from "./OperationDispatcher";
 import type {
-    SearchIReturn,
+    SearchState,
 } from "./search_i";
 import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { strict as assert } from "assert";
@@ -54,7 +54,7 @@ async function searchAliases (
     target: Vertex,
     argument: SearchArgument,
     chaining: ChainingArguments,
-    ret: SearchIReturn,
+    ret: SearchState,
 ): Promise<void> {
     assert(target.dse.alias);
     const data = getOptionallyProtectedValue(argument);

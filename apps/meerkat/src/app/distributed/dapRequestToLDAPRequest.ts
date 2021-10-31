@@ -1,5 +1,5 @@
-import type { Context } from "../types";
-import * as errors from "../errors";
+import type { Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import { TRUE_BIT, FALSE, ObjectIdentifier } from "asn1-ts";
 import { LDAPMessage } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
@@ -112,7 +112,7 @@ const DEFAULT_LDAP_FILTER: LDAPFilter = {
 };
 
 function getLDAPEncoder (ctx: Context, type_: AttributeType): LDAPSyntaxEncoder | null {
-    const spec = ctx.attributes.get(type_.toString());
+    const spec = ctx.attributeTypes.get(type_.toString());
     if (!spec?.ldapSyntax) {
         return null;
     }
@@ -125,7 +125,9 @@ function getLDAPEncoder (ctx: Context, type_: AttributeType): LDAPSyntaxEncoder 
 
 function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string, AttributeErrorData ] {
     return [
-        `Attribute type ${type_.toString()} could not be encoded for LDAP.`,
+        ctx.i18n.t("err:attribute_type_cannot_be_encoded_to_ldap", {
+            oid: type_.toString(),
+        }),
         new AttributeErrorData(
             {
                 rdnSequence: [],
@@ -214,7 +216,9 @@ function convert_dap_mod_to_ldap_mod (ctx: Context, mod: EntryModification): LDA
     }
     else if ("alterValues" in mod) {
         throw new errors.ServiceError(
-            `Cannot use alterValues modification for type ${mod.alterValues.type_.toString()} with an LDAP server.`,
+            ctx.i18n.t("err:cannot_use_altervalues_in_ldap", {
+                oid: mod.alterValues.type_.toString(),
+            }),
             new ServiceErrorData(
                 ServiceProblem_notSupportedByLDAP,
                 [],
@@ -232,7 +236,9 @@ function convert_dap_mod_to_ldap_mod (ctx: Context, mod: EntryModification): LDA
     }
     else if ("resetValue" in mod) {
         throw new errors.ServiceError(
-            `Cannot use resetValue modification for type ${mod.resetValue.toString()} with an LDAP server.`,
+            ctx.i18n.t("err:cannot_use_resetvalue_in_ldap", {
+                oid: mod.resetValue.toString(),
+            }),
             new ServiceErrorData(
                 ServiceProblem_notSupportedByLDAP,
                 [],
@@ -295,7 +301,7 @@ function convertDAPFilterItemToLDAPFilterItem (ctx: Context, fi: DAPFilterItem):
         if (!fi.substrings.type_) {
             return NOT_UNDERSTOOD;
         }
-        const spec = ctx.attributes.get(fi.substrings.type_.toString());
+        const spec = ctx.attributeTypes.get(fi.substrings.type_.toString());
         if (!spec?.ldapSyntax) {
             return NOT_UNDERSTOOD;
         }
@@ -353,7 +359,7 @@ function convertDAPFilterItemToLDAPFilterItem (ctx: Context, fi: DAPFilterItem):
         if (!fi.extensibleMatch.type_) {
             return NOT_UNDERSTOOD;
         }
-        const spec = ctx.attributes.get(fi.extensibleMatch.type_.toString());
+        const spec = ctx.attributeTypes.get(fi.extensibleMatch.type_.toString());
         if (!spec?.ldapSyntax) {
             return NOT_UNDERSTOOD;
         }
@@ -421,7 +427,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     const messageId: number = randomInt(MAX_LDAP_MESSAGE_ID);
     if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
         throw new errors.ServiceError(
-            "Cannot use the administerPassword operation on an LDAP server.",
+            ctx.i18n.t("err:cannot_use_apw_in_ldap"),
             new ServiceErrorData(
                 ServiceProblem_notSupportedByLDAP,
                 [],
@@ -446,7 +452,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
                 addRequest: new AddRequest(
                     encodeLDAPDN(ctx, data.object.rdnSequence),
                     data.entry.map((attr) => {
-                        const spec = ctx.attributes.get(attr.type_.toString());
+                        const spec = ctx.attributeTypes.get(attr.type_.toString());
                         if (!spec?.ldapSyntax) {
                             throw new Error(); // FIXME:
                         }
@@ -471,7 +477,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
         throw new errors.ServiceError(
-            "Cannot use the changePassword operation on an LDAP server.",
+            ctx.i18n.t("err:cannot_use_cpw_in_ldap"),
             new ServiceErrorData(
                 ServiceProblem_notSupportedByLDAP,
                 [],
@@ -490,7 +496,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     else if (compareCode(req.opCode, compare["&operationCode"]!)) {
         const arg = compare.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
-        const spec = ctx.attributes.get(data.purported.type_.toString());
+        const spec = ctx.attributeTypes.get(data.purported.type_.toString());
         if (!spec?.ldapSyntax) {
             throw new Error(); // FIXME:
         }

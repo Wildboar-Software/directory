@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";

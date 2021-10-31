@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import {
@@ -8,7 +8,7 @@ import {
 export
 function getLDAPDecoder (ctx: Context, type_: LDAPOID): LDAPSyntaxDecoder | undefined {
     const desc = normalizeAttributeDescription(type_);
-    const spec = ctx.attributes.get(desc);
+    const spec = ctx.attributeTypes.get(desc);
     if (!spec?.ldapSyntax) {
         return undefined;
     }

@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
@@ -16,7 +16,7 @@ function getEntryInfoItemFromPartialAttribute (
 ): EntryInformation_information_Item | undefined {
     if (typesOnly) {
         const desc = normalizeAttributeDescription(partattr.type_);
-        const spec = ctx.attributes.get(desc);
+        const spec = ctx.attributeTypes.get(desc);
         return spec?.id
             ? {
                 attributeType: spec.id,

@@ -12,6 +12,8 @@ i18n
         lng: osLocale.sync().slice(0, 2),
         ns: [
             "main",
+            "err",
+            "log",
         ],
         fallbackLng: "en",
         pluralSeparator: "#",

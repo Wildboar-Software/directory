@@ -1,6 +1,6 @@
-import { Context, StoredContext, Vertex, ClientConnection, OperationReturn } from "../types";
+import { Context, StoredContext, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_CompareArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
@@ -74,6 +74,13 @@ import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import failover from "../utils/failover";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -101,6 +108,9 @@ async function compare (
     const target = state.foundDSE;
     const argument = _decode_CompareArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const typeAndSuperTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, data.purported.type_));
     const targetDN = getDistinguishedName(target);
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
@@ -150,7 +160,7 @@ async function compare (
         );
         if (!authorizedToEntry) {
             throw new errors.SecurityError(
-                "Not permitted to modify entry with changePassword operation.",
+                ctx.i18n.t("err:not_authz_read"),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
@@ -163,12 +173,31 @@ async function compare (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         }
         for (const type_ of typeAndSuperTypes) {
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    ctx.i18n.t("err:abandoned"),
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            abandoned["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
             const {
                 authorized,
             } = bacACDF(
@@ -185,7 +214,9 @@ async function compare (
             );
             if (!authorized) {
                 throw new errors.SecurityError(
-                    `Not permitted to compare or read attribute type ${type_.toString()}.`,
+                    ctx.i18n.t("err:not_authz_read_or_compare_attr", {
+                        oid: type_.toString(),
+                    }),
                     new SecurityErrorData(
                         SecurityProblem_insufficientAccessRights,
                         undefined,
@@ -198,7 +229,7 @@ async function compare (
                             securityError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -208,7 +239,9 @@ async function compare (
     const matcher = EQUALITY_MATCHER(data.purported.type_);
     if (!matcher) {
         throw new errors.ServiceError(
-            `Equality matching rule used by type ${data.purported.type_.toString()} not understood.`,
+            ctx.i18n.t("err:no_equality_matching_rule_defined_for_type", {
+                oid: data.purported.type_.toString(),
+            }),
             new ServiceErrorData(
                 ServiceProblem_unsupportedMatchingUse,
                 [],
@@ -219,7 +252,7 @@ async function compare (
                     serviceError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -251,6 +284,25 @@ async function compare (
     let matchedType: AttributeType | undefined;
     let matched: boolean = false;
     for (const value of values) {
+        if (op?.abandonTime) {
+            op.events.emit("abandon");
+            throw new errors.AbandonError(
+                ctx.i18n.t("err:abandoned"),
+                new AbandonedData(
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         if (!matcher(data.purported.assertion, value.value)) {
             continue;
         }
@@ -262,7 +314,7 @@ async function compare (
                 conn.authLevel,
                 {
                     value: new AttributeTypeAndValue(
-                        value.id,
+                        value.type,
                         value.value,
                     ),
                 },
@@ -281,7 +333,7 @@ async function compare (
                 matched = true;
                 break;
             }
-            if (value.contexts.size === 0) {
+            if (value.contexts && (value.contexts.size === 0)) {
                 matched = true;
                 break;
             }
@@ -291,8 +343,9 @@ async function compare (
             matched = acs.selectedContexts
                 .every((sc): boolean => evaluateContextAssertion(
                     sc,
-                    Object.values(value.contexts).map(contextFromStoredContext),
+                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                 ));
             if (matched) {
                 break;
@@ -316,16 +369,18 @@ async function compare (
                             return sc.contextAssertions.all
                                 .every((ca): boolean => evaluateContextAssertion(
                                     ca,
-                                    Object.values(value.contexts).map(contextFromStoredContext),
+                                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
                                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                 ));
                         } else if ("preference" in sc.contextAssertions) {
                             // REVIEW: I _think_ this is fine. See X.511, Section 7.6.3.
                             return sc.contextAssertions.preference
                                 .some((ca): boolean => evaluateContextAssertion(
                                     ca,
-                                    Object.values(value.contexts).map(contextFromStoredContext),
+                                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
                                     (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                 ));
                         } else {
                             return false; // FIXME: Not understood. What to do?
@@ -342,6 +397,9 @@ async function compare (
         }
         matched = true;
         break;
+    }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
     }
 
     const result: CompareResult = {
@@ -381,12 +439,12 @@ async function compare (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_compare),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
                 ava: getStatisticsFromAttributeValueAssertion(data.purported),
-            },
+            }), undefined),
         },
     };
 }

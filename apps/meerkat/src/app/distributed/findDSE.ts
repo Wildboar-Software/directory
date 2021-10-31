@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Vertex, ClientConnection } from "../types";
+import type { Context, DIT, Vertex, ClientConnection } from "@wildboar/meerkat-types";
 import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
@@ -41,9 +41,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { OBJECT_IDENTIFIER, TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
+import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
 import readChildren from "../dit/readChildren";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     ServiceProblem_timeLimitExceeded,
     ServiceProblem_loopDetected,
@@ -79,7 +79,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_RETURN_DN,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import createSecurityParameters from "../x500/createSecurityParameters";
@@ -92,23 +91,17 @@ import {
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
-import { id_ar_accessControlSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
-import { id_ar_subschemaAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
-import { id_ar_collectiveAttributeSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
-import { id_ar_contextDefaultSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
-import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
-import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
-const accessControlSpecificArea: string = id_ar_accessControlSpecificArea.toString();
-const subschemaAdminSpecificArea: string = id_ar_subschemaAdminSpecificArea.toString();
-const collectiveAttributeSpecificArea: string = id_ar_collectiveAttributeSpecificArea.toString();
-const contextDefaultSpecificArea: string = id_ar_contextDefaultSpecificArea.toString();
-const serviceSpecificArea: string = id_ar_serviceSpecificArea.toString();
-const pwdAdminSpecificArea: string = id_ar_pwdAdminSpecificArea.toString();
 
 const MAX_DEPTH: number = 10000;
 
@@ -122,7 +115,11 @@ async function someSubordinatesAreCP (
             cp: true,
             deleteTimestamp: null,
         },
-        select: {},
+        select: {
+            // Select statements cannot be null in Prisma, so we just select
+            // something so we can ignore it.
+            id: true,
+        },
     }));
 }
 
@@ -192,7 +189,7 @@ async function findDSE (
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -203,7 +200,7 @@ async function findDSE (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -215,6 +212,7 @@ async function findDSE (
      */
     if (needleDN.length === 0) {
         state.entrySuitable = true;
+        state.foundDSE = ctx.dit.root;
         return;
     }
     let i: number = 0;
@@ -228,7 +226,9 @@ async function findDSE (
     let dse_lastEntryFound: Vertex | undefined = undefined;
     let lastCP: Vertex | undefined;
     const candidateRefs: ContinuationReference[] = [];
-
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const serviceControls = state.operationArgument.set
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
@@ -260,11 +260,8 @@ async function findDSE (
     const subentries: boolean = (
         serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
-    /**
-     * This is used to set the EntryInformation.partialName.
-     */
-    let partialName: boolean = false;
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
 
     const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
@@ -280,7 +277,9 @@ async function findDSE (
     const node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false = async (): Promise<Vertex | undefined> => {
         if (dse_i.dse.shadow?.subordinateCompleteness === false) {
             if (!lastCP) {
-                ctx.log.warn("DIT invalid: shadow copy not under a context prefix.");
+                ctx.log.warn(ctx.i18n.t("log:shadow_not_under_cp", {
+                    id: dse_i.dse.uuid,
+                }));
                 return undefined;
             }
             const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, lastEntryFound);
@@ -333,7 +332,7 @@ async function findDSE (
     const candidateRefsEmpty_yes_branch = async (): Promise<Vertex | undefined> => {
         if (partialNameResolution === FALSE) {
             throw new errors.NameError(
-                `No such object: ${encodeLDAPDN(ctx, needleDN)}.`,
+                ctx.i18n.t("err:entry_not_found"),
                 new NameErrorData(
                     NameProblem_noSuchObject,
                     {
@@ -347,13 +346,13 @@ async function findDSE (
                         nameError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         } else {
-            partialName = true;
-            nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
+            state.partialName = true;
+            nameResolutionPhase = OperationProgress_nameResolutionPhase_completed; // FIXME:
             return dse_i;
         }
     };
@@ -415,7 +414,7 @@ async function findDSE (
                     } else {
                         throw new errors.NameError(
                             // REVIEW: This seems incorrect to me... What about read or modifyEntry?
-                            "Only a list or search operation may target the root DSE.",
+                            ctx.i18n.t("err:can_only_list_or_search_root"),
                             new NameErrorData(
                                 NameProblem_noSuchObject,
                                 {
@@ -494,7 +493,7 @@ async function findDSE (
                     && (nextRDNToBeResolved === (i + 1))
                 ) {
                     throw new errors.ServiceError(
-                        "Unable to proceed.",
+                        ctx.i18n.t("err:unable_to_proceed"),
                         new ServiceErrorData(
                             ServiceProblem_unableToProceed,
                             [],
@@ -505,13 +504,13 @@ async function findDSE (
                                 serviceError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
                 } else {
                     throw new errors.ServiceError(
-                        "Invalid reference.",
+                        ctx.i18n.t("err:invalid_reference"),
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],
@@ -522,7 +521,7 @@ async function findDSE (
                                 serviceError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
@@ -530,7 +529,7 @@ async function findDSE (
             }
             case (OperationProgress_nameResolutionPhase_completed): {
                 throw new errors.ServiceError(
-                    "",
+                    "7E66876A-D4C5-48FF-815A-93B096F19BB4", // FIXME:
                     new ServiceErrorData(
                         ServiceProblem_invalidReference,
                         [],
@@ -541,7 +540,7 @@ async function findDSE (
                             serviceError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -621,52 +620,171 @@ async function findDSE (
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
         let cursorId: number | undefined;
-        let subordinatesInBatch = await readChildren(
-            ctx,
-            dse_i,
-            100,
-            undefined,
-            cursorId,
-            {
-                subentry: subentries,
-            },
-        );
+        /**
+         * What follows in this if statement is a byte-for-byte check for an
+         * entry having the exact RDN supplied by the query. This is intended to
+         * be a performance improvement by making the database do the work of
+         * finding the exact matching entry. However, a database query is not
+         * worth the overhead if there are only a few entries immediately
+         * subordinate to this entry. For this reason, this optimization is only
+         * used if the subordinates are not already loaded into memory or if
+         * there are a lot of immediate subordinates.
+         *
+         * (Empirically, it seems like this is only worth it if there are about
+         * 1000 immediate subordinates.)
+         */
+        if (!dse_i.subordinates || (dse_i.subordinates.length > 1000)) { // TODO: Make this configurable.
+            const match = await ctx.db.entry.findFirst({
+                where: {
+                    AND: [
+                        {
+                            immediate_superior_id: dse_i.dse.id,
+                            deleteTimestamp: null,
+                        },
+                        ...needleRDN.map((atav) => ({
+                            RDN: {
+                                some: {
+                                    type: atav.type_.toString(),
+                                    value: Buffer.from(atav.value.toBytes()),
+                                },
+                            },
+                        })),
+                    ],
+                },
+            });
+            if (match) {
+                const matchedVertex = await vertexFromDatabaseEntry(ctx, dse_i, match, true);
+                // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                if (!ctx.config.bulkInsertMode && accessControlScheme) {
+                    const childDN = getDistinguishedName(matchedVertex);
+                    const relevantSubentries: Vertex[] = (await Promise.all(
+                        state.admPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
+                    )).flat();
+                    const targetACI = [
+                        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !matchedVertex.dse.subentry)
+                            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                            : []),
+                        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && matchedVertex.dse.subentry)
+                            ? matchedVertex.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                            : []),
+                        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                            ? matchedVertex.dse.entryACI ?? []
+                            : []),
+                    ];
+                    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                            ...tuple,
+                            await userWithinACIUserClass(
+                                tuple[0],
+                                conn.boundNameAndUID!,
+                                childDN,
+                                EQUALITY_MATCHER,
+                                isMemberOfGroup,
+                            ),
+                        ]),
+                    ))
+                        .filter((tuple) => (tuple[5] > 0));
+                    const {
+                        authorized,
+                    } = bacACDF(
+                        relevantTuples,
+                        conn.authLevel,
+                        {
+                            entry: Array
+                                .from(matchedVertex.dse.objectClass)
+                                .map(ObjectIdentifier.fromString),
+                        },
+                        [
+                            PERMISSION_CATEGORY_BROWSE,
+                            PERMISSION_CATEGORY_RETURN_DN,
+                        ],
+                        EQUALITY_MATCHER,
+                    );
+                    if (!authorized) {
+                        await targetNotFoundSubprocedure();
+                        return;
+                    }
+                }
+                i++;
+                rdnMatched = true;
+                dse_i = matchedVertex;
+            }
+        }
+        let subordinatesInBatch = rdnMatched
+            ? []
+            : await readChildren(
+                ctx,
+                dse_i,
+                100,
+                undefined,
+                cursorId,
+                {
+                    AND: needleRDN.map((atav) => ({
+                        RDN: {
+                            some: {
+                                type: atav.type_.toString(),
+                            },
+                        },
+                    })),
+                },
+            );
         while (subordinatesInBatch.length) {
             for (const child of subordinatesInBatch) {
                 cursorId = child.dse.id;
-                checkTimeLimit();
-                const childDN = getDistinguishedName(child);
-                const relevantSubentries: Vertex[] = (await Promise.all(
-                    state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
-                )).flat();
-                const targetACI = [
-                    ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
-                        ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                        : []),
-                    ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
-                        ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
-                        : []),
-                    ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                        ? child.dse.entryACI ?? []
-                        : []),
-                ];
-                const acdfTuples: ACDFTuple[] = (targetACI ?? [])
-                    .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-                const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
-                const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-                    acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                        ...tuple,
-                        await userWithinACIUserClass(
-                            tuple[0],
-                            conn.boundNameAndUID!, // FIXME:
-                            childDN,
-                            EQUALITY_MATCHER,
-                            isMemberOfGroup,
+                if (op?.abandonTime) {
+                    op.events.emit("abandon");
+                    throw new errors.AbandonError(
+                        ctx.i18n.t("err:abandoned"),
+                        new AbandonedData(
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                abandoned["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
                         ),
-                    ]),
-                ))
-                    .filter((tuple) => (tuple[5] > 0));
-                if (accessControlScheme) { // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                    );
+                }
+                checkTimeLimit();
+                // TODO: Make this a check for AC schemes that use the BAC ACDF.
+                if (!ctx.config.bulkInsertMode && accessControlScheme) {
+                    const childDN = getDistinguishedName(child);
+                    const relevantSubentries: Vertex[] = (await Promise.all(
+                        state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+                    )).flat();
+                    const targetACI = [
+                        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
+                            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+                            : []),
+                        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
+                            ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
+                            : []),
+                        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                            ? child.dse.entryACI ?? []
+                            : []),
+                    ];
+                    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                            ...tuple,
+                            await userWithinACIUserClass(
+                                tuple[0],
+                                conn.boundNameAndUID!,
+                                childDN,
+                                EQUALITY_MATCHER,
+                                isMemberOfGroup,
+                            ),
+                        ]),
+                    ))
+                        .filter((tuple) => (tuple[5] > 0));
                     const {
                         authorized,
                     } = bacACDF(
@@ -713,7 +831,13 @@ async function findDSE (
                 undefined,
                 cursorId,
                 {
-                    subentry: subentries,
+                    AND: needleRDN.map((atav) => ({
+                        RDN: {
+                            some: {
+                                type: atav.type_.toString(),
+                            },
+                        },
+                    })),
                 },
             );
         }
@@ -729,12 +853,12 @@ async function findDSE (
             nssrEncountered = true;
         }
         if (
-            (i === state.chainingArguments.operationProgress?.nextRDNToBeResolved)
+            (i === nextRDNToBeResolved)
             // Is checking for shadow enough to determine if !master?
             || (state.chainingArguments.nameResolveOnMaster && dse_i.dse.shadow)
         ) {
             throw new errors.ServiceError(
-                "Could not resolve name on master.",
+                ctx.i18n.t("err:could_not_resolve_name_on_master"),
                 new ServiceErrorData(
                     ServiceProblem_unableToProceed,
                     [],
@@ -757,7 +881,7 @@ async function findDSE (
                     return;
                 } else {
                     throw new errors.NameError(
-                        "Reached an alias above the sought object, and dereferencing was prohibited.",
+                        ctx.i18n.t("err:reached_alias_above_target"),
                         new NameErrorData(
                             NameProblem_aliasDereferencingProblem,
                             { // FIXME: Check authorization to see this.
@@ -825,12 +949,11 @@ async function findDSE (
                 return;
             } else {
                 throw new errors.NameError(
-                    "No DSEs to find beneath a subentry.",
+                    ctx.i18n.t("err:reached_subentry_above_target"),
                     new NameErrorData(
                         NameProblem_noSuchObject,
                         {
-                            rdnSequence: [], // REVIEW: information disclosure.
-                            // rdnSequence: needleDN.slice(0, i),
+                            rdnSequence: getDistinguishedName(dse_i),
                         },
                         [],
                         createSecurityParameters(
@@ -852,6 +975,7 @@ async function findDSE (
                     await targetFoundSubprocedure();
                     return;
                 }
+                // if (true) {
                 if (manageDSAITPlaneRefElement || manageDSAIT) {
                     state.foundDSE = dse_i;
                     state.entrySuitable = true;
@@ -874,7 +998,7 @@ async function findDSE (
                 }
                 if (!await someSubordinatesAreCP(ctx, dse_i)) {
                     throw new errors.ServiceError(
-                        "",
+                        "788EC688-D82A-444A-A2F7-457B80753ADD", // FIXME:
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],
@@ -885,7 +1009,7 @@ async function findDSE (
                                 serviceError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
+                            state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
                     );
@@ -981,7 +1105,7 @@ async function findDSE (
         }
     }
     throw new errors.ServiceError(
-        "Loop detected in Find DSE procedure.",
+        ctx.i18n.t("err:loop_detected"),
         new ServiceErrorData(
             ServiceProblem_loopDetected,
             [],

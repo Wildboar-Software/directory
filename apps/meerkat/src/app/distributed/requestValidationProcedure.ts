@@ -1,5 +1,5 @@
-import type { Context } from "../types";
-import * as errors from "../errors";
+import type { Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { addSeconds } from "date-fns";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
@@ -436,7 +436,7 @@ async function requestValidationProcedure (
     assert(req.argument);
     if (ctx.dsa.hibernatingSince || ctx.dsa.sentinelTriggeredHibernation) {
         throw new errors.ServiceError(
-            "Request denied. Hibernating.",
+            ctx.i18n.t("err:hibernating"),
             new ServiceErrorData(
                 ServiceProblem_busy,
                 [],
@@ -475,13 +475,15 @@ async function requestValidationProcedure (
         && (chainedArgument.operationProgress.nextRDNToBeResolved > chainedArgument.targetObject.length)
     ) {
         throw new errors.ServiceError(
-            `Invalid nextRDNToBeResolved ${chainedArgument.operationProgress?.nextRDNToBeResolved}.`,
+            ctx.i18n.t("err:invalid_nextrdntoberesolved", {
+                next: chainedArgument.operationProgress?.nextRDNToBeResolved,
+            }),
             new ServiceErrorData(
                 ServiceProblem_unwillingToPerform, // TODO: Is this correct?
                 [],
                 createSecurityParameters(ctx), // TODO:
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                chainedArgument.aliasDereferenced,
                 undefined,
             ),
         );
@@ -502,13 +504,13 @@ async function requestValidationProcedure (
     }
     if (loopDetected(chainedArgument.traceInformation)) {
         throw new errors.ServiceError(
-            "Loop detected.",
+            ctx.i18n.t("err:loop_detected"),
             new ServiceErrorData(
                 ServiceProblem_loopDetected,
                 [],
                 createSecurityParameters(ctx), // TODO:
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                chainedArgument.aliasDereferenced,
                 undefined,
             ),
         );

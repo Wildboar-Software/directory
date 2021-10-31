@@ -1,4 +1,4 @@
-import { Context, Vertex } from "./types";
+import { Context, Vertex } from "@wildboar/meerkat-types";
 import { v4 as uuid } from "uuid";
 import {
     AccessPoint,
@@ -17,6 +17,7 @@ import * as fs from "fs";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import winston from "winston";
 import isDebugging from "is-debugging";
+import i18n from "i18next";
 
 if (!process.env.MEERKAT_SIGNING_CERT_CHAIN || !process.env.MEERKAT_SIGNING_KEY) {
     console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
@@ -45,6 +46,7 @@ const root: Vertex = {
     },
 };
 const ctx: Context = {
+    i18n,
     config: {
         localQualifierPointsFor: {
             usingStartTLS: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS
@@ -71,6 +73,9 @@ const ctx: Context = {
         },
         sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
         administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
+        bulkInsertMode: (process.env.MEERKAT_BULK_INSERT_MODE === "1"),
+        bindMinSleepInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_MIN_SLEEP_MS ?? "") || 1000,
+        bindSleepRangeInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_SLEEP_RANGE_MS ?? "") || 1000,
     },
     dsa: {
         accessPoint: new AccessPoint(
@@ -107,7 +112,9 @@ const ctx: Context = {
     db: new PrismaClient(),
     telemetry: {
         sendEvent: (body: Record<string, any>) => {
-            ctx.log.debug(body);
+            // if (process.env.NODE_ENV === "development") {
+            //     console.debug(body);
+            // }
             // try {
             //     axios.post(telemetryURL, body, {
             //         headers: {
@@ -130,14 +137,13 @@ const ctx: Context = {
     objectIdentifierToName: new Map(),
     nameToObjectIdentifier: new Map(),
     objectClasses: new Map(),
-    attributes: new Map(),
+    attributeTypes: new Map(),
     equalityMatchingRules: new Map(),
     orderingMatchingRules: new Map(),
     substringsMatchingRules: new Map(),
     approxMatchingRules: new Map(),
     contextTypes: new Map(),
     matchingRulesSuitableForNaming: new Set(),
-    pagedResultsRequests: new Map(),
     ldapSyntaxes: new Map(),
     operationalBindingControlEvents: new EventEmitter(),
     collectiveAttributes: new Set(),

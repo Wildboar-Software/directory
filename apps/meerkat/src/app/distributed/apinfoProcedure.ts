@@ -1,4 +1,5 @@
-import type { Context } from "../types";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { BOOLEAN, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -18,6 +19,7 @@ import {
     ServiceProblem_unavailable,
     ServiceProblem_unwillingToPerform,
     ServiceProblem_invalidReference,
+    ServiceProblem_loopDetected,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
@@ -44,27 +46,35 @@ import {
     ReferenceType_nonSpecificSubordinate as nssr,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
+import {
+    TraceItem,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import type { OperationDispatcherState } from "./OperationDispatcher";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 export
 async function apinfoProcedure (
     ctx: Context,
     api: AccessPointInformation,
     req: ChainedRequest,
+    conn: ClientConnection,
+    state: OperationDispatcherState,
 ): Promise<ResultOrError | null> {
-    // TODO: Loop AVOIDANCE, not loop DETECTION.
-    // if (loopDetected(chaining.traceInformation)) {
-    //     throw new errors.ServiceError(
-    //         "Loop detected.",
-    //         new ServiceErrorData(
-    //             ServiceProblem_loopDetected,
-    //             [],
-    //             undefined,
-    //             undefined,
-    //             undefined,
-    //             undefined,
-    //         ),
-    //     );
-    // }
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
+    // Loop avoidance is handled below.
     const serviceControls = req.argument?.set
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
@@ -100,6 +110,57 @@ async function apinfoProcedure (
         ...api.additionalPoints ?? [],
     ];
     for (const ap of accessPoints) {
+        if (op?.abandonTime) {
+            op.events.emit("abandon");
+            throw new errors.AbandonError(
+                ctx.i18n.t("err:abandoned"),
+                new AbandonedData(
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        const tenativeTrace: TraceItem[] = [
+            ...req.chaining.traceInformation,
+            new TraceItem(
+                {
+                    rdnSequence: ap.ae_title.rdnSequence,
+                },
+                req.chaining.targetObject
+                    ? {
+                        rdnSequence: req.chaining.targetObject,
+                    }
+                    : undefined,
+                req.chaining.operationProgress ?? ChainingArguments._default_value_for_operationProgress,
+            ),
+        ];
+        if (loopDetected(tenativeTrace)) {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:loop_detected"),
+                new ServiceErrorData(
+                    ServiceProblem_loopDetected,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    req.chaining.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         // TODO: Check if localScope.
         if (
             (ap.category === MasterOrShadowAccessPoint_category_shadow)
@@ -160,7 +221,9 @@ async function apinfoProcedure (
                 }
             } else {
                 if (!result.opCode) {
-                    ctx.log.warn(`This DSA returned a result with no opCode, which might have been malicious: `, api.ae_title);
+                    ctx.log.warn(ctx.i18n.t("log:dsa_returned_no_opcode", {
+                        dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+                    }));
                     continue;
                 }
                 return {
@@ -170,7 +233,9 @@ async function apinfoProcedure (
                 };
             }
         } catch (e) {
-            ctx.log.warn(`Unable to access DSA `, api.ae_title); // FIXME:
+            ctx.log.warn(ctx.i18n.t("log:could_not_write_operation_to_dsa", {
+                dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+            }));
             continue;
         }
     }

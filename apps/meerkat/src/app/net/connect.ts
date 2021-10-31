@@ -1,5 +1,5 @@
-import type { Context, OperationStatistics } from "../types";
-import * as errors from "../errors";
+import type { Context, OperationStatistics } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";

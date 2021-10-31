@@ -1,6 +1,6 @@
-import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import { ObjectIdentifier } from "asn1-ts";
+import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import {
     ListArgument,
@@ -54,7 +54,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_RETURN_DN,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
@@ -78,6 +77,7 @@ import {
 import {
     ServiceProblem_invalidQueryReference,
     ServiceProblem_unavailable,
+    ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     PartialOutcomeQualifier,
@@ -104,6 +104,7 @@ import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFrom
 import getListResultStatistics from "../telemetry/getListResultStatistics";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import failover from "../utils/failover";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -116,6 +117,9 @@ async function list_i (
     const target = state.foundDSE;
     const arg: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(arg);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -173,11 +177,11 @@ async function list_i (
         if (!authorized) {
             // Non-disclosure of the target object is at least addressed in X.501 RBAC!
             throw new errors.NameError(
-                "Not permitted to list the target entry.",
+                ctx.i18n.t("err:not_authz_list"),
                 new NameErrorData(
                     NameProblem_noSuchObject,
                     {
-                        rdnSequence: [],
+                        rdnSequence: targetDN.slice(0, -1),
                     },
                     [],
                     createSecurityParameters(
@@ -187,7 +191,7 @@ async function list_i (
                         nameError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -197,13 +201,16 @@ async function list_i (
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
     let page: number = 0;
     let queryReference: string | undefined;
+    let cursorId: number | undefined;
     if (data.pagedResults) {
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
             const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
             if ((pi < 0) || !Number.isSafeInteger(pi)) {
                 throw new errors.ServiceError(
-                    `Paginated query page index ${pi} is invalid.`,
+                    ctx.i18n.t("err:page_number_invalid", {
+                        pi,
+                    }),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -214,7 +221,7 @@ async function list_i (
                             serviceError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -222,7 +229,9 @@ async function list_i (
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
             if ((nr.pageSize < 1) || !Number.isSafeInteger(nr.pageSize)) {
                 throw new errors.ServiceError(
-                    `Paginated query page size ${nr.pageSize} is invalid.`,
+                    ctx.i18n.t("err:page_size_invalid", {
+                        ps: nr.pageSize,
+                    }),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -233,7 +242,7 @@ async function list_i (
                             serviceError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -246,7 +255,7 @@ async function list_i (
             const paging = conn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
-                    `Paginated query reference '${queryReference.slice(0, 32)}' is invalid.`,
+                    ctx.i18n.t("err:paginated_query_ref_invalid"),
                     new ServiceErrorData(
                         ServiceProblem_invalidQueryReference,
                         [],
@@ -257,17 +266,18 @@ async function list_i (
                             serviceError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
             }
-            pagingRequest = paging[0];
-            page = paging[1];
+            pagingRequest = paging.request;
+            page = paging.pageIndex;
+            cursorId = paging.cursorIds[0];
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             throw new errors.AbandonError(
-                `Abandoned paginated query identified by query reference '${queryReference.slice(0, 32)}'.`,
+                ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
                     AbandonedProblem_pagingAbandoned,
                     [],
@@ -278,13 +288,13 @@ async function list_i (
                         abandoned["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         } else {
             throw new errors.ServiceError(
-                "Unrecognized paginated query syntax.",
+                ctx.i18n.t("err:unrecognized_paginated_query_syntax"),
                 new ServiceErrorData(
                     ServiceProblem_unavailable,
                     [],
@@ -295,13 +305,30 @@ async function list_i (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
         }
     }
-
+    if (pagingRequest?.sortKeys && (pagingRequest.sortKeys.length > 1)) {
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:only_one_sort_key"),
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const SRcontinuationList: ContinuationReference[] = [];
     const listItems: ListItem[] = [];
     const pageNumber: number = pagingRequest?.pageNumber ?? 0;
@@ -309,7 +336,6 @@ async function list_i (
         ?? data.serviceControls?.sizeLimit
         ?? Infinity;
     const useSortedSearch: boolean = Boolean(pagingRequest?.sortKeys?.length);
-    let cursorId: number | undefined;
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
         return useSortedSearch
             ? await (async () => {
@@ -346,26 +372,24 @@ async function list_i (
     let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
-            if ("present" in state.invokeId) {
-                const op = conn.invocations.get(state.invokeId.present);
-                if (op?.abandonTime) {
-                    throw new errors.AbandonError(
-                        "Abandoned.",
-                        new AbandonedData(
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    ctx.i18n.t("err:abandoned"),
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
                             undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                conn.boundNameAndUID?.dn,
-                                undefined,
-                                abandoned["&errorCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
+                            abandoned["&errorCode"],
                         ),
-                    );
-                }
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
                 limitExceeded = LimitProblem_timeLimitExceeded;
@@ -514,12 +538,17 @@ async function list_i (
         }
         subordinatesInBatch = await getNextBatchOfSubordinates();
     }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
+    }
 
     if (queryReference && pagingRequest) {
         conn.pagedResultsRequests.set(queryReference, {
             request: pagingRequest,
             pageIndex: page + 1,
-            cursorId,
+            cursorIds: cursorId
+                ? [ cursorId ]
+                : [],
         });
     }
 
@@ -615,7 +644,7 @@ async function list_i (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_list),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
@@ -623,15 +652,15 @@ async function list_i (
                 prr: data.pagedResults
                     ? getStatisticsFromPagedResultsRequest(data.pagedResults)
                     : undefined,
-            },
-            outcome: {
+            }), undefined),
+            outcome: failover(() => ({
                 result: {
                     list: getListResultStatistics(result),
                     poq: (("listInfo" in result.unsigned) && result.unsigned.listInfo.partialOutcomeQualifier)
                         ? getPartialOutcomeQualifierStatistics(result.unsigned.listInfo.partialOutcomeQualifier)
                         : undefined,
                 },
-            },
+            }), undefined),
         },
     };
 }

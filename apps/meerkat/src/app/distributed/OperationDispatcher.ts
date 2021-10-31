@@ -1,4 +1,4 @@
-import type { ClientConnection, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "../types";
+import type { ClientConnection, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "@wildboar/meerkat-types";
 import type DSPConnection from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import {
@@ -17,7 +17,7 @@ import {
     _decode_SearchResult,
     _encode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import requestValidationProcedure from "./requestValidationProcedure";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import getSoughtObjectFromRequest from "./getSoughtObjectFromRequest";
@@ -42,6 +42,8 @@ import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstract
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+import { ldapTransport } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ldapTransport.oa";
+import { linkedLDAP } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/linkedLDAP.oa";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
 import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
@@ -74,8 +76,7 @@ import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 import { DER } from "asn1-ts/dist/node/functional";
-import type { SearchIReturn } from "./search_i";
-import type { SearchIIReturn } from "./search_ii";
+import type { SearchState } from "./search_i";
 import { ChainingResults } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import type { Error_ } from "@wildboar/x500/src/lib/types/Error_";
 import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
@@ -106,6 +107,10 @@ import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
 import getSearchResultStatistics from "../telemetry/getSearchResultStatistics";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
+import { BER } from "asn1-ts/dist/node/functional";
+import failover from "../utils/failover";
+import emptyChainingResults from "../x500/emptyChainingResults";
 
 export
 type SearchResultOrError = {
@@ -264,6 +269,38 @@ class OperationDispatcher {
                 foundDSE: state.foundDSE,
             };
         }
+        else if (compareCode(req.opCode, ldapTransport["&operationCode"]!)) {
+            const arg = ldapTransport.decoderFor["&ArgumentType"]!(state.operationArgument);
+            const data = getOptionallyProtectedValue(arg);
+            const dapRequest = ldapRequestToDAPRequest(ctx, conn, data.ldapMessage);
+            if (!dapRequest) {
+                throw new Error();
+            }
+            return OperationDispatcher.dispatchDAPRequest(
+                ctx,
+                conn,
+                {
+                    invokeId: req.invokeId,
+                    opCode: req.opCode,
+                    argument: dapRequest.argument,
+                },
+            );
+        }
+        else if (compareCode(req.opCode, linkedLDAP["&operationCode"]!)) {
+            // Automatically returns NULL no matter what, because Meerkat DSA
+            // will not issue ldapTransport requests. It will just make LDAP
+            // requests or the equivalent DAP requests.
+            return {
+                invokeId: req.invokeId,
+                opCode: req.opCode,
+                result: {
+                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                        state.chainingResults,
+                        linkedLDAP.encoderFor["&ResultType"]!(null, BER),
+                    ),
+                },
+            };
+        }
         else if (compareCode(req.opCode, list["&operationCode"]!)) {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
@@ -304,12 +341,7 @@ class OperationDispatcher {
                     opCode: req.opCode,
                     result: {
                         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            new ChainingResults(
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                            ),
+                            emptyChainingResults(),
                             _encode_ListResult(newResult, DER),
                         ),
                     },
@@ -359,8 +391,8 @@ class OperationDispatcher {
         else if (compareCode(req.opCode, search["&operationCode"]!)) {
             const argument = _decode_SearchArgument(reqData.argument);
             const data = getOptionallyProtectedValue(argument);
-            const requestStats: RequestStatistics = {
-                operationCode: codeToString(req.opCode),
+            const requestStats: RequestStatistics | undefined = failover(() => ({
+                operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: data.baseObject.rdnSequence.length,
                 subset: data.subset,
@@ -391,7 +423,7 @@ class OperationDispatcher {
                     ? data.joinArguments.map(getJoinArgumentStatistics)
                     : undefined,
                 joinType: data.joinType,
-            };
+            }), undefined);
             const chainingResults = new ChainingResults(
                 undefined,
                 undefined,
@@ -407,13 +439,21 @@ class OperationDispatcher {
                 response: [],
                 unexplored: [],
             };
-            await relatedEntryProcedure(ctx, conn, req.invokeId, relatedEntryReturn, argument, reqData.chainedArgument);
+            await relatedEntryProcedure(
+                ctx,
+                conn,
+                state,
+                relatedEntryReturn,
+                argument,
+                reqData.chainedArgument,
+            );
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // Search (II)
-                const response: SearchIIReturn = {
+                const response: SearchState = {
                     results: [],
                     chaining: relatedEntryReturn.chaining,
+                    depth: 0,
                 };
                 await search_ii(
                     ctx,
@@ -422,8 +462,6 @@ class OperationDispatcher {
                     argument,
                     response,
                 );
-                // const poq: PartialOutcomeQualifier =
-                // FIXME: Use response.poq!
                 const localResult: SearchResult = {
                     unsigned: {
                         searchInfo: new SearchResultData_searchInfo(
@@ -431,18 +469,20 @@ class OperationDispatcher {
                                 rdnSequence: foundDN,
                             },
                             response.results,
-                            relatedEntryReturn.unexplored.length
+                            (response.poq || relatedEntryReturn.unexplored.length)
                                 ? new PartialOutcomeQualifier(
-                                    undefined,
+                                    response.poq?.limitProblem,
                                     relatedEntryReturn.unexplored,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
+                                    response.poq?.unavailableCriticalExtensions,
+                                    response.poq?.unknownErrors,
+                                    response.paging
+                                        ? Buffer.from(response.paging[0], "base64")
+                                        : response.poq?.queryReference,
+                                    response.poq?.overspecFilter,
+                                    response.poq?.notification,
+                                    response.poq?.entryCount,
                                 )
-                                : undefined, // FIXME
+                                : undefined,
                             undefined,
                             [],
                             createSecurityParameters(
@@ -480,18 +520,13 @@ class OperationDispatcher {
                     opCode: search["&operationCode"]!,
                     result: {
                         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            new ChainingResults(
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                            ),
+                            emptyChainingResults(),
                             _encode_SearchResult(result, DER),
                         ),
                     },
                     request: requestStats,
                     outcome: {
-                        result: {
+                        result: failover(() => ({
                             search: getSearchResultStatistics(result),
                             poq: (
                                 ("searchInfo" in unprotectedResult)
@@ -499,15 +534,16 @@ class OperationDispatcher {
                             )
                                 ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
                                 : undefined,
-                        },
+                        }), undefined),
                     },
                     foundDSE: state.foundDSE,
                 };
             } else { // Search (I)
                 // Only Search (I) results in results merging.
-                const response: SearchIReturn = {
+                const response: SearchState = {
                     results: [],
                     chaining: relatedEntryReturn.chaining,
+                    depth: 0,
                 };
                 await search_i(
                     ctx,
@@ -523,18 +559,20 @@ class OperationDispatcher {
                                 rdnSequence: foundDN,
                             },
                             response.results,
-                            relatedEntryReturn.unexplored.length
+                            (response.poq || relatedEntryReturn.unexplored.length)
                                 ? new PartialOutcomeQualifier(
-                                    undefined,
+                                    response.poq?.limitProblem,
                                     relatedEntryReturn.unexplored,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
+                                    response.poq?.unavailableCriticalExtensions,
+                                    response.poq?.unknownErrors,
+                                    response.paging
+                                        ? Buffer.from(response.paging[0], "base64")
+                                        : response.poq?.queryReference,
+                                    response.poq?.overspecFilter,
+                                    response.poq?.notification,
+                                    response.poq?.entryCount,
                                 )
-                                : undefined, // FIXME
+                                : undefined,
                             undefined,
                             [],
                             createSecurityParameters(
@@ -572,18 +610,13 @@ class OperationDispatcher {
                     opCode: search["&operationCode"]!,
                     result: {
                         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            new ChainingResults(
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                            ),
+                            emptyChainingResults(),
                             _encode_SearchResult(result, DER),
                         ),
                     },
                     request: requestStats,
                     outcome: {
-                        result: {
+                        result: failover(() => ({
                             search: getSearchResultStatistics(result),
                             poq: (
                                 ("searchInfo" in unprotectedResult)
@@ -591,7 +624,7 @@ class OperationDispatcher {
                             )
                                 ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
                                 : undefined,
-                        },
+                        }), undefined),
                     },
                     foundDSE: state.foundDSE,
                 };
@@ -616,12 +649,7 @@ class OperationDispatcher {
                 opCode: req.opCode,
                 result: {
                     unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                        new ChainingResults(
-                            undefined,
-                            undefined,
-                            undefined,
-                            undefined,
-                        ),
+                        emptyChainingResults(),
                         result.result,
                     ),
                 },
@@ -636,7 +664,7 @@ class OperationDispatcher {
         const targetObject = getSoughtObjectFromRequest(req);
         if (!targetObject) {
             throw new errors.SecurityError(
-                "No discernable targeted object.",
+                ctx.i18n.t("err:no_discernable_target_object"),
                 new SecurityErrorData(
                     SecurityProblem_noInformation,
                     undefined,
@@ -649,17 +677,12 @@ class OperationDispatcher {
                         id_errcode_securityError,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    reqData.chainedArgument.aliasDereferenced,
                     undefined,
                 ),
             );
         }
-        const chainingResults = new ChainingResults(
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        );
+        const chainingResults = emptyChainingResults();
         const state: OperationDispatcherState = {
             NRcontinuationList: [],
             SRcontinuationList: [],
@@ -713,7 +736,7 @@ class OperationDispatcher {
             }
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
-                    "Chained error.",
+                    ctx.i18n.t("err:chained_error"),
                     nrcrResult.error,
                     nrcrResult.errcode,
                 );
@@ -788,13 +811,14 @@ class OperationDispatcher {
             response: [],
             unexplored: [],
         };
-        await relatedEntryProcedure(ctx, conn, invokeId, relatedEntryReturn, argument, chaining);
+        await relatedEntryProcedure(ctx, conn, state, relatedEntryReturn, argument, chaining);
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         if (nameResolutionPhase === completed) { // Search (II)
-            const response: SearchIIReturn = {
+            const response: SearchState = {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
+                depth: 0,
             };
             await search_ii(ctx, conn, state, argument, response);
             const localResult: SearchResult = {
@@ -804,18 +828,20 @@ class OperationDispatcher {
                             rdnSequence: foundDN,
                         },
                         response.results,
-                        relatedEntryReturn.unexplored.length
+                        (response.poq || relatedEntryReturn.unexplored.length)
                             ? new PartialOutcomeQualifier(
-                                undefined,
+                                response.poq?.limitProblem,
                                 relatedEntryReturn.unexplored,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
+                                response.poq?.unavailableCriticalExtensions,
+                                response.poq?.unknownErrors,
+                                response.paging
+                                    ? Buffer.from(response.paging[0], "base64")
+                                    : response.poq?.queryReference,
+                                response.poq?.overspecFilter,
+                                response.poq?.notification,
+                                response.poq?.entryCount,
                             )
-                            : undefined, // FIXME
+                            : undefined,
                         undefined,
                         [],
                         createSecurityParameters(
@@ -824,7 +850,7 @@ class OperationDispatcher {
                             search["&operationCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 },
@@ -855,9 +881,10 @@ class OperationDispatcher {
             };
         } else { // Search (I)
             // Only Search (I) results in results merging.
-            const response: SearchIReturn = {
+            const response: SearchState = {
                 results: [],
                 chaining: relatedEntryReturn.chaining,
+                depth: 0,
             };
             await search_i(ctx, conn, state, argument, response);
             const localResult: SearchResult = {
@@ -867,18 +894,20 @@ class OperationDispatcher {
                             rdnSequence: foundDN,
                         },
                         response.results,
-                        relatedEntryReturn.unexplored.length
+                        (response.poq || relatedEntryReturn.unexplored.length)
                             ? new PartialOutcomeQualifier(
-                                undefined,
+                                response.poq?.limitProblem,
                                 relatedEntryReturn.unexplored,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
-                                undefined,
+                                response.poq?.unavailableCriticalExtensions,
+                                response.poq?.unknownErrors,
+                                response.paging
+                                    ? Buffer.from(response.paging[0], "base64")
+                                    : response.poq?.queryReference,
+                                response.poq?.overspecFilter,
+                                response.poq?.notification,
+                                response.poq?.entryCount,
                             )
-                            : undefined, // FIXME
+                            : undefined,
                         undefined,
                         [],
                         createSecurityParameters(
@@ -936,7 +965,7 @@ class OperationDispatcher {
             : chaining.targetObject ?? data.baseObject.rdnSequence;
         if (!targetObject) {
             throw new errors.SecurityError(
-                "No discernable targeted object.",
+                ctx.i18n.t("err:no_discernable_target_object"),
                 new SecurityErrorData(
                     SecurityProblem_noInformation,
                     undefined,
@@ -949,17 +978,12 @@ class OperationDispatcher {
                         id_errcode_securityError,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    chaining.aliasDereferenced,
                     undefined,
                 ),
             );
         }
-        const chainingResults = new ChainingResults(
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        );
+        const chainingResults = emptyChainingResults();
         const state: OperationDispatcherState = {
             NRcontinuationList: [],
             SRcontinuationList: [],
@@ -1004,7 +1028,7 @@ class OperationDispatcher {
                 );
             } else if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
-                    "Chained error.",
+                    ctx.i18n.t("err:chained_error"),
                     nrcrResult.error,
                     nrcrResult.errcode,
                 );

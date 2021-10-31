@@ -1,5 +1,10 @@
-import { Context, ClientConnection, OperationStatistics } from "../types";
-import * as errors from "../errors";
+import {
+    Context,
+    ClientConnection,
+    OperationStatistics,
+    OperationInvocationInfo,
+} from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Socket } from "net";
 import { IDMConnection } from "@wildboar/idm";
@@ -29,7 +34,7 @@ import {
     IdmReject_reason_unknownOperationRequest,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import { Abort_reasonNotSpecified } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import { bind as doBind } from "./bind";
+import { bind as doBind } from "../authn/dsaBind";
 import {
     dSABind,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
@@ -50,6 +55,13 @@ import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "../x500/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+import { EventEmitter } from "events";
+import {
+    IdmReject_reason_duplicateInvokeIDRequest,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
+import { differenceInMilliseconds } from "date-fns";
+import * as crypto from "crypto";
+import sleep from "../utils/sleep";
 
 async function handleRequest (
     ctx: Context,
@@ -96,12 +108,17 @@ async function handleRequestAndErrors (
             operationCode: codeToString(request.opcode),
         },
     };
-    const now = new Date();
-    dsp.invocations.set(request.invokeID, {
+    const info: OperationInvocationInfo = {
         invokeId: request.invokeID,
         operationCode: request.opcode,
         startTime: new Date(),
-    });
+        events: new EventEmitter(),
+    };
+    if (dsp.invocations.has(request.invokeID)) {
+        await dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        return;
+    }
+    dsp.invocations.set(request.invokeID, info);
     try {
         await handleRequest(ctx, dsp, request, stats);
     } catch (e) {
@@ -175,12 +192,7 @@ async function handleRequestAndErrors (
             await dsp.idm.writeAbort(Abort_reasonNotSpecified);
         }
     } finally {
-        dsp.invocations.set(request.invokeID, {
-            invokeId: request.invokeID,
-            operationCode: request.opcode,
-            startTime: now,
-            resultTime: new Date(),
-        });
+        dsp.invocations.delete(request.invokeID);
         for (const opstat of ctx.statistics.operations) {
             ctx.telemetry.sendEvent(opstat);
         }
@@ -213,10 +225,17 @@ class DSPConnection extends ClientConnection {
         super();
         this.socket = idm.s;
         const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
+        const startBindTime = new Date();
         doBind(ctx, idm.s, bind)
-            .then((outcome) => {
-                this.boundEntry = undefined;
-                this.boundNameAndUID = undefined;
+            .then(async (outcome) => {
+                const endBindTime = new Date();
+                const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
+                const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
+                    + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
+                const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
+                await sleep(sleepTime);
+                this.boundEntry = outcome.boundVertex;
+                this.boundNameAndUID = outcome.boundNameAndUID;
                 this.authLevel = outcome.authLevel;
                 if (outcome.failedAuthentication) {
                     const err: typeof directoryBindError["&ParameterType"] = {

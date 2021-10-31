@@ -1,4 +1,4 @@
-import type { ServerStatistics } from "../types";
+import type { ServerStatistics } from "@wildboar/meerkat-types";
 import * as os from "os";
 
 function canFail <T>(cb: () => T): T | undefined {

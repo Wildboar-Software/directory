@@ -1,6 +1,6 @@
-import type { Context, ClientConnection, OPCR } from "../types";
+import type { Context, ClientConnection, OPCR } from "@wildboar/meerkat-types";
 import { BOOLEAN, TRUE } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     OperationProgress,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
@@ -42,6 +42,13 @@ import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractS
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import getDistinguishedName from "../x500/getDistinguishedName";
 
 export
 async function nrcrProcedure (
@@ -51,13 +58,16 @@ async function nrcrProcedure (
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
 ): Promise<OPCR | Error_> {
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -68,7 +78,7 @@ async function nrcrProcedure (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -79,7 +89,7 @@ async function nrcrProcedure (
     if (chainingProhibited) { // TODO: Permit local DSA policy to prohibit chaining.
         // TODO: Permit configuration of what to do here.
         throw new errors.ReferralError( // TODO: If this is called from LDAP, an LDAP referral must be returned.
-            "Referral",
+            ctx.i18n.t("err:referral"),
             new ReferralData(
                 state.NRcontinuationList[0],
                 [],
@@ -90,7 +100,7 @@ async function nrcrProcedure (
                     referral["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
@@ -102,6 +112,25 @@ async function nrcrProcedure (
         opCode: state.operationCode,
     };
     for (const cref of state.NRcontinuationList) {
+        if (op?.abandonTime) {
+            op.events.emit("abandon");
+            throw new errors.AbandonError(
+                ctx.i18n.t("err:abandoned"),
+                new AbandonedData(
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        abandoned["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         assert(cref.accessPoints[0]);
         checkTimeLimit();
         // /**
@@ -115,7 +144,7 @@ async function nrcrProcedure (
         //  */
         const isNSSR = (cref.accessPoints.length > 1);
         if (!isNSSR) {
-            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req);
+            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req, conn, state);
             if (!outcome) {
                 continue;
             } else if (("result" in outcome) && outcome.result) {
@@ -126,8 +155,27 @@ async function nrcrProcedure (
         }
         let allServiceErrors: boolean = true;
         for (const ap of cref.accessPoints) {
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    ctx.i18n.t("err:abandoned"),
+                    new AbandonedData(
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            abandoned["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
             try {
-                const outcome: ResultOrError | null = await apinfoProcedure(ctx, ap, req);
+                const outcome: ResultOrError | null = await apinfoProcedure(ctx, ap, req, conn, state);
                 if (!outcome) {
                     continue;
                 }
@@ -148,8 +196,8 @@ async function nrcrProcedure (
                             }
                             continue;
                         } else if (errorData.problem === ServiceProblem_invalidReference) {
-                            throw new errors.ServiceError(
-                                "DIT Error.",
+                            throw new errors.ServiceError( // FIXME: This is swallowed by the try-catch loop.
+                                ctx.i18n.t("err:dit_error"),
                                 new ServiceErrorData(
                                     ServiceProblem_ditError,
                                     [],
@@ -160,7 +208,7 @@ async function nrcrProcedure (
                                         serviceError["&errorCode"],
                                     ),
                                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                    undefined,
+                                    state.chainingArguments.aliasDereferenced,
                                     undefined,
                                 ),
                             );
@@ -197,11 +245,11 @@ async function nrcrProcedure (
                 // return null;
             } else {
                 throw new errors.NameError(
-                    "Could not find object in any relevant NSSR DSA.",
+                    ctx.i18n.t("err:entry_not_found_in_nssr"),
                     new NameErrorData(
                         NameProblem_noSuchObject,
                         {
-                            rdnSequence: [],
+                            rdnSequence: getDistinguishedName(state.foundDSE),
                         },
                         [],
                         createSecurityParameters(
@@ -211,7 +259,7 @@ async function nrcrProcedure (
                             nameError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -219,7 +267,7 @@ async function nrcrProcedure (
         }
     }
     throw new errors.ServiceError(
-        "Name could not be resolved.",
+        ctx.i18n.t("err:name_not_resolved"),
         new ServiceErrorData(
             ServiceProblem_unableToProceed, // TODO: Not sure this is the right error.
             [],
@@ -230,7 +278,7 @@ async function nrcrProcedure (
                 serviceError["&errorCode"],
             ),
             ctx.dsa.accessPoint.ae_title.rdnSequence,
-            undefined,
+            state.chainingArguments.aliasDereferenced,
             undefined,
         ),
     );

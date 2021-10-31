@@ -1,6 +1,6 @@
-import type { Context } from "../../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type DOPConnection from "../DOPConnection";
-import * as errors from "../../errors";
+import * as errors from "@wildboar/meerkat-types";
 import type {
     ModifyOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
@@ -58,6 +58,7 @@ import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import becomeSubordinate from "../establish/becomeSubordinate";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -165,7 +166,9 @@ async function modifyOperationalBinding (
 
     if (permittedAPs.length === 0) {
         throw new errors.OperationalBindingError(
-            `No operational binding with identifier ${data.bindingID.identifier}.`,
+            ctx.i18n.t("err:no_ob_with_id", {
+                id: data.bindingID.identifier,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidID,
@@ -201,7 +204,9 @@ async function modifyOperationalBinding (
 
     if (!opBinding) {
         throw new errors.OperationalBindingError(
-            `No operational binding with identifier ${data.bindingID.identifier}.`,
+            ctx.i18n.t("err:no_ob_with_id", {
+                id: data.bindingID.identifier,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidID,
@@ -256,7 +261,6 @@ async function modifyOperationalBinding (
     const sp = data.securityParameters;
     const created = await ctx.db.operationalBinding.create({
         data: {
-            supply_contexts: "", // FIXME: Make this null.
             previous_id: opBinding.id as unknown as undefined, // FIXME: WTF is going on here?
             outbound: false,
             binding_type: data.bindingType.toString(),
@@ -330,7 +334,7 @@ async function modifyOperationalBinding (
                 NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
-                    "Operational binding contextPrefixInfo did not match immediateSuperior.",
+                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
                     {
                         unsigned: new OpBindingErrorParam(
                             OpBindingErrorParam_problem_invalidAgreement,
@@ -354,11 +358,12 @@ async function modifyOperationalBinding (
             // Delete context prefix up until and including the CP entry.
             // Create the new context, exactly like before.
             // Reparent subordinate entry.
-            // TODO: const reply = await becomeSubordinate(ctx, agreement, init);
+            // const reply = await becomeSubordinate(ctx, agreement, init);
+            // TODO: I think you need to implement a modifySubordinate(). The above will not suffice.
             const approved: boolean = await getApproval(created.uuid);
             if (!approved) {
                 throw new errors.OperationalBindingError(
-                    "Operational binding rejected.",
+                    ctx.i18n.t("err:ob_rejected"),
                     {
                         unsigned: new OpBindingErrorParam(
                             OpBindingErrorParam_problem_invalidAgreement,
@@ -390,7 +395,7 @@ async function modifyOperationalBinding (
             };
         } else {
             throw new errors.OperationalBindingError(
-                "Operational binding initiator format unrecognized.",
+                ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
                 {
                     unsigned: new OpBindingErrorParam(
                         OpBindingErrorParam_problem_invalidAgreement,
@@ -411,7 +416,6 @@ async function modifyOperationalBinding (
                 },
             );
         }
-
     } else {
         throw NOT_SUPPORTED_ERROR;
     }

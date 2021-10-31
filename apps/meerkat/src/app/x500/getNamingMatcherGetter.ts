@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type {
     AttributeType,
@@ -9,7 +9,7 @@ function getNamingMatcherGetter (
     ctx: Context,
 ): (attributeType: AttributeType) => EqualityMatcher | undefined {
     const ret = function (attributeType: AttributeType): EqualityMatcher | undefined {
-        const spec = ctx.attributes.get(attributeType.toString());
+        const spec = ctx.attributeTypes.get(attributeType.toString());
         if (!spec) {
             return undefined;
         }

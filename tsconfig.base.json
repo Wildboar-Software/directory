@@ -1,24 +1,25 @@
 {
-  "compileOnSave": false,
-  "compilerOptions": {
-    "rootDir": ".",
-    "sourceMap": true,
-    "declaration": false,
-    "moduleResolution": "node",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "importHelpers": true,
-    "target": "es2015",
-    "module": "esnext",
-    "lib": ["es2017", "es2019", "dom"],
-    "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "strictNullChecks": true,
-    "baseUrl": ".",
-    "paths": {
-      "@wildboar/idm": ["libs/idm/src/index.ts"],
-      "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"]
-    }
-  },
-  "exclude": ["node_modules", "tmp"]
+    "compileOnSave": false,
+    "compilerOptions": {
+        "rootDir": ".",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "importHelpers": true,
+        "target": "es2015",
+        "module": "esnext",
+        "lib": ["es2017", "es2019", "dom"],
+        "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
+        "strictNullChecks": true,
+        "baseUrl": ".",
+        "paths": {
+            "@wildboar/idm": ["libs/idm/src/index.ts"],
+            "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"],
+            "@wildboar/meerkat-types": ["libs/meerkat-types/src/index.ts"]
+        }
+    },
+    "exclude": ["node_modules", "tmp"]
 }

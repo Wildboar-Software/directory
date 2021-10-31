@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Vertex } from "../types";
+import type { Context, DIT, Vertex } from "@wildboar/meerkat-types";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";

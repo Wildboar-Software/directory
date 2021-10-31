@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 
 export
@@ -14,7 +14,7 @@ function isAttributeSubtype (
         if (cand === CRIT_OID) {
             return crit;
         }
-        const attrInfo = ctx.attributes.get(CRIT_OID);
+        const attrInfo = ctx.attributeTypes.get(CRIT_OID);
         if (!attrInfo) {
             return undefined;
         }

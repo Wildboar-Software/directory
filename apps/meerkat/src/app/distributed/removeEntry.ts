@@ -1,6 +1,6 @@
-import { Context, Vertex, ClientConnection, OperationReturn } from "../types";
+import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_RemoveEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
@@ -77,6 +77,13 @@ import codeToString from "../x500/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import failover from "../utils/failover";
+import {
+    AbandonedData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 
 // TODO: subentries
 
@@ -90,13 +97,16 @@ async function removeEntry (
     const target = state.foundDSE;
     const argument = _decode_RemoveEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const op = ("present" in state.invokeId)
+        ? conn.invocations.get(state.invokeId.present)
+        : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
-                "Could not complete operation in time.",
+                ctx.i18n.t("err:time_limit"),
                 new ServiceErrorData(
                     ServiceProblem_timeLimitExceeded,
                     [],
@@ -107,7 +117,7 @@ async function removeEntry (
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -161,7 +171,7 @@ async function removeEntry (
         );
         if (!authorizedToRemoveEntry) {
             throw new errors.SecurityError(
-                "Not permitted to remove entry.",
+                ctx.i18n.t("err:not_authz_remove_entry"),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
@@ -174,7 +184,7 @@ async function removeEntry (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -246,7 +256,10 @@ async function removeEntry (
                 ];
                 const subr = await findEntry(ctx, ctx.dit.root, subrDN);
                 if (!subr) {
-                    ctx.log.warn(`Subordinate entry for agreement ${bindingID.identifier} (version ${bindingID.version}) not found.`);
+                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
+                        obid: bindingID.identifier.toString(),
+                        version: bindingID.version.toString(),
+                    }));
                     continue;
                 }
                 assert(subr.immediateSuperior);
@@ -261,10 +274,18 @@ async function removeEntry (
                     accessPoint,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }
@@ -285,7 +306,7 @@ async function removeEntry (
                 validity_end: {
                     lte: now,
                 },
-                // accepted: true, // FIXME: Is this always set?
+                accepted: true,
                 OR: [
                     { // Local DSA initiated role B (meaning local DSA is subordinate.)
                         initiator: OperationalBindingInitiator.ROLE_B,
@@ -335,10 +356,18 @@ async function removeEntry (
                     bindingID,
                 )
                     .catch((e) => {
-                        ctx.log.warn(`Failed to terminate HOB for agreement ${bindingID.identifier} (version ${bindingID.version}). ${e}`);
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: e.message,
+                        }));
                     });
             } catch (e) {
-                ctx.log.warn(`Failed to update HOB for agreement ${bindingID.identifier} (version ${bindingID.version}).`);
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
                 continue;
             }
         }
@@ -349,6 +378,30 @@ async function removeEntry (
         // TODO: It is not clear what "Section 6" refers to.
     }
     // TODO: Step 7: Update shadows.
+
+    if (op?.abandonTime) {
+        op.events.emit("abandon");
+        throw new errors.AbandonError(
+            ctx.i18n.t("err:abandoned"),
+            new AbandonedData(
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    abandoned["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    if (op) {
+        op.pointOfNoReturnTime = new Date();
+    }
+    // FIXME: actually delete the entry BEFORE updating the HOBs.
     await deleteEntry(ctx, target);
 
     return {
@@ -370,11 +423,11 @@ async function removeEntry (
             ),
         },
         stats: {
-            request: {
+            request: failover(() => ({
                 operationCode: codeToString(id_opcode_removeEntry),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: targetDN.length,
-            },
+            }), undefined),
         },
     };
 }

@@ -1,10 +1,17 @@
-import type { Context } from "../../types";
+import type { Context } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import type {
     SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
+import {
+    UpdateErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    UpdateProblem_entryAlreadyExists,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     MasterAndShadowAccessPoints,
     SubordinateToSuperior,
@@ -23,6 +30,10 @@ import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
 import addValues from "../../database/entry/addValues";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
 
 // TODO: If context prefix initialization fails, undo all changes.
 export
@@ -84,6 +95,28 @@ async function becomeSubordinate (
             currentRoot = existingEntry;
         }
     }
+    const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
+    const existing = await findEntry(ctx, ctx.dit.root, itinerantDN, false);
+    if (existing) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:entry_already_exists"),
+            new UpdateErrorData(
+                UpdateProblem_entryAlreadyExists,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+
     const createdCP = await createEntry(
         ctx,
         currentRoot,

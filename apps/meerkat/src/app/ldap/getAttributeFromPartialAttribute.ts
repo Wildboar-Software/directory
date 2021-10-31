@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import type {
     PartialAttribute,
@@ -10,7 +10,7 @@ import {
 export
 function getAttributeFromPartialAttribute (ctx: Context, attr: PartialAttribute): Attribute | undefined {
     const desc = normalizeAttributeDescription(attr.type_);
-    const spec = ctx.attributes.get(desc);
+    const spec = ctx.attributeTypes.get(desc);
     if (!spec?.ldapSyntax) {
         return undefined;
     }

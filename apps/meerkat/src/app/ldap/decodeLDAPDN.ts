@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
@@ -17,15 +17,18 @@ import destringifyRDNSequence from "@wildboar/ldap/src/lib/destringifiers/RDNSeq
  * @returns
  */
 export
-function decodeLDAPDN (ctx: Context, dn: Uint8Array): RDNSequence {
+function decodeLDAPDN (ctx: Context, dn: Uint8Array | string): RDNSequence {
     if (dn.length === 0) {
         return [];
     }
+    const dnStr: string = (typeof dn === "string")
+        ? dn
+        : Buffer.from(dn).toString("utf-8");
     return Array.from(destringifyRDNSequence(
-        Buffer.from(dn).toString("utf-8"),
+        dnStr,
         (attrDesc: string) => {
             const attrType = normalizeAttributeDescription(Buffer.from(attrDesc));
-            const attr = ctx.attributes.get(attrType);
+            const attr = ctx.attributeTypes.get(attrType);
             if (!attr?.ldapSyntax) {
                 throw new Error(attrDesc.toString());
             }

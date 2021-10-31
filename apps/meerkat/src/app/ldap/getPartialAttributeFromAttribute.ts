@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import {
     PartialAttribute,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
@@ -9,7 +9,7 @@ import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 
 export
 function getPartialAttributeFromAttribute (ctx: Context, attr: Attribute): PartialAttribute | undefined {
-    const spec = ctx.attributes.get(attr.type_.toString());
+    const spec = ctx.attributeTypes.get(attr.type_.toString());
     if (!spec?.ldapSyntax) {
         return undefined;
     }

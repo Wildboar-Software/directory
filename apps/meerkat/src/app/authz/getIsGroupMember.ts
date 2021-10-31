@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
@@ -55,12 +55,12 @@ function getIsGroupMember (
         ));
         // TODO: Review what to do about the unique identifier.
         for (const attr of groupAttributes) {
-            if (attr.id.isEqualTo(member["&id"])) {
+            if (attr.type.isEqualTo(member["&id"])) {
                 const decodedValue = _decode_DistinguishedName(attr.value);
                 if (compareDistinguishedName(decodedValue, user.dn, getEqualityMatcher)) {
                     return true;
                 }
-            } else if (attr.id.isEqualTo(uniqueMember["&id"])) {
+            } else if (attr.type.isEqualTo(uniqueMember["&id"])) {
                 const decodedValue = uniqueMember.decoderFor["&Type"]!(attr.value);
                 if (compareDistinguishedName(decodedValue.dn, user.dn, getEqualityMatcher)) {
                     return true;

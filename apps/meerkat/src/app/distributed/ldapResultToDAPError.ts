@@ -1,4 +1,4 @@
-import * as errors from "../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     LDAPResult,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";

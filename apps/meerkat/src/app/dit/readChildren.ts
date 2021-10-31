@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import type { Prisma } from "@prisma/client";
 
@@ -15,9 +15,9 @@ async function readChildren (
         return []; // These types should never have children. This return is to prevent errors.
     }
     if (!entry.subordinates) {
-        return await Promise.all(
+        return Promise.all(
             (await ctx.db.entry.findMany({
-                take: take ?? Infinity,
+                take: take ?? 1000000,
                 skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
                 cursor: (cursorId !== undefined)
                     ? {

@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import type {
     AttributeType,
@@ -6,7 +6,7 @@ import type {
 
 export
 function getLDAPEncoder (ctx: Context, type_: AttributeType): LDAPSyntaxEncoder | undefined {
-    const spec = ctx.attributes.get(type_.toString());
+    const spec = ctx.attributeTypes.get(type_.toString());
     if (!spec?.ldapSyntax) {
         return undefined;
     }

@@ -1,5 +1,11 @@
-import { Context, ClientConnection, PagedResultsRequestState, OperationStatistics } from "../types";
-import * as errors from "../errors";
+import {
+    Context,
+    ClientConnection,
+    PagedResultsRequestState,
+    OperationStatistics,
+    OperationInvocationInfo,
+} from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { IDMConnection } from "@wildboar/idm";
 import versions from "./versions";
 import type {
@@ -46,6 +52,14 @@ import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "../x500/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { EventEmitter } from "events";
+import {
+    IdmReject_reason_duplicateInvokeIDRequest,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import { differenceInMilliseconds } from "date-fns";
+import * as crypto from "crypto";
+import sleep from "../utils/sleep";
 
 async function handleRequest (
     ctx: Context,
@@ -92,15 +106,22 @@ async function handleRequestAndErrors (
             operationCode: codeToString(request.opcode),
         },
     };
-    const now = new Date();
-    dap.invocations.set(request.invokeID, {
+    const info: OperationInvocationInfo = {
         invokeId: request.invokeID,
         operationCode: request.opcode,
         startTime: new Date(),
-    });
+        events: new EventEmitter(),
+    };
+    if (dap.invocations.has(request.invokeID)) {
+        await dap.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        return;
+    }
+    dap.invocations.set(request.invokeID, info);
     try {
         await handleRequest(ctx, dap, request, stats);
     } catch (e) {
+        console.error(e);
+        ctx.log.error("DAP error", e.message);
         if (!stats.outcome) {
             stats.outcome = {};
         }
@@ -172,12 +193,7 @@ async function handleRequestAndErrors (
             // TODO: Don't you need to actually close the connection?
         }
     } finally {
-        dap.invocations.set(request.invokeID, {
-            invokeId: request.invokeID,
-            operationCode: request.opcode,
-            startTime: now,
-            resultTime: new Date(),
-        });
+        dap.invocations.delete(request.invokeID);
         for (const opstat of ctx.statistics.operations) {
             ctx.telemetry.sendEvent(opstat);
         }
@@ -196,9 +212,18 @@ class DAPConnection extends ClientConnection {
         try {
             this.idm.close();
         } catch (e) {
-            this.ctx.log.warn(`${DAPConnection.name} ${this.id}: Error in closing IDM connection: ${e}`);
+            this.ctx.log.warn(this.ctx.i18n.t("log:error_closing_connection", {
+                ctype: DAPConnection.name,
+                cid: this.id,
+                e: e.message,
+                transport: "IDM",
+            }));
         } finally {
-            this.ctx.log.info(`${DAPConnection.name} ${this.id}: Unbound.`);
+            this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
+                ctype: DAPConnection.name,
+                cid: this.id,
+                protocol: "DAP",
+            }));
         }
     }
 
@@ -210,10 +235,17 @@ class DAPConnection extends ClientConnection {
         super();
         this.socket = idm.s;
         const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
+        const startBindTime = new Date();
         doBind(ctx, idm.s, bind)
-            .then((outcome) => {
-                this.boundEntry = undefined;
-                this.boundNameAndUID = undefined;
+            .then(async (outcome) => {
+                const endBindTime = new Date();
+                const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
+                const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
+                    + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
+                const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
+                await sleep(sleepTime);
+                this.boundEntry = outcome.boundVertex;
+                this.boundNameAndUID = outcome.boundNameAndUID;
                 this.authLevel = outcome.authLevel;
                 if (outcome.failedAuthentication) {
                     const err: typeof directoryBindError["&ParameterType"] = {
@@ -231,16 +263,32 @@ class DAPConnection extends ClientConnection {
                         .then(() => {
                             this.handleUnbind()
                                 .then(() => {
-                                    ctx.log.info(`${DAPConnection.name} ${this.id}: Disconnected ${remoteHostIdentifier} due to authentication failure.`);
+                                    ctx.log.info(ctx.i18n.t("log:disconnected_auth_failure", {
+                                        ctype: DAPConnection.name,
+                                        cid: this.id,
+                                        source: remoteHostIdentifier,
+                                    }));
                                 })
                                 .catch((e) => {
-                                    ctx.log.error(`${DAPConnection.name} ${this.id}: Error disconnecting from ${remoteHostIdentifier}: `, e);
+                                    ctx.log.info(ctx.i18n.t("log:error_unbinding", {
+                                        ctype: DAPConnection.name,
+                                        cid: this.id,
+                                        e: e.message,
+                                    }));
                                 });
                         })
                         .catch((e) => {
-                            ctx.log.error(`${DAPConnection.name} ${this.id}: Error writing bind error: ${remoteHostIdentifier}: `, e);
+                            ctx.log.info(ctx.i18n.t("log:error_writing_bind_error", {
+                                ctype: DAPConnection.name,
+                                cid: this.id,
+                                e: e.message,
+                            }));
                         });
-                    ctx.log.info(`${DAPConnection.name} ${this.id}: Invalid credentials from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:auth_failure", {
+                        ctype: DAPConnection.name,
+                        cid: this.id,
+                        source: remoteHostIdentifier,
+                    }));
                     return;
                 }
                 const bindResult = new DirectoryBindResult(
@@ -253,13 +301,27 @@ class DAPConnection extends ClientConnection {
                     ("basicLevels" in outcome.authLevel)
                     && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
                 ) {
-                    ctx.log.info(`${DAPConnection.name} ${this.id}: Anonymous DAP connection bound from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
+                        source: remoteHostIdentifier,
+                        protocol: "DAP",
+                    }));
                 } else {
-                    ctx.log.info(`${DAPConnection.name} ${this.id}: Authenticated DAP connection bound from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
+                        source: remoteHostIdentifier,
+                        protocol: "DAP",
+                        dn: this.boundNameAndUID?.dn
+                            ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                            : "",
+                    }));
                 }
             })
             .catch((e) => {
-                ctx.log.error(`${DAPConnection.name} ${this.id}: Error during DAP bind operation from ${remoteHostIdentifier}: `, e);
+                ctx.log.error(ctx.i18n.t("log:bind_error", {
+                    ctype: DAPConnection.name,
+                    cid: this.id,
+                    source: remoteHostIdentifier,
+                    e: e.message,
+                }));
             });
 
         idm.events.on("request", this.handleRequest.bind(this));

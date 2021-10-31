@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "../../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
@@ -17,7 +17,6 @@ import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtend
 import bacACDF, {
     PERMISSION_CATEGORY_READ,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import attributesFromValues from "../../x500/attributesFromValues";
 import {
@@ -88,7 +87,7 @@ async function readPermittedEntryInformation (
                         authLevel,
                         {
                             value: new AttributeTypeAndValue(
-                                value.id,
+                                value.type,
                                 value.value,
                             ),
                         },

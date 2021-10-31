@@ -1,7 +1,8 @@
-import { Context, Vertex, ClientConnection } from "../types";
+import { Context, Vertex, ClientConnection, OperationStatistics } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import * as net from "net";
 import * as tls from "tls";
-import { BERElement, ASN1TruncationError, ObjectIdentifier } from "asn1-ts";
+import { BERElement, ASN1TruncationError } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
     LDAPMessage,
@@ -31,7 +32,6 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
-import { startTLS } from "@wildboar/ldap/src/lib/extensions";
 import bind from "./bind";
 import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
@@ -40,23 +40,69 @@ import dapReplyToLDAPResult from "../distributed/dapReplyToLDAPResult";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import dapErrorToLDAPResult from "../distributed/dapErrorToLDAPResult";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import codeToString from "../x500/codeToString";
+import getServerStatistics from "../telemetry/getServerStatistics";
+import getConnectionStatistics from "../telemetry/getConnectionStatistics";
+import {
+    SearchRequest_scope_baseObject,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
+import {
+    PartialAttribute,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+import {
+    modifyPassword,
+    whoAmI,
+    startTLS,
+    cancel,
+} from "@wildboar/ldap/src/lib/extensions";
+import encodeLDAPDN from "./encodeLDAPDN";
+
+function isRootSubschemaDN (dn: Uint8Array): boolean {
+    const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
+    return [ // Different ways of representing the same DN.
+        "cn=subschema",
+        "2.5.4.3=subschema",
+        "cn=#0C09737562736368656d61",
+        "2.5.4.3=#0C09737562736368656d61",
+    ].includes(dnstr);
+}
+
+/**
+ * NOTE: The subschemaSubentry in the Root DSE only points to the subschema
+ * subentry that provides schema for the Root DSE. It is not used for other
+ * directory entries. For this reason, we don't even need to read anything from
+ * the database. And, in fact, it also appears that just returning an empty
+ * attribute from the subschema subentry makes Apache Directory Studio stop
+ * fussing!
+ */
+const rootSubschemaPseudoVertexAttributes: PartialAttribute[] = [
+    new PartialAttribute(
+        Buffer.from("attributeTypes", "utf-8"),
+        [ // TODO: Fill in these attribute types.
+            // Buffer.from("( 1.3.6.1.4.1.1466.101.120.6 NAME 'altServer' SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 USAGE dSAOperation )", "utf-8"),
+            // Buffer.from("( 1.3.6.1.4.1.1466.101.120.5 NAME 'namingContexts' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 USAGE dSAOperation )", "utf-8"),
+            // Buffer.from("( 1.3.6.1.4.1.1466.101.120.13 NAME 'supportedControl' SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 USAGE dSAOperation )", "utf-8"),
+            // Buffer.from("", "utf-8"),
+            // Buffer.from("", "utf-8"),
+            // Buffer.from("", "utf-8"),
+            // Buffer.from("", "utf-8"),
+            // TODO: namingContexts: naming contexts;
+            // TODO: supportedControl: recognized LDAP controls;
+            // TODO: supportedExtension: recognized LDAP extended operations;
+            // TODO: supportedFeatures: recognized LDAP features;
+            // TODO: supportedLDAPVersion: LDAP versions supported; and
+            // TODO: supportedSASLMechanisms
+        ],
+    ),
+];
 
 async function handleRequest (
     ctx: Context,
-    conn: ClientConnection, // eslint-disable-line
+    conn: LDAPConnection,
     message: LDAPMessage,
-    // stats: OperationStatistics,
+    stats: OperationStatistics,
 ): Promise<void> {
-    const dapRequest = ldapRequestToDAPRequest(ctx, message);
-    const result = await OperationDispatcher.dispatchDAPRequest(
-        ctx,
-        conn,
-        {
-            invokeId: dapRequest.invokeId,
-            opCode: dapRequest.opCode,
-            argument: dapRequest.argument,
-        },
-    );
+    ctx.log.debug(`Received LDAP request ${message.messageID} of type ${Object.keys(message.protocolOp)[0]}.`);
     // let toWriteBuffer: Buffer = Buffer.alloc(0);
     // let resultsBuffered: number = 0;
     const onEntry = async (searchResEntry: SearchResultEntry): Promise<void> => {
@@ -78,36 +124,81 @@ async function handleRequest (
         // }
         conn.socket.write(_encode_LDAPMessage(resultMessage, BER).toBytes());
     };
+    if (
+        ("searchRequest" in message.protocolOp)
+        && (message.protocolOp.searchRequest.scope === SearchRequest_scope_baseObject)
+        && isRootSubschemaDN(message.protocolOp.searchRequest.baseObject)
+    ) {
+        const entry = new SearchResultEntry(
+            Buffer.from("cn=subschema", "utf-8"),
+            rootSubschemaPseudoVertexAttributes,
+        );
+        await onEntry(entry);
+        const res = new LDAPMessage(
+            message.messageID,
+            {
+                searchResDone: new LDAPResult(
+                    LDAPResult_resultCode_success,
+                    Buffer.alloc(0),
+                    Buffer.from("Success", "utf-8"),
+                    undefined,
+                ),
+            },
+            undefined,
+        );
+        conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+        return;
+    }
+    const dapRequest = ldapRequestToDAPRequest(ctx, conn, message);
+    if (!dapRequest) {
+        return;
+    }
+    if ("present" in dapRequest.invokeId) {
+        conn.messageIDToInvokeID.set(message.messageID, dapRequest.invokeId.present);
+        conn.invokeIDToMessageID.set(dapRequest.invokeId.present, message.messageID);
+    }
+    const result = await OperationDispatcher.dispatchDAPRequest(
+        ctx,
+        conn,
+        {
+            invokeId: dapRequest.invokeId,
+            opCode: dapRequest.opCode,
+            argument: dapRequest.argument,
+        },
+    );
     const unprotectedResult = getOptionallyProtectedValue(result.result);
     const ldapResult = await dapReplyToLDAPResult(ctx, {
         invokeId: dapRequest.invokeId, // TODO: I think this is unnecessary.
         opCode: dapRequest.opCode,
         result: unprotectedResult.result,
-    }, message.messageID, onEntry);
+    }, message, onEntry);
     conn.socket.write(_encode_LDAPMessage(ldapResult, BER).toBytes());
-    // stats.request = result.request ?? stats.request;
-    // stats.outcome = result.outcome ?? stats.outcome;
-    // ctx.statistics.operations.push(stats);
+    stats.request = result.request ?? stats.request;
+    stats.outcome = result.outcome ?? stats.outcome;
+    ctx.statistics.operations.push(stats);
 }
 
 async function handleRequestAndErrors (
     ctx: Context,
-    conn: ClientConnection, // eslint-disable-line
+    conn: LDAPConnection,
     message: LDAPMessage,
 ): Promise<void> {
-    // const stats: OperationStatistics = {
-    //     type: "op",
-    //     inbound: true,
-    //     server: getServerStatistics(),
-    //     connection: getConnectionStatistics(dap),
-    //     // idm?: IDMTransportStatistics;
-    //     bind: {
-    //         protocol: dap_ip["&id"]!.toString(),
-    //     },
-    //     request: {
-    //         operationCode: codeToString(request.opcode),
-    //     },
-    // };
+    const stats: OperationStatistics = {
+        type: "op",
+        inbound: true,
+        server: getServerStatistics(),
+        connection: getConnectionStatistics(conn),
+        bind: {
+            protocol: "ldap",
+        },
+        request: {
+            operationCode: Object.keys(message.protocolOp)[0],
+        },
+    };
+    const cancelOp: boolean = (
+        ("extendedReq" in message.protocolOp)
+        && decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(cancel)
+    );
     // const now = new Date();
     // dap.invocations.set(request.invokeID, {
     //     invokeId: request.invokeID,
@@ -115,10 +206,22 @@ async function handleRequestAndErrors (
     //     startTime: new Date(),
     // });
     try {
-        await handleRequest(ctx, conn, message);
+        await handleRequest(ctx, conn, message, stats);
     } catch (e) {
         ctx.log.error(e.message);
-        const result: LDAPResult | undefined = dapErrorToLDAPResult(e);
+        if (!stats.outcome) {
+            stats.outcome = {};
+        }
+        if (!stats.outcome.error) {
+            stats.outcome.error = {};
+        }
+        if (e instanceof Error) {
+            stats.outcome.error.stack = e.stack;
+        }
+        if (e instanceof errors.DirectoryError) {
+            stats.outcome.error.code = codeToString(e.getErrCode());
+        }
+        const result: LDAPResult | undefined = dapErrorToLDAPResult(ctx, e, cancelOp);
         if (!result) {
             return; // No response is returned for abandoned operations in LDAP.
         }
@@ -140,31 +243,47 @@ async function handleRequestAndErrors (
         } else if ("searchRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { searchResDone: result }, undefined);
             conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+        } else if ("extendedReq" in message.protocolOp) {
+            const oid = decodeLDAPOID(message.protocolOp.extendedReq.requestName);
+            if (oid.isEqualTo(modifyPassword)) {
+                const emptySeq = BERElement.fromSequence([]);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        extendedResp: new ExtendedResponse(
+                            result.resultCode,
+                            result.matchedDN,
+                            result.diagnosticMessage,
+                            result.referral,
+                            message.protocolOp.extendedReq.requestName,
+                            emptySeq.toBytes(),
+                        ),
+                    },
+                    undefined,
+                );
+                conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else {
+                return;
+            }
         } else {
-            return;
+            return; // FIXME: Return some other error.
         }
-        // if (!stats.outcome) {
-        //     stats.outcome = {};
-        // }
-        // if (!stats.outcome.error) {
-        //     stats.outcome.error = {};
-        // }
-        // if (e instanceof Error) {
-        //     stats.outcome.error.stack = e.stack;
-        // }
-        // if (e instanceof errors.DirectoryError) {
-        //     stats.outcome.error.code = codeToString(e.getErrCode());
-        // }
     } finally {
+        const invokeID = conn.messageIDToInvokeID.get(message.messageID);
+        if (invokeID) {
+            conn.invokeIDToMessageID.delete(invokeID);
+        }
+        conn.messageIDToInvokeID.delete(message.messageID);
+        // ctx.log.debug(`Finished operation ${invokeID} / ${message.messageID}.`);
         // dap.invocations.set(request.invokeID, {
         //     invokeId: request.invokeID,
         //     operationCode: request.opcode,
         //     startTime: now,
         //     resultTime: new Date(),
         // });
-        // for (const opstat of ctx.statistics.operations) {
-        //     ctx.telemetry.sendEvent(opstat);
-        // }
+        for (const opstat of ctx.statistics.operations) {
+            ctx.telemetry.sendEvent(opstat);
+        }
     }
 }
 
@@ -196,7 +315,7 @@ class LDAPConnection extends ClientConnection {
             try {
                 message = _decode_LDAPMessage(el);
             } catch (e) {
-                ctx.log.error(`Malformed LDAPMessage. ${this.buffer.toString("hex")}`);
+                ctx.log.error(ctx.i18n.t("log:malformed_ldapmessage"));
                 return;
             }
 
@@ -246,9 +365,10 @@ class LDAPConnection extends ClientConnection {
                         false,
                     ),
                 };
-            } else if ("abandonRequest" in message.protocolOp) {
-                ctx.log.info(`Abandon operation ${message.protocolOp.abandonRequest}.`);
-            } else if ("extendedReq" in message.protocolOp) {
+            } else if (
+                ("extendedReq" in message.protocolOp)
+                && !decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(modifyPassword)
+            ) {
                 const req = message.protocolOp.extendedReq;
                 const oid = decodeLDAPOID(req.requestName);
                 if (oid.isEqualTo(startTLS)) {
@@ -263,8 +383,26 @@ class LDAPConnection extends ClientConnection {
                                 Buffer.alloc(0),
                                 Buffer.from("STARTTLS initiated.", "utf-8"),
                                 undefined,
-                                encodeLDAPOID(new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 1466, 20037 ])),
+                                encodeLDAPOID(startTLS),
                                 undefined,
+                            ),
+                        },
+                        undefined,
+                    );
+                    this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                } else if (oid.isEqualTo(whoAmI)) {
+                    const res = new LDAPMessage(
+                        message.messageID,
+                        {
+                            extendedResp: new ExtendedResponse(
+                                LDAPResult_resultCode_success,
+                                Buffer.alloc(0),
+                                Buffer.from("Success.", "utf-8"),
+                                undefined,
+                                undefined,
+                                this.boundNameAndUID
+                                    ? Buffer.from(`dn:${encodeLDAPDN(ctx, this.boundNameAndUID.dn)}`, "utf-8")
+                                    : Buffer.alloc(0), // Anonymous.
                             ),
                         },
                         undefined,

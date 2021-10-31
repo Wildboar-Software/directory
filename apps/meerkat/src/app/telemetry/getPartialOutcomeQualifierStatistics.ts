@@ -1,4 +1,4 @@
-import type { PartialOutcomeQualifierStatistics } from "../types";
+import type { PartialOutcomeQualifierStatistics } from "@wildboar/meerkat-types";
 import type { PartialOutcomeQualifier } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 import getFilterStatistics from "./getFilterStatistics";
 import getContinuationReferenceStatistics from "./getContinuationReferenceStatistics";

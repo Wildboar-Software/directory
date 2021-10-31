@@ -6,7 +6,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import {
     ObjectClassInfo,
-} from "../types";
+} from "@wildboar/meerkat-types";
 
 export
 function objectClassFromInformationObject (io: OBJECT_CLASS): ObjectClassInfo {

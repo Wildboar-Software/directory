@@ -1,6 +1,6 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
-import type { Context, DSE } from "../types";
+import type { Context, DSE } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import { ACIScope, ACIItem as DatabaseACIItem } from "@prisma/client";
 import {
@@ -55,6 +55,9 @@ function toACIItem (dbaci: DatabaseACIItem): ACIItem {
     return _decode_ACIItem(el);
 }
 
+const ALIAS: string = alias["&id"].toString();
+let collectiveAttributeTypes: string[] = [];
+
 // TODO: Handle decoding errors.
 
 export
@@ -62,16 +65,24 @@ async function dseFromDatabaseEntry (
     ctx: Context,
     dbe: DatabaseEntry,
 ): Promise<DSE> {
-    const acis = await ctx.db.aCIItem.findMany({
-        where: {
-            entry_id: dbe.id,
-        },
-    });
+    const acis = ctx.config.bulkInsertMode
+        ? []
+        : await ctx.db.aCIItem.findMany({
+            where: {
+                entry_id: dbe.id,
+            },
+            select: {
+                scope: true,
+                ber: true,
+            },
+        });
     const entryACI = acis.filter((aci) => aci.scope === ACIScope.ENTRY).map(toACIItem);
     const prescriptiveACI = dbe.subentry
         ? acis.filter((aci) => aci.scope === ACIScope.PRESCRIPTIVE).map(toACIItem)
         : [];
-    const subentryACI = acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem);
+    const subentryACI = dbe.admPoint
+        ? acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem)
+        : [];
     const rdn = await getRDNFromEntryId(ctx, dbe.id);
     const objectClasses = await ctx.db.entryObjectClass.findMany({
         where: {
@@ -86,13 +97,19 @@ async function dseFromDatabaseEntry (
         uuid: dbe.entryUUID,
         rdn,
         objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
-        uniqueIdentifier: dbe.uniqueIdentifier
-            ? (() => {
+        uniqueIdentifier: (await ctx.db.uniqueIdentifier.findMany({
+            where: {
+                entry_id: dbe.id,
+            },
+            select: {
+                uniqueIdentifier: true,
+            },
+        }))
+            .map(({ uniqueIdentifier }) => {
                 const el = new BERElement();
-                el.value = dbe.uniqueIdentifier;
+                el.value = uniqueIdentifier;
                 return el.bitString;
-            })()
-            : undefined,
+            }),
         structuralObjectClass: dbe.structuralObjectClass
             ? ObjectIdentifier.fromString(dbe.structuralObjectClass)
             : undefined,
@@ -173,11 +190,17 @@ async function dseFromDatabaseEntry (
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SUPPLIER,
             },
+            select: {
+                ber: true,
+            },
         });
         const consumerRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.CONSUMER,
+            },
+            select: {
+                ber: true,
             },
         });
         const secondaryRows = await ctx.db.accessPoint.findMany({
@@ -186,7 +209,7 @@ async function dseFromDatabaseEntry (
                 knowledge_type: Knowledge.SECONDARY_SHADOW,
             },
             include: {
-                consumers: true,
+                consumers: true, // FIXME: Why did I do this?
             },
         });
         const supplierKnowledge = supplierRows
@@ -214,7 +237,7 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    if (ret.objectClass.has(alias["&id"].toString())) {
+    if (ret.objectClass.has(ALIAS)) {
         const aliasedEntry = await ctx.db.alias.findUnique({
             where: {
                 alias_entry_id: dbe.id,
@@ -229,7 +252,9 @@ async function dseFromDatabaseEntry (
                     .map((rdn: Record<string, string>) => rdnFromJson(rdn)),
             };
         } else {
-            ctx.log.warn("Alias entry found without corresponding alias attribute.");
+            ctx.log.warn(ctx.i18n.t("log:alias_but_no_aen", {
+                id: dbe.entryUUID,
+            }));
         }
     }
 
@@ -238,6 +263,9 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SPECIFIC,
+            },
+            select: {
+                ber: true,
             },
         });
         const specificKnowledge = subordinateKnowledgeRows
@@ -256,6 +284,9 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
             },
+            select: {
+                ber: true,
+            },
         });
         const nonSpecificKnowledge = nssrs
             .map((n) => {
@@ -273,6 +304,9 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SPECIFIC,
+            },
+            select: {
+                ber: true,
             },
         });
         const specificKnowledge = subordinateKnowledgeRows
@@ -295,7 +329,7 @@ async function dseFromDatabaseEntry (
         },
     });
     if (administrativeRoles.length > 0) {
-        const accessControlScheme = await ctx.db.entryAccessControlScheme.findUnique({
+        const accessControlScheme = await ctx.db.entryAccessControlScheme.findFirst({
             where: {
                 entry_id: dbe.id,
             },
@@ -317,6 +351,9 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
             },
+            select: {
+                ber: true,
+            },
         });
         const subtreeSpecification = subtreeRows
             .map((s) => {
@@ -325,7 +362,9 @@ async function dseFromDatabaseEntry (
                 return _decode_SubtreeSpecification(el);
             });
 
-        const collectiveAttributeTypes: string[] = Array.from(ctx.collectiveAttributes);
+        if (collectiveAttributeTypes.length === 0) {
+            collectiveAttributeTypes = Array.from(ctx.collectiveAttributes);
+        }
 
         const collectiveAttributes: Attribute[] = attributesFromValues(
             await Promise.all(
@@ -371,6 +410,9 @@ async function dseFromDatabaseEntry (
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SPECIFIC,
             },
+            select: {
+                ber: true,
+            },
         });
         const specificKnowledge = subordinateKnowledgeRows
             .map((s) => {
@@ -402,7 +444,7 @@ async function dseFromDatabaseEntry (
             },
             select: {
                 collectiveExclusion: true,
-            }
+            },
         });
         ret.entry = {
             collectiveExclusions: new Set(

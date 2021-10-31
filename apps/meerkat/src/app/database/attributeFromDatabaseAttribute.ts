@@ -1,4 +1,4 @@
-import type { Context, Value } from "../types";
+import type { Context, Value } from "@wildboar/meerkat-types";
 import type { AttributeValue, ContextValue } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
 
@@ -7,7 +7,6 @@ async function attributeFromDatabaseAttribute (
     ctx: Context,
     attr: AttributeValue & { ContextValue: ContextValue[] },
 ): Promise<Value> {
-    // TODO: Convert OIDs in the database to Int[]
     const value = new BERElement();
     value.fromBytes(attr.ber);
     const contexts: Value["contexts"] = new Map();
@@ -27,7 +26,7 @@ async function attributeFromDatabaseAttribute (
         }
     });
     return {
-        id: new ObjectIdentifier(attr.type.split(".").map((node) => Number.parseInt(node))),
+        type: new ObjectIdentifier(attr.type.split(".").map((node) => Number.parseInt(node))),
         value,
         contexts,
     };

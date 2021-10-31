@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 
 export
 async function createDatabaseReport (ctx: Context): Promise<Record<string, any>> {
@@ -107,7 +107,7 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
             }),
         },
         attributeTypes: {
-            all: Array.from(ctx.attributes.keys())
+            all: Array.from(ctx.attributeTypes.keys())
                 .filter((k) => (k.indexOf(".") > -1)), // human friendly names like "commonName" are indexed too.
             numberFromDatabase: await ctx.db.attributeTypeDescription.count(),
         },

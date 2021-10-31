@@ -4,7 +4,7 @@ import type {
 import type {
     AttributeValueAssertionStatistics,
     ContextStatistics,
-} from "../types";
+} from "@wildboar/meerkat-types";
 
 export
 function getStatisticsFromAttributeValueAssertion (ava: AttributeValueAssertion): AttributeValueAssertionStatistics {

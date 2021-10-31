@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
@@ -12,7 +12,7 @@ function *getAttributeParentTypes (
     yield type_;
     let current: AttributeType | undefined = type_;
     while (current) {
-        const spec = ctx.attributes.get(current.toString());
+        const spec = ctx.attributeTypes.get(current.toString());
         if (!spec?.parent) {
             return;
         }

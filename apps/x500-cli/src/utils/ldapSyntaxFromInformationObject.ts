@@ -1,7 +1,7 @@
 import {
     SYNTAX_NAME,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca";
-import { LDAPSyntaxInfo } from "../types";
+import type { LDAPSyntaxInfo } from "../types";
 
 export
 function attributeFromInformationObject (io: SYNTAX_NAME): LDAPSyntaxInfo {

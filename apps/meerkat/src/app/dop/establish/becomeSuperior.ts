@@ -1,4 +1,4 @@
-import type { Context } from "../../types";
+import type { Context } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -22,10 +22,19 @@ import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
-import * as errors from "../../errors";
+import * as errors from "@wildboar/meerkat-types";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    UpdateErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    UpdateProblem_entryAlreadyExists,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
 import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
@@ -57,7 +66,7 @@ async function becomeSubordinate (
     const superior = await findEntry(ctx, ctx.dit.root, agreement.immediateSuperior, false);
     if (!superior) {
         throw new errors.SecurityError(
-            "No such superior or not authorized to know about it.",
+            ctx.i18n.t("err:no_such_superior"),
             new SecurityErrorData(
                 SecurityProblem_insufficientAccessRights,
                 undefined,
@@ -77,7 +86,7 @@ async function becomeSubordinate (
     }
     if (superior.dse.shadow || superior.dse.subentry || superior.dse.alias) {
         throw new errors.OperationalBindingError(
-            "Parent DSE is not of a permissible DSE type.",
+            ctx.i18n.t("err:parent_dse_not_permissible"),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_roleAssignment,
@@ -101,18 +110,17 @@ async function becomeSubordinate (
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
     const existing = await findEntry(ctx, ctx.dit.root, itinerantDN, false);
     if (existing) {
-        throw new errors.SecurityError(
-            "Entry already exists.",
-            new SecurityErrorData(
-                SecurityProblem_insufficientAccessRights,
-                undefined,
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:entry_already_exists"),
+            new UpdateErrorData(
+                UpdateProblem_entryAlreadyExists,
                 undefined,
                 [],
                 createSecurityParameters(
                     ctx,
                     undefined,
                     undefined,
-                    securityError["&errorCode"],
+                    updateError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,

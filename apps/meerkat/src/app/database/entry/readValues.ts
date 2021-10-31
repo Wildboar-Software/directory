@@ -4,14 +4,17 @@ import type {
     IndexableOID,
     Value,
     SpecialAttributeDatabaseReader,
-} from "../../types";
-import { ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/meerkat-types";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+import {
+    AttributeUsage_userApplications,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import attributeFromDatabaseAttribute from "../attributeFromDatabaseAttribute";
 import readCollectiveValues from "./readCollectiveValues";
 import getDistinguishedName from "../../x500/getDistinguishedName";
@@ -25,137 +28,11 @@ import {
     id_soc_subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
 
-// Special Attributes
-import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import { administrativeRole } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
-import { subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
-import { accessControlScheme } from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
-import { createTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
-import { modifyTimestamp } from "@wildboar/x500/src/lib/modules/InformationFramework/modifyTimestamp.oa";
-import { creatorsName } from "@wildboar/x500/src/lib/modules/InformationFramework/creatorsName.oa";
-import { modifiersName } from "@wildboar/x500/src/lib/modules/InformationFramework/modifiersName.oa";
-import { pwdStartTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
-import { pwdExpiryTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
-import { pwdEndTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEndTime.oa";
-import { pwdFails } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
-import { pwdFailureTime } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
-import { pwdGracesUsed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGracesUsed.oa";
-// import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
-// import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
-import { pwdModifyEntryAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
-import { pwdChangeAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
-import { pwdMaxAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxAge.oa";
-import { pwdExpiryAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryAge.oa";
-import { pwdMinLength } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinLength.oa";
-// import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
-// import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
-import { pwdDictionaries } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdDictionaries.oa";
-import { pwdExpiryWarning } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryWarning.oa";
-import { pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGraces.oa";
-import { pwdFailureDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureDuration.oa";
-import { pwdLockoutDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdLockoutDuration.oa";
-import { pwdMaxFailures } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxFailures.oa";
-import { pwdMaxTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxTimeInHistory.oa";
-import { pwdMinTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinTimeInHistory.oa";
-import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
-import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
-// import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
-import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
-import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
-import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
-import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
-import { nameForms } from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
-import { dITContentRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
-import { objectClasses } from "@wildboar/x500/src/lib/modules/SchemaAdministration/objectClasses.oa";
-import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
-import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
-import { contextTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/contextTypes.oa";
-import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
-import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
-import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
-import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
-import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
-import { structuralObjectClass } from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
-import { subschemaSubentryList } from "@wildboar/x500/src/lib/modules/InformationFramework/subschemaSubentryList.oa";
-
-// Attribute Adders
-import * as readers from "../specialAttributeValueReaders";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
-
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 // TODO: Explore making this a temporalContext
 const DEFAULT_CAD: ContextSelection = {
     allContexts: null,
 };
-
-const userAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseReader> = new Map([
-    [ objectClass["&id"]!.toString(), readers.readObjectClass ],
-    [ userPwd["&id"]!.toString(), readers.readUserPwd ],
-    [ userPassword["&id"]!.toString(), readers.readUserPassword ],
-    [ uniqueIdentifier["&id"].toString(), readers.readUniqueIdentifier ], // Has significance for Basic Access Control
-]);
-
-const operationalAttributeDatabaseReaders: Map<IndexableOID, SpecialAttributeDatabaseReader> = new Map([
-    [ createTimestamp["&id"]!.toString(), readers.readCreateTimestamp ],
-    [ modifyTimestamp["&id"]!.toString(), readers.readModifyTimestamp ],
-    [ creatorsName["&id"]!.toString(), readers.readCreatorsName ],
-    [ modifiersName["&id"]!.toString(), readers.readModifiersName ],
-    [ administrativeRole["&id"]!.toString(), readers.readAdministrativeRole ],
-    [ subtreeSpecification["&id"]!.toString(), readers.readSubtreeSpecification ],
-    [ accessControlScheme["&id"]!.toString(), readers.readAccessControlScheme ],
-
-    // [ id_aca_entryACI.toString(), writeEntryACI ],
-    // [ id_aca_prescriptiveACI.toString(), writePrescriptiveACI ],
-    // [ id_aca_subentryACI.toString(), writeSubentryACI ],
-
-    [ pwdStartTime["&id"]!.toString(), readers.readPwdStartTime ],
-    [ pwdExpiryTime["&id"]!.toString(), readers.readPwdExpiryTime ],
-    [ pwdEndTime["&id"]!.toString(), readers.readPwdEndTime ],
-    [ pwdFails["&id"]!.toString(), readers.readPwdFails ],
-    [ pwdFailureTime["&id"]!.toString(), readers.readPwdFailureTime ],
-    [ pwdGracesUsed["&id"]!.toString(), readers.readPwdGracesUsed ],
-    // [ userPwdHistory["&id"]!.toString(), readers.readUserPwdHistory ],
-    // [ userPwdRecentlyExpired["&id"]!.toString(), readers.readUserPwdRecentlyExpired ],
-    [ pwdModifyEntryAllowed["&id"]!.toString(), readers.readPwdModifyEntryAllowed ],
-    [ pwdChangeAllowed["&id"]!.toString(), readers.readPwdChangeAllowed ],
-    [ pwdMaxAge["&id"]!.toString(), readers.readPwdMaxAge ],
-    [ pwdExpiryAge["&id"]!.toString(), readers.readPwdExpiryAge ],
-    [ pwdMinLength["&id"]!.toString(), readers.readPwdMinLength ],
-    // [ pwdVocabulary["&id"]!.toString(), readers.readPwdVocabulary ],
-    // [ pwdAlphabet["&id"]!.toString(), readers.readPwdAlphabet ],
-    [ pwdDictionaries["&id"]!.toString(), readers.readPwdDictionaries ],
-    [ pwdExpiryWarning["&id"]!.toString(), readers.readPwdExpiryWarning ],
-    [ pwdGraces["&id"]!.toString(), readers.readPwdGraces ],
-    [ pwdFailureDuration["&id"]!.toString(), readers.readPwdFailureDuration ],
-    [ pwdLockoutDuration["&id"]!.toString(), readers.readPwdLockoutDuration ],
-    [ pwdMaxFailures["&id"]!.toString(), readers.readPwdMaxFailures ],
-    [ pwdMaxTimeInHistory["&id"]!.toString(), readers.readPwdMaxTimeInHistory ],
-    [ pwdMinTimeInHistory["&id"]!.toString(), readers.readPwdMinTimeInHistory ],
-    [ pwdHistorySlots["&id"]!.toString(), readers.readPwdHistorySlots ],
-    [ pwdRecentlyExpiredDuration["&id"]!.toString(), readers.readPwdRecentlyExpiredDuration ],
-    // [ pwdEncAlg["&id"]!.toString(), readers.readPwdEncAlg ],
-
-    [ userPwd["&id"]!.toString(), readers.readUserPwd ],
-    [ userPassword["&id"]!.toString(), readers.readUserPassword ],
-
-    [ uniqueIdentifier["&id"].toString(), readers.readUniqueIdentifier ], // Has significance for Basic Access Control
-
-    [ dITStructureRules["&id"].toString(), readers.readDITStructureRules ],
-    [ nameForms["&id"].toString(), readers.readNameForms ],
-    [ dITContentRules["&id"].toString(), readers.readDITContentRules ],
-    [ objectClasses["&id"].toString(), readers.readObjectClasses ],
-    [ attributeTypes["&id"].toString(), readers.readAttributeTypes ],
-    [ friends["&id"].toString(), readers.readFriends ],
-    [ contextTypes["&id"].toString(), readers.readContextTypes ],
-    [ dITContextUse["&id"].toString(), readers.readDITContextUse ],
-    [ matchingRules["&id"].toString(), readers.readMatchingRules ],
-    [ matchingRuleUse["&id"].toString(), readers.readMatchingRuleUse ],
-    [ ldapSyntaxes["&id"].toString(), readers.readLdapSyntaxes ],
-
-    [ governingStructureRule["&id"].toString(), readers.readGoverningStructureRule ],
-    [ structuralObjectClass["&id"].toString(), readers.readStructuralObjectClass ],
-    [ subschemaSubentryList["&id"].toString(), readers.readSubschemaSubentryList ],
-]);
 
 export
 interface ReadEntryAttributesReturn {
@@ -287,31 +164,39 @@ async function readValues (
             .map((a) => attributeFromDatabaseAttribute(ctx, a)),
     );
 
+    const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));
+
     const userAttributeReaderToExecute: SpecialAttributeDatabaseReader[] = selectedUserAttributes
         ? Array.from(selectedUserAttributes)
-            .map((oid) => userAttributeDatabaseReaders.get(oid))
+            .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
             .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler)
-        : Array.from(userAttributeDatabaseReaders.values());
+        // : Array.from(userAttributeDatabaseReaders.values());
+        : uniqueAttributeTypes
+            .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
+            .map((spec) => spec.driver!.readValues);
     const operationalAttributeReadersToExecute: SpecialAttributeDatabaseReader[] = (
         selectedOperationalAttributes !== undefined
     )
         ? ((selectedOperationalAttributes === null)
-            ? Array.from(operationalAttributeDatabaseReaders.values())
+            // ? Array.from(operationalAttributeDatabaseReaders.values())
+            ? uniqueAttributeTypes
+                .filter((spec) => (spec.usage && (spec.usage !== AttributeUsage_userApplications)) && spec.driver)
+                .map((spec) => spec.driver!.readValues)
             : Array.from(selectedOperationalAttributes)
-                .map((oid) => operationalAttributeDatabaseReaders.get(oid))
+                .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
                 .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler))
         : [];
 
     for (const reader of userAttributeReaderToExecute) {
         try {
-            userAttributes.push(...await reader(ctx, entry));
+            userAttributes.push(...await reader(ctx, entry, relevantSubentries));
         } catch (e) {
             continue;
         }
     }
     for (const reader of operationalAttributeReadersToExecute) {
         try {
-            operationalAttributes.push(...await reader(ctx, entry));
+            operationalAttributes.push(...await reader(ctx, entry, relevantSubentries));
         } catch (e) {
             continue;
         }
@@ -330,7 +215,7 @@ async function readValues (
                     return true;
                 }
                 // Collective attributes cannot be operational attributes.
-                return selectedUserAttributes.has(attr.id.toString());
+                return selectedUserAttributes.has(attr.type.toString());
             });
 
     // FIXME: Fully implement this!

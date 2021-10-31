@@ -1,5 +1,5 @@
-import type { Context, Vertex, Value } from "../types";
-import { Prisma } from "@prisma/client";
+import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
+import { Prisma, Entry as DatabaseEntry } from "@prisma/client";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import type {
     DistinguishedName,
@@ -26,8 +26,10 @@ async function createEntry (
     values: Value[] = [],
     modifier: DistinguishedName = [],
 ): Promise<Vertex> {
+    const label = randomBytes(4).toString("base64");
+    console.time(label);
     const objectClasses = values
-        .filter((value) => value.id.isEqualTo(objectClass["&id"]))
+        .filter((value) => value.type.isEqualTo(objectClass["&id"]))
         .map((value) => value.value.objectIdentifier);
     // This entry is intentionally created as deleted first, in case the transaction fails.
     const isSubentry = objectClasses.some((oc) => oc.isEqualTo(subentry["&id"]));
@@ -56,22 +58,21 @@ async function createEntry (
             structuralObjectClass: entryInit.structuralObjectClass
                 ?? getStructuralObjectClass(ctx, objectClasses).toString(),
             governingStructureRule: entryInit.governingStructureRule,
-            uniqueIdentifier: Buffer.concat([
-                Buffer.from([ 0 ]),
-                randomBytes(8),
-            ]),
+        },
+        select: {
+            id: true,
         },
     });
-    await ctx.db.$transaction(rdn.map((atav) => ctx.db.rDN.create({
-        data: {
-            entry_id: createdEntry.id,
-            type: atav.type_.toString(),
-            value: Buffer.from(atav.value.toBytes()),
-            str: atav.value.toString(),
-        },
-    })));
-    const vertex = await vertexFromDatabaseEntry(ctx, superior, createdEntry, true);
+    const vertex = await vertexFromDatabaseEntry(ctx, superior, createdEntry as DatabaseEntry, true);
     await ctx.db.$transaction([
+        ctx.db.rDN.createMany({
+            data: rdn.map((atav) => ({
+                entry_id: createdEntry.id,
+                type: atav.type_.toString(),
+                value: Buffer.from(atav.value.toBytes()),
+                str: atav.value.toString(),
+            })),
+        }),
         ...await addValues(ctx, vertex, values, modifier),
         ctx.db.entry.update({
             where: {
@@ -79,6 +80,14 @@ async function createEntry (
             },
             data: {
                 deleteTimestamp: null,
+                UniqueIdentifier: {
+                    create: {
+                        uniqueIdentifier: Buffer.concat([
+                            Buffer.from([ 0 ]),
+                            randomBytes(8),
+                        ]),
+                    },
+                },
             },
         }),
     ]);
@@ -88,7 +97,9 @@ async function createEntry (
         },
     });
     assert(newEntry);
-    return vertexFromDatabaseEntry(ctx, superior, newEntry, true);
+    const ret = await vertexFromDatabaseEntry(ctx, superior, newEntry, true);
+    console.timeEnd(label);
+    return ret;
 }
 
 export default createEntry;

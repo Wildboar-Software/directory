@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "@wildboar/meerkat-types";
 import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
 import type {
     AttributeType,
@@ -9,7 +9,7 @@ function getSubstringsMatcherGetter (
     ctx: Context,
 ): (attributeType: AttributeType) => SubstringsMatcher | undefined {
     const ret = function (attributeType: AttributeType): SubstringsMatcher | undefined {
-        const spec = ctx.attributes.get(attributeType.toString());
+        const spec = ctx.attributeTypes.get(attributeType.toString());
         if (!spec) {
             return undefined;
         }

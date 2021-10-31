@@ -1,5 +1,5 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
-import type { Context, Vertex } from "../types";
+import type { Context, Vertex } from "@wildboar/meerkat-types";
 import dseFromDatabaseEntry from "./dseFromDatabaseEntry";
 
 // TODO: Handle decoding errors.
@@ -23,6 +23,7 @@ async function vertexFromDatabaseEntry (
         ? null
         : await Promise.all(
             (await ctx.db.entry.findMany({
+                take: 10_000_000,
                 where: {
                     immediate_superior_id: dbe.id,
                 },

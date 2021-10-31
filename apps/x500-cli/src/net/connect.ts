@@ -134,15 +134,18 @@ async function connect (
         },
         events: new EventEmitter(),
     };
-    const HANDLE_ERROR = () => {
-        ret.events.emit("error", undefined);
-    };
     idm.events.on("error_", (e) => {
         console.error(e);
         ret.events.emit("error", undefined);
     });
-    idm.events.on("reject", HANDLE_ERROR);
-    idm.events.on("abort", HANDLE_ERROR);
+    idm.events.on("reject", () => {
+        ret.events.emit("error", undefined);
+        // console.log("REJECTED.");
+    });
+    idm.events.on("abort", () => {
+        ret.events.emit("error", undefined);
+        // console.log("ABORTED.");
+    });
     return ret;
 }
 

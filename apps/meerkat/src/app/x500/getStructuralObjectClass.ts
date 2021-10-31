@@ -1,4 +1,4 @@
-import type { Context, IndexableOID } from "../types"
+import type { Context, IndexableOID } from "@wildboar/meerkat-types"
 import { ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
 import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
 import {

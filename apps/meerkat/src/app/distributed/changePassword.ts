@@ -1,6 +1,6 @@
-import type { Context, Vertex, ClientConnection, OperationReturn } from "../types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
-import * as errors from "../errors";
+import type { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import { ObjectIdentifier } from "asn1-ts";
+import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     ChangePasswordArgument,
@@ -22,6 +22,7 @@ import attemptPassword from "../authn/attemptPassword";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     SecurityProblem_noInformation,
+    SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -35,7 +36,6 @@ import bacACDF, {
     PERMISSION_CATEGORY_MODIFY,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import {
@@ -52,8 +52,6 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import codeToString from "../x500/codeToString";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 // changePassword OPERATION ::= {
@@ -170,7 +168,7 @@ async function changePassword (
             || !authorizedToModifyUserPwd
         ) {
             throw new errors.SecurityError(
-                "Not permitted to modify entry with changePassword operation.",
+                ctx.i18n.t("err:not_authz_cpw"),
                 new SecurityErrorData(
                     SecurityProblem_noInformation,
                     undefined,
@@ -183,7 +181,7 @@ async function changePassword (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             );
@@ -193,10 +191,14 @@ async function changePassword (
         userPwd: data.oldPwd,
     });
     if (!oldPasswordIsCorrect) {
+        ctx.log.warn(ctx.i18n.t("log:change_password_incorrect", {
+            cid: conn.id,
+            uuid: target.dse.uuid,
+        }));
         throw new errors.SecurityError(
-            "Old password incorrect in changePassword operation.",
+            ctx.i18n.t("err:old_password_incorrect"),
             new SecurityErrorData(
-                SecurityProblem_noInformation,
+                SecurityProblem_invalidCredentials,
                 undefined,
                 undefined,
                 [],
@@ -207,12 +209,13 @@ async function changePassword (
                     securityError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
+                state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
         );
     }
-    await setEntryPassword(ctx, target, data.newPwd);
+    const promises = await setEntryPassword(ctx, conn, target, data.newPwd);
+    await ctx.db.$transaction(promises);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for
     entries in this DSA. Meerkat DSA will take a principled stance and refuse
