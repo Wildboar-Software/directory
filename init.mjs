@@ -1,5 +1,5 @@
 
-export function init (ctx) {
+export async function init (ctx) {
     ctx.log.info("Made it, big dawg.");
 }
 

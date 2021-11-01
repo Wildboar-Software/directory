@@ -7,10 +7,12 @@ URBIT
 IPNS
 CA
 C=US
-    ST=FL+O=State of Florida
-        L=Jacksonville
-            GN=Jonathan+SN=Wilbur+dnQualifier=7F91D7AA-6CD9-440F-9021-99A89EC1D5E6
-        O=Wildboar Software
+  O=US Government
+  ST=FL
+    O=FL Government
+    L=Jacksonville
+      GN=Jonathan+SN=Wilbur+dnQualifier=7F91D7AA-6CD9-440F-9021-99A89EC1D5E6
+    O=Wildboar Software
 ```
 
 - Each governmental body would have its own naming context

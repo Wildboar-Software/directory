@@ -60,6 +60,13 @@ import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
+import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import {
+    administerPassword,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+import {
+    changePassword,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 
 async function handleRequest (
     ctx: Context,
@@ -194,6 +201,15 @@ async function handleRequestAndErrors (
         }
     } finally {
         dap.invocations.delete(request.invokeID);
+        if (
+            compareCode(request.opcode, administerPassword["&operationCode"]!)
+            || compareCode(request.opcode, administerPassword["&operationCode"]!)
+        ) {
+            // We do not send telemetry data on administerPassword or
+            // changePassword operations.
+            ctx.statistics.operations.length = 0;
+            return;
+        }
         for (const opstat of ctx.statistics.operations) {
             ctx.telemetry.sendEvent(opstat);
         }

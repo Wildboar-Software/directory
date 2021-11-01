@@ -196,11 +196,11 @@ class OperationDispatcher {
                 opCode: req.opCode,
                 result: outcome.result,
                 request: {
-                    ...outcome.stats.request,
+                    // ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
                 },
                 outcome: {
-                    ...outcome.stats.outcome,
+                    // ...outcome.stats.outcome,
                 },
                 foundDSE: state.foundDSE,
             };
@@ -212,11 +212,11 @@ class OperationDispatcher {
                 opCode: req.opCode,
                 result: outcome.result,
                 request: {
-                    ...outcome.stats.request,
+                    // ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
                 },
                 outcome: {
-                    ...outcome.stats.outcome,
+                    // ...outcome.stats.outcome,
                 },
                 foundDSE: state.foundDSE,
             };
