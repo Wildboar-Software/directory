@@ -2,6 +2,7 @@ import type {
     Context,
     Vertex,
     Value,
+    PendingUpdates,
     AttributeTypeDatabaseDriver,
     SpecialAttributeDatabaseReader,
     SpecialAttributeDatabaseEditor,
@@ -33,13 +34,43 @@ const readValues: SpecialAttributeDatabaseReader = async (
 };
 
 export
-const addValue: SpecialAttributeDatabaseEditor = NOOP;
+const addValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.governingStructureRule = value.value.integer;
+};
 
 export
-const removeValue: SpecialAttributeDatabaseEditor = NOOP;
+const removeValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.governingStructureRule = null;
+};
+
 
 export
-const removeAttribute: SpecialAttributeDatabaseRemover = NOOP;
+const removeAttribute: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.governingStructureRule = null;
+};
 
 export
 const countValues: SpecialAttributeCounter = async (

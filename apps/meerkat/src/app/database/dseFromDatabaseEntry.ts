@@ -94,7 +94,7 @@ async function dseFromDatabaseEntry (
     });
     const ret: DSE = {
         id: dbe.id,
-        uuid: dbe.entryUUID,
+        uuid: dbe.dseUUID,
         rdn,
         objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
         uniqueIdentifier: (await ctx.db.uniqueIdentifier.findMany({
@@ -124,8 +124,8 @@ async function dseFromDatabaseEntry (
                 ? dbe.modifiersName.map((rdn: Record<string, string>) => rdnFromJson(rdn))
                 : [],
         },
-        createdTimestamp: dbe.createdTimestamp,
-        modifyTimestamp: dbe.modifyTimestamp,
+        createdTimestamp: dbe.createdTimestamp ?? undefined,
+        modifyTimestamp: dbe.modifyTimestamp ?? undefined,
         entryACI,
     };
 

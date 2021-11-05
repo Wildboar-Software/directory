@@ -23,7 +23,6 @@ export
 const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    relevantSubentries?: Vertex[],
 ): Promise<Value[]> => {
     return Array.from(vertex.dse.admPoint?.administrativeRole.values() ?? [])
         .map(ObjectIdentifier.fromString)
@@ -81,7 +80,6 @@ export
 const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    relevantSubentries?: Vertex[],
 ): Promise<number> => {
     return ctx.db.entryAdministrativeRole.count({
         where: {
@@ -94,7 +92,6 @@ export
 const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-    relevantSubentries?: Vertex[],
 ): Promise<boolean> => {
     return !!(await ctx.db.entryAdministrativeRole.findFirst({
         where: {

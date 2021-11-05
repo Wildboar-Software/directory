@@ -2,6 +2,7 @@ import type {
     Context,
     Vertex,
     Value,
+    PendingUpdates,
     AttributeTypeDatabaseDriver,
     SpecialAttributeDatabaseReader,
     SpecialAttributeDatabaseEditor,
@@ -11,7 +12,6 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
-import NOOP from "./NOOP";
 import {
     creatorsName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/creatorsName.oa";
@@ -21,6 +21,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import rdnToJson from "../../x500/rdnToJson";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -39,13 +40,42 @@ const readValues: SpecialAttributeDatabaseReader = async (
 };
 
 export
-const addValue: SpecialAttributeDatabaseEditor = NOOP;
+const addValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.creatorsName = _decode_DistinguishedName(value.value).map(rdnToJson);
+};
 
 export
-const removeValue: SpecialAttributeDatabaseEditor = NOOP;
+const removeValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.creatorsName = false; // FIXME: This seems to error when `null`.
+};
 
 export
-const removeAttribute: SpecialAttributeDatabaseRemover = NOOP;
+const removeAttribute: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.creatorsName = false; // FIXME: This seems to error when `null`.
+};
 
 export
 const countValues: SpecialAttributeCounter = async (): Promise<number> => {

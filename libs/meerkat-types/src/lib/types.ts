@@ -396,6 +396,7 @@ export
 interface DSE {
     id: number; // Database primary key ID.
     uuid: UUID;
+    entryUUID?: UUID;
     uniqueIdentifier?: BIT_STRING[];
     rdn: RelativeDistinguishedName;
     objectClass: Set<IndexableOID>;
@@ -404,8 +405,8 @@ interface DSE {
     hierarchy?: HierarchyInfo;
     creatorsName?: Name;
     modifiersName?: Name;
-    createdTimestamp: Date;
-    modifyTimestamp: Date;
+    createdTimestamp?: Date;
+    modifyTimestamp?: Date;
     entryACI?: ACIItem[];
 
     // DSE type-specific data

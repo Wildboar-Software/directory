@@ -2,6 +2,7 @@ import type {
     Context,
     Vertex,
     Value,
+    PendingUpdates,
     AttributeTypeDatabaseDriver,
     SpecialAttributeDatabaseReader,
     SpecialAttributeDatabaseEditor,
@@ -10,54 +11,78 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
 import {
     nonSpecificKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/nonSpecificKnowledge.oa";
-import { BERElement } from "asn1-ts";
+import { DER } from "asn1-ts/dist/node/functional";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    return (await ctx.db.nonSpecificKnowledge.findMany({
-        where: {
-            entry_id: vertex.dse.id,
-        },
-        select: {
-            ber: true,
-        },
-    }))
-        .map(({ ber }) => {
-            const value = new BERElement();
-            value.fromBytes(ber);
-            return {
-                type: nonSpecificKnowledge["&id"],
-                value,
-            };
-        });
+    if (!vertex.dse.nssr?.nonSpecificKnowledge?.length) {
+        return [];
+    }
+    return vertex.dse.nssr.nonSpecificKnowledge.map((k) => ({
+        type: nonSpecificKnowledge["&id"],
+        value: nonSpecificKnowledge.encoderFor["&Type"]!(k, DER),
+    }));
 };
 
 export
-const addValue: SpecialAttributeDatabaseEditor = NOOP;
+const addValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.nonSpecificKnowledge.create({
+        data: {
+            entry_id: vertex.dse.id,
+            ber: Buffer.from(value.value.toBytes()),
+        },
+    }));
+};
 
 export
-const removeValue: SpecialAttributeDatabaseEditor = NOOP;
+const removeValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.nonSpecificKnowledge.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            ber: Buffer.from(value.value.toBytes()),
+        },
+    }));
+};
 
 export
-const removeAttribute: SpecialAttributeDatabaseRemover = NOOP;
+const removeAttribute: SpecialAttributeDatabaseRemover  = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.nssr?.nonSpecificKnowledge?.length) {
+        return;
+    }
+    vertex.dse.nssr.nonSpecificKnowledge = [];
+    pendingUpdates.otherWrites.push(ctx.db.nonSpecificKnowledge.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
+};
 
 export
 const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<number> => {
-    return ctx.db.nonSpecificKnowledge.count({
-        where: {
-            entry_id: vertex.dse.id,
-        },
-    });
+    return vertex.dse.nssr?.nonSpecificKnowledge?.length ?? 0;
 };
 
 export
@@ -65,11 +90,7 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return !!(await ctx.db.nonSpecificKnowledge.count({
-        where: {
-            entry_id: vertex.dse.id,
-        },
-    }));
+    return Boolean(vertex.dse.nssr?.nonSpecificKnowledge?.length);
 };
 
 export

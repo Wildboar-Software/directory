@@ -21,6 +21,9 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.modifyTimestamp) {
+        return [];
+    }
     return [
         {
             type: modifyTimestamp["&id"],
@@ -60,7 +63,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    return (vertex.dse.modifyTimestamp.valueOf() === value.value.generalizedTime.valueOf());
+    return (vertex.dse.modifyTimestamp?.valueOf() === value.value.generalizedTime.valueOf());
 };
 
 export

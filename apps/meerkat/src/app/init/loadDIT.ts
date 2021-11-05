@@ -1,5 +1,6 @@
 import type { Context, DIT } from "@wildboar/meerkat-types";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import { randomUUID } from "crypto";
 
 const ROOT_DSE_NAME = [];
 
@@ -19,6 +20,7 @@ async function loadDIT (
         rootDSE = await ctx.db.entry.create({
             data: {
                 immediate_superior_id: null,
+                entryUUID: randomUUID(),
                 glue: false,
                 cp: false,
                 entry: false,

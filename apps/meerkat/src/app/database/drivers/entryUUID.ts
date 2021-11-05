@@ -2,6 +2,7 @@ import type {
     Context,
     Vertex,
     Value,
+    PendingUpdates,
     AttributeTypeDatabaseDriver,
     SpecialAttributeDatabaseReader,
     SpecialAttributeDatabaseEditor,
@@ -10,7 +11,6 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
 import {
     DERElement,
     ASN1TagClass,
@@ -18,6 +18,7 @@ import {
     ASN1UniversalType,
     ObjectIdentifier,
 } from "asn1-ts";
+import bytesToUUID from "../../utils/bytesToUUID";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -38,13 +39,42 @@ const readValues: SpecialAttributeDatabaseReader = async (
 };
 
 export
-const addValue: SpecialAttributeDatabaseEditor = NOOP;
+const addValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.entryUUID = bytesToUUID(value.value.octetString);
+};
 
 export
-const removeValue: SpecialAttributeDatabaseEditor = NOOP;
+const removeValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.entryUUID = null;
+};
 
 export
-const removeAttribute: SpecialAttributeDatabaseRemover = NOOP;
+const removeAttribute: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.entryUpdate.entryUUID = null;
+};
 
 export
 const countValues: SpecialAttributeCounter = async (): Promise<number> => {

@@ -32,6 +32,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
         const subordinates = await ctx.db.entry.count({
             where: {
                 immediate_superior_id: vertex.dse.id,
+                deleteTimestamp: null,
             },
         });
         return [
@@ -40,7 +41,6 @@ const readValues: SpecialAttributeDatabaseReader = async (
                 value: _encodeBoolean((subordinates > 0), DER),
             },
         ];
-
     }
 };
 

@@ -19,6 +19,13 @@ type Names = String
 // just like collective attributes.
 model Entry {
   id                    Int    @id @default(autoincrement())
+  // LDAP operational attributes
+  // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
+  entryUUID String? // @db.Uuid
+  // A separate attribute for identifying a DSE. entryUUID cannot be used to
+  // identify DSEs, because in shadow DSEs, it may not be known.
+  dseUUID   String @default(uuid())
+
   immediate_superior_id Int?
   immediate_superior    Entry? @relation(name: "superior", fields: [immediate_superior_id], references: [id])
 
@@ -51,15 +58,11 @@ model Entry {
   //   writeableCopy Boolean @default(false) // Not used.
 
   // Single-valued attributes
-  createdTimestamp DateTime  @default(now())
-  modifyTimestamp  DateTime  @updatedAt
+  createdTimestamp DateTime?
+  modifyTimestamp  DateTime?
   deleteTimestamp  DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
-  creatorsName     Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-  modifiersName    Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-
-  // LDAP operational attributes
-  // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
-  entryUUID String @default(uuid()) // @db.Uuid
+  creatorsName     Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  modifiersName    Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
 
   // This should be stored, rather than calculated. The reason for this is that
   // the permitted superior structure rules refers to the governingStructureRule
@@ -76,6 +79,8 @@ model Entry {
   subordinate_completeness    Boolean?
   attribute_completeness      Boolean?
   attribute_values_incomplete Boolean?
+
+  lastShadowUpdate DateTime?
 
   // Storage parameters
   keep_children_in_database Boolean @default(false)
@@ -121,6 +126,7 @@ model Entry {
   ContextUseRule   ContextUseRule[]
   Friendship       Friendship[]
   SearchRule       SearchRule[]
+  @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
   UniqueIdentifier UniqueIdentifier[]

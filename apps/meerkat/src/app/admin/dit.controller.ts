@@ -285,7 +285,7 @@ export class DitController {
                 },
             })
             : undefined;
-        const superiorUUID: string | undefined = superior?.entryUUID;
+        const superiorUUID: string | undefined = superior?.dseUUID;
         const rdn: RelativeDistinguishedName = await getRDNFromEntryId(this.ctx, entry.id);
         const vertex = await vertexFromDatabaseEntry(this.ctx, undefined, entry, true);
         const {
@@ -339,8 +339,8 @@ export class DitController {
                     oid: oc,
                     name: this.ctx.objectClasses.get(oc)?.ldapNames?.[0],
                 })),
-            createdTimestamp: entry.createdTimestamp.toISOString(),
-            modifyTimestamp: entry.modifyTimestamp.toISOString(),
+            createdTimestamp: entry.createdTimestamp?.toISOString(),
+            modifyTimestamp: entry.modifyTimestamp?.toISOString(),
             deleteTimestamp: entry.deleteTimestamp?.toISOString(),
             creatorsName: (vertex.dse.creatorsName?.rdnSequence ?? [])
                 .map((rdn) => escape(encodeRDN(this.ctx, rdn))),

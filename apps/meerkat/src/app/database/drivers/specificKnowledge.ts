@@ -2,71 +2,155 @@ import type {
     Context,
     Vertex,
     Value,
+    PendingUpdates,
     AttributeTypeDatabaseDriver,
     SpecialAttributeDatabaseReader,
     SpecialAttributeDatabaseEditor,
     SpecialAttributeDatabaseRemover,
     SpecialAttributeCounter,
     SpecialAttributeDetector,
-    SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import { Knowledge } from "@prisma/client";
-import { BERElement } from "asn1-ts";
-import NOOP from "./NOOP";
+import { DER } from "asn1-ts/dist/node/functional";
 import {
     specificKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/specificKnowledge.oa";
+import rdnToJson from "../../x500/rdnToJson";
+import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
+import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
+import {
+    _encode_MasterOrShadowAccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+
+// TODO: Put this in the X.500 library.
+const commonPrefix: number[] = [
+    0x54, // The AFI
+    0x00, 0x72, 0x87, 0x22, // The IDI
+];
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    if (!vertex.dse.subr || !vertex.dse.immSupr || !vertex.dse.xr) {
-        return [];
+    return vertex.dse.subr?.specificKnowledge
+        ? [
+            {
+                type: specificKnowledge["&id"],
+                value: specificKnowledge.encoderFor["&Type"]!(vertex.dse.subr.specificKnowledge, DER),
+            }
+        ]
+        : [];
+};
+
+export
+const addValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const decoded = specificKnowledge.decoderFor["&Type"]!(value.value);
+    if (vertex.dse.subr) {
+        vertex.dse.subr.specificKnowledge = decoded;
     }
-    return (await ctx.db.accessPoint.findMany({
+    pendingUpdates.otherWrites.push(ctx.db.accessPoint.createMany({
+        data: decoded.map((mosap) => ({
+            ae_title: mosap.ae_title.rdnSequence.map(rdnToJson),
+            entry_id: vertex.dse.id,
+            ber: Buffer.from(_encode_MasterOrShadowAccessPoint(mosap, DER).toBytes()),
+            knowledge_type: Knowledge.SPECIFIC,
+            category: mosap.category,
+            chainingRequired: mosap.chainingRequired,
+            NSAP: {
+                createMany: {
+                    data: mosap.address.nAddresses.map((nsap) => {
+                        const url: string | undefined = ((): string | undefined => {
+                            if (nsap[0] !== 0xFF) { // It is not a URL.
+                                return undefined;
+                            }
+                            try {
+                                const [ , uri ] = uriFromNSAP(nsap);
+                                return uri;
+                            } catch {
+                                return undefined;
+                            }
+                        })();
+                        const ip_and_port = ((): [ string, number | undefined ] | undefined => {
+                            if (nsap[0] !== 0xFF) { // It is not a URL.
+                                return undefined;
+                            }
+                            for (let i = 0; i < commonPrefix.length; i++) {
+                                if (nsap[i] !== commonPrefix[i]) {
+                                    return undefined;
+                                }
+                            }
+                            const [ , ip, port ] = ipv4FromNSAP(nsap);
+                            return [ Array.from(ip).join("."), port ];
+                        })();
+                        return {
+                            ipv4: ip_and_port
+                                ? ip_and_port[0]
+                                : undefined,
+                            tcp_port: ip_and_port
+                                ? ip_and_port[1]
+                                : undefined,
+                            url,
+                            bytes: Buffer.from(nsap),
+                        };
+                    }),
+                },
+            },
+        })),
+    }));
+};
+
+export
+const removeValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (
+        !vertex.dse.subr?.specificKnowledge?.length
+        || (vertex.dse.subr.specificKnowledge.length !== value.value.set.length)
+    ) {
+        return;
+    }
+    pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            knowledge_type: Knowledge.SPECIFIC,
+            ber: Buffer.from(value.value.toBytes()),
+        },
+    }));
+};
+
+export
+const removeAttribute: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.subr?.specificKnowledge?.length) {
+        return;
+    }
+    vertex.dse.subr.specificKnowledge = [];
+    pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
             knowledge_type: Knowledge.SPECIFIC,
         },
-        select: {
-            ber: true,
-        },
-    }))
-        .map(({ ber }) => {
-            const value = new BERElement();
-            value.fromBytes(ber);
-            return {
-                type: specificKnowledge["&id"],
-                value,
-            };
-        });
+    }));
 };
-
-export
-const addValue: SpecialAttributeDatabaseEditor = NOOP;
-
-export
-const removeValue: SpecialAttributeDatabaseEditor = NOOP;
-
-export
-const removeAttribute: SpecialAttributeDatabaseRemover = NOOP;
 
 export
 const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<number> => {
-    if (!vertex.dse.subr || !vertex.dse.immSupr || !vertex.dse.xr) {
-        return 0;
-    }
-    return ctx.db.accessPoint.count({
-        where: {
-            entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
-        },
-    });
+    return vertex.dse.subr?.specificKnowledge?.length ? 1 : 0;
 };
 
 export
@@ -74,33 +158,7 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    if (!vertex.dse.subr || !vertex.dse.immSupr || !vertex.dse.xr) {
-        return false;
-    }
-    return !!(await ctx.db.accessPoint.count({
-        where: {
-            entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
-        },
-    }));
-};
-
-export
-const hasValue: SpecialAttributeValueDetector = async (
-    ctx: Readonly<Context>,
-    vertex: Vertex,
-    value: Value,
-): Promise<boolean> => {
-    if (!vertex.dse.subr || !vertex.dse.immSupr || !vertex.dse.xr) {
-        return false;
-    }
-    return !!(await ctx.db.accessPoint.count({
-        where: {
-            entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
-            ber: Buffer.from(value.value.toBytes()),
-        },
-    }));
+    return Boolean(vertex.dse.subr?.specificKnowledge?.length);
 };
 
 export
@@ -111,7 +169,7 @@ const driver: AttributeTypeDatabaseDriver = {
     removeAttribute,
     countValues,
     isPresent,
-    hasValue,
+    // hasValue,
 };
 
 export default driver;

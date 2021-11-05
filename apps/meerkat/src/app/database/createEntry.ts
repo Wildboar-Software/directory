@@ -14,7 +14,7 @@ import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias
 // import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
 import addValues from "./entry/addValues";
 import { strict as assert } from "assert";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 
 export
@@ -35,14 +35,16 @@ async function createEntry (
     const isSubentry = objectClasses.some((oc) => oc.isEqualTo(subentry["&id"]));
     const isAlias = objectClasses.some((oc) => oc.isEqualTo(alias["&id"]));
     // const isFamilyMember = objectClasses.some((oc) => (oc.isEqualTo(parent["&id"]) || oc.isEqualTo(child["&id"])));
+    const now = new Date();
     const createdEntry = await ctx.db.entry.create({
         data: {
             immediate_superior_id: superior.dse.id,
+            entryUUID: randomUUID(),
             creatorsName: [],
             modifiersName: [],
-            createdTimestamp: new Date(),
-            modifyTimestamp: new Date(),
-            deleteTimestamp: new Date(),
+            createdTimestamp: now,
+            modifyTimestamp: now,
+            deleteTimestamp: now,
             glue: entryInit.glue,
             cp: entryInit.cp,
             entry: entryInit.entry ?? (!isAlias && !isSubentry),
