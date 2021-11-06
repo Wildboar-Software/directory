@@ -1,126 +1,100 @@
-// import type {
-//     Context,
-//     Vertex,
-//     Value,
-//     PendingUpdates,
-//     AttributeTypeDatabaseDriver,
-//     SpecialAttributeDatabaseReader,
-//     SpecialAttributeDatabaseEditor,
-//     SpecialAttributeDatabaseRemover,
-//     SpecialAttributeCounter,
-//     SpecialAttributeDetector,
-//     SpecialAttributeValueDetector,
-// } from "@wildboar/meerkat-types";
-// import NOOP from "./NOOP";
-// // import {
-// //     DERElement,
-// //     ASN1TagClass,
-// //     ASN1UniversalType,
-// //     ObjectIdentifier,
-// // } from "asn1-ts";
-// // import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
-// // import {
-// //     objectClass,
-// // } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import type {
+    Context,
+    Vertex,
+    Value,
+    AttributeTypeDatabaseDriver,
+    SpecialAttributeDatabaseReader,
+    SpecialAttributeDatabaseEditor,
+    SpecialAttributeDatabaseRemover,
+    SpecialAttributeCounter,
+    SpecialAttributeDetector,
+    SpecialAttributeValueDetector,
+} from "@wildboar/meerkat-types";
+import {
+    hierarchyTop,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyTop.oa";
+import NOOP from "./NOOP";
+import { DER } from "asn1-ts/dist/node/functional";
+import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 
-// export
-// const readValues: SpecialAttributeDatabaseReader = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     relevantSubentries?: Vertex[],
-// ): Promise<Value[]> => {
-//     // return Array.from(vertex.dse.objectClass)
-//     //     .map(ObjectIdentifier.fromString)
-//     //     .map((oid) => _encodeObjectIdentifier(oid, DER))
-//     //     .map((value): Value => ({
-//     //         type: objectClass["&id"]!,
-//     //         value,
-//     //     }));
-// };
 
-// export
-// const addValue: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: Value,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-//     // pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.create({
-//     //     data: {
-//     //         entry_id: vertex.dse.id,
-//     //         object_class: value.value.objectIdentifier.toString(),
-//     //     },
-//     // }));
-// };
+export
+const readValues: SpecialAttributeDatabaseReader = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<Value[]> => {
+    if (vertex.dse.hierarchy?.top === undefined) {
+        return [];
+    }
+    return [
+        {
+            type: hierarchyTop["&id"],
+            value: hierarchyTop.encoderFor["&Type"]!(vertex.dse.hierarchy.top, DER),
+        },
+    ];
+};
 
-// export
-// const removeValue: SpecialAttributeDatabaseEditor = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: Value,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-//     // pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.deleteMany({
-//     //     where: {
-//     //         entry_id: vertex.dse.id,
-//     //         object_class: value.value.objectIdentifier.toString(),
-//     //     },
-//     // }));
-// };
+/**
+ * The X.500 does not state that hierarchyTop is `NO USER MODIFICATION`. I think
+ * this is actually a mistake, because X.501 (2016), Section 14.10 states that:
+ *
+ * > This attribute value [hierarchyTop] shall be supplied and maintained by the
+ * > directory.
+ *
+ * ...which is what the specification says for the other hierarchical attribute
+ * types that are `NO USER MODIFICATION`.
+ */
+export
+const addValue: SpecialAttributeDatabaseEditor = NOOP;
 
-// export
-// const removeAttribute: SpecialAttributeDatabaseRemover = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     pendingUpdates: PendingUpdates,
-// ): Promise<void> => {
-//     // pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.deleteMany({
-//     //     where: {
-//     //         entry_id: vertex.dse.id,
-//     //     },
-//     // }));
-// };
+export
+const removeValue: SpecialAttributeDatabaseEditor = NOOP;
 
-// export
-// const countValues: SpecialAttributeCounter = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     relevantSubentries?: Vertex[],
-// ): Promise<number> => {
-//     // return ctx.db.entryObjectClass.count({
-//     //     where: {
-//     //         entry_id: vertex.dse.id,
-//     //     },
-//     // });
-// };
+export
+const removeAttribute: SpecialAttributeDatabaseRemover = NOOP;
 
-// export
-// const isPresent: SpecialAttributeDetector = async (
-//     ctx: Readonly<Context>,
-//     entry: Vertex,
-//     relevantSubentries?: Vertex[],
-// ): Promise<boolean> => {
-//     // return true;
-// };
+export
+const countValues: SpecialAttributeCounter = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<number> => {
+    return (vertex.dse.hierarchy?.top) ? 1 : 0;
+};
 
-// export
-// const hasValue: SpecialAttributeValueDetector = async (
-//     ctx: Readonly<Context>,
-//     vertex: Vertex,
-//     value: Value,
-// ): Promise<boolean> => {
+export
+const isPresent: SpecialAttributeDetector = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+): Promise<boolean> => {
+    return Boolean(vertex.dse.hierarchy?.top);
+};
 
-// };
+export
+const hasValue: SpecialAttributeValueDetector = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+): Promise<boolean> => {
+    if (!vertex.dse.hierarchy?.top) {
+        return false;
+    }
+    return compareDistinguishedName(
+        vertex.dse.hierarchy.top,
+        hierarchyTop.decoderFor["&Type"]!(value.value),
+        getEqualityMatcherGetter(ctx),
+    );
+};
 
-// export
-// const driver: AttributeTypeDatabaseDriver = {
-//     readValues,
-//     addValue,
-//     removeValue,
-//     removeAttribute,
-//     countValues,
-//     isPresent,
-//     hasValue,
-// };
+export
+const driver: AttributeTypeDatabaseDriver = {
+    readValues,
+    addValue,
+    removeValue,
+    removeAttribute,
+    countValues,
+    isPresent,
+    hasValue,
+};
 
-// export default driver;
+export default driver;

@@ -4,10 +4,6 @@ import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
 import attributeFromInformationObject from "./attributeFromInformationObject";
 import { AttributeUsage } from "@prisma/client";
 import entryUUID from "../schema/attributes/entryUUID";
-import {
-    userPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
-
 import accessControlSchemeDriver from "../database/drivers/accessControlScheme";
 import accessControlSubentryListDriver from "../database/drivers/accessControlSubentryList";
 import administrativeRoleDriver from "../database/drivers/administrativeRole";
@@ -31,10 +27,10 @@ import family_informationDriver from "../database/drivers/family_information";
 import friendsDriver from "../database/drivers/friends";
 import governingStructureRuleDriver from "../database/drivers/governingStructureRule";
 import hasSubordinatesDriver from "../database/drivers/hasSubordinates";
-// import hierarchyBelowDriver from "../database/drivers/hierarchyBelow";
-// import hierarchyLevelDriver from "../database/drivers/hierarchyLevel";
-// import hierarchyParentDriver from "../database/drivers/hierarchyParent";
-// import hierarchyTopDriver from "../database/drivers/hierarchyTop";
+import hierarchyBelowDriver from "../database/drivers/hierarchyBelow";
+import hierarchyLevelDriver from "../database/drivers/hierarchyLevel";
+import hierarchyParentDriver from "../database/drivers/hierarchyParent";
+import hierarchyTopDriver from "../database/drivers/hierarchyTop";
 import ldapSyntaxesDriver from "../database/drivers/ldapSyntaxes";
 import matchingRulesDriver from "../database/drivers/matchingRules";
 import matchingRuleUseDriver from "../database/drivers/matchingRuleUse";
@@ -95,8 +91,8 @@ import userPwdDriver from "../database/drivers/userPwd";
 
 export
 async function loadAttributeTypes (ctx: Context): Promise<void> {
-    Object.values(x500at)
-        .map(attributeFromInformationObject)
+    Object.entries(x500at)
+        .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
             ctx.attributeTypes.set(attr.id.toString(), attr);
             attr.ldapNames?.forEach((ldapName: string): void => {
@@ -160,8 +156,6 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.matchingRulesSuitableForNaming.add(x500mr.uriMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.uTCTimeMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.uUIDPairMatch["&id"].toString());
-
-
     ctx.attributeTypes.get(x500at.accessControlScheme["&id"].toString())!.driver = accessControlSchemeDriver;
     ctx.attributeTypes.get(x500at.accessControlSubentryList["&id"].toString())!.driver = accessControlSubentryListDriver;
     ctx.attributeTypes.get(x500at.administrativeRole["&id"].toString())!.driver = administrativeRoleDriver;
@@ -185,10 +179,10 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.friends["&id"].toString())!.driver = friendsDriver;
     ctx.attributeTypes.get(x500at.governingStructureRule["&id"].toString())!.driver = governingStructureRuleDriver;
     ctx.attributeTypes.get(x500at.hasSubordinates["&id"].toString())!.driver = hasSubordinatesDriver;
-    // ctx.attributeTypes.get(x500at.hierarchyBelow["&id"].toString())!.driver = hierarchyBelowDriver;
-    // ctx.attributeTypes.get(x500at.hierarchyLevel["&id"].toString())!.driver = hierarchyLevelDriver;
-    // ctx.attributeTypes.get(x500at.hierarchyParent["&id"].toString())!.driver = hierarchyParentDriver;
-    // ctx.attributeTypes.get(x500at.hierarchyTop["&id"].toString())!.driver = hierarchyTopDriver;
+    ctx.attributeTypes.get(x500at.hierarchyBelow["&id"].toString())!.driver = hierarchyBelowDriver;
+    ctx.attributeTypes.get(x500at.hierarchyLevel["&id"].toString())!.driver = hierarchyLevelDriver;
+    ctx.attributeTypes.get(x500at.hierarchyParent["&id"].toString())!.driver = hierarchyParentDriver;
+    ctx.attributeTypes.get(x500at.hierarchyTop["&id"].toString())!.driver = hierarchyTopDriver;
     ctx.attributeTypes.get(x500at.ldapSyntaxes["&id"].toString())!.driver = ldapSyntaxesDriver;
     ctx.attributeTypes.get(x500at.matchingRules["&id"].toString())!.driver = matchingRulesDriver;
     ctx.attributeTypes.get(x500at.matchingRuleUse["&id"].toString())!.driver = matchingRuleUseDriver;
@@ -243,7 +237,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.supportedSASLMechanisms["&id"].toString())!.driver = supportedSASLMechanismsDriver;
     ctx.attributeTypes.get(x500at.uniqueIdentifier["&id"].toString())!.driver = uniqueIdentifierDriver;
     ctx.attributeTypes.get(x500at.userPassword["&id"].toString())!.driver = userPasswordDriver;
-    // ctx.attributeTypes.get(userPwd["&id"].toString())!.driver = userPwdDriver; // FIXME:
+    ctx.attributeTypes.get(x500at.userPwd["&id"].toString())!.driver = userPwdDriver;
     // ctx.attributeTypes.get(x500at.userPwdHistory["&id"].toString())!.driver = userPwdHistoryDriver;
     // ctx.attributeTypes.get(x500at.userPwdRecentlyExpired["&id"].toString())!.driver = userPwdRecentlyExpiredDriver;
 }

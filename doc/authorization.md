@@ -151,3 +151,8 @@ should be defined that:
   subtrees.
 - Explicitly prohibit users from modifying or deleting entries that they did not
   author.
+- Carefully choose which users can modify `hierarchyParent` and
+  `aliasedEntryName`, because these attributes could be used to initiate attacks
+  against the directory (e.g. trying to exploit a bug in access control by
+  using aliases or attempting to enumerate entries with timing attacks via the
+  `hierarchyParent` attribute validation.)

@@ -260,9 +260,12 @@ export
 interface HierarchyInfo {
     // level: number; // Shall be 0 for hierarchical top.
     // below: boolean; // Shall be computed.
-    parent?: Vertex;
+    // parent?: Vertex;
     // top: Vertex;
-    children: Vertex[];
+    // children: Vertex[];
+    top?: DistinguishedName; // This should not be present in the hierarchical top.
+    level: number; // This should be zero for the hierarchical top.
+    parent?: DistinguishedName;
 }
 
 export

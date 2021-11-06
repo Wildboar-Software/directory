@@ -7,9 +7,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 
 export
-function attributeFromInformationObject (io: ATTRIBUTE): AttributeInfo {
+function attributeFromInformationObject (io: ATTRIBUTE, name?: string): AttributeInfo {
     return {
         id: io["&id"],
+        name: name ? [ name ] : undefined,
         parent: io["&derivation"]?.["&id"],
         equalityMatchingRule: io["&equality-match"]?.["&id"],
         orderingMatchingRule: io["&ordering-match"]?.["&id"],

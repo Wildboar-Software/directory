@@ -272,7 +272,7 @@ export class DitController {
     ) {
         const entry = await this.ctx.db.entry.findUnique({
             where: {
-                entryUUID: id,
+                dseUUID: id,
             },
         });
         if (!entry) {
@@ -301,7 +301,7 @@ export class DitController {
             .map((attr) => [
                 ((): string => {
                     const spec = this.ctx.attributeTypes.get(attr.type.toString());
-                    return spec?.ldapNames?.[0] ?? attr.type.toString();
+                    return spec?.name?.[0] ?? spec?.ldapNames?.[0] ?? attr.type.toString();
                 })(),
                 ((): string => {
                     const spec = this.ctx.attributeTypes.get(attr.type.toString());
