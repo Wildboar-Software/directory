@@ -106,5 +106,6 @@
     "cannot_add_obsolete_attr": "The following attributes are obsolete, and therefore may not be added to an entry: {{oids}}",
     "only_one_sort_key": "Sorted search and list operations may only use one sort key in this DSA.",
     "unsupported_familygrouping": "Unsupported familyGrouping option.",
-    "child_cannot_be_in_hierarchy": "Child member of a compound entry may not be in a hierarchical group."
+    "child_cannot_be_in_hierarchy": "Child member of a compound entry may not be in a hierarchical group.",
+    "cannot_move_child": "Cannot move child entry, because it would break a compound entry."
 }

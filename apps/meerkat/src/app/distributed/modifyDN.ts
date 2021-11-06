@@ -290,6 +290,34 @@ async function modifyDN (
     const isExtensible: boolean = target.dse.objectClass.has(extensibleObject.toString());
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+    if (
+        target.dse.objectClass.has(id_oc_child.toString())
+        && data.newSuperior // Renaming a child entry is not a problem, but moving it is.
+        // It is only a problem if the new prefix is actually different than what is present.
+        && !compareDistinguishedName(targetDN.slice(0, -1), data.newSuperior, NAMING_MATCHER)
+    ) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:cannot_move_child"),
+            new UpdateErrorData(
+                UpdateProblem_familyRuleViolation,
+                [
+                    {
+                        attributeType: id_oc_child,
+                    },
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
