@@ -1,6 +1,8 @@
 -- CreateTable
 CREATE TABLE `Entry` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `entryUUID` VARCHAR(191) NULL,
+    `dseUUID` VARCHAR(191) NOT NULL,
     `immediate_superior_id` INTEGER NULL,
     `glue` BOOLEAN NOT NULL DEFAULT false,
     `cp` BOOLEAN NOT NULL DEFAULT false,
@@ -16,20 +18,26 @@ CREATE TABLE `Entry` (
     `rhob` BOOLEAN NOT NULL DEFAULT false,
     `sa` BOOLEAN NOT NULL DEFAULT false,
     `dsSubentry` BOOLEAN NOT NULL DEFAULT false,
-    `createdTimestamp` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `modifyTimestamp` DATETIME(3) NOT NULL,
+    `createdTimestamp` DATETIME(3) NULL,
+    `modifyTimestamp` DATETIME(3) NULL,
     `deleteTimestamp` DATETIME(3) NULL,
-    `creatorsName` JSON NOT NULL,
-    `modifiersName` JSON NOT NULL,
-    `entryUUID` VARCHAR(191) NOT NULL,
+    `creatorsName` JSON NULL,
+    `modifiersName` JSON NULL,
     `governingStructureRule` INTEGER NULL,
     `structuralObjectClass` VARCHAR(191) NULL,
     `subordinate_completeness` BOOLEAN NULL,
     `attribute_completeness` BOOLEAN NULL,
     `attribute_values_incomplete` BOOLEAN NULL,
+    `lastShadowUpdate` DATETIME(3) NULL,
     `keep_children_in_database` BOOLEAN NOT NULL DEFAULT false,
+    `hierarchyParent_id` INTEGER NULL,
+    `hierarchyParentDN` JSON NULL,
+    `hierarchyLevel` INTEGER NULL,
+    `hierarchyTopDN` JSON NULL,
+    `hierarchyPath` VARCHAR(191) NULL,
 
     INDEX `Entry_immediate_superior_id_deleteTimestamp_subentry_idx`(`immediate_superior_id`, `deleteTimestamp`, `subentry`),
+    UNIQUE INDEX `Entry_dseUUID_key`(`dseUUID`),
     UNIQUE INDEX `Entry_entryUUID_key`(`entryUUID`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -363,7 +371,7 @@ CREATE TABLE `SubtreeSpecification` (
 -- CreateTable
 CREATE TABLE `DitBridgeKnowledge` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `domain_local_id` VARCHAR(191) NOT NULL,
+    `domain_local_id` VARCHAR(191) NULL,
     `ber` LONGBLOB NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -531,7 +539,7 @@ CREATE TABLE `SearchRule` (
     `family_return_member_select` INTEGER NULL,
     `relaxation_minimum` INTEGER NOT NULL DEFAULT 1,
     `relaxation_maximum` INTEGER NULL,
-    `additionalControl` VARCHAR(191) NOT NULL,
+    `additionalControl` VARCHAR(191) NULL,
     `base_object_allowed` BOOLEAN NOT NULL DEFAULT true,
     `one_level_allowed` BOOLEAN NOT NULL DEFAULT true,
     `whole_subtree_allowed` BOOLEAN NOT NULL DEFAULT true,
@@ -539,7 +547,7 @@ CREATE TABLE `SearchRule` (
     `entry_limit_default` INTEGER NULL,
     `entry_limit_max` INTEGER NULL,
     `ber` LONGBLOB NOT NULL,
-    `name` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `entry_id` INTEGER NOT NULL,
 
@@ -702,6 +710,7 @@ CREATE TABLE `Alias` (
     `aliased_entry_id` INTEGER NULL,
     `aliased_entry_name` JSON NULL,
 
+    UNIQUE INDEX `Alias_aliased_entry_id_key`(`aliased_entry_id`),
     INDEX `Alias_aliased_entry_id_idx`(`aliased_entry_id`),
     UNIQUE INDEX `Alias_alias_entry_id_key`(`alias_entry_id`),
     PRIMARY KEY (`id`)
@@ -737,8 +746,19 @@ CREATE TABLE `EntryAccessControlScheme` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `AltServer` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `uri` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Entry` ADD CONSTRAINT `Entry_immediate_superior_id_fkey` FOREIGN KEY (`immediate_superior_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Entry` ADD CONSTRAINT `Entry_hierarchyParent_id_fkey` FOREIGN KEY (`hierarchyParent_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `UniqueIdentifier` ADD CONSTRAINT `UniqueIdentifier_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

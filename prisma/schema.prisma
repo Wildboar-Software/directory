@@ -26,7 +26,7 @@ model Entry {
     // identify DSEs, because in shadow DSEs, it may not be known.
     dseUUID   String  @default(uuid())
 
-    immediate_superior_id Int?   @unique
+    immediate_superior_id Int?
     immediate_superior    Entry? @relation(name: "superior", fields: [immediate_superior_id], references: [id])
 
     // DSE Types
@@ -86,15 +86,15 @@ model Entry {
     keep_children_in_database Boolean @default(false)
 
     // Hierarchy Attributes
-    hierarchyParent_id Int?    @unique
+    hierarchyParent_id Int?
     hierarchyParent    Entry?  @relation(name: "parent", fields: [hierarchyParent_id], references: [id])
     hierarchyParentDN  Json?
     hierarchyLevel     Int?
     hierarchyTopDN     Json?
     hierarchyPath      String? // Period-delimited database IDs
 
-    Entry                      Entry?                       @relation("superior")
-    Parent                     Entry?                       @relation("parent")
+    subordinates               Entry[]                      @relation("superior")
+    hierarchicalChildren       Entry[]                      @relation("parent")
     ACIItem                    ACIItem[]
     Clearance                  Clearance[]
     MatchingRuleUse            MatchingRuleUse[]

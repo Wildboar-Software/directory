@@ -111,6 +111,9 @@ import {
     ldapAttributeOptionContext,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapAttributeOptionContext.oa";
 import {
+    languageContext
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
+import {
     modifyPassword,
     cancel,
 } from "@wildboar/ldap/src/lib/extensions";
@@ -153,6 +156,10 @@ import {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import {
+    TypeAndContextAssertion,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 
 const NOT_UNDERSTOOD: DAPFilter = {
     and: [],
@@ -203,15 +210,57 @@ function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification):
         throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
     }
     const decoder = ldapSyntax.decoder;
+    const options: string[] = Buffer.from(mod.modification.type_)
+        .toString("utf-8")
+        .split(";")
+        .slice(1)
+        .map((opt) => opt.trim().replace(/[^A-Za-z0-9-]/g, ""))
+        ;
+    const languages: string[] = options
+        .filter((opt) => opt.toLowerCase().startsWith("lang-"))
+        .map((opt) => opt.slice(5, 7));
+    const contexts: X500Context[] = [];
+    if (options.length) {
+        contexts.push(new X500Context(
+            ldapAttributeOptionContext["&id"],
+            [
+                ldapAttributeOptionContext.encoderFor["&Type"]!(options, DER),
+            ],
+            false,
+        ));
+    }
+    if (languages.length) {
+        contexts.push(new X500Context(
+            languageContext["&id"],
+            languages
+                .map((lang) => languageContext.encoderFor["&Type"]!(lang, DER)),
+            false,
+        ));
+    }
     switch (mod.operation) {
-    case (ModifyRequest_changes_change_operation_add): {
-        return {
-            addValues: new Attribute(
-                spec.id,
-                mod.modification.vals.map(decoder),
-                undefined,
-            ),
-        };
+    // NOTE: You have to cast as a `number` to prevent some weird TypeScript bug.
+    case (ModifyRequest_changes_change_operation_add as number): {
+        if (contexts.length) {
+            return {
+                addValues: new Attribute(
+                    spec.id,
+                    [],
+                    mod.modification.vals
+                        .map((val) => new Attribute_valuesWithContext_Item(
+                            decoder(val),
+                            contexts,
+                        )),
+                ),
+            };
+        } else {
+            return {
+                addValues: new Attribute(
+                    spec.id,
+                    mod.modification.vals.map(decoder),
+                    undefined,
+                ),
+            };
+        }
     }
     case (ModifyRequest_changes_change_operation_delete_): {
         if (mod.modification.vals.length === 0) {
@@ -219,22 +268,50 @@ function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification):
                 removeAttribute: spec.id,
             };
         }
-        return {
-            removeValues: new Attribute(
-                spec.id,
-                mod.modification.vals.map(decoder),
-                undefined,
-            ),
-        };
+        if (contexts.length) {
+            return {
+                removeValues: new Attribute(
+                    spec.id,
+                    [],
+                    mod.modification.vals
+                        .map((val) => new Attribute_valuesWithContext_Item(
+                            decoder(val),
+                            contexts,
+                        )),
+                ),
+            };
+        } else {
+            return {
+                removeValues: new Attribute(
+                    spec.id,
+                    mod.modification.vals.map(decoder),
+                    undefined,
+                ),
+            };
+        }
     }
-    case (ModifyRequest_changes_change_operation_replace): {
-        return {
-            replaceValues: new Attribute(
-                spec.id,
-                mod.modification.vals.map(decoder),
-                undefined,
-            ),
-        };
+    case (ModifyRequest_changes_change_operation_replace as number): {
+        if (contexts.length) {
+            return {
+                replaceValues: new Attribute(
+                    spec.id,
+                    [],
+                    mod.modification.vals
+                        .map((val) => new Attribute_valuesWithContext_Item(
+                            decoder(val),
+                            contexts,
+                        )),
+                ),
+            };
+        } else {
+            return {
+                replaceValues: new Attribute(
+                    spec.id,
+                    mod.modification.vals.map(decoder),
+                    undefined,
+                ),
+            };
+        }
     }
     case (3): { // increment
         if (mod.modification.vals.length !== 1) {
@@ -263,11 +340,40 @@ function convert_ldap_ava_to_dap_ava (ctx: Context, ava: LDAPAttributeValueAsser
     if (!ldapSyntax?.decoder) {
         throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
     }
+    const options: string[] = Buffer.from(ava.attributeDesc)
+        .toString("utf-8")
+        .split(";")
+        .slice(1)
+        .map((opt) => opt.trim().replace(/[^A-Za-z0-9-]/g, ""))
+        ;
+    const languages: string[] = options
+        .filter((opt) => opt.toLowerCase().startsWith("lang-"))
+        .map((opt) => opt.slice(5, 7));
+    const contextAssertions: ContextAssertion[] = [];
+    if (options.length) {
+        contextAssertions.push(new ContextAssertion(
+            ldapAttributeOptionContext["&id"],
+            [
+                ldapAttributeOptionContext.encoderFor["&Assertion"]!(options, DER),
+            ],
+        ));
+    }
+    if (languages.length) {
+        contextAssertions.push(new ContextAssertion(
+            languageContext["&id"],
+            languages
+                .map((lang) => languageContext.encoderFor["&Type"]!(lang, DER)),
+        ));
+    }
     const decoder = ldapSyntax.decoder;
     return new AttributeValueAssertion(
         spec.id,
         decoder(ava.assertionValue),
-        undefined,
+        contextAssertions.length
+            ? {
+                selectedContexts: contextAssertions,
+            }
+            : undefined,
     );
 }
 
@@ -403,6 +509,7 @@ function convertAttributeSelectiontoEIS (
     selection: AttributeSelection,
     typesOnly?: boolean,
 ): EntryInformationSelection {
+    const selectedContexts: TypeAndContextAssertion[] = [];
     const returnAllUserAttributesExclusively: boolean = (selection.length === 0); // Case #1
     const returnAllUserAttributesInclusively: boolean = selection
         .some((attr) => (attr[0] === 0x2A)); // Case #2
@@ -426,8 +533,45 @@ function convertAttributeSelectiontoEIS (
                 ];
             }
             const spec = ctx.attributeTypes.get(desc);
-            return spec ? [ spec.id ] : [];
+            if (!spec) {
+                return [];
+            }
+            const contextAssertions: ContextAssertion[] = [];
+            const options: string[] = Buffer.from(attr)
+                .toString("utf-8")
+                .split(";")
+                .slice(1)
+                .map((opt) => opt.trim().replace(/[^A-Za-z0-9-]/g, ""))
+                ;
+            const languages: string[] = options
+                .filter((opt) => opt.toLowerCase().startsWith("lang-"))
+                .map((opt) => opt.slice(5, 7));
+            if (options.length) {
+                contextAssertions.push(new ContextAssertion(
+                    ldapAttributeOptionContext["&id"],
+                    [
+                        ldapAttributeOptionContext.encoderFor["&Assertion"]!(options, DER),
+                    ],
+                ));
+            }
+            if (languages.length) {
+                contextAssertions.push(new ContextAssertion(
+                    languageContext["&id"],
+                    languages
+                        .map((lang) => languageContext.encoderFor["&Type"]!(lang, DER)),
+                ));
+            }
+            if (contextAssertions.length) {
+                selectedContexts.push(new TypeAndContextAssertion(
+                    spec.id,
+                    {
+                        all: contextAssertions,
+                    },
+                ));
+            }
+            return [ spec.id ];
         });
+
     return new EntryInformationSelection(
         (returnAllUserAttributesExclusively || returnAllUserAttributesInclusively)
             ? {
@@ -460,7 +604,11 @@ function convertAttributeSelectiontoEIS (
                 };
             }
         })(),
-        undefined,
+        selectedContexts.length
+            ? {
+                selectedContexts: selectedContexts,
+            }
+            : undefined,
         false,
         undefined,
     );
@@ -639,11 +787,9 @@ function ldapRequestToDAPRequest (
                     (req.protocolOp.searchRequest.timeLimit > 0)
                         ? req.protocolOp.searchRequest.timeLimit
                         : undefined,
-                    // undefined,
                     (req.protocolOp.searchRequest.sizeLimit > 0)
                         ? req.protocolOp.searchRequest.sizeLimit
                         : undefined,
-                    // undefined,
                     undefined,
                     undefined,
                     undefined,
@@ -728,17 +874,20 @@ function ldapRequestToDAPRequest (
                 req.protocolOp.addRequest.attributes
                     .map((attr): Attribute | undefined => {
                         const desc = normalizeAttributeDescription(attr.type_);
+                        const spec = ctx.attributeTypes.get(desc);
+                        const decoder = getLDAPDecoder(ctx, desc);
+                        if (!decoder) {
+                            throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
+                        }
                         const options: string[] = Buffer.from(attr.type_)
                             .toString("utf-8")
                             .split(";")
                             .slice(1)
                             .map((opt) => opt.trim().replace(/[^A-Za-z0-9-]/g, ""))
                             ;
-                        const spec = ctx.attributeTypes.get(desc);
-                        const decoder = getLDAPDecoder(ctx, desc);
-                        if (!decoder) {
-                            throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
-                        }
+                        const languages: string[] = options
+                            .filter((opt) => opt.toLowerCase().startsWith("lang-"))
+                            .map((opt) => opt.slice(5, 7));
                         try {
                             if (options.length) {
                                 return new Attribute(
@@ -755,7 +904,15 @@ function ldapRequestToDAPRequest (
                                                     ],
                                                     false,
                                                 ),
-                                            ],
+                                                languages.length
+                                                    ? new X500Context(
+                                                        languageContext["&id"],
+                                                        languages.map((lang) => languageContext.encoderFor["&Type"]!(lang, DER)),
+                                                        false,
+                                                    )
+                                                    : null,
+                                            ]
+                                                .filter((c): c is X500Context => !!c),
                                         )),
                                 );
                             } else {
@@ -896,6 +1053,31 @@ function ldapRequestToDAPRequest (
         if (!decoder) {
             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
         }
+        const options: string[] = Buffer.from(req.protocolOp.compareRequest.ava.attributeDesc)
+            .toString("utf-8")
+            .split(";")
+            .slice(1)
+            .map((opt) => opt.trim().replace(/[^A-Za-z0-9-]/g, ""))
+            ;
+        const languages: string[] = options
+            .filter((opt) => opt.toLowerCase().startsWith("lang-"))
+            .map((opt) => opt.slice(5, 7));
+        const contextAssertions: ContextAssertion[] = [];
+        if (options.length) {
+            contextAssertions.push(new ContextAssertion(
+                ldapAttributeOptionContext["&id"],
+                [
+                    ldapAttributeOptionContext.encoderFor["&Assertion"]!(options, DER),
+                ],
+            ));
+        }
+        if (languages.length) {
+            contextAssertions.push(new ContextAssertion(
+                languageContext["&id"],
+                languages
+                    .map((lang) => languageContext.encoderFor["&Type"]!(lang, DER)),
+            ));
+        }
         const dapReq: CompareArgument = {
             unsigned: new CompareArgumentData(
                 {
@@ -904,7 +1086,11 @@ function ldapRequestToDAPRequest (
                 new AttributeValueAssertion(
                     spec.id,
                     decoder(req.protocolOp.compareRequest.ava.assertionValue),
-                    undefined,
+                    contextAssertions.length
+                        ? {
+                            selectedContexts: contextAssertions,
+                        }
+                        : undefined,
                 ),
                 [],
                 new ServiceControls(
