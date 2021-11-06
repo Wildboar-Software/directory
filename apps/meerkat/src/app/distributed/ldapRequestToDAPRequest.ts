@@ -160,6 +160,20 @@ import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFram
 import {
     TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+import {
+    TimeAssertion,
+    _encode_TimeAssertion,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeAssertion.ta";
+import { temporalContext } from "@wildboar/x500/src/lib/collections/contexts";
+
+const now: TimeAssertion = {
+    now: null,
+};
+const encodedTimeAssertion = _encode_TimeAssertion(now, DER);
+const temporalContextAssertion = new ContextAssertion(
+    temporalContext["&id"],
+    [ encodedTimeAssertion ],
+);
 
 const NOT_UNDERSTOOD: DAPFilter = {
     and: [],
@@ -349,7 +363,9 @@ function convert_ldap_ava_to_dap_ava (ctx: Context, ava: LDAPAttributeValueAsser
     const languages: string[] = options
         .filter((opt) => opt.toLowerCase().startsWith("lang-"))
         .map((opt) => opt.slice(5, 7));
-    const contextAssertions: ContextAssertion[] = [];
+    const contextAssertions: ContextAssertion[] = [
+        temporalContextAssertion,
+    ];
     if (options.length) {
         contextAssertions.push(new ContextAssertion(
             ldapAttributeOptionContext["&id"],
@@ -536,7 +552,9 @@ function convertAttributeSelectiontoEIS (
             if (!spec) {
                 return [];
             }
-            const contextAssertions: ContextAssertion[] = [];
+            const contextAssertions: ContextAssertion[] = [
+                temporalContextAssertion,
+            ];
             const options: string[] = Buffer.from(attr)
                 .toString("utf-8")
                 .split(";")
@@ -1062,7 +1080,9 @@ function ldapRequestToDAPRequest (
         const languages: string[] = options
             .filter((opt) => opt.toLowerCase().startsWith("lang-"))
             .map((opt) => opt.slice(5, 7));
-        const contextAssertions: ContextAssertion[] = [];
+        const contextAssertions: ContextAssertion[] = [
+            temporalContextAssertion,
+        ];
         if (options.length) {
             contextAssertions.push(new ContextAssertion(
                 ldapAttributeOptionContext["&id"],
