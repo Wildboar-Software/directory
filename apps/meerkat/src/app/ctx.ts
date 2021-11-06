@@ -151,6 +151,7 @@ const ctx: Context = {
     statistics: {
         operations: [],
     },
+    usedInvokeIDs: new Set(),
 };
 
 export default ctx;

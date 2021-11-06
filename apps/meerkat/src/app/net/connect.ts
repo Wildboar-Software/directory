@@ -34,8 +34,9 @@ import type { WriteOperationOptions } from "./Connection";
 import { EventEmitter } from "stream";
 import { IDMConnection } from "@wildboar/idm";
 import * as url from "url";
-import * as crypto from "crypto";
-import { Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     chainedRead,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
@@ -96,10 +97,10 @@ import emptyChainingResults from "../x500/emptyChainingResults";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+import generateUnusedInvokeID from "./generateUnusedInvokeID";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
-const MAX_INVOKE_ID: number = 2147483648;
 const LDAP_VERSION_3: INTEGER = 3;
 
 export
@@ -130,7 +131,7 @@ function getIDMOperationWriter (
             },
             outcome: {},
         };
-        const invokeID: number = crypto.randomInt(MAX_INVOKE_ID);
+        const invokeID: number = generateUnusedInvokeID(ctx);
         const param: Chained = {
             unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 req.chaining,

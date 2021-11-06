@@ -4,7 +4,6 @@ import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import { TRUE_BIT, FALSE, ObjectIdentifier } from "asn1-ts";
 import { LDAPMessage } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
-import { randomInt } from "crypto";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
@@ -105,8 +104,8 @@ import {
 import {
     ServiceProblem_notSupportedByLDAP,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 
-const MAX_LDAP_MESSAGE_ID: number = 2147483648;
 const DEFAULT_LDAP_FILTER: LDAPFilter = {
     present: encodeLDAPOID(objectClass["&id"]),
 };
@@ -424,7 +423,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     if (!req.opCode || !req.argument) {
         throw new Error(); // FIXME:
     }
-    const messageId: number = randomInt(MAX_LDAP_MESSAGE_ID);
+    const messageId: number = generateUnusedInvokeID(ctx);
     if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:cannot_use_apw_in_ldap"),

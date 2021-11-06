@@ -1078,6 +1078,7 @@ interface Context {
     operationalBindingControlEvents: OperationalBindingControlEvents;
     collectiveAttributes: Set<IndexableOID>;
     nameForms: Map<IndexableOID, NameFormInfo>;
+    usedInvokeIDs: Set<number>;
 }
 
 export

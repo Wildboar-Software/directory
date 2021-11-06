@@ -50,7 +50,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubentryInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import readChildren from "../dit/readChildren";
-import * as crypto from "crypto";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import admPointEIS from "./admPointEIS";
@@ -58,6 +57,7 @@ import subentryEIS from "./subentryEIS";
 import readAttributes from "../database/entry/readAttributes";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import createSecurityParameters from "../x500/createSecurityParameters";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -242,7 +242,7 @@ async function establishSubordinate (
         ));
         current = current.immediateSuperior;
     }
-    const bindingIdentifier: number = crypto.randomInt(4294967296);
+    const bindingIdentifier: number = generateUnusedInvokeID(ctx);
     const sup2sub = new SuperiorToSubordinate(
         ditContext.reverse(),
         newEntryInfo,

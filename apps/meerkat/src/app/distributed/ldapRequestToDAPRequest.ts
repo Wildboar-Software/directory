@@ -15,7 +15,6 @@ import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type {
     LDAPMessage,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
-import { randomInt } from "crypto";
 import { AbandonArgument, _encode_AbandonArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
 import { AddEntryArgument, _encode_AddEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
 import { AdministerPasswordArgument, _encode_AdministerPasswordArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
@@ -153,8 +152,7 @@ import type {
 import {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
-
-const MAX_INVOKE_ID: number = 2147483648;
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 
 const NOT_UNDERSTOOD: DAPFilter = {
     and: [],
@@ -475,7 +473,7 @@ function ldapRequestToDAPRequest (
     req: LDAPMessage,
 ): Request | null {
     const invokeId: InvokeId = {
-        present: randomInt(MAX_INVOKE_ID),
+        present: generateUnusedInvokeID(ctx),
     };
     let subentriesControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc3672.html
     let managedDSAITControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc3296.html
