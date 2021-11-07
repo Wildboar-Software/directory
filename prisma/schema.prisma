@@ -146,7 +146,7 @@ model Entry {
 model UniqueIdentifier {
     id               Int   @id @default(autoincrement())
     entry_id         Int
-    entry            Entry @relation(fields: [entry_id], references: [id])
+    entry            Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     uniqueIdentifier Bytes // DER-encoded bitstring value (not tag and length bytes)
 }
 
@@ -162,7 +162,7 @@ model UniqueIdentifier {
 model Password {
     id                       Int       @id @default(autoincrement())
     entry_id                 Int
-    entry                    Entry     @relation(fields: [entry_id], references: [id])
+    entry                    Entry     @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     encrypted                Bytes
     algorithm_oid            String // OID
     algorithm_parameters_der Bytes?
@@ -179,7 +179,7 @@ model Password {
 model PwdModifyEntryAllowed {
     id       Int     @id @default(autoincrement())
     entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id])
+    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Boolean
 
     @@unique([entry_id])
@@ -188,7 +188,7 @@ model PwdModifyEntryAllowed {
 model PwdChangeAllowed {
     id       Int     @id @default(autoincrement())
     entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id])
+    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Boolean
 
     @@unique([entry_id])
@@ -197,7 +197,7 @@ model PwdChangeAllowed {
 model PwdMaxAge {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -206,7 +206,7 @@ model PwdMaxAge {
 model PwdExpiryAge {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -215,7 +215,7 @@ model PwdExpiryAge {
 model PwdMinLength {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -224,7 +224,7 @@ model PwdMinLength {
 model NoDictionaryWords {
     id       Int     @id @default(autoincrement())
     entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id])
+    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Boolean
 
     @@unique([entry_id])
@@ -233,7 +233,7 @@ model NoDictionaryWords {
 model NoPersonNames {
     id       Int     @id @default(autoincrement())
     entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id])
+    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Boolean
 
     @@unique([entry_id])
@@ -242,7 +242,7 @@ model NoPersonNames {
 model NoGeographicalNames {
     id       Int     @id @default(autoincrement())
     entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id])
+    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Boolean
 
     @@unique([entry_id])
@@ -258,14 +258,14 @@ model NoGeographicalNames {
 model PwdDictionaries {
     id       Int    @id @default(autoincrement())
     entry_id Int
-    entry    Entry  @relation(fields: [entry_id], references: [id])
+    entry    Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    String @db.MediumText
 }
 
 model PwdExpiryWarning {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -274,7 +274,7 @@ model PwdExpiryWarning {
 model PwdGraces {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -283,7 +283,7 @@ model PwdGraces {
 model PwdFailureDuration {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -292,7 +292,7 @@ model PwdFailureDuration {
 model PwdLockoutDuration {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -301,7 +301,7 @@ model PwdLockoutDuration {
 model PwdMaxFailures {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -310,7 +310,7 @@ model PwdMaxFailures {
 model PwdMaxTimeInHistory {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -319,7 +319,7 @@ model PwdMaxTimeInHistory {
 model PwdMinTimeInHistory {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -328,7 +328,7 @@ model PwdMinTimeInHistory {
 model PwdHistorySlots {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -337,7 +337,7 @@ model PwdHistorySlots {
 model PwdRecentlyExpiredDuration {
     id       Int   @id @default(autoincrement())
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     value    Int
 
     @@unique([entry_id])
@@ -353,7 +353,7 @@ model PwdRecentlyExpiredDuration {
 model AttributeValue {
     id                         Int     @id @default(autoincrement())
     entry_id                   Int
-    entry                      Entry   @relation(fields: [entry_id], references: [id])
+    entry                      Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     type                       String // OID
     tag_class                  Int     @db.SmallInt
     constructed                Boolean
@@ -378,7 +378,7 @@ model AttributeValue {
 model ContextValue {
     id          Int            @id @default(autoincrement())
     value_id    Int
-    value       AttributeValue @relation(fields: [value_id], references: [id])
+    value       AttributeValue @relation(fields: [value_id], references: [id], onDelete: Cascade)
     type        OID
     tag_class   Int            @db.SmallInt
     constructed Boolean
@@ -403,7 +403,7 @@ enum ACIScope {
 model ACIItem {
     id                               Int      @id @default(autoincrement())
     entry_id                         Int
-    entry                            Entry    @relation(fields: [entry_id], references: [id])
+    entry                            Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     tag                              String
     precedence                       Int
     auth_level_basic_level           Int?
@@ -417,7 +417,7 @@ model ACIItem {
 model Clearance {
     id                          Int     @id @default(autoincrement())
     entry_id                    Int
-    entry                       Entry   @relation(fields: [entry_id], references: [id])
+    entry                       Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     policy_id                   String // OID
     // From classList
     unmarked                    Boolean
@@ -460,7 +460,7 @@ model AccessPoint {
     is_consumer_of_id        Int? // This comes from SupplierAndConsumers.consumers
     is_consumer_of           AccessPoint?                @relation("is_consumer_of", fields: [is_consumer_of_id], references: [id])
     entry_id                 Int?
-    entry                    Entry?                      @relation(fields: [entry_id], references: [id])
+    entry                    Entry?                      @relation(fields: [entry_id], references: [id], onDelete: SetNull)
     non_supplying_master_for AccessPoint[]               @relation("non_supplying_master")
     consumers                AccessPoint[]               @relation("is_consumer_of")
     operational_bindings     OperationalBinding[]        @relation("ob_access_point")
@@ -475,14 +475,14 @@ model NetworkServiceAccessPoint {
     url             String?
     bytes           Bytes
     access_point_id Int
-    access_point    AccessPoint @relation(fields: [access_point_id], references: [id])
+    access_point    AccessPoint @relation(fields: [access_point_id], references: [id], onDelete: Cascade)
 }
 
 model NonSpecificKnowledge {
     id       Int   @id @default(autoincrement())
     ber      Bytes
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 }
 
 model SubtreeSpecification {
@@ -494,7 +494,7 @@ model SubtreeSpecification {
     specification_filter Json? // {"and": [{"item": "2.5.4.10"}]}
     ber                  Bytes
     entry_id             Int
-    entry                Entry @relation(fields: [entry_id], references: [id])
+    entry                Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 }
 
 model DitBridgeKnowledge {
@@ -586,7 +586,7 @@ model ContentRule {
     description          String?
     obsolete             Boolean @default(false)
     entry_id             Int
-    entry                Entry   @relation(fields: [entry_id], references: [id])
+    entry                Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
     @@unique([entry_id, structural_class])
 }
@@ -609,7 +609,7 @@ model ContextUseRule {
     description   String?
     obsolete      Boolean @default(false)
     entry_id      Int
-    entry         Entry   @relation(fields: [entry_id], references: [id])
+    entry         Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
     // NOTE: X.501 does not say that this has to be unique by attribute type.
     @@index([entry_id])
@@ -630,7 +630,7 @@ model Friendship {
     description String?
     obsolete    Boolean @default(false)
     entry_id    Int
-    entry       Entry   @relation(fields: [entry_id], references: [id])
+    entry       Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
     @@unique([entry_id, anchor])
 }
@@ -652,7 +652,7 @@ model MatchingRuleUse {
     information OIDs
 
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
     @@unique([entry_id, identifier])
 }
@@ -744,7 +744,7 @@ model SearchRule {
     description                 String?
 
     entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id])
+    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
     @@unique([dmd_id, rule_id])
     @@index([rule_id])
@@ -911,7 +911,7 @@ model NamedObjectIdentifier {
 model RDN {
     id       BigInt  @id @default(autoincrement())
     entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id])
+    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     type     OID
     value    Bytes
     str      String?
@@ -922,7 +922,7 @@ model RDN {
 model EntryObjectClass {
     id           BigInt @id @default(autoincrement())
     entry_id     Int
-    entry        Entry  @relation(fields: [entry_id], references: [id])
+    entry        Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     object_class OID
 
     @@unique([entry_id, object_class])
@@ -931,9 +931,9 @@ model EntryObjectClass {
 model Alias {
     id                 Int    @id @default(autoincrement())
     alias_entry_id     Int
-    alias_entry        Entry  @relation(name: "alias_entry", fields: [alias_entry_id], references: [id])
+    alias_entry        Entry  @relation(name: "alias_entry", fields: [alias_entry_id], references: [id], onDelete: Cascade)
     aliased_entry_id   Int?   @unique
-    aliased_entry      Entry? @relation(name: "aliased_entry", fields: [aliased_entry_id], references: [id])
+    aliased_entry      Entry? @relation(name: "aliased_entry", fields: [aliased_entry_id], references: [id], onDelete: SetNull)
     aliased_entry_name Json?
 
     @@unique([alias_entry_id])
@@ -943,7 +943,7 @@ model Alias {
 model EntryAdministrativeRole {
     id                 Int   @id @default(autoincrement())
     entry_id           Int
-    entry              Entry @relation(fields: [entry_id], references: [id])
+    entry              Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     administrativeRole OID
 
     @@unique([entry_id, administrativeRole])
@@ -952,7 +952,7 @@ model EntryAdministrativeRole {
 model EntryCollectiveExclusion {
     id                  Int   @id @default(autoincrement())
     entry_id            Int
-    entry               Entry @relation(fields: [entry_id], references: [id])
+    entry               Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     collectiveExclusion OID
 
     @@unique([entry_id, collectiveExclusion])
@@ -961,7 +961,7 @@ model EntryCollectiveExclusion {
 model EntryAccessControlScheme {
     id                  Int   @id @default(autoincrement())
     entry_id            Int
-    entry               Entry @relation(fields: [entry_id], references: [id])
+    entry               Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
     accessControlScheme OID
 
     @@unique([entry_id])

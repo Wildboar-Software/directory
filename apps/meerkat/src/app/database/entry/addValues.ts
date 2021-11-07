@@ -54,7 +54,6 @@ async function addValues (
                         createMany: {
                             data: Array.from(attr.contexts?.values() ?? [])
                                 .flatMap((context) => context.values.map((cv) => ({
-                                    entry_id: entry.dse.id,
                                     type: context.id.toString(),
                                     tag_class: cv.tagClass,
                                     constructed: (cv.construction === ASN1Construction.constructed),
