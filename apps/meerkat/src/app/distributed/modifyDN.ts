@@ -619,7 +619,7 @@ async function modifyDN (
                         ctx,
                         conn.boundNameAndUID?.dn,
                         undefined,
-                        updateError["&errorCode"],
+                        serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     state.chainingArguments.aliasDereferenced,

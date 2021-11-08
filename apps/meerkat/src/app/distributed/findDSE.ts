@@ -229,7 +229,13 @@ async function findDSE (
     const op = ("present" in state.invokeId)
         ? conn.invocations.get(state.invokeId.present)
         : undefined;
-    const serviceControls = state.operationArgument.set
+    const opArgElements = state.operationArgument.set;
+    const criticalExtensions = opArgElements
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 25)
+        ))?.inner.bitString;
+    const serviceControls = opArgElements
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
             && (el.tagNumber === 30)
@@ -554,8 +560,11 @@ async function findDSE (
     const targetFoundSubprocedure = async (): Promise<Vertex | undefined> => {
         const suitable: boolean = checkSuitabilityProcedure(
             ctx,
+            conn,
             dse_i,
             state.operationCode,
+            state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+            criticalExtensions ?? new Uint8ClampedArray(),
             dontUseCopy,
             copyShallDo,
             state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,

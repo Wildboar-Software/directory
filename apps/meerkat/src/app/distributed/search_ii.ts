@@ -276,8 +276,11 @@ async function search_ii (
             }
             const suitable = checkSuitabilityProcedure(
                 ctx,
+                conn,
                 subordinate,
                 search["&operationCode"]!,
+                state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                data.criticalExtensions ?? new Uint8ClampedArray(),
                 dontUseCopy,
                 copyShallDo,
                 state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,

@@ -1,5 +1,5 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
-import type { ASN1Element } from "asn1-ts";
+import { Context, Vertex, ClientConnection, ServiceError } from "@wildboar/meerkat-types";
+import type { ASN1Element, BIT_STRING } from "asn1-ts";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { id_opcode_compare } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
 import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
@@ -19,12 +19,27 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import { strict as assert } from "assert";
 import isModificationOperation from "../x500/isModificationOperation";
+import unmetCriticalExtension from "../x500/unmetCriticalExtension";
+import {
+    ServiceProblem,
+    ServiceProblem_unavailableCriticalExtension,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 export
 function checkSuitabilityProcedure (
     ctx: Context,
+    conn: ClientConnection,
     vertex: Vertex,
     operationType: Code,
+    aliasDereferenced: boolean,
+    criticalExtensions: BIT_STRING,
     dontUseCopy: boolean,
     copyShallDo: boolean,
     excludeShadows: boolean,
@@ -32,7 +47,27 @@ function checkSuitabilityProcedure (
     searchArgument?: SearchArgument,
 ): boolean {
     if (!vertex.dse.shadow) {
-        // TODO: Check critical extensions
+        const unmet = unmetCriticalExtension(criticalExtensions);
+        if (unmet !== undefined) {
+            throw new ServiceError(
+                ctx.i18n.t("err:unavailable_critical_extension", {
+                    index: unmet,
+                }),
+                new ServiceErrorData(
+                    ServiceProblem_unavailableCriticalExtension,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                )
+            );
+        }
         return true;
     }
     if (isModificationOperation(operationType)) {
@@ -42,7 +77,27 @@ function checkSuitabilityProcedure (
         return false; // The user specifically demanded a non-shadow copy.
     }
     if (copyShallDo) {
-        // TODO: Check critical extensions
+        const unmet = unmetCriticalExtension(criticalExtensions);
+        if (unmet !== undefined) {
+            throw new ServiceError(
+                ctx.i18n.t("err:unavailable_critical_extension", {
+                    index: unmet,
+                }),
+                new ServiceErrorData(
+                    ServiceProblem_unavailableCriticalExtension,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                )
+            );
+        }
         return true;
     }
     if (compareCode(operationType, id_opcode_list)) {

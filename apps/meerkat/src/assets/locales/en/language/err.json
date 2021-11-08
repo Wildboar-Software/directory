@@ -107,5 +107,6 @@
     "only_one_sort_key": "Sorted search and list operations may only use one sort key in this DSA.",
     "unsupported_familygrouping": "Unsupported familyGrouping option.",
     "child_cannot_be_in_hierarchy": "Child member of a compound entry may not be in a hierarchical group.",
-    "cannot_move_child": "Cannot move child entry, because it would break a compound entry."
+    "cannot_move_child": "Cannot move child entry, because it would break a compound entry.",
+    "unavailable_critical_extension": "Unavailable critical extension {{index}}."
 }
