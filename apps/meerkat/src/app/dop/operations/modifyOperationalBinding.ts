@@ -50,6 +50,10 @@ import {
     SuperiorToSubordinateModification,
     _decode_SuperiorToSubordinateModification,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinateModification.ta";
+import {
+    SubordinateToSuperior,
+    _decode_SubordinateToSuperior,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -58,7 +62,8 @@ import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import becomeSubordinate from "../establish/becomeSubordinate";
+import updateContextPrefix from "../modify/updateContextPrefix";
+import updateSubordinate from "../modify/updateSubordinate";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -108,14 +113,14 @@ async function modifyOperationalBinding (
 ): Promise<ModifyOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
-    const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
-        new Promise<boolean>((resolve) => {
-            ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
-                resolve(approved);
-            });
-        }),
-        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 30000)),
-    ]);
+    // const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
+    //     new Promise<boolean>((resolve) => {
+    //         ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
+    //             resolve(approved);
+    //         });
+    //     }),
+    //     new Promise<boolean>(resolve => setTimeout(() => resolve(false), 30000)),
+    // ]);
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,
@@ -234,14 +239,14 @@ async function modifyOperationalBinding (
     }
 
     const now = new Date();
-    const validFrom = (
+    const validFrom: Date = (
         data.valid?.validFrom
         && ("time" in data.valid.validFrom)
         && !(data.valid.validFrom instanceof ASN1Element)
     )
         ? getDateFromOBTime(data.valid.validFrom.time)
         : now;
-    const validUntil = (
+    const validUntil: Date | null | undefined = (
         data.valid?.validUntil
         && ("time" in data.valid.validUntil)
         && !(data.valid.validUntil instanceof ASN1Element)
@@ -259,9 +264,14 @@ async function modifyOperationalBinding (
         : undefined;
 
     const sp = data.securityParameters;
-    const created = await ctx.db.operationalBinding.create({
+    await ctx.db.operationalBinding.create({
         data: {
-            previous_id: opBinding.id as unknown as undefined, // FIXME: WTF is going on here?
+            accepted: true, // REVIEW: Automatically-accepted.
+            previous: {
+                connect: {
+                    id: opBinding.id,
+                },
+            },
             outbound: false,
             binding_type: data.bindingType.toString(),
             binding_identifier: data.newBindingID.identifier,
@@ -306,30 +316,24 @@ async function modifyOperationalBinding (
     // TODO: If any RDN in the CP changes, update the corresponding DSE.
 
     if (data.bindingType.isEqualTo(id_op_binding_hierarchical)) {
-        const agreement: HierarchicalAgreement = data.newAgreement
+        const oldAgreement: HierarchicalAgreement = (() => {
+            const el = new BERElement();
+            el.fromBytes(opBinding.agreement_ber);
+            return _decode_HierarchicalAgreement(el);
+        })();
+        const newAgreement: HierarchicalAgreement = data.newAgreement
             ? _decode_HierarchicalAgreement(data.newAgreement)
-            : (() => {
-                const el = new BERElement();
-                el.fromBytes(opBinding.agreement_ber);
-                return _decode_HierarchicalAgreement(el);
-            })();
+            : oldAgreement;
 
         if (!data.initiator) {
             throw new Error(); // Required for an HOB modification. roleAssignment
-        }
-
-        // If the agreement hasn't changed, there is nothing to do.
-        if (!data.newAgreement) {
-            return {
-                null_: null,
-            };
         }
 
         if ("roleA_initiates" in data.initiator) {
             const init: SuperiorToSubordinateModification = _decode_SuperiorToSubordinateModification(data.initiator.roleA_initiates);
             // TODO: Check that the superior did not change Agreement.rdn.
             if (!compareDistinguishedName(
-                agreement.immediateSuperior,
+                newAgreement.immediateSuperior,
                 init.contextPrefixInfo.map((rdn) => rdn.rdn),
                 NAMING_MATCHER,
             )) {
@@ -355,41 +359,13 @@ async function modifyOperationalBinding (
                     },
                 );
             }
-            // Delete context prefix up until and including the CP entry.
-            // Create the new context, exactly like before.
-            // Reparent subordinate entry.
-            // const reply = await becomeSubordinate(ctx, agreement, init);
-            // TODO: I think you need to implement a modifySubordinate(). The above will not suffice.
-            const approved: boolean = await getApproval(created.uuid);
-            if (!approved) {
-                throw new errors.OperationalBindingError(
-                    ctx.i18n.t("err:ob_rejected"),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_invalidAgreement,
-                            data.bindingType,
-                            undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                undefined,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
-                        ),
-                    },
-                );
-            }
+            await updateContextPrefix(ctx, newAgreement, init);
             return {
                 null_: null,
             };
         } else if ("roleB_initiates" in data.initiator) {
-            // TODO: const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
-            // TODO: const reply = await becomeSuperior(ctx, agreement, init);
+            const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
+            await updateSubordinate(ctx, oldAgreement, newAgreement, init);
             return {
                 null_: null,
             };

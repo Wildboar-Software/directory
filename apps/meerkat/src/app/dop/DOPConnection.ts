@@ -41,6 +41,7 @@ import {
     Versions_v2,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 import establishOperationalBinding from "./operations/establishOperationalBinding";
+import modifyOperationalBinding from "./operations/modifyOperationalBinding";
 import terminateOperationalBinding from "./operations/terminateOperationalBinding";
 import {
     _decode_EstablishOperationalBindingArgument,
@@ -48,6 +49,12 @@ import {
 import {
     _encode_EstablishOperationalBindingResult,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
+import {
+    _decode_ModifyOperationalBindingArgument,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
+import {
+    _encode_ModifyOperationalBindingResult,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingResult.ta";
 import {
     _decode_TerminateOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
@@ -77,7 +84,7 @@ import sleep from "../utils/sleep";
 
 async function handleRequest (
     ctx: Context,
-    dop: DOPConnection, // eslint-disable-line
+    conn: DOPConnection, // eslint-disable-line
     request: Request,
 ): Promise<void> {
     if (!("local" in request.opcode)) {
@@ -87,17 +94,27 @@ async function handleRequest (
     case (100): { // establish
         const arg = _decode_EstablishOperationalBindingArgument(request.argument);
         const result = await establishOperationalBinding(ctx, arg);
-        await dop.idm.writeResult(
+        await conn.idm.writeResult(
             request.invokeID,
             request.opcode,
             _encode_EstablishOperationalBindingResult(result, DER),
         );
         break;
     }
+    case (102): { // modify
+        const arg = _decode_ModifyOperationalBindingArgument(request.argument);
+        const result = await modifyOperationalBinding(ctx, conn, arg);
+        await conn.idm.writeResult(
+            request.invokeID,
+            request.opcode,
+            _encode_ModifyOperationalBindingResult(result, DER),
+        );
+        break;
+    }
     case (101): { // terminate
         const arg = _decode_TerminateOperationalBindingArgument(request.argument);
         const result = await terminateOperationalBinding(ctx, this, arg);
-        await dop.idm.writeResult(
+        await conn.idm.writeResult(
             request.invokeID,
             request.opcode,
             _encode_TerminateOperationalBindingResult(result, DER),

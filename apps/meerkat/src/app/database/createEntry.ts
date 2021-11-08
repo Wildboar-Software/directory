@@ -26,8 +26,6 @@ async function createEntry (
     values: Value[] = [],
     modifier: DistinguishedName = [],
 ): Promise<Vertex> {
-    const label = randomBytes(4).toString("base64");
-    console.time(label);
     const objectClasses = values
         .filter((value) => value.type.isEqualTo(objectClass["&id"]))
         .map((value) => value.value.objectIdentifier);
@@ -100,7 +98,6 @@ async function createEntry (
     });
     assert(newEntry);
     const ret = await vertexFromDatabaseEntry(ctx, superior, newEntry, true);
-    console.timeEnd(label);
     return ret;
 }
 

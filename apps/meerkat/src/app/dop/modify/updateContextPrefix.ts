@@ -3,23 +3,20 @@ import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import type {
-    SuperiorToSubordinate,
     SuperiorToSubordinateModification,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinateModification.ta";
 import {
     MasterAndShadowAccessPoints,
-    SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import {
-    MasterOrShadowAccessPoint,
     _encode_MasterOrShadowAccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
-import {
-    MasterOrShadowAccessPoint_category_master,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
-import {
+import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import type {
+    RelativeDistinguishedName as RDN,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
@@ -27,11 +24,39 @@ import { Knowledge } from "@prisma/client";
 import deleteEntry from "../../database/deleteEntry";
 import { DER } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
+import getDistinguishedName from "../../x500/getDistinguishedName";
+import addAttributes from "../../database/entry/addAttributes";
+import removeAttribute from "../../database/entry/removeAttribute";
+import {
+    objectClass,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import {
+    entryACI,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
+import {
+    prescriptiveACI,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
+import {
+    subentryACI,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
+import {
+    administrativeRole,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+import {
+    accessControlScheme,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
+import {
+    commonName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import {
+    subtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 
-// NOTE: This is for RECEIVING an update to the CP, not creating one.
-// TODO: If context prefix initialization fails, undo all changes.
 /**
- * @deprecated This is not used anywhere.
+ * @description
+ *
+ * This is for RECEIVING an update to the CP, not creating one.
+ *
  * @param ctx
  * @param oldAgreement
  * @param newAgreement
@@ -43,10 +68,8 @@ export
 async function updateContextPrefix (
     ctx: Context,
     oldAgreement: HierarchicalAgreement,
-    newAgreement: HierarchicalAgreement,
-    init: SuperiorToSubordinate,
     mod: SuperiorToSubordinateModification,
-): Promise<SubordinateToSuperior> {
+): Promise<void> {
 
     // Because we use the agreement's RDN to find the entry, it's critical that
     // the agreement in the database is kept in sync with the entry's RDN.
@@ -54,107 +77,201 @@ async function updateContextPrefix (
         ...oldAgreement.immediateSuperior,
         oldAgreement.rdn,
     ];
-    const oldCP = await findEntry(ctx, ctx.dit.root, oldDN);
+
+    const oldCP = await findEntry(ctx, ctx.dit.root, oldDN); // FIXME: I think you could just search for the immediate superior.
     if (!oldCP) {
         throw new Error(); // FIXME:
     }
 
-    /**
-     * Remove all entries from the old CP, ascending the DIT up until and
-     * including the first CP. We have to use this approach because the naming
-     * context superior to this OB's immediate superior naming context (the
-     * "grandfather" naming context, if that helps) might actually belong
-     * to this DSA! That would mean that we could accidentally delete our own
-     * data! There is no problem (that I can see) with having dangling `glue`
-     * DSEs lying around.
-     */
     const oldImmediateSuperior = oldCP.immediateSuperior;
     let currentOld: Vertex | undefined = oldImmediateSuperior;
     if (!currentOld) {
         throw new Error(); // FIXME:
     }
-    while (currentOld) {
-        await deleteEntry(ctx, currentOld);
-        if (currentOld.dse.cp) {
-            break;
-        }
+    while (
+        currentOld
+        && currentOld.immediateSuperior
+        && !currentOld.immediateSuperior.dse.entry
+    ) {
         currentOld = currentOld.immediateSuperior;
     }
+    const highestDseThatSuperiorDSAMayModify: Vertex | undefined = currentOld;
+    if (!highestDseThatSuperiorDSAMayModify) {
+        throw new Error();
+    }
+    const highestModifiableDN = getDistinguishedName(highestDseThatSuperiorDSAMayModify);
 
-    let currentRoot = ctx.dit.root;
-    for (let i = 0; i < mod.contextPrefixInfo.length; i++) {
+    await ctx.db.entry.update({
+        where: {
+            id: oldCP.dse.id,
+        },
+        data: {
+            deleteTimestamp: new Date(),
+            immediate_superior_id: null,
+        },
+    });
+
+    // Mark the subordinate DSE / CP as "deleted" and set its immediate_superior_id to `null`.
+    // Modify the context prefix.
+    // "Un-delete" the subordinate DSE and set its immediate_superior_id to the new superior.
+    // Reload the DIT, starting from the first DSE the HOB superior could not modify.
+
+    let currentRoot = highestDseThatSuperiorDSAMayModify;
+    // Can you trust mod.contextPrefixInfo.length? Yes, because the superior DSA may move its entries.
+    for (let i = highestModifiableDN.length - 1; i < mod.contextPrefixInfo.length; i++) {
         const vertex = mod.contextPrefixInfo[i];
-        let immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = undefined;
-        const last: boolean =( mod.contextPrefixInfo.length === (i + 1));
-        const existingEntry = await findEntry(ctx, currentRoot, [ vertex.rdn ]);
-        if (existingEntry) {
-            currentRoot = existingEntry;
-            /**
-             * We have already deleted any entries belonging to the superior
-             * naming context ...
-             *
-             * Actually, I just realized a problem with this: what if the
-             * grandfather naming context does NOT belong to this DSA and its
-             * admin points or subentries have changed?
-             *
-             * Could you just bail out if the existing DSE is of type subr?
-             */
-            continue;
-        }
-        immSuprAccessPoints = vertex.accessPoints;
+        const last: boolean = (mod.contextPrefixInfo.length === (i + 1));
+        const immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = vertex.accessPoints;
         const immSupr: boolean = Boolean(immSuprAccessPoints && last);
-        const createdEntry = await createEntry(
-            ctx,
-            currentRoot,
-            vertex.rdn,
-            {
-                glue: (!vertex.admPointInfo && !vertex.accessPoints),
-                rhob: Boolean(vertex.admPointInfo),
-                immSupr,
-                AccessPoint: immSupr
-                    ? {
-                        createMany: {
-                            data: vertex.accessPoints
-                                ? vertex.accessPoints.map((ap) => ({
-                                    ae_title: ap.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
-                                    knowledge_type: Knowledge.SPECIFIC,
-                                    category: ap.category,
-                                    chainingRequired: ap.chainingRequired,
-                                    ber: Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes()),
-                                }))
-                                : [],
-                        }
-                    }
-                    : undefined,
-            },
-            vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
-            [],
-        );
-        for (const subentry of (vertex.subentries ?? [])) {
-            await createEntry(
+        const existingEntry = await findEntry(ctx, currentRoot, [ vertex.rdn ]);
+        if (!existingEntry) {
+            const createdEntry = await createEntry(
                 ctx,
-                createdEntry,
-                subentry.rdn,
+                currentRoot,
+                vertex.rdn,
                 {
-                    subentry: true,
+                    glue: (!vertex.admPointInfo && !vertex.accessPoints),
+                    rhob: Boolean(vertex.admPointInfo),
+                    immSupr,
+                    AccessPoint: immSupr
+                        ? {
+                            createMany: {
+                                data: vertex.accessPoints
+                                    ? vertex.accessPoints.map((ap) => ({
+                                        ae_title: ap.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
+                                        knowledge_type: Knowledge.SPECIFIC,
+                                        category: ap.category,
+                                        chainingRequired: ap.chainingRequired,
+                                        ber: Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes()),
+                                    }))
+                                    : [],
+                            }
+                        }
+                        : undefined,
                 },
-                subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
                 [],
             );
+            for (const subentry of (vertex.subentries ?? [])) {
+                await createEntry(
+                    ctx,
+                    createdEntry,
+                    subentry.rdn,
+                    {
+                        subentry: true,
+                        rhob: true,
+                    },
+                    subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                    [],
+                );
+            }
+            const oldRDN: RDN = oldAgreement.immediateSuperior[i];
+            const oldVertex = await findEntry(ctx, currentRoot, [ oldRDN ]);
+            if (oldVertex) {
+                await deleteEntry(ctx, oldVertex);
+            }
+            currentRoot = createdEntry;
+        } else {
+            currentRoot = existingEntry;
+            if (vertex.admPointInfo) {
+                const deletions = (
+                    await Promise.all(
+                        vertex.admPointInfo
+                            .map((attr) => removeAttribute(ctx, currentRoot, attr.type_, []))
+                    )
+                ).flat();
+                await ctx.db.$transaction([
+                    ctx.db.attributeValue.deleteMany({
+                        where: {
+                            entry_id: currentRoot.dse.id,
+                        },
+                    }),
+                    ...deletions,
+                    ...await addAttributes(ctx, currentRoot, vertex.admPointInfo, []), // FIXME: modifiersName
+                ]);
+                for (const subentry of vertex.subentries ?? []) {
+                    const oldSubentry = await findEntry(ctx, currentRoot, [ subentry.rdn ]);
+                    if (!oldSubentry) {
+                        await createEntry(
+                            ctx,
+                            currentRoot,
+                            subentry.rdn,
+                            {
+                                subentry: true,
+                                rhob: true,
+                            },
+                            subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                            [],
+                        );
+                        continue;
+                    }
+                    const subentryDeletions = (
+                        await Promise.all(
+                            [
+                                commonName["&id"],
+                                subtreeSpecification["&id"],
+                                prescriptiveACI["&id"],
+                            ]
+                                .map((type_) => removeAttribute(ctx, oldSubentry, type_, [])),
+                        )
+                    ).flat();
+                    const subentryInfoDeletions = (
+                        await Promise.all(
+                            subentry.info
+                                .map((attr) => removeAttribute(ctx, oldSubentry, attr.type_, []))
+                        )
+                    ).flat();
+                    await ctx.db.$transaction([
+                        ctx.db.attributeValue.deleteMany({
+                            where: {
+                                entry_id: oldSubentry.dse.id,
+                            },
+                        }),
+                        ...subentryDeletions,
+                        ...subentryInfoDeletions,
+                        ...await addAttributes(ctx, currentRoot, subentry.info, []), // FIXME: modifiersName
+                    ]);
+                }
+            } else { // This point is no longer an administrative point, or never was.
+                const deletions = (
+                    await Promise.all(
+                        [
+                            administrativeRole["&id"],
+                            accessControlScheme["&id"],
+                            subentryACI["&id"],
+                        ]
+                            .map((type_) => removeAttribute(ctx, currentRoot, type_, [])),
+                    )
+                ).flat();
+                await ctx.db.$transaction(deletions);
+            }
+            if (currentRoot.dse.shadow) {
+                continue; // We don't modify shadow entries.
+            }
         }
     }
-    const createdCP = await createEntry(
-        ctx,
-        currentRoot,
-        newAgreement.rdn,
-        {
-            cp: true,
-            immSupr: false, // This is supposed to be on the superior of this entry.
-            entry: true,
-        },
-        mod.immediateSuperiorInfo?.flatMap((attr) => valuesFromAttribute(attr)) ?? [],
-        [],
-    );
+
+    if (mod.immediateSuperiorInfo) {
+        const deletions = (
+            await Promise.all(
+                mod.immediateSuperiorInfo
+                    .filter((attr) => (
+                        attr.type_.isEqualTo(objectClass["&id"])
+                        || attr.type_.isEqualTo(entryACI["&id"])
+                    ))
+                    .map((attr) => removeAttribute(ctx, currentRoot, attr.type_, []))
+            )
+        ).flat();
+        await ctx.db.$transaction([
+            // ctx.db.attributeValue.deleteMany({
+            //     where: {
+            //         entry_id: currentRoot.dse.id,
+            //     },
+            // }),
+            ...deletions,
+            ...await addAttributes(ctx, currentRoot, mod.immediateSuperiorInfo, []), // FIXME: modifiersName
+        ]);
+    }
 
     // This should not be present in a Sup2SubModification.
     // if (sup2sub.entryInfo) {
@@ -162,37 +279,18 @@ async function updateContextPrefix (
     //     await writeEntryAttributes(ctx, subr, values);
     // }
 
+    await ctx.db.entry.update({
+        where: {
+            id: oldCP.dse.id,
+        },
+        data: {
+            deleteTimestamp: null,
+            immediate_superior_id: currentRoot.dse.id,
+        },
+    });
+
     // TODO: Update the knowledge references of the root DSE (supr) if the highest NC has changed.
     // TODO: I think you need supr knowledge in the root DSE.
-    const myAccessPoint = ctx.dsa.accessPoint;
-    return new SubordinateToSuperior(
-        [
-            // TODO: NOTE 1 – The master access point within accessPoints is the same
-            // as that passed in the accessPoint parameter of the Establish and
-            // Modify Operational Binding operations.
-            new MasterOrShadowAccessPoint(
-                myAccessPoint.ae_title,
-                myAccessPoint.address,
-                myAccessPoint.protocolInformation,
-                MasterOrShadowAccessPoint_category_master,
-                false,
-            ),
-            /** REVIEW:
-             * ITU Recommendation X.518 (2016), Section 23.1.2, says that:
-             *
-             * > The values of the consumerKnowledge and secondaryShadows (both
-             * > held in the subordinate context prefix DSE) are used to form
-             * > additional elements in accessPoints with category having the
-             * > value shadow.
-             *
-             * But the context prefix is newly created by the operation itself,
-             * so how could it possibly have shadows at that time?
-             */
-        ],
-        Boolean(createdCP.dse.alias),
-        mod.entryInfo,
-        undefined,
-    );
 }
 
 export default updateContextPrefix;

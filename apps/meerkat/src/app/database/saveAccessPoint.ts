@@ -72,6 +72,45 @@ async function saveAccessPoint (
             non_supplying_master_id,
             is_consumer_of_id,
             ber,
+            NSAP: {
+                createMany: {
+                    data: ap.address.nAddresses.map((nsap) => {
+                        const url: string | undefined = ((): string | undefined => {
+                            if (nsap[0] !== 0xFF) { // It is not a URL.
+                                return undefined;
+                            }
+                            try {
+                                const [ , uri ] = uriFromNSAP(nsap);
+                                return uri;
+                            } catch {
+                                return undefined;
+                            }
+                        })();
+                        const ip_and_port = ((): [ string, number | undefined ] | undefined => {
+                            if (nsap[0] !== 0xFF) { // It is not a URL.
+                                return undefined;
+                            }
+                            for (let i = 0; i < commonPrefix.length; i++) {
+                                if (nsap[i] !== commonPrefix[i]) {
+                                    return undefined;
+                                }
+                            }
+                            const [ , ip, port ] = ipv4FromNSAP(nsap);
+                            return [ Array.from(ip).join("."), port ];
+                        })();
+                        return {
+                            ipv4: ip_and_port
+                                ? ip_and_port[0]
+                                : undefined,
+                            tcp_port: ip_and_port
+                                ? ip_and_port[1]
+                                : undefined,
+                            url,
+                            bytes: Buffer.from(nsap),
+                        };
+                    }),
+                },
+            },
         },
     });
     if (("consumers" in ap) && ap.consumers) {
@@ -79,44 +118,6 @@ async function saveAccessPoint (
             await saveAccessPoint(ctx, consumer, Knowledge.CONSUMER, undefined, created.id);
         }
     }
-    await ctx.db.networkServiceAccessPoint.createMany({
-        data: ap.address.nAddresses.map((nsap) => {
-            const url: string | undefined = ((): string | undefined => {
-                if (nsap[0] !== 0xFF) { // It is not a URL.
-                    return undefined;
-                }
-                try {
-                    const [ , uri ] = uriFromNSAP(nsap);
-                    return uri;
-                } catch {
-                    return undefined;
-                }
-            })();
-            const ip_and_port = ((): [ string, number | undefined ] | undefined => {
-                if (nsap[0] !== 0xFF) { // It is not a URL.
-                    return undefined;
-                }
-                for (let i = 0; i < commonPrefix.length; i++) {
-                    if (nsap[i] !== commonPrefix[i]) {
-                        return undefined;
-                    }
-                }
-                const [ , ip, port ] = ipv4FromNSAP(nsap);
-                return [ Array.from(ip).join("."), port ];
-            })();
-            return {
-                ipv4: ip_and_port
-                    ? ip_and_port[0]
-                    : undefined,
-                tcp_port: ip_and_port
-                    ? ip_and_port[1]
-                    : undefined,
-                url,
-                access_point_id: created.id,
-                bytes: Buffer.from(nsap),
-            };
-        }),
-    });
     return created.id;
 }
 

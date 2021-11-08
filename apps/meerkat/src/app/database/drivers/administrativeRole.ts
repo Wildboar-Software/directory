@@ -55,6 +55,12 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    if (
+        ((await ctx.db.entryAdministrativeRole.count()) === 1)
+        && (await hasValue(ctx, vertex, value))
+    ) {
+        pendingUpdates.entryUpdate.admPoint = false;
+    }
     pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.deleteMany({
         where: {
             entry_id: vertex.dse.id,
@@ -74,6 +80,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
             entry_id: vertex.dse.id,
         },
     }));
+    pendingUpdates.entryUpdate.admPoint = false;
 };
 
 export
