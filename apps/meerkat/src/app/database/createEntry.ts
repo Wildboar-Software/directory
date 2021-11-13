@@ -97,7 +97,7 @@ async function createEntry (
         },
     });
     assert(newEntry);
-    const ret = await vertexFromDatabaseEntry(ctx, superior, newEntry, true);
+    const ret = await vertexFromDatabaseEntry(ctx, superior, newEntry, false);
     return ret;
 }
 
