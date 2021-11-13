@@ -454,7 +454,7 @@ interface Configuration {
     bindMinSleepInMilliseconds: number;
     bindSleepRangeInMilliseconds: number;
     minAuthLevelForOperationalBinding: number;
-
+    minAuthLocalQualifierForOperationalBinding: number;
 }
 
 export

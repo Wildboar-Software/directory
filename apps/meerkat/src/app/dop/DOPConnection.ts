@@ -1,4 +1,16 @@
-import { Context, ClientConnection } from "@wildboar/meerkat-types";
+import {
+    Context,
+    ClientConnection,
+    AbandonError,
+    AbandonFailedError,
+    AttributeError,
+    NameError,
+    ReferralError,
+    SecurityError,
+    ServiceError,
+    UpdateError,
+    UnknownOperationError,
+} from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import { IDMConnection } from "@wildboar/idm";
 import {
@@ -10,17 +22,6 @@ import {
 import type { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import {
-    AbandonError,
-    AbandonFailedError,
-    AttributeError,
-    NameError,
-    ReferralError,
-    SecurityError,
-    ServiceError,
-    UpdateError,
-    UnknownOperationError,
-} from "@wildboar/meerkat-types";
-import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { TRUE_BIT } from "asn1-ts";
@@ -29,7 +30,10 @@ import { _encode_AbandonFailedData } from "@wildboar/x500/src/lib/modules/Direct
 import { _encode_AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import { _encode_NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import { _encode_ReferralData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReferralData.ta";
-import { _encode_SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityErrorData,
+    _encode_SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import { _encode_ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { _encode_UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
@@ -74,6 +78,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     SecurityProblem_noInformation,
+    SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
     AuthenticationLevel_basicLevels_level_none,
@@ -81,6 +86,10 @@ import {
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 
 async function handleRequest (
     ctx: Context,
@@ -133,6 +142,37 @@ async function handleRequestAndErrors (
     request: Request,
 ): Promise<void> {
     try {
+        /**
+         * We block DOP requests that do not meet some configured minimum of
+         * authentication, because requests--accepted or not--take up database
+         * storage, so we need to enforce a modicum of authentication so
+         * nefarious users cannot initiate a storage-exhaustion-based denial of
+         * service attack.
+         */
+        if (
+            !("basicLevels" in dop.authLevel)
+            || (dop.authLevel.basicLevels.level < ctx.config.minAuthLevelForOperationalBinding)
+            || ((dop.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.minAuthLocalQualifierForOperationalBinding)
+        ) {
+            throw new SecurityError(
+                ctx.i18n.t("err:not_authorized_ob"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        dop.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
         await handleRequest(ctx, dop, request);
     } catch (e) {
         ctx.log.error(e);

@@ -108,5 +108,6 @@
     "unsupported_familygrouping": "Unsupported familyGrouping option.",
     "child_cannot_be_in_hierarchy": "Child member of a compound entry may not be in a hierarchical group.",
     "cannot_move_child": "Cannot move child entry, because it would break a compound entry.",
-    "unavailable_critical_extension": "Unavailable critical extension {{index}}."
+    "unavailable_critical_extension": "Unavailable critical extension {{index}}.",
+    "not_authorized_ob": "Not authorized to request an operational binding."
 }
