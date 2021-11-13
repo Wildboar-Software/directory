@@ -187,7 +187,7 @@ import {
     // SearchControlOptions_includeAllAreas,
     // SearchControlOptions_noSystemRelaxation,
     // SearchControlOptions_dnAttribute,
-    // SearchControlOptions_matchOnResidualName,
+    SearchControlOptions_matchOnResidualName,
     // SearchControlOptions_entryCount,
     // SearchControlOptions_useSubset,
     SearchControlOptions_separateFamilyMembers,
@@ -206,6 +206,18 @@ import {
     family_information,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
 import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
+import type {
+    Filter,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
+import type {
+    FilterItem,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
+import {
+    AttributeValueAssertion,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
+import type {
+    RelativeDistinguishedName as RDN,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -560,7 +572,7 @@ async function search_i (
     // const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
     // const noSystemRelaxation: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_noSystemRelaxation]);
     // const dnAttribute: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_dnAttribute]);
-    // const matchOnResidualName: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchOnResidualName]);
+    const matchOnResidualName: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchOnResidualName]);
     // const entryCount: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_entryCount]);
     // const useSubset: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_useSubset]);
     const separateFamilyMembers: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_separateFamilyMembers]);
@@ -845,7 +857,23 @@ async function search_i (
      */
     const entryOnly = state.chainingArguments.entryOnly ?? ChainingArguments._default_value_for_entryOnly;
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
-    const filter = data.filter ?? SearchArgumentData._default_value_for_filter;
+    const filter: Filter = (matchOnResidualName && state.partialName)
+        ? {
+            and: [
+                (data.filter ?? SearchArgumentData._default_value_for_filter),
+                data.baseObject.rdnSequence
+                    .slice(targetDN.length)
+                    .flatMap((unmatchedRDN: RDN): FilterItem[] => unmatchedRDN
+                        .map((atav): FilterItem => ({
+                            equality: new AttributeValueAssertion(
+                                atav.type_,
+                                atav.value,
+                                undefined,
+                            ),
+                        }))),
+            ],
+        }
+        : (data.filter ?? SearchArgumentData._default_value_for_filter);
     const serviceControlOptions = data.serviceControls?.options;
     // Service controls
     const dontUseCopy: boolean = (
