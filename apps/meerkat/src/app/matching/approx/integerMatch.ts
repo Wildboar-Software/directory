@@ -9,7 +9,7 @@ function getIntegerMatch (percentToleration: number): EqualityMatcher {
     ): boolean => {
         const a: INTEGER = assertion.integer;
         const v: INTEGER = value.integer;
-        const percentIncorrect = Math.abs((v - a) / v) * 100;
+        const percentIncorrect = Math.abs(Number((BigInt(v) - BigInt(a)) / BigInt(v))) * 100;
         return (percentIncorrect <= percentToleration);
     };
 }

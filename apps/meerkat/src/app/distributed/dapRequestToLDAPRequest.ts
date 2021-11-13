@@ -643,7 +643,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
             {
                 searchRequest: new SearchRequest(
                     encodeLDAPDN(ctx, data.baseObject.rdnSequence),
-                    data.subset ?? SearchRequest_scope_baseObject,
+                    Number(data.subset ?? SearchRequest_scope_baseObject),
                     dontDereferenceAliases
                         ? SearchRequest_derefAliases_neverDerefAliases
                         : SearchRequest_derefAliases_derefFindingBaseObj,

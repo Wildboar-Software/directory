@@ -17,7 +17,9 @@ function getStatisticsFromPagedResultsRequest (prr: PagedResultsRequest): PagedR
         newRequest: "newRequest" in prr,
         queryReference: "queryReference" in prr,
         abandonQuery: "abandonQuery" in prr,
-        pageSize: newRequest?.pageSize,
+        pageSize: (newRequest?.pageSize !== undefined)
+            ? Number(newRequest.pageSize)
+            : undefined,
         sortKeys: newRequest?.sortKeys
             ?.map((sk) => ({
                 type: sk.type_.toString(),
@@ -25,7 +27,9 @@ function getStatisticsFromPagedResultsRequest (prr: PagedResultsRequest): PagedR
             })),
         reverse: newRequest?.reverse,
         unmerged: newRequest?.unmerged,
-        pageNumber: newRequest?.pageNumber,
+        pageNumber: (newRequest?.pageNumber !== undefined)
+            ? Number(newRequest.pageNumber)
+            : undefined,
     };
 }
 

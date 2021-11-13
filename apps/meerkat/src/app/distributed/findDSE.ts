@@ -220,14 +220,16 @@ async function findDSE (
     let nssrEncountered: boolean = false;
     let nameResolutionPhase: OperationProgress_nameResolutionPhase = state.chainingArguments
         .operationProgress?.nameResolutionPhase ?? OperationProgress_nameResolutionPhase_notStarted;
-    let nextRDNToBeResolved: number = state.chainingArguments.operationProgress?.nextRDNToBeResolved ?? 0;
+    let nextRDNToBeResolved: number = (state.chainingArguments.operationProgress?.nextRDNToBeResolved !== undefined)
+        ? Number(state.chainingArguments.operationProgress.nextRDNToBeResolved)
+        : 0;
     const m: number = needleDN.length;
     let lastEntryFound: number = 0; // The last RDN whose DSE was of type entry.
     let dse_lastEntryFound: Vertex | undefined = undefined;
     let lastCP: Vertex | undefined;
     const candidateRefs: ContinuationReference[] = [];
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const opArgElements = state.operationArgument.set;
     const criticalExtensions = opArgElements

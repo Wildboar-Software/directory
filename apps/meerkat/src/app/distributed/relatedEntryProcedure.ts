@@ -94,7 +94,7 @@ async function relatedEntryProcedure (
     chaining?: ChainingArguments,
 ): Promise<void> {
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = chaining?.timeLimit
         ? getDateFromTime(chaining.timeLimit)

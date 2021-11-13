@@ -10,8 +10,12 @@ function getStatisticsFromSecurityParameters (sc: SecurityParameters): SecurityP
         certificationPathLength: sc.certification_path?.theCACertificates?.length,
         operationCode: Boolean(sc.operationCode),
         errorCode: Boolean(sc.errorCode),
-        target: sc.target,
-        errorProtection: sc.errorProtection,
+        target: (sc.target !== undefined)
+            ? Number(sc.target)
+            : undefined,
+        errorProtection: (sc.errorProtection !== undefined)
+            ? Number(sc.errorProtection)
+            : undefined,
         time: sc.time
             ? (("utcTime" in sc.time) ? sc.time.utcTime : sc.time.generalizedTime).toISOString()
             : undefined,

@@ -25,6 +25,24 @@ export
 function getStatisticsFromServiceControls (sc: ServiceControls): ServiceControlStatistics {
     return {
         ...sc,
+        priority: (sc.priority !== undefined)
+            ? Number(sc.priority)
+            : undefined,
+        sizeLimit: (sc.sizeLimit !== undefined)
+            ? Number(sc.sizeLimit)
+            : undefined,
+        timeLimits: (sc.timeLimit !== undefined)
+            ? Number(sc.timeLimit)
+            : undefined,
+        attributeSizeLimit: (sc.attributeSizeLimit !== undefined)
+            ? Number(sc.attributeSizeLimit)
+            : undefined,
+        scopeOfReferral: (sc.scopeOfReferral !== undefined)
+            ? Number(sc.scopeOfReferral)
+            : undefined,
+        userClass: (sc.userClass !== undefined)
+            ? Number(sc.userClass)
+            : undefined,
         options: {
             preferChaining: (sc.options?.[ServiceControlOptions_preferChaining] === TRUE_BIT),
             chainingProhibited: (sc.options?.[ServiceControlOptions_chainingProhibited] === TRUE_BIT),

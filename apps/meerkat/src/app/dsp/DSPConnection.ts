@@ -109,16 +109,16 @@ async function handleRequestAndErrors (
         },
     };
     const info: OperationInvocationInfo = {
-        invokeId: request.invokeID,
+        invokeId: Number(request.invokeID),
         operationCode: request.opcode,
         startTime: new Date(),
         events: new EventEmitter(),
     };
-    if (dsp.invocations.has(request.invokeID)) {
+    if (dsp.invocations.has(Number(request.invokeID))) {
         await dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
     }
-    dsp.invocations.set(request.invokeID, info);
+    dsp.invocations.set(Number(request.invokeID), info);
     try {
         await handleRequest(ctx, dsp, request, stats);
     } catch (e) {
@@ -143,14 +143,14 @@ async function handleRequestAndErrors (
             const code = _encode_Code(errors.AbandonFailedError.errcode, BER);
             const data = _encode_AbandonFailedData(e.data, BER);
             await dsp.idm.writeError(request.invokeID, code, data);
-            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.AttributeError) {
             const code = _encode_Code(errors.AttributeError.errcode, BER);
             const data = _encode_AttributeErrorData(e.data, BER);
             await dsp.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
                 type: ap.type_.toString(),
-                problem: ap.problem,
+                problem: Number(ap.problem),
             }));
         } else if (e instanceof errors.NameError) {
             const code = _encode_Code(errors.NameError.errcode, BER);
@@ -166,17 +166,17 @@ async function handleRequestAndErrors (
             const code = _encode_Code(errors.SecurityError.errcode, BER);
             const data = _encode_SecurityErrorData(e.data, BER);
             await dsp.idm.writeError(request.invokeID, code, data);
-            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
             const data = _encode_ServiceErrorData(e.data, BER);
             await dsp.idm.writeError(request.invokeID, code, data);
-            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.UpdateError) {
             const code = _encode_Code(errors.UpdateError.errcode, BER);
             const data = _encode_UpdateErrorData(e.data, BER);
             await dsp.idm.writeError(request.invokeID, code, data);
-            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.problem = Number(e.data.problem);
             stats.outcome.error.attributeInfo = e.data.attributeInfo?.map((ai) => {
                 if ("attributeType" in ai) {
                     return ai.attributeType.toString();
@@ -192,7 +192,7 @@ async function handleRequestAndErrors (
             await dsp.idm.writeAbort(Abort_reasonNotSpecified);
         }
     } finally {
-        dsp.invocations.delete(request.invokeID);
+        dsp.invocations.delete(Number(request.invokeID));
         for (const opstat of ctx.statistics.operations) {
             ctx.telemetry.sendEvent(opstat);
         }

@@ -85,63 +85,21 @@ import {
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
-import type {
-    DITStructureRule,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DITStructureRule.ta";
-import type {
-    DITContentRule,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DITContentRule.ta";
-import type {
-    DITContextUse,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DITContextUse.ta";
 import {
     DITStructureRuleDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
 import {
-    NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
-import {
-    NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
-import {
     DITContentRuleDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
 import {
-    MatchingRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleDescription.ta";
-import {
-    ObjectClassDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassDescription.ta";
-import {
-    ObjectClassInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassInformation.ta";
-import {
-    AttributeTypeDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeDescription.ta";
-import {
-    AttributeTypeInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeInformation.ta";
-import {
     MatchingRuleUseDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
-import {
-    ContextDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextDescription.ta";
-import {
-    ContextInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextInformation.ta";
 import {
     FriendsDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
 import {
     DITContextUseDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
-import {
-    DITContextUseInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
-import {
-    LdapSyntaxDescription,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
 import { EventEmitter } from "events";
 import type { i18n } from "i18next";
 
@@ -495,6 +453,8 @@ interface Configuration {
     bulkInsertMode: boolean;
     bindMinSleepInMilliseconds: number;
     bindSleepRangeInMilliseconds: number;
+    minAuthLevelForOperationalBinding: number;
+
 }
 
 export

@@ -395,7 +395,9 @@ class OperationDispatcher {
                 operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
                 targetNameLength: data.baseObject.rdnSequence.length,
-                subset: data.subset,
+                subset: (data.subset !== undefined)
+                    ? Number(data.subset)
+                    : undefined,
                 filter: data.filter
                     ? getFilterStatistics(data.filter)
                     : undefined,
@@ -412,7 +414,9 @@ class OperationDispatcher {
                     : undefined,
                 checkOverspecified: data.checkOverspecified,
                 // relaxation
-                extendedArea: data.extendedArea,
+                extendedArea: (data.extendedArea !== undefined)
+                    ? Number(data.extendedArea)
+                    : undefined,
                 hierarchySelections: data.hierarchySelections
                     ? Array.from(data.hierarchySelections)
                     : undefined,
@@ -961,7 +965,7 @@ class OperationDispatcher {
         const data = getOptionallyProtectedValue(argument);
         const encodedArgument = _encode_SearchArgument(argument, DER);
         const targetObject = chaining.relatedEntry // The specification is not clear of what to do for targetObject.
-            ? data.joinArguments?.[chaining.relatedEntry]?.joinBaseObject.rdnSequence
+            ? data.joinArguments?.[Number(chaining.relatedEntry)]?.joinBaseObject.rdnSequence
             : chaining.targetObject ?? data.baseObject.rdnSequence;
         if (!targetObject) {
             throw new errors.SecurityError(

@@ -99,7 +99,7 @@ function getSoughtObjectFromRequest (
         const arg = search.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         if (chainingArguments?.relatedEntry !== undefined) {
-            const relatedEntry = data.joinArguments?.[chainingArguments.relatedEntry];
+            const relatedEntry = data.joinArguments?.[Number(chainingArguments.relatedEntry)];
             if (!relatedEntry) {
                 return undefined; // TODO: Throw an invalid request error.
             }

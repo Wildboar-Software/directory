@@ -98,7 +98,7 @@ async function removeEntry (
     const argument = _decode_RemoveEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)

@@ -18,11 +18,18 @@ export
 function encryptPassword (algId: AlgorithmIdentifier, password: Uint8Array): Uint8Array | null {
     if (algId.algorithm.isEqualTo(scrypt["&id"]!) && algId.parameters) {
         const parameters: typeof scrypt["&Type"] = scrypt.decoderFor["&Type"]!(algId.parameters);
-        return crypto.scryptSync(password, parameters.salt, parameters.keyLength ?? 128, {
-            cost: parameters.costParameter,
-            blockSize: parameters.blockSize,
-            parallelization: parameters.parallelizationParameter,
-        });
+        return crypto.scryptSync(
+            password,
+            parameters.salt,
+            parameters.keyLength
+                ? Number(parameters.keyLength)
+                : 128,
+            {
+                cost: Number(parameters.costParameter),
+                blockSize: Number(parameters.blockSize),
+                parallelization: Number(parameters.parallelizationParameter),
+            },
+        );
     } else {
         return null;
     }

@@ -6,12 +6,18 @@ export
 function getContinuationReferenceStatistics (cr: ContinuationReference): ContinuationReferenceStatistics {
     return {
         targetObjectNameLength: cr.targetObject.rdnSequence.length,
-        aliasedRDNs: cr.aliasedRDNs,
+        aliasedRDNs: (cr.aliasedRDNs !== undefined)
+            ? Number(cr.aliasedRDNs)
+            : undefined,
         operationProgress: {
             phase: cr.operationProgress?.nameResolutionPhase,
-            next: cr.operationProgress?.nextRDNToBeResolved,
+            next: (cr.operationProgress?.nextRDNToBeResolved !== undefined)
+                ? Number(cr.operationProgress.nextRDNToBeResolved)
+                : undefined,
         },
-        rdnsResolved: cr.rdnsResolved,
+        rdnsResolved: (cr.rdnsResolved !== undefined)
+            ? Number(cr.rdnsResolved)
+            : undefined,
         referenceType: cr.referenceType,
         accessPoints: cr.accessPoints.map(getAccessPointInformationStatistics),
         entryOnly: cr.entryOnly,

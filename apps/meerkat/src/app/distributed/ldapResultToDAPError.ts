@@ -1,4 +1,5 @@
 import * as errors from "@wildboar/meerkat-types";
+import type { INTEGER } from "asn1-ts";
 import {
     LDAPResult,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
@@ -128,7 +129,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import ldapReferenceToContinuationReference from "../ldap/ldapReferenceToContinuationReference";
 
-function serviceErrorData (problem: number): ServiceErrorData {
+function serviceErrorData (problem: INTEGER): ServiceErrorData {
     return new ServiceErrorData(
         problem,
         [],
@@ -139,7 +140,7 @@ function serviceErrorData (problem: number): ServiceErrorData {
     );
 }
 
-function securityErrorData (problem: number): SecurityErrorData {
+function securityErrorData (problem: INTEGER): SecurityErrorData {
     return new SecurityErrorData(
         problem,
         undefined,
@@ -166,7 +167,7 @@ function attributeErrorData (): AttributeErrorData {
     );
 }
 
-function nameErrorData (problem: number): NameErrorData {
+function nameErrorData (problem: INTEGER): NameErrorData {
     return new NameErrorData(
         problem,
         {
@@ -180,7 +181,7 @@ function nameErrorData (problem: number): NameErrorData {
     );
 }
 
-function updateErrorData (problem: number): UpdateErrorData {
+function updateErrorData (problem: INTEGER): UpdateErrorData {
     return new UpdateErrorData(
         problem,
         undefined,

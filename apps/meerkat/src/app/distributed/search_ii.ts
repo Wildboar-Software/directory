@@ -72,7 +72,7 @@ async function search_ii (
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
     const serviceControlOptions = data.serviceControls?.options;
@@ -127,7 +127,7 @@ async function search_ii (
     if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
-            const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
+            const pi = (((nr.pageNumber !== undefined) ? Number(nr.pageNumber) : 1) - 1); // The spec is unclear if this is zero-indexed.
             if ((pi < 0) || !Number.isSafeInteger(pi)) {
                 throw new errors.ServiceError(
                     ctx.i18n.t("err:page_number_invalid", {
@@ -172,7 +172,9 @@ async function search_ii (
             const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             const newPagingState: PagedResultsRequestState = {
                 cursorIds: [],
-                pageIndex: ((data.pagedResults.newRequest.pageNumber ?? 1) - 1),
+                pageIndex: (((data.pagedResults.newRequest.pageNumber !== undefined)
+                    ? Number(data.pagedResults.newRequest.pageNumber)
+                    : 1) - 1),
                 request: data.pagedResults.newRequest,
             };
             searchState.paging = [ queryReference, newPagingState ];

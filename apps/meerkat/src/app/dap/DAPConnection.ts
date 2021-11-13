@@ -114,16 +114,16 @@ async function handleRequestAndErrors (
         },
     };
     const info: OperationInvocationInfo = {
-        invokeId: request.invokeID,
+        invokeId: Number(request.invokeID),
         operationCode: request.opcode,
         startTime: new Date(),
         events: new EventEmitter(),
     };
-    if (dap.invocations.has(request.invokeID)) {
+    if (dap.invocations.has(Number(request.invokeID))) {
         await dap.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
     }
-    dap.invocations.set(request.invokeID, info);
+    dap.invocations.set(Number(request.invokeID), info);
     try {
         await handleRequest(ctx, dap, request, stats);
     } catch (e) {
@@ -150,14 +150,14 @@ async function handleRequestAndErrors (
             const code = _encode_Code(errors.AbandonFailedError.errcode, BER);
             const data = _encode_AbandonFailedData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.AttributeError) {
             const code = _encode_Code(errors.AttributeError.errcode, BER);
             const data = _encode_AttributeErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
                 type: ap.type_.toString(),
-                problem: ap.problem,
+                problem: Number(ap.problem),
             }));
         } else if (e instanceof errors.NameError) {
             const code = _encode_Code(errors.NameError.errcode, BER);
@@ -173,17 +173,17 @@ async function handleRequestAndErrors (
             const code = _encode_Code(errors.SecurityError.errcode, BER);
             const data = _encode_SecurityErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
             const data = _encode_ServiceErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.UpdateError) {
             const code = _encode_Code(errors.UpdateError.errcode, BER);
             const data = _encode_UpdateErrorData(e.data, BER);
             await dap.idm.writeError(request.invokeID, code, data);
-            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.problem = Number(e.data.problem);
             stats.outcome.error.attributeInfo = e.data.attributeInfo?.map((ai) => {
                 if ("attributeType" in ai) {
                     return ai.attributeType.toString();
@@ -200,7 +200,7 @@ async function handleRequestAndErrors (
             // TODO: Don't you need to actually close the connection?
         }
     } finally {
-        dap.invocations.delete(request.invokeID);
+        dap.invocations.delete(Number(request.invokeID));
         if (
             compareCode(request.opcode, administerPassword["&operationCode"]!)
             || compareCode(request.opcode, administerPassword["&operationCode"]!)

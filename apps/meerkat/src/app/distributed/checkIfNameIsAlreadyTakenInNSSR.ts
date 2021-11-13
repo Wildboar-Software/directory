@@ -77,7 +77,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
     destinationDN: DistinguishedName,
 ): Promise<void> {
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     for (const nsk of nonSpecificKnowledges) {
         const [ masters ] = splitIntoMastersAndShadows(nsk);

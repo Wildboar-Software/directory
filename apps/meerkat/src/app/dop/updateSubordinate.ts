@@ -280,7 +280,7 @@ async function updateSubordinate (
 
     const newBindingID = new OperationalBindingID(
         currentBindingID.identifier,
-        currentBindingID.identifier + 1,
+        Number(currentBindingID.version) + 1,
     );
 
     const arg: ModifyOperationalBindingArgument = {

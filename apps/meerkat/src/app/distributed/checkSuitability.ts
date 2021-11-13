@@ -21,7 +21,6 @@ import { strict as assert } from "assert";
 import isModificationOperation from "../x500/isModificationOperation";
 import unmetCriticalExtension from "../x500/unmetCriticalExtension";
 import {
-    ServiceProblem,
     ServiceProblem_unavailableCriticalExtension,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {

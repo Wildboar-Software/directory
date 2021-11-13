@@ -76,6 +76,7 @@ const ctx: Context = {
         bulkInsertMode: (process.env.MEERKAT_BULK_INSERT_MODE === "1"),
         bindMinSleepInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_MIN_SLEEP_MS ?? "") || 1000,
         bindSleepRangeInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_SLEEP_RANGE_MS ?? "") || 1000,
+        minAuthLevelForOperationalBinding: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_OB ?? "128"),
     },
     dsa: {
         accessPoint: new AccessPoint(

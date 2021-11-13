@@ -154,8 +154,8 @@ async function handleRequest (
         return;
     }
     if ("present" in dapRequest.invokeId) {
-        conn.messageIDToInvokeID.set(message.messageID, dapRequest.invokeId.present);
-        conn.invokeIDToMessageID.set(dapRequest.invokeId.present, message.messageID);
+        conn.messageIDToInvokeID.set(Number(message.messageID), Number(dapRequest.invokeId.present));
+        conn.invokeIDToMessageID.set(Number(dapRequest.invokeId.present), Number(message.messageID));
     }
     const result = await OperationDispatcher.dispatchDAPRequest(
         ctx,
@@ -269,11 +269,11 @@ async function handleRequestAndErrors (
             return; // FIXME: Return some other error.
         }
     } finally {
-        const invokeID = conn.messageIDToInvokeID.get(message.messageID);
+        const invokeID = conn.messageIDToInvokeID.get(Number(message.messageID));
         if (invokeID) {
             conn.invokeIDToMessageID.delete(invokeID);
         }
-        conn.messageIDToInvokeID.delete(message.messageID);
+        conn.messageIDToInvokeID.delete(Number(message.messageID));
         // ctx.log.debug(`Finished operation ${invokeID} / ${message.messageID}.`);
         // dap.invocations.set(request.invokeID, {
         //     invokeId: request.invokeID,

@@ -60,7 +60,7 @@ async function abandon (
         );
     }
     const invokeID = data.invokeID.present;
-    const op = conn.invocations.get(invokeID);
+    const op = conn.invocations.get(Number(invokeID));
     if (!op) {
         throw new errors.AbandonFailedError(
             ctx.i18n.t("err:invocation_not_found", {
@@ -113,7 +113,7 @@ async function abandon (
      */
     op.abandonTime = new Date();
     const acknowledgement = await Promise.race<number | undefined>([
-        new Promise<number>((resolve) => op.events.once("abandon", () => resolve(invokeID))),
+        new Promise<number>((resolve) => op.events.once("abandon", () => resolve(Number(invokeID)))),
         new Promise<undefined>((_, reject) => setTimeout(reject, 3000)), // Wait three seconds before timing out.
     ]);
     if (acknowledgement !== invokeID) {

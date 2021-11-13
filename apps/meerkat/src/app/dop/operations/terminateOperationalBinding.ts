@@ -126,7 +126,7 @@ async function terminateOperationalBinding (
     }
 
     const opBindingWhere = {
-        binding_identifier: data.bindingID.identifier,
+        binding_identifier: Number(data.bindingID.identifier),
         binding_type: {
             equals: data.bindingType.toString(),
         },

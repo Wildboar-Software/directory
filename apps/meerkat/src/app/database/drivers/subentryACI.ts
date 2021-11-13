@@ -47,7 +47,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         where: {
             entry_id: vertex.dse.id,
             tag: directoryStringToString(decoded.identificationTag),
-            precedence: decoded.precedence,
+            precedence: Number(decoded.precedence),
             scope: ACIScope.SUBENTRY,
         },
     }));

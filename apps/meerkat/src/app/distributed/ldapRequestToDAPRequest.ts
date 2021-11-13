@@ -1147,7 +1147,7 @@ function ldapRequestToDAPRequest (
     else if ("abandonRequest" in req.protocolOp) {
         const messageID = req.protocolOp.abandonRequest;
         ctx.log.debug(`Abandoning LDAP message ${messageID}.`);
-        const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(messageID);
+        const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(Number(messageID));
         ctx.log.debug(`Abandoning invoke ID ${abandonedOperationInvokeID} which corresponds to LDAP message ${messageID}.`);
         if (abandonedOperationInvokeID === undefined) {
             return null;
@@ -1230,7 +1230,7 @@ function ldapRequestToDAPRequest (
             if (!cancelIDElement) {
                 throw new Error();
             }
-            const messageID: number = cancelIDElement.integer;
+            const messageID: number = Number(cancelIDElement.integer);
             const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(messageID);
             if (abandonedOperationInvokeID === undefined) {
                 return null;

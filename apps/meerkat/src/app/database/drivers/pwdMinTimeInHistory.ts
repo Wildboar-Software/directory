@@ -49,7 +49,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             entry_id: vertex.dse.id,
         },
         data: {
-            value: value.value.integer,
+            value: Number(value.value.integer),
         },
     }));
 };
@@ -65,7 +65,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         ctx.db.pwdMinTimeInHistory.deleteMany({
             where: {
                 entry_id: vertex.dse.id,
-                value: value.value.integer,
+                value: Number(value.value.integer),
             },
         }),
     );
@@ -120,7 +120,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return !!(await ctx.db.pwdMinTimeInHistory.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            value: value.value.integer,
+            value: Number(value.value.integer),
         },
         select: {
             id: true,

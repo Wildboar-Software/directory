@@ -127,7 +127,7 @@ function createChainingArgumentsFromDUA (
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
-                generalizedTime: addSeconds(new Date(), data.serviceControls.timeLimit),
+                generalizedTime: addSeconds(new Date(), Number(data.serviceControls.timeLimit)),
             }
             : undefined;
         nameResolveOnMaster = data.nameResolveOnMaster;
@@ -163,7 +163,7 @@ function createChainingArgumentsFromDUA (
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
-                generalizedTime: addSeconds(new Date(), data.serviceControls.timeLimit),
+                generalizedTime: addSeconds(new Date(), Number(data.serviceControls.timeLimit)),
             }
             : undefined;
         nameResolveOnMaster = data.nameResolveOnMaster;
@@ -194,7 +194,7 @@ function createChainingArgumentsFromDUA (
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
-                generalizedTime: addSeconds(new Date(), data.serviceControls.timeLimit),
+                generalizedTime: addSeconds(new Date(), Number(data.serviceControls.timeLimit)),
             }
             : undefined;
         nameResolveOnMaster = data.nameResolveOnMaster;
@@ -225,7 +225,7 @@ function createChainingArgumentsFromDUA (
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
-                generalizedTime: addSeconds(new Date(), data.serviceControls.timeLimit),
+                generalizedTime: addSeconds(new Date(), Number(data.serviceControls.timeLimit)),
             }
             : undefined;
         nameResolveOnMaster = data.nameResolveOnMaster;
@@ -256,7 +256,7 @@ function createChainingArgumentsFromDUA (
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
-                generalizedTime: addSeconds(new Date(), data.serviceControls.timeLimit),
+                generalizedTime: addSeconds(new Date(), Number(data.serviceControls.timeLimit)),
             }
             : undefined;
         nameResolveOnMaster = data.nameResolveOnMaster;
@@ -287,7 +287,7 @@ function createChainingArgumentsFromDUA (
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
-                generalizedTime: addSeconds(new Date(), data.serviceControls.timeLimit),
+                generalizedTime: addSeconds(new Date(), Number(data.serviceControls.timeLimit)),
             }
             : undefined;
         nameResolveOnMaster = data.nameResolveOnMaster;
@@ -318,7 +318,7 @@ function createChainingArgumentsFromDUA (
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
-                generalizedTime: addSeconds(new Date(), data.serviceControls.timeLimit),
+                generalizedTime: addSeconds(new Date(), Number(data.serviceControls.timeLimit)),
             }
             : undefined;
         nameResolveOnMaster = data.nameResolveOnMaster;
@@ -349,7 +349,7 @@ function createChainingArgumentsFromDUA (
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
-                generalizedTime: addSeconds(new Date(), data.serviceControls.timeLimit),
+                generalizedTime: addSeconds(new Date(), Number(data.serviceControls.timeLimit)),
             }
             : undefined;
         nameResolveOnMaster = data.nameResolveOnMaster;

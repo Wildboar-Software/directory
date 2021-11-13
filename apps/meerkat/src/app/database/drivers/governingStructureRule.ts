@@ -11,7 +11,6 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     governingStructureRule,
@@ -43,7 +42,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     if (!vertex.dse.shadow) {
         return;
     }
-    pendingUpdates.entryUpdate.governingStructureRule = value.value.integer;
+    pendingUpdates.entryUpdate.governingStructureRule = Number(value.value.integer);
 };
 
 export

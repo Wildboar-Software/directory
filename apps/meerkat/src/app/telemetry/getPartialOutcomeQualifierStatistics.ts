@@ -6,7 +6,9 @@ import getContinuationReferenceStatistics from "./getContinuationReferenceStatis
 export
 function getPartialOutcomeQualifierStatistics (poq: PartialOutcomeQualifier): PartialOutcomeQualifierStatistics {
     return {
-        limitProblem: poq.limitProblem,
+        limitProblem: poq.limitProblem
+            ? Number(poq.limitProblem)
+            : undefined,
         unexplored: poq.unexplored?.map(getContinuationReferenceStatistics),
         unavailableCriticalExtensions: poq.unavailableCriticalExtensions,
         numberOfUnknownErrors: poq.unknownErrors?.length,
@@ -16,13 +18,13 @@ function getPartialOutcomeQualifierStatistics (poq: PartialOutcomeQualifier): Pa
             : undefined,
         notification: poq.notification?.map((not) => not.type_.toString()),
         bestEstimate: (poq.entryCount && ("bestEstimate" in poq.entryCount))
-            ? poq.entryCount.bestEstimate
+            ? Number(poq.entryCount.bestEstimate)
             : undefined,
         lowEstimate: (poq.entryCount && ("lowEstimate" in poq.entryCount))
-            ? poq.entryCount.lowEstimate
+            ? Number(poq.entryCount.lowEstimate)
             : undefined,
         exact: (poq.entryCount && ("exact" in poq.entryCount))
-            ? poq.entryCount.exact
+            ? Number(poq.entryCount.exact)
             : undefined,
     };
 }

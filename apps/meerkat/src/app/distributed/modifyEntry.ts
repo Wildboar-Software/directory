@@ -262,7 +262,7 @@ function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
 
 function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Value {
     const toBeAdded = (toBeAddedElement.tagNumber === ASN1UniversalType.integer)
-        ? toBeAddedElement.integer
+        ? Number(toBeAddedElement.integer)
         : toBeAddedElement.real;
     return (value: Value): Value => {
         if (!isAcceptableTypeForAlterValues(value.value)) {
@@ -272,7 +272,7 @@ function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Valu
             throw new Error();
         }
         const currentValue = (value.value.tagNumber === ASN1UniversalType.integer)
-            ? value.value.integer
+            ? Number(value.value.integer)
             : value.value.real;
         return {
             ...value,
@@ -1323,7 +1323,7 @@ async function modifyEntry (
     const argument = _decode_ModifyEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)

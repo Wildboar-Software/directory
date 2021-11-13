@@ -4,7 +4,6 @@ import type {
     Value,
     SpecialAttributeDatabaseEditor,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
 import {
     ACIItem,
     _decode_ACIItem,
@@ -25,12 +24,14 @@ const writeSomeACI: (scope: ACIScope) => SpecialAttributeDatabaseEditor = (scope
             data: {
                 entry_id: entry.dse.id,
                 tag: directoryStringToString(aci.identificationTag),
-                precedence: aci.precedence,
+                precedence: Number(aci.precedence),
                 auth_level_basic_level: ("basicLevels" in aci.authenticationLevel)
                     ? aci.authenticationLevel.basicLevels.level
                     : undefined,
                 auth_level_basic_local_qualifier: ("basicLevels" in aci.authenticationLevel)
-                    ? aci.authenticationLevel.basicLevels.localQualifier
+                    ? (aci.authenticationLevel.basicLevels.localQualifier !== undefined)
+                        ? Number(aci.authenticationLevel.basicLevels.localQualifier)
+                        : undefined
                     : undefined,
                 auth_level_basic_signed: ("basicLevels" in aci.authenticationLevel)
                     ? aci.authenticationLevel.basicLevels.signed

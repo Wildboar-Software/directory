@@ -20,7 +20,6 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import setEntryPassword from "../database/setEntryPassword";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
-    SecurityProblem_noInformation,
     SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";

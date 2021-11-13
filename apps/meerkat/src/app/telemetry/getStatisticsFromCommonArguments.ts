@@ -18,10 +18,14 @@ function getStatisticsFromCommonArguments (cargs: CommonArguments): CommonArgume
         operationProgress: cargs.operationProgress
             ? {
                 phase: cargs.operationProgress.nameResolutionPhase,
-                next: cargs.operationProgress.nextRDNToBeResolved,
+                next: (cargs.operationProgress.nextRDNToBeResolved !== undefined)
+                    ? Number(cargs.operationProgress.nextRDNToBeResolved)
+                    : undefined,
             }
             : undefined,
-        aliasedRDNs: cargs.aliasedRDNs,
+        aliasedRDNs: (cargs.aliasedRDNs !== undefined)
+            ? Number(cargs.aliasedRDNs)
+            : undefined,
         criticalExtensions: cargs.criticalExtensions
             ? Array.from(cargs.criticalExtensions)
             : undefined,

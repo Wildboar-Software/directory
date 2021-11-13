@@ -72,7 +72,7 @@ async function apinfoProcedure (
     state: OperationDispatcherState,
 ): Promise<ResultOrError | null> {
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     // Loop avoidance is handled below.
     const serviceControls = req.argument?.set

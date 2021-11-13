@@ -109,7 +109,7 @@ async function compare (
     const argument = _decode_CompareArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const typeAndSuperTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, data.purported.type_));
     const targetDN = getDistinguishedName(target);

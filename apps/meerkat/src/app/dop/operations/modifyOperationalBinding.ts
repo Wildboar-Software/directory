@@ -197,7 +197,7 @@ async function modifyOperationalBinding (
 
     const opBinding = await ctx.db.operationalBinding.findFirst({
         where: {
-            binding_identifier: data.bindingID.identifier,
+            binding_identifier: Number(data.bindingID.identifier),
             binding_type: {
                 equals: data.bindingType.toString(),
             },
@@ -274,8 +274,8 @@ async function modifyOperationalBinding (
             },
             outbound: false,
             binding_type: data.bindingType.toString(),
-            binding_identifier: data.newBindingID.identifier,
-            binding_version: data.newBindingID.version,
+            binding_identifier: Number(data.newBindingID.identifier),
+            binding_version: Number(data.newBindingID.version),
             agreement_ber: data.newAgreement
                 ? Buffer.from(data.newAgreement.toBytes())
                 : opBinding.agreement_ber,
@@ -302,9 +302,13 @@ async function modifyOperationalBinding (
             security_random: sp?.random
                 ? Buffer.from(packBits(sp.random))
                 : undefined,
-            security_target: sp?.target,
+            security_target: (sp?.target !== undefined)
+                ? Number (sp.target)
+                : undefined,
             security_operationCode: codeToString(sp?.operationCode),
-            security_errorProtection: sp?.errorProtection,
+            security_errorProtection: (sp?.errorProtection !== undefined)
+                ? Number(sp.errorProtection)
+                : undefined,
             security_errorCode: codeToString(sp?.errorCode),
             // new_context_prefix_rdn: rdnToJson(agreement.rdn),
             // immediate_superior: agreement.immediateSuperior.map((rdn) => rdnToJson(rdn)),

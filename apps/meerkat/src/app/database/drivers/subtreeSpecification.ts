@@ -58,8 +58,12 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             base: subtree.base
                 ? subtree.base.map((rdn) => rdnToJson(rdn))
                 : undefined,
-            minimum: subtree.minimum,
-            maximum: subtree.maximum,
+            minimum: (subtree.minimum !== undefined)
+                ? Number(subtree.minimum)
+                : undefined,
+            maximum: (subtree.maximum !== undefined)
+                ? Number(subtree.maximum)
+                : undefined,
             ber: Buffer.from(value.value.toBytes()),
             // specific_exclusions: // FIXME:
             // specification_filter: // FIXME:
@@ -81,8 +85,12 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.subtreeSpecification.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            minimum: subtree.minimum,
-            maximum: subtree.maximum,
+            minimum: (subtree.minimum !== undefined)
+                ? Number(subtree.minimum)
+                : undefined,
+            maximum: (subtree.maximum !== undefined)
+                ? Number(subtree.maximum)
+                : undefined,
             ber: Buffer.from(value.value.toBytes()),
             // specific_exclusions: // FIXME:
             // specification_filter: // FIXME:

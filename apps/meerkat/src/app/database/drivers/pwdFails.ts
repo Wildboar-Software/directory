@@ -51,7 +51,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.password.updateMany({
         where: {
             entry_id: vertex.dse.id,
-            pwdFails: value.value.integer,
+            pwdFails: Number(value.value.integer),
         },
         data: {
             pwdFails: 0,
@@ -111,7 +111,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return !!(await ctx.db.password.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            pwdFails: value.value.integer,
+            pwdFails: Number(value.value.integer),
         },
         select: {
             id: true,

@@ -106,7 +106,7 @@ async function list_ii (
     const arg: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(arg);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -193,7 +193,9 @@ async function list_ii (
     if (data.pagedResults) {
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
-            const pi = ((nr.pageNumber ?? 1) - 1); // The spec is unclear if this is zero-indexed.
+            const pi = (((nr.pageNumber !== undefined)
+                ? Number(nr.pageNumber)
+                : 1) - 1); // The spec is unclear if this is zero-indexed.
             if ((pi < 0) || !Number.isSafeInteger(pi)) {
                 throw new errors.ServiceError(
                     ctx.i18n.t("err:page_number_invalid", {
@@ -237,7 +239,9 @@ async function list_ii (
             }
             queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             pagingRequest = data.pagedResults.newRequest;
-            page = ((data.pagedResults.newRequest.pageNumber ?? 1) - 1);
+            page = (((data.pagedResults.newRequest.pageNumber !== undefined)
+                ? Number(data.pagedResults.newRequest.pageNumber)
+                : 1) - 1);
         } else if ("queryReference" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
             const paging = conn.pagedResultsRequests.get(queryReference);
@@ -303,10 +307,14 @@ async function list_ii (
     const excludeShadows: boolean = state.chainingArguments.excludeShadows
         ?? ChainingArguments._default_value_for_excludeShadows;
     const listItems: ListItem[] = [];
-    const pageNumber: number = pagingRequest?.pageNumber ?? 0;
-    const pageSize: number = pagingRequest?.pageSize
-        ?? data.serviceControls?.sizeLimit
-        ?? Infinity;
+    const pageNumber: number = (pagingRequest?.pageNumber !== undefined)
+        ? Number(pagingRequest.pageNumber)
+        : 0;
+    const pageSize: number = Number(
+        pagingRequest?.pageSize
+            ?? data.serviceControls?.sizeLimit
+            ?? Infinity
+    );
     let subordinatesInBatch = await readChildren(
         ctx,
         target,

@@ -45,7 +45,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.create({
         data: {
             entry_id: vertex.dse.id,
-            ruleIdentifier: decoded.ruleIdentifier,
+            ruleIdentifier: Number(decoded.ruleIdentifier),
             nameForm: decoded.nameForm.toString(),
             superiorStructureRules: decoded.superiorStructureRules
                 ?.map((ssr) => ssr.toString())
@@ -82,7 +82,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            ruleIdentifier: decoded.ruleIdentifier,
+            ruleIdentifier: Number(decoded.ruleIdentifier),
         },
     }));
 };
@@ -137,7 +137,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return !!(await ctx.db.dITStructureRule.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            ruleIdentifier: decoded.ruleIdentifier,
+            ruleIdentifier: Number(decoded.ruleIdentifier),
         },
         select: {
             id: true,

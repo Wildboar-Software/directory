@@ -213,7 +213,7 @@ async function addEntry (
     const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -1096,7 +1096,7 @@ async function addEntry (
                 ),
             );
         }
-        governingStructureRule = structuralRules[0].ruleIdentifier;
+        governingStructureRule = Number(structuralRules[0].ruleIdentifier);
         const contentRule = (schemaSubentry.dse.subentry?.ditContentRules ?? [])
             .filter((rule) => !rule.obsolete)
             // .find(), because there should only be one per SOC.

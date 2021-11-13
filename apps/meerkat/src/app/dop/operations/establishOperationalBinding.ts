@@ -54,7 +54,7 @@ import {
     _encode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import { ASN1Element, OBJECT_IDENTIFIER, packBits } from "asn1-ts";
+import { ASN1Element, packBits } from "asn1-ts";
 import becomeSubordinate from "../establish/becomeSubordinate";
 import becomeSuperior from "../establish/becomeSuperior";
 import { OperationalBindingInitiator, Knowledge } from "@prisma/client";
@@ -256,7 +256,9 @@ async function establishOperationalBinding (
                     outbound: false,
                     binding_type: data.bindingType.toString(),
                     binding_identifier: newBindingIdentifier,
-                    binding_version: data.bindingID?.version ?? 0,
+                    binding_version: (data.bindingID?.version !== undefined)
+                        ? Number(data.bindingID.version)
+                        : 0,
                     agreement_ber: Buffer.from(data.agreement.toBytes()),
                     access_point: {
                         create: {
@@ -283,9 +285,13 @@ async function establishOperationalBinding (
                     security_random: sp?.random
                         ? Buffer.from(packBits(sp.random))
                         : undefined,
-                    security_target: sp?.target,
+                    security_target: (sp?.target !== undefined)
+                        ? Number(sp.target)
+                        : undefined,
                     security_operationCode: codeToString(sp?.operationCode),
-                    security_errorProtection: sp?.errorProtection,
+                    security_errorProtection: (sp?.errorProtection !== undefined)
+                        ? Number(sp.errorProtection)
+                        : undefined,
                     security_errorCode: codeToString(sp?.errorCode),
                     new_context_prefix_rdn: rdnToJson(agreement.rdn),
                     immediate_superior: agreement.immediateSuperior.map((rdn) => rdnToJson(rdn)),

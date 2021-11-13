@@ -97,7 +97,7 @@ async function read (
     const argument = _decode_ReadArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());

@@ -59,7 +59,7 @@ async function nrcrProcedure (
     partialNameResolution: BOOLEAN,
 ): Promise<OPCR | Error_> {
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)

@@ -13,7 +13,9 @@ function getEntryInformationSelectionStatistics (eis: EntryInformationSelection)
         selectUserAttributes: eis.attributes && ("select" in eis.attributes)
             ? eis.attributes.select.map((oid) => oid.toString())
             : undefined,
-        infoTypes: eis.infoTypes,
+        infoTypes: (eis.infoTypes !== undefined)
+            ? Number(eis.infoTypes)
+            : undefined,
         allExtraAttributes: eis.extraAttributes && ("allOperationalAttributes" in eis.extraAttributes),
         selectExtraAttributes: eis.extraAttributes && ("select" in eis.extraAttributes)
             ? eis.extraAttributes.select.map((oid) => oid.toString())

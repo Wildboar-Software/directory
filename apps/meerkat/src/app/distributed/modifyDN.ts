@@ -1,5 +1,5 @@
 import { Context, Vertex, Value, ClientConnection, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -260,7 +260,7 @@ async function modifyDN (
     const argument = _decode_ModifyDNArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(state.invokeId.present)
+        ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -815,7 +815,7 @@ async function modifyDN (
     const attributeTypesForbidden: Set<IndexableOID> = new Set();
 
     // Subschema validation
-    let newGoverningStructureRule: number | undefined;
+    let newGoverningStructureRule: INTEGER | undefined;
     const schemaSubentry = target.dse.subentry // Schema rules only apply to entries.
         ? undefined
         : await getSubschemaSubentry(ctx, superior);
@@ -1271,7 +1271,7 @@ async function modifyDN (
             },
             data: {
                 immediate_superior_id: superior.dse.id,
-                governingStructureRule: newGoverningStructureRule,
+                governingStructureRule: Number(newGoverningStructureRule),
             },
         }),
         ctx.db.rDN.deleteMany({
