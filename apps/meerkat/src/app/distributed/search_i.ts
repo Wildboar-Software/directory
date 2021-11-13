@@ -183,15 +183,15 @@ import {
     // SearchControlOptions_searchAliases,
     SearchControlOptions_matchedValuesOnly,
     // SearchControlOptions_checkOverspecified,
-    // SearchControlOptions_performExactly,
+    SearchControlOptions_performExactly,
     // SearchControlOptions_includeAllAreas,
     // SearchControlOptions_noSystemRelaxation,
-    // SearchControlOptions_dnAttribute,
+    SearchControlOptions_dnAttribute,
     SearchControlOptions_matchOnResidualName,
     // SearchControlOptions_entryCount,
     // SearchControlOptions_useSubset,
     SearchControlOptions_separateFamilyMembers,
-    // SearchControlOptions_searchFamily,
+    SearchControlOptions_searchFamily,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
@@ -218,10 +218,18 @@ import {
 import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+import {
+    id_oc_parent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
+import {
+    id_oc_child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
 const BYTES_IN_A_UUID: number = 16;
+const PARENT: string = id_oc_parent.toString();
+const CHILD: string = id_oc_child.toString();
 
 /**
  * "Why don't you just fetch `pageSize` number of entries?"
@@ -243,6 +251,7 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     skipsRemaining?: number;
     depth: number;
     paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
+    familyOnly?: boolean;
 }
 
 // Note that this does not scrutinize the root DSE for membership. It is assumed.
@@ -568,15 +577,15 @@ async function search_i (
     // const searchAliases: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchAliases]);
     const matchedValuesOnly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchedValuesOnly]);
     // const checkOverspecified: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_checkOverspecified]);
-    // const performExactly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_performExactly]);
+    const performExactly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_performExactly]);
     // const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
     // const noSystemRelaxation: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_noSystemRelaxation]);
-    // const dnAttribute: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_dnAttribute]);
+    const dnAttribute: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_dnAttribute]);
     const matchOnResidualName: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchOnResidualName]);
     // const entryCount: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_entryCount]);
     // const useSubset: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_useSubset]);
     const separateFamilyMembers: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_separateFamilyMembers]);
-    // const searchFamily: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchFamily]);
+    const searchFamily: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchFamily]);
 
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -988,7 +997,9 @@ async function search_i (
             );
             return authorizedToMatch;
         },
-        performExactly: false, // FIXME:
+        performExactly,
+        matchedValuesOnly,
+        dnAttribute,
     };
 
     if (target.dse.cp) {
@@ -1186,6 +1197,13 @@ async function search_i (
         );
         return;
     }
+    const isParent: boolean = target.dse.objectClass.has(PARENT);
+    const isChild: boolean = target.dse.objectClass.has(CHILD);
+    const isAncestor: boolean = (isParent && !isChild);
+    const searchFamilyInEffect: boolean = (
+        (searchFamily && !entryOnly && isAncestor && (searchState.depth === 0))
+        || Boolean(searchState.familyOnly)
+    );
     const familyGrouping = data.familyGrouping ?? SearchArgumentData._default_value_for_familyGrouping;
     const familySubsetGetter: (vertex: Vertex) => IterableIterator<Vertex[]> = (() => {
         switch (familyGrouping) {
@@ -1214,6 +1232,8 @@ async function search_i (
     })();
     if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) {
         // Nothing needs to be done here. Proceed to step 6.
+        // This no-op section is basically so that a one-level search does not
+        // include the target entry.
     } else if ((subset === SearchArgumentData_subset_baseObject) || entryOnly) {
         if (
             (target.dse.subentry && subentries)
@@ -1266,7 +1286,10 @@ async function search_i (
                 );
                 if (matched || searchingForRootDSE) {
                     if (searchState.skipsRemaining > 0) {
-                        if (separateFamilyMembers) {
+                        // The specification never explicitly says that
+                        // separateFamilyMembers should make each family member
+                        // count towards the limits, but it would make sense.
+                        if (separateFamilyMembers || searchFamilyInEffect) {
                             searchState.skipsRemaining -= familySubset
                                 .filter((vertex) => (
                                     !familySelect
@@ -1622,6 +1645,14 @@ async function search_i (
     }
     const useSortedSearch: boolean = !!searchState.paging?.[1].request.sortKeys?.[0];
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
+        /**
+         * We return no subordinates, because the family members will all be
+         * returned because of the current target entry, even if the
+         * `separateFamilyMembers` option is used.
+         */
+        if (searchFamilyInEffect) {
+            return [];
+        }
         return useSortedSearch
             ? await (async () => {
                 const results: Vertex[] = [];
@@ -1656,6 +1687,16 @@ async function search_i (
                     //     ? convertFilterToPrismaSelect(ctx, data.filter)
                     //     : {}),
                     subentry: subentries,
+                    EntryObjectClass: {
+                        /**
+                         * We do not iterate over child entries, because
+                         * those will be returned--or not--with the
+                         * ancestor entry.
+                         */
+                        none: {
+                            object_class: CHILD,
+                        },
+                    },
                 },
             );
     };
@@ -1703,6 +1744,14 @@ async function search_i (
                 }
             }
             if (subentries && !subordinate.dse.subentry) {
+                continue;
+            }
+            /**
+             * We do not iterate over child entries, because
+             * those will be returned--or not--with the
+             * ancestor entry.
+             */
+            if (subordinate.dse.objectClass.has(CHILD)) {
                 continue;
             }
             if (subordinate.dse.subr && !subordinate.dse.cp) {
@@ -1754,6 +1803,7 @@ async function search_i (
                 })
                 : state.chainingArguments;
             searchState.depth++;
+            searchState.familyOnly = searchFamilyInEffect;
             await search_i(
                 ctx,
                 conn,

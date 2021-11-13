@@ -165,6 +165,10 @@ import {
     _encode_TimeAssertion,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeAssertion.ta";
 import { temporalContext } from "@wildboar/x500/src/lib/collections/contexts";
+import {
+    SearchControlOptions,
+    SearchControlOptions_separateFamilyMembers,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 
 const now: TimeAssertion = {
     now: null,
@@ -778,6 +782,13 @@ function ldapRequestToDAPRequest (
             }
             return undefined;
         })();
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(12);
+        /**
+         * We separate family members, because there is no LDAP syntax for
+         * family-information, but we might want to interact with child entries
+         * via LDAP. This allows us to return child entries separately for LDAP.
+         */
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
         const dapReq: SearchArgument = {
             unsigned: new SearchArgumentData(
                 {
@@ -790,13 +801,13 @@ function ldapRequestToDAPRequest (
                 Boolean(req.protocolOp.searchRequest.derefAliases),
                 eis,
                 prr,
+                false, // matchedValuesOnly has a different meaning in LDAP.
                 undefined,
                 undefined,
                 undefined,
                 undefined,
                 undefined,
-                undefined,
-                undefined,
+                searchControlOptions,
                 undefined,
                 undefined,
                 [],
