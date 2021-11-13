@@ -8,7 +8,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import { OperationalBindingInitiator } from "@prisma/client";
 import removeSubordinate from "./terminate/removeSubordinate";
-import removeSuperior from "./terminate/removeSuperior";
 
 export
 async function terminate (
@@ -36,9 +35,14 @@ async function terminate (
             );
             if (iAmSuperior) {
                 removeSubordinate(ctx, agreement); // Async, but we do not need to await.
-            } else {
-                removeSuperior(ctx, agreement); // Async, but we do not need to await.
             }
+            /*
+             * When this DSA is subordinate, we do not delete the context
+             * prefix. We keep it. This is so the context prefix can be
+             * "repatriated" later on if desired. It is up to administrators to
+             * delete the detached subtree after a HOB is terminated if they
+             * desire.
+             */
             break;
         }
         default: {
