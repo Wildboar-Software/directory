@@ -1,3 +1,4 @@
+import type { ASN1Element } from "asn1-ts";
 import type { AttributeInfo } from "@wildboar/meerkat-types";
 import type {
     ATTRIBUTE,
@@ -25,6 +26,7 @@ function attributeFromInformationObject (io: ATTRIBUTE, name?: string): Attribut
         ldapNames: io["&ldapName"],
         ldapDescription: io["&ldapDesc"],
         compatibleMatchingRules: new Set(),
+        validator: (value: ASN1Element) => io.decoderFor["&Type"]!(value),
     };
 }
 

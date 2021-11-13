@@ -1,5 +1,5 @@
 import type { ContextTypeInfo } from "@wildboar/meerkat-types";
-import { TRUE } from "asn1-ts";
+import { ASN1Element, TRUE } from "asn1-ts";
 import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
 import type {
     CONTEXT,
@@ -12,6 +12,7 @@ function contextTypeFromInformationObject (io: CONTEXT, matcher: ContextMatcher,
         absentMatch: io["&absentMatch"] ?? TRUE,
         matcher,
         syntax: syntax ?? "",
+        validator: (value: ASN1Element) => io.decoderFor["&Type"]!(value),
     };
 }
 

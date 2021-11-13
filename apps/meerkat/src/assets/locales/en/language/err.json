@@ -109,5 +109,8 @@
     "child_cannot_be_in_hierarchy": "Child member of a compound entry may not be in a hierarchical group.",
     "cannot_move_child": "Cannot move child entry, because it would break a compound entry.",
     "unavailable_critical_extension": "Unavailable critical extension {{index}}.",
-    "not_authorized_ob": "Not authorized to request an operational binding."
+    "not_authorized_ob": "Not authorized to request an operational binding.",
+    "invalid_attribute_syntax": "Invalid attribute syntax for type {{type}}.",
+    "invalid_context_syntax": "Invalid context syntax for type {{type}}.",
+    "value_already_exists": "Value of type {{type}} already exists."
 }

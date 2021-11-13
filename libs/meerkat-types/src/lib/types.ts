@@ -172,6 +172,7 @@ interface AttributeInfo {
     compatibleMatchingRules: Set<IndexableOID>;
     syntax?: string;
     driver?: AttributeTypeDatabaseDriver;
+    validator?: (value: ASN1Element) => unknown;
 }
 
 export
@@ -996,6 +997,7 @@ interface ContextTypeInfo {
     defaultValue?: () => ASN1Element;
     absentMatch: boolean; // Defaults to TRUE
     matcher: ContextMatcher;
+    validator?: (value: ASN1Element) => unknown;
 }
 
 export
