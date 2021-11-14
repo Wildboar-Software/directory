@@ -112,5 +112,7 @@
     "not_authorized_ob": "Not authorized to request an operational binding.",
     "invalid_attribute_syntax": "Invalid attribute syntax for type {{type}}.",
     "invalid_context_syntax": "Invalid context syntax for type {{type}}.",
-    "value_already_exists": "Value of type {{type}} already exists."
+    "value_already_exists": "Value of type {{type}} already exists.",
+    "not_ancestor": "Target of deletion was not ancestor of the compound entry.",
+    "not_allowed_on_non_leaf": "Not allowed to delete a non-leaf entry."
 }

@@ -1,32 +1,74 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
+import {
+    id_oc_child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 
-export
-async function deleteEntry (
-    ctx: Context,
-    entry: Vertex,
-): Promise<void> {
-    if (entry.dse.root && !entry.immediateSuperior) {
-        return; // Protects us from accidentally deleting the Root DSE.
-    }
+const CHILD: string = id_oc_child.toString();
+
+async function deleteChildren (ctx: Context, id: number): Promise<void> {
+    const children = await ctx.db.entry.findMany({
+        where: {
+            immediate_superior_id: id,
+            EntryObjectClass: {
+                some: {
+                    object_class: CHILD,
+                },
+            },
+        },
+        select: {
+            id: true,
+        },
+    });
+    await Promise.all(children.map((child) => deleteChildren(ctx, child.id)));
     await ctx.db.$transaction([
         ctx.db.attributeValue.deleteMany({
             where: {
-                entry_id: entry.dse.id,
+                entry_id: id,
             },
         }),
         ctx.db.entry.updateMany({
             where: {
-                id: entry.dse.id,
+                id: id,
             },
             data: {
                 deleteTimestamp: new Date(),
             },
         }),
     ]);
-    if (entry.immediateSuperior?.subordinates?.length) {
-        const entryIndex = entry.immediateSuperior.subordinates
-            .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
-        entry.immediateSuperior.subordinates.splice(entryIndex, 1);
+}
+
+export
+async function deleteEntry (
+    ctx: Context,
+    entry: Vertex,
+    alsoDeleteFamily: boolean = false,
+): Promise<void> {
+    if (entry.dse.root && !entry.immediateSuperior) {
+        return; // Protects us from accidentally deleting the Root DSE.
+    }
+    if (alsoDeleteFamily) {
+        await deleteChildren(ctx, entry.dse.id);
+    } else {
+        await ctx.db.$transaction([
+            ctx.db.attributeValue.deleteMany({
+                where: {
+                    entry_id: entry.dse.id,
+                },
+            }),
+            ctx.db.entry.updateMany({
+                where: {
+                    id: entry.dse.id,
+                },
+                data: {
+                    deleteTimestamp: new Date(),
+                },
+            }),
+        ]);
+        if (entry.immediateSuperior?.subordinates?.length) {
+            const entryIndex = entry.immediateSuperior.subordinates
+                .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
+            entry.immediateSuperior.subordinates.splice(entryIndex, 1);
+        }
     }
 }
 

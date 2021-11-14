@@ -84,6 +84,28 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    id_oc_parent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
+import {
+    id_oc_child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+import {
+    FamilyGrouping_compoundEntry,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import {
+    UpdateErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    UpdateProblem_notAncestor,
+    UpdateProblem_notAllowedOnNonLeaf,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+
+const PARENT: string = id_oc_parent.toString();
+const CHILD: string = id_oc_child.toString();
 
 // TODO: subentries
 
@@ -190,6 +212,63 @@ async function removeEntry (
             );
         }
     }
+
+    const nonChildSubordinate = await ctx.db.entry.findFirst({
+        where: {
+            immediate_superior_id: target.dse.id,
+            EntryObjectClass: {
+                none: {
+                    object_class: CHILD,
+                },
+            },
+        },
+        select: {
+            id: true,
+        },
+    });
+    if (nonChildSubordinate) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:not_allowed_on_non_leaf"),
+            new UpdateErrorData(
+                UpdateProblem_notAllowedOnNonLeaf,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+
+    const isParent: boolean = target.dse.objectClass.has(PARENT);
+    const isChild: boolean = target.dse.objectClass.has(CHILD);
+    const isAncestor: boolean = (isParent && !isChild);
+    if (!isAncestor && (data.familyGrouping === FamilyGrouping_compoundEntry)) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:not_ancestor"),
+            new UpdateErrorData(
+                UpdateProblem_notAncestor,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+    const alsoDeleteFamily: boolean = (isAncestor && (data.familyGrouping === FamilyGrouping_compoundEntry));
 
     checkTimeLimit();
     if (target.dse.subentry) { // Go to step 5.
@@ -402,7 +481,7 @@ async function removeEntry (
         op.pointOfNoReturnTime = new Date();
     }
     // FIXME: actually delete the entry BEFORE updating the HOBs.
-    await deleteEntry(ctx, target);
+    await deleteEntry(ctx, target, alsoDeleteFamily);
 
     return {
         result: {
