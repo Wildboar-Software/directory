@@ -86,6 +86,15 @@ import {
 import {
     family_information,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
+import {
+    AttributeErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+import {
+    AttributeErrorData_problems_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+import {
+    AttributeProblem_noSuchAttributeOrValue,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 
 export
 async function read (
@@ -245,6 +254,40 @@ async function read (
         permittedEntryInfo.information.push({
             attribute: familyInfoAttr,
         });
+    }
+
+    if (permittedEntryInfo.information.length === 0) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:no_such_attribute_or_value"),
+            new AttributeErrorData(
+                {
+                    rdnSequence: targetDN,
+                },
+                [
+                    ...(data.selection?.attributes && ("select" in data.selection.attributes))
+                        ? data.selection.attributes.select
+                        : [],
+                    ...(data.selection?.extraAttributes && ("select" in data.selection.extraAttributes))
+                        ? data.selection.extraAttributes.select
+                        : [],
+                ]
+                    .map((oid) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_noSuchAttributeOrValue,
+                        oid,
+                        undefined,
+                    )),
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    abandoned["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
     }
 
     const modifyRights: ModifyRights = [];

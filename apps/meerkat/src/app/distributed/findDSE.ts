@@ -52,6 +52,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
+    NameProblem_aliasProblem,
     NameProblem_aliasDereferencingProblem,
     NameProblem_noSuchObject,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
@@ -945,13 +946,35 @@ async function findDSE (
                     state.chainingArguments.excludeWriteableCopies,
                 );
                 state.chainingArguments = newChaining;
-                return findDSE(
+                await findDSE(
                     ctx,
                     conn,
                     haystackVertex,
                     newN,
-                    state,
+                    state, // FIXME: Doesn't the state need to be updated?
                 );
+                if (!state.entrySuitable) {
+                    throw new errors.NameError(
+                        ctx.i18n.t("err:alias_problem"),
+                        new NameErrorData(
+                            NameProblem_aliasProblem,
+                            {
+                                rdnSequence: getDistinguishedName(dse_i),
+                            },
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                nameError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            false,
+                            undefined,
+                        ),
+                    );
+                }
+                return;
             }
         }
         if (dse_i.dse.subentry) {

@@ -126,6 +126,21 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+import {
+    AttributeErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+import {
+    AttributeErrorData_problems_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+import {
+    AttributeProblem_undefinedAttributeType,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+import {
+    NameErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
+import {
+    NameProblem_invalidAttributeSyntax,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -1106,9 +1121,62 @@ async function modifyDN (
                 ),
             );
         }
-        const spec = ctx.attributeTypes.get(atav.type_.toString());
+        const spec = ctx.attributeTypes.get(TYPE_OID);
         if (!spec) {
-            throw new Error(); // FIXME: Attribute type not understood.
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:unrecognized_attribute_type", {
+                    oids: TYPE_OID,
+                }),
+                new AttributeErrorData(
+                    {
+                        rdnSequence: targetDN,
+                    },
+                    [
+                        new AttributeErrorData_problems_Item(
+                            AttributeProblem_undefinedAttributeType,
+                            atav.type_,
+                            undefined,
+                        ),
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (spec.validator) {
+            try {
+                spec.validator(atav.value);
+            } catch {
+                throw new errors.NameError(
+                    ctx.i18n.t("err:invalid_attribute_syntax", {
+                        type: TYPE_OID,
+                    }),
+                    new NameErrorData(
+                        NameProblem_invalidAttributeSyntax,
+                        {
+                            rdnSequence: targetDN,
+                        },
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
         }
         let hasValue: boolean = false;
         if (spec.driver?.hasValue) {

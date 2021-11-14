@@ -177,6 +177,12 @@ import {
 import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
+import {
+    NameErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
+import {
+    NameProblem_invalidAttributeSyntax,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -981,35 +987,61 @@ async function addEntry (
         const unrecognizedAFDNs: AttributeType[] = [];
         const cannotBeUsedInNameAFDNs: AttributeType[] = [];
         const unmatchedAFDNs: AttributeType[] = [];
-        attrsFromDN
-            .forEach((afdn): void => {
-                const oid: string = afdn.type.toString();
-                if (rdnAttributes.has(oid)) {
-                    duplicatedAFDNs.push(afdn.type);
-                    return;
-                } else {
-                    rdnAttributes.add(oid);
+        for (const afdn of attrsFromDN) {
+            const oid: string = afdn.type.toString();
+            if (rdnAttributes.has(oid)) {
+                duplicatedAFDNs.push(afdn.type);
+                continue;
+            } else {
+                rdnAttributes.add(oid);
+            }
+            const spec = ctx.attributeTypes.get(afdn.type.toString());
+            if (!spec) {
+                unrecognizedAFDNs.push(afdn.type);
+                continue;
+            }
+            if (spec.validator) {
+                try {
+                    spec.validator(afdn.value);
+                } catch {
+                    throw new errors.NameError(
+                        ctx.i18n.t("err:invalid_attribute_syntax", {
+                            type: afdn.type.toString(),
+                        }),
+                        new NameErrorData(
+                            NameProblem_invalidAttributeSyntax,
+                            {
+                                rdnSequence: targetDN,
+                            },
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                updateError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
                 }
-                const spec = ctx.attributeTypes.get(afdn.type.toString());
-                if (!spec) {
-                    unrecognizedAFDNs.push(afdn.type);
-                    return;
-                }
-                const matcher = getNamingMatcherGetter(ctx)(afdn.type);
-                if (!matcher) {
-                    cannotBeUsedInNameAFDNs.push(afdn.type);
-                    return;
-                }
-                const someAttributeMatched = values.some((attr) => (
-                    (!attr.contexts || (attr.contexts.size === 0))
-                    && attr.type.isEqualTo(afdn.type)
-                    && matcher(attr.value, afdn.value)
-                ));
-                if (!someAttributeMatched) {
-                    unmatchedAFDNs.push(afdn.type);
-                    return;
-                }
-            });
+            }
+            const matcher = getNamingMatcherGetter(ctx)(afdn.type);
+            if (!matcher) {
+                cannotBeUsedInNameAFDNs.push(afdn.type);
+                continue;
+            }
+            const someAttributeMatched = values.some((attr) => (
+                (!attr.contexts || (attr.contexts.size === 0))
+                && attr.type.isEqualTo(afdn.type)
+                && matcher(attr.value, afdn.value)
+            ));
+            if (!someAttributeMatched) {
+                unmatchedAFDNs.push(afdn.type);
+                continue;
+            }
+        }
 
         if (duplicatedAFDNs.length > 0) {
             throw new errors.UpdateError(
@@ -1303,8 +1335,8 @@ async function addEntry (
         const contextRulesIndex: Map<IndexableOID, DITContextUseDescription> = new Map(
             contextUseRules.map((rule) => [ rule.identifier.toString(), rule ]),
         );
-        for (const attr of values) {
-            const applicableRule = contextRulesIndex.get(attr.type.toString())
+        for (const value of values) {
+            const applicableRule = contextRulesIndex.get(value.type.toString())
                 ?? contextRulesIndex.get(ALL_ATTRIBUTE_TYPES);
             /**
              * From ITU Recommendation X.501 (2016), Section 13.10.1:
@@ -1314,7 +1346,7 @@ async function addEntry (
              * > contain no context lists.
              */
             if (!applicableRule) {
-                if (attr.contexts && (attr.contexts.size > 0)) {
+                if (value.contexts && (value.contexts.size > 0)) {
                     throw new errors.AttributeError(
                         ctx.i18n.t("err:no_contexts_permitted"),
                         new AttributeErrorData(
@@ -1324,8 +1356,8 @@ async function addEntry (
                             [
                                 new AttributeErrorData_problems_Item(
                                     AttributeProblem_contextViolation,
-                                    attr.type,
-                                    attr.value,
+                                    value.type,
+                                    value.value,
                                 ),
                             ],
                             [],
@@ -1352,14 +1384,14 @@ async function addEntry (
                 ...applicableRule.information.optionalContexts ?? [],
             ];
             const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((con) => con.toString()));
-            for (const context of attr.contexts?.values() ?? []) {
+            for (const context of value.contexts?.values() ?? []) {
                 const ID: string = context.id.toString();
                 mandatoryContextsRemaining.delete(ID);
                 if (!permittedContextsIndex.has(ID)) {
                     throw new errors.AttributeError(
                         ctx.i18n.t("err:context_type_prohibited_by_context_use_rule", {
                             ct: ID,
-                            at: attr.type.toString(),
+                            at: value.type.toString(),
                         }),
                         new AttributeErrorData(
                             {
@@ -1368,8 +1400,8 @@ async function addEntry (
                             [
                                 new AttributeErrorData_problems_Item(
                                     AttributeProblem_contextViolation,
-                                    attr.type,
-                                    attr.value,
+                                    value.type,
+                                    value.value,
                                 ),
                             ],
                             [],
@@ -1399,7 +1431,7 @@ async function addEntry (
                 if (!everyRequiredContextHasADefaultValue) {
                     throw new errors.AttributeError(
                         ctx.i18n.t("err:missing_required_context_types", {
-                            attr: attr.type.toString(),
+                            attr: value.type.toString(),
                             oids: Array.from(mandatoryContextsRemaining.values()).join(", "),
                         }),
                         new AttributeErrorData(
@@ -1409,8 +1441,8 @@ async function addEntry (
                             [
                                 new AttributeErrorData_problems_Item(
                                     AttributeProblem_contextViolation,
-                                    attr.type,
-                                    attr.value,
+                                    value.type,
+                                    value.value,
                                 ),
                             ],
                             [],
@@ -1438,11 +1470,11 @@ async function addEntry (
                     continue; // This is intentional. This is not supposed to throw.
                 }
                 const defaultValueGetter = spec.defaultValue;
-                if (!attr.contexts?.has(CTYPE_OID)) {
-                    if (!attr.contexts) {
-                        attr.contexts = new Map();
+                if (!value.contexts?.has(CTYPE_OID)) {
+                    if (!value.contexts) {
+                        value.contexts = new Map();
                     }
-                    attr.contexts.set(CTYPE_OID, {
+                    value.contexts.set(CTYPE_OID, {
                         id: ct,
                         fallback: true,
                         values: [ defaultValueGetter() ],
