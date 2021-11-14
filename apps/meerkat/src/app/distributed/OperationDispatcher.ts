@@ -179,13 +179,17 @@ class OperationDispatcher {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
                 result: outcome.result,
-                request: {
-                    ...outcome.stats.request,
-                    operationCode: codeToString(req.opCode),
-                },
-                outcome: {
-                    ...outcome.stats.outcome,
-                },
+                request: ctx.config.bulkInsertMode
+                    ? undefined
+                    : {
+                        ...outcome.stats.request,
+                        operationCode: codeToString(req.opCode),
+                    },
+                outcome: ctx.config.bulkInsertMode
+                    ? undefined
+                    : {
+                        ...outcome.stats.outcome,
+                    },
                 foundDSE: state.foundDSE,
             };
         }

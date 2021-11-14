@@ -114,5 +114,9 @@
     "invalid_context_syntax": "Invalid context syntax for type {{type}}.",
     "value_already_exists": "Value of type {{type}} already exists.",
     "not_ancestor": "Target of deletion was not ancestor of the compound entry.",
-    "not_allowed_on_non_leaf": "Not allowed to delete a non-leaf entry."
+    "not_allowed_on_non_leaf": "Not allowed to delete a non-leaf entry.",
+    "not_allowed_on_rdn": "Modification would affect the RDN.",
+    "no_such_hierarchy_parent": "No such hierarchy parent.",
+    "parent_not_ancestor": "Hierarchy parent was not the ancestor of the compound entry of which it is a part.",
+    "unsupported_auth_method": "Unsupported authentication method."
 }

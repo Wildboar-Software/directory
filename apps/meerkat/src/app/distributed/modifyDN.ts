@@ -25,6 +25,7 @@ import {
     UpdateProblem_affectsMultipleDSAs,
     UpdateProblem_objectClassViolation,
     UpdateProblem_familyRuleViolation,
+    UpdateProblem_noSuchSuperior,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getRDN from "../x500/getRDN";
@@ -451,9 +452,9 @@ async function modifyDN (
         : null; // `null` means we did not try.
     if (newSuperior === undefined) { // `undefined` means we tried and failed.
         throw new errors.UpdateError(
-            ctx.i18n.t("err:new_superior_not_within_this_dsa"),
+            ctx.i18n.t("err:no_such_superior"),
             new UpdateErrorData(
-                UpdateProblem_affectsMultipleDSAs,
+                UpdateProblem_noSuchSuperior,
                 undefined,
                 [],
                 createSecurityParameters(

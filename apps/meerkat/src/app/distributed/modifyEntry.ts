@@ -28,6 +28,7 @@ import {
     UpdateProblem_objectClassViolation,
     UpdateProblem_objectClassModificationProhibited,
     UpdateProblem_familyRuleViolation,
+    UpdateProblem_notAllowedOnRDN,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     objectClass,
@@ -565,6 +566,29 @@ async function executeRemoveAttribute (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
+    if (entry.dse.rdn.some((atav) => atav.type_.isEqualTo(mod))) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:not_allowed_on_rdn"),
+            new UpdateErrorData(
+                UpdateProblem_notAllowedOnRDN,
+                [
+                    {
+                        attributeType: mod,
+                    },
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        )
+    }
     delta.delete(mod.toString());
     if (accessControlScheme) {
         const {
@@ -636,7 +660,40 @@ async function executeRemoveValues (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
+    const EQUALITY_MATCHER = equalityMatcherGetter(mod.type_);
     const values = valuesFromAttribute(mod);
+    const rdnValueOfType = entry.dse.rdn.find((atav) => atav.type_.isEqualTo(mod.type_));
+    if (
+        rdnValueOfType
+        && EQUALITY_MATCHER
+        && values.some((value) => EQUALITY_MATCHER(value.value, rdnValueOfType.value))
+    ) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:not_allowed_on_rdn"),
+            new UpdateErrorData(
+                UpdateProblem_notAllowedOnRDN,
+                [
+                    {
+                        attribute: new Attribute(
+                            rdnValueOfType.type_,
+                            [ rdnValueOfType.value ],
+                            undefined,
+                        ),
+                    },
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        )
+    }
     if (accessControlScheme) {
         const {
             authorized: authorizedForAttributeType,
@@ -1012,7 +1069,7 @@ function handleContextRule (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    aliasDereferenced,
                     undefined,
                 ),
             );
@@ -1242,7 +1299,7 @@ async function executeEntryModification (
                         updateError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    aliasDereferenced,
                     undefined,
                 ),
             );
@@ -2126,7 +2183,7 @@ async function modifyEntry (
                         id_opcode_modifyEntry,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
             },

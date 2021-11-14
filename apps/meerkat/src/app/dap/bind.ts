@@ -1,4 +1,8 @@
-import type { Context, BindReturn } from "@wildboar/meerkat-types";
+import {
+    Context,
+    BindReturn,
+    SecurityError,
+} from "@wildboar/meerkat-types";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {
@@ -18,6 +22,16 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import attemptPassword from "../authn/attemptPassword";
 import getDistinguishedName from "../x500/getDistinguishedName";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_unsupportedAuthenticationMethod,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import createSecurityParameters from "../x500/createSecurityParameters";
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
@@ -139,16 +153,24 @@ async function bind (
             return invalidCredentialsReturn;
         }
     } else {
-        return {
-            authLevel: {
-                basicLevels: new AuthenticationLevel_basicLevels(
-                    AuthenticationLevel_basicLevels_level_none,
-                    localQualifierPoints,
+        throw new SecurityError(
+            ctx.i18n.t("err:unsupported_auth_method"),
+            new SecurityErrorData(
+                SecurityProblem_unsupportedAuthenticationMethod,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
                     undefined,
+                    undefined,
+                    securityError["&errorCode"],
                 ),
-            },
-            failedAuthentication: true,
-        };
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                false,
+                undefined,
+            ),
+        );
     }
 }
 

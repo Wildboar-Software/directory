@@ -1660,14 +1660,16 @@ async function addEntry (
             ),
         },
         stats: {
-            request: failover(() => ({
-                operationCode: codeToString(id_opcode_addEntry),
-                ...getStatisticsFromCommonArguments(data),
-                targetNameLength: targetDN.length,
-                targetSystemNSAPs: data.targetSystem
-                    ? Array.from(accessPointToNSAPStrings(data.targetSystem))
-                    : undefined,
-            }), undefined),
+            request: ctx.config.bulkInsertMode
+                ? undefined
+                : failover(() => ({
+                    operationCode: codeToString(id_opcode_addEntry),
+                    ...getStatisticsFromCommonArguments(data),
+                    targetNameLength: targetDN.length,
+                    targetSystemNSAPs: data.targetSystem
+                        ? Array.from(accessPointToNSAPStrings(data.targetSystem))
+                        : undefined,
+                }), undefined),
         },
     };
 }

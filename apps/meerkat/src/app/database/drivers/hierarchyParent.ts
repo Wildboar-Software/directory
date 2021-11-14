@@ -1,4 +1,4 @@
-import type {
+import {
     Context,
     Vertex,
     Value,
@@ -10,6 +10,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
+    UpdateError,
 } from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import rdnToJson from "../../x500/rdnToJson";
@@ -24,6 +25,22 @@ import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 import getRDNFromEntryId from "../getRDNFromEntryId";
 import sleep from "../../utils/sleep";
 import { randomInt } from "crypto";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    UpdateErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    UpdateProblem_hierarchyRuleViolation,
+    UpdateProblem_parentNotAncestor,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import {
+    id_oc_child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+
+const CHILD: string = id_oc_child.toString();
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -62,7 +79,50 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     const parent = await findEntry(ctx, ctx.dit.root, dn);
     if (!parent) {
         // Hierarchical groups are required to be within a single DSA.
-        throw new Error();
+        throw new UpdateError(
+            ctx.i18n.t("err:no_such_hierarchy_parent"),
+            new UpdateErrorData(
+                UpdateProblem_hierarchyRuleViolation,
+                [
+                    {
+                        attributeType: hierarchyParent["&id"],
+                    },
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+    if (parent.dse.objectClass.has(CHILD)) {
+        throw new UpdateError(
+            ctx.i18n.t("err:parent_not_ancestor"),
+            new UpdateErrorData(
+                UpdateProblem_parentNotAncestor,
+                [
+                    {
+                        attributeType: hierarchyParent["&id"],
+                    },
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
     }
     if (!parent.dse.hierarchy) {
         parent.dse.hierarchy = {

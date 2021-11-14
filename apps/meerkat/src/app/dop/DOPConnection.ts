@@ -78,7 +78,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     SecurityProblem_noInformation,
-    SecurityProblem_insufficientAccessRights,
+    SecurityProblem_inappropriateAuthentication,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
     AuthenticationLevel_basicLevels_level_none,
@@ -157,7 +157,7 @@ async function handleRequestAndErrors (
             throw new SecurityError(
                 ctx.i18n.t("err:not_authorized_ob"),
                 new SecurityErrorData(
-                    SecurityProblem_insufficientAccessRights,
+                    SecurityProblem_inappropriateAuthentication,
                     undefined,
                     undefined,
                     [],
@@ -168,7 +168,7 @@ async function handleRequestAndErrors (
                         securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
+                    false,
                     undefined,
                 ),
             );

@@ -45,6 +45,7 @@ const root: Vertex = {
         modifyTimestamp: new Date(),
     },
 };
+const bulkInsertMode: boolean = (process.env.MEERKAT_BULK_INSERT_MODE === "1");
 const ctx: Context = {
     i18n,
     config: {
@@ -73,7 +74,7 @@ const ctx: Context = {
         },
         sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
         administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
-        bulkInsertMode: (process.env.MEERKAT_BULK_INSERT_MODE === "1"),
+        bulkInsertMode,
         bindMinSleepInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_MIN_SLEEP_MS ?? "") || 1000,
         bindSleepRangeInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_SLEEP_RANGE_MS ?? "") || 1000,
         minAuthLevelForOperationalBinding: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_OB ?? "1"),
@@ -114,6 +115,9 @@ const ctx: Context = {
     db: new PrismaClient(),
     telemetry: {
         sendEvent: (body: Record<string, any>) => {
+            if (bulkInsertMode) {
+                return;
+            }
             // if (process.env.NODE_ENV === "development") {
             //     console.debug(body);
             // }
