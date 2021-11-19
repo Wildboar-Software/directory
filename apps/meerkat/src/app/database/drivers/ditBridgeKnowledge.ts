@@ -58,7 +58,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         data: {
             domain_local_id: dbk.domainLocalID
                 ? directoryStringToString(dbk.domainLocalID)
-                : "", // FIXME: undefined instead.
+                : undefined,
             ber: Buffer.from(value.value.toBytes()),
         },
     }));

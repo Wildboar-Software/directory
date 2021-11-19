@@ -110,6 +110,7 @@ async function dapReplyToLDAPResult (
         throw new Error(); // FIXME:
     }
 
+    const successMessage = ctx.i18n.t("main:success");
     let sortRequestControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc2891.html
     let simplePagedResultsControl: Control | undefined;
     for (const control of req.controls ?? []) {
@@ -134,7 +135,7 @@ async function dapReplyToLDAPResult (
                 addResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                 ),
             },
@@ -152,7 +153,7 @@ async function dapReplyToLDAPResult (
                 extendedResp: new ExtendedResponse(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"), // FIXME: Make "Success" an i18n string.
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                     encodeLDAPOID(modifyPassword),
                     emptySeq.toBytes(),
@@ -172,7 +173,7 @@ async function dapReplyToLDAPResult (
                         ? LDAPResult_resultCode_compareTrue
                         : LDAPResult_resultCode_compareFalse,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                 ),
             },
@@ -186,7 +187,7 @@ async function dapReplyToLDAPResult (
                 modDNResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                 ),
             },
@@ -214,7 +215,7 @@ async function dapReplyToLDAPResult (
                 modifyResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                 ),
             },
@@ -247,7 +248,7 @@ async function dapReplyToLDAPResult (
                 searchResDone: new LDAPResult(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                 ),
             },
@@ -261,7 +262,7 @@ async function dapReplyToLDAPResult (
                 delResponse: new LDAPResult(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                 ),
             },
@@ -333,7 +334,7 @@ async function dapReplyToLDAPResult (
                 searchResDone: new LDAPResult(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                 ),
             },
@@ -352,7 +353,7 @@ async function dapReplyToLDAPResult (
                 extendedResp: new ExtendedResponse(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success.", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                     undefined,
                     undefined,

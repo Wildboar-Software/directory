@@ -70,7 +70,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         },
     });
     if (!password) {
-        return; // TODO: Should this throw an error?
+        return;
     }
     if (password.pwdExpiryTime?.valueOf() === value.value.generalizedTime.valueOf()) {
         pendingUpdates.otherWrites.push(ctx.db.password.updateMany({

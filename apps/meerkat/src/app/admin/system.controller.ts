@@ -37,7 +37,6 @@ export class SystemController {
             os_freemem: canFail(() => os.freemem().toString()),
             os_homedir: canFail(() => os.homedir()),
             os_hostname: canFail(() => os.hostname()),
-            // os_networkInterfaces: os.networkInterfaces(), // TODO:
             os_platform: canFail(() => os.platform()),
             os_release: canFail(() => os.release()),
             os_totalmem: canFail(() => os.totalmem().toString()),

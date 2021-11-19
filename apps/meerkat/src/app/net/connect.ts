@@ -54,7 +54,7 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import { DER } from "asn1-ts/dist/node/functional";
 import getServerStatistics from "../telemetry/getServerStatistics";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import { LDAPSocket } from "@wildboar/ldap-socket";
 import {
     LDAPMessage,

@@ -16,6 +16,33 @@ import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import rdnToJson from "../../x500/rdnToJson";
+import type {
+    Refinement,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+
+function refinementToJSON (ref: Refinement): Record<string, any> {
+    if ("and" in ref) {
+        return {
+            and: ref.and.map((sub) => refinementToJSON(sub)),
+        };
+    } else if ("or" in ref) {
+        return {
+            or: ref.or.map((sub) => refinementToJSON(sub)),
+        };
+    } else if ("not" in ref) {
+        return {
+            not: refinementToJSON(ref.not),
+        };
+    } else if ("item" in ref) {
+        return {
+            item: ref.item.toString(),
+        };
+    } else {
+        return {
+            unrecognizedAlternative: ref.toString(),
+        };
+    }
+}
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -65,11 +92,9 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 ? Number(subtree.maximum)
                 : undefined,
             ber: Buffer.from(value.value.toBytes()),
-            // specific_exclusions: // FIXME:
-            // specification_filter: // FIXME:
-            // specific_exclusions: subtree.specificExclusions?.map((sx) => {
-            //     if ("")
-            // })
+            specification_filter: subtree.specificationFilter
+                ? refinementToJSON(subtree.specificationFilter)
+                : undefined,
         },
     }));
 };
@@ -92,11 +117,6 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                 ? Number(subtree.maximum)
                 : undefined,
             ber: Buffer.from(value.value.toBytes()),
-            // specific_exclusions: // FIXME:
-            // specification_filter: // FIXME:
-            // specific_exclusions: subtree.specificExclusions?.map((sx) => {
-            //     if ("")
-            // })
         },
     }));
 };

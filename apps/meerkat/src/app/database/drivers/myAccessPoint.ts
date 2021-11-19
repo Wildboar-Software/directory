@@ -15,6 +15,9 @@ import { DER } from "asn1-ts/dist/node/functional";
 import {
     myAccessPoint,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/myAccessPoint.oa";
+import {
+    _encode_AccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -58,8 +61,16 @@ const isPresent: SpecialAttributeDetector = async (
 };
 
 export
-const hasValue: SpecialAttributeValueDetector = async (): Promise<boolean> => {
-    return true; // TODO: implement AccessPoint.
+const hasValue: SpecialAttributeValueDetector = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+): Promise<boolean> => {
+    if (!vertex.dse.root?.myAccessPoint) {
+        return false;
+    }
+    const encoded = _encode_AccessPoint(vertex.dse.root.myAccessPoint, DER);
+    return !Buffer.compare(encoded.toBytes(), value.value.toBytes());
 };
 
 export

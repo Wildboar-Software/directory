@@ -163,7 +163,7 @@ import {
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEntryModificationStatistics from "../telemetry/getEntryModificationStatistics";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
@@ -227,6 +227,7 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+import getACIItems from "../authz/getACIItems";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1417,7 +1418,7 @@ async function modifyEntry (
      */
     const isSubentry: boolean = Boolean(target.dse.subentry);
     const isAlias: boolean = Boolean(target.dse.alias);
-    const isExtensible: boolean = target.dse.objectClass.has(extensibleObject.toString()); // TODO: Support this being added.
+    const isExtensible: boolean = target.dse.objectClass.has(extensibleObject.toString());
     // const isParent: boolean = target.dse.objectClass.has(id_oc_parent.toString());
     // const isChild: boolean = target.dse.objectClass.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
@@ -1431,15 +1432,7 @@ async function modifyEntry (
         )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
-    const relevantACIItems = [ // FIXME: subentries
-        ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-            : []),
-        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-            ? (target.dse.entryACI ?? [])
-            : []),
-    ];
+    const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
         ? []
         : (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
@@ -1708,13 +1701,15 @@ async function modifyEntry (
         for (const ra of Array.from(requiredAttributes)) {
             const deltaValues = delta.get(ra);
             if (!deltaValues?.length) {
-                // FIXME: Blocked on implementing attribute count() driver.
-                const alreadyPresentValues = await ctx.db.attributeValue.count({
-                    where: {
-                        entry_id: target.dse.id,
-                        type: ra,
-                    },
-                });
+                const spec = ctx.attributeTypes.get(ra);
+                const alreadyPresentValues = spec?.driver?.countValues
+                    ? spec.driver.countValues(ctx, target, relevantSubentries)
+                    : await ctx.db.attributeValue.count({
+                        where: {
+                            entry_id: target.dse.id,
+                            type: ra,
+                        },
+                    });
                 if (alreadyPresentValues === 0) {
                     missingRequiredAttributeTypes.add(ra);
                 }

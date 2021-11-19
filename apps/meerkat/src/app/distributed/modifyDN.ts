@@ -28,7 +28,7 @@ import {
     UpdateProblem_noSuchSuperior,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import getRDN from "../x500/getRDN";
+import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
 import findEntry from "../x500/findEntry";
 import { strict as assert } from "assert";
 import {
@@ -56,7 +56,6 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
 import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
@@ -91,12 +90,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import checkNameForm from "../x500/checkNameForm";
+import checkNameForm from "@wildboar/x500/src/lib/utils/checkNameForm";
 import {
     ObjectClassKind_auxiliary,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
@@ -141,6 +140,8 @@ import {
 import {
     NameProblem_invalidAttributeSyntax,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+import getACIItems from "../authz/getACIItems";
+import { differenceInMilliseconds } from "date-fns";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -339,15 +340,7 @@ async function modifyDN (
     )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
-    const relevantACIItems = [ // FIXME: subentries
-        ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-            : []),
-        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-            ? (target.dse.entryACI ?? [])
-            : []),
-    ];
+    const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
@@ -496,13 +489,7 @@ async function modifyDN (
         const newAccessControlScheme = newAdmPoints
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         if (newAccessControlScheme) {
-            const AC_SCHEME: string = newAccessControlScheme?.toString() ?? "";
-            const relevantACIItems = [ // FIXME: subentries
-                // NOTE: ITU X.511 says that the IMPORT permission MUST come only from prescriptiveACI.
-                ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-                    ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                    : []),
-            ];
+            const relevantACIItems = getACIItems(accessControlScheme, undefined, relevantSubentries);
             const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
                 .flatMap((aci) => getACDFTuplesFromACIItem(aci));
             const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
@@ -810,13 +797,18 @@ async function modifyDN (
         (target.dse.entry || target.dse.alias)
         && superior.dse.nssr
     ) { // Continue at step 5.
+        const timeRemainingInMilliseconds = timeLimitEndTime
+            ? differenceInMilliseconds(timeLimitEndTime, new Date())
+            : undefined;
         // Follow instructions in 19.1.5. These are the only steps unique to this DSE type.
         await checkIfNameIsAlreadyTakenInNSSR(
             ctx,
             conn,
-            state,
+            state.invokeId,
+            state.chainingArguments.aliasDereferenced ?? false,
             superior.dse.nssr.nonSpecificKnowledge ?? [],
             destinationDN,
+            timeRemainingInMilliseconds,
         );
     }
 

@@ -456,6 +456,7 @@ interface Configuration {
     bindSleepRangeInMilliseconds: number;
     minAuthLevelForOperationalBinding: number;
     minAuthLocalQualifierForOperationalBinding: number;
+    myAccessPointNSAPs: Uint8Array[];
 }
 
 export

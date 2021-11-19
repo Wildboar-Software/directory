@@ -224,6 +224,7 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+import getACIItems from "../authz/getACIItems";
 
 // TODO: This will require serious changes when service specific areas are implemented.
 
@@ -675,7 +676,7 @@ async function search_i (
             cursorId = searchState.paging[1].cursorIds[searchState.depth];
         } else if ("abandonQuery" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
-            conn.pagedResultsRequests.delete(queryReference); // FIXME: Do this in list too.
+            conn.pagedResultsRequests.delete(queryReference);
             throw new errors.AbandonError(
                 ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
@@ -760,18 +761,7 @@ async function search_i (
     )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
-    const targetACI = [
-        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !target.dse.subentry)
-            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-            : []),
-        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && target.dse.subentry)
-            ? target.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
-            : []),
-        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-            ? target.dse.entryACI ?? []
-            : []),
-    ];
+    const targetACI = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
@@ -1358,19 +1348,20 @@ async function search_i (
                     if (separateFamilyMembers) {
                         searchState.results.push(
                             ...filteredEinfos
-                                .map((einfo, i) => [ einfo, familySubset[i] ] as const)
+                                .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
                                 .filter(([ , vertex ]) => (
                                     !familySelect
                                     || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
                                 ))
-                                .map(([ [ incompleteEntry, permittedEinfo ], vertex ]) => new EntryInformation(
+                                .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
                                     {
                                         rdnSequence: getDistinguishedName(vertex),
                                     },
                                     Boolean(vertex.dse.shadow),
                                     permittedEinfo,
                                     incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                    undefined, // TODO: Review, but I think this will always be false.
+                                    // Only the ancestor can have partialName.
+                                    ((index === 0) && state.partialName && (searchState.depth === 0)),
                                     undefined,
                                 )),
                         );
@@ -1401,7 +1392,7 @@ async function search_i (
                             Boolean(familySubset[0].dse.shadow),
                             filteredEinfos[0][1],
                             filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                            undefined, // TODO: Review, but I think this will always be false.
+                            (state.partialName && (searchState.depth === 0)),
                             undefined,
                         ),
                     );
@@ -1524,19 +1515,20 @@ async function search_i (
                     if (separateFamilyMembers) {
                         searchState.results.push(
                             ...filteredEinfos
-                                .map((einfo, i) => [ einfo, familySubset[i] ] as const)
+                                .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
                                 .filter(([ , vertex ]) => (
                                     !familySelect
                                     || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
                                 ))
-                                .map(([ [ incompleteEntry, permittedEinfo ], vertex ]) => new EntryInformation(
+                                .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
                                     {
                                         rdnSequence: getDistinguishedName(vertex),
                                     },
                                     Boolean(vertex.dse.shadow),
                                     permittedEinfo,
                                     incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                    undefined, // TODO: Review, but I think this will always be false.
+                                    // Only the ancestor can have partialName.
+                                    ((index === 0) && state.partialName && (searchState.depth === 0)),
                                     undefined,
                                 )),
                         );
@@ -1567,7 +1559,7 @@ async function search_i (
                                 Boolean(familySubset[0].dse.shadow),
                                 filteredEinfos[0][1],
                                 filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                undefined, // TODO: Review, but I think this will always be false.
+                                (state.partialName && (searchState.depth === 0)),
                                 undefined,
                             ),
                         );

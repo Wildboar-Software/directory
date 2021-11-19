@@ -124,6 +124,11 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import type {
+    AccessPointInformation,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
+import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
+import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 
 function ldapErr (code: number, message: string): LDAPResult {
     return new LDAPResult(
@@ -141,6 +146,18 @@ function ldapErrWithDN (ctx: Context, code: number, message: string, dn: Disting
         Buffer.from(message, "utf-8"),
         undefined,
     );
+}
+
+function apiToURL (
+    api: AccessPointInformation,
+): string[] {
+    return [
+        ...api.address.nAddresses.map(naddrToURI),
+        ...api.additionalPoints
+            ?.flatMap((ap) => ap.address.nAddresses.map(naddrToURI)) ?? [],
+    ]
+        .filter((naddr): naddr is string => !!naddr)
+        .filter((url) => url.toUpperCase().startsWith("LDAP"));
 }
 
 export
@@ -216,7 +233,13 @@ function dapErrorToLDAPResult (
         // stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
     } else if (e instanceof errors.ReferralError) {
         // stats.outcome.error.candidate = getContinuationReferenceStatistics(e.data.candidate);
-        return ldapErr(LDAPResult_resultCode_referral, e.message); // FIXME:
+        const urls: string[] = e.data.candidate.accessPoints.flatMap(apiToURL);
+        return new LDAPResult(
+            LDAPResult_resultCode_referral,
+            new Uint8Array(),
+            Buffer.from(e.message, "utf-8"),
+            urls.map((url) => Buffer.from(url, "utf-8")),
+        );
     } else if (e instanceof errors.SecurityError) {
         switch (e.data.problem) {
             case (SecurityProblem_inappropriateAuthentication):

@@ -70,7 +70,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
@@ -81,6 +81,7 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import getACIItems from "../authz/getACIItems";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -119,15 +120,7 @@ async function compare (
     )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
-    const relevantACIItems = [ // FIXME: subentries
-        ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-            : []),
-        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-            ? (target.dse.entryACI ?? [])
-            : []),
-    ];
+    const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
@@ -136,7 +129,7 @@ async function compare (
             ...tuple,
             await userWithinACIUserClass(
                 tuple[0],
-                conn.boundNameAndUID!, // FIXME:
+                conn.boundNameAndUID!,
                 targetDN,
                 EQUALITY_MATCHER,
                 isMemberOfGroup,

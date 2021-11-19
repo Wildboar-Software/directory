@@ -22,6 +22,7 @@ import {
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 import rdnToJson from "../../x500/rdnToJson";
+import { Prisma } from "@prisma/client";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -62,7 +63,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     if (!vertex.dse.shadow) {
         return;
     }
-    pendingUpdates.entryUpdate.modifiersName = false; // FIXME: This seems to error when `null`.
+    pendingUpdates.entryUpdate.modifiersName = Prisma.DbNull;
 };
 
 export
@@ -74,7 +75,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     if (!vertex.dse.shadow) {
         return;
     }
-    pendingUpdates.entryUpdate.modifiersName = false; // FIXME: This seems to error when `null`.
+    pendingUpdates.entryUpdate.modifiersName = Prisma.DbNull;
 };
 
 export

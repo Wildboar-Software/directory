@@ -18,7 +18,7 @@ import {
     _decode_SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import { strict as assert } from "assert";
-import isModificationOperation from "../x500/isModificationOperation";
+import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
 import unmetCriticalExtension from "../x500/unmetCriticalExtension";
 import {
     ServiceProblem_unavailableCriticalExtension,

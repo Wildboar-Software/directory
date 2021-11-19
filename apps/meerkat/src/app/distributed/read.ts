@@ -30,9 +30,6 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-// import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
@@ -57,7 +54,7 @@ import {
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
 import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
@@ -95,6 +92,7 @@ import {
 import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+import getACIItems from "../authz/getACIItems";
 
 export
 async function read (
@@ -118,18 +116,7 @@ async function read (
         )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
-    const relevantACIItems = isSubentry
-        ? [
-            ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
-                ? (target.immediateSuperior?.dse.admPoint?.subentryACI ?? [])
-                : []),
-        ]
-        : [
-            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                : []),
-        ];
+    const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);

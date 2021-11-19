@@ -22,12 +22,7 @@ import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import {
     _encode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-
-// TODO: Put this in the X.500 library.
-const commonPrefix: number[] = [
-    0x54, // The AFI
-    0x00, 0x72, 0x87, 0x22, // The IDI
-];
+import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -79,11 +74,11 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                                 }
                             })();
                             const ip_and_port = ((): [ string, number | undefined ] | undefined => {
-                                if (nsap[0] !== 0xFF) { // It is not a URL.
+                                if (nsap[0] !== 0xFF) { // It is not an IP.
                                     return undefined;
                                 }
-                                for (let i = 0; i < commonPrefix.length; i++) {
-                                    if (nsap[i] !== commonPrefix[i]) {
+                                for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
+                                    if (nsap[i] !== IPV4_AFI_IDI[i]) {
                                         return undefined;
                                     }
                                 }
@@ -136,8 +131,8 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                             if (nsap[0] !== 0xFF) { // It is not a URL.
                                 return undefined;
                             }
-                            for (let i = 0; i < commonPrefix.length; i++) {
-                                if (nsap[i] !== commonPrefix[i]) {
+                            for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
+                                if (nsap[i] !== IPV4_AFI_IDI[i]) {
                                     return undefined;
                                 }
                             }

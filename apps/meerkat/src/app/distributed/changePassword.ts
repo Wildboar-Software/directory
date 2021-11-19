@@ -26,8 +26,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
@@ -53,6 +51,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import getACIItems from "../authz/getACIItems";
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -95,15 +94,7 @@ async function changePassword (
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     if (accessControlScheme) {
-        const AC_SCHEME: string = accessControlScheme.toString();
-        const relevantACIItems = [
-            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                : []),
-            ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                ? (target.dse.entryACI ?? [])
-                : []),
-        ];
+        const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
         const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);

@@ -4,6 +4,7 @@ import type {
 import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
 import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 
+// FIXME: Remove this. Convert nAddress to string.
 export
 function *accessPointToNSAPStrings (ap: AccessPoint): IterableIterator<string> {
     for (const naddr of ap.address.nAddresses) {

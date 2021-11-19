@@ -49,7 +49,7 @@ const selectAllInfo = new EntryInformationSelection(
         allContexts: null,
     },
     true,
-    undefined, // TODO: Family selection
+    undefined,
 );
 
 const autonomousArea: string = id_ar_autonomousArea.toString();

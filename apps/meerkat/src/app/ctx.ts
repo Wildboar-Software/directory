@@ -18,6 +18,9 @@ import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import winston from "winston";
 import isDebugging from "is-debugging";
 import i18n from "i18next";
+import {
+    uriToNSAP,
+} from "@wildboar/x500/src/lib/distributed/uri";
 
 if (!process.env.MEERKAT_SIGNING_CERT_CHAIN || !process.env.MEERKAT_SIGNING_KEY) {
     console.error("SIGNING_CERT_CHAIN and SIGNING_KEY environment variables must be configured.");
@@ -32,6 +35,12 @@ if (!dsaCert) {
     console.error("Certificate chain file indicated by environment variable SIGNING_CERT_CHAIN had no PEM-encoded certificates.");
     process.exit(1);
 }
+
+const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
+    ? process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
+        .split(/\s+/g)
+        .map((url) => uriToNSAP(url, (url.startsWith("itot://"))))
+    : [];
 
 const rootID = uuid();
 const root: Vertex = {
@@ -79,6 +88,7 @@ const ctx: Context = {
         bindSleepRangeInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_SLEEP_RANGE_MS ?? "") || 1000,
         minAuthLevelForOperationalBinding: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_OB ?? "1"),
         minAuthLocalQualifierForOperationalBinding: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB ?? "128"),
+        myAccessPointNSAPs: myNSAPs,
     },
     dsa: {
         accessPoint: new AccessPoint(
@@ -87,7 +97,7 @@ const ctx: Context = {
                 undefined,
                 undefined,
                 undefined,
-                [], // FIXME:
+                myNSAPs,
             ),
             undefined,
         ),

@@ -1,5 +1,6 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { INTEGER } from "asn1-ts";
 import type {
     EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
@@ -73,6 +74,9 @@ import {
     id_op_establishOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-establishOperationalBinding.va";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import type {
+    InvokeId,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -95,6 +99,8 @@ function codeToString (code?: Code): string | undefined {
 export
 async function establishOperationalBinding (
     ctx: Context,
+    conn: ClientConnection,
+    invokeId: INTEGER,
     arg: EstablishOperationalBindingArgument,
 ): Promise<EstablishOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
@@ -345,7 +351,7 @@ async function establishOperationalBinding (
             };
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
-            const reply = await becomeSuperior(ctx, agreement, init);
+            const reply = await becomeSuperior(ctx, conn, invokeId, agreement, init);
             return {
                 unsigned: new EstablishOperationalBindingResultData(
                     data.bindingType,

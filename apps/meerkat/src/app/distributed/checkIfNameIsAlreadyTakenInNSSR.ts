@@ -2,7 +2,7 @@ import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import type {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
-import { TRUE_BIT } from "asn1-ts";
+import { TRUE_BIT, BOOLEAN, INTEGER } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -59,7 +59,6 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     updateError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
-import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     AbandonedData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
@@ -67,21 +66,26 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import type {
+    InvokeId,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import { addMilliseconds } from "date-fns";
 
 export
 async function checkIfNameIsAlreadyTakenInNSSR (
     ctx: Context,
     conn: ClientConnection,
-    state: OperationDispatcherState,
+    invokeId: InvokeId,
+    aliasDereferenced: BOOLEAN,
     nonSpecificKnowledges: MasterAndShadowAccessPoints[],
     destinationDN: DistinguishedName,
+    timeLimitInMilliseconds?: INTEGER,
 ): Promise<void> {
-    const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+    const op = ("present" in invokeId)
+        ? conn.invocations.get(Number(invokeId.present))
         : undefined;
     for (const nsk of nonSpecificKnowledges) {
         const [ masters ] = splitIntoMastersAndShadows(nsk);
-        // TODO: Use only IDM endpoints.
         for (const accessPoint of masters) {
             if (op?.abandonTime) {
                 op.events.emit("abandon");
@@ -97,7 +101,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                             abandoned["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        state.chainingArguments.aliasDereferenced,
+                        aliasDereferenced,
                         undefined,
                     ),
                 );
@@ -128,7 +132,9 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     new ServiceControls(
                         serviceControlOptions,
                         undefined,
-                        undefined, // TODO:
+                        (timeLimitInMilliseconds !== undefined)
+                            ? (Number(timeLimitInMilliseconds) / 1000)
+                            : undefined,
                         undefined,
                         undefined,
                         undefined,
@@ -141,7 +147,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         accessPoint.ae_title.rdnSequence,
                         chainedRead["&operationCode"],
                     ),
-                    undefined, // TODO:
+                    conn.boundNameAndUID?.dn,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_completed,
                         undefined,
@@ -158,7 +164,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
             };
             const chained: ChainedArgument = new ChainedArgument(
                 new ChainingArguments(
-                    undefined, // TODO:
+                    conn.boundNameAndUID?.dn,
                     undefined,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_proceeding,
@@ -170,7 +176,11 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     undefined,
                     ReferenceType_nonSpecificSubordinate,
                     undefined,
-                    undefined, // TODO:
+                    timeLimitInMilliseconds
+                        ? {
+                            generalizedTime: addMilliseconds(new Date(), Number(timeLimitInMilliseconds))
+                        }
+                        : undefined,
                     createSecurityParameters(
                         ctx,
                         accessPoint.ae_title.rdnSequence,

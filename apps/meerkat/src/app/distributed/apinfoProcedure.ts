@@ -38,7 +38,7 @@ import {
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import isModificationOperation from "../x500/isModificationOperation";
+import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
 import {
     OperationProgress_nameResolutionPhase_proceeding as proceeding,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";

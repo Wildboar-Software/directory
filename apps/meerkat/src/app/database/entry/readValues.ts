@@ -27,6 +27,17 @@ import {
 import {
     id_soc_subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
+import groupByOID from "../../utils/groupByOID";
+import type {
+    TypeAndContextAssertion,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+import type {
+    ContextAssertion,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import {
+    id_oa_allAttributeTypes,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+import getAttributeParentTypes from "../../x500/getAttributeParentTypes";
 
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 // TODO: Explore making this a temporalContext
@@ -64,6 +75,14 @@ interface ReadEntryAttributesReturn {
 //     selectedContexts  SET SIZE (1..MAX) OF TypeAndContextAssertion,
 //     ... }
 
+// TypeAndContextAssertion ::= SEQUENCE {
+//     type               AttributeType,
+//     contextAssertions  CHOICE {
+//       preference         SEQUENCE OF ContextAssertion,
+//       all                SET OF ContextAssertion,
+//       ...},
+//     ... }
+
 // This is so friends of friends, recursively, can be added.
 function addFriends (
     relevantSubentries: Vertex[],
@@ -89,6 +108,56 @@ function addFriends (
         }
     }
 }
+
+const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
+
+// function *filterByTypeAndContextAssertion (
+//     ctx: Context,
+//     values: Value[],
+//     selectedContexts: Record<string, TypeAndContextAssertion[]> | null,
+// ): IterableIterator<Value> {
+//     const preferences: Map<ContextAssertion[], number> = new Map();
+//     if (!selectedContexts) {
+//         yield *values;
+//         return;
+//     }
+//     for (const value of values) {
+//         // A ContextAssertion is true for a particular attribute value if:
+//         // ...the attribute value contains no contexts of the asserted contextType
+//         if (!(value.contexts) || value.contexts.size === 0) {
+//             yield value;
+//         }
+//         const TYPE_OID: string = value.type.toString();
+//         const typeAndSuperTypes: Set<string> = new Set([
+//             TYPE_OID,
+//             ALL_ATTRIBUTE_TYPES,
+//             ...Array.from(getAttributeParentTypes(ctx, value.type)).map((oid) => oid.toString()),
+//         ]);
+//         const typeAndContextAssertions = Array.from(typeAndSuperTypes)
+//             .flatMap((oid) => selectedContexts[oid] ?? []);
+//         if (typeAndContextAssertions.length === 0) {
+//             yield value; // There are no context assertions for this attribute type.
+//         }
+//         for (const taca of typeAndContextAssertions) {
+//             if ("all" in taca.contextAssertions) {
+//                 const match = taca.contextAssertions.all.every((ca): boolean => evaluateContextAssertion(
+//                     ca,
+//                     Array.from(value.contexts?.values() ?? []).map((sc) => sc.),
+//                     getContextMatcher,
+//                     determineAbsentMatch,
+//                 ));
+//                 if (match) {
+//                     yield value;
+//                 }
+//             } else if ("preference" in taca.contextAssertions) {
+
+//             } else {
+//                 continue;
+//             }
+//         }
+//         // return typeAndContextAssertions.every((taca): boolean => {
+//     }
+// }
 
 export
 async function readValues (
@@ -117,6 +186,9 @@ async function readValues (
             }
             : undefined)
         ?? DEFAULT_CAD;
+    // const selectedContexts = ("selectedContexts" in contextSelection)
+    //     ? groupByOID<TypeAndContextAssertion>(contextSelection.selectedContexts, (c) => c.type_)
+    //     : null;
     const selectedUserAttributes: Set<IndexableOID> | null = (eis?.attributes && ("select" in eis.attributes))
         ? new Set(eis.attributes.select.map((oid) => oid.toString()))
         : null;
@@ -218,7 +290,8 @@ async function readValues (
                 return selectedUserAttributes.has(attr.type.toString());
             });
 
-    // FIXME: Fully implement this!
+    // TODO: Evaluate values against context assertions.
+
     return {
         userAttributes,
         operationalAttributes,

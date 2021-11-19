@@ -207,7 +207,7 @@ async function search_ii (
             cursorId = searchState.paging[1].cursorIds[searchState.depth];
         } else if ("abandonQuery" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
-            conn.pagedResultsRequests.delete(queryReference); // FIXME: Do this in list too.
+            conn.pagedResultsRequests.delete(queryReference);
             throw new errors.AbandonError(
                 ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(

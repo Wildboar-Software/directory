@@ -67,7 +67,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 import getEntryInfoFromSearchResultEntry from "../ldap/getEntryInfoFromSearchResultEntry";
 import ldapReferenceToContinuationReference from "../ldap/ldapReferenceToContinuationReference";
-import getRDN from "../x500/getRDN";
+import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
 
 function ldapResultCodeToLimitProblem (code: LDAPResult_resultCode): LimitProblem | undefined {
     return ({

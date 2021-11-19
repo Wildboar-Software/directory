@@ -40,7 +40,7 @@ import dapReplyToLDAPResult from "../distributed/dapReplyToLDAPResult";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import dapErrorToLDAPResult from "../distributed/dapErrorToLDAPResult";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import {
@@ -129,6 +129,7 @@ async function handleRequest (
         && (message.protocolOp.searchRequest.scope === SearchRequest_scope_baseObject)
         && isRootSubschemaDN(message.protocolOp.searchRequest.baseObject)
     ) {
+        const successMessage = ctx.i18n.t("main:success");
         const entry = new SearchResultEntry(
             Buffer.from("cn=subschema", "utf-8"),
             rootSubschemaPseudoVertexAttributes,
@@ -140,7 +141,7 @@ async function handleRequest (
                 searchResDone: new LDAPResult(
                     LDAPResult_resultCode_success,
                     Buffer.alloc(0),
-                    Buffer.from("Success", "utf-8"),
+                    Buffer.from(successMessage, "utf-8"),
                     undefined,
                 ),
             },

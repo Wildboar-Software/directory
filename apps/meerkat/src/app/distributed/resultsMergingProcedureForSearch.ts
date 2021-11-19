@@ -22,8 +22,10 @@ async function resultsMergingProcedureForSearch (
 ): Promise<SearchResult> {
     const data: SearchResultData = getOptionallyProtectedValue(res);
     // We skip removing duplicates for now.
-    // TODO: Return if limit problem.
     if (("searchInfo" in data) && data.searchInfo.partialOutcomeQualifier) {
+        if (data.searchInfo.partialOutcomeQualifier.limitProblem !== undefined) {
+            return res;
+        }
         const poq = data.searchInfo.partialOutcomeQualifier;
         for (const cr of (poq.unexplored ?? [])) {
             // None shall be ignored for now.

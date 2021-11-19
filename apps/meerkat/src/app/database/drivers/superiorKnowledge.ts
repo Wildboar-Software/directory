@@ -21,12 +21,7 @@ import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
 import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
-
-// TODO: Put this in the X.500 library.
-const commonPrefix: number[] = [
-    0x54, // The AFI
-    0x00, 0x72, 0x87, 0x22, // The IDI
-];
+import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -78,8 +73,8 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                             if (nsap[0] !== 0xFF) { // It is not a URL.
                                 return undefined;
                             }
-                            for (let i = 0; i < commonPrefix.length; i++) {
-                                if (nsap[i] !== commonPrefix[i]) {
+                            for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
+                                if (nsap[i] !== IPV4_AFI_IDI[i]) {
                                     return undefined;
                                 }
                             }

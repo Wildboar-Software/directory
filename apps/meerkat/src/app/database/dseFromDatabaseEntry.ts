@@ -131,20 +131,7 @@ async function dseFromDatabaseEntry (
 
     if (dbe.immediate_superior_id === null) { // root and possibly supr
         ret.root = {
-            myAccessPoint: new AccessPoint(
-                {
-                    rdnSequence: [],
-                },
-                new PresentationAddress(
-                    undefined,
-                    undefined,
-                    undefined,
-                    [
-                        uriToNSAP(`idm://${os.hostname()}`, false), // FIXME:
-                    ],
-                ),
-                undefined,
-            )
+            myAccessPoint: ctx.dsa.accessPoint,
         };
 
         const superiorKnowledgeRows = await ctx.db.accessPoint.findMany({

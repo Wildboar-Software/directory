@@ -54,6 +54,9 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import { strict as assert } from "assert";
 import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -146,7 +149,7 @@ function createChainingArgumentsFromDUA (
             // DEVIATION: Not setting the chainingProhibited SCO.
         }
         traceInformation.push(new TraceItem(
-            ctx.dsa.accessPoint.ae_title, // TODO: Better DSA name.
+            ctx.dsa.accessPoint.ae_title,
             undefined,
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
@@ -182,7 +185,7 @@ function createChainingArgumentsFromDUA (
             // DEVIATION: Not setting the chainingProhibited SCO.
         }
         traceInformation.push(new TraceItem(
-            ctx.dsa.accessPoint.ae_title, // TODO: Better DSA name.
+            ctx.dsa.accessPoint.ae_title,
             undefined,
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
@@ -213,7 +216,7 @@ function createChainingArgumentsFromDUA (
             // DEVIATION: Not setting the chainingProhibited SCO.
         }
         traceInformation.push(new TraceItem(
-            ctx.dsa.accessPoint.ae_title, // TODO: Better DSA name.
+            ctx.dsa.accessPoint.ae_title,
             undefined,
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
@@ -244,7 +247,7 @@ function createChainingArgumentsFromDUA (
             // DEVIATION: Not setting the chainingProhibited SCO.
         }
         traceInformation.push(new TraceItem(
-            ctx.dsa.accessPoint.ae_title, // TODO: Better DSA name.
+            ctx.dsa.accessPoint.ae_title,
             undefined,
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
@@ -275,7 +278,7 @@ function createChainingArgumentsFromDUA (
             // DEVIATION: Not setting the chainingProhibited SCO.
         }
         traceInformation.push(new TraceItem(
-            ctx.dsa.accessPoint.ae_title, // TODO: Better DSA name.
+            ctx.dsa.accessPoint.ae_title,
             undefined,
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
@@ -306,7 +309,7 @@ function createChainingArgumentsFromDUA (
             // DEVIATION: Not setting the chainingProhibited SCO.
         }
         traceInformation.push(new TraceItem(
-            ctx.dsa.accessPoint.ae_title, // TODO: Better DSA name.
+            ctx.dsa.accessPoint.ae_title,
             undefined,
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
@@ -337,7 +340,7 @@ function createChainingArgumentsFromDUA (
             // DEVIATION: Not setting the chainingProhibited SCO.
         }
         traceInformation.push(new TraceItem(
-            ctx.dsa.accessPoint.ae_title, // TODO: Better DSA name.
+            ctx.dsa.accessPoint.ae_title,
             undefined,
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
@@ -368,7 +371,7 @@ function createChainingArgumentsFromDUA (
             // DEVIATION: Not setting the chainingProhibited SCO.
         }
         traceInformation.push(new TraceItem(
-            ctx.dsa.accessPoint.ae_title, // TODO: Better DSA name.
+            ctx.dsa.accessPoint.ae_title,
             undefined,
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
@@ -481,7 +484,12 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_unwillingToPerform, // TODO: Is this correct?
                 [],
-                createSecurityParameters(ctx), // TODO:
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 chainedArgument.aliasDereferenced,
                 undefined,
@@ -508,7 +516,12 @@ async function requestValidationProcedure (
             new ServiceErrorData(
                 ServiceProblem_loopDetected,
                 [],
-                createSecurityParameters(ctx), // TODO:
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 chainedArgument.aliasDereferenced,
                 undefined,

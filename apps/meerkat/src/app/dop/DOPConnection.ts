@@ -102,7 +102,7 @@ async function handleRequest (
     switch (request.opcode.local) {
     case (100): { // establish
         const arg = _decode_EstablishOperationalBindingArgument(request.argument);
-        const result = await establishOperationalBinding(ctx, arg);
+        const result = await establishOperationalBinding(ctx, conn, request.invokeID, arg);
         await conn.idm.writeResult(
             request.invokeID,
             request.opcode,

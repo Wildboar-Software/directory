@@ -98,7 +98,7 @@ import {
 import {
     id_errcode_securityError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-securityError.va";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getFilterStatistics from "../telemetry/getFilterStatistics";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";

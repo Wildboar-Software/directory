@@ -60,7 +60,7 @@ import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import readChildren from "../dit/readChildren";
-import getRDN from "../x500/getRDN";
+import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -76,8 +76,6 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
@@ -133,7 +131,7 @@ import {
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import accessPointToNSAPStrings from "../x500/accessPointToNSAPStrings";
 import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
@@ -145,7 +143,7 @@ import {
     subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
-import checkNameForm from "../x500/checkNameForm";
+import checkNameForm from "@wildboar/x500/src/lib/utils/checkNameForm";
 import {
     ObjectClassKind_auxiliary,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
@@ -183,6 +181,7 @@ import {
 import {
     NameProblem_invalidAttributeSyntax,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+import getACIItems from "../authz/getACIItems";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -388,21 +387,10 @@ async function addEntry (
         )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
-    const relevantACIItems = isSubentry
-        ? [
-            ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
-                ? (immediateSuperior.dse.admPoint?.subentryACI ?? [])
-                : []),
-        ]
-        : [
-            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                : []),
-        ];
+    const relevantACIItems = getACIItems(accessControlScheme, undefined, relevantSubentries, isSubentry);
     const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
-        ? (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci))
-        : [];
+        ? []
+        : (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = ctx.config.bulkInsertMode
         ? []
@@ -531,13 +519,18 @@ async function addEntry (
             );
         }
     }
+    const timeRemainingInMilliseconds = timeLimitEndTime
+        ? differenceInMilliseconds(timeLimitEndTime, new Date())
+        : undefined;
     if (!ctx.config.bulkInsertMode && immediateSuperior.dse.nssr) {
         await checkIfNameIsAlreadyTakenInNSSR(
             ctx,
             conn,
-            state,
+            state.invokeId,
+            state.chainingArguments.aliasDereferenced ?? false,
             immediateSuperior.dse.nssr?.nonSpecificKnowledge ?? [],
             targetDN,
+            timeRemainingInMilliseconds,
         );
     }
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
@@ -558,9 +551,6 @@ async function addEntry (
             ),
         );
     }
-    const timeRemainingInMilliseconds = timeLimitEndTime
-        ? differenceInMilliseconds(timeLimitEndTime, new Date())
-        : undefined;
     // NOTE: This does not actually check if targetSystem is the current DSA.
     if (data.targetSystem) {
         const obResponse = await establishSubordinate(

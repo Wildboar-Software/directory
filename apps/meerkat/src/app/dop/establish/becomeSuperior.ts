@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -17,7 +17,7 @@ import {
 import {
     _encode_ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier } from "asn1-ts";
+import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier, INTEGER } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
 import rdnToJson from "../../x500/rdnToJson";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
@@ -55,11 +55,14 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import createEntry from "../../database/createEntry";
+import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
 
 // TODO: If context prefix initialization fails, undo all changes.
 export
 async function becomeSubordinate (
     ctx: Context,
+    conn: ClientConnection,
+    invokeId: INTEGER,
     agreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
 ): Promise<SuperiorToSubordinate> {
@@ -130,7 +133,16 @@ async function becomeSubordinate (
     }
 
     if (superior.dse.nssr) {
-        // TODO: Follow procedures in clause 19.1.5.
+        await checkIfNameIsAlreadyTakenInNSSR(
+            ctx,
+            conn,
+            {
+                present: invokeId,
+            },
+            false,
+            superior.dse.nssr.nonSpecificKnowledge,
+            itinerantDN,
+        );
     }
 
     const subr = await createEntry(

@@ -73,7 +73,7 @@ import {
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
-import codeToString from "../x500/codeToString";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
@@ -103,6 +103,7 @@ import {
     UpdateProblem_notAncestor,
     UpdateProblem_notAllowedOnNonLeaf,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import getACIItems from "../authz/getACIItems";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -152,15 +153,7 @@ async function removeEntry (
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     if (accessControlScheme) {
-        const AC_SCHEME: string = accessControlScheme.toString();
-        const relevantACIItems = [
-            ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-                ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                : []),
-            ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                ? (target.dse.entryACI ?? [])
-                : []),
-        ];
+        const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
         const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);

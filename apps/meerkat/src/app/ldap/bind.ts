@@ -48,11 +48,11 @@ function invalidCredentialsError (name: Uint8Array): BindResponse {
     );
 }
 
-function simpleSuccess (name: Uint8Array): BindResponse {
+function simpleSuccess (successMessage: string, name: Uint8Array): BindResponse {
     return new BindResponse(
         LDAPResult_resultCode_success,
         name,
-        Buffer.from("Success", "utf-8"),
+        Buffer.from(successMessage, "utf-8"),
         undefined,
         undefined,
     );
@@ -101,6 +101,7 @@ async function bind (
     }
     // Wait a random amount of time to prevent timing attacks.
     sleep(crypto.randomInt(3000) + 1000);
+    const successMessage = ctx.i18n.t("main:success");
     const dn = decodeLDAPDN(ctx, req.name);
     const entry = await findEntry(ctx, ctx.dit.root, dn, true);
     if (!entry) {
@@ -150,7 +151,7 @@ async function bind (
                         undefined,
                     ),
                 },
-                result: simpleSuccess(encodedDN),
+                result: simpleSuccess(successMessage, encodedDN),
             };
         }
         // const attrs = await readEntry(ctx, entry);
@@ -173,7 +174,7 @@ async function bind (
                         undefined,
                     ),
                 },
-                result: simpleSuccess(encodedDN),
+                result: simpleSuccess(successMessage, encodedDN),
             };
         } else {
             return invalidCredentials;
@@ -209,7 +210,7 @@ async function bind (
                                 undefined,
                             ),
                         },
-                        result: simpleSuccess(encodedDN),
+                        result: simpleSuccess(successMessage, encodedDN),
                     };
                 } else {
                     return invalidCredentials;
