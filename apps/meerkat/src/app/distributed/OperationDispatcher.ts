@@ -140,14 +140,6 @@ interface OperationDispatcherState {
     partialName: boolean;
 }
 
-// export
-// type OperationDispatcherReturn = ChainedResultOrError
-//     & Partial<WithRequestStatistics>
-//     & Partial<WithOutcomeStatistics>
-//     & {
-//         foundDSE?: Vertex;
-//     };
-
 export
 interface OperationDispatcherReturn
 extends
@@ -169,6 +161,7 @@ class OperationDispatcher {
         conn: ClientConnection,
         req: Request,
         reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+        local: boolean = false,
     ): Promise<OperationDispatcherReturn> {
         assert(req.opCode);
         assert(req.argument);
@@ -333,7 +326,7 @@ class OperationDispatcher {
                     ctx,
                     conn,
                     data,
-                    false, // FIXME:
+                    local,
                     state.NRcontinuationList,
                     state.SRcontinuationList,
                 );
@@ -646,6 +639,7 @@ class OperationDispatcher {
         conn: ClientConnection,
         req: Request,
         preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
+        local: boolean,
     ): Promise<OperationDispatcherReturn> {
         assert(req.opCode);
         assert(req.argument);
@@ -740,6 +734,7 @@ class OperationDispatcher {
                     conn,
                     req,
                     reqData,
+                    local,
                 );
             }
             if ("error" in nrcrResult) {
@@ -762,6 +757,7 @@ class OperationDispatcher {
             conn,
             req,
             reqData,
+            local,
         );
     }
 
@@ -782,6 +778,7 @@ class OperationDispatcher {
             conn,
             req,
             preparedRequest,
+            false,
         );
     }
 
@@ -802,6 +799,7 @@ class OperationDispatcher {
             conn,
             req,
             preparedRequest,
+            false,
         );
     }
 

@@ -3,7 +3,6 @@ import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 
-// TODO: Not used anywhere.
 export
 function *getAttributeParentTypes (
     ctx: Context,

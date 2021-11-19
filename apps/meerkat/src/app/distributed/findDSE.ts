@@ -101,6 +101,7 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import getACIItems from "../authz/getACIItems";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -164,7 +165,7 @@ function makeContinuationRefFromSupplierKnowledge (
                     )),
             ),
         ],
-        false, // FIXME:
+        false,
         undefined,
         false,
         false,
@@ -555,7 +556,7 @@ async function findDSE (
                 );
             }
             default: {
-                throw new Error(); // FIXME:
+                assert(false);
             }
         }
     };
@@ -645,7 +646,7 @@ async function findDSE (
          * (Empirically, it seems like this is only worth it if there are about
          * 1000 immediate subordinates.)
          */
-        if (!dse_i.subordinates || (dse_i.subordinates.length > 1000)) { // TODO: Make this configurable.
+        if (!dse_i.subordinates || (dse_i.subordinates.length > ctx.config.useDatabaseWhenThereAreXSubordinates)) {
             const match = await ctx.db.entry.findFirst({
                 where: {
                     AND: [
@@ -666,23 +667,12 @@ async function findDSE (
             });
             if (match) {
                 const matchedVertex = await vertexFromDatabaseEntry(ctx, dse_i, match, true);
-                // TODO: Make this a check for AC schemes that use the BAC ACDF.
                 if (!ctx.config.bulkInsertMode && accessControlScheme) {
                     const childDN = getDistinguishedName(matchedVertex);
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         state.admPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
                     )).flat();
-                    const targetACI = [
-                        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !matchedVertex.dse.subentry)
-                            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                            : []),
-                        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && matchedVertex.dse.subentry)
-                            ? matchedVertex.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
-                            : []),
-                        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                            ? matchedVertex.dse.entryACI ?? []
-                            : []),
-                    ];
+                    const targetACI = getACIItems(accessControlScheme, matchedVertex, relevantSubentries);
                     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
                     const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
@@ -765,23 +755,12 @@ async function findDSE (
                     );
                 }
                 checkTimeLimit();
-                // TODO: Make this a check for AC schemes that use the BAC ACDF.
                 if (!ctx.config.bulkInsertMode && accessControlScheme) {
                     const childDN = getDistinguishedName(child);
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
                     )).flat();
-                    const targetACI = [
-                        ...((accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME) && !child.dse.subentry)
-                            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
-                            : []),
-                        ...((accessControlSchemesThatUseSubentryACI.has(AC_SCHEME) && child.dse.subentry)
-                            ? child.immediateSuperior?.dse?.admPoint?.subentryACI ?? []
-                            : []),
-                        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                            ? child.dse.entryACI ?? []
-                            : []),
-                    ];
+                    const targetACI = getACIItems(accessControlScheme, child, relevantSubentries);
                     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
                     const relevantTuples: ACDFTupleExtended[] = (await Promise.all(

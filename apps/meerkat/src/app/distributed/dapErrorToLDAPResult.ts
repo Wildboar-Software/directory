@@ -127,7 +127,6 @@ import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import type {
     AccessPointInformation,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
-import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 
 function ldapErr (code: number, message: string): LDAPResult {
@@ -333,11 +332,6 @@ function dapErrorToLDAPResult (
         //         return null;
         //     }
         // }).filter((ainfo): ainfo is string => !!ainfo);
-    } else if (e instanceof errors.UnknownOperationError) {
-        // await dap.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
-    } else {
-        // await dap.idm.writeAbort(Abort_reasonNotSpecified);
-        // TODO: Don't you need to actually close the connection?
     }
     return new LDAPResult(
         LDAPResult_resultCode_other,

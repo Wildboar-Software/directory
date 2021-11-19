@@ -86,8 +86,7 @@ async function nrcrProcedure (
     };
     assert(state.chainingArguments.operationProgress?.nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed);
     assert(state.NRcontinuationList.length); // This procedure should not be called if there are no refs.
-    if (chainingProhibited) { // TODO: Permit local DSA policy to prohibit chaining.
-        // TODO: Permit configuration of what to do here.
+    if (ctx.config.prohibitChaining || chainingProhibited) {
         throw new errors.ReferralError( // TODO: If this is called from LDAP, an LDAP referral must be returned.
             ctx.i18n.t("err:referral"),
             new ReferralData(

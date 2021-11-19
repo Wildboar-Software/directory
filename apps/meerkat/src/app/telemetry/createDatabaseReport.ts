@@ -116,11 +116,10 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
                 .filter((k) => (k.indexOf(".") > -1)), // human friendly names like "person" are indexed too.
             numberFromDatabase: await ctx.db.objectClassDescription.count(),
         },
-        // TODO: Implement once ctx.equalityMatchingRules is actually used!
-        // matchingRules: {
-        //     all: Array.from(ctx.equalityMatchingRules.keys())
-        //         .filter((k) => (k.indexOf(".") > -1)), // human friendly names like "commonName" are indexed too.
-        // },
+        matchingRules: {
+            all: Array.from(ctx.equalityMatchingRules.keys())
+                .filter((k) => (k.indexOf(".") > -1)), // human friendly names like "commonName" are indexed too.
+        },
         friendships: {
             numberFromDatabase: await ctx.db.friendship.count(),
         },

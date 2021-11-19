@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import { Context, ServiceError } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import { TRUE_BIT, FALSE, ObjectIdentifier } from "asn1-ts";
@@ -105,6 +105,7 @@ import {
     ServiceProblem_notSupportedByLDAP,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import { strict as assert } from "assert";
 
 const DEFAULT_LDAP_FILTER: LDAPFilter = {
     present: encodeLDAPOID(objectClass["&id"]),
@@ -420,9 +421,7 @@ function convertDAPFilterToLDAPFilter (ctx: Context, filter: DAPFilter): LDAPFil
  */
 export
 function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
-    if (!req.opCode || !req.argument) {
-        throw new Error(); // FIXME:
-    }
+    assert(req.opCode);
     const messageId: number = generateUnusedInvokeID(ctx);
     if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
         throw new errors.ServiceError(
@@ -443,6 +442,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
         );
     }
     else if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
+        assert(req.argument);
         const arg = addEntry.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         return new LDAPMessage(
@@ -453,11 +453,41 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
                     data.entry.map((attr) => {
                         const spec = ctx.attributeTypes.get(attr.type_.toString());
                         if (!spec?.ldapSyntax) {
-                            throw new Error(); // FIXME:
+                            throw new ServiceError(
+                                ctx.i18n.t("err:not_supported_by_ldap"),
+                                new ServiceErrorData(
+                                    ServiceProblem_notSupportedByLDAP,
+                                    [],
+                                    createSecurityParameters(
+                                        ctx,
+                                        undefined,
+                                        undefined,
+                                        id_errcode_serviceError,
+                                    ),
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                ),
+                            );
                         }
                         const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
                         if (!ldapSyntax?.encoder) {
-                            throw new Error(); // FIXME:
+                            throw new ServiceError(
+                                ctx.i18n.t("err:not_supported_by_ldap"),
+                                new ServiceErrorData(
+                                    ServiceProblem_notSupportedByLDAP,
+                                    [],
+                                    createSecurityParameters(
+                                        ctx,
+                                        undefined,
+                                        undefined,
+                                        id_errcode_serviceError,
+                                    ),
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                ),
+                            );
                         }
                         const encoder = ldapSyntax.encoder;
                         const values: Uint8Array[] = attr.values.map(encoder);
@@ -493,15 +523,46 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
         );
     }
     else if (compareCode(req.opCode, compare["&operationCode"]!)) {
+        assert(req.argument);
         const arg = compare.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         const spec = ctx.attributeTypes.get(data.purported.type_.toString());
         if (!spec?.ldapSyntax) {
-            throw new Error(); // FIXME:
+            throw new ServiceError(
+                ctx.i18n.t("err:not_supported_by_ldap"),
+                new ServiceErrorData(
+                    ServiceProblem_notSupportedByLDAP,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_errcode_serviceError,
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
         }
         const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
         if (!ldapSyntax?.encoder) {
-            throw new Error(); // FIXME:
+            throw new ServiceError(
+                ctx.i18n.t("err:not_supported_by_ldap"),
+                new ServiceErrorData(
+                    ServiceProblem_notSupportedByLDAP,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_errcode_serviceError,
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
         }
         const encoder = ldapSyntax.encoder;
         return new LDAPMessage(
@@ -519,6 +580,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
         );
     }
     else if (compareCode(req.opCode, list["&operationCode"]!)) {
+        assert(req.argument);
         const arg = list.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         const dontDereferenceAliases: boolean = (
@@ -545,6 +607,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
         );
     }
     else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
+        assert(req.argument);
         const arg = modifyDN.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         return new LDAPMessage(
@@ -563,6 +626,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
         );
     }
     else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
+        assert(req.argument);
         const arg = modifyEntry.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         return new LDAPMessage(
@@ -577,6 +641,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
         );
     }
     else if (compareCode(req.opCode, read["&operationCode"]!)) {
+        assert(req.argument);
         const arg = read.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         const dontDereferenceAliases: boolean = (
@@ -612,6 +677,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
         );
     }
     else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
+        assert(req.argument);
         const arg = removeEntry.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         return new LDAPMessage(
@@ -623,6 +689,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
         );
     }
     else if (compareCode(req.opCode, search["&operationCode"]!)) {
+        assert(req.argument);
         const arg = search.decoderFor["&ArgumentType"]!(req.argument);
         const data = getOptionallyProtectedValue(arg);
         const dontDereferenceAliases: boolean = (

@@ -120,5 +120,6 @@
     "parent_not_ancestor": "Hierarchy parent was not the ancestor of the compound entry of which it is a part.",
     "unsupported_auth_method": "Unsupported authentication method.",
     "alias_problem": "Alias did not point to an existing entry.",
-    "no_such_attribute_or_value": "The entry did not possess the selected values."
+    "no_such_attribute_or_value": "The entry did not possess the selected values.",
+    "not_supported_by_ldap": "Not supported by LDAP."
 }

@@ -63,6 +63,7 @@ import {
     modifyPassword
 } from "@wildboar/ldap/src/lib/extensions";
 import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
+import { strict as assert } from "assert";
 
 async function getSearchResultEntries (
     ctx: Context,
@@ -106,10 +107,7 @@ async function dapReplyToLDAPResult (
     onEntry: (entry: SearchResultEntry) => Promise<void>,
     foundDSE?: Vertex,
 ): Promise<LDAPMessage> {
-    if (!res.opCode || !res.result) {
-        throw new Error(); // FIXME:
-    }
-
+    assert(res.opCode);
     const successMessage = ctx.i18n.t("main:success");
     let sortRequestControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc2891.html
     let simplePagedResultsControl: Control | undefined;

@@ -457,6 +457,8 @@ interface Configuration {
     minAuthLevelForOperationalBinding: number;
     minAuthLocalQualifierForOperationalBinding: number;
     myAccessPointNSAPs: Uint8Array[];
+    useDatabaseWhenThereAreXSubordinates: number;
+    prohibitChaining: boolean;
 }
 
 export

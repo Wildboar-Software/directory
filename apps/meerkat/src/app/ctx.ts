@@ -89,6 +89,12 @@ const ctx: Context = {
         minAuthLevelForOperationalBinding: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_OB ?? "1"),
         minAuthLocalQualifierForOperationalBinding: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB ?? "128"),
         myAccessPointNSAPs: myNSAPs,
+        useDatabaseWhenThereAreXSubordinates: process.env.MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES
+            ? Number.parseInt(process.env.MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES)
+            : 1000,
+        prohibitChaining: process.env.MEERKAT_PROHIBIT_CHAINING
+            ? (process.env.MEERKAT_PROHIBIT_CHAINING === "1")
+            : undefined,
     },
     dsa: {
         accessPoint: new AccessPoint(

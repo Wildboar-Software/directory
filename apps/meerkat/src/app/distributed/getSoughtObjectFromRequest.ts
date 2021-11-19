@@ -101,7 +101,7 @@ function getSoughtObjectFromRequest (
         if (chainingArguments?.relatedEntry !== undefined) {
             const relatedEntry = data.joinArguments?.[Number(chainingArguments.relatedEntry)];
             if (!relatedEntry) {
-                return undefined; // TODO: Throw an invalid request error.
+                return undefined;
             }
             return relatedEntry.joinBaseObject.rdnSequence;
         }
