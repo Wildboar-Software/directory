@@ -17,16 +17,23 @@ async function vertexFromDatabaseEntry (
     if (dbe.keep_children_in_database) {
         return ret;
     }
-    ret.subordinates = oneLevel
-        ? null
-        : await Promise.all(
-            (await ctx.db.entry.findMany({
-                take: 10_000_000,
-                where: {
-                    immediate_superior_id: dbe.id,
-                },
-            })).map((child) => vertexFromDatabaseEntry(ctx, ret, child)),
-        );
+    try {
+        ret.subordinates = oneLevel
+            ? null
+            : await Promise.all(
+                (await ctx.db.entry.findMany({
+                    take: 10_000_000,
+                    where: {
+                        immediate_superior_id: dbe.id,
+                    },
+                })).map((child) => vertexFromDatabaseEntry(ctx, ret, child)),
+            );
+    } catch (e) {
+        ctx.log.error("err:failed_to_decode_subordinates", {
+            uuid: ret.dse.uuid,
+            e: e,
+        });
+    }
     return ret;
 }
 

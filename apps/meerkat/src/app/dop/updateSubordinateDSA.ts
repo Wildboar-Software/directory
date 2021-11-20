@@ -191,7 +191,7 @@ interface UpdateSubordinateOptions extends ConnectOptions, WriteOperationOptions
 }
 
 export
-async function updateSubordinate (
+async function updateSubordinateDSA (
     ctx: Context,
     currentBindingID: OperationalBindingID,
     immediateSuperior: Vertex,
@@ -312,4 +312,4 @@ async function updateSubordinate (
     });
 }
 
-export default updateSubordinate;
+export default updateSubordinateDSA;

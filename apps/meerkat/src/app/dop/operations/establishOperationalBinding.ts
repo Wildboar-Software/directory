@@ -74,9 +74,6 @@ import {
     id_op_establishOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-establishOperationalBinding.va";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import type {
-    InvokeId,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -222,7 +219,7 @@ async function establishOperationalBinding (
                     },
                 );
             }
-            const reply = await becomeSubordinate(ctx, agreement, init);
+            const reply = await becomeSubordinate(ctx, data.accessPoint, agreement, init);
             const sp = data.securityParameters;
             const now = new Date();
             const alreadyTakenBindingIDs = new Set(

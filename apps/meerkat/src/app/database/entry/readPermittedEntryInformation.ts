@@ -23,6 +23,7 @@ import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import accessControlSchemesThatUseACIItems from "../../authz/accessControlSchemesThatUseACIItems";
 
 export
 interface ReadPermittedEntryInformationReturn {
@@ -49,7 +50,10 @@ async function readPermittedEntryInformation (
         relevantSubentries,
         operationContexts,
     );
-    if (!accessControlScheme) {
+    if (
+        !accessControlScheme
+        || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         return {
             incompleteEntry: false,
             information: einfo,

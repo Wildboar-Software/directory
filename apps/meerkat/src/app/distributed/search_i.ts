@@ -225,8 +225,10 @@ import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import getACIItems from "../authz/getACIItems";
+import isAttributeSubtype from "../x500/isAttributeSubtype";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 
-// TODO: This will require serious changes when service specific areas are implemented.
+// NOTE: This will require serious changes when service specific areas are implemented.
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = id_oc_parent.toString();
@@ -793,7 +795,10 @@ async function search_i (
         );
         return authorized;
     };
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const authorizedToSearch = authorized([
             PERMISSION_CATEGORY_RETURN_DN,
             PERMISSION_CATEGORY_BROWSE,
@@ -954,13 +959,16 @@ async function search_i (
             return ctx.contextTypes.get(contextType.toString())?.absentMatch ?? true;
         },
         isMatchingRuleCompatibleWithAttributeType: (mr: OBJECT_IDENTIFIER, at: OBJECT_IDENTIFIER): boolean => {
-            return true; // FIXME:
+            return !!ctx.attributeTypes.get(at.toString())?.compatibleMatchingRules.has(mr.toString());
         },
         isAttributeSubtype: (attributeType: OBJECT_IDENTIFIER, parentType: OBJECT_IDENTIFIER): boolean => {
-            return true; // FIXME:
+            return !!isAttributeSubtype(ctx, attributeType, parentType);
         },
         permittedToMatch: (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
-            if (!accessControlScheme) {
+            if (
+                !accessControlScheme
+                || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+            ) {
                 return true;
             }
             const {
@@ -1058,7 +1066,10 @@ async function search_i (
     const filterUnauthorizedEntryInformation = (
         einfo: EntryInformation_information_Item[],
     ): [ boolean, EntryInformation_information_Item[] ] => {
-        if (!accessControlScheme) {
+        if (
+            !accessControlScheme
+            || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        ) {
             return [ true, einfo ];
         }
         let incompleteEntry: boolean = false;

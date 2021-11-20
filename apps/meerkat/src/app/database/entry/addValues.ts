@@ -162,7 +162,7 @@ async function addValues (
     ctx: Context,
     entry: Vertex,
     values: Value[],
-    modifier: DistinguishedName,
+    modifier?: DistinguishedName,
 ): Promise<PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
         await validateValues(ctx, entry, values);
@@ -170,7 +170,7 @@ async function addValues (
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
-            modifiersName: modifier.map(rdnToJson),
+            modifiersName: modifier?.map(rdnToJson),
         },
         otherWrites: [],
     };

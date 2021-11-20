@@ -369,6 +369,7 @@ class LDAPConnection extends ClientConnection {
             } else if (
                 ("extendedReq" in message.protocolOp)
                 && !decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(modifyPassword)
+                && !decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(cancel)
             ) {
                 const req = message.protocolOp.extendedReq;
                 const oid = decodeLDAPOID(req.requestName);

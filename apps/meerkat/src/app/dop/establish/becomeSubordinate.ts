@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context, PendingUpdates } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -23,11 +23,21 @@ import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
 import addValues from "../../database/entry/addValues";
+import {
+    superiorKnowledge,
+} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
+import {
+    addValue,
+} from "../../database/drivers/superiorKnowledge";
+import {
+    AccessPoint,
+    _encode_AccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 
-// TODO: If context prefix initialization fails, undo all changes.
 export
 async function becomeSubordinate (
     ctx: Context,
+    superiorAccessPoint: AccessPoint,
     agreement: HierarchicalAgreement,
     sup2sub: SuperiorToSubordinate,
 ): Promise<SubordinateToSuperior> {
@@ -158,18 +168,37 @@ async function becomeSubordinate (
             ),
         );
     }
-    // TODO: Update the knowledge references of the root DSE (supr) if the highest NC has changed.
+
+    { // Update superiorKnowledge
+        const pendingUpdates: PendingUpdates = {
+            entryUpdate: {},
+            otherWrites: [],
+        };
+        await addValue(ctx, ctx.dit.root, {
+            type: superiorKnowledge["&id"],
+            value: _encode_AccessPoint(superiorAccessPoint, DER),
+        }, pendingUpdates);
+        await ctx.db.$transaction([
+            ctx.db.entry.update({
+                where: {
+                    id: ctx.dit.root.dse.id,
+                },
+                data: {
+                    ...pendingUpdates.entryUpdate,
+                },
+            }),
+            ...pendingUpdates.otherWrites,
+        ]);
+    }
+
     const myAccessPoint = ctx.dsa.accessPoint;
     return new SubordinateToSuperior(
         [
-            // TODO: NOTE 1 – The master access point within accessPoints is the same
-            // as that passed in the accessPoint parameter of the Establish and
-            // Modify Operational Binding operations.
             new MasterOrShadowAccessPoint(
                 myAccessPoint.ae_title,
                 myAccessPoint.address,
                 myAccessPoint.protocolInformation,
-                MasterOrShadowAccessPoint_category_master,
+                MasterOrShadowAccessPoint_category_master, // Could not be otherwise.
                 false,
             ),
             /** REVIEW:

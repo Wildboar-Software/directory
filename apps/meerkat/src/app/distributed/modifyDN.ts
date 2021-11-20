@@ -32,10 +32,6 @@ import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
 import findEntry from "../x500/findEntry";
 import { strict as assert } from "assert";
 import {
-    id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import { OperationalBindingInitiator } from "@prisma/client";
-import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -44,7 +40,6 @@ import {
     _decode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import isPrefix from "../x500/isPrefix";
-import updateSubordinate from "../dop/updateSubordinate";
 import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
 import type {
     DistinguishedName,
@@ -56,7 +51,6 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
@@ -142,6 +136,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 import getACIItems from "../authz/getACIItems";
 import { differenceInMilliseconds } from "date-fns";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings";
+import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
+import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -357,7 +355,10 @@ async function modifyDN (
         ]),
     ))
         .filter((tuple) => (tuple[5] > 0));
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         if (data.newRDN) {
             const {
                 authorized: authorizedToEntry,
@@ -488,7 +489,10 @@ async function modifyDN (
         )).flat();
         const newAccessControlScheme = newAdmPoints
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-        if (newAccessControlScheme) {
+        if (
+            newAccessControlScheme
+            && accessControlSchemesThatUseACIItems.has(newAccessControlScheme.toString())
+        ) {
             const relevantACIItems = getACIItems(accessControlScheme, undefined, relevantSubentries);
             const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
                 .flatMap((aci) => getACDFTuplesFromACIItem(aci));
@@ -582,8 +586,6 @@ async function modifyDN (
         }
     }
 
-    // TODO: Check if new superior provides IMPORT permission via a prescriptiveACI or subentryACI
-
     // This is, at least implicitly, a part of steps 5, 6, and 7.
     if (await findEntry(ctx, superior, [ newRDN ])) {
         throw new errors.UpdateError(
@@ -607,192 +609,58 @@ async function modifyDN (
 
     checkTimeLimit();
     if (target.dse.subentry) { // Continue at step 7.
-        // TODO: I believe the code in this section could be deduplicated.
-        const admPoint = target.immediateSuperior;
-        assert(admPoint);
-        if (!admPoint.dse.admPoint) {
-            throw new errors.ServiceError(
-                ctx.i18n.t("err:subentry_not_child_of_admpoint", {
-                    uuid: target.dse.uuid,
-                }),
-                new ServiceErrorData(
-                    ServiceProblem_ditError,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        serviceError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
-        }
-        const admPointDN = getDistinguishedName(admPoint);
-        const now = new Date();
-        const relevantOperationalBindings = await ctx.db.operationalBinding.findMany({
-            where: {
-                binding_type: id_op_binding_hierarchical.toString(),
-                validity_start: {
-                    gte: now,
-                },
-                validity_end: {
-                    lte: now,
-                },
-                accepted: true,
-                OR: [
-                    { // Local DSA initiated role A (meaning local DSA is superior.)
-                        initiator: OperationalBindingInitiator.ROLE_A,
-                        outbound: true,
-                    },
-                    { // Remote DSA initiated role B (meaning local DSA is superior again.)
-                        initiator: OperationalBindingInitiator.ROLE_B,
-                        outbound: false,
-                    },
-                ],
-            },
-            select: {
-                binding_identifier: true,
-                binding_version: true,
-                access_point: true,
-                agreement_ber: true,
-            },
-        });
-        for (const ob of relevantOperationalBindings) {
-            const argreementElement = new BERElement();
-            argreementElement.fromBytes(ob.agreement_ber);
-            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-            if (!isPrefix(ctx, admPointDN, agreement.immediateSuperior)) {
-                continue;
-            }
-            const bindingID = new OperationalBindingID(
-                ob.binding_identifier,
-                ob.binding_version,
-            );
-            const accessPointElement = new BERElement();
-            accessPointElement.fromBytes(ob.access_point.ber);
-            const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
-            try {
-                const subrDN: DistinguishedName = [
-                    ...agreement.immediateSuperior,
-                    agreement.rdn,
-                ];
-                const subr = await findEntry(ctx, ctx.dit.root, subrDN);
-                if (!subr) {
-                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
-                        obid: bindingID.identifier.toString(),
-                        version: bindingID.version.toString(),
-                    }));
-                    continue;
-                }
-                assert(subr.immediateSuperior);
-                // We do not await the return value. This can run independently
-                // of returning from this operation.
-                updateSubordinate(
-                    ctx,
-                    bindingID,
-                    subr.immediateSuperior,
-                    undefined,
-                    subr.dse.rdn,
-                    accessPoint,
-                )
-                    .catch((e) => {
-                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                            obid: bindingID.identifier.toString(),
-                            version: bindingID.version.toString(),
-                            e: e.message,
-                        }));
-                    });
-            } catch (e) {
-                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                    obid: bindingID.identifier.toString(),
-                    version: bindingID.version.toString(),
-                    e: e.message,
-                }));
-                continue;
-            }
-        }
+        // Deviation from the specification: we update the subordinates AFTER we update the DN locally.
     } else if (target.dse.cp) { // Continue at step 6.
+        // FIXME: This is wrong. You're updating the subordinate DSA. You need to update superior.
         // Notify the superior DSA.
-        const now = new Date();
-        const relevantOperationalBindings = await ctx.db.operationalBinding.findMany({
-            where: {
-                binding_type: id_op_binding_hierarchical.toString(),
-                validity_start: {
-                    gte: now,
-                },
-                validity_end: {
-                    lte: now,
-                },
-                accepted: true,
-                OR: [
-                    { // Local DSA initiated role B (meaning local DSA is subordinate.)
-                        initiator: OperationalBindingInitiator.ROLE_B,
-                        outbound: true,
-                    },
-                    { // Remote DSA initiated role A (meaning remote DSA is superior.)
-                        initiator: OperationalBindingInitiator.ROLE_A,
-                        outbound: false,
-                    },
-                ],
-            },
-            select: {
-                uuid: true,
-                binding_identifier: true,
-                binding_version: true,
-                access_point: true,
-                agreement_ber: true,
-            },
-        });
-        for (const ob of relevantOperationalBindings) {
-            const argreementElement = new BERElement();
-            argreementElement.fromBytes(ob.agreement_ber);
-            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-            const agreementDN: DistinguishedName = [
-                ...agreement.immediateSuperior,
-                agreement.rdn,
-            ];
-            const match = compareDistinguishedName(targetDN, agreementDN, NAMING_MATCHER);
-            if (!match) {
-                continue;
-            }
-            const bindingID = new OperationalBindingID(
-                ob.binding_identifier,
-                ob.binding_version,
-            );
-            const accessPointElement = new BERElement();
-            accessPointElement.fromBytes(ob.access_point.ber);
-            const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
-            try {
-                assert(target.immediateSuperior);
-                // We do not await the return value. This can run independently
-                // of returning from this operation.
-                updateSubordinate(
-                    ctx,
-                    bindingID,
-                    superior,
-                    undefined,
-                    newRDN,
-                    accessPoint,
-                )
-                    .catch((e) => {
-                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                            obid: bindingID.identifier.toString(),
-                            version: bindingID.version.toString(),
-                            e: e.message,
-                        }));
-                    });
-            } catch (e) {
-                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                    obid: bindingID.identifier.toString(),
-                    version: bindingID.version.toString(),
-                    e: e.message,
-                }));
-                continue;
-            }
-        }
+        // const relevantOperationalBindings = await getRelevantOperationalBindings(ctx, false);
+        // for (const ob of relevantOperationalBindings) {
+        //     const argreementElement = new BERElement();
+        //     argreementElement.fromBytes(ob.agreement_ber);
+        //     const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
+        //     const agreementDN: DistinguishedName = [
+        //         ...agreement.immediateSuperior,
+        //         agreement.rdn,
+        //     ];
+        //     const match = compareDistinguishedName(targetDN, agreementDN, NAMING_MATCHER);
+        //     if (!match) {
+        //         continue;
+        //     }
+        //     const bindingID = new OperationalBindingID(
+        //         ob.binding_identifier,
+        //         ob.binding_version,
+        //     );
+        //     const accessPointElement = new BERElement();
+        //     accessPointElement.fromBytes(ob.access_point.ber);
+        //     const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
+        //     try {
+        //         assert(target.immediateSuperior);
+        //         // We do not await the return value. This can run independently
+        //         // of returning from this operation.
+        //         updateSubordinateDSA(
+        //             ctx,
+        //             bindingID,
+        //             superior,
+        //             undefined,
+        //             newRDN,
+        //             accessPoint,
+        //         )
+        //             .catch((e) => {
+        //                 ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+        //                     obid: bindingID.identifier.toString(),
+        //                     version: bindingID.version.toString(),
+        //                     e: e.message,
+        //                 }));
+        //             });
+        //     } catch (e) {
+        //         ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+        //             obid: bindingID.identifier.toString(),
+        //             version: bindingID.version.toString(),
+        //             e: e.message,
+        //         }));
+        //         continue;
+        //     }
+        // }
     } else if (
         (target.dse.entry || target.dse.alias)
         && superior.dse.nssr
@@ -810,6 +678,11 @@ async function modifyDN (
             destinationDN,
             timeRemainingInMilliseconds,
         );
+        /**
+         * Note that this covers the case where the entry is of type admPoint,
+         * because an admPoint must always be of type entry.
+         */
+        updateAffectedSubordinateDSAs(ctx, targetDN);
     }
 
     // For checking deleteOldRDN
@@ -1375,7 +1248,20 @@ async function modifyDN (
         }
     }
 
-    // FIXME: Move the updates to the HOB down here so that they happen AFTER the update.
+    if (target.dse.cp) {
+        // The specification says that you must wait for this to succeed before
+        // returning a response. So we await this, unlike the subordinate updates.
+        await updateSuperiorDSA(ctx, targetDN, target, {
+            // timeLimitInMilliseconds // TODO:
+        });
+    }
+    if (target.dse.entry || target.dse.alias || target.dse.subentry) {
+        const affectedPrefix = target.dse.subentry
+            ? target.immediateSuperior
+            : target;
+        const affectedPrefixDN = getDistinguishedName(affectedPrefix);
+        updateAffectedSubordinateDSAs(ctx, affectedPrefixDN); // INTENTIONAL_NO_AWAIT
+    }
 
     // TODO: Update shadows
     const result: ModifyDNResult = {

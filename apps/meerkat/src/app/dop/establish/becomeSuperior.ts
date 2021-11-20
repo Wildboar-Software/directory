@@ -57,9 +57,8 @@ import {
 import createEntry from "../../database/createEntry";
 import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
 
-// TODO: If context prefix initialization fails, undo all changes.
 export
-async function becomeSubordinate (
+async function becomeSuperior (
     ctx: Context,
     conn: ClientConnection,
     invokeId: INTEGER,
@@ -199,4 +198,4 @@ async function becomeSubordinate (
     );
 }
 
-export default becomeSubordinate;
+export default becomeSuperior;

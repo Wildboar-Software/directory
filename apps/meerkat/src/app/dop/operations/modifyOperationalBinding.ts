@@ -63,7 +63,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import updateContextPrefix from "../modify/updateContextPrefix";
-import updateSubordinate from "../modify/updateSubordinate";
+import updateLocalSubr from "../modify/updateLocalSubr";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -369,7 +369,7 @@ async function modifyOperationalBinding (
             };
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
-            await updateSubordinate(ctx, oldAgreement, newAgreement, init);
+            await updateLocalSubr(ctx, oldAgreement, newAgreement, init);
             return {
                 null_: null,
             };

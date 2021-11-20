@@ -169,6 +169,15 @@ import {
     SearchControlOptions,
     SearchControlOptions_separateFamilyMembers,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    ServiceProblem_unavailableCriticalExtension,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 const now: TimeAssertion = {
     now: null,
@@ -680,7 +689,24 @@ function ldapRequestToDAPRequest (
             }
             default: {
                 if (control.criticality) {
-                    throw new Error(); // FIXME: What kind of error?
+                    throw new errors.ServiceError(
+                        ctx.i18n.t("err:unrecognized_ldap_extension", {
+                            ext: oid.toString(),
+                        }),
+                        new ServiceErrorData(
+                            ServiceProblem_unavailableCriticalExtension,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            false,
+                            undefined,
+                        ),
+                    );
                 }
             }
         }
@@ -755,7 +781,25 @@ function ldapRequestToDAPRequest (
                         attrSpec?.id,
                         mrSpec?.id,
                     );
-                } // TODO: What to do if the attribute type was not understood?
+                } else if (sortRequestControl.criticality) {
+                    // Attribute type not understood.
+                    throw new errors.ServiceError(
+                        ctx.i18n.t("err:unrecognized_sort_key"),
+                        new ServiceErrorData(
+                            ServiceProblem_unavailableCriticalExtension,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            false,
+                            undefined,
+                        ),
+                    );
+                }
             }
         }
         const prr: PagedResultsRequest | undefined = (() => {
@@ -894,7 +938,6 @@ function ldapRequestToDAPRequest (
         };
     }
     else if ("addRequest" in req.protocolOp) {
-        // TODO: targetSystem support.
         const dapReq: AddEntryArgument = {
             unsigned: new AddEntryArgumentData(
                 {
@@ -1180,7 +1223,7 @@ function ldapRequestToDAPRequest (
         const oid = ObjectIdentifier.fromString(Buffer.from(req.protocolOp.extendedReq.requestName).toString("utf-8"));
         if (oid.isEqualTo(modifyPassword)) {
             if (!req.protocolOp.extendedReq.requestValue) {
-                throw new Error(); // TODO:
+                throw new Error();
             }
             const passwdModifyRequestElement = new DERElement();
             passwdModifyRequestElement.fromBytes(req.protocolOp.extendedReq.requestValue);
@@ -1233,7 +1276,7 @@ function ldapRequestToDAPRequest (
             }
         } else if (oid.isEqualTo(cancel)) {
             if (!req.protocolOp.extendedReq.requestValue) {
-                throw new Error(); // TODO:
+                throw new Error();
             }
             const el = new BERElement();
             el.fromBytes(req.protocolOp.extendedReq.requestValue);

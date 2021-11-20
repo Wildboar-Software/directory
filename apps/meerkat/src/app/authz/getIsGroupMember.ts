@@ -4,6 +4,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import { member } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/member.oa";
 import { uniqueMember } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueMember.oa";
+import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
 import { groupOfNames } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/groupOfNames.oa";
 import { groupOfUniqueNames } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/groupOfUniqueNames.oa";
 import {
@@ -40,6 +41,38 @@ function getIsGroupMember (
         ) {
             return undefined;
         }
+        if (user.uid) {
+            const userEntry = await findEntry(ctx, ctx.dit.root, user.dn);
+            if (!userEntry) {
+                return undefined;
+            }
+            const { userAttributes: uniqueIdentifiers } = await readValues(ctx, userEntry, new EntryInformationSelection(
+                {
+                    select: [
+                        uniqueIdentifier["&id"],
+                    ],
+                },
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            ));
+            const someUIDMatched: boolean = uniqueIdentifiers
+                .some((uid) => !Buffer.compare(
+                    Buffer.from(uid.value.bitString),
+                    Buffer.from(user.uid!),
+                ));
+            if (!someUIDMatched) {
+                /**
+                 * Undefined if the Unique Identifier does not match, because
+                 * this is not the same object that is named; that object no
+                 * longer exists. (The point of the unique identifier is to
+                 * uniquely identify objects between "re-incarnations.")
+                 */
+                return undefined;
+            }
+        }
         const { userAttributes: groupAttributes } = await readValues(ctx, groupEntry, new EntryInformationSelection(
             {
                 select: [
@@ -53,7 +86,6 @@ function getIsGroupMember (
             undefined,
             undefined,
         ));
-        // TODO: Review what to do about the unique identifier.
         for (const attr of groupAttributes) {
             if (attr.type.isEqualTo(member["&id"])) {
                 const decodedValue = _decode_DistinguishedName(attr.value);

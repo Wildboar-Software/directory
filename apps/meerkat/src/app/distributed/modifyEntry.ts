@@ -85,29 +85,11 @@ import removeAttribute from "../database/entry/removeAttribute";
 import readValues from "../database/entry/readValues";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
 import { strict as assert } from "assert";
-import {
-    id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import { OperationalBindingInitiator } from "@prisma/client";
-import {
-    HierarchicalAgreement,
-    _decode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
-import {
-    AccessPoint,
-    _decode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import isPrefix from "../x500/isPrefix";
-import updateSubordinate from "../dop/updateSubordinate";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import findEntry from "../x500/findEntry";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import type {
@@ -228,6 +210,8 @@ import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import getACIItems from "../authz/getACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -256,8 +240,8 @@ function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
     return (
         (el.tagClass === ASN1TagClass.universal)
         && (
-            el.tagNumber === ASN1UniversalType.integer
-            || el.tagNumber === ASN1UniversalType.realNumber
+            (el.tagNumber === ASN1UniversalType.integer)
+            || (el.tagNumber === ASN1UniversalType.realNumber)
         )
     );
 }
@@ -298,7 +282,10 @@ function checkPermissionToAddValues (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): void {
-    if (!accessControlScheme) {
+    if (
+        !accessControlScheme
+        || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         return;
     }
     const values = valuesFromAttribute(attribute);
@@ -591,7 +578,10 @@ async function executeRemoveAttribute (
         )
     }
     delta.delete(mod.toString());
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized: authorizedForAttributeType,
         } = bacACDF(
@@ -695,7 +685,10 @@ async function executeRemoveValues (
             ),
         )
     }
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized: authorizedForAttributeType,
         } = bacACDF(
@@ -768,7 +761,10 @@ async function executeAlterValues (
     if (!isAcceptableTypeForAlterValues(mod.value)) {
         throw new Error();
     }
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized: authorizedForAttributeType,
         } = bacACDF(
@@ -818,7 +814,10 @@ async function executeAlterValues (
         ...userAttributes,
         ...operationalAttributes,
     ];
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         for (const value of values) {
             const {
                 authorized: authorizedForValue,
@@ -878,7 +877,10 @@ async function executeResetValue (
             },
         },
     };
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const rows = await ctx.db.attributeValue.findMany({
             where,
             select: {
@@ -950,7 +952,10 @@ async function executeReplaceValues (
         entry_id: entry.dse.id,
         type: TYPE_OID,
     };
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized: authorizedForValue,
         } = bacACDF(
@@ -1468,7 +1473,11 @@ async function modifyEntry (
         return authorized;
     };
 
-    if (!ctx.config.bulkInsertMode && accessControlScheme) {
+    if (
+        !ctx.config.bulkInsertMode
+        && accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const authorizedToModifyEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_MODIFY ]);
         if (!authorizedToModifyEntry) {
             throw new errors.SecurityError(
@@ -1994,91 +2003,9 @@ async function modifyEntry (
         const admPoint: Vertex | undefined = target.dse.admPoint
             ? target
             : target.immediateSuperior;
-        assert(admPoint?.dse.admPoint);
+        assert(admPoint);
         const admPointDN = getDistinguishedName(admPoint);
-        const now = new Date();
-        const relevantOperationalBindings = await ctx.db.operationalBinding.findMany({
-            where: {
-                binding_type: id_op_binding_hierarchical.toString(),
-                validity_start: {
-                    gte: now,
-                },
-                validity_end: {
-                    lte: now,
-                },
-                accepted: true,
-                OR: [
-                    { // Local DSA initiated role A (meaning local DSA is superior.)
-                        initiator: OperationalBindingInitiator.ROLE_A,
-                        outbound: true,
-                    },
-                    { // Remote DSA initiated role B (meaning local DSA is superior again.)
-                        initiator: OperationalBindingInitiator.ROLE_B,
-                        outbound: false,
-                    },
-                ],
-            },
-            select: {
-                binding_identifier: true,
-                binding_version: true,
-                access_point: true,
-                agreement_ber: true,
-            },
-        });
-        for (const ob of relevantOperationalBindings) {
-            const argreementElement = new BERElement();
-            argreementElement.fromBytes(ob.agreement_ber);
-            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-            if (!isPrefix(ctx, admPointDN, agreement.immediateSuperior)) {
-                continue;
-            }
-            const bindingID = new OperationalBindingID(
-                ob.binding_identifier,
-                ob.binding_version,
-            );
-            const accessPointElement = new BERElement();
-            accessPointElement.fromBytes(ob.access_point.ber);
-            const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
-            try {
-                const subrDN: DistinguishedName = [
-                    ...agreement.immediateSuperior,
-                    agreement.rdn,
-                ];
-                const subr = await findEntry(ctx, ctx.dit.root, subrDN);
-                if (!subr) {
-                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
-                        obid: bindingID.identifier.toString(),
-                        version: bindingID.version.toString(),
-                    }));
-                    continue;
-                }
-                assert(subr.immediateSuperior);
-                // We do not await the return value. This can run independently
-                // of returning from this operation.
-                updateSubordinate(
-                    ctx,
-                    bindingID,
-                    subr.immediateSuperior,
-                    undefined,
-                    subr.dse.rdn,
-                    accessPoint,
-                )
-                    .catch((e) => {
-                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                            obid: bindingID.identifier.toString(),
-                            version: bindingID.version.toString(),
-                            e: e.message,
-                        }));
-                    });
-            } catch (e) {
-                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                    obid: bindingID.identifier.toString(),
-                    version: bindingID.version.toString(),
-                    e: e.message,
-                }));
-                continue;
-            }
-        }
+        updateAffectedSubordinateDSAs(ctx, admPointDN); // INTENTIONAL_NO_AWAIT
     }
 
     // TODO: Update Shadows

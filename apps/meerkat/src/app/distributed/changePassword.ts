@@ -52,6 +52,7 @@ import {
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getACIItems from "../authz/getACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -93,7 +94,10 @@ async function changePassword (
     )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));

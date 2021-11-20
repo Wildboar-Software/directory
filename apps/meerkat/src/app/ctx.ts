@@ -94,7 +94,7 @@ const ctx: Context = {
             : 1000,
         prohibitChaining: process.env.MEERKAT_PROHIBIT_CHAINING
             ? (process.env.MEERKAT_PROHIBIT_CHAINING === "1")
-            : undefined,
+            : false,
     },
     dsa: {
         accessPoint: new AccessPoint(

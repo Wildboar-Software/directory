@@ -70,9 +70,6 @@ import {
     id_opcode_search,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
@@ -102,6 +99,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import getACIItems from "../authz/getACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -631,7 +629,6 @@ async function findDSE (
         let rdnMatched: boolean = false;
         const accessControlScheme = state.admPoints
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-        const AC_SCHEME: string = accessControlScheme?.toString() ?? "";
         let cursorId: number | undefined;
         /**
          * What follows in this if statement is a byte-for-byte check for an
@@ -667,7 +664,11 @@ async function findDSE (
             });
             if (match) {
                 const matchedVertex = await vertexFromDatabaseEntry(ctx, dse_i, match, true);
-                if (!ctx.config.bulkInsertMode && accessControlScheme) {
+                if (
+                    !ctx.config.bulkInsertMode
+                    && accessControlScheme
+                    && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+                ) {
                     const childDN = getDistinguishedName(matchedVertex);
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         state.admPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
@@ -755,7 +756,11 @@ async function findDSE (
                     );
                 }
                 checkTimeLimit();
-                if (!ctx.config.bulkInsertMode && accessControlScheme) {
+                if (
+                    !ctx.config.bulkInsertMode
+                    && accessControlScheme
+                    && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+                ) {
                     const childDN = getDistinguishedName(child);
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),

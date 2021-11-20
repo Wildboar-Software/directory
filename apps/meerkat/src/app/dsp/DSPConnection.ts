@@ -189,7 +189,7 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.UnknownOperationError) {
             await dsp.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else {
-            await dsp.idm.writeAbort(Abort_reasonNotSpecified);
+            await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.close());
         }
     } finally {
         dsp.invocations.delete(Number(request.invokeID));

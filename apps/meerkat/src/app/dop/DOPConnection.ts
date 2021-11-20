@@ -211,7 +211,7 @@ async function handleRequestAndErrors (
         } else if (e instanceof UnknownOperationError) {
             await dop.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else {
-            await dop.idm.writeAbort(Abort_reasonNotSpecified);
+            await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.close());
         }
     }
 }

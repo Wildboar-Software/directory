@@ -93,6 +93,7 @@ import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import getACIItems from "../authz/getACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 
 export
 async function read (
@@ -133,7 +134,10 @@ async function read (
         ]),
     ))
         .filter((tuple) => (tuple[5] > 0));
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized,
         } = bacACDF(
@@ -278,7 +282,11 @@ async function read (
     }
 
     const modifyRights: ModifyRights = [];
-    if (data.modifyRightsRequest && accessControlScheme) {
+    if (
+        data.modifyRightsRequest
+        && accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized: authorizedToAddEntry,
         } = bacACDF(
@@ -356,7 +364,11 @@ async function read (
                 state.partialName,
                 false,
             ),
-            (data.modifyRightsRequest && accessControlScheme)
+            (
+                data.modifyRightsRequest
+                && accessControlScheme
+                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+            )
                 ? modifyRights
                 : undefined,
             [],

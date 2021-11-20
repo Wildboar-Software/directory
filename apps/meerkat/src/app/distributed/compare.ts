@@ -80,6 +80,7 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import getACIItems from "../authz/getACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -135,7 +136,10 @@ async function compare (
         ]),
     ))
         .filter((tuple) => (tuple[5] > 0));
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized: authorizedToEntry,
         } = bacACDF(
@@ -297,7 +301,10 @@ async function compare (
         if (!matcher(data.purported.assertion, value.value)) {
             continue;
         }
-        if (accessControlScheme) {
+        if (
+            accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        ) {
             const {
                 authorized,
             } = bacACDF(

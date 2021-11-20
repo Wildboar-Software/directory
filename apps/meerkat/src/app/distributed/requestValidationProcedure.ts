@@ -404,17 +404,6 @@ function createChainingArgumentsFromDUA (
     );
 }
 
-// TODO: To be implemented later.
-// function createChainingArgumentsFromLDAP (
-//     ctx: Context,
-//     operationCode: Code,
-//     operationArgument: ASN1Element,
-//     authenticationLevel: AuthenticationLevel,
-//     uniqueIdentifier?: UniqueIdentifier,
-// ): ChainingArguments {
-
-// }
-
 /**
  * @summary
  * @description

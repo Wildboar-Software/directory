@@ -131,8 +131,7 @@ async function handleRequestAndErrors (
     try {
         await handleRequest(ctx, dap, request, stats);
     } catch (e) {
-        console.error(e);
-        ctx.log.error("DAP error", e.message);
+        ctx.log.error(e.message);
         if (!stats.outcome) {
             stats.outcome = {};
         }
@@ -200,8 +199,7 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.UnknownOperationError) {
             await dap.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else {
-            await dap.idm.writeAbort(Abort_reasonNotSpecified);
-            // TODO: Don't you need to actually close the connection?
+            await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.close());
         }
     } finally {
         dap.invocations.delete(Number(request.invokeID));
@@ -217,10 +215,10 @@ async function handleRequestAndErrors (
             // changePassword operations, or when bulk insert mode is used and
             // the operation is `addEntry`.
             ctx.statistics.operations.length = 0;
-            return;
-        }
-        for (const opstat of ctx.statistics.operations) {
-            ctx.telemetry.sendEvent(opstat);
+        } else {
+            for (const opstat of ctx.statistics.operations) {
+                ctx.telemetry.sendEvent(opstat);
+            }
         }
     }
 }

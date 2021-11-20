@@ -20,7 +20,6 @@ import { strict as assert } from "assert";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import { OperationalBindingInitiator } from "@prisma/client";
 import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
@@ -29,11 +28,8 @@ import {
     AccessPoint,
     _decode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import isPrefix from "../x500/isPrefix";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import updateSubordinate from "../dop/updateSubordinate";
 import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import findEntry from "../x500/findEntry";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -44,8 +40,6 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
@@ -104,6 +98,9 @@ import {
     UpdateProblem_notAllowedOnNonLeaf,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getACIItems from "../authz/getACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings";
+import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -152,7 +149,10 @@ async function removeEntry (
     )).flat();
     const accessControlScheme = state.admPoints
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
@@ -278,89 +278,7 @@ async function removeEntry (
             throw new Error(); // FIXME:
         }
         const admPointDN = getDistinguishedName(admPoint);
-        const now = new Date();
-        const relevantOperationalBindings = await ctx.db.operationalBinding.findMany({
-            where: {
-                binding_type: id_op_binding_hierarchical.toString(),
-                validity_start: {
-                    gte: now,
-                },
-                validity_end: {
-                    lte: now,
-                },
-                // accepted: true, // FIXME: Is this always set?
-                OR: [
-                    { // Local DSA initiated role A (meaning local DSA is superior.)
-                        initiator: OperationalBindingInitiator.ROLE_A,
-                        outbound: true,
-                    },
-                    { // Remote DSA initiated role B (meaning local DSA is superior again.)
-                        initiator: OperationalBindingInitiator.ROLE_B,
-                        outbound: false,
-                    },
-                ],
-            },
-            select: {
-                binding_identifier: true,
-                binding_version: true,
-                access_point: true,
-                agreement_ber: true,
-            },
-        });
-        for (const ob of relevantOperationalBindings) {
-            const argreementElement = new BERElement();
-            argreementElement.fromBytes(ob.agreement_ber);
-            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-            if (!isPrefix(ctx, admPointDN, agreement.immediateSuperior)) {
-                continue;
-            }
-            const bindingID = new OperationalBindingID(
-                ob.binding_identifier,
-                ob.binding_version,
-            );
-            const accessPointElement = new BERElement();
-            accessPointElement.fromBytes(ob.access_point.ber);
-            const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
-            try {
-                const subrDN: DistinguishedName = [
-                    ...agreement.immediateSuperior,
-                    agreement.rdn,
-                ];
-                const subr = await findEntry(ctx, ctx.dit.root, subrDN);
-                if (!subr) {
-                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
-                        obid: bindingID.identifier.toString(),
-                        version: bindingID.version.toString(),
-                    }));
-                    continue;
-                }
-                assert(subr.immediateSuperior);
-                // We do not await the return value. This can run independently
-                // of returning from this operation.
-                updateSubordinate(
-                    ctx,
-                    bindingID,
-                    subr.immediateSuperior,
-                    undefined,
-                    subr.dse.rdn,
-                    accessPoint,
-                )
-                    .catch((e) => {
-                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                            obid: bindingID.identifier.toString(),
-                            version: bindingID.version.toString(),
-                            e: e.message,
-                        }));
-                    });
-            } catch (e) {
-                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                    obid: bindingID.identifier.toString(),
-                    version: bindingID.version.toString(),
-                    e: e.message,
-                }));
-                continue;
-            }
-        }
+        updateAffectedSubordinateDSAs(ctx, admPointDN); // INTENTIONAL_NO_AWAIT
     } else if (target.dse.cp) { // Go to step 6.
         // 1. Remove the naming context.
         // 2. Terminate the HOB, if applicable.
@@ -368,36 +286,7 @@ async function removeEntry (
         //      and immediate_superior + rdn === this entry. Include the access point (ber).
         // - c. Issue a terminate OB operation to all relevant access points.
         const targetDN = getDistinguishedName(target);
-        const now = new Date();
-        const relevantOperationalBindings = await ctx.db.operationalBinding.findMany({
-            where: {
-                binding_type: id_op_binding_hierarchical.toString(),
-                validity_start: {
-                    gte: now,
-                },
-                validity_end: {
-                    lte: now,
-                },
-                accepted: true,
-                OR: [
-                    { // Local DSA initiated role B (meaning local DSA is subordinate.)
-                        initiator: OperationalBindingInitiator.ROLE_B,
-                        outbound: true,
-                    },
-                    { // Remote DSA initiated role A (meaning remote DSA is superior.)
-                        initiator: OperationalBindingInitiator.ROLE_A,
-                        outbound: false,
-                    },
-                ],
-            },
-            select: {
-                uuid: true,
-                binding_identifier: true,
-                binding_version: true,
-                access_point: true,
-                agreement_ber: true,
-            },
-        });
+        const relevantOperationalBindings = await getRelevantOperationalBindings(ctx, false);
         for (const ob of relevantOperationalBindings) {
             const argreementElement = new BERElement();
             argreementElement.fromBytes(ob.agreement_ber);

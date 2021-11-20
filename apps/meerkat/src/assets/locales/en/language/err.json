@@ -109,6 +109,7 @@
     "child_cannot_be_in_hierarchy": "Child member of a compound entry may not be in a hierarchical group.",
     "cannot_move_child": "Cannot move child entry, because it would break a compound entry.",
     "unavailable_critical_extension": "Unavailable critical extension {{index}}.",
+    "unrecognized_sort_key": "Critical sort key attribute type not recognized.",
     "not_authorized_ob": "Not authorized to request an operational binding.",
     "invalid_attribute_syntax": "Invalid attribute syntax for type {{type}}.",
     "invalid_context_syntax": "Invalid context syntax for type {{type}}.",
@@ -121,5 +122,7 @@
     "unsupported_auth_method": "Unsupported authentication method.",
     "alias_problem": "Alias did not point to an existing entry.",
     "no_such_attribute_or_value": "The entry did not possess the selected values.",
-    "not_supported_by_ldap": "Not supported by LDAP."
+    "not_supported_by_ldap": "Not supported by LDAP.",
+    "unrecognized_ldap_extension": "Unrecognized LDAP extension: {{ext}}.",
+    "failed_to_decode_subordinates": "Failed to load a subordinate of entry {{uuid}} with this error. No subordinates will be cached for this entry. This was the error: {{e}}"
 }

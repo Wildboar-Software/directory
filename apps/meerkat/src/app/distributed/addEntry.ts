@@ -45,7 +45,7 @@ import {
 import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
-import { ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT, BERElement } from "asn1-ts";
+import { ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import {
     SecurityErrorData,
@@ -105,25 +105,6 @@ import establishSubordinate from "../dop/establishSubordinate";
 import { chainedAddEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAddEntry.oa";
 import { strict as assert } from "assert";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import {
-    id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import { OperationalBindingInitiator } from "@prisma/client";
-import {
-    HierarchicalAgreement,
-    _decode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
-import {
-    AccessPoint,
-    _decode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import isPrefix from "../x500/isPrefix";
-import updateSubordinate from "../dop/updateSubordinate";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import type {
-    DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import findEntry from "../x500/findEntry";
 import { differenceInMilliseconds } from "date-fns";
 import {
     ServiceProblem_timeLimitExceeded
@@ -182,6 +163,8 @@ import {
     NameProblem_invalidAttributeSyntax,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 import getACIItems from "../authz/getACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -407,7 +390,11 @@ async function addEntry (
             ]),
         ))
             .filter((tuple) => (tuple[5] > 0));
-    if (!ctx.config.bulkInsertMode && accessControlScheme) {
+    if (
+        !ctx.config.bulkInsertMode
+        && accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized,
         } = bacACDF(
@@ -569,7 +556,7 @@ async function addEntry (
             return {
                 result: chainedResult,
                 stats: {},
-            }; // TODO: This strips the remote DSA's signature!
+            };
         } else {
             throw new errors.ServiceError(
                 ctx.i18n.t("err:could_not_add_entry_to_remote_dsa"),
@@ -592,7 +579,10 @@ async function addEntry (
 
     const nonUserApplicationAttributes: AttributeType[] = [];
     if (!ctx.config.bulkInsertMode) {
-        if (accessControlScheme) { // FIXME: Actually check that what follows applies to this scheme.
+        if (
+            accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        ) {
             for (const attr of data.entry) {
                 const {
                     authorized: authorizedToAddAttributeType,
@@ -632,7 +622,10 @@ async function addEntry (
             }
         }
         for (const value of values) {
-            if (accessControlScheme) {
+            if (
+                accessControlScheme
+                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+            ) {
                 const {
                     authorized: authorizedToAddAttributeValue,
                 } = bacACDF(
@@ -1577,89 +1570,7 @@ async function addEntry (
             : newEntry.immediateSuperior;
         assert(admPoint?.dse.admPoint);
         const admPointDN = getDistinguishedName(admPoint);
-        const now = new Date();
-        const relevantOperationalBindings = await ctx.db.operationalBinding.findMany({
-            where: {
-                binding_type: id_op_binding_hierarchical.toString(),
-                validity_start: {
-                    gte: now,
-                },
-                validity_end: {
-                    lte: now,
-                },
-                accepted: true,
-                OR: [
-                    { // Local DSA initiated role A (meaning local DSA is superior.)
-                        initiator: OperationalBindingInitiator.ROLE_A,
-                        outbound: true,
-                    },
-                    { // Remote DSA initiated role B (meaning local DSA is superior again.)
-                        initiator: OperationalBindingInitiator.ROLE_B,
-                        outbound: false,
-                    },
-                ],
-            },
-            select: {
-                binding_identifier: true,
-                binding_version: true,
-                access_point: true,
-                agreement_ber: true,
-            },
-        });
-        for (const ob of relevantOperationalBindings) {
-            const argreementElement = new BERElement();
-            argreementElement.fromBytes(ob.agreement_ber);
-            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-            if (!isPrefix(ctx, admPointDN, agreement.immediateSuperior)) {
-                continue;
-            }
-            const bindingID = new OperationalBindingID(
-                ob.binding_identifier,
-                ob.binding_version,
-            );
-            const accessPointElement = new BERElement();
-            accessPointElement.fromBytes(ob.access_point.ber);
-            const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
-            try {
-                const subrDN: DistinguishedName = [
-                    ...agreement.immediateSuperior,
-                    agreement.rdn,
-                ];
-                const subr = await findEntry(ctx, ctx.dit.root, subrDN);
-                if (!subr) {
-                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
-                        obid: bindingID.identifier.toString(),
-                        version: bindingID.version.toString(),
-                    }));
-                    continue;
-                }
-                assert(subr.immediateSuperior);
-                // We do not await the return value. This can run independently
-                // of returning from this operation.
-                updateSubordinate(
-                    ctx,
-                    bindingID,
-                    subr.immediateSuperior,
-                    undefined,
-                    subr.dse.rdn,
-                    accessPoint,
-                )
-                    .catch((e) => {
-                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                            obid: bindingID.identifier.toString(),
-                            version: bindingID.version.toString(),
-                            e: e.message,
-                        }));
-                    });
-            } catch (e) {
-                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                    obid: bindingID.identifier.toString(),
-                    version: bindingID.version.toString(),
-                    e: e.message,
-                }));
-                continue;
-            }
-        }
+        updateAffectedSubordinateDSAs(ctx, admPointDN); // INTENTIONAL_NO_AWAIT
     }
 
     // TODO: Update shadows

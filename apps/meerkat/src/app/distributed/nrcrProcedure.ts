@@ -49,6 +49,9 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import getDistinguishedName from "../x500/getDistinguishedName";
+import type {
+    OPTIONALLY_PROTECTED,
+} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
 
 export
 async function nrcrProcedure (
@@ -87,7 +90,7 @@ async function nrcrProcedure (
     assert(state.chainingArguments.operationProgress?.nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed);
     assert(state.NRcontinuationList.length); // This procedure should not be called if there are no refs.
     if (ctx.config.prohibitChaining || chainingProhibited) {
-        throw new errors.ReferralError( // TODO: If this is called from LDAP, an LDAP referral must be returned.
+        throw new errors.ReferralError(
             ctx.i18n.t("err:referral"),
             new ReferralData(
                 state.NRcontinuationList[0],
@@ -173,54 +176,65 @@ async function nrcrProcedure (
                     ),
                 );
             }
+            let outcome: ResultOrError | null = null;
             try {
-                const outcome: ResultOrError | null = await apinfoProcedure(ctx, ap, req, conn, state);
-                if (!outcome) {
+                outcome = await apinfoProcedure(ctx, ap, req, conn, state);
+            } catch {
+                continue;
+            }
+            if (!outcome) {
+                continue;
+            }
+            if (("result" in outcome) && outcome.result) {
+                try {
+                    return chainedRead.decoderFor["&ResultType"]!(outcome.result);
+                } catch (e) {
+                    ctx.log.error(e.message);
                     continue;
                 }
-                if (("result" in outcome) && outcome.result) {
-                    return chainedRead.decoderFor["&ResultType"]!(outcome.result);
-                } else if ("error" in outcome) {
-                    if (outcome.errcode && compareCode(outcome.errcode, serviceError["&errorCode"]!)) {
-                        const errorParam = serviceError.decoderFor["&ParameterType"]!(outcome.error);
-                        const errorData = getOptionallyProtectedValue(errorParam);
-                        if (
-                            (errorData.problem === ServiceProblem_unableToProceed)
-                            || (errorData.problem === ServiceProblem_busy)
-                            || (errorData.problem === ServiceProblem_unavailable)
-                            || (errorData.problem === ServiceProblem_unwillingToPerform)
-                        ) {
-                            if (errorData.problem !== ServiceProblem_unableToProceed) {
-                                allServiceErrors = false;
-                            }
-                            continue;
-                        } else if (errorData.problem === ServiceProblem_invalidReference) {
-                            throw new errors.ServiceError( // FIXME: This is swallowed by the try-catch loop.
-                                ctx.i18n.t("err:dit_error"),
-                                new ServiceErrorData(
-                                    ServiceProblem_ditError,
-                                    [],
-                                    createSecurityParameters(
-                                        ctx,
-                                        conn.boundNameAndUID?.dn,
-                                        undefined,
-                                        serviceError["&errorCode"],
-                                    ),
-                                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                    state.chainingArguments.aliasDereferenced,
-                                    undefined,
-                                ),
-                            );
-                        } else {
-                            return outcome;
-                        }
-                    } else {
-                        allServiceErrors = false;
+            } else if ("error" in outcome) {
+                if (outcome.errcode && compareCode(outcome.errcode, serviceError["&errorCode"]!)) {
+                    let errorParam: OPTIONALLY_PROTECTED<ServiceErrorData> | null = null;
+                    try {
+                        errorParam = serviceError.decoderFor["&ParameterType"]!(outcome.error);
+                    } catch {
                         continue;
                     }
+                    const errorData = getOptionallyProtectedValue(errorParam);
+                    if (
+                        (errorData.problem === ServiceProblem_unableToProceed)
+                        || (errorData.problem === ServiceProblem_busy)
+                        || (errorData.problem === ServiceProblem_unavailable)
+                        || (errorData.problem === ServiceProblem_unwillingToPerform)
+                    ) {
+                        if (errorData.problem !== ServiceProblem_unableToProceed) {
+                            allServiceErrors = false;
+                        }
+                        continue;
+                    } else if (errorData.problem === ServiceProblem_invalidReference) {
+                        throw new errors.ServiceError(
+                            ctx.i18n.t("err:dit_error"),
+                            new ServiceErrorData(
+                                ServiceProblem_ditError,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    conn.boundNameAndUID?.dn,
+                                    undefined,
+                                    serviceError["&errorCode"],
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                state.chainingArguments.aliasDereferenced,
+                                undefined,
+                            ),
+                        );
+                    } else {
+                        return outcome;
+                    }
+                } else {
+                    allServiceErrors = false;
+                    continue;
                 }
-            } catch (e) {
-                continue;
             }
         } // End of NSSR access point loop.
         if (allServiceErrors) {
@@ -268,7 +282,7 @@ async function nrcrProcedure (
     throw new errors.ServiceError(
         ctx.i18n.t("err:name_not_resolved"),
         new ServiceErrorData(
-            ServiceProblem_unableToProceed, // TODO: Not sure this is the right error.
+            ServiceProblem_unavailable, // The specification does not clarify what the problem is supposed to be.
             [],
             createSecurityParameters(
                 ctx,

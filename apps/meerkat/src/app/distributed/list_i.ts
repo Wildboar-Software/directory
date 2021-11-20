@@ -103,6 +103,7 @@ import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcome
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import failover from "../utils/failover";
 import getACIItems from "../authz/getACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -146,7 +147,10 @@ async function list_i (
         ]),
     ))
         .filter((tuple) => (tuple[5] > 0));
-    if (accessControlScheme) {
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
         const {
             authorized,
         } = bacACDF(
@@ -399,7 +403,10 @@ async function list_i (
             if (subentries && !subordinate.dse.subentry) {
                 continue;
             }
-            if (accessControlScheme) {
+            if (
+                accessControlScheme
+                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+            ) {
                 const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
                 const subordinateACI = getACIItems(accessControlScheme, subordinate, relevantSubentries);
                 const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])

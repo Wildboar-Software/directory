@@ -11,12 +11,8 @@ import {
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import {
-    AccessPoint,
     _decode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import {
-    PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import {
     _decode_SupplierInformation,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
@@ -34,8 +30,6 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import attributesFromValues from "../x500/attributesFromValues";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
-import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
-import * as os from "os";
 import { Knowledge } from "@prisma/client";
 import {
     _decode_DitBridgeKnowledge,
@@ -57,8 +51,6 @@ function toACIItem (dbaci: DatabaseACIItem): ACIItem {
 
 const ALIAS: string = alias["&id"].toString();
 let collectiveAttributeTypes: string[] = [];
-
-// TODO: Handle decoding errors.
 
 export
 async function dseFromDatabaseEntry (
@@ -194,9 +186,6 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SECONDARY_SHADOW,
-            },
-            include: {
-                consumers: true, // FIXME: Why did I do this?
             },
         });
         const supplierKnowledge = supplierRows
