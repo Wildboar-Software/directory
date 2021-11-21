@@ -176,7 +176,9 @@ async function updateSuperiorDSA (
                     undefined,
                 ));
             }
-            (await readChildren(ctx, newCP))
+            (await readChildren(ctx, newCP, undefined, undefined, undefined, {
+                subentry: true,
+            }))
                 .filter((sub) => sub.dse.subentry)
                 .forEach((sub): void => {
                     subentryInfos.push(new SubentryInfo(
@@ -184,7 +186,6 @@ async function updateSuperiorDSA (
                         getAttributesFromSubentry(sub),
                     ));
                 });
-
             const myAccessPoint = ctx.dsa.accessPoint;
             const sub2sup: SubordinateToSuperior = new SubordinateToSuperior(
                 [
@@ -239,7 +240,6 @@ async function updateSuperiorDSA (
                     ),
                 ),
             };
-
             return conn.writeOperation({
                 opCode: modifyOperationalBinding["&operationCode"]!,
                 argument: _encode_ModifyOperationalBindingArgument(arg, DER),

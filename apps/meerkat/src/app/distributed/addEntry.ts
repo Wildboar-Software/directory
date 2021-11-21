@@ -165,6 +165,7 @@ import {
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
+import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -1565,11 +1566,9 @@ async function addEntry (
 
     // Update relevant hierarchical operational bindings
     if (!ctx.config.bulkInsertMode && (newEntry.dse.admPoint || newEntry.dse.subentry)) {
-        const admPoint: Vertex | undefined = newEntry.dse.admPoint
-            ? newEntry
-            : newEntry.immediateSuperior;
-        assert(admPoint?.dse.admPoint);
-        const admPointDN = getDistinguishedName(admPoint);
+        const admPointDN: DistinguishedName = newEntry.dse.admPoint
+            ? targetDN
+            : targetDN.slice(0, -1);
         updateAffectedSubordinateDSAs(ctx, admPointDN); // INTENTIONAL_NO_AWAIT
     }
 

@@ -264,7 +264,7 @@ async function modifyOperationalBinding (
         : undefined;
 
     const sp = data.securityParameters;
-    await ctx.db.operationalBinding.create({
+    const created = await ctx.db.operationalBinding.create({
         data: {
             accepted: true, // REVIEW: Automatically-accepted.
             previous: {
@@ -363,7 +363,7 @@ async function modifyOperationalBinding (
                     },
                 );
             }
-            await updateContextPrefix(ctx, newAgreement, init);
+            await updateContextPrefix(ctx, created.uuid, newAgreement, init);
             return {
                 null_: null,
             };

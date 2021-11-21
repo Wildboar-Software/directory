@@ -105,8 +105,6 @@ import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs"
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
 
-// TODO: subentries
-
 export
 async function removeEntry (
     ctx: Context,
@@ -265,20 +263,7 @@ async function removeEntry (
 
     checkTimeLimit();
     if (target.dse.subentry) { // Go to step 5.
-        // 1. Remove the subentry.
-        // 2. Modify the operational bindings of all relevant subordinate DSAs.
-        // - a. Get the DN administrative point
-        // - b. Query the database for all active HOBs where local DSA is superior
-        //      and admin point is a prefix of immediate_superior. Include the access point (ber).
-        // - c. Issue a modify OB operation to all relevant access points.
-        // 3. Continue at step 7.
-        const admPoint = target.immediateSuperior;
-        assert(admPoint);
-        if (!admPoint.dse.admPoint) {
-            throw new Error(); // FIXME:
-        }
-        const admPointDN = getDistinguishedName(admPoint);
-        updateAffectedSubordinateDSAs(ctx, admPointDN); // INTENTIONAL_NO_AWAIT
+        // Steps moved to run _after_ the local deletion of the DSE.
     } else if (target.dse.cp) { // Go to step 6.
         // 1. Remove the naming context.
         // 2. Terminate the HOB, if applicable.
@@ -362,8 +347,18 @@ async function removeEntry (
     if (op) {
         op.pointOfNoReturnTime = new Date();
     }
-    // FIXME: actually delete the entry BEFORE updating the HOBs.
     await deleteEntry(ctx, target, alsoDeleteFamily);
+
+    if (target.dse.subentry) {
+        // 1. Remove the subentry.
+        // 2. Modify the operational bindings of all relevant subordinate DSAs.
+        // - a. Get the DN administrative point
+        // - b. Query the database for all active HOBs where local DSA is superior
+        //      and admin point is a prefix of immediate_superior. Include the access point (ber).
+        // - c. Issue a modify OB operation to all relevant access points.
+        // 3. Continue at step 7.
+        updateAffectedSubordinateDSAs(ctx, targetDN.slice(0, -1)); // INTENTIONAL_NO_AWAIT
+    }
 
     return {
         result: {

@@ -356,11 +356,17 @@ async function compare (
                 matched = true;
                 break;
             } else if ("selectedContexts" in data.operationContexts) {
+                /**
+                 * Note that (I think) some generic
+                 * `evaluateTypeAndContextAssertion()` function could not be
+                 * used in this case, because `preference` merely needs to check
+                 * that any context is matched.
+                 */
                 // assertedContexts is true if:
                 // each ContextAssertion in selectedContexts is true...
                 matched = data
                     .operationContexts
-                    .selectedContexts // FIXME: Replace with evaluateTypeAndContextAssertion
+                    .selectedContexts
                     .filter((sc): boolean => (sc.type_.isEqualTo(data.purported.type_)))
                     .every((sc): boolean => {
                         if ("all" in sc.contextAssertions) {

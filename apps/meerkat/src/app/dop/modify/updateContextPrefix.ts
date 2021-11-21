@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import { Context, Vertex, OperationalBindingError } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -51,6 +51,27 @@ import {
 import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
+import {
+    OpBindingErrorParam,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+import {
+    OpBindingErrorParam_problem_currentlyNotDecidable,
+    OpBindingErrorParam_problem_invalidAgreement,
+    OpBindingErrorParam_problem_invalidBindingType,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
+import {
+    id_op_binding_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+import {
+    AccessPoint,
+    _encode_AccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import saveAccessPoint from "../../database/saveAccessPoint";
+import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 
 /**
  * @description
@@ -67,6 +88,7 @@ import {
 export
 async function updateContextPrefix (
     ctx: Context,
+    uuid: string,
     oldAgreement: HierarchicalAgreement,
     mod: SuperiorToSubordinateModification,
 ): Promise<void> {
@@ -78,15 +100,59 @@ async function updateContextPrefix (
         oldAgreement.rdn,
     ];
 
-    const oldCP = await findEntry(ctx, ctx.dit.root, oldDN); // FIXME: I think you could just search for the immediate superior.
+    const oldCP = await findEntry(ctx, ctx.dit.root, oldDN);
     if (!oldCP) {
-        throw new Error(); // FIXME:
+        throw new OperationalBindingError(
+            ctx.i18n.t("err:could_not_find_cp", {
+                uuid: uuid,
+            }),
+            {
+                unsigned: new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidBindingType,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        operationalBindingError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+            },
+        );
     }
 
     const oldImmediateSuperior = oldCP.immediateSuperior;
     let currentOld: Vertex | undefined = oldImmediateSuperior;
     if (!currentOld) {
-        throw new Error(); // FIXME:
+        throw new OperationalBindingError(
+            ctx.i18n.t("err:could_not_find_supr", {
+                uuid: uuid,
+            }),
+            {
+                unsigned: new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidBindingType,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        operationalBindingError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+            },
+        );
     }
     while (
         currentOld
@@ -118,10 +184,11 @@ async function updateContextPrefix (
 
     let currentRoot = highestDseThatSuperiorDSAMayModify;
     // Can you trust mod.contextPrefixInfo.length? Yes, because the superior DSA may move its entries.
+    let immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = undefined;
     for (let i = highestModifiableDN.length - 1; i < mod.contextPrefixInfo.length; i++) {
         const vertex = mod.contextPrefixInfo[i];
         const last: boolean = (mod.contextPrefixInfo.length === (i + 1));
-        const immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = vertex.accessPoints;
+        immSuprAccessPoints = vertex.accessPoints;
         const immSupr: boolean = Boolean(immSuprAccessPoints && last);
         const existingEntry = await findEntry(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
@@ -134,7 +201,7 @@ async function updateContextPrefix (
                     rhob: Boolean(vertex.admPointInfo),
                     immSupr,
                     AccessPoint: immSupr
-                        ? {
+                        ? { // FIXME : Use saveAccessPoint
                             createMany: {
                                 data: vertex.accessPoints
                                     ? vertex.accessPoints.map((ap) => ({
@@ -187,7 +254,7 @@ async function updateContextPrefix (
                         },
                     }),
                     ...deletions,
-                    ...await addAttributes(ctx, currentRoot, vertex.admPointInfo, []), // FIXME: modifiersName
+                    ...await addAttributes(ctx, currentRoot, vertex.admPointInfo),
                 ]);
                 for (const subentry of vertex.subentries ?? []) {
                     const oldSubentry = await findEntry(ctx, currentRoot, [ subentry.rdn ]);
@@ -229,7 +296,7 @@ async function updateContextPrefix (
                         }),
                         ...subentryDeletions,
                         ...subentryInfoDeletions,
-                        ...await addAttributes(ctx, currentRoot, subentry.info, []), // FIXME: modifiersName
+                        ...await addAttributes(ctx, currentRoot, subentry.info),
                     ]);
                 }
             } else { // This point is no longer an administrative point, or never was.
@@ -240,7 +307,7 @@ async function updateContextPrefix (
                             accessControlScheme["&id"],
                             subentryACI["&id"],
                         ]
-                            .map((type_) => removeAttribute(ctx, currentRoot, type_, [])),
+                            .map((type_) => removeAttribute(ctx, currentRoot, type_)),
                     )
                 ).flat();
                 await ctx.db.$transaction(deletions);
@@ -259,7 +326,7 @@ async function updateContextPrefix (
                         attr.type_.isEqualTo(objectClass["&id"])
                         || attr.type_.isEqualTo(entryACI["&id"])
                     ))
-                    .map((attr) => removeAttribute(ctx, currentRoot, attr.type_, []))
+                    .map((attr) => removeAttribute(ctx, currentRoot, attr.type_))
             )
         ).flat();
         await ctx.db.$transaction([
@@ -269,7 +336,7 @@ async function updateContextPrefix (
             //     },
             // }),
             ...deletions,
-            ...await addAttributes(ctx, currentRoot, mod.immediateSuperiorInfo, []), // FIXME: modifiersName
+            ...await addAttributes(ctx, currentRoot, mod.immediateSuperiorInfo),
         ]);
     }
 
@@ -289,8 +356,28 @@ async function updateContextPrefix (
         },
     });
 
-    // TODO: Update the knowledge references of the root DSE (supr) if the highest NC has changed.
-    // TODO: I think you need supr knowledge in the root DSE.
+    const newSuperiorKnowledge = (immSuprAccessPoints ?? [])
+        .map((mosap) => new AccessPoint(
+            mosap.ae_title,
+            mosap.address,
+            mosap.protocolInformation,
+        ));
+    for (const ap of newSuperiorKnowledge) {
+        const ber = Buffer.from(_encode_AccessPoint(ap, DER).toBytes());
+        const alreadySavedAccessPoint = await ctx.db.accessPoint.findFirst({
+            where: {
+                ber,
+                knowledge_type: Knowledge.SUPERIOR,
+            },
+            select: {
+                id: true,
+            },
+        });
+        if (alreadySavedAccessPoint) {
+            continue;
+        }
+        await saveAccessPoint(ctx, ap, Knowledge.SUPERIOR, ctx.dit.root.dse.id);
+    }
 }
 
 export default updateContextPrefix;

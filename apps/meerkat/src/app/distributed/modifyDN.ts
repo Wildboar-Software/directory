@@ -1,5 +1,5 @@
 import { Context, Vertex, Value, ClientConnection, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -31,19 +31,6 @@ import getDistinguishedName from "../x500/getDistinguishedName";
 import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
 import findEntry from "../x500/findEntry";
 import { strict as assert } from "assert";
-import {
-    HierarchicalAgreement,
-    _decode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
-import {
-    AccessPoint,
-    _decode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import isPrefix from "../x500/isPrefix";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import type {
-    DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import removeValues from "../database/entry/removeValues";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
@@ -76,7 +63,6 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import {
-    ServiceProblem_ditError,
     ServiceProblem_timeLimitExceeded
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
@@ -137,7 +123,6 @@ import {
 import getACIItems from "../authz/getACIItems";
 import { differenceInMilliseconds } from "date-fns";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
-import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 
@@ -608,66 +593,44 @@ async function modifyDN (
     }
 
     checkTimeLimit();
+    const timeRemainingInMilliseconds = timeLimitEndTime
+        ? differenceInMilliseconds(timeLimitEndTime, new Date())
+        : undefined;
     if (target.dse.subentry) { // Continue at step 7.
         // Deviation from the specification: we update the subordinates AFTER we update the DN locally.
     } else if (target.dse.cp) { // Continue at step 6.
-        // FIXME: This is wrong. You're updating the subordinate DSA. You need to update superior.
-        // Notify the superior DSA.
-        // const relevantOperationalBindings = await getRelevantOperationalBindings(ctx, false);
-        // for (const ob of relevantOperationalBindings) {
-        //     const argreementElement = new BERElement();
-        //     argreementElement.fromBytes(ob.agreement_ber);
-        //     const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-        //     const agreementDN: DistinguishedName = [
-        //         ...agreement.immediateSuperior,
-        //         agreement.rdn,
-        //     ];
-        //     const match = compareDistinguishedName(targetDN, agreementDN, NAMING_MATCHER);
-        //     if (!match) {
-        //         continue;
-        //     }
-        //     const bindingID = new OperationalBindingID(
-        //         ob.binding_identifier,
-        //         ob.binding_version,
-        //     );
-        //     const accessPointElement = new BERElement();
-        //     accessPointElement.fromBytes(ob.access_point.ber);
-        //     const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
-        //     try {
-        //         assert(target.immediateSuperior);
-        //         // We do not await the return value. This can run independently
-        //         // of returning from this operation.
-        //         updateSubordinateDSA(
-        //             ctx,
-        //             bindingID,
-        //             superior,
-        //             undefined,
-        //             newRDN,
-        //             accessPoint,
-        //         )
-        //             .catch((e) => {
-        //                 ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-        //                     obid: bindingID.identifier.toString(),
-        //                     version: bindingID.version.toString(),
-        //                     e: e.message,
-        //                 }));
-        //             });
-        //     } catch (e) {
-        //         ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-        //             obid: bindingID.identifier.toString(),
-        //             version: bindingID.version.toString(),
-        //             e: e.message,
-        //         }));
-        //         continue;
-        //     }
-        // }
+        try {
+            // The specification says that you must wait for this to succeed
+            // before returning a response. So we await this, unlike the
+            // subordinate updates.
+            await updateSuperiorDSA(ctx, targetDN, target, {
+                timeLimitInMilliseconds: timeRemainingInMilliseconds,
+            });
+        } catch (e) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:superior_dsa_would_not_rename", {
+                    e: e?.message,
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_affectsMultipleDSAs,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
     } else if (
         (target.dse.entry || target.dse.alias)
         && superior.dse.nssr
     ) { // Continue at step 5.
-        const timeRemainingInMilliseconds = timeLimitEndTime
-            ? differenceInMilliseconds(timeLimitEndTime, new Date())
-            : undefined;
         // Follow instructions in 19.1.5. These are the only steps unique to this DSE type.
         await checkIfNameIsAlreadyTakenInNSSR(
             ctx,
@@ -1248,19 +1211,11 @@ async function modifyDN (
         }
     }
 
-    if (target.dse.cp) {
-        // The specification says that you must wait for this to succeed before
-        // returning a response. So we await this, unlike the subordinate updates.
-        await updateSuperiorDSA(ctx, targetDN, target, {
-            // timeLimitInMilliseconds // TODO:
-        });
-    }
     if (target.dse.entry || target.dse.alias || target.dse.subentry) {
         const affectedPrefix = target.dse.subentry
-            ? target.immediateSuperior
-            : target;
-        const affectedPrefixDN = getDistinguishedName(affectedPrefix);
-        updateAffectedSubordinateDSAs(ctx, affectedPrefixDN); // INTENTIONAL_NO_AWAIT
+            ? targetDN.slice(0, -1)
+            : targetDN;
+        updateAffectedSubordinateDSAs(ctx, affectedPrefix); // INTENTIONAL_NO_AWAIT
     }
 
     // TODO: Update shadows

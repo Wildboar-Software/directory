@@ -232,7 +232,9 @@ async function updateSubordinateDSA (
                 ...operationalAttributes,
             );
 
-            const subordinates = await readChildren(ctx, current);
+            const subordinates = await readChildren(ctx, current, undefined, undefined, undefined, {
+                subentry: true,
+            });
             subentryInfos.push(
                 ...await Promise.all(
                     subordinates

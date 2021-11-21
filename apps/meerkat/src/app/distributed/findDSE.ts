@@ -274,7 +274,7 @@ async function findDSE (
     const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
-            // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
+            // DEVIATION: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             state.NRcontinuationList.push(...candidateRefs);
             return undefined; // entry unsuitable
         } else {
@@ -330,7 +330,7 @@ async function findDSE (
                 false,
             );
             candidateRefs.push(cr);
-            // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
+            // DEVIATION: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             state.NRcontinuationList.push(...candidateRefs);
             return undefined;
         }
@@ -368,7 +368,7 @@ async function findDSE (
     const candidateRefsEmpty1_Branch = async (): Promise<Vertex | undefined> => {
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
-            // TODO: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
+            // DEVIATION: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             state.NRcontinuationList.push(...candidateRefs);
             return undefined; // entry unsuitable
         } else {

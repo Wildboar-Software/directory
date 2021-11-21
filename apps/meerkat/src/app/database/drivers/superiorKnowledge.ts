@@ -22,12 +22,19 @@ import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
+import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    if (vertex.dse.root) {
+        const firstLevel: boolean = await isFirstLevelDSA(ctx);
+        if (firstLevel) {
+            return [];
+        }
+    }
     return vertex.dse.supr?.superiorKnowledge.map((k) => ({
         type: superiorKnowledge["&id"],
         value: superiorKnowledge.encoderFor["&Type"]!(k, DER),

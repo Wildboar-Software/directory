@@ -13,12 +13,12 @@ async function removeAttribute (
     ctx: Context,
     entry: Vertex,
     type_: AttributeType,
-    modifier: DistinguishedName,
+    modifier?: DistinguishedName,
 ): Promise<PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
-            modifiersName: modifier.map(rdnToJson),
+            modifiersName: modifier?.map(rdnToJson),
         },
         otherWrites: [],
     };

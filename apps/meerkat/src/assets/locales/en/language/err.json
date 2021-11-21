@@ -124,5 +124,8 @@
     "no_such_attribute_or_value": "The entry did not possess the selected values.",
     "not_supported_by_ldap": "Not supported by LDAP.",
     "unrecognized_ldap_extension": "Unrecognized LDAP extension: {{ext}}.",
-    "failed_to_decode_subordinates": "Failed to load a subordinate of entry {{uuid}} with this error. No subordinates will be cached for this entry. This was the error: {{e}}"
+    "failed_to_decode_subordinates": "Failed to load a subordinate of entry {{uuid}} with this error. No subordinates will be cached for this entry. This was the error: {{e}}",
+    "superior_dsa_would_not_rename": "Superior DSA refused to allow RDN change to the subordinate context prefix. {{e}}",
+    "could_not_find_cp": "Could not find context prefix associated with operational binding {{uuid}}.",
+    "could_not_find_supr": "Could not find superior associated with operational binding {{uuid}}."
 }

@@ -15,7 +15,7 @@ async function addAttributes (
     ctx: Context,
     entry: Vertex,
     attributes: Attribute[],
-    modifier: DistinguishedName,
+    modifier?: DistinguishedName,
 ): Promise<PrismaPromise<any>[]> {
     return addValues(ctx, entry, attributes.flatMap(valuesFromAttribute), modifier);
 }

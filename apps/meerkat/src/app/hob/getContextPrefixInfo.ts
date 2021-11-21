@@ -85,7 +85,9 @@ async function getContextPrefixInfo (
                 ));
             }
 
-            (await readChildren(ctx, current))
+            (await readChildren(ctx, current, undefined, undefined, undefined, {
+                subentry: true,
+            }))
                 .filter((sub) => sub.dse.subentry)
                 .forEach((sub): void => {
                     subentryInfos.push(new SubentryInfo(
