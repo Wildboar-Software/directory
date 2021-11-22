@@ -127,5 +127,6 @@
     "failed_to_decode_subordinates": "Failed to load a subordinate of entry {{uuid}} with this error. No subordinates will be cached for this entry. This was the error: {{e}}",
     "superior_dsa_would_not_rename": "Superior DSA refused to allow RDN change to the subordinate context prefix. {{e}}",
     "could_not_find_cp": "Could not find context prefix associated with operational binding {{uuid}}.",
-    "could_not_find_supr": "Could not find superior associated with operational binding {{uuid}}."
+    "could_not_find_supr": "Could not find superior associated with operational binding {{uuid}}.",
+    "invalid_reference_no_reason_to_search_here": "Invalid reference: there is no context prefix under the target object, and therefore no reason to continue the search or list in this DSA."
 }

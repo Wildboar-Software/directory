@@ -15,7 +15,6 @@ import {
     MasterOrShadowAccessPoint_category_shadow,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
 import {
-    OperationProgress_nameResolutionPhase,
     OperationProgress_nameResolutionPhase_notStarted,
     OperationProgress_nameResolutionPhase_completed,
     OperationProgress_nameResolutionPhase_proceeding,
@@ -100,6 +99,7 @@ import {
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import cloneChainingArgs from "../x500/cloneChainingArguments";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -127,6 +127,7 @@ function makeContinuationRefFromSupplierKnowledge (
     cp: Vertex,
     needleDN: DistinguishedName,
     nextRDNToBeResolved: number | undefined,
+    rdnsResolved?: number,
 ): ContinuationReference {
     assert(cp.dse.cp);
     assert(cp.dse.cp.supplierKnowledge?.[0]);
@@ -139,7 +140,7 @@ function makeContinuationRefFromSupplierKnowledge (
             OperationProgress_nameResolutionPhase_proceeding,
             nextRDNToBeResolved,
         ),
-        undefined, // FIXME:
+        rdnsResolved,
         ReferenceType_supplier,
         [ // Only more than one API may be present if this is for an NSSR.
             new AccessPointInformation(
@@ -218,11 +219,8 @@ async function findDSE (
     let i: number = 0;
     let dse_i: Vertex = haystackVertex;
     let nssrEncountered: boolean = false;
-    let nameResolutionPhase: OperationProgress_nameResolutionPhase = state.chainingArguments
-        .operationProgress?.nameResolutionPhase ?? OperationProgress_nameResolutionPhase_notStarted;
-    let nextRDNToBeResolved: number = (state.chainingArguments.operationProgress?.nextRDNToBeResolved !== undefined)
-        ? Number(state.chainingArguments.operationProgress.nextRDNToBeResolved)
-        : 0;
+    // let nameResolutionPhase: OperationProgress_nameResolutionPhase = state.chainingArguments
+    //     .operationProgress?.nameResolutionPhase ?? OperationProgress_nameResolutionPhase_notStarted;
     const m: number = needleDN.length;
     let lastEntryFound: number = 0; // The last RDN whose DSE was of type entry.
     let dse_lastEntryFound: Vertex | undefined = undefined;
@@ -290,9 +288,20 @@ async function findDSE (
                 }));
                 return undefined;
             }
-            const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, lastEntryFound);
+            const cr = makeContinuationRefFromSupplierKnowledge(
+                lastCP,
+                needleDN,
+                lastEntryFound,
+                state.rdnsResolved,
+            );
             candidateRefs.push(cr);
-            nextRDNToBeResolved = i;
+            state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
+                // REVIEW: Do I need to update targetObject?
+                operationProgress: new OperationProgress(
+                    OperationProgress_nameResolutionPhase_proceeding,
+                    lastEntryFound,
+                ),
+            });
             return undefined; // Entry unsuitable.
         }
         if (dse_lastEntryFound?.dse.nssr) {
@@ -360,7 +369,12 @@ async function findDSE (
             );
         } else {
             state.partialName = true;
-            nameResolutionPhase = OperationProgress_nameResolutionPhase_completed; // FIXME:
+            state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
+                operationProgress: new OperationProgress(
+                    OperationProgress_nameResolutionPhase_completed,
+                    undefined,
+                ),
+            });
             return dse_i;
         }
     };
@@ -417,7 +431,12 @@ async function findDSE (
                         compareCode(state.operationCode, list["&operationCode"]!)
                         || compareCode(state.operationCode, search["&operationCode"]!)
                     ) {
-                        nameResolutionPhase = OperationProgress_nameResolutionPhase_completed; // TODO: I think you have to return the modified chaningArgs.
+                        state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
+                            operationProgress: new OperationProgress(
+                                OperationProgress_nameResolutionPhase_completed,
+                                undefined,
+                            ),
+                        });
                         return dse_i; // Entry suitable.
                     } else {
                         throw new errors.NameError(
@@ -481,19 +500,26 @@ async function findDSE (
                     return candidateRefsEmpty1_Branch();
                 }
             }
-        } else { // Last entry found === 0
-            nameResolutionPhase = OperationProgress_nameResolutionPhase_proceeding;
+        } else { // Last entry found !== 0
+            state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
+                operationProgress: new OperationProgress(
+                    OperationProgress_nameResolutionPhase_proceeding,
+                    state.chainingArguments.operationProgress?.nextRDNToBeResolved,
+                ),
+            });
             return node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false();
         }
     };
 
     const targetNotFoundSubprocedure = async () => {
+        const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
         switch (nameResolutionPhase) {
             case (OperationProgress_nameResolutionPhase_notStarted): {
                 return targetNotFoundSubprocedure_notStarted_branch();
             }
             case (OperationProgress_nameResolutionPhase_proceeding): {
-                if (lastEntryFound >= nextRDNToBeResolved) {
+                const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
+                if (lastEntryFound >= (nextRDNToBeResolved ?? 0)) {
                     return node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false();
                 }
                 if (
@@ -537,7 +563,8 @@ async function findDSE (
             }
             case (OperationProgress_nameResolutionPhase_completed): {
                 throw new errors.ServiceError(
-                    "7E66876A-D4C5-48FF-815A-93B096F19BB4", // FIXME:
+                    // REVIEW: I am not really sure about this error message.
+                    ctx.i18n.t("err:invalid_reference_no_reason_to_search_here"),
                     new ServiceErrorData(
                         ServiceProblem_invalidReference,
                         [],
@@ -573,15 +600,32 @@ async function findDSE (
             state.operationArgument,
         );
         if (suitable) {
-            nameResolutionPhase = OperationProgress_nameResolutionPhase_completed;
+            state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
+                operationProgress: new OperationProgress(
+                    OperationProgress_nameResolutionPhase_completed,
+                    undefined,
+                ),
+            });
             state.entrySuitable = true;
             state.foundDSE = dse_i;
             return dse_i;
         } else {
-            nameResolutionPhase = OperationProgress_nameResolutionPhase_proceeding;
-            nextRDNToBeResolved = m;
+            state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
+                operationProgress: new OperationProgress(
+                    OperationProgress_nameResolutionPhase_proceeding,
+                    m,
+                ),
+            });
             assert(lastCP);
-            const cr = makeContinuationRefFromSupplierKnowledge(lastCP, needleDN, nextRDNToBeResolved);
+            const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
+            const cr = makeContinuationRefFromSupplierKnowledge(
+                lastCP,
+                needleDN,
+                nextRDNToBeResolved !== undefined
+                    ? Number(nextRDNToBeResolved)
+                    : undefined,
+                state.rdnsResolved,
+            );
             candidateRefs.push(cr);
             return undefined;
         }
@@ -591,6 +635,7 @@ async function findDSE (
     while (iterations < MAX_DEPTH) {
         iterations++;
         if (i === m) {
+            const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
             // I pretty much don't understand this entire section.
             if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
                 await targetNotFoundSubprocedure();
@@ -713,11 +758,14 @@ async function findDSE (
                 i++;
                 rdnMatched = true;
                 dse_i = matchedVertex;
+                state.rdnsResolved++;
             }
         }
-        let subordinatesInBatch = rdnMatched
-            ? []
-            : await readChildren(
+        const getNextBatchOfSubordinates = async () => {
+            if (rdnMatched) {
+                return [];
+            }
+            return readChildren(
                 ctx,
                 dse_i,
                 100,
@@ -733,6 +781,8 @@ async function findDSE (
                     })),
                 },
             );
+        };
+        let subordinatesInBatch = await getNextBatchOfSubordinates();
         while (subordinatesInBatch.length) {
             for (const child of subordinatesInBatch) {
                 cursorId = child.dse.id;
@@ -814,28 +864,14 @@ async function findDSE (
                 if (rdnMatched) {
                     i++;
                     dse_i = child;
+                    state.rdnsResolved++;
                     break;
                 }
             }
             if (rdnMatched) {
                 break;
             }
-            subordinatesInBatch = await readChildren(
-                ctx,
-                dse_i,
-                100,
-                undefined,
-                cursorId,
-                {
-                    AND: needleRDN.map((atav) => ({
-                        RDN: {
-                            some: {
-                                type: atav.type_.toString(),
-                            },
-                        },
-                    })),
-                },
-            );
+            subordinatesInBatch = await getNextBatchOfSubordinates();
         }
         if (!rdnMatched) {
             await targetNotFoundSubprocedure();
@@ -848,6 +884,7 @@ async function findDSE (
         if (dse_i.dse.nssr) {
             nssrEncountered = true;
         }
+        const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
         if (
             (i === nextRDNToBeResolved)
             // Is checking for shadow enough to determine if !master?
@@ -989,6 +1026,7 @@ async function findDSE (
         }
         if (dse_i.dse.entry) {
             if (i === m) {
+                const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
                 if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
                     await targetFoundSubprocedure();
                     return;
@@ -1016,7 +1054,8 @@ async function findDSE (
                 }
                 if (!await someSubordinatesAreCP(ctx, dse_i)) {
                     throw new errors.ServiceError(
-                        "788EC688-D82A-444A-A2F7-457B80753ADD", // FIXME:
+                        // REVIEW: I am not really sure about this error message.
+                        ctx.i18n.t("err:invalid_reference_no_reason_to_search_here"),
                         new ServiceErrorData(
                             ServiceProblem_invalidReference,
                             [],

@@ -393,8 +393,6 @@ model ContextValue {
 // Should there be a separate Attribute Types table? No, because these have a functional aspect.
 // Should there be a separate Context Types table? No, because these have a functional aspect.
 
-// TODO: Operational binding agreements
-
 enum ACIScope {
     PRESCRIPTIVE
     ENTRY

@@ -154,14 +154,6 @@ directory:
 - Images, movies, audio.
   - X.500 directories are innately not well-suited for storing large files.
 
-## More Documentation
-
-- [ ] Usage
-- [ ] Authentication
-- [ ] Authorization / Access Control
-- [ ] Logging / Monitoring
-- [ ] IDEA: "disabled" field in ACI items table (useful for troubleshooting)
-
 ## Projects in this Monorepo
 
 - Meerkat Directory Server

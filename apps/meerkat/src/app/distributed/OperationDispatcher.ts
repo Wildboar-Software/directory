@@ -138,6 +138,7 @@ interface OperationDispatcherState {
     foundDSE: Vertex;
     entrySuitable: boolean;
     partialName: boolean;
+    rdnsResolved: number;
 }
 
 export
@@ -699,6 +700,7 @@ class OperationDispatcher {
             foundDSE: ctx.dit.root,
             entrySuitable: false,
             partialName: false,
+            rdnsResolved: 0,
         };
         await findDSE(
             ctx,
@@ -1004,6 +1006,7 @@ class OperationDispatcher {
             foundDSE: ctx.dit.root,
             entrySuitable: false,
             partialName: false,
+            rdnsResolved: 0,
         };
         await findDSE(
             ctx,
