@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import { Context, ClientConnection, OperationalBindingError } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -36,10 +36,26 @@ import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import addAttributes from "../../database/entry/addAttributes";
 import removeAttribute from "../../database/entry/removeAttribute";
 import { IPV4_AFI_IDI } from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
+import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
+import {
+    InvokeId,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import {
+    OpBindingErrorParam_problem_invalidAgreement,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
+import {
+    id_err_operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
+import {
+    id_op_binding_non_specific_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+
 
 export
 async function updateLocalSubr (
     ctx: Context,
+    conn: ClientConnection,
+    invokeId: InvokeId,
     oldAgreement: HierarchicalAgreement,
     newAgreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
@@ -90,7 +106,6 @@ async function updateLocalSubr (
         );
     }
     // const oldDN = [ ...oldAgreement.immediateSuperior, oldAgreement.rdn ];
-    // const newDN = [ ...newAgreement.immediateSuperior, newAgreement.rdn ];
     const oldSubordinate = await findEntry(ctx, superior, [ oldAgreement.rdn ], false);
     if (!oldSubordinate) {
         throw new Error(); // The old subordinate should have disappeared.
@@ -98,7 +113,39 @@ async function updateLocalSubr (
     if (!compareRDN(oldAgreement.rdn, newAgreement.rdn, getNamingMatcherGetter(ctx))) {
         // If newAgreement.rdn is different, change the RDN of the existing entry.
         if (superior.dse.nssr) {
-            // TODO: Follow procedures in clause 19.1.5.
+            const newDN = [ ...newAgreement.immediateSuperior, newAgreement.rdn ];
+            try {
+                await checkIfNameIsAlreadyTakenInNSSR(
+                    ctx,
+                    conn,
+                    invokeId,
+                    false,
+                    superior.dse.nssr.nonSpecificKnowledge,
+                    newDN,
+                );
+            } catch (e) {
+                throw new OperationalBindingError(
+                    ctx.i18n.t("err:entry_already_exists_in_nssr"),
+                    {
+                        unsigned: new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_invalidAgreement,
+                            id_op_binding_non_specific_hierarchical,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            false,
+                            undefined,
+                        ),
+                    },
+                );
+            }
         }
         await ctx.db.$transaction([
             ctx.db.rDN.deleteMany({
@@ -191,7 +238,7 @@ async function updateLocalSubr (
                 },
             }),
             ...deletions,
-            ...await addAttributes(ctx, oldSubordinate, sub2sup.entryInfo, []), // FIXME: modifiersName
+            ...await addAttributes(ctx, oldSubordinate, sub2sup.entryInfo),
         ]);
     }
 
@@ -206,13 +253,12 @@ async function updateLocalSubr (
                     subr: true,
                 },
                 subentry.info.flatMap((attr) => valuesFromAttribute(attr)),
-                [], // FIXME: modifiersName
             );
         } else {
             const deletions = (
                 await Promise.all(
                     subentry.info
-                        .map((attr) => removeAttribute(ctx, oldSubordinate, attr.type_, []))
+                        .map((attr) => removeAttribute(ctx, oldSubordinate, attr.type_))
                 )
             ).flat();
             await ctx.db.$transaction([
@@ -222,7 +268,7 @@ async function updateLocalSubr (
                     },
                 }),
                 ...deletions,
-                ...await addAttributes(ctx, existingSubentry, subentry.info, []), // FIXME: modifiersName
+                ...await addAttributes(ctx, existingSubentry, subentry.info),
             ]);
         }
     }

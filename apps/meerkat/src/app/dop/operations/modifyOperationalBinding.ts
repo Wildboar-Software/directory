@@ -64,6 +64,9 @@ import {
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import updateContextPrefix from "../modify/updateContextPrefix";
 import updateLocalSubr from "../modify/updateLocalSubr";
+import {
+    InvokeId,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -109,6 +112,7 @@ export
 async function modifyOperationalBinding (
     ctx: Context,
     conn: DOPConnection,
+    invokeId: InvokeId,
     arg: ModifyOperationalBindingArgument,
 ): Promise<ModifyOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
@@ -369,7 +373,7 @@ async function modifyOperationalBinding (
             };
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
-            await updateLocalSubr(ctx, oldAgreement, newAgreement, init);
+            await updateLocalSubr(ctx, conn, invokeId, oldAgreement, newAgreement, init);
             return {
                 null_: null,
             };

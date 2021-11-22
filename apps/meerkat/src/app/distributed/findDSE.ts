@@ -560,7 +560,7 @@ async function findDSE (
     };
 
     const targetFoundSubprocedure = async (): Promise<Vertex | undefined> => {
-        const suitable: boolean = checkSuitabilityProcedure(
+        const suitable: boolean = await checkSuitabilityProcedure(
             ctx,
             conn,
             dse_i,

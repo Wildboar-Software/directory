@@ -1004,7 +1004,7 @@ async function search_i (
         if (data.exclusions?.some((x) => isPrefix(ctx, x, targetDN))) {
             return;
         } else {
-            const suitable: boolean = checkSuitabilityProcedure(
+            const suitable: boolean = await checkSuitabilityProcedure(
                 ctx,
                 conn,
                 target,

@@ -276,7 +276,7 @@ async function search_ii (
             if (!subordinate.dse.cp) {
                 continue;
             }
-            const suitable = checkSuitabilityProcedure(
+            const suitable: boolean = await checkSuitabilityProcedure(
                 ctx,
                 conn,
                 subordinate,

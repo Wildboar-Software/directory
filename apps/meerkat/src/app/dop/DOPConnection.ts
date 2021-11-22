@@ -112,7 +112,9 @@ async function handleRequest (
     }
     case (102): { // modify
         const arg = _decode_ModifyOperationalBindingArgument(request.argument);
-        const result = await modifyOperationalBinding(ctx, conn, arg);
+        const result = await modifyOperationalBinding(ctx, conn, {
+            present: request.invokeID,
+        }, arg);
         await conn.idm.writeResult(
             request.invokeID,
             request.opcode,

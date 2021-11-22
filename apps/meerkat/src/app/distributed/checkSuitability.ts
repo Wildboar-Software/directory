@@ -30,9 +30,39 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import getShadowingAgreementInfo from "../dit/getShadowingAgreementInfo";
+import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea";
+
+async function isComplete (vertex: Vertex): Promise<boolean> {
+    return (
+        !vertex.dse.shadow
+        || (
+            vertex.dse.shadow.attributeCompleteness
+            && vertex.dse.shadow.attributeValuesIncomplete
+        )
+    );
+}
+
+async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promise<boolean> {
+    return !(await ctx.db.entry.findFirst({
+        where: {
+            shadow: true,
+            deleteTimestamp: null,
+            immediate_superior_id: vertex.dse.id,
+            OR: [
+                {
+                    attribute_completeness: false,
+                },
+                {
+                    attribute_values_incomplete: true,
+                },
+            ],
+        },
+    }));
+}
 
 export
-function checkSuitabilityProcedure (
+async function checkSuitabilityProcedure (
     ctx: Context,
     conn: ClientConnection,
     vertex: Vertex,
@@ -44,7 +74,7 @@ function checkSuitabilityProcedure (
     excludeShadows: boolean,
     encodedArgument?: ASN1Element,
     searchArgument?: SearchArgument,
-): boolean {
+): Promise<boolean> {
     if (!vertex.dse.shadow) {
         const unmet = unmetCriticalExtension(criticalExtensions);
         if (unmet !== undefined) {
@@ -102,9 +132,8 @@ function checkSuitabilityProcedure (
     if (compareCode(operationType, id_opcode_list)) {
         return vertex.dse.shadow.subordinateCompleteness;
     } else if (compareCode(operationType, id_opcode_read)) {
-        return true; // FIXME: This might be passable for now, but it is technically incorrect.
-        // I don't know how to tell if the shadow copy is missing attributes
-        // that are present in the master, or if there are no such attributes at all.
+        // DEVIATION: Information selection is not evaluated against the shadowed info.
+        return true;
     } else if (compareCode(operationType, id_opcode_search)) {
         assert(searchArgument || encodedArgument); // This should NEVER be called without passing this in if it is a search.
         const argument = searchArgument ?? _decode_SearchArgument(encodedArgument!);
@@ -129,20 +158,34 @@ function checkSuitabilityProcedure (
             if (excludeShadows) {
                 return false;
             }
-            // TODO: Check that shadowed information can satisfy search.
+            const shadowingAgreement = await getShadowingAgreementInfo(ctx, vertex);
+            if (!shadowingAgreement) {
+                return false; // The shadowing agreement might have expired and this is a stale shadow.
+            }
+            if (searchArgData.subset === SearchArgumentData_subset_oneLevel) {
+                // If every subordinate has full attributes, this is automatically suitable.
+                if (await areAllSubordinatesComplete(ctx, vertex)) {
+                    return true;
+                }
+            }
+            if (searchArgData.filter) {
+                // DEVIATION: This is almost GUARANTEED to be incorrect.
+                if (!filterCanBeUsedInShadowedArea(searchArgData.filter, shadowingAgreement)) {
+                    return false;
+                }
+            }
+            // DEVIATION: Information selection is not evaluated against the shadowed info.
             return true;
         } else if (searchArgData.subset === SearchArgumentData_subset_baseObject) {
-            // TODO: Check if all attributes are present.
-            return true;
+            return isComplete(vertex);
         } else {
-            return false; // TODO: Review. What to do?
+            return !excludeShadows; // Unknown subset.
         }
     } else if (compareCode(operationType, id_opcode_compare)) {
-        // TODO: Bail out if matching rules are not supported by DSA.
-        // TODO: Check if all attributes requested are present.
-        return true;
+        // ~~Bail out if matching rules are not supported by DSA.~~ Actually, let's let the compare function handle this.
+        return isComplete(vertex);
     } else {
-        return false; // TODO: Review. What to do?
+        return true;
     }
 }
 

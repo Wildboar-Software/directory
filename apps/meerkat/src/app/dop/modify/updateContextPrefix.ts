@@ -8,9 +8,6 @@ import type {
 import {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
-import {
-    _encode_MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -18,7 +15,6 @@ import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import findEntry from "../../x500/findEntry";
-import rdnToJson from "../../x500/rdnToJson";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import deleteEntry from "../../database/deleteEntry";
@@ -55,8 +51,6 @@ import {
     OpBindingErrorParam,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
 import {
-    OpBindingErrorParam_problem_currentlyNotDecidable,
-    OpBindingErrorParam_problem_invalidAgreement,
     OpBindingErrorParam_problem_invalidBindingType,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
 import {
@@ -71,7 +65,8 @@ import {
     _encode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import saveAccessPoint from "../../database/saveAccessPoint";
-import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
+import dseFromDatabaseEntry from "../../database/dseFromDatabaseEntry";
+import { strict as assert } from "assert";
 
 /**
  * @description
@@ -200,25 +195,20 @@ async function updateContextPrefix (
                     glue: (!vertex.admPointInfo && !vertex.accessPoints),
                     rhob: Boolean(vertex.admPointInfo),
                     immSupr,
-                    AccessPoint: immSupr
-                        ? { // FIXME : Use saveAccessPoint
-                            createMany: {
-                                data: vertex.accessPoints
-                                    ? vertex.accessPoints.map((ap) => ({
-                                        ae_title: ap.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
-                                        knowledge_type: Knowledge.SPECIFIC,
-                                        category: ap.category,
-                                        chainingRequired: ap.chainingRequired,
-                                        ber: Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes()),
-                                    }))
-                                    : [],
-                            }
-                        }
-                        : undefined,
                 },
                 vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
                 [],
             );
+            for (const ap of vertex.accessPoints ?? []) {
+                await saveAccessPoint(ctx, ap, Knowledge.SPECIFIC, createdEntry.dse.id);
+            }
+            const dbe = await ctx.db.entry.findUnique({
+                where: {
+                    id: createdEntry.dse.id,
+                },
+            });
+            assert(dbe);
+            createdEntry.dse = await dseFromDatabaseEntry(ctx, dbe); // To get it to reload the saved access points.
             for (const subentry of (vertex.subentries ?? [])) {
                 await createEntry(
                     ctx,
