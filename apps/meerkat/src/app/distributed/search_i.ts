@@ -1665,7 +1665,7 @@ async function search_i (
                     searchState.paging![1].request!.sortKeys![0].type_,
                     results,
                     searchState.paging![1].request.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
-                    ENTRIES_PER_BATCH,
+                    ENTRIES_PER_BATCH, // TODO: Make configurable
                     undefined,
                     cursorId,
                 );

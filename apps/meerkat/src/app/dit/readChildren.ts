@@ -17,7 +17,7 @@ async function readChildren (
     if (!entry.subordinates) {
         return Promise.all(
             (await ctx.db.entry.findMany({
-                take: take ?? 1000000,
+                take: take ?? 1000000, // You MUST specify a "take" number when using a cursor.
                 skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
                 cursor: (cursorId !== undefined)
                     ? {

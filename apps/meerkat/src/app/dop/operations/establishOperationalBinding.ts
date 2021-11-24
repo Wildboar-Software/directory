@@ -1,5 +1,6 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import DOPConnection from "../DOPConnection";
 import type { INTEGER } from "asn1-ts";
 import type {
     EstablishOperationalBindingArgument,
@@ -30,6 +31,7 @@ import {
     OpBindingErrorParam_problem_invalidAgreement,
     OpBindingErrorParam_problem_invalidStartTime,
     OpBindingErrorParam_problem_invalidEndTime,
+    OpBindingErrorParam_problem_duplicateID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
 import {
     HierarchicalAgreement,
@@ -51,9 +53,6 @@ import type {
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import {
-    _encode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import { ASN1Element, packBits } from "asn1-ts";
 import becomeSubordinate from "../establish/becomeSubordinate";
@@ -74,6 +73,13 @@ import {
     id_op_establishOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-establishOperationalBinding.va";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import saveAccessPoint from "../../database/saveAccessPoint";
+import {
+    _encode_AttributeCertificationPath as _encode_ACP,
+} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+import {
+    _encode_Token,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -96,7 +102,7 @@ function codeToString (code?: Code): string | undefined {
 export
 async function establishOperationalBinding (
     ctx: Context,
-    conn: ClientConnection,
+    conn: DOPConnection,
     invokeId: INTEGER,
     arg: EstablishOperationalBindingArgument,
 ): Promise<EstablishOperationalBindingResult> {
@@ -242,7 +248,29 @@ async function establishOperationalBinding (
             let newBindingIdentifier!: number;
             if (typeof data.bindingID?.identifier === "number") {
                 if (alreadyTakenBindingIDs.has(data.bindingID.identifier)) {
-                    throw new Error(); // FIXME:
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:ob_duplicate_identifier", {
+                            id: data.bindingID.identifier,
+                        }),
+                        {
+                            unsigned: new OpBindingErrorParam(
+                                OpBindingErrorParam_problem_duplicateID,
+                                id_op_binding_hierarchical,
+                                undefined,
+                                undefined,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    conn.boundNameAndUID?.dn,
+                                    undefined,
+                                    id_err_operationalBindingError,
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                false,
+                                undefined,
+                            ),
+                        },
+                    );
                 } else {
                     newBindingIdentifier = data.bindingID.identifier;
                 }
@@ -254,6 +282,7 @@ async function establishOperationalBinding (
                 newBindingIdentifier = attemptedID;
             }
 
+            const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     outbound: false,
@@ -264,14 +293,8 @@ async function establishOperationalBinding (
                         : 0,
                     agreement_ber: Buffer.from(data.agreement.toBytes()),
                     access_point: {
-                        create: {
-                            knowledge_type: Knowledge.OB_REQUEST,
-                            ae_title: data.accessPoint.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
-                            // ipv4: ipv4FromNSAP(data.accessPoint.address.nAddresses[0])
-                            // TODO: ipv4
-                            // TODO: tcp_port
-                            // TODO: url
-                            ber: Buffer.from(_encode_AccessPoint(data.accessPoint, DER).toBytes()),
+                        connect: {
+                            id: access_point_id,
                         },
                     },
                     initiator: OperationalBindingInitiator.ROLE_A,
@@ -297,9 +320,55 @@ async function establishOperationalBinding (
                         : undefined,
                     security_errorCode: codeToString(sp?.errorCode),
                     new_context_prefix_rdn: rdnToJson(agreement.rdn),
-                    immediate_superior: agreement.immediateSuperior.map((rdn) => rdnToJson(rdn)),
-                    // TODO: Source
-                    supply_contexts: "",
+                    immediate_superior: agreement.immediateSuperior.map(rdnToJson),
+                    source_ip: conn.socket.remoteAddress,
+                    source_tcp_port: conn.socket.remotePort,
+                    source_credentials_type: ((): number | null => {
+                        if (!conn.bind.credentials) {
+                            return null;
+                        }
+                        if ("simple" in conn.bind.credentials) {
+                            return 0;
+                        }
+                        if ("strong" in conn.bind.credentials) {
+                            return 1;
+                        }
+                        if ("external" in conn.bind.credentials) {
+                            return 2;
+                        }
+                        if ("spkm" in conn.bind.credentials) {
+                            return 3;
+                        }
+                        return 4;
+                    })(),
+                    source_certificate_path: (
+                        conn.bind.credentials
+                        && ("strong" in conn.bind.credentials)
+                        && conn.bind.credentials.strong.certification_path
+                    )
+                        ? Buffer.from(_encode_CertificationPath(conn.bind.credentials.strong.certification_path, DER).toBytes())
+                        : undefined,
+                    source_attr_cert_path: (
+                        conn.bind.credentials
+                        && ("strong" in conn.bind.credentials)
+                        && conn.bind.credentials.strong.attributeCertificationPath
+                    )
+                        ? Buffer.from(_encode_ACP(conn.bind.credentials.strong.attributeCertificationPath, DER).toBytes())
+                        : undefined,
+                    source_bind_token: (
+                        conn.bind.credentials
+                        && ("strong" in conn.bind.credentials)
+                    )
+                        ? Buffer.from(_encode_Token(conn.bind.credentials.strong.bind_token, DER).toBytes())
+                        : undefined,
+                    source_strong_name: (
+                        conn.bind.credentials
+                        && ("strong" in conn.bind.credentials)
+                        && conn.bind.credentials.strong.name
+                    )
+                        ? conn.bind.credentials.strong.name.map(rdnToJson)
+                        : undefined,
+                    supply_contexts: null,
                     requested_time: new Date(),
                 },
             });

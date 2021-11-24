@@ -224,7 +224,6 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
         }
 
         // specificExclusions
-        // TODO: Should you use startsWith() instead?
         if (toParse.slice(index, index + SPEX_STRING.length) === SPEX_STRING) {
             index += SPEX_STRING.length;
             skipOverWhitespace();

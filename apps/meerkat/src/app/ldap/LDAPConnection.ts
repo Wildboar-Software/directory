@@ -56,6 +56,7 @@ import {
     cancel,
 } from "@wildboar/ldap/src/lib/extensions";
 import encodeLDAPDN from "./encodeLDAPDN";
+import createNoticeOfDisconnection from "./createNoticeOfDisconnection";
 
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
@@ -78,20 +79,19 @@ function isRootSubschemaDN (dn: Uint8Array): boolean {
 const rootSubschemaPseudoVertexAttributes: PartialAttribute[] = [
     new PartialAttribute(
         Buffer.from("attributeTypes", "utf-8"),
-        [ // TODO: Fill in these attribute types.
-            // Buffer.from("( 1.3.6.1.4.1.1466.101.120.6 NAME 'altServer' SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 USAGE dSAOperation )", "utf-8"),
-            // Buffer.from("( 1.3.6.1.4.1.1466.101.120.5 NAME 'namingContexts' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 USAGE dSAOperation )", "utf-8"),
-            // Buffer.from("( 1.3.6.1.4.1.1466.101.120.13 NAME 'supportedControl' SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 USAGE dSAOperation )", "utf-8"),
-            // Buffer.from("", "utf-8"),
-            // Buffer.from("", "utf-8"),
-            // Buffer.from("", "utf-8"),
-            // Buffer.from("", "utf-8"),
-            // TODO: namingContexts: naming contexts;
-            // TODO: supportedControl: recognized LDAP controls;
-            // TODO: supportedExtension: recognized LDAP extended operations;
-            // TODO: supportedFeatures: recognized LDAP features;
-            // TODO: supportedLDAPVersion: LDAP versions supported; and
-            // TODO: supportedSASLMechanisms
+        [
+            Buffer.from("( 1.3.6.1.4.1.1466.101.120.6 NAME 'altServer' SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 USAGE dSAOperation )", "utf-8"),
+            Buffer.from("( 1.3.6.1.4.1.1466.101.120.5 NAME 'namingContexts' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 USAGE dSAOperation )", "utf-8"),
+            Buffer.from("( 1.3.6.1.4.1.1466.101.120.13 NAME 'supportedControl' SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 USAGE dSAOperation )", "utf-8"),
+            Buffer.from("( 1.3.6.1.4.1.1466.101.120.7 NAME 'supportedExtension' SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 USAGE dSAOperation )", "utf-8"),
+            Buffer.from("( 1.3.6.1.4.1.4203.1.3.5 NAME 'supportedFeatures' SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 USAGE dSAOperation )", "utf-8"),
+            Buffer.from("( 1.3.6.1.4.1.1466.101.120.15 NAME 'supportedLDAPVersion' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 USAGE dSAOperation )", "utf-8"),
+            Buffer.from("( 1.3.6.1.4.1.1466.101.120.14 NAME 'supportedSASLMechanisms' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 USAGE dSAOperation )", "utf-8"),
+            Buffer.from("( 2.5.18.3 NAME 'creatorsName' EQUALITY distinguishedNameMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
+            Buffer.from("( 2.5.18.1 NAME 'createTimestamp' EQUALITY generalizedTimeMatch ORDERING generalizedTimeOrderingMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
+            Buffer.from("( 2.5.18.4 NAME 'modifiersName' EQUALITY distinguishedNameMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
+            Buffer.from("( 2.5.18.2 NAME 'modifyTimestamp' EQUALITY generalizedTimeMatch ORDERING generalizedTimeOrderingMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
+            Buffer.from("( 1.3.6.1.1.16.4 NAME 'entryUUID' DESC 'UUID of the entry' EQUALITY uuidMatch ORDERING uuidOrderingMatch SYNTAX 1.3.6.1.1.16.1 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
         ],
     ),
 ];
@@ -169,7 +169,7 @@ async function handleRequest (
     );
     const unprotectedResult = getOptionallyProtectedValue(result.result);
     const ldapResult = await dapReplyToLDAPResult(ctx, {
-        invokeId: dapRequest.invokeId, // TODO: I think this is unnecessary.
+        invokeId: dapRequest.invokeId,
         opCode: dapRequest.opCode,
         result: unprotectedResult.result,
     }, message, onEntry);
@@ -267,7 +267,20 @@ async function handleRequestAndErrors (
                 return;
             }
         } else {
-            return; // FIXME: Return some other error.
+            const errorMessage: string = ctx.i18n.t("err:unrecognized_ldap_op");
+            /**
+             * IETF RFC 4511, Section 4.1.1 states that:
+             *
+             * > In other cases where the client or server cannot parse an LDAP
+             * > PDU, it SHOULD abruptly terminate the LDAP session.
+             *
+             * An LDAP server is supposed to send a notice of disconnection, as
+             * detailed in IETF RFC 4511, Section 4.4.1.
+             */
+            const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, errorMessage);
+            conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            conn.socket.end();
+            return;
         }
     } finally {
         const invokeID = conn.messageIDToInvokeID.get(Number(message.messageID));
@@ -309,14 +322,24 @@ class LDAPConnection extends ClientConnection {
                 if (e instanceof ASN1TruncationError) {
                     return;
                 }
-                // TODO: Close the connection.
+                ctx.log.error(ctx.i18n.t("log:encoding_error", {
+                    uuid: this.id,
+                }));
+                const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
+                this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                this.socket.end();
                 return;
             }
             let message!: LDAPMessage;
             try {
                 message = _decode_LDAPMessage(el);
             } catch (e) {
-                ctx.log.error(ctx.i18n.t("log:malformed_ldapmessage"));
+                ctx.log.error(ctx.i18n.t("log:malformed_ldapmessage", {
+                    uuid: this.id,
+                }));
+                const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
+                this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                this.socket.end();
                 return;
             }
 

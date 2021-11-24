@@ -122,10 +122,22 @@ const objectClasses: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
     return Buffer.from(`( ${fields.join(" ")} )`, "utf-8");
 };
 
-// TODO: Curry the Context.
+/**
+ * @description
+ *
+ * WARNING: This will silently not report the SYNTAX if no LDAP syntax is
+ * defined for a type that is passed in. This might be fine if a parent type
+ * defines an LDAP syntax, but it might _not_ be fine if NO parent in the
+ * ancestry does not define an LDAP syntax.
+ *
+ * @param ctx
+ * @returns
+ */
 export
-const attributeTypes: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+const attributeTypes: (ctx: Context) => LDAPSyntaxEncoder = (ctx: Context) => (value: ASN1Element): Uint8Array => {
     const desc = _decode_AttributeTypeDescription(value);
+    const spec = ctx.attributeTypes.get(desc.identifier.toString());
+    const ldapSyntax = ctx.ldapSyntaxes.get(spec?.ldapSyntax?.toString() ?? "");
     const fields: string[] = [
         desc.identifier.toString(),
     ];
@@ -154,7 +166,9 @@ const attributeTypes: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
     if (desc.information.substringsMatch) {
         fields.push(`SUBSTR ${desc.information.substringsMatch.toString()}`);
     }
-    // FIXME: SYNTAX
+    if (ldapSyntax) {
+        fields.push(`SYNTAX ${ldapSyntax.id.toString()}`);
+    }
     if (desc.information.multi_valued === false) {
         fields.push("SINGLE-VALUE");
     }

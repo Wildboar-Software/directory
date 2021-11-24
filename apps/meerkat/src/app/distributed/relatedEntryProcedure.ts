@@ -48,6 +48,7 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import type { SearchState } from "./search_i";
 
 export
 interface RelatedEntryReturn {
@@ -89,6 +90,7 @@ async function relatedEntryProcedure (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
+    search: SearchState,
     ret: RelatedEntryReturn,
     argument: SearchArgument,
     chaining?: ChainingArguments,
@@ -189,9 +191,14 @@ async function relatedEntryProcedure (
                 newChaining,
             );
             if ("result" in response && response.result) {
-                // TODO: i) If the result is signed, add it to uncorrelatedSearchInfo in SearchResult.
-                // TODO: ii) If the result is not signed, perform the join process as specified in Rec. ITU-T X.511 | ISO/IEC 9594-3.
-                ret.response.push(response.result);
+                // i) If the result is signed, add it to uncorrelatedSearchInfo in SearchResult.
+                // ii) If the result is not signed, perform the join process as specified in Rec. ITU-T X.511 | ISO/IEC 9594-3.
+                if (("unsigned" in response.result) && ("searchInfo" in response.result.unsigned)) {
+                    // This implementation does not actually check for duplicates.
+                    search.results.push(...response.result.unsigned.searchInfo.entries);
+                } else {
+                    ret.response.push(response.result);
+                }
             } else {
                 continue;
             }

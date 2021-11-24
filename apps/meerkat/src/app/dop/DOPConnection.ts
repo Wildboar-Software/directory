@@ -233,12 +233,22 @@ class DOPConnection extends ClientConnection {
     }
 
     private async handleUnbind (): Promise<void> {
-        // FIXME: Make this like DAPConnection.
-        this.ctx.log.info(this.ctx.i18n.t("log:connection_unbound", {
-            ctype: "",
-            cid: "",
-            protocol: "DOP",
-        }));
+        try {
+            this.idm.close();
+        } catch (e) {
+            this.ctx.log.warn(this.ctx.i18n.t("log:error_closing_connection", {
+                ctype: DOPConnection.name,
+                cid: this.id,
+                e: e.message,
+                transport: "IDM",
+            }));
+        } finally {
+            this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
+                ctype: DOPConnection.name,
+                cid: this.id,
+                protocol: "DAP",
+            }));
+        }
     }
 
     constructor (

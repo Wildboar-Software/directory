@@ -157,8 +157,6 @@ import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 //     info [1] SET OF Attribute{{SupportedAttributes}},
 //     ... }
 
-// FIXME: Allow creation of alias+cp
-
 export
 interface EstablishSubordinateOptions extends ConnectOptions, WriteOperationOptions {
     endTime?: Date;

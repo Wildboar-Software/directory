@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import { Context, Vertex, UpdateError } from "@wildboar/meerkat-types";
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, BERElement, ObjectIdentifier } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import { connect, ConnectOptions } from "../net/connect";
@@ -74,6 +74,15 @@ import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
 import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    UpdateErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    UpdateProblem_affectsMultipleDSAs,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
 
 export
 interface UpdateSuperiorOptions extends ConnectOptions, WriteOperationOptions {
@@ -85,6 +94,7 @@ async function updateSuperiorDSA (
     ctx: Context,
     affectedDN: DistinguishedName,
     newCP: Vertex,
+    aliasDereferenced: boolean,
     options?: UpdateSuperiorOptions,
 ): Promise<ResultOrError> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
@@ -255,7 +265,23 @@ async function updateSuperiorDSA (
         }
         break;
     }
-    throw new Error(); // FIXME:
+    throw new UpdateError(
+        ctx.i18n.t("err:failed_to_update_superior_dsa"),
+        new UpdateErrorData(
+            UpdateProblem_affectsMultipleDSAs,
+            undefined,
+            [],
+            createSecurityParameters(
+                ctx,
+                undefined,
+                undefined,
+                updateError["&errorCode"],
+            ),
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            aliasDereferenced,
+            undefined,
+        ),
+    );
 }
 
 export default updateSuperiorDSA;

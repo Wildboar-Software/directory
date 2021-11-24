@@ -14,15 +14,21 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { ASN1Element, BOOLEAN, INTEGER, OPTIONAL, TRUE_BIT, FALSE } from "asn1-ts";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_noInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
     ServiceProblem_loopDetected,
     ServiceProblem_busy,
-    ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
-import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
-import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+// import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
+// import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+// import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
@@ -32,7 +38,6 @@ import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSer
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
-
 import { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import { DomainInfo } from "@wildboar/x500/src/lib/modules/DistributedOperations/DomainInfo.ta";
@@ -115,15 +120,16 @@ function createChainingArgumentsFromDUA (
     let dspPaging: OPTIONAL<BOOLEAN>;
     let excludeWriteableCopies: OPTIONAL<BOOLEAN>;
 
-    if (compareCode(operationCode, abandon["&operationCode"]!)) {
-        // TODO: Abandon procedures.
-    }
-    else if (compareCode(operationCode, administerPassword["&operationCode"]!)) {
-        // const arg = administerPassword.decoderFor["&ArgumentType"]!(operationArgument);
-        // const data = getOptionallyProtectedValue(arg);
-        // TODO: operationProgress?
-    }
-    else if (compareCode(operationCode, addEntry["&operationCode"]!)) {
+    /**
+     * Abandon procedures are supposed to start here, but we do them within the
+     * connection classes instead.
+     */
+    // if (compareCode(operationCode, abandon["&operationCode"]!)) {
+    // }
+    // else if (compareCode(operationCode, administerPassword["&operationCode"]!)) {
+    // }
+    // else
+    if (compareCode(operationCode, addEntry["&operationCode"]!)) {
         const arg = addEntry.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
         originator = data.requestor;
@@ -154,11 +160,8 @@ function createChainingArgumentsFromDUA (
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
-    else if (compareCode(operationCode, changePassword["&operationCode"]!)) {
-        // const arg = changePassword.decoderFor["&ArgumentType"]!(operationArgument);
-        // const data = getOptionallyProtectedValue(arg);
-        // TODO: operationProgress?
-    }
+    // else if (compareCode(operationCode, changePassword["&operationCode"]!)) {
+    // }
     else if (compareCode(operationCode, compare["&operationCode"]!)) {
         const arg = compare.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
@@ -466,18 +469,20 @@ async function requestValidationProcedure (
         && (chainedArgument.operationProgress?.nextRDNToBeResolved !== undefined)
         && (chainedArgument.operationProgress.nextRDNToBeResolved > chainedArgument.targetObject.length)
     ) {
-        throw new errors.ServiceError(
+        throw new errors.SecurityError(
             ctx.i18n.t("err:invalid_nextrdntoberesolved", {
                 next: chainedArgument.operationProgress?.nextRDNToBeResolved,
             }),
-            new ServiceErrorData(
-                ServiceProblem_unwillingToPerform, // TODO: Is this correct?
+            new SecurityErrorData(
+                SecurityProblem_noInformation,
+                undefined,
+                undefined,
                 [],
                 createSecurityParameters(
                     ctx,
                     undefined,
                     undefined,
-                    serviceError["&errorCode"],
+                    securityError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 chainedArgument.aliasDereferenced,

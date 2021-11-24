@@ -95,6 +95,9 @@ const ctx: Context = {
         prohibitChaining: process.env.MEERKAT_PROHIBIT_CHAINING
             ? (process.env.MEERKAT_PROHIBIT_CHAINING === "1")
             : false,
+        entriesPerSubordinatesPage: process.env.MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE
+            ? Number.parseInt(process.env.MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE)
+            : 100,
     },
     dsa: {
         accessPoint: new AccessPoint(

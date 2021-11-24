@@ -21,8 +21,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/terminateOperationalBinding.oa";
 import { DER } from "asn1-ts/dist/node/functional";
 
-// TODO: I haven't figured out how to meaningfully name / differentiate between this and `terminateByID()`.
-
 export
 async function terminateByTypeAndBindingID (
     ctx: Context,

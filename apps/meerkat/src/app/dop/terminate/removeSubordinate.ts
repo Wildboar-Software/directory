@@ -19,10 +19,6 @@ async function removeSubordinate (
     if (!entry) {
         return; // It is already deleted. Nothing to do.
     }
-    const subordinates = await readChildren(ctx, entry);
-    if (subordinates.length > 0) {
-        // TODO: Remove recursively.
-    }
     await deleteEntry(ctx, entry);
 }
 

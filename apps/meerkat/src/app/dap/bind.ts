@@ -138,7 +138,7 @@ async function bind (
                 boundVertex: foundEntry,
                 boundNameAndUID: new NameAndOptionalUID(
                     getDistinguishedName(foundEntry),
-                    undefined,
+                    foundEntry.dse.uniqueIdentifier?.[0], // We just use the first unique identifier.
                 ),
                 authLevel: {
                     basicLevels: new AuthenticationLevel_basicLevels(

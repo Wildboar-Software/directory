@@ -768,7 +768,7 @@ async function findDSE (
             return readChildren(
                 ctx,
                 dse_i,
-                100,
+                ctx.config.entriesPerSubordinatesPage,
                 undefined,
                 cursorId,
                 {

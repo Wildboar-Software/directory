@@ -21,7 +21,7 @@ async function readChildrenSorted (
     let newCursorId: number | undefined;
     const results = await Promise.all(
         (await ctx.db.attributeValue.findMany({
-            take,
+            take: take ?? 1000000, // You MUST specify a "take" when cursors are used.
             skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
             where: {
                 entry_id: entry.dse.id,

@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import { Context, OperationalBindingError } from "@wildboar/meerkat-types";
 import type DOPConnection from "../DOPConnection";
 import * as errors from "@wildboar/meerkat-types";
 import type {
@@ -20,6 +20,9 @@ import {
     OpBindingErrorParam_problem_unsupportedBindingType,
     OpBindingErrorParam_problem_invalidID,
     OpBindingErrorParam_problem_invalidAgreement,
+    OpBindingErrorParam_problem_roleAssignment,
+    OpBindingErrorParam_problem_duplicateID,
+    OpBindingErrorParam_problem_invalidNewID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
 import {
     _decode_PresentationAddress,
@@ -67,6 +70,12 @@ import updateLocalSubr from "../modify/updateLocalSubr";
 import {
     InvokeId,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import {
+    _encode_AttributeCertificationPath as _encode_ACP,
+} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+import {
+    _encode_Token,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -237,12 +246,72 @@ async function modifyOperationalBinding (
         );
     }
 
-    // FIXME: The binding version is a revision number. I got this detail wrong.
-    if ((opBinding.binding_version ?? 1) < data.newBindingID.version) {
-        // Throw new Error.
+    const now = new Date();
+    const alreadyTakenBindingID = !!(await ctx.db.operationalBinding.findFirst({
+        where: {
+            binding_type: id_op_binding_hierarchical.toString(),
+            validity_start: {
+                gte: now,
+            },
+            validity_end: {
+                lte: now,
+            },
+            binding_identifier: Number(data.newBindingID.identifier),
+        },
+        select: {
+            binding_identifier: true,
+        },
+    }));
+    if (alreadyTakenBindingID) {
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:ob_duplicate_identifier", {
+                id: data.newBindingID.identifier,
+            }),
+            {
+                unsigned: new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_duplicateID,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+            },
+        );
     }
 
-    const now = new Date();
+    if ((opBinding.binding_version ?? 1) >= data.newBindingID.version) {
+        throw new OperationalBindingError(
+            ctx.i18n.t("err:ob_invalid_version"),
+            {
+                unsigned: new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidNewID,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+            }
+        )
+    }
+
     const validFrom: Date = (
         data.valid?.validFrom
         && ("time" in data.valid.validFrom)
@@ -314,14 +383,58 @@ async function modifyOperationalBinding (
                 ? Number(sp.errorProtection)
                 : undefined,
             security_errorCode: codeToString(sp?.errorCode),
-            // new_context_prefix_rdn: rdnToJson(agreement.rdn),
-            // immediate_superior: agreement.immediateSuperior.map((rdn) => rdnToJson(rdn)),
-            // TODO: Source
+            // new_context_prefix_rdn: set below.
+            // immediate_superior: set below.
+            source_ip: conn.socket.remoteAddress,
+            source_tcp_port: conn.socket.remotePort,
+            source_credentials_type: ((): number | null => {
+                if (!conn.bind.credentials) {
+                    return null;
+                }
+                if ("simple" in conn.bind.credentials) {
+                    return 0;
+                }
+                if ("strong" in conn.bind.credentials) {
+                    return 1;
+                }
+                if ("external" in conn.bind.credentials) {
+                    return 2;
+                }
+                if ("spkm" in conn.bind.credentials) {
+                    return 3;
+                }
+                return 4;
+            })(),
+            source_certificate_path: (
+                conn.bind.credentials
+                && ("strong" in conn.bind.credentials)
+                && conn.bind.credentials.strong.certification_path
+            )
+                ? Buffer.from(_encode_CertificationPath(conn.bind.credentials.strong.certification_path, DER).toBytes())
+                : undefined,
+            source_attr_cert_path: (
+                conn.bind.credentials
+                && ("strong" in conn.bind.credentials)
+                && conn.bind.credentials.strong.attributeCertificationPath
+            )
+                ? Buffer.from(_encode_ACP(conn.bind.credentials.strong.attributeCertificationPath, DER).toBytes())
+                : undefined,
+            source_bind_token: (
+                conn.bind.credentials
+                && ("strong" in conn.bind.credentials)
+            )
+                ? Buffer.from(_encode_Token(conn.bind.credentials.strong.bind_token, DER).toBytes())
+                : undefined,
+            source_strong_name: (
+                conn.bind.credentials
+                && ("strong" in conn.bind.credentials)
+                && conn.bind.credentials.strong.name
+            )
+                ? conn.bind.credentials.strong.name.map(rdnToJson)
+                : undefined,
             requested_time: new Date(),
         },
     });
-
-    // TODO: If any RDN in the CP changes, update the corresponding DSE.
 
     if (data.bindingType.isEqualTo(id_op_binding_hierarchical)) {
         const oldAgreement: HierarchicalAgreement = (() => {
@@ -333,13 +446,42 @@ async function modifyOperationalBinding (
             ? _decode_HierarchicalAgreement(data.newAgreement)
             : oldAgreement;
 
+        await ctx.db.operationalBinding.update({
+            where: {
+                id: created.id,
+            },
+            data: {
+                new_context_prefix_rdn: rdnToJson(newAgreement.rdn),
+                immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
+            },
+        });
+
         if (!data.initiator) {
-            throw new Error(); // Required for an HOB modification. roleAssignment
+            throw new OperationalBindingError(
+                ctx.i18n.t("err:cannot_reverse_roles_in_hob"),
+                {
+                    unsigned: new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_roleAssignment,
+                        id_op_binding_hierarchical,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        false,
+                        undefined,
+                    ),
+                },
+            );
         }
 
         if ("roleA_initiates" in data.initiator) {
             const init: SuperiorToSubordinateModification = _decode_SuperiorToSubordinateModification(data.initiator.roleA_initiates);
-            // TODO: Check that the superior did not change Agreement.rdn.
             if (!compareDistinguishedName(
                 newAgreement.immediateSuperior,
                 init.contextPrefixInfo.map((rdn) => rdn.rdn),

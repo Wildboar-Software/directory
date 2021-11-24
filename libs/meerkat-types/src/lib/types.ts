@@ -459,6 +459,7 @@ interface Configuration {
     myAccessPointNSAPs: Uint8Array[];
     useDatabaseWhenThereAreXSubordinates: number;
     prohibitChaining: boolean;
+    entriesPerSubordinatesPage: number;
 }
 
 export

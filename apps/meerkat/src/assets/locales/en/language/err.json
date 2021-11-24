@@ -128,5 +128,10 @@
     "superior_dsa_would_not_rename": "Superior DSA refused to allow RDN change to the subordinate context prefix. {{e}}",
     "could_not_find_cp": "Could not find context prefix associated with operational binding {{uuid}}.",
     "could_not_find_supr": "Could not find superior associated with operational binding {{uuid}}.",
-    "invalid_reference_no_reason_to_search_here": "Invalid reference: there is no context prefix under the target object, and therefore no reason to continue the search or list in this DSA."
+    "invalid_reference_no_reason_to_search_here": "Invalid reference: there is no context prefix under the target object, and therefore no reason to continue the search or list in this DSA.",
+    "cannot_reverse_roles_in_hob": "Cannot reverse roles in a hierarchical operational binding.",
+    "ob_duplicate_identifier": "Proposed operational binding ID {{id}} is already taken.",
+    "ob_invalid_version": "Proposed operational binding ID version is less than or equal to the most current version.",
+    "failed_to_update_superior_dsa": "Failed to notify superior DSA of changes to the context prefix or one of its subentries.",
+    "unrecognized_ldap_op": "Unrecognized LDAP operation."
 }

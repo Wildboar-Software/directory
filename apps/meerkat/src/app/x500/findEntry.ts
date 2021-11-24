@@ -4,8 +4,6 @@ import readChildren from "../dit/readChildren";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
-// TODO: Accept neverDerefAliases, derefInSearching, derefFindingBaseObj, derefAlways
-
 export
 async function findEntry (
     ctx: Context,
@@ -22,17 +20,8 @@ async function findEntry (
     if (!currentVertex) {
         return undefined;
     }
-    if ((currentVertex.dse.rdn.length === 0) && (dn.length === 0)) {
-        return currentVertex;
-    }
-    const children = await readChildren(ctx, dit); // TODO: Pagination.
-    if (currentVertex.dse.rdn.length === 0) { // Root DSE, which will not match.
-        for (const child of children) {
-            const found = await findEntry(ctx, child, dn, derefAliases);
-            if (found) {
-                return found;
-            }
-        }
+    if (dn.length === 0) {
+        return ctx.dit.root;
     }
     // To minimize modification by reference.
     const query: DistinguishedName = [ ...dn ];
@@ -40,25 +29,44 @@ async function findEntry (
     if (!queriedRDN) {
         return undefined;
     }
-    if (queriedRDN.length !== dit.dse.rdn.length) {
-        return undefined;
-    }
-    const rdnMatched = compareRDN(queriedRDN, dit.dse.rdn, NAMING_MATCHER);
+    const rdnMatched = compareRDN(queriedRDN, currentVertex.dse.rdn, NAMING_MATCHER);
     if (!rdnMatched) {
         return undefined;
     }
     if (query.length === 0) {
-        return dit; // We matched the last RDN of the query.
+        return currentVertex; // We matched the last RDN of the query.
     }
+    let cursorId: number = 0;
+    const getNextBatchOfSubordinates = () => readChildren(
+        ctx,
+        currentVertex,
+        ctx.config.entriesPerSubordinatesPage,
+        undefined,
+        cursorId,
+        {
+            AND: queriedRDN.map((atav) => ({
+                RDN: {
+                    some: {
+                        type: atav.type_.toString(),
+                    },
+                },
+            })),
+        },
+    );
     /**
      * Otherwise, we repeat the process by querying each child vertex of the DIT
      * with a distinguished name whose terminal RDN has been truncated.
      */
-    for (const child of children) {
-        const found = await findEntry(ctx, child, query, derefAliases);
-        if (found) {
-            return found;
+    let subordinates = await getNextBatchOfSubordinates();
+    while (subordinates.length) {
+        for (const subordinate of subordinates) {
+            const found = await findEntry(ctx, subordinate, query, derefAliases);
+            if (found) {
+                return found;
+            }
+            cursorId = subordinate.dse.id;
         }
+        subordinates = await getNextBatchOfSubordinates();
     }
 }
 

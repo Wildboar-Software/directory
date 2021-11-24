@@ -603,7 +603,7 @@ async function modifyDN (
             // The specification says that you must wait for this to succeed
             // before returning a response. So we await this, unlike the
             // subordinate updates.
-            await updateSuperiorDSA(ctx, targetDN, target, {
+            await updateSuperiorDSA(ctx, targetDN, target, state.chainingArguments.aliasDereferenced ?? false, {
                 timeLimitInMilliseconds: timeRemainingInMilliseconds,
             });
         } catch (e) {

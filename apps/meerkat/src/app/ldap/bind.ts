@@ -100,7 +100,7 @@ async function bind (
         };
     }
     // Wait a random amount of time to prevent timing attacks.
-    sleep(crypto.randomInt(3000) + 1000);
+    sleep(crypto.randomInt(3000) + 1000); // TODO: Make configurable.
     const successMessage = ctx.i18n.t("main:success");
     const dn = decodeLDAPDN(ctx, req.name);
     const entry = await findEntry(ctx, ctx.dit.root, dn, true);
@@ -128,7 +128,7 @@ async function bind (
     const ret = {
         boundNameAndUID: new NameAndOptionalUID(
             decodeLDAPDN(ctx, req.name),
-            undefined, // FIXME:
+            entry.dse.uniqueIdentifier?.[0], // We just use the first one, whatever that is.
         ),
         boundVertex: entry,
     };

@@ -105,7 +105,7 @@ function loadLDAPSyntaxes (ctx: Context): void {
     });
 
     ctx.ldapSyntaxes.get(attributeTypeDescription["&id"]!.toString())!.decoder = localDecoders.getAttributeTypesDecoder(ctx);
-    ctx.ldapSyntaxes.get(attributeTypeDescription["&id"]!.toString())!.encoder = localEncoders.attributeTypes;
+    ctx.ldapSyntaxes.get(attributeTypeDescription["&id"]!.toString())!.encoder = localEncoders.attributeTypes(ctx);
     ctx.ldapSyntaxes.get(bitString["&id"]!.toString())!.decoder = decoders.bitString;
     ctx.ldapSyntaxes.get(bitString["&id"]!.toString())!.encoder = encoders.bitString;
     ctx.ldapSyntaxes.get(boolean_["&id"]!.toString())!.decoder = decoders.boolean_;

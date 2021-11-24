@@ -441,10 +441,16 @@ class OperationDispatcher {
                 response: [],
                 unexplored: [],
             };
+            const searchResponse: SearchState = {
+                results: [],
+                chaining: relatedEntryReturn.chaining,
+                depth: 0,
+            };
             await relatedEntryProcedure(
                 ctx,
                 conn,
                 state,
+                searchResponse,
                 relatedEntryReturn,
                 argument,
                 reqData.chainedArgument,
@@ -452,17 +458,12 @@ class OperationDispatcher {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // Search (II)
-                const response: SearchState = {
-                    results: [],
-                    chaining: relatedEntryReturn.chaining,
-                    depth: 0,
-                };
                 await search_ii(
                     ctx,
                     conn,
                     state,
                     argument,
-                    response,
+                    searchResponse,
                 );
                 const localResult: SearchResult = {
                     unsigned: {
@@ -470,19 +471,19 @@ class OperationDispatcher {
                             {
                                 rdnSequence: foundDN,
                             },
-                            response.results,
-                            (response.poq || relatedEntryReturn.unexplored.length)
+                            searchResponse.results,
+                            (searchResponse.poq || relatedEntryReturn.unexplored.length)
                                 ? new PartialOutcomeQualifier(
-                                    response.poq?.limitProblem,
+                                    searchResponse.poq?.limitProblem,
                                     relatedEntryReturn.unexplored,
-                                    response.poq?.unavailableCriticalExtensions,
-                                    response.poq?.unknownErrors,
-                                    response.paging
-                                        ? Buffer.from(response.paging[0], "base64")
-                                        : response.poq?.queryReference,
-                                    response.poq?.overspecFilter,
-                                    response.poq?.notification,
-                                    response.poq?.entryCount,
+                                    searchResponse.poq?.unavailableCriticalExtensions,
+                                    searchResponse.poq?.unknownErrors,
+                                    searchResponse.paging
+                                        ? Buffer.from(searchResponse.paging[0], "base64")
+                                        : searchResponse.poq?.queryReference,
+                                    searchResponse.poq?.overspecFilter,
+                                    searchResponse.poq?.notification,
+                                    searchResponse.poq?.entryCount,
                                 )
                                 : undefined,
                             undefined,
@@ -542,17 +543,12 @@ class OperationDispatcher {
                 };
             } else { // Search (I)
                 // Only Search (I) results in results merging.
-                const response: SearchState = {
-                    results: [],
-                    chaining: relatedEntryReturn.chaining,
-                    depth: 0,
-                };
                 await search_i(
                     ctx,
                     conn,
                     state,
                     argument,
-                    response,
+                    searchResponse,
                 );
                 const localResult: SearchResult = {
                     unsigned: {
@@ -560,19 +556,19 @@ class OperationDispatcher {
                             {
                                 rdnSequence: foundDN,
                             },
-                            response.results,
-                            (response.poq || relatedEntryReturn.unexplored.length)
+                            searchResponse.results,
+                            (searchResponse.poq || relatedEntryReturn.unexplored.length)
                                 ? new PartialOutcomeQualifier(
-                                    response.poq?.limitProblem,
+                                    searchResponse.poq?.limitProblem,
                                     relatedEntryReturn.unexplored,
-                                    response.poq?.unavailableCriticalExtensions,
-                                    response.poq?.unknownErrors,
-                                    response.paging
-                                        ? Buffer.from(response.paging[0], "base64")
-                                        : response.poq?.queryReference,
-                                    response.poq?.overspecFilter,
-                                    response.poq?.notification,
-                                    response.poq?.entryCount,
+                                    searchResponse.poq?.unavailableCriticalExtensions,
+                                    searchResponse.poq?.unknownErrors,
+                                    searchResponse.paging
+                                        ? Buffer.from(searchResponse.paging[0], "base64")
+                                        : searchResponse.poq?.queryReference,
+                                    searchResponse.poq?.overspecFilter,
+                                    searchResponse.poq?.notification,
+                                    searchResponse.poq?.entryCount,
                                 )
                                 : undefined,
                             undefined,
@@ -819,35 +815,43 @@ class OperationDispatcher {
             response: [],
             unexplored: [],
         };
-        await relatedEntryProcedure(ctx, conn, state, relatedEntryReturn, argument, chaining);
+        const searchResponse: SearchState = {
+            results: [],
+            chaining: relatedEntryReturn.chaining,
+            depth: 0,
+        };
+        await relatedEntryProcedure(
+            ctx,
+            conn,
+            state,
+            searchResponse,
+            relatedEntryReturn,
+            argument,
+            chaining,
+        );
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         if (nameResolutionPhase === completed) { // Search (II)
-            const response: SearchState = {
-                results: [],
-                chaining: relatedEntryReturn.chaining,
-                depth: 0,
-            };
-            await search_ii(ctx, conn, state, argument, response);
+            await search_ii(ctx, conn, state, argument, searchResponse);
             const localResult: SearchResult = {
                 unsigned: {
                     searchInfo: new SearchResultData_searchInfo(
                         {
                             rdnSequence: foundDN,
                         },
-                        response.results,
-                        (response.poq || relatedEntryReturn.unexplored.length)
+                        searchResponse.results,
+                        (searchResponse.poq || relatedEntryReturn.unexplored.length)
                             ? new PartialOutcomeQualifier(
-                                response.poq?.limitProblem,
+                                searchResponse.poq?.limitProblem,
                                 relatedEntryReturn.unexplored,
-                                response.poq?.unavailableCriticalExtensions,
-                                response.poq?.unknownErrors,
-                                response.paging
-                                    ? Buffer.from(response.paging[0], "base64")
-                                    : response.poq?.queryReference,
-                                response.poq?.overspecFilter,
-                                response.poq?.notification,
-                                response.poq?.entryCount,
+                                searchResponse.poq?.unavailableCriticalExtensions,
+                                searchResponse.poq?.unknownErrors,
+                                searchResponse.paging
+                                    ? Buffer.from(searchResponse.paging[0], "base64")
+                                    : searchResponse.poq?.queryReference,
+                                searchResponse.poq?.overspecFilter,
+                                searchResponse.poq?.notification,
+                                searchResponse.poq?.entryCount,
                             )
                             : undefined,
                         undefined,
@@ -884,36 +888,31 @@ class OperationDispatcher {
                     present: 1,
                 },
                 opCode: search["&operationCode"]!,
-                chaining: response.chaining,
+                chaining: searchResponse.chaining,
                 result,
             };
         } else { // Search (I)
             // Only Search (I) results in results merging.
-            const response: SearchState = {
-                results: [],
-                chaining: relatedEntryReturn.chaining,
-                depth: 0,
-            };
-            await search_i(ctx, conn, state, argument, response);
+            await search_i(ctx, conn, state, argument, searchResponse);
             const localResult: SearchResult = {
                 unsigned: {
                     searchInfo: new SearchResultData_searchInfo(
                         {
                             rdnSequence: foundDN,
                         },
-                        response.results,
-                        (response.poq || relatedEntryReturn.unexplored.length)
+                        searchResponse.results,
+                        (searchResponse.poq || relatedEntryReturn.unexplored.length)
                             ? new PartialOutcomeQualifier(
-                                response.poq?.limitProblem,
+                                searchResponse.poq?.limitProblem,
                                 relatedEntryReturn.unexplored,
-                                response.poq?.unavailableCriticalExtensions,
-                                response.poq?.unknownErrors,
-                                response.paging
-                                    ? Buffer.from(response.paging[0], "base64")
-                                    : response.poq?.queryReference,
-                                response.poq?.overspecFilter,
-                                response.poq?.notification,
-                                response.poq?.entryCount,
+                                searchResponse.poq?.unavailableCriticalExtensions,
+                                searchResponse.poq?.unknownErrors,
+                                searchResponse.paging
+                                    ? Buffer.from(searchResponse.paging[0], "base64")
+                                    : searchResponse.poq?.queryReference,
+                                searchResponse.poq?.overspecFilter,
+                                searchResponse.poq?.notification,
+                                searchResponse.poq?.entryCount,
                             )
                             : undefined,
                         undefined,
@@ -950,7 +949,7 @@ class OperationDispatcher {
                     present: 1,
                 },
                 opCode: search["&operationCode"]!,
-                chaining: response.chaining,
+                chaining: searchResponse.chaining,
                 result,
             };
         }

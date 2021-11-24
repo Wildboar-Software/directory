@@ -822,8 +822,8 @@ model OperationalBinding {
     binding_identifier Int
     binding_version    Int
     agreement_ber      Bytes
-    access_point_id    Int
-    access_point       AccessPoint                 @relation("ob_access_point", fields: [access_point_id], references: [id])
+    access_point_id    Int? // Made optional just so saveAccessPoint can be used.
+    access_point       AccessPoint?                 @relation("ob_access_point", fields: [access_point_id], references: [id])
     initiator          OperationalBindingInitiator
     initiator_ber      Bytes
     validity_start     DateTime
