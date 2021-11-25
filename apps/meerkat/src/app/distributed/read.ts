@@ -116,6 +116,7 @@ async function read (
             state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
         )).flat();
     const accessControlScheme = state.admPoints
+        .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])

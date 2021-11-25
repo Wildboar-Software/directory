@@ -40,7 +40,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier } from "asn1-ts";
+import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
 import readChildren from "../dit/readChildren";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -74,6 +74,7 @@ import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtend
 import bacACDF, {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
+    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
@@ -631,6 +632,7 @@ async function findDSE (
         }
     };
 
+    let accessControlScheme: OBJECT_IDENTIFIER | undefined;
     let iterations: number = 0;
     while (iterations < MAX_DEPTH) {
         iterations++;
@@ -672,7 +674,8 @@ async function findDSE (
         }
         const needleRDN = needleDN[i];
         let rdnMatched: boolean = false;
-        const accessControlScheme = state.admPoints
+        accessControlScheme = state.admPoints
+            .reverse()
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         let cursorId: number | undefined;
         /**
@@ -806,62 +809,79 @@ async function findDSE (
                     );
                 }
                 checkTimeLimit();
-                if (
-                    !ctx.config.bulkInsertMode
-                    && accessControlScheme
-                    && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-                ) {
-                    const childDN = getDistinguishedName(child);
-                    const relevantSubentries: Vertex[] = (await Promise.all(
-                        state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
-                    )).flat();
-                    const targetACI = getACIItems(accessControlScheme, child, relevantSubentries);
-                    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
-                        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-                    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-                        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                            ...tuple,
-                            await userWithinACIUserClass(
-                                tuple[0],
-                                conn.boundNameAndUID!,
-                                childDN,
-                                EQUALITY_MATCHER,
-                                isMemberOfGroup,
-                            ),
-                        ]),
-                    ))
-                        .filter((tuple) => (tuple[5] > 0));
-                    const {
-                        authorized,
-                    } = bacACDF(
-                        relevantTuples,
-                        conn.authLevel,
-                        {
-                            entry: Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString),
-                        },
-                        [
-                            PERMISSION_CATEGORY_BROWSE,
-                            PERMISSION_CATEGORY_RETURN_DN,
-                        ],
-                        EQUALITY_MATCHER,
-                    );
-                    if (!authorized) {
-                        /**
-                         * We ignore entries for which browse and returnDN permissions
-                         * are not granted. This is not specified in the Find DSE
-                         * procedure, but it is important for preventing information
-                         * disclosure vulnerabilities.
-                         */
-                        continue;
-                    }
-                }
-
                 rdnMatched = compareRDN(
                     needleRDN,
                     child.dse.rdn,
                     getNamingMatcherGetter(ctx),
                 );
                 if (rdnMatched) {
+                    if ( // Check if the user can actually access it.
+                        !ctx.config.bulkInsertMode
+                        && accessControlScheme
+                        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+                    ) {
+                        const childDN = getDistinguishedName(child);
+                        const relevantSubentries: Vertex[] = (await Promise.all(
+                            state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+                        )).flat();
+                        const targetACI = getACIItems(accessControlScheme, child, relevantSubentries);
+                        const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                            .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                                ...tuple,
+                                await userWithinACIUserClass(
+                                    tuple[0],
+                                    conn.boundNameAndUID!,
+                                    childDN,
+                                    EQUALITY_MATCHER,
+                                    isMemberOfGroup,
+                                ),
+                            ]),
+                        ))
+                            .filter((tuple) => (tuple[5] > 0));
+                        /**
+                         * We ignore entries for which browse and returnDN permissions
+                         * are not granted. This is not specified in the Find DSE
+                         * procedure, but it is important for preventing information
+                         * disclosure vulnerabilities.
+                         */
+                        const {
+                            authorized,
+                        } = bacACDF(
+                            relevantTuples,
+                            conn.authLevel,
+                            {
+                                entry: Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString),
+                            },
+                            [
+                                PERMISSION_CATEGORY_BROWSE,
+                                PERMISSION_CATEGORY_RETURN_DN,
+                            ],
+                            EQUALITY_MATCHER,
+                        );
+                        if (!authorized) {
+                            throw new errors.NameError(
+                                ctx.i18n.t("err:entry_not_found"),
+                                new NameErrorData(
+                                    NameProblem_noSuchObject,
+                                    {
+                                        rdnSequence: childDN,
+                                    },
+                                    [],
+                                    createSecurityParameters(
+                                        ctx,
+                                        conn.boundNameAndUID?.dn,
+                                        undefined,
+                                        nameError["&errorCode"],
+                                    ),
+                                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                    state.chainingArguments.aliasDereferenced,
+                                    undefined,
+                                ),
+                            );
+                        }
+                    }
                     i++;
                     dse_i = child;
                     state.rdnsResolved++;
@@ -877,6 +897,49 @@ async function findDSE (
             await targetNotFoundSubprocedure();
             return;
         }
+
+        let discloseOnError: boolean = true;
+        if (
+            !ctx.config.bulkInsertMode
+            && accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        ) {
+            const currentDN = getDistinguishedName(dse_i);
+            const relevantSubentries: Vertex[] = (await Promise.all(
+                state.admPoints.map((ap) => getRelevantSubentries(ctx, dse_i, currentDN, ap)),
+            )).flat();
+            const targetACI = getACIItems(accessControlScheme, dse_i, relevantSubentries);
+            const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
+                acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
+                    ...tuple,
+                    await userWithinACIUserClass(
+                        tuple[0],
+                        conn.boundNameAndUID!,
+                        currentDN,
+                        EQUALITY_MATCHER,
+                        isMemberOfGroup,
+                    ),
+                ]),
+            ))
+                .filter((tuple) => (tuple[5] > 0));
+            const { authorized: authorizedToDiscloseOnError } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    entry: Array
+                        .from(dse_i.dse.objectClass)
+                        .map(ObjectIdentifier.fromString),
+                },
+                [
+                    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+                ],
+                EQUALITY_MATCHER,
+            );
+            discloseOnError = authorizedToDiscloseOnError;
+        }
+
         /**
          * This is not explicitly required by the specification, but it seems to
          * be implicitly required for the formation of continuation references.
@@ -914,11 +977,17 @@ async function findDSE (
                     return;
                 } else {
                     throw new errors.NameError(
-                        ctx.i18n.t("err:reached_alias_above_target"),
+                        discloseOnError
+                            ? ctx.i18n.t("err:reached_alias_above_target")
+                            : ctx.i18n.t("err:entry_not_found"),
                         new NameErrorData(
-                            NameProblem_aliasDereferencingProblem,
-                            { // FIXME: Check authorization to see this.
-                                rdnSequence: getDistinguishedName(dse_i),
+                            discloseOnError
+                                ? NameProblem_aliasDereferencingProblem
+                                : NameProblem_noSuchObject,
+                            {
+                                rdnSequence: discloseOnError
+                                    ? getDistinguishedName(dse_i)
+                                    : getDistinguishedName(dse_i.immediateSuperior!),
                             },
                             [],
                             createSecurityParameters(
@@ -1150,11 +1219,18 @@ async function findDSE (
             candidateRefs.push(cr);
         }
         if (dse_i.dse.admPoint) {
+            /**
+             * NOTE: You cannot remove "overridden" administrative points, such
+             * as removing all previous access control inner areas when an
+             * access control specific area is encountered, because
+             * administrative points may have multiple administrative roles.
+             *
+             * Instead, the behavior of ignoring overridden administrative
+             * points should be handled wherever they are actually used.
+             */
             if (dse_i.dse.admPoint.administrativeRole.has(autonomousArea)) {
                 state.admPoints.length = 0;
             }
-            // TODO: inner areas shall not be used if SAC is in place.
-            // NOTE: This actually needs to be implemented elsewhere.
             state.admPoints.push(dse_i);
         }
         if (dse_i.dse.cp && dse_i.dse.shadow) {

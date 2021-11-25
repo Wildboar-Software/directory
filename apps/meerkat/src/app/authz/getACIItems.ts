@@ -1,11 +1,25 @@
 import type { Vertex } from "@wildboar/meerkat-types";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
-import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
+import accessControlSchemesThatUseEntryACI from "./accessControlSchemesThatUseEntryACI";
+import accessControlSchemesThatUsePrescriptiveACI from "./accessControlSchemesThatUsePrescriptiveACI";
+import accessControlSchemesThatUseSubentryACI from "./accessControlSchemesThatUseSubentryACI";
+import accessControlSchemesThatUseInnerAreas from "./accessControlSchemesThatUseInnerAreas";
 import type {
     ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+import {
+    accessControlSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
+import {
+    id_ar_accessControlSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+import {
+    id_ar_accessControlInnerArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
+
+const AC_SUBENTRY: string = accessControlSubentry["&id"].toString();
+const AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
+const AC_INNER: string = id_ar_accessControlInnerArea.toString();
 
 export
 function getACIItems (
@@ -18,6 +32,22 @@ function getACIItems (
         return [];
     }
     const AC_SCHEME: string = accessControlScheme.toString();
+    const accessControlSubentries = relevantSubentries
+        .filter((sub) => sub.dse.objectClass.has(AC_SUBENTRY))
+        .reverse();
+    const indexOfFirstACSA: number = accessControlSubentries
+        .findIndex((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_SPECIFIC));
+    if (indexOfFirstACSA === -1) {
+        return [];
+    }
+    const accessControlSubentriesWithinScope = accessControlSchemesThatUseInnerAreas.has(AC_SCHEME)
+        ? accessControlSubentries
+            .slice(0, indexOfFirstACSA + 1)
+            .filter((sub) => (
+                sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_SPECIFIC)
+                || sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_INNER)
+            ))
+        : [ accessControlSubentries[0] ];
     if (isSubentry || vertex?.dse.subentry) {
         return [
             ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
@@ -30,7 +60,7 @@ function getACIItems (
     }
     return [
         ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-            ? relevantSubentries.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+            ? accessControlSubentriesWithinScope.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
             : []),
         ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
             ? (vertex?.dse.entryACI ?? [])

@@ -93,6 +93,7 @@ async function changePassword (
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
     const accessControlScheme = state.admPoints
+        .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     if (
         accessControlScheme

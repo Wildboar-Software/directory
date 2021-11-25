@@ -368,6 +368,7 @@ async function addEntry (
             state.admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
         )).flat();
     const accessControlScheme = state.admPoints
+        .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const relevantACIItems = getACIItems(accessControlScheme, undefined, relevantSubentries, isSubentry);
     const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode

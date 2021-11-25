@@ -129,6 +129,7 @@ async function list_i (
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
     const accessControlScheme = state.admPoints
+        .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const targetACI = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
@@ -545,7 +546,6 @@ async function list_i (
         });
     }
 
-    // TODO: Implement sorting.
     if (target.dse.nssr) {
         SRcontinuationList.push(new ContinuationReference(
             {

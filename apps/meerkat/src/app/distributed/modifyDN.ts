@@ -322,6 +322,7 @@ async function modifyDN (
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
     const accessControlScheme = state.admPoints
+        .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
@@ -473,6 +474,7 @@ async function modifyDN (
             newAdmPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, destinationDN, ap)),
         )).flat();
         const newAccessControlScheme = newAdmPoints
+            .reverse()
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         if (
             newAccessControlScheme
