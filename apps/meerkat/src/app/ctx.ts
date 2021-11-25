@@ -98,6 +98,14 @@ const ctx: Context = {
         entriesPerSubordinatesPage: process.env.MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE
             ? Number.parseInt(process.env.MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE)
             : 100,
+        transcodeValuesToDER: ( // Currently does not do anything.
+            !process.env.MEERKAT_TRANSCODE_VALUES_TO_DER
+            || (process.env.MEERKAT_TRANSCODE_VALUES_TO_DER === "1")
+        ),
+        transcodeDistinguishedValuesToDER: ( // Currently does not do anything.
+            !process.env.MEERKAT_TRANSCODE_DISTINGUISHED_VALUES_TO_DER
+            || (process.env.MEERKAT_TRANSCODE_DISTINGUISHED_VALUES_TO_DER === "1")
+        ),
     },
     dsa: {
         accessPoint: new AccessPoint(
@@ -170,6 +178,7 @@ const ctx: Context = {
     contextTypes: new Map(),
     matchingRulesSuitableForNaming: new Set(),
     ldapSyntaxes: new Map(),
+    ldapSyntaxToASN1Syntax: new Map(),
     operationalBindingControlEvents: new EventEmitter(),
     collectiveAttributes: new Set(),
     nameForms: new Map(),

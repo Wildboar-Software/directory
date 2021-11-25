@@ -460,6 +460,8 @@ interface Configuration {
     useDatabaseWhenThereAreXSubordinates: number;
     prohibitChaining: boolean;
     entriesPerSubordinatesPage: number;
+    transcodeValuesToDER: boolean;
+    transcodeDistinguishedValuesToDER: boolean;
 }
 
 export
@@ -987,6 +989,7 @@ interface MatchingRuleInfo <Matcher> {
     description?: string;
     obsolete?: boolean;
     syntax?: string;
+    ldapAssertionSyntax?: OBJECT_IDENTIFIER;
     matcher: Matcher;
 }
 
@@ -1031,6 +1034,7 @@ interface Context {
     with structural classes. */
     attributeTypes: Map<IndexableOID, AttributeInfo>;
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
+    ldapSyntaxToASN1Syntax: Map<IndexableOID, string>;
     equalityMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
     orderingMatchingRules: Map<IndexableOID, MatchingRuleInfo<OrderingMatcher>>;
     substringsMatchingRules: Map<IndexableOID, MatchingRuleInfo<SubstringsMatcher>>;

@@ -20,7 +20,7 @@ import {
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 
 const ctx: Context = {
-    attributes: {
+    attributeTypes: {
         get: (key: string) => {
             return {
                 id: new ObjectIdentifier([ 2, 4, 3, 6 ]),

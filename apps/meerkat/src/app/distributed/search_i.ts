@@ -102,9 +102,6 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUseSubentryACI from "../authz/accessControlSchemesThatUseSubentryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
@@ -227,6 +224,9 @@ import {
 import getACIItems from "../authz/getACIItems";
 import isAttributeSubtype from "../x500/isAttributeSubtype";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import type {
+    SearchResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -234,27 +234,40 @@ const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
 
-/**
- * "Why don't you just fetch `pageSize` number of entries?"
- *
- * Pagination fetches `pageSize` number of entries at _each level_ of search
- * recursion. In other words, if you request a page size of 100, and, in the
- * process, you recurse into the DIT ten layers deep, there will actually be
- * 1000 entries loaded into memory at the deepest part. This means that a
- * request could consume considerably higher memory than expected. To prevent
- * this, a fixed page size is used. In the future, this may be configurable.
- */
-const ENTRIES_PER_BATCH: number = 1000;
+
 
 export
 interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
     chaining: ChainingResults;
     results: EntryInformation[];
+    resultSets: SearchResult[];
     poq?: PartialOutcomeQualifier;
     skipsRemaining?: number;
     depth: number;
     paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
     familyOnly?: boolean;
+}
+
+function getNumberOfResultsInSearch (result: SearchResult): number {
+    const data = getOptionallyProtectedValue(result);
+    if ("searchInfo" in data) {
+        return data.searchInfo.entries.length;
+    } else if ("uncorrelatedSearchInfo" in data) {
+        return data.uncorrelatedSearchInfo
+            .map(getNumberOfResultsInSearch)
+            .reduce((p, c) => p + c, 0);
+    } else {
+        return 0;
+    }
+}
+
+function getCurrentNumberOfResults (state: SearchState): number {
+    return (
+        state.results.length
+        + state.resultSets
+            .map(getNumberOfResultsInSearch)
+            .reduce((p, c) => p + c, 0)
+    );
 }
 
 // Note that this does not scrutinize the root DSE for membership. It is assumed.
@@ -737,7 +750,8 @@ async function search_i (
         );
         return;
     }
-    if (searchState.results.length >= pageSize) {
+    const currentNumberOfResults: number = getCurrentNumberOfResults(searchState);
+    if (currentNumberOfResults >= pageSize) {
         searchState.poq = new PartialOutcomeQualifier(
             LimitProblem_sizeLimitExceeded,
             undefined,
@@ -1188,6 +1202,11 @@ async function search_i (
         ) {
             return; // REVIEW: This is not totally correct.
         }
+        // const searchAliasState: SearchState = {
+        //     chaining: state.chainingResults,
+        //     depth: 0,
+        //     results: [],
+        // };
         await searchAliasesProcedure(
             ctx,
             conn,
@@ -1665,7 +1684,17 @@ async function search_i (
                     searchState.paging![1].request!.sortKeys![0].type_,
                     results,
                     searchState.paging![1].request.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
-                    ENTRIES_PER_BATCH, // TODO: Make configurable
+                    /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
+                     * "Why don't you just fetch `pageSize` number of entries?"
+                     *
+                     * Pagination fetches `pageSize` number of entries at _each level_ of search
+                     * recursion. In other words, if you request a page size of 100, and, in the
+                     * process, you recurse into the DIT ten layers deep, there will actually be
+                     * 1000 entries loaded into memory at the deepest part. This means that a
+                     * request could consume considerably higher memory than expected. To prevent
+                     * this, a fixed page size is used. In the future, this may be configurable.
+                     */
+                    ctx.config.entriesPerSubordinatesPage,
                     undefined,
                     cursorId,
                 );
@@ -1682,7 +1711,17 @@ async function search_i (
             : await readChildren(
                 ctx,
                 target,
-                ENTRIES_PER_BATCH,
+                /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
+                 * "Why don't you just fetch `pageSize` number of entries?"
+                 *
+                 * Pagination fetches `pageSize` number of entries at _each level_ of search
+                 * recursion. In other words, if you request a page size of 100, and, in the
+                 * process, you recurse into the DIT ten layers deep, there will actually be
+                 * 1000 entries loaded into memory at the deepest part. This means that a
+                 * request could consume considerably higher memory than expected. To prevent
+                 * this, a fixed page size is used. In the future, this may be configurable.
+                 */
+                ctx.config.entriesPerSubordinatesPage,
                 undefined,
                 cursorId,
                 {

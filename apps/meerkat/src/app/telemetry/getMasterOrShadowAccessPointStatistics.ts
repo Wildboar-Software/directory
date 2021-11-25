@@ -2,7 +2,7 @@ import type { MasterOrShadowAccessPointStatistics } from "@wildboar/meerkat-type
 import type {
     MasterOrShadowAccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
-import accessPointToNSAPStrings from "../x500/accessPointToNSAPStrings";
+import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 
 
 export
@@ -12,7 +12,9 @@ function getMasterOrShadowAccessPointStatistics (
     return {
         aeTitleLength: mosap.ae_title.rdnSequence.length,
         category: mosap.category,
-        nsaps: Array.from(accessPointToNSAPStrings(mosap)),
+        nsaps: mosap.address.nAddresses
+            .map(naddrToURI)
+            .filter((addr): addr is string => !!addr),
         // protocolInformation unused.
         chainingRequired: mosap.chainingRequired,
     };

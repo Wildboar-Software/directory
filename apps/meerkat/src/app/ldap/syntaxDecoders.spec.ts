@@ -26,7 +26,7 @@ const ctx: Context = {
             };
         },
     },
-    attributes: {
+    attributeTypes: {
         get: (key: string) => {
             return {
                 id: new ObjectIdentifier([ 2, 4, 3, 10 ]),

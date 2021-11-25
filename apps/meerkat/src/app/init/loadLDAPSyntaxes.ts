@@ -51,50 +51,92 @@ import {
 import * as localEncoders from "../ldap/syntaxEncoders";
 import * as localDecoders from "../ldap/syntaxDecoders";
 
+const ldapSyntaxes = {
+    "attributeTypeDescription": attributeTypeDescription,
+    "bitString": bitString,
+    "boolean_": boolean_,
+    "countryString": countryString,
+    "dn": dn,
+    "deliveryMethod": deliveryMethod,
+    "directoryString": directoryString,
+    "dITContentRuleDescription": dITContentRuleDescription,
+    "dITStructureRuleDescription": dITStructureRuleDescription,
+    "enhancedGuide": enhancedGuide,
+    "facsimileTelephoneNr": facsimileTelephoneNr,
+    "fax": fax,
+    "generalizedTime": generalizedTime,
+    "guide": guide,
+    "ia5String": ia5String,
+    "integer": integer,
+    "jpeg": jpeg,
+    "matchingRuleDescription": matchingRuleDescription,
+    "matchingRuleUseDescription": matchingRuleUseDescription,
+    "nameAndOptionalUID": nameAndOptionalUID,
+    "nameFormDescription": nameFormDescription,
+    "numericString": numericString,
+    "objectClassDescription": objectClassDescription,
+    "oid": oid,
+    "otherMailbox": otherMailbox,
+    "octetString": octetString,
+    "postalAddr": postalAddr,
+    "presentationAddr": presentationAddr,
+    "printableString": printableString,
+    "subtreeSpec": subtreeSpec,
+    "telephoneNr": telephoneNr,
+    "telexNr": telexNr,
+    "utcTime": utcTime,
+    "ldapSyntaxDescription": ldapSyntaxDescription,
+    "substringAssertion": substringAssertion,
+};
+
+const ldapSyntaxToASN1Syntax = {
+    "1.3.6.1.4.1.1466.115.121.1.3": "AttributeTypeDescription",
+    "1.3.6.1.4.1.1466.115.121.1.6": "BIT STRING",
+    "1.3.6.1.4.1.1466.115.121.1.7": "BOOLEAN",
+    "1.3.6.1.4.1.1466.115.121.1.11": "CountryName",
+    "1.3.6.1.4.1.1466.115.121.1.14": "PreferredDeliveryMethod",
+    "1.3.6.1.4.1.1466.115.121.1.15": "UnboundedDirectoryString",
+    "1.3.6.1.4.1.1466.115.121.1.16": "DITContentRuleDescription",
+    "1.3.6.1.4.1.1466.115.121.1.17": "DITStructureRuleDescription",
+    "1.3.6.1.4.1.1466.115.121.1.12": "DistinguishedName",
+    "1.3.6.1.4.1.1466.115.121.1.21": "EnhancedGuide",
+    "1.3.6.1.4.1.1466.115.121.1.22": "FacsimileTelephoneNumber",
+    // "1.3.6.1.4.1.1466.115.121.1.23": "NULL",
+    "1.3.6.1.4.1.1466.115.121.1.24": "GeneralizedTime",
+    "1.3.6.1.4.1.1466.115.121.1.25": "Guide",
+    "1.3.6.1.4.1.1466.115.121.1.26": "IA5String",
+    "1.3.6.1.4.1.1466.115.121.1.27": "INTEGER",
+    // "1.3.6.1.4.1.1466.115.121.1.28": "NULL",
+    // "1.3.6.1.4.1.1466.115.121.1.54": "NULL",
+    "1.3.6.1.4.1.1466.115.121.1.30": "MatchingRuleDescription",
+    "1.3.6.1.4.1.1466.115.121.1.31": "MatchingRuleUseDescription",
+    "1.3.6.1.4.1.1466.115.121.1.34": "NameAndOptionalUID",
+    "1.3.6.1.4.1.1466.115.121.1.35": "NameFormDescription",
+    "1.3.6.1.4.1.1466.115.121.1.36": "NumericString",
+    "1.3.6.1.4.1.1466.115.121.1.37": "ObjectClassDescription",
+    "1.3.6.1.4.1.1466.115.121.1.40": "OCTET STRING",
+    "1.3.6.1.4.1.1466.115.121.1.38": "OBJECT IDENTIFIER",
+    // "1.3.6.1.4.1.1466.115.121.1.39": "NULL",
+    "1.3.6.1.4.1.1466.115.121.1.41": "PostalAddress",
+    "1.3.6.1.4.1.1466.115.121.1.44": "PrintableString",
+    "1.3.6.1.4.1.1466.115.121.1.58": "SubstringAssertion",
+    "1.3.6.1.4.1.1466.115.121.1.50": "TelephoneNumber",
+    // "1.3.6.1.4.1.1466.115.121.1.51": "", // Telex Terminal Identifier
+    "1.3.6.1.4.1.1466.115.121.1.52": "TelexNumber",
+    "1.3.6.1.4.1.1466.115.121.1.53": "UTCTime",
+    "1.3.6.1.1.16.1": "UUID"
+};
+
 export
 function loadLDAPSyntaxes (ctx: Context): void {
-    const ldapSyntaxes = {
-        "attributeTypeDescription": attributeTypeDescription,
-        "bitString": bitString,
-        "boolean_": boolean_,
-        "countryString": countryString,
-        "dn": dn,
-        "deliveryMethod": deliveryMethod,
-        "directoryString": directoryString,
-        "dITContentRuleDescription": dITContentRuleDescription,
-        "dITStructureRuleDescription": dITStructureRuleDescription,
-        "enhancedGuide": enhancedGuide,
-        "facsimileTelephoneNr": facsimileTelephoneNr,
-        "fax": fax,
-        "generalizedTime": generalizedTime,
-        "guide": guide,
-        "ia5String": ia5String,
-        "integer": integer,
-        "jpeg": jpeg,
-        "matchingRuleDescription": matchingRuleDescription,
-        "matchingRuleUseDescription": matchingRuleUseDescription,
-        "nameAndOptionalUID": nameAndOptionalUID,
-        "nameFormDescription": nameFormDescription,
-        "numericString": numericString,
-        "objectClassDescription": objectClassDescription,
-        "oid": oid,
-        "otherMailbox": otherMailbox,
-        "octetString": octetString,
-        "postalAddr": postalAddr,
-        "presentationAddr": presentationAddr,
-        "printableString": printableString,
-        "subtreeSpec": subtreeSpec,
-        "telephoneNr": telephoneNr,
-        "telexNr": telexNr,
-        "utcTime": utcTime,
-        "ldapSyntaxDescription": ldapSyntaxDescription,
-        "substringAssertion": substringAssertion,
-    };
-
     Object.values(ldapSyntaxes)
         .map(ldapSyntaxFromInformationObject)
         .forEach((syntax) => {
             ctx.ldapSyntaxes.set(syntax.id.toString(), syntax);
+        });
+    Object.entries(ldapSyntaxToASN1Syntax)
+        .map(([ oid, syntax ]) => {
+            ctx.ldapSyntaxToASN1Syntax.set(oid, syntax);
         });
 
     ctx.ldapSyntaxes.set(uuid.toString(), {
@@ -142,7 +184,7 @@ function loadLDAPSyntaxes (ctx: Context): void {
     ctx.ldapSyntaxes.get(jpeg["&id"]!.toString())!.decoder = decoders.jpeg;
     ctx.ldapSyntaxes.get(jpeg["&id"]!.toString())!.encoder = encoders.jpeg;
     ctx.ldapSyntaxes.get(matchingRuleDescription["&id"]!.toString())!.decoder = localDecoders.getMatchingRulesDecoder(ctx);
-    ctx.ldapSyntaxes.get(matchingRuleDescription["&id"]!.toString())!.encoder = localEncoders.matchingRules;
+    ctx.ldapSyntaxes.get(matchingRuleDescription["&id"]!.toString())!.encoder = localEncoders.getMatchingRulesEncoder(ctx);
     ctx.ldapSyntaxes.get(matchingRuleUseDescription["&id"]!.toString())!.decoder = localDecoders.getMatchingRuleUseDecoder(ctx);
     ctx.ldapSyntaxes.get(matchingRuleUseDescription["&id"]!.toString())!.encoder = localEncoders.matchingRuleUse;
     // nameAndOptionalUID

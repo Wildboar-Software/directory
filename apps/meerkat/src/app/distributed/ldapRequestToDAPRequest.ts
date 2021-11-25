@@ -9,6 +9,7 @@ import {
     BERElement,
     OCTET_STRING,
     INTEGER,
+    OBJECT_IDENTIFIER,
 } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
@@ -178,6 +179,7 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 
 const now: TimeAssertion = {
     now: null,
@@ -194,10 +196,46 @@ const NOT_UNDERSTOOD: DAPFilter = {
 
 function getLDAPDecoder (ctx: Context, descriptor: string): LDAPSyntaxDecoder | null {
     const spec = ctx.attributeTypes.get(descriptor);
-    if (!spec?.ldapSyntax) {
+    if (!spec) {
         return null;
     }
-    const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
+    const parentTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, spec.id));
+    const ldapSyntaxOID: OBJECT_IDENTIFIER | undefined = [
+        spec.id,
+        ...parentTypes,
+    ]
+        .map((spec) => ctx.attributeTypes.get(spec.toString())?.ldapSyntax)
+        .find((oid) => oid);
+    if (!ldapSyntaxOID) {
+        return null;
+    }
+    const ldapSyntax = ctx.ldapSyntaxes.get(ldapSyntaxOID.toString());
+    if (!ldapSyntax?.decoder) {
+        return null;
+    }
+    return ldapSyntax.decoder;
+}
+
+function getLDAPDecoderForEqualityMatcher (ctx: Context, descriptor: string): LDAPSyntaxDecoder | null {
+    const spec = ctx.attributeTypes.get(descriptor);
+    if (!spec) {
+        return null;
+    }
+    const parentTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, spec.id));
+    const equalityMatcherOID: OBJECT_IDENTIFIER | undefined = [
+        spec.id,
+        ...parentTypes,
+    ]
+        .map((oid) => ctx.attributeTypes.get(oid.toString())?.equalityMatchingRule)
+        .find((oid) => oid);
+    if (!equalityMatcherOID) {
+        return null;
+    }
+    const equalityMatching = ctx.equalityMatchingRules.get(equalityMatcherOID.toString());
+    if (!equalityMatching?.ldapAssertionSyntax) {
+        return null;
+    }
+    const ldapSyntax = ctx.ldapSyntaxes.get(equalityMatching.ldapAssertionSyntax.toString());
     if (!ldapSyntax?.decoder) {
         return null;
     }
@@ -360,11 +398,7 @@ function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification):
 function convert_ldap_ava_to_dap_ava (ctx: Context, ava: LDAPAttributeValueAssertion): AttributeValueAssertion {
     const desc = normalizeAttributeDescription(ava.attributeDesc);
     const spec = ctx.attributeTypes.get(desc);
-    if (!spec?.ldapSyntax) {
-        throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
-    }
-    const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
-    if (!ldapSyntax?.decoder) {
+    if (!spec) {
         throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
     }
     const options: string[] = Buffer.from(ava.attributeDesc)
@@ -394,7 +428,10 @@ function convert_ldap_ava_to_dap_ava (ctx: Context, ava: LDAPAttributeValueAsser
                 .map((lang) => languageContext.encoderFor["&Type"]!(lang, DER)),
         ));
     }
-    const decoder = ldapSyntax.decoder;
+    const decoder = getLDAPDecoderForEqualityMatcher(ctx, desc);
+    if (!decoder) {
+        throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
+    }
     return new AttributeValueAssertion(
         spec.id,
         decoder(ava.assertionValue),
@@ -502,24 +539,35 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
         if (!filter.extensibleMatch.type_) {
             return NOT_UNDERSTOOD;
         }
-        const matchingRule = filter.extensibleMatch.matchingRule
-            ? ctx.attributeTypes.get(normalizeAttributeDescription(filter.extensibleMatch.matchingRule))?.id
+        const mrDesc = filter.extensibleMatch.matchingRule
+            ? normalizeAttributeDescription(filter.extensibleMatch.matchingRule)
+            : undefined;
+        const matchingRule = mrDesc
+            ? ctx.equalityMatchingRules.get(mrDesc)
+                ?? ctx.orderingMatchingRules.get(mrDesc)
+                ?? ctx.substringsMatchingRules.get(mrDesc)
             : undefined;
         const desc = normalizeAttributeDescription(filter.extensibleMatch.type_);
         const spec = ctx.attributeTypes.get(desc);
-        if (!spec?.ldapSyntax) {
+        const ldapSyntaxOID = (
+            matchingRule?.ldapAssertionSyntax
+            && ctx.ldapSyntaxes.get(matchingRule.ldapAssertionSyntax.toString())
+        )
+            ?? (spec?.ldapSyntax && ctx.ldapSyntaxes.get(spec.ldapSyntax.toString()));
+        if (!ldapSyntaxOID) {
             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
         }
-        const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
+        const ldapSyntax = ctx.ldapSyntaxes.get(ldapSyntaxOID.toString());
         if (!ldapSyntax?.decoder) {
             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
         }
         const decoder = ldapSyntax.decoder;
+        matchingRule?.ldapAssertionSyntax
         return {
             item: {
                 extensibleMatch: new MatchingRuleAssertion(
-                    matchingRule
-                        ? [ matchingRule ]
+                    matchingRule?.id
+                        ? [ matchingRule.id ]
                         : [],
                     spec?.id,
                     decoder(filter.extensibleMatch.matchValue),
@@ -1121,7 +1169,7 @@ function ldapRequestToDAPRequest (
         if (!spec?.ldapSyntax) {
             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
         }
-        const decoder = getLDAPDecoder(ctx, desc);
+        const decoder = getLDAPDecoderForEqualityMatcher(ctx, desc);
         if (!decoder) {
             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
         }

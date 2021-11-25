@@ -59,12 +59,29 @@ import {
     _encode_LdapSyntaxDescription,
 } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
 import {
-    SubtreeSpecification,
     _encode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import {
     getSubtreeSpecLexer,
 } from "./lexSubtreeSpec";
+
+function qdstring (escaped: string): string {
+    return escaped
+        .slice(1, -1)
+        .replace(/\\27/g, "'")
+        .replace(/\\5C/g, "\\");
+}
+
+function descr (str: string): string {
+    const unsanitized = str.slice(1, -1);
+    if (!/[A-Za-z][A-Za-z0-9-]*/.test(unsanitized)) {
+        throw new Error();
+    }
+    if (unsanitized.endsWith("-")) {
+        throw new Error(); // Technically, this is not prohibited by the spec, but it is probably invalid.
+    }
+    return unsanitized;
+}
 
 // export
 // const objectClasses: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
@@ -126,18 +143,18 @@ function getDITStructureRulesDecoder (
                     if (tokens[t] === "(") {
                         t++;
                         while ((t < tokens.length) && (tokens[t] !== ")")) {
-                            name.push(tokens[t].replace(/'/g, ""));
+                            name.push(descr(tokens[t]));
                             t++;
                         }
                     } else if (tokens[t]) { // Checking that it's not undefined.
-                        name.push(tokens[t].replace(/'/g, ""));
+                        name.push(descr(tokens[t]));
                     }
                     break;
                 }
                 case ("DESC"): {
                     t++;
                     if (tokens[t]) {
-                        description = tokens[t].replace(/'/g, ""); // FIXME: Proper escaping.
+                        description = qdstring(tokens[t]);
                     }
                     break;
                 }
@@ -221,18 +238,18 @@ function getNameFormsDecoder (
                     if (tokens[t] === "(") {
                         t++;
                         while ((t < tokens.length) && (tokens[t] !== ")")) {
-                            name.push(tokens[t].replace(/'/g, ""));
+                            name.push(descr(tokens[t]));
                             t++;
                         }
                     } else if (tokens[t]) { // Checking that it's not undefined.
-                        name.push(tokens[t].replace(/'/g, ""));
+                        name.push(descr(tokens[t]));
                     }
                     break;
                 }
                 case ("DESC"): {
                     t++;
                     if (tokens[t]) {
-                        description = tokens[t].replace(/'/g, ""); // FIXME: Proper escaping.
+                        description = qdstring(tokens[t]);
                     }
                     break;
                 }
@@ -361,18 +378,18 @@ function getDITContentRulesDecoder (
                     if (tokens[t] === "(") {
                         t++;
                         while ((t < tokens.length) && (tokens[t] !== ")")) {
-                            name.push(tokens[t].replace(/'/g, ""));
+                            name.push(descr(tokens[t]));
                             t++;
                         }
                     } else if (tokens[t]) { // Checking that it's not undefined.
-                        name.push(tokens[t].replace(/'/g, ""));
+                        name.push(descr(tokens[t]));
                     }
                     break;
                 }
                 case ("DESC"): {
                     t++;
                     if (tokens[t]) {
-                        description = tokens[t].replace(/'/g, ""); // FIXME: Proper escaping.
+                        description = qdstring(tokens[t]);
                     }
                     break;
                 }
@@ -565,18 +582,18 @@ function getObjectClassesDecoder (
                 if (tokens[t] === "(") {
                     t++;
                     while ((t < tokens.length) && (tokens[t] !== ")")) {
-                        name.push(tokens[t].replace(/'/g, ""));
+                        name.push(descr(tokens[t]));
                         t++;
                     }
                 } else if (tokens[t]) { // Checking that it's not undefined.
-                    name.push(tokens[t].replace(/'/g, ""));
+                    name.push(descr(tokens[t]));
                 }
                 break;
             }
             case ("DESC"): {
                 t++;
                 if (tokens[t]) {
-                    description = tokens[t].replace(/'/g, ""); // FIXME: Proper escaping.
+                    description = qdstring(tokens[t]);
                 }
                 break;
             }
@@ -750,18 +767,18 @@ function getAttributeTypesDecoder (
                     if (tokens[t] === "(") {
                         t++;
                         while ((t < tokens.length) && (tokens[t] !== ")")) {
-                            name.push(tokens[t].replace(/'/g, ""));
+                            name.push(descr(tokens[t]));
                             t++;
                         }
                     } else if (tokens[t]) { // Checking that it's not undefined.
-                        name.push(tokens[t].replace(/'/g, ""));
+                        name.push(descr(tokens[t]));
                     }
                     break;
                 }
                 case ("DESC"): {
                     t++;
                     if (tokens[t]) {
-                        description = tokens[t].replace(/'/g, ""); // FIXME: Proper escaping.
+                        description = qdstring(tokens[t]);
                     }
                     break;
                 }
@@ -860,6 +877,9 @@ function getAttributeTypesDecoder (
                 }
             }
         }
+        const syntax: string | undefined = attributeSyntax
+            ? ctx.ldapSyntaxToASN1Syntax.get(attributeSyntax.toString())
+            : undefined;
         const desc = new AttributeTypeDescription(
             identifier,
             name?.map((name) => ({
@@ -876,7 +896,11 @@ function getAttributeTypesDecoder (
                 equalityMatch,
                 orderingMatch,
                 substringsMatch,
-                undefined, // TODO:
+                syntax
+                    ? {
+                        uTF8String: syntax,
+                    }
+                    : undefined,
                 multiValued,
                 collective,
                 userModifiable,
@@ -898,6 +922,7 @@ function getMatchingRulesDecoder (
         const name: string[] = [];
         let description: string | undefined;
         let obsolete: boolean = false;
+        let assertionSyntax: OBJECT_IDENTIFIER | undefined;
         for (let t: number = 1; t < tokens.length; t++) { // We skip the first because it is the identifier.
             switch (tokens[t]) {
                 case ("NAME"): {
@@ -905,18 +930,18 @@ function getMatchingRulesDecoder (
                     if (tokens[t] === "(") {
                         t++;
                         while ((t < tokens.length) && (tokens[t] !== ")")) {
-                            name.push(tokens[t].replace(/'/g, ""));
+                            name.push(descr(tokens[t]));
                             t++;
                         }
                     } else if (tokens[t]) { // Checking that it's not undefined.
-                        name.push(tokens[t].replace(/'/g, ""));
+                        name.push(descr(tokens[t]));
                     }
                     break;
                 }
                 case ("DESC"): {
                     t++;
                     if (tokens[t]) {
-                        description = tokens[t].replace(/'/g, ""); // FIXME: Proper escaping.
+                        description = qdstring(tokens[t]);
                     }
                     break;
                 }
@@ -924,8 +949,20 @@ function getMatchingRulesDecoder (
                     obsolete = true;
                     break;
                 }
+                case ("SYNTAX"): {
+                    t++;
+                    const indexOfLcurly = tokens[t].indexOf("{");
+                    const numericoid = (indexOfLcurly > -1)
+                        ? tokens[t].slice(0, indexOfLcurly)
+                        : tokens[t];
+                        assertionSyntax = ObjectIdentifier.fromString(numericoid);
+                    break;
+                }
             }
         }
+        const syntax: string | undefined = assertionSyntax
+            ? ctx.ldapSyntaxToASN1Syntax.get(assertionSyntax.toString())
+            : undefined;
         const desc = new MatchingRuleDescription(
             identifier,
             name?.map((name) => ({
@@ -937,7 +974,11 @@ function getMatchingRulesDecoder (
                 }
                 : undefined,
             obsolete,
-            undefined, // TODO: Derive from LDAP syntax.
+            syntax
+                ? {
+                    uTF8String: syntax,
+                }
+                : undefined,
         );
         return _encode_MatchingRuleDescription(desc, DER);
     };
@@ -962,18 +1003,18 @@ function getMatchingRuleUseDecoder (
                     if (tokens[t] === "(") {
                         t++;
                         while ((t < tokens.length) && (tokens[t] !== ")")) {
-                            name.push(tokens[t].replace(/'/g, ""));
+                            name.push(descr(tokens[t]));
                             t++;
                         }
                     } else if (tokens[t]) { // Checking that it's not undefined.
-                        name.push(tokens[t].replace(/'/g, ""));
+                        name.push(descr(tokens[t]));
                     }
                     break;
                 }
                 case ("DESC"): {
                     t++;
                     if (tokens[t]) {
-                        description = tokens[t].replace(/'/g, ""); // FIXME: Proper escaping.
+                        description = qdstring(tokens[t]);
                     }
                     break;
                 }
@@ -1044,7 +1085,7 @@ function ldapSyntaxes (value: Uint8Array): ASN1Element {
             case ("DESC"): {
                 t++;
                 if (tokens[t]) {
-                    description = tokens[t].replace(/'/g, ""); // FIXME: Proper escaping.
+                    description = qdstring(tokens[t]);
                 }
                 break;
             }

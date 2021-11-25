@@ -185,8 +185,15 @@ const attributeTypes: (ctx: Context) => LDAPSyntaxEncoder = (ctx: Context) => (v
 };
 
 export
-const matchingRules: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+const getMatchingRulesEncoder: (ctx: Context) => LDAPSyntaxEncoder = (ctx: Context) => (value: ASN1Element): Uint8Array => {
     const desc = _decode_MatchingRuleDescription(value);
+    const OID: string = desc.identifier.toString();
+    const spec = ctx.equalityMatchingRules.get(OID)
+        ?? ctx.orderingMatchingRules.get(OID)
+        ?? ctx.substringsMatchingRules.get(OID);
+    if (!spec?.ldapAssertionSyntax) {
+        throw new Error();
+    }
     const fields: string[] = [
         desc.identifier.toString(),
     ];
@@ -203,7 +210,7 @@ const matchingRules: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
     if (desc.obsolete) {
         fields.push("OBSOLETE");
     }
-    // FIXME: SYNTAX Assertion syntax. (Where do you even find this?)
+    fields.push(`SYNTAX ${spec.ldapAssertionSyntax.toString()}`);
     return Buffer.from(`( ${fields.join(" ")} )`, "utf-8");
 };
 

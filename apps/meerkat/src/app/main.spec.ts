@@ -29,36 +29,37 @@ function frame (ber: ASN1Element): Buffer {
 }
 
 describe("Meerkat directory server", () => {
-    it.skip("starts successfully", async (done) => {
+    it.skip("starts successfully", (done) => {
         const PORT: number = 23230;
         Object.assign(process.env, {
             PORT: PORT.toString(10),
         });
-        await main();
-        const client = net.createConnection({
-            host: "localhost",
-            port: PORT,
-        }, () => {
-            client.on("data", (data) => {
-                done();
+        main()
+            .then(() => {
+                const client = net.createConnection({
+                    host: "localhost",
+                    port: PORT,
+                }, () => {
+                    client.on("data", (data) => {
+                        done();
+                    });
+                    client.on("error", (err) => {
+                        done(err);
+                    });
+                    const dba = new DirectoryBindArgument(
+                        undefined,
+                        undefined,
+                    );
+                    const dapBind = {
+                        bind: new IdmBind(
+                            dap_ip["&id"]!,
+                            undefined,
+                            undefined,
+                            _encode_DirectoryBindArgument(dba, BER),
+                        ),
+                    };
+                    client.write(frame(_encode_IDM_PDU(dapBind, BER)));
+                });
             });
-            client.on("error", (err) => {
-                done(err);
-            });
-
-            const dba = new DirectoryBindArgument(
-                undefined,
-                undefined,
-            );
-            const dapBind = {
-                bind: new IdmBind(
-                    dap_ip["&id"]!,
-                    undefined,
-                    undefined,
-                    _encode_DirectoryBindArgument(dba, BER),
-                ),
-            };
-            client.write(frame(_encode_IDM_PDU(dapBind, BER)));
-        });
     });
 });

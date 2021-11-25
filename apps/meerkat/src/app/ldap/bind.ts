@@ -17,10 +17,8 @@ import {
     LDAPResult_resultCode_invalidCredentials,
     LDAPResult_resultCode_authMethodNotSupported,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
-import * as crypto from "crypto";
 import attemptPassword from "../authn/attemptPassword";
 import readEntryPassword from "../database/readEntryPassword";
-import sleep from "../utils/sleep";
 import type { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import { AuthenticationLevel_basicLevels } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
 import {
@@ -99,8 +97,6 @@ async function bind (
             ),
         };
     }
-    // Wait a random amount of time to prevent timing attacks.
-    sleep(crypto.randomInt(3000) + 1000); // TODO: Make configurable.
     const successMessage = ctx.i18n.t("main:success");
     const dn = decodeLDAPDN(ctx, req.name);
     const entry = await findEntry(ctx, ctx.dit.root, dn, true);

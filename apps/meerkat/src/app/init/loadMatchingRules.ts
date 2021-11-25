@@ -280,6 +280,7 @@ function toInfo <Matcher> (
         description: mr["&ldapDesc"],
         obsolete: false,
         matcher,
+        ldapAssertionSyntax: mr["&ldapSyntax"],
     };
 }
 

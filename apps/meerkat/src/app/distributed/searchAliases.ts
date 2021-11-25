@@ -116,11 +116,13 @@ async function searchAliases (
     if ("result" in outcome) {
         const data = getOptionallyProtectedValue(outcome.result);
         if ("searchInfo" in data) {
-            ret.results = data.searchInfo.entries;
+            // REVIEW: I think this section might be problematic, because you
+            // are overwriting the main search's chaining arguments, POQ, etc.
+            ret.results.push(...data.searchInfo.entries);
             ret.poq = data.searchInfo.partialOutcomeQualifier;
             ret.chaining = outcome.chaining;
-        } else {
-            // TODO: I think this path will never be taken...
+        } else if ("uncorrelatedSearchInfo" in data) {
+            ret.resultSets.push(...data.uncorrelatedSearchInfo);
         }
     } else if (outcome.errcode) {
         if (compareCode(outcome.errcode, referral["&errorCode"]!)) {

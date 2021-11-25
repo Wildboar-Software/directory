@@ -179,7 +179,7 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
             }
         };
 
-        const readName = (): string => { // FIXME: Escaping double quotes is not working.
+        const readName = (): string => {
             let ret: string = "";
             while (index < toParse.length) {
                 const char = toParse.charAt(index);

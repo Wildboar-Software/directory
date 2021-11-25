@@ -57,6 +57,9 @@ import {
 } from "@wildboar/ldap/src/lib/extensions";
 import encodeLDAPDN from "./encodeLDAPDN";
 import createNoticeOfDisconnection from "./createNoticeOfDisconnection";
+import { differenceInMilliseconds } from "date-fns";
+import * as crypto from "crypto";
+import sleep from "../utils/sleep";
 
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
@@ -345,8 +348,15 @@ class LDAPConnection extends ClientConnection {
 
             if ("bindRequest" in message.protocolOp) {
                 const req = message.protocolOp.bindRequest;
+                const startBindTime = new Date();
                 bind(ctx, this.socket, req)
                     .then(async (bindReturn) => {
+                        const endBindTime = new Date();
+                        const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
+                        const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
+                            + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
+                        const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
+                        await sleep(sleepTime);
                         if (bindReturn.result.resultCode === LDAPResult_resultCode_success) {
                             this.boundEntry = bindReturn.boundVertex;
                             this.authLevel = bindReturn.authLevel;

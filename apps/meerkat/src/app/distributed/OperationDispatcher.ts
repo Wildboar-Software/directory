@@ -443,6 +443,7 @@ class OperationDispatcher {
             };
             const searchResponse: SearchState = {
                 results: [],
+                resultSets: [],
                 chaining: relatedEntryReturn.chaining,
                 depth: 0,
             };
@@ -499,10 +500,14 @@ class OperationDispatcher {
                         ),
                     },
                 };
-                const unmergedResult: SearchResult = (relatedEntryReturn.response.length)
+                const unmergedResult: SearchResult = (
+                    searchResponse.resultSets.length
+                    + relatedEntryReturn.response.length
+                )
                     ? {
                         unsigned: {
                             uncorrelatedSearchInfo: [
+                                ...searchResponse.resultSets,
                                 ...relatedEntryReturn.response,
                                 localResult,
                             ],
@@ -584,10 +589,14 @@ class OperationDispatcher {
                         ),
                     },
                 };
-                const unmergedResult: SearchResult = (relatedEntryReturn.response.length)
+                const unmergedResult: SearchResult = (
+                    searchResponse.resultSets.length
+                    + relatedEntryReturn.response.length
+                )
                     ? {
                         unsigned: {
                             uncorrelatedSearchInfo: [
+                                ...searchResponse.resultSets,
                                 ...relatedEntryReturn.response,
                                 localResult,
                             ],
@@ -817,6 +826,7 @@ class OperationDispatcher {
         };
         const searchResponse: SearchState = {
             results: [],
+            resultSets: [],
             chaining: relatedEntryReturn.chaining,
             depth: 0,
         };
@@ -867,10 +877,14 @@ class OperationDispatcher {
                     ),
                 },
             };
-            const unmergedResult: SearchResult = (relatedEntryReturn.response.length)
+            const unmergedResult: SearchResult = (
+                searchResponse.resultSets.length
+                + relatedEntryReturn.response.length
+            )
                 ? {
                     unsigned: {
                         uncorrelatedSearchInfo: [
+                            ...searchResponse.resultSets,
                             ...relatedEntryReturn.response,
                             localResult,
                         ],
@@ -928,10 +942,14 @@ class OperationDispatcher {
                     ),
                 },
             };
-            const unmergedResult: SearchResult = (relatedEntryReturn.response.length)
+            const unmergedResult: SearchResult = (
+                searchResponse.resultSets.length
+                + relatedEntryReturn.response.length
+            )
                 ? {
                     unsigned: {
                         uncorrelatedSearchInfo: [
+                            ...searchResponse.resultSets,
                             ...relatedEntryReturn.response,
                             localResult,
                         ],

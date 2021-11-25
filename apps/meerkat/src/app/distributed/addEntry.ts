@@ -103,8 +103,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
 import establishSubordinate from "../dop/establishSubordinate";
 import { chainedAddEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAddEntry.oa";
-import { strict as assert } from "assert";
-import getDistinguishedName from "../x500/getDistinguishedName";
 import { differenceInMilliseconds } from "date-fns";
 import {
     ServiceProblem_timeLimitExceeded
@@ -114,7 +112,7 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import accessPointToNSAPStrings from "../x500/accessPointToNSAPStrings";
+import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
 import validateObjectClasses from "../x500/validateObjectClasses";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
@@ -1599,7 +1597,11 @@ async function addEntry (
                     ...getStatisticsFromCommonArguments(data),
                     targetNameLength: targetDN.length,
                     targetSystemNSAPs: data.targetSystem
-                        ? Array.from(accessPointToNSAPStrings(data.targetSystem))
+                        // ? Array.from(accessPointToNSAPStrings(data.targetSystem))
+                        // : undefined,
+                        ? data.targetSystem.address.nAddresses
+                            .map(naddrToURI)
+                            .filter((addr): addr is string => !!addr)
                         : undefined,
                 }), undefined),
         },
