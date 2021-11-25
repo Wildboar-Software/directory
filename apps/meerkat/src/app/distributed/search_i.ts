@@ -1852,9 +1852,12 @@ async function search_i (
                 conn,
                 {
                     ...state,
+                    admPoints: subordinate.dse.admPoint
+                        ? [ ...state.admPoints, subordinate ]
+                        : [ ...state.admPoints ],
                     chainingArguments: newChainingArguments,
                     foundDSE: subordinate,
-                }, // TODO: Are you sure you can always pass in the same admPoints?
+                },
                 argument,
                 searchState,
             );

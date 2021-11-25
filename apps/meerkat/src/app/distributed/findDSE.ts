@@ -101,6 +101,7 @@ import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
+import emptyChainingResults from "../x500/emptyChainingResults";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -1036,12 +1037,26 @@ async function findDSE (
                     state.chainingArguments.excludeWriteableCopies,
                 );
                 state.chainingArguments = newChaining;
+                const newState: OperationDispatcherState = {
+                    ...state,
+                    NRcontinuationList: [],
+                    SRcontinuationList: [],
+                    admPoints: [],
+                    referralRequests: [],
+                    emptyHierarchySelect: false,
+                    chainingArguments: newChaining,
+                    chainingResults: emptyChainingResults(),
+                    foundDSE: ctx.dit.root,
+                    entrySuitable: false,
+                    partialName: false,
+                    rdnsResolved: 0,
+                };
                 await findDSE(
                     ctx,
                     conn,
                     haystackVertex,
                     newN,
-                    state, // FIXME: Doesn't the state need to be updated?
+                    newState,
                 );
                 if (!state.entrySuitable) {
                     throw new errors.NameError(

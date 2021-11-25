@@ -1,6 +1,4 @@
 import type { Context, ClientConnection } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
-import * as errors from "@wildboar/meerkat-types";
 import {
     ListResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
@@ -10,24 +8,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import { strict as assert } from "assert";
 import lcrProcedure from "./lcrProcedure";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import {
-    SecurityProblem_noInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
-import accessControlSchemesThatUseEntryACI from "../authz/accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "../authz/accessControlSchemesThatUsePrescriptiveACI";
-import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
-    PERMISSION_CATEGORY_ADD,
-    PERMISSION_CATEGORY_REMOVE,
-    PERMISSION_CATEGORY_MODIFY,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
-import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 
 export
 async function resultsMergingProcedureForList (
@@ -40,13 +20,19 @@ async function resultsMergingProcedureForList (
 ): Promise<ListResultData> {
     // We skip deduplicating listInfo for now.
     if (local) {
-        const nullResult = (
-            ("listInfo" in data)
-            && (data.listInfo.subordinates.length === 0)
-        );
-        if (nullResult) {
-            // TODO: Check ACI, return error if denied... I don't actually feel like this is necessary.
-        }
+        /** REVIEW:
+         * The specification says that, if the result is "null" (has no entries)
+         * the DSA may choose to throw an "appropriate error" depending on
+         * access controls and whether "local policy allows." The problem is
+         * that I don't know why you would throw an error instead of returning
+         * the null result or what to check for with access control. For now, it
+         * will be Meerkat DSA's "local policy" to just return the null result
+         * until I discover what exactly the security issue (if any) is.
+         */
+        // const nullResult = (
+        //     ("listInfo" in data)
+        //     && (data.listInfo.subordinates.length === 0)
+        // );
         return data;
     }
     if (("listInfo" in data) && data.listInfo.partialOutcomeQualifier) {
