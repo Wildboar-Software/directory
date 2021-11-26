@@ -41,6 +41,7 @@ async function readPermittedEntryInformation (
     eis?: EntryInformationSelection,
     relevantSubentries?: Vertex[],
     operationContexts?: ContextSelection,
+    attributeSizeLimit?: number,
 ): Promise<ReadPermittedEntryInformationReturn> {
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const einfo: EntryInformation_information_Item[] = await readEntryInformation(
@@ -49,6 +50,7 @@ async function readPermittedEntryInformation (
         eis,
         relevantSubentries,
         operationContexts,
+        attributeSizeLimit,
     );
     if (
         !accessControlScheme

@@ -94,6 +94,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 
 export
 async function read (
@@ -196,6 +197,12 @@ async function read (
     if (op) {
         op.pointOfNoReturnTime = new Date();
     }
+    const attributeSizeLimit: number | undefined = (
+        Number.isSafeInteger(Number(data.serviceControls?.attributeSizeLimit))
+        && (Number(data.serviceControls?.attributeSizeLimit) >= MINIMUM_MAX_ATTR_SIZE)
+    )
+        ? Number(data.serviceControls!.attributeSizeLimit)
+        : undefined;
     const permittedEntryInfo = await readPermittedEntryInformation(
         ctx,
         target,
@@ -205,6 +212,7 @@ async function read (
         data.selection,
         relevantSubentries,
         data.operationContexts,
+        attributeSizeLimit,
     );
 
     if (
@@ -228,6 +236,7 @@ async function read (
                     data.selection,
                     relevantSubentries,
                     data.operationContexts,
+                    attributeSizeLimit,
                 )),
         );
         const permittedEinfoIndex: Map<number, EntryInformation_information_Item[]> = new Map(

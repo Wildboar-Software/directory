@@ -17,12 +17,13 @@ async function readEntryInformation (
     eis?: EntryInformationSelection,
     relevantSubentries?: Vertex[],
     operationContexts?: ContextSelection,
+    attributeSizeLimit?: number,
 ): Promise<EntryInformation_information_Item[]> {
     const {
         userAttributes,
         operationalAttributes,
         collectiveAttributes,
-    } = await readAttributes(ctx, vertex, eis, relevantSubentries, operationContexts);
+    } = await readAttributes(ctx, vertex, eis, relevantSubentries, operationContexts, attributeSizeLimit);
     const attributes = [
         ...userAttributes,
         ...operationalAttributes,

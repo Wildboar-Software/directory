@@ -10,6 +10,7 @@ import attributesFromValues from "../../x500/attributesFromValues";
 import type {
     ContextSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
+import getAttributeSizeFilter from "../../x500/getAttributeSizeFilter";
 
 export
 interface ReadEntryAttributesReturn {
@@ -25,11 +26,19 @@ async function readAttributes (
     eis?: EntryInformationSelection,
     relevantSubentries?: Vertex[],
     operationContexts?: ContextSelection,
+    attributeSizeLimit?: number,
 ): Promise<ReadEntryAttributesReturn> {
     const values = await readValues(ctx, vertex, eis, relevantSubentries, operationContexts);
-    const userAttributes = attributesFromValues(values.userAttributes);
-    const operationalAttributes = attributesFromValues(values.operationalAttributes);
-    const collectiveAttributes = attributesFromValues(values.collectiveValues);
+    const sizeFilter = getAttributeSizeFilter(attributeSizeLimit ?? Infinity);
+    const userAttributes = attributeSizeLimit
+        ? attributesFromValues(values.userAttributes).filter(sizeFilter)
+        : attributesFromValues(values.userAttributes);
+    const operationalAttributes = attributeSizeLimit
+        ? attributesFromValues(values.operationalAttributes).filter(sizeFilter)
+        : attributesFromValues(values.operationalAttributes);
+    const collectiveAttributes = attributeSizeLimit
+        ? attributesFromValues(values.collectiveValues).filter(sizeFilter)
+        : attributesFromValues(values.collectiveValues);
     return {
         userAttributes,
         operationalAttributes,

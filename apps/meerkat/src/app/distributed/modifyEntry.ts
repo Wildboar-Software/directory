@@ -212,6 +212,7 @@ import {
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
+import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1428,6 +1429,12 @@ async function modifyEntry (
     // const isChild: boolean = target.dse.objectClass.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+    const attributeSizeLimit: number | undefined = (
+        Number.isSafeInteger(Number(data.serviceControls?.attributeSizeLimit))
+        && (Number(data.serviceControls?.attributeSizeLimit) >= MINIMUM_MAX_ATTR_SIZE)
+    )
+        ? Number(data.serviceControls!.attributeSizeLimit)
+        : undefined;
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
@@ -2045,6 +2052,7 @@ async function modifyEntry (
             data.selection,
             relevantSubentries,
             data.operationContexts,
+            attributeSizeLimit,
         );
         if (
             data.selection?.familyReturn

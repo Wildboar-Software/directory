@@ -227,14 +227,14 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 import type {
     SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
+import getAttributeSizeFilter from "../x500/getAttributeSizeFilter";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
-
-
 
 export
 interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
@@ -590,6 +590,20 @@ async function search_i (
         );
     }
 
+    const attributeSizeLimit: number | undefined = (
+        Number.isSafeInteger(Number(data.serviceControls?.attributeSizeLimit))
+        && (Number(data.serviceControls?.attributeSizeLimit) >= MINIMUM_MAX_ATTR_SIZE)
+    )
+        ? Number(data.serviceControls!.attributeSizeLimit)
+        : undefined;
+    const sizeFilter = getAttributeSizeFilter(attributeSizeLimit ?? Infinity);
+    const filterEntryInfoItemBySize = (item: EntryInformation_information_Item): boolean => {
+        if (!("attribute" in item)) {
+            return true;
+        }
+        return sizeFilter(item.attribute);
+    };
+
     // const searchAliases: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchAliases]);
     const matchedValuesOnly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchedValuesOnly]);
     // const checkOverspecified: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_checkOverspecified]);
@@ -938,7 +952,7 @@ async function search_i (
             userAttributes,
             operationalAttributes,
             collectiveAttributes,
-        } = await readAttributes(ctx, target, eis, relevantSubentries, data.operationContexts);
+        } = await readAttributes(ctx, target, eis, relevantSubentries, data.operationContexts, attributeSizeLimit);
         const attributes = [
             ...userAttributes,
             ...operationalAttributes,
@@ -1389,7 +1403,9 @@ async function search_i (
                                         rdnSequence: getDistinguishedName(vertex),
                                     },
                                     Boolean(vertex.dse.shadow),
-                                    permittedEinfo,
+                                    attributeSizeLimit
+                                        ? permittedEinfo.filter(filterEntryInfoItemBySize)
+                                        : permittedEinfo,
                                     incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
                                     // Only the ancestor can have partialName.
                                     ((index === 0) && state.partialName && (searchState.depth === 0)),
@@ -1421,7 +1437,9 @@ async function search_i (
                                 rdnSequence: getDistinguishedName(familySubset[0]),
                             },
                             Boolean(familySubset[0].dse.shadow),
-                            filteredEinfos[0][1],
+                            attributeSizeLimit
+                                ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                                : filteredEinfos[0][1],
                             filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
                             (state.partialName && (searchState.depth === 0)),
                             undefined,
@@ -1556,7 +1574,9 @@ async function search_i (
                                         rdnSequence: getDistinguishedName(vertex),
                                     },
                                     Boolean(vertex.dse.shadow),
-                                    permittedEinfo,
+                                    attributeSizeLimit
+                                        ? permittedEinfo.filter(filterEntryInfoItemBySize)
+                                        : permittedEinfo,
                                     incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
                                     // Only the ancestor can have partialName.
                                     ((index === 0) && state.partialName && (searchState.depth === 0)),
@@ -1588,7 +1608,9 @@ async function search_i (
                                     rdnSequence: getDistinguishedName(familySubset[0]),
                                 },
                                 Boolean(familySubset[0].dse.shadow),
-                                filteredEinfos[0][1],
+                                attributeSizeLimit
+                                    ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                                    : filteredEinfos[0][1],
                                 filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
                                 (state.partialName && (searchState.depth === 0)),
                                 undefined,
