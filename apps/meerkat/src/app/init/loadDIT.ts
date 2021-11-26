@@ -33,7 +33,7 @@ async function loadDIT (
                 rhob: false,
                 sa: false,
                 dsSubentry: false,
-                createdTimestamp: now,
+                createTimestamp: now,
                 modifyTimestamp: now,
                 deleteTimestamp: null,
                 creatorsName: ROOT_DSE_NAME,

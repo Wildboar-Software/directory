@@ -1356,16 +1356,11 @@ async function search_i (
                                     .map((mv): Value => ({
                                         ...mv,
                                         contexts: mv.contexts
-                                            ? new Map(
-                                                mv.contexts.map((context): [ string, StoredContext ] => [
-                                                    context.contextType.toString(),
-                                                    {
-                                                        id: context.contextType,
-                                                        fallback: context.fallback ?? false,
-                                                        values: context.contextValues,
-                                                    },
-                                                ]),
-                                            )
+                                            ? mv.contexts.map((context): StoredContext => ({
+                                                    contextType: context.contextType,
+                                                    fallback: context.fallback ?? false,
+                                                    contextValues: context.contextValues,
+                                                }))
                                             : undefined,
                                     })),
                             );
@@ -1527,16 +1522,11 @@ async function search_i (
                                     .map((mv): Value => ({
                                         ...mv,
                                         contexts: mv.contexts
-                                            ? new Map(
-                                                mv.contexts.map((context): [ string, StoredContext ] => [
-                                                    context.contextType.toString(),
-                                                    {
-                                                        id: context.contextType,
-                                                        fallback: context.fallback ?? false,
-                                                        values: context.contextValues,
-                                                    },
-                                                ]),
-                                            )
+                                            ? mv.contexts.map((context): StoredContext => ({
+                                                    contextType: context.contextType,
+                                                    fallback: context.fallback ?? false,
+                                                    contextValues: context.contextValues,
+                                                }))
                                             : undefined,
                                     })),
                             );

@@ -102,6 +102,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
 import { EventEmitter } from "events";
 import type { i18n } from "i18next";
+import {
+    Context as X500Context,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -198,10 +201,8 @@ interface StructuralObjectClassInfo extends ObjectClassInfo {
 }
 
 export
-interface StoredContext {
-    id: OBJECT_IDENTIFIER;
-    fallback: boolean;
-    values: ASN1Element[];
+interface StoredContext extends Omit<X500Context, "_unrecognizedExtensionsList"> {
+
 }
 
 export
@@ -210,9 +211,9 @@ interface Value {
      * The ID of the value in the attributevalue table, if applicable.
      */
     id?: number;
-    type: AttributeType; // TODO: Rename to "type"
+    type: AttributeType;
     value: ANY;
-    contexts?: Map<IndexableOID, StoredContext>;
+    contexts?: StoredContext[];
 }
 
 export
@@ -367,7 +368,7 @@ interface DSE {
     hierarchy?: HierarchyInfo;
     creatorsName?: Name;
     modifiersName?: Name;
-    createdTimestamp?: Date;
+    createTimestamp?: Date;
     modifyTimestamp?: Date;
     entryACI?: ACIItem[];
 

@@ -1,3 +1,8 @@
+// In schema defined in this file, lower snake-cased names and identifiers
+// shall be used for column names, unless they are named after something, such
+// as an attribute type, in which case, the casing in which that thing normally
+// appears shall be used. Models shall always be upper camel-cased.
+
 datasource db {
     url      = env("DATABASE_URL")
     // provider = "postgresql"
@@ -58,8 +63,8 @@ model Entry {
     //   writeableCopy Boolean @default(false) // Not used.
 
     // Single-valued attributes
-    createdTimestamp DateTime?
-    modifyTimestamp  DateTime?
+    createTimestamp  DateTime // Can be non-null: even SDSEs are required to transmit createTimestamp.
+    modifyTimestamp  DateTime // Can be non-null: even SDSEs are required to transmit modifyTimestamp.
     deleteTimestamp  DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
     creatorsName     Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
     modifiersName    Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]

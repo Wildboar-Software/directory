@@ -30,58 +30,61 @@ async function updateAffectedSubordinateDSAs (
 ): Promise<void> {
     const activeHOBs = await getRelevantOperationalBindings(ctx, true);
     for (const hob of activeHOBs) {
+        if (!hob.access_point) {
+            continue;
+        }
         const argreementElement = new BERElement();
-            argreementElement.fromBytes(hob.agreement_ber);
-            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-            if (!isPrefix(ctx, affectedPrefix, agreement.immediateSuperior)) {
-                continue;
-            }
-            const bindingID = new OperationalBindingID(
-                hob.binding_identifier,
-                hob.binding_version,
-            );
-            const accessPointElement = new BERElement();
-            accessPointElement.fromBytes(hob.access_point.ber);
-            const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
-            const subrDN: DistinguishedName = [
-                ...agreement.immediateSuperior,
-                agreement.rdn,
-            ];
-            try {
-                const subr = await findEntry(ctx, ctx.dit.root, subrDN);
-                if (!subr) {
-                    ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
-                        obid: bindingID.identifier.toString(),
-                        version: bindingID.version.toString(),
-                    }));
-                    continue;
-                }
-                assert(subr.immediateSuperior);
-                // We do not await the return value. This can run independently
-                // of returning from the operation.
-                updateSubordinateDSA(
-                    ctx,
-                    bindingID,
-                    subr.immediateSuperior,
-                    undefined,
-                    subr.dse.rdn,
-                    accessPoint,
-                )
-                    .catch((e) => {
-                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                            obid: bindingID.identifier.toString(),
-                            version: bindingID.version.toString(),
-                            e: e.message,
-                        }));
-                    });
-            } catch (e) {
-                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+        argreementElement.fromBytes(hob.agreement_ber);
+        const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
+        if (!isPrefix(ctx, affectedPrefix, agreement.immediateSuperior)) {
+            continue;
+        }
+        const bindingID = new OperationalBindingID(
+            hob.binding_identifier,
+            hob.binding_version,
+        );
+        const accessPointElement = new BERElement();
+        accessPointElement.fromBytes(hob.access_point.ber);
+        const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
+        const subrDN: DistinguishedName = [
+            ...agreement.immediateSuperior,
+            agreement.rdn,
+        ];
+        try {
+            const subr = await findEntry(ctx, ctx.dit.root, subrDN);
+            if (!subr) {
+                ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
                     obid: bindingID.identifier.toString(),
                     version: bindingID.version.toString(),
-                    e: e.message,
                 }));
                 continue;
             }
+            assert(subr.immediateSuperior);
+            // We do not await the return value. This can run independently
+            // of returning from the operation.
+            updateSubordinateDSA(
+                ctx,
+                bindingID,
+                subr.immediateSuperior,
+                undefined,
+                subr.dse.rdn,
+                accessPoint,
+            )
+                .catch((e) => {
+                    ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                        obid: bindingID.identifier.toString(),
+                        version: bindingID.version.toString(),
+                        e: e.message,
+                    }));
+                });
+        } catch (e) {
+            ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                obid: bindingID.identifier.toString(),
+                version: bindingID.version.toString(),
+                e: e.message,
+            }));
+            continue;
+        }
     }
 }
 

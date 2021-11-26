@@ -93,8 +93,8 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 
 function contextFromStoredContext (sc: StoredContext): X500Context {
     return new X500Context(
-        sc.id,
-        sc.values,
+        sc.contextType,
+        sc.contextValues,
         sc.fallback,
     );
 }
@@ -332,7 +332,7 @@ async function compare (
                 matched = true;
                 break;
             }
-            if (value.contexts && (value.contexts.size === 0)) {
+            if (!value.contexts || (value.contexts.length === 0)) {
                 matched = true;
                 break;
             }

@@ -40,7 +40,7 @@ async function createEntry (
             entryUUID: randomUUID(),
             creatorsName: [],
             modifiersName: [],
-            createdTimestamp: now,
+            createTimestamp: now,
             modifyTimestamp: now,
             deleteTimestamp: now,
             glue: entryInit.glue,

@@ -21,13 +21,13 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    if (!vertex.dse.createdTimestamp) {
+    if (!vertex.dse.createTimestamp) {
         return [];
     }
     return [
         {
             type: createTimestamp["&id"],
-            value: _encodeGeneralizedTime(vertex.dse.createdTimestamp, DER),
+            value: _encodeGeneralizedTime(vertex.dse.createTimestamp, DER),
         },
     ];
 };
@@ -46,7 +46,7 @@ const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<number> => {
-    return vertex.dse.createdTimestamp ? 1 : 0;
+    return vertex.dse.createTimestamp ? 1 : 0;
 };
 
 export
@@ -54,7 +54,7 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return Boolean(vertex.dse.createdTimestamp);
+    return Boolean(vertex.dse.createTimestamp);
 };
 
 export
@@ -63,7 +63,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    return (vertex.dse.createdTimestamp?.valueOf() === value.value.generalizedTime.valueOf());
+    return (vertex.dse.createTimestamp?.valueOf() === value.value.generalizedTime.valueOf());
 };
 
 export

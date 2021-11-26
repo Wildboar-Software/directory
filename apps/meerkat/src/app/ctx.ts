@@ -50,7 +50,7 @@ const root: Vertex = {
         uuid: rootID,
         rdn: [],
         objectClass: new Set(),
-        createdTimestamp: new Date(),
+        createTimestamp: new Date(),
         modifyTimestamp: new Date(),
     },
 };

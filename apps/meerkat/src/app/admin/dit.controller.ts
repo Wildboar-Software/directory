@@ -316,7 +316,7 @@ export class DitController {
                     return Buffer.from(encoder(attr.value)).toString("utf-8");
                 })(),
                 Array.from(attr.contexts?.values() ?? [])
-                    .map((context) => context.id.toString())
+                    .map((context) => context.contextType.toString())
                     .join(", "),
             ]);
 
@@ -339,7 +339,7 @@ export class DitController {
                     oid: oc,
                     name: this.ctx.objectClasses.get(oc)?.ldapNames?.[0],
                 })),
-            createdTimestamp: entry.createdTimestamp?.toISOString(),
+            createTimestamp: entry.createTimestamp?.toISOString(),
             modifyTimestamp: entry.modifyTimestamp?.toISOString(),
             deleteTimestamp: entry.deleteTimestamp?.toISOString(),
             creatorsName: (vertex.dse.creatorsName?.rdnSequence ?? [])

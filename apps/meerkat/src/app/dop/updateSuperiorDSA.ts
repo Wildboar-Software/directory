@@ -104,6 +104,9 @@ async function updateSuperiorDSA (
         : undefined;
     const activeHOBs = await getRelevantOperationalBindings(ctx, false);
     for (const hob of activeHOBs) {
+        if (!hob.access_point) {
+            continue;
+        }
         const argreementElement = new BERElement();
         argreementElement.fromBytes(hob.agreement_ber);
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);

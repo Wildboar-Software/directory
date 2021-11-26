@@ -963,7 +963,6 @@ async function addEntry (
             .map((atav): Value => ({
                 type: atav.type_,
                 value: atav.value,
-                contexts: new Map([]),
             }));
         const rdnAttributes: Set<IndexableOID> = new Set();
         const duplicatedAFDNs: AttributeType[] = [];
@@ -1016,7 +1015,7 @@ async function addEntry (
                 continue;
             }
             const someAttributeMatched = values.some((attr) => (
-                (!attr.contexts || (attr.contexts.size === 0))
+                (!attr.contexts || (attr.contexts.length === 0))
                 && attr.type.isEqualTo(afdn.type)
                 && matcher(attr.value, afdn.value)
             ));
@@ -1329,7 +1328,7 @@ async function addEntry (
              * > contain no context lists.
              */
             if (!applicableRule) {
-                if (value.contexts && (value.contexts.size > 0)) {
+                if (value.contexts && (value.contexts.length > 0)) {
                     throw new errors.AttributeError(
                         ctx.i18n.t("err:no_contexts_permitted"),
                         new AttributeErrorData(
@@ -1368,7 +1367,7 @@ async function addEntry (
             ];
             const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((con) => con.toString()));
             for (const context of value.contexts?.values() ?? []) {
-                const ID: string = context.id.toString();
+                const ID: string = context.contextType.toString();
                 mandatoryContextsRemaining.delete(ID);
                 if (!permittedContextsIndex.has(ID)) {
                     throw new errors.AttributeError(
@@ -1453,14 +1452,14 @@ async function addEntry (
                     continue; // This is intentional. This is not supposed to throw.
                 }
                 const defaultValueGetter = spec.defaultValue;
-                if (!value.contexts?.has(CTYPE_OID)) {
+                if (!value.contexts?.some((context) => context.contextType.isEqualTo(ct))) {
                     if (!value.contexts) {
-                        value.contexts = new Map();
+                        value.contexts = [];
                     }
-                    value.contexts.set(CTYPE_OID, {
-                        id: ct,
+                    value.contexts.push({
+                        contextType: ct,
                         fallback: true,
-                        values: [ defaultValueGetter() ],
+                        contextValues: [ defaultValueGetter() ],
                     });
                 }
             }

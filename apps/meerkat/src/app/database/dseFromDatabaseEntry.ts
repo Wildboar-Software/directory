@@ -116,7 +116,7 @@ async function dseFromDatabaseEntry (
                 ? dbe.modifiersName.map((rdn: Record<string, string>) => rdnFromJson(rdn))
                 : [],
         },
-        createdTimestamp: dbe.createdTimestamp ?? undefined,
+        createTimestamp: dbe.createTimestamp ?? undefined,
         modifyTimestamp: dbe.modifyTimestamp ?? undefined,
         entryACI,
     };

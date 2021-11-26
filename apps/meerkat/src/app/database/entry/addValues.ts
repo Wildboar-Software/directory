@@ -116,16 +116,17 @@ async function validateValues (
                 ),
             );
         }
-        for (const [ ctype, context ] of value.contexts?.entries() ?? []) {
-            const contextSpec = ctx.contextTypes.get(ctype);
+        for (const context of value.contexts ?? []) {
+            const CONTEXT_TYPE: string = context.contextType.toString();
+            const contextSpec = ctx.contextTypes.get(CONTEXT_TYPE);
             if (contextSpec?.validator) {
-                for (const cvalue of context.values) {
+                for (const cvalue of context.contextValues) {
                     try {
                         contextSpec.validator(cvalue);
                     } catch (e) {
                         throw new AttributeError(
                             ctx.i18n.t("err:invalid_context_syntax", {
-                                type: ctype,
+                                type: CONTEXT_TYPE,
                             }),
                             new AttributeErrorData(
                                 {
@@ -202,14 +203,14 @@ async function addValues (
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {
-                            data: Array.from(attr.contexts?.values() ?? [])
-                                .flatMap((context) => context.values.map((cv) => ({
-                                    type: context.id.toString(),
+                            data: Array.from(attr.contexts ?? [])
+                                .flatMap((context) => context.contextValues.map((cv) => ({
+                                    type: context.contextType.toString(),
                                     tag_class: cv.tagClass,
                                     constructed: (cv.construction === ASN1Construction.constructed),
                                     tag_number: cv.tagNumber,
                                     ber: Buffer.from(cv.toBytes()),
-                                    fallback: context.fallback,
+                                    fallback: context.fallback ?? false,
                                 }))),
                         },
                     },

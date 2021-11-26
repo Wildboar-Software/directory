@@ -17,15 +17,15 @@ function attributesFromValues (values: Value[]): Attribute[] {
         return new Attribute(
             atavs[0].type,
             atavs
-                .filter((atav) => (!atav.contexts || (atav.contexts.size === 0)))
+                .filter((atav) => (!atav.contexts || (atav.contexts.length === 0)))
                 .map((atav) => atav.value),
             atavs
-                .filter((atav) => (atav.contexts && (atav.contexts.size > 0)))
+                .filter((atav) => (atav.contexts && (atav.contexts.length > 0)))
                 .map((atav) => new Attribute_valuesWithContext_Item(
                     atav.value,
                     Array.from(atav.contexts?.values() ?? []).map((context) => new Context(
-                        context.id,
-                        context.values,
+                        context.contextType,
+                        context.contextValues,
                         context.fallback,
                     )),
                 )),

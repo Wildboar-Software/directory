@@ -9,26 +9,18 @@ async function attributeFromDatabaseAttribute (
 ): Promise<Value> {
     const value = new BERElement();
     value.fromBytes(attr.ber);
-    const contexts: Value["contexts"] = new Map();
-    attr.ContextValue.forEach((c) => {
-        const CONTEXT_OID: string = c.type;
-        const el = new BERElement();
-        el.fromBytes(c.ber);
-        const group = contexts.get(CONTEXT_OID);
-        if (!group) {
-            contexts.set(CONTEXT_OID, {
-                id: ObjectIdentifier.fromString(c.type),
-                fallback: c.fallback,
-                values: [ el ],
-            });
-        } else {
-            group.values.push(el);
-        }
-    });
     return {
         type: new ObjectIdentifier(attr.type.split(".").map((node) => Number.parseInt(node))),
         value,
-        contexts,
+        contexts: attr.ContextValue.map((c) => {
+            const el = new BERElement();
+            el.fromBytes(c.ber);
+            return {
+                contextType: ObjectIdentifier.fromString(c.type),
+                fallback: c.fallback,
+                contextValues: [ el ],
+            };
+        }),
     };
 }
 

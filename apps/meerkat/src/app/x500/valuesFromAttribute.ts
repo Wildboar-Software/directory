@@ -9,21 +9,15 @@ function valuesFromAttribute (attr: Attribute): Value[] {
         ...attr.values.map((value): Value => ({
             type: attr.type_,
             value,
-            contexts: new Map([]),
         })),
         ...attr.valuesWithContext?.map((vwc): Value => ({
             type: attr.type_,
             value: vwc.value,
-            contexts: new Map(
-                vwc.contextList.map((context): [ string, StoredContext ] => [
-                    context.contextType.toString(),
-                    {
-                        id: context.contextType,
-                        fallback: context.fallback ?? false,
-                        values: context.contextValues,
-                    },
-                ]),
-            ),
+            contexts: vwc.contextList.map((context): StoredContext => ({
+                contextType: context.contextType,
+                fallback: context.fallback ?? false,
+                contextValues: context.contextValues,
+            })),
         })) ?? [],
     ]
 }

@@ -274,6 +274,9 @@ async function removeEntry (
         const targetDN = getDistinguishedName(target);
         const relevantOperationalBindings = await getRelevantOperationalBindings(ctx, false);
         for (const ob of relevantOperationalBindings) {
+            if (!ob.access_point) {
+                continue;
+            }
             const argreementElement = new BERElement();
             argreementElement.fromBytes(ob.agreement_ber);
             const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);

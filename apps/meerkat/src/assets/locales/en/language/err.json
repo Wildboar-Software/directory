@@ -60,7 +60,6 @@
     "new_superior_not_within_this_dsa": "Target entry's new superior is not within this DSA.",
     "not_authz_import": "Not authorized to import this entry.",
     "entry_has_external_subordinates": "Target entry cannot be moved because it has subordinates that are external to this DSA.",
-    "subentry_not_child_of_admpoint": "Subentry {{uuid}} was not a child of an administrative point.",
     "rdn_attribute_type_requires_contexts": "Attribute type {{oid}} cannot be used in the target entry's new name, because the context use rules for that type mandate the existence of the following context types: {{oids}}.",
     "attribute_type_not_permitted_by_oc": "Attribute types {{oids}} not permitted by the entry's object classes.",
     "deleting_old_rdn_deletes_required_attribute": "Deleting the old RDN would delete a required attribute.",
