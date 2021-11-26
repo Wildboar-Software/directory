@@ -599,7 +599,19 @@ async function modifyDN (
         ? differenceInMilliseconds(timeLimitEndTime, new Date())
         : undefined;
     if (target.dse.subentry) { // Continue at step 7.
-        // Deviation from the specification: we update the subordinates AFTER we update the DN locally.
+        // DEVIATION: from the specification: we update the subordinates AFTER we update the DN locally.
+        if (target.immediateSuperior?.dse.cp) {
+            // DEVIATION:
+            // The specification does NOT say that you have to update the
+            // superior's subentries for the new CP. Meerkat DSA does this
+            // anyway, just without awaiting.
+            updateSuperiorDSA(
+                ctx,
+                targetDN.slice(0, -1),
+                target.immediateSuperior!,
+                state.chainingArguments.aliasDereferenced ?? false,
+            ); // INTENTIONAL_NO_AWAIT
+        }
     } else if (target.dse.cp) { // Continue at step 6.
         try {
             // The specification says that you must wait for this to succeed

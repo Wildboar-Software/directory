@@ -101,6 +101,7 @@ import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
+import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -265,6 +266,18 @@ async function removeEntry (
     checkTimeLimit();
     if (target.dse.subentry) { // Go to step 5.
         // Steps moved to run _after_ the local deletion of the DSE.
+        if (target.immediateSuperior?.dse.cp) {
+            // DEVIATION:
+            // The specification does NOT say that you have to update the
+            // superior's subentries for the new CP. Meerkat DSA does this
+            // anyway, just without awaiting.
+            updateSuperiorDSA(
+                ctx,
+                targetDN.slice(0, -1),
+                target.immediateSuperior!,
+                state.chainingArguments.aliasDereferenced ?? false,
+            ); // INTENTIONAL_NO_AWAIT
+        }
     } else if (target.dse.cp) { // Go to step 6.
         // 1. Remove the naming context.
         // 2. Terminate the HOB, if applicable.

@@ -213,6 +213,7 @@ import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
+import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -2014,6 +2015,19 @@ async function modifyEntry (
         assert(admPoint);
         const admPointDN = getDistinguishedName(admPoint);
         updateAffectedSubordinateDSAs(ctx, admPointDN); // INTENTIONAL_NO_AWAIT
+        // DEVIATION: from the specification: we update the subordinates AFTER we update the DN locally.
+        if (target.dse.subentry && target.immediateSuperior?.dse.cp) {
+            // DEVIATION:
+            // The specification does NOT say that you have to update the
+            // superior's subentries for the new CP. Meerkat DSA does this
+            // anyway, just without awaiting.
+            updateSuperiorDSA(
+                ctx,
+                targetDN.slice(0, -1),
+                target.immediateSuperior,
+                state.chainingArguments.aliasDereferenced ?? false,
+            ); // INTENTIONAL_NO_AWAIT
+        }
     }
 
     // TODO: Update Shadows

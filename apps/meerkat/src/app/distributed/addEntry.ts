@@ -164,6 +164,7 @@ import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -1568,6 +1569,18 @@ async function addEntry (
             ? targetDN
             : targetDN.slice(0, -1);
         updateAffectedSubordinateDSAs(ctx, admPointDN); // INTENTIONAL_NO_AWAIT
+        if (newEntry.dse.subentry && newEntry.immediateSuperior?.dse.cp) {
+            // DEVIATION:
+            // The specification does NOT say that you have to update the
+            // superior's subentries for the new CP. Meerkat DSA does this
+            // anyway, just without awaiting.
+            updateSuperiorDSA(
+                ctx,
+                targetDN.slice(0, -1),
+                immediateSuperior,
+                state.chainingArguments.aliasDereferenced ?? false,
+            ); // INTENTIONAL_NO_AWAIT
+        }
     }
 
     // TODO: Update shadows
