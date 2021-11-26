@@ -1680,7 +1680,46 @@ async function search_i (
             ),
         );
     }
-    const useSortedSearch: boolean = !!searchState.paging?.[1].request.sortKeys?.[0];
+    const sortKey = searchState.paging?.[1].request.sortKeys?.[0].type_;
+    /** DEVIATION: 9F763AD8-1A94-4053-93CE-4F0D445B7D2D
+     * This is not explicitly required by the directory specifications, but
+     * Meerkat DSA checks for whether the user has the permission to read and
+     * compare attribute types of the sort key before honoring the sort. This is
+     * done to prevent information disclosure vulnerabilities. Otherwise, a
+     * nefarious user could sort entries by a sort key to discover,
+     * illegitimately, what their values are by comparison.
+     *
+     * Note that this implementation just uses the current ACDF tuples for
+     * evaluating this permission, not the relevant ACDF tuples for each
+     * subordinate. This is technically incorrect, since different permissions
+     * could apply to the subordinates, but this check itself is "extra credit"
+     * anyway: as I stated before, the X.500 specifications don't require this.
+     * Also note that the permission is only checked for the attribute type as a
+     * whole, not the individual values. Both of the above slackenings are in
+     * interest of laziness, performance, and simplicity.
+     */
+    const permittedToSort: boolean = (() => {
+        if (!sortKey) {
+            return false;
+        }
+        if (!accessControlScheme || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())) {
+            return true;
+        }
+        const { authorized: authorizedToSortKey } = bacACDF(
+            relevantTuples,
+            conn.authLevel,
+            {
+                attributeType: sortKey,
+            },
+            [
+                PERMISSION_CATEGORY_COMPARE,
+                PERMISSION_CATEGORY_READ,
+            ],
+            EQUALITY_MATCHER,
+        );
+        return authorizedToSortKey;
+    })();
+
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
         /**
          * We return no subordinates, because the family members will all be
@@ -1690,7 +1729,7 @@ async function search_i (
         if (searchFamilyInEffect) {
             return [];
         }
-        return useSortedSearch
+        return permittedToSort
             ? await (async () => {
                 const results: Vertex[] = [];
                 const newCursorId = await readChildrenSorted(
@@ -1794,7 +1833,7 @@ async function search_i (
                 );
                 return;
             }
-            if (!useSortedSearch) {
+            if (!permittedToSort) {
                 cursorId = subordinate.dse.id;
                 if (searchState.paging?.[1].cursorIds) {
                     searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
