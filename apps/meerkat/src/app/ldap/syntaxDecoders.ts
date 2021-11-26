@@ -1,6 +1,14 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
-import { ASN1Element, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
+import {
+    ASN1Element,
+    BERElement,
+    ASN1TagClass,
+    ASN1Construction,
+    ASN1UniversalType,
+    ObjectIdentifier,
+    OBJECT_IDENTIFIER,
+} from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import lex from "./lexSchema";
 import isDigit from "../utils/isDigit";
@@ -61,9 +69,8 @@ import {
 import {
     _encode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
-import {
-    getSubtreeSpecLexer,
-} from "./lexSubtreeSpec";
+import { getSubtreeSpecLexer } from "./lexSubtreeSpec";
+import { phone } from "phone";
 
 function qdstring (escaped: string): string {
     return escaped
@@ -1113,3 +1120,21 @@ function getSubtreeSpecificationDecoder (
         return _encode_SubtreeSpecification(ss, DER);
     };
 }
+
+export
+const telephoneNumber: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
+    const str = Buffer.from(value).toString("utf-8");
+    const phoneResult = phone(str, {
+        validateMobilePrefix: false,
+    });
+    if (!phoneResult.isValid) {
+        throw new Error();
+    }
+    const el = new BERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.printableString,
+    );
+    el.printableString = phoneResult.phoneNumber;
+    return el;
+};

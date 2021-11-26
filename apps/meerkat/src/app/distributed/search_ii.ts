@@ -286,6 +286,8 @@ async function search_ii (
                 dontUseCopy,
                 copyShallDo,
                 state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
+                undefined,
+                argument,
             );
             if (!suitable) {
                 continue;

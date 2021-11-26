@@ -49,6 +49,7 @@ import {
 import {
     Refinement,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+import { phone } from "phone";
 
 function escapeUBS (str: UBS): string {
     return directoryStringToString(str)
@@ -429,3 +430,17 @@ function getSubtreeSpecificationEncoder (
         return Buffer.from(`{ ${fields.join(", ")} }`, "utf-8");
     };
 }
+
+export
+const telephoneNumber: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    const str = value.printableString;
+    try {
+        const pn: string | null = phone(str).phoneNumber;
+        if (!pn) {
+            return Buffer.from(str, "utf-8");
+        }
+        return Buffer.from(pn, "utf-8");
+    } catch {
+        return Buffer.from(str, "utf-8");
+    }
+};

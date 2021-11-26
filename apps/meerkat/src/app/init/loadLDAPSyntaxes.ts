@@ -221,8 +221,8 @@ function loadLDAPSyntaxes (ctx: Context): void {
     ctx.ldapSyntaxes.get(printableString["&id"]!.toString())!.encoder = encoders.printableString;
     ctx.ldapSyntaxes.get(subtreeSpec["&id"]!.toString())!.decoder = localDecoders.getSubtreeSpecificationDecoder(ctx);
     ctx.ldapSyntaxes.get(subtreeSpec["&id"]!.toString())!.encoder = localEncoders.getSubtreeSpecificationEncoder(ctx);
-    ctx.ldapSyntaxes.get(telephoneNr["&id"]!.toString())!.decoder = decoders.telephoneNumber;
-    ctx.ldapSyntaxes.get(telephoneNr["&id"]!.toString())!.encoder = encoders.telephoneNumber;
+    ctx.ldapSyntaxes.get(telephoneNr["&id"]!.toString())!.decoder = localDecoders.telephoneNumber;
+    ctx.ldapSyntaxes.get(telephoneNr["&id"]!.toString())!.encoder = localEncoders.telephoneNumber;
     // telexNr
     ctx.ldapSyntaxes.get(utcTime["&id"]!.toString())!.decoder = decoders.utcTime;
     ctx.ldapSyntaxes.get(utcTime["&id"]!.toString())!.encoder = encoders.utcTime;

@@ -1043,6 +1043,8 @@ async function search_i (
                 dontUseCopy,
                 copyShallDo,
                 state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
+                undefined,
+                argument,
             );
             if (suitable) {
                 if (searchState.chaining.alreadySearched) {
