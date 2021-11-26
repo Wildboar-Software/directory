@@ -80,3 +80,40 @@ languages.
 
 In LDAP, diagnostic messages will be returned in the language of the DSA. There
 is no current means for indicating an LDAP user's language preference.
+
+## Approximate Matching
+
+Meerkat DSA implements some "approximate" equivalents of some of the matching
+rules defined in the X.500 series of specifications. These equivalents are used
+whenever `approximateMatch` alternative of a `FilterItem` is used.
+
+Approximate matching rules are only implemented where it would not be easy to
+construct equivalent semantics using some combination of other matching rules.
+For instance, you could not easily craft an search filter that tolerates a
+single-letter typo or transposition for every possible permutation of letters in
+a word, so an approximate matching rule has be implemented for this.
+
+| Matching Rule                      | Behavior                                                                        |
+|------------------------------------|---------------------------------------------------------------------------------|
+| acceptableCertPoliciesMatch        | Matches if a simple majority of the asserted policies are present.              |
+| algorithmIdentifierMatch           | Matches if just the `algorithm` object identifier matches.                      |
+| attDescriptor                      | Leading and trailing whitespace and casing are ignored.                         |
+| bitStringMatch                     | Tolerates a single inverted bit from the assertion.                             |
+| caseIgnoreIA5Match                 | Trims whitespace and tolerates a fast Levenshtein difference of 1.              |
+| caseIgnoreListMatch                | Same as `caseIgnoreIA5Match`.                                                   |
+| caseIgnoreMatch                    | Same as `caseIgnoreIA5Match`.                                                   |
+| directoryStringFirstComponentMatch | Trims whitespace and ignores casing.                                            |
+| distinguishedNameMatch             | Matches if all but the last RDN matches the assertion.                          |
+| dualStringMatch                    | Tolerates a fast Levenshtein difference of 1.                                   |
+| generalizedTimeMatch               | Tolerates an mismatching time by one day.                                       |
+| integerFirstComponentMatch         | Matches an integer that is up to 10% incorrect.                                 |
+| integerMatch                       | Matches an integer that is up to 10% incorrect.                                 |
+| intEmailMatch                      | Trims whitespace, lowercases, and matches if local parts differ by FL* of 1.    |
+| jidMatch                           | Same as `intEmailMatch`.                                                        |
+| objectIdentifierMatch              | Matches if either value is a prefix of the other.                               |
+| pwdEncAlgMatch                     | Matches if just the `algorithm` object identifier matches.                      |
+| uniqueMemberMatch                  | Matches if only the distinguished name matches.                                 |
+| uriMatch                           | Matches if only protocol, hostname, port, and path matches.                     |
+| uTCTimeMatch                       | Tolerates an mismatching time by one day.                                       |
+
+* "FL" = Fast Levenshtein.

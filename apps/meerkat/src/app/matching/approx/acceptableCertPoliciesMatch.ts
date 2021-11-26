@@ -32,6 +32,7 @@ const acceptableCertPoliciesMatch: EqualityMatcher = (
     const el: DERElement = new DERElement();
     el.fromBytes(ext.extnValue);
     const storedValue: AcceptableCertPoliciesSyntax = _decode_AcceptableCertPoliciesSyntax(el);
+    // FIXME: I think this implementation is wrong.
     return most(a, (oid: OBJECT_IDENTIFIER, index: number) => storedValue[index]?.isEqualTo(oid));
 }
 

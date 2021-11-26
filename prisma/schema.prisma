@@ -13,9 +13,9 @@ generator client {
     provider = "prisma-client-js"
 }
 
-type OID = String
+type OID = String // Period-delimited numeric-only object identifiers.
 
-type OIDs = String
+type OIDs = String // Space-delimited, period-delimited numeric-only object identifiers.
 
 type Names = String
 
