@@ -28,7 +28,7 @@ import {
     id_soc_subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
 import groupByOID from "../../utils/groupByOID";
-import type {
+import {
     TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 import type {
@@ -38,6 +38,10 @@ import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
 import getAttributeParentTypes from "../../x500/getAttributeParentTypes";
+import evaluateContextAssertion from "@wildboar/x500/src/lib/utils/evaluateContextAssertion";
+import {
+    Context as X500Context,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 // TODO: Explore making this a temporalContext
@@ -111,53 +115,80 @@ function addFriends (
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
-// function *filterByTypeAndContextAssertion (
-//     ctx: Context,
-//     values: Value[],
-//     selectedContexts: Record<string, TypeAndContextAssertion[]> | null,
-// ): IterableIterator<Value> {
-//     const preferences: Map<ContextAssertion[], number> = new Map();
-//     if (!selectedContexts) {
-//         yield *values;
-//         return;
-//     }
-//     for (const value of values) {
-//         // A ContextAssertion is true for a particular attribute value if:
-//         // ...the attribute value contains no contexts of the asserted contextType
-//         if (!(value.contexts) || value.contexts.size === 0) {
-//             yield value;
-//         }
-//         const TYPE_OID: string = value.type.toString();
-//         const typeAndSuperTypes: Set<string> = new Set([
-//             TYPE_OID,
-//             ALL_ATTRIBUTE_TYPES,
-//             ...Array.from(getAttributeParentTypes(ctx, value.type)).map((oid) => oid.toString()),
-//         ]);
-//         const typeAndContextAssertions = Array.from(typeAndSuperTypes)
-//             .flatMap((oid) => selectedContexts[oid] ?? []);
-//         if (typeAndContextAssertions.length === 0) {
-//             yield value; // There are no context assertions for this attribute type.
-//         }
-//         for (const taca of typeAndContextAssertions) {
-//             if ("all" in taca.contextAssertions) {
-//                 const match = taca.contextAssertions.all.every((ca): boolean => evaluateContextAssertion(
-//                     ca,
-//                     Array.from(value.contexts?.values() ?? []).map((sc) => sc.),
-//                     getContextMatcher,
-//                     determineAbsentMatch,
-//                 ));
-//                 if (match) {
-//                     yield value;
-//                 }
-//             } else if ("preference" in taca.contextAssertions) {
+// Converts "preference" assertions to "all" assertions of the preferred context.
+function determinePreference (
+    ctx: Context,
+    valuesOfSameType: Value[],
+    preference: ContextAssertion[],
+): ContextAssertion | null {
+    const contexts = valuesOfSameType
+        .flatMap((value) => value.contexts ?? [])
+        .map((context) => new X500Context(
+            context.contextType,
+            context.contextValues,
+            context.fallback,
+        ));
+    for (const ca of preference) {
+        const matched: boolean = evaluateContextAssertion(ca, contexts,
+            (contextType: OBJECT_IDENTIFIER) => ctx.contextTypes.get(contextType.toString())?.matcher,
+            (contextType: OBJECT_IDENTIFIER) => ctx.contextTypes.get(contextType.toString())?.absentMatch ?? false,
+        );
+        if (matched) {
+            return ca;
+        }
+    }
+    return null;
+}
 
-//             } else {
-//                 continue;
-//             }
-//         }
-//         // return typeAndContextAssertions.every((taca): boolean => {
-//     }
-// }
+function *filterByTypeAndContextAssertion (
+    ctx: Context,
+    values: Value[],
+    selectedContexts: Record<IndexableOID, TypeAndContextAssertion[]> | null,
+): IterableIterator<Value> {
+    if (!selectedContexts) {
+        yield *values;
+        return;
+    }
+    for (const value of values) {
+        // A ContextAssertion is true for a particular attribute value if:
+        // ...the attribute value contains no contexts of the asserted contextType
+        if (!(value.contexts) || value.contexts.length === 0) {
+            yield value;
+        }
+        const TYPE_OID: string = value.type.toString();
+        const typeAndContextAssertions = [
+            TYPE_OID,
+            ALL_ATTRIBUTE_TYPES,
+            ...Array.from(getAttributeParentTypes(ctx, value.type)).map((oid) => oid.toString()),
+        ]
+            .flatMap((oid) => selectedContexts[oid] ?? []);
+        if (typeAndContextAssertions.length === 0) {
+            yield value; // There are no context assertions for this attribute type.
+        }
+        const contexts = (value.contexts ?? []).map((c) => new X500Context(
+            c.contextType,
+            c.contextValues,
+            c.fallback,
+        ));
+        for (const taca of typeAndContextAssertions) {
+            if ("all" in taca.contextAssertions) {
+                const match = taca.contextAssertions.all.every((ca): boolean => evaluateContextAssertion(
+                    ca,
+                    contexts,
+                    (contextType: OBJECT_IDENTIFIER) => ctx.contextTypes.get(contextType.toString())?.matcher,
+                    (contextType: OBJECT_IDENTIFIER) => ctx.contextTypes.get(contextType.toString())?.absentMatch ?? false,
+                ));
+                if (match) {
+                    yield value;
+                }
+            } else if ("preference" in taca.contextAssertions) {
+                continue; // Already handled.
+            } else {
+                continue;
+            }
+        }
+    }
+}
 
 export
 async function readValues (
@@ -186,9 +217,6 @@ async function readValues (
             }
             : undefined)
         ?? DEFAULT_CAD;
-    // const selectedContexts = ("selectedContexts" in contextSelection)
-    //     ? groupByOID<TypeAndContextAssertion>(contextSelection.selectedContexts, (c) => c.type_)
-    //     : null;
     const selectedUserAttributes: Set<IndexableOID> | null = (eis?.attributes && ("select" in eis.attributes))
         ? new Set(eis.attributes.select.map((oid) => oid.toString()))
         : null;
@@ -207,9 +235,9 @@ async function readValues (
             addFriends(relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
         }
     }
-    const operationalAttributes: Value[] = [];
+    let operationalAttributes: Value[] = [];
     // TODO: I feel like this could be optimized to query fewer attributes.
-    const userAttributes: Value[] = await Promise.all(
+    let userAttributes: Value[] = await Promise.all(
         (await ctx.db.attributeValue.findMany({
             where: {
                 entry_id: entry.dse.id,
@@ -279,7 +307,7 @@ async function readValues (
      * are applied to a subentry, the subentry could have duplicated collective
      * values listed as both its collective values and user values.
      */
-    const collectiveValues: Value[] = ((relevantSubentries && entry.dse.entry && !entry.dse.subentry)
+    let collectiveValues: Value[] = ((relevantSubentries && entry.dse.entry && !entry.dse.subentry)
         ? readCollectiveValues(ctx, entry, relevantSubentries)
         : [])
             .filter((attr) => {
@@ -290,7 +318,50 @@ async function readValues (
                 return selectedUserAttributes.has(attr.type.toString());
             });
 
-    // TODO: Evaluate values against context assertions.
+    const valuesByType: Record<IndexableOID, Value[]> = groupByOID([
+        ...userAttributes,
+        ...operationalAttributes,
+        ...collectiveValues,
+    ], (value) => value.type);
+
+    const newAssertions: TypeAndContextAssertion[] = [];
+    if ("selectedContexts" in contextSelection) {
+        // This loop is just to handle TypeAndContextAssertion.[#].preference.
+        const deselected: Set<IndexableOID> = new Set();
+        for (const taca of contextSelection.selectedContexts) {
+            if (!("preference" in taca.contextAssertions)) {
+                continue;
+            }
+            const typeAndParentTypes = Array.from(getAttributeParentTypes(ctx, taca.type_));
+            const types = [
+                ...typeAndParentTypes,
+                id_oa_allAttributeTypes,
+            ];
+            const relevantValues: Value[] = types.flatMap((type) => valuesByType[type.toString()] ?? []);
+            const ca = determinePreference(ctx, relevantValues, taca.contextAssertions.preference);
+            if (!ca) {
+                deselected.add(taca.type_.toString());
+                continue;
+            }
+            newAssertions.push(new TypeAndContextAssertion(
+                taca.type_,
+                {
+                    all: [ ca ],
+                },
+            ));
+        }
+    }
+
+    const selectedContexts = ("selectedContexts" in contextSelection)
+        ? groupByOID<TypeAndContextAssertion>([
+            ...contextSelection.selectedContexts,
+            ...newAssertions,
+        ], (c) => c.type_)
+        : null;
+
+    userAttributes = Array.from(filterByTypeAndContextAssertion(ctx, userAttributes, selectedContexts));
+    operationalAttributes = Array.from(filterByTypeAndContextAssertion(ctx, operationalAttributes, selectedContexts));
+    collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
 
     return {
         userAttributes,
