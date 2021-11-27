@@ -119,6 +119,12 @@ async function main (): Promise<void> {
         ? packageJSON?.default.version
         : packageJSON?.version;
 
+    if (versionSlug) {
+        ctx.log.debug(ctx.i18n.t("log:starting_meerkat_version", {
+            version: versionSlug,
+        }));
+    }
+
     if (
         process.env.MEERKAT_SIGNING_CERT_CHAIN
         && process.env.MEERKAT_SIGNING_KEY

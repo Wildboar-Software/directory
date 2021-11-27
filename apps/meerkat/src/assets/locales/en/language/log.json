@@ -53,5 +53,6 @@
     "family_subset_had_zero_members": "Family subset had zero members. This is not supposed to ever happen.",
     "invalid_init_js": "Invalid MEERKAT_INIT_JS file. It must export a function named 'init' or 'default'.",
     "bulk_insert_mode": "You are running Meerkat DSA in bulk insert mode. This means that almost no schema validation or access controls will apply.",
-    "no_dsa_keypair": "Because the MEERKAT_SIGNING_CERT_CHAIN and MEERKAT_SIGNING_KEY environment variables were not set, Meerkat DSA will not digitally sign server responses, and its Application Entity (AE) Title will not be set."
+    "no_dsa_keypair": "Because the MEERKAT_SIGNING_CERT_CHAIN and MEERKAT_SIGNING_KEY environment variables were not set, Meerkat DSA will not digitally sign server responses, and its Application Entity (AE) Title will not be set.",
+    "starting_meerkat_version": "Starting up Meerkat DSA, version {{version}}."
 }
