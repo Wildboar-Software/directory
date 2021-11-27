@@ -1,48 +1,36 @@
 version: '3.7'
 
 services:
-  # meerkat:
-  #   command: '/usr/local/bin/node --inspect=0.0.0.0:5858 /srv/dist/apps/meerkat/main.js'
-  #   working_dir: /srv
-  #   container_name: 'meerkat'
-  #   depends_on:
-  #     - postgres
-  #   environment:
-  #     # https://www.gnu.org/software/libc/manual/html_node/Locale-Categories.html#Locale-Categories
-  #     # LC_COLLATE: ""
-  #     # LC_CTYPE: ""
-  #     # LC_MONETARY: ""
-  #     # LC_NUMERIC: ""
-  #     # LC_TIME: ""
-  #     LC_MESSAGES: en_US.utf8
-  #     LC_ALL: en_US.utf8
-  #     LANG: en_US.utf8
-  #   hostname: 'meerkat'
-  #   image: 'node:stretch'
-  #   ports:
-  #     - '1389:389/tcp'
-  #     - '4632:4632/tcp'
-  #   volumes:
-  #     - '.:/srv:ro'
-  # postgres:
-  #   image: postgres
-  #   restart: always
-  #   environment:
-  #     POSTGRES_PASSWORD: example
-  #   ports:
-  #     - '5432:5432/tcp'
-  #   volumes:
-  #     - data:/var/lib/mysql
-
-  # db:
-  #   image: mariadb
-  #   restart: always
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: example
-  #   ports:
-  #     - '3306:3306/tcp'
-  #   volumes:
-  #     - data:/var/lib/mysql
+  meerkat:
+    build:
+      context: .
+      dockerfile: meerkat.dockerfile
+    env_file:
+      - .env
+    environment:
+      # What appears in this section overrides anything in .env.
+      DATABASE_URL: mysql://root:example@db:3306/directory
+      MEERKAT_SERVER_TLS_CERT: /data/keypair/cert.pem
+      MEERKAT_SERVER_TLS_KEY: /data/keypair/key.pem
+      MEERKAT_SIGNING_CERT_CHAIN: /data/keypair/cert.pem
+      MEERKAT_SIGNING_KEY: /data/keypair/key.pem
+      MEERKAT_INIT_JS: /data/init.mjs
+    depends_on:
+      - db
+    hostname: 'meerkat'
+    labels:
+      author: Wildboar Software
+      app: meerkat
+      version: 1.0.0-beta.1
+    ports:
+      - '1389:389/tcp' # LDAP TCP Port
+      - '4632:4632/tcp' # IDM Socket
+      - '18080:18080/tcp' # Web administration console
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+        read_only: true
 
   db:
     image: mysql
@@ -55,12 +43,5 @@ services:
     volumes:
       - data:/var/lib/mysql
 
-  # adminer:
-  #   depends_on:
-  #     - db
-  #   image: adminer
-  #   restart: always
-  #   ports:
-  #     - '15432:8080/tcp'
 volumes:
   data: {}

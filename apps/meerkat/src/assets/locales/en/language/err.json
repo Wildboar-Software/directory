@@ -132,5 +132,6 @@
     "ob_duplicate_identifier": "Proposed operational binding ID {{id}} is already taken.",
     "ob_invalid_version": "Proposed operational binding ID version is less than or equal to the most current version.",
     "failed_to_update_superior_dsa": "Failed to notify superior DSA of changes to the context prefix or one of its subentries.",
-    "unrecognized_ldap_op": "Unrecognized LDAP operation."
+    "unrecognized_ldap_op": "Unrecognized LDAP operation.",
+    "cert_chain_no_certificates": "Certificate chain file '{{envvar}}' indicated by environment variable SIGNING_CERT_CHAIN had no PEM-encoded certificates."
 }

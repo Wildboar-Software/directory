@@ -31,18 +31,20 @@ function createSecurityParameters (
     errorCode?: Code,
 ): SecurityParameters {
     return new SecurityParameters(
-        new CertificationPath(
-            ctx.dsa.signing.certPath[ctx.dsa.signing.certPath.length - 1],
-            (ctx.dsa.signing.certPath.length > 1)
-                ? ctx.dsa.signing.certPath
-                    .slice(0, -1) // The last certificate is the end-entity (the DSA.)
-                    .reverse() // The certificates are in order of descending authority.
-                    .map((cert) => new CertificatePair(
-                        undefined,
-                        cert,
-                    ))
-                : undefined,
-        ),
+        ctx.dsa.signing
+            ? new CertificationPath(
+                ctx.dsa.signing.certPath[ctx.dsa.signing.certPath.length - 1],
+                (ctx.dsa.signing.certPath.length > 1)
+                    ? ctx.dsa.signing.certPath
+                        .slice(0, -1) // The last certificate is the end-entity (the DSA.)
+                        .reverse() // The certificates are in order of descending authority.
+                        .map((cert) => new CertificatePair(
+                            undefined,
+                            cert,
+                        ))
+                    : undefined,
+            )
+            : undefined,
         recipient,
         {
             generalizedTime: new Date((new Date()).valueOf() + 60000),

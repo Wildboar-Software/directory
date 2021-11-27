@@ -431,7 +431,7 @@ interface DSAInfo {
     accessPoint: AccessPoint;
     hibernatingSince?: Date;
     sentinelTriggeredHibernation?: Date;
-    signing: SigningInfo;
+    signing?: SigningInfo;
 }
 
 export

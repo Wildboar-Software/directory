@@ -110,6 +110,13 @@ Future versions of Meerkat DSA, where Meerkat is less buggy, might not collect
 as much data, since the primary purpose of collecting this data is to provide
 support and fix bugs.
 
+## Bulk Insertion Mode
+
+Telemetry is disabled when using Bulk Insertion Mode. Be sure to understand the
+trade-offs regarding the use of Bulk Insertion Mode before enabling it to
+circumvent telemetry: Bulk Insertion Mode disables all access controls and
+most schema validation for `addEntry` operations.
+
 ## Prisma Telemetry
 
 Prisma, which is the ORM that Meerkat DSA uses for interacting with the

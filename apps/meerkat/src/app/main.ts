@@ -45,6 +45,8 @@ import {
 } from "./constants";
 import createDatabaseReport from "./telemetry/createDatabaseReport";
 import semver from "semver";
+import { createPrivateKey } from "crypto";
+import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 
 const DEFAULT_IDM_TCP_PORT: number = 4632;
 const DEFAULT_LDAP_TCP_PORT: number = 1389;
@@ -112,11 +114,36 @@ async function checkForUpdates (ctx: Context, currentVersionString: string): Pro
 
 export default
 async function main (): Promise<void> {
-    const packageJSON = await import("package.json")
-        .catch(() => undefined);
+    const packageJSON = await import("package.json").catch(() => {});
     const versionSlug = packageJSON?.default
         ? packageJSON?.default.version
         : packageJSON?.version;
+
+    if (
+        process.env.MEERKAT_SIGNING_CERT_CHAIN
+        && process.env.MEERKAT_SIGNING_KEY
+    ) {
+        const chainFile = await fs.readFile(process.env.MEERKAT_SIGNING_CERT_CHAIN, { encoding: "utf-8" });
+        const keyFile = await fs.readFile(process.env.MEERKAT_SIGNING_KEY, { encoding: "utf-8" });
+        const pkiPath = decodePkiPathFromPEM(chainFile);
+        const dsaCert = pkiPath[pkiPath.length - 1];
+        if (!dsaCert) {
+            ctx.log.error(ctx.i18n.t("err:cert_chain_no_certificates", {
+                envvar: process.env.MEERKAT_SIGNING_CERT_CHAIN,
+            }));
+            process.exit(1);
+        }
+        ctx.dsa.signing = {
+            key: createPrivateKey({
+                key: keyFile,
+                format: "pem",
+            }),
+            certPath: pkiPath,
+        };
+        ctx.dsa.accessPoint.ae_title.rdnSequence.push(...dsaCert.toBeSigned.subject.rdnSequence);
+    } else {
+        ctx.log.warn(ctx.i18n.t("log:no_dsa_keypair"));
+    }
 
     await loadDIT(ctx);
     // The ordering of these is important.
@@ -169,7 +196,9 @@ async function main (): Promise<void> {
                     process.env.MEERKAT_INIT_JS,
                 );
             })()
-            : process.cwd();
+            : path.isAbsolute(process.env.MEERKAT_INIT_JS)
+                ? process.env.MEERKAT_INIT_JS
+                : path.join(process.cwd(), process.env.MEERKAT_INIT_JS);
         const mod = await import(/* webpackIgnore: true */ importPath);
         if (("default" in mod) && (typeof mod.default === "function")) {
             await mod.default(ctx);
