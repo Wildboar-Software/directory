@@ -81,7 +81,10 @@
                         "outputPath": "dist/apps/meerkat",
                         "main": "apps/meerkat/src/main.ts",
                         "tsConfig": "apps/meerkat/tsconfig.app.json",
-                        "assets": ["apps/meerkat/src/assets"],
+                        "assets": [
+                            "apps/meerkat/src/assets",
+                            "apps/meerkat/src/prisma"
+                        ],
                         "memoryLimit": 4096,
                         "maxWorkers": 4,
                         "generatePackageJson": true,
