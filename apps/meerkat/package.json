@@ -1,3 +1,33 @@
 {
-    "version": "1.0.0-beta.1"
+    "name": "@wildboar/meerkat-dsa",
+    "description": "X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.",
+    "bugs": {
+        "email": "jonathan@wilbur.space",
+        "url": "https://github.com/Wildboar-Software/directory/issues"
+    },
+    "contributors": [
+        {
+            "email": "jonathan@wilbur.space",
+            "name": "Jonathan M. Wilbur",
+            "url": "https://github.com/JonathanWilbur"
+        }
+    ],
+    "version": "1.0.0-beta.1",
+    "license": "MIT",
+    "bin": {
+        "meerkat": "./src/start-meerkat"
+    },
+    "keywords": [
+        "X.500",
+        "DSA",
+        "Directory",
+        "LDAP",
+        "DAP",
+        "X500",
+        "ITU"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Wildboar-Software/directory.git"
+    }
 }

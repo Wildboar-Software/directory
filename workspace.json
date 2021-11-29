@@ -83,7 +83,9 @@
                         "tsConfig": "apps/meerkat/tsconfig.app.json",
                         "assets": [
                             "apps/meerkat/src/assets",
-                            "apps/meerkat/src/prisma"
+                            "apps/meerkat/src/prisma",
+                            "apps/meerkat/src/start-meerkat",
+                            "apps/meerkat/src/README.md"
                         ],
                         "memoryLimit": 4096,
                         "maxWorkers": 4,
