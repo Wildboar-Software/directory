@@ -1,6 +1,6 @@
 FROM node:17-alpine
 LABEL author="Wildboar Software"
-LABEL version="1.0.0-beta.1"
+LABEL version="1.0.0-beta.2"
 LABEL app="meerkat"
 # RUN /usr/local/bin/node -v
 # RUN /usr/local/bin/npm -v

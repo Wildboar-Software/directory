@@ -47,9 +47,6 @@ import {
     SearchRequest_scope_baseObject,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
 import {
-    PartialAttribute,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
-import {
     modifyPassword,
     whoAmI,
     startTLS,
@@ -60,6 +57,7 @@ import createNoticeOfDisconnection from "./createNoticeOfDisconnection";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
+import getRootSubschema from "./getRootSubschema";
 
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
@@ -70,34 +68,6 @@ function isRootSubschemaDN (dn: Uint8Array): boolean {
         "2.5.4.3=#0C09737562736368656d61",
     ].includes(dnstr);
 }
-
-/**
- * NOTE: The subschemaSubentry in the Root DSE only points to the subschema
- * subentry that provides schema for the Root DSE. It is not used for other
- * directory entries. For this reason, we don't even need to read anything from
- * the database. And, in fact, it also appears that just returning an empty
- * attribute from the subschema subentry makes Apache Directory Studio stop
- * fussing!
- */
-const rootSubschemaPseudoVertexAttributes: PartialAttribute[] = [
-    new PartialAttribute(
-        Buffer.from("attributeTypes", "utf-8"),
-        [
-            Buffer.from("( 1.3.6.1.4.1.1466.101.120.6 NAME 'altServer' SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 USAGE dSAOperation )", "utf-8"),
-            Buffer.from("( 1.3.6.1.4.1.1466.101.120.5 NAME 'namingContexts' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 USAGE dSAOperation )", "utf-8"),
-            Buffer.from("( 1.3.6.1.4.1.1466.101.120.13 NAME 'supportedControl' SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 USAGE dSAOperation )", "utf-8"),
-            Buffer.from("( 1.3.6.1.4.1.1466.101.120.7 NAME 'supportedExtension' SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 USAGE dSAOperation )", "utf-8"),
-            Buffer.from("( 1.3.6.1.4.1.4203.1.3.5 NAME 'supportedFeatures' SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 USAGE dSAOperation )", "utf-8"),
-            Buffer.from("( 1.3.6.1.4.1.1466.101.120.15 NAME 'supportedLDAPVersion' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 USAGE dSAOperation )", "utf-8"),
-            Buffer.from("( 1.3.6.1.4.1.1466.101.120.14 NAME 'supportedSASLMechanisms' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 USAGE dSAOperation )", "utf-8"),
-            Buffer.from("( 2.5.18.3 NAME 'creatorsName' EQUALITY distinguishedNameMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
-            Buffer.from("( 2.5.18.1 NAME 'createTimestamp' EQUALITY generalizedTimeMatch ORDERING generalizedTimeOrderingMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
-            Buffer.from("( 2.5.18.4 NAME 'modifiersName' EQUALITY distinguishedNameMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
-            Buffer.from("( 2.5.18.2 NAME 'modifyTimestamp' EQUALITY generalizedTimeMatch ORDERING generalizedTimeOrderingMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
-            Buffer.from("( 1.3.6.1.1.16.4 NAME 'entryUUID' DESC 'UUID of the entry' EQUALITY uuidMatch ORDERING uuidOrderingMatch SYNTAX 1.3.6.1.1.16.1 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )", "utf-8"),
-        ],
-    ),
-];
 
 async function handleRequest (
     ctx: Context,
@@ -133,9 +103,27 @@ async function handleRequest (
         && isRootSubschemaDN(message.protocolOp.searchRequest.baseObject)
     ) {
         const successMessage = ctx.i18n.t("main:success");
+        /**
+         * We allow users to see schema at the Root DSE level if they are
+         * authenticated or if there are no passwords in the database. This is
+         * to preserve the privacy of directory schema despite the fact that
+         * no access controls can be applied to the Root DSE. If these
+         * conditions are not met, the user will only see a small selection of
+         * schema.
+         */
+        const permittedToSeeSchema: boolean = Boolean(conn.boundEntry || !(await ctx.db.password.findFirst({
+            where: {
+                entry: {
+                    deleteTimestamp: null,
+                },
+            },
+            select: {
+                id: true,
+            },
+        })));
         const entry = new SearchResultEntry(
             Buffer.from("cn=subschema", "utf-8"),
-            rootSubschemaPseudoVertexAttributes,
+            getRootSubschema(ctx, permittedToSeeSchema),
         );
         await onEntry(entry);
         const res = new LDAPMessage(
@@ -310,6 +298,8 @@ class LDAPConnection extends ClientConnection {
     private buffer: Buffer = Buffer.alloc(0);
     public boundEntry: Vertex | undefined;
 
+    // I _think_ this function MUST NOT be async, or this function could run
+    // multiple times out-of-sync, mutating `this.buffer` indeterminately.
     private handleData (ctx: Context, data: Buffer): void {
         this.buffer = Buffer.concat([
             this.buffer,
@@ -389,7 +379,19 @@ class LDAPConnection extends ClientConnection {
                             undefined,
                         );
                         this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-                    });
+                    })
+                    .finally(() => this.handleData(ctx, Buffer.alloc(0)));
+                /**
+                 * When we bind, we slice the buffer, which we would normally
+                 * do at the end of an iteration of this `while` loop, and then
+                 * we break out of the `while` loop to avoid processing more
+                 * messages until the bind returns with a response. When bind
+                 * finishes, it will call `handleData` again with an empty
+                 * buffer (a pseudo-packet) to continue processing enqueued
+                 * messages.
+                 */
+                this.buffer = this.buffer.slice(bytesRead);
+                break;
             } else if ("unbindRequest" in message.protocolOp) {
                 this.boundEntry = undefined;
                 this.authLevel = {

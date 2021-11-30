@@ -1,0 +1,29 @@
+apiVersion: v1
+entries:
+  meerkat-dsa:
+  - apiVersion: v2
+    appVersion: 1.0.0-beta.2
+    created: "2021-11-30T08:26:40.3040665-05:00"
+    description: X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.
+    digest: e94d01d1e874b9c99ce22ee7376da7411e7e1f9fe6b9a1423a5f6ae524296886
+    home: https://wildboarsoftware.com
+    keywords:
+    - directory
+    - X.500
+    - x500
+    - dsa
+    - ldap
+    - meerkat
+    - wildboar
+    maintainers:
+    - email: jonathan.wilbur@wildboarsoftware.com
+      name: Jonathan M. Wilbur
+      url: https://github.com/JonathanWilbur
+    name: meerkat-dsa
+    sources:
+    - https://github.com/Wildboar-Software/directory
+    type: application
+    urls:
+    - https://meerkatdsahelmtest.blob.core.windows.net/asdf/meerkat-dsa-0.2.0.tgz
+    version: 0.2.0
+generated: "2021-11-30T08:26:40.302909-05:00"

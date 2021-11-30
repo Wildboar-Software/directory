@@ -683,7 +683,7 @@ function convertAttributeSelectiontoEIS (
                 };
             }
         })(),
-        selectedContexts.length
+        selectedContexts.length // FIXME: This is causing duplicate attribute values to be read.
             ? {
                 selectedContexts: selectedContexts,
             }

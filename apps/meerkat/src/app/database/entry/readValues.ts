@@ -154,6 +154,7 @@ function *filterByTypeAndContextAssertion (
         // ...the attribute value contains no contexts of the asserted contextType
         if (!(value.contexts) || value.contexts.length === 0) {
             yield value;
+            continue;
         }
         const TYPE_OID: string = value.type.toString();
         const typeAndContextAssertions = [
@@ -164,6 +165,7 @@ function *filterByTypeAndContextAssertion (
             .flatMap((oid) => selectedContexts[oid] ?? []);
         if (typeAndContextAssertions.length === 0) {
             yield value; // There are no context assertions for this attribute type.
+            continue;
         }
         const contexts = (value.contexts ?? []).map((c) => new X500Context(
             c.contextType,
@@ -270,7 +272,6 @@ async function readValues (
         ? Array.from(selectedUserAttributes)
             .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
             .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler)
-        // : Array.from(userAttributeDatabaseReaders.values());
         : uniqueAttributeTypes
             .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
             .map((spec) => spec.driver!.readValues);
@@ -278,7 +279,6 @@ async function readValues (
         selectedOperationalAttributes !== undefined
     )
         ? ((selectedOperationalAttributes === null)
-            // ? Array.from(operationalAttributeDatabaseReaders.values())
             ? uniqueAttributeTypes
                 .filter((spec) => (spec.usage && (spec.usage !== AttributeUsage_userApplications)) && spec.driver)
                 .map((spec) => spec.driver!.readValues)
