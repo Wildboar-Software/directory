@@ -1,0 +1,38 @@
+# NOTE: The web admin service is deliberately excluded. Because it is security
+# sensitive, it will need to be manually deployed. The port is still exposed by
+# the pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: directory
+  labels:
+    {{- include "meerkat-dsa.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    {{- if .Values.idm.port }}
+    - name: idm
+      protocol: TCP
+      port: {{ .Values.idm.port | default 4632 | int }}
+      targetPort: 4632
+    {{- if .Values.tlsSecretName }}
+    - name: idms
+      protocol: TCP
+      port: {{ .Values.idms.port | default 44632 | int }}
+      targetPort: 44632
+    {{- end }}
+    {{- end }}
+    {{- if .Values.ldap.port }}
+    - name: ldap
+      protocol: TCP
+      port: {{ .Values.ldap.port | default 389 | int }}
+      targetPort: 1389 # We use 1389 instead of 389 because ports under 1000 are privileged.
+    {{- if .Values.tlsSecretName }}
+    - name: ldaps
+      protocol: TCP
+      port: {{ .Values.ldaps.port | default 636 | int }}
+      targetPort: 1636 # We use 1636 instead of 389 because ports under 1000 are privileged.
+    {{- end }}
+    {{- end }}
+  selector:
+    {{- include "meerkat-dsa.selectorLabels" . | nindent 4 }}

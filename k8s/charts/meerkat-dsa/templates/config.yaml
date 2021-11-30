@@ -1,0 +1,48 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "meerkat-dsa.fullname" . }}-config
+  namespace: default
+  labels:
+    {{- include "meerkat-dsa.labels" . | nindent 4 }}
+data:
+  locale: {{ .Values.locale }}
+  {{- if .Values.dapEnabled }}
+  idmPort: "4632"
+  idmsPort: "44632"
+  {{- end }}
+  {{- if .Values.ldapEnabled }}
+  ldapPort: "1389" # We use 1389 instead of 389 because ports under 1000 are privileged.
+  ldapsPort: "1636" # We use 1636 instead of 636 because ports under 1000 are privileged.
+  {{- end }}
+  {{- if .Values.webAdminEnabled }}
+  webAdminPort: "18080"
+  {{- end }}
+  {{- if .Values.administratorEmail }}
+  administratorEmail: {{ .Values.administratorEmail | quote }}
+  {{- end }}
+  {{- if .Values.sentinelDomain }}
+  sentinelDomain: {{ .Values.sentinelDomain | quote }}
+  {{- end }}
+  bindMinSleep: {{ .Values.bindMinSleep | default 1000 | quote }}
+  bindSleepRange: {{ .Values.bindSleepRange | default 3000 | quote }}
+  minAuthLevelForOB: {{ .Values.minAuthLevelForOB | default 1 | quote }}
+  minAuthLocalQualifierForOB: {{ .Values.minAuthLocalQualifierForOB | default 128 | quote }}
+  {{- if .Values.myAccessPointNSAPs }}
+  myAccessPointNSAPs: {{ .Values.myAccessPointNSAPs | quote }}
+  {{- end }}
+  useDatabaseWhenThereAreXSubordinates: {{ .Values.useDatabaseWhenThereAreXSubordinates | default 1000 | quote }}
+  entriesPerSubordinatesPage: {{ .Values.entriesPerSubordinatesPage | default 100 | quote }}
+  {{- if .Values.transcodeValuestoDER }}
+  transcodeValuestoDER: "1"
+  {{- end }}
+  {{- if .Values.transcodeDistinguishedValuesToDER }}
+  transcodeDistinguishedValuesToDER: "1"
+  {{- end }}
+  {{- if .Values.bulkInsertMode }}
+  bulkInsertMode: "1"
+  {{- end }}
+  {{- if .Values.init }}
+  init: |-
+{{ toYaml .Values.init | indent 4 }}
+  {{- end }}

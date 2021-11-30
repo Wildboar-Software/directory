@@ -1,0 +1,236 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "meerkat-dsa.fullname" . }}
+  labels:
+    {{- include "meerkat-dsa.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "meerkat-dsa.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "meerkat-dsa.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: LC_ALL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: locale
+            - name: LANG
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: locale
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.databaseSecretName }}
+                  key: databaseUrl
+            {{- if .Values.dapEnabled }}
+            - name: MEERKAT_IDM_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: idmPort
+            {{- if .Values.tlsSecretName }}
+            - name: MEERKAT_IDMS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: idmsPort
+            {{- end }}
+            {{- end }}
+            {{- if .Values.ldapEnabled }}
+            - name: MEERKAT_LDAP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: ldapPort
+            {{- if .Values.tlsSecretName }}
+            - name: MEERKAT_LDAPS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: ldapsPort
+            {{- end }}
+            {{- end }}
+            {{- if .Values.webAdminEnabled }}
+            - name: MEERKAT_WEB_ADMIN_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: webAdminPort
+            {{- end }}
+            {{- if .Values.tlsSecretName }}
+            - name: MEERKAT_SERVER_TLS_CERT
+              value: /data/pki/tls/tls-cert.pem
+            {{- end }}
+            {{- if .Values.tlsSecretName }}
+            - name: MEERKAT_SERVER_TLS_KEY
+              value: /data/pki/tls/tls-key.pem
+            {{- end }}
+            {{- if .Values.signingSecretName }}
+            - name: MEERKAT_SIGNING_CERT_CHAIN
+              value: /data/pki/signing/sig-cert.pem
+            {{- end }}
+            {{- if .Values.signingSecretName }}
+            - name: MEERKAT_SIGNING_KEY
+              value: /data/pki/signing/sig-key.pem
+            {{- end }}
+            {{- if .Values.sentinelDomain }}
+            - name: MEERKAT_SENTINEL_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: sentinelDomain
+            {{- end }}
+            {{- if .Values.administratorEmail }}
+            - name: MEERKAT_ADMINISTRATOR_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: administratorEmail
+            {{- end }}
+            - name: MEERKAT_BIND_MIN_SLEEP_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: bindMinSleep
+            - name: MEERKAT_BIND_SLEEP_RANGE_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: bindSleepRange
+            - name: MEERKAT_MIN_AUTH_LEVEL_FOR_OB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: minAuthLevelForOB
+            - name: MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: minAuthLocalQualifierForOB
+            {{- if .Values.myAccessPointNSAPs }}
+            - name: MEERKAT_MY_ACCESS_POINT_NSAPS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: myAccessPointNSAPs
+            {{- end }}
+            - name: MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: useDatabaseWhenThereAreXSubordinates
+            - name: MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: entriesPerSubordinatesPage
+            {{- if .Values.transcodeValuestoDER }}
+            - name: MEERKAT_TRANSCODE_VALUES_TO_DER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: transcodeValuestoDER
+            {{- end }}
+            {{- if .Values.transcodeDistinguishedValuesToDER }}
+            - name: MEERKAT_TRANSCODE_DISTINGUISHED_VALUES_TO_DER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: transcodeDistinguishedValuesToDER
+            {{- end }}
+            {{- if .Values.init }}
+            - name: MEERKAT_INIT_JS
+              value: /data/init/init.mjs
+            {{- end }}
+            {{- if .Values.bulkInsertMode }}
+            - name: MEERKAT_BULK_INSERT_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: bulkInsertMode
+            {{- end }}
+          ports:
+            {{- if .Values.dapEnabled }}
+            - name: idm
+              containerPort: 4632
+              protocol: TCP
+            - name: idms
+              containerPort: 44632
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.ldapEnabled }}
+            - name: ldap
+              containerPort: 389
+              protocol: TCP
+            - name: ldaps
+              containerPort: 636
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.webAdminEnabled }}
+            - name: admin
+              containerPort: 18080
+              protocol: TCP
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.signingSecretName }}
+            - name: config
+              mountPath: "/data/pki/signing"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.tlsSecretName }}
+            - name: config
+              mountPath: "/data/pki/tls"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.init }}
+            - name: config
+              mountPath: "/data/init"
+              readOnly: true
+            {{- end }}
+      {{- with .Values.nodeSelector }}
+      volumes:
+        {{- if .Values.signingSecretName }}
+        - name: signing-volume
+          secret:
+            secretName: {{ .Values.signingSecretName | quote }}
+        {{- end }}
+        {{- if .Values.tlsSecretName }}
+        - name: tls-secret-volume
+          secret:
+            secretName: {{ .Values.tlsSecretName | quote }}
+        {{- end }}
+        {{- if .Values.init }}
+        - name: init-volume
+          configMap:
+            name: {{ include "meerkat-dsa.fullname" . }}-config
+            items:
+              - key: init
+                path: init.mjs
+        {{- end }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
