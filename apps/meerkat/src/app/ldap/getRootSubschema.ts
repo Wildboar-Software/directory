@@ -33,8 +33,17 @@ const rootAttributeTypesValues: Buffer[] = [
  * defined in this DSA.
  */
 function getRootSubschema (ctx: Context, permittedToSeeSchema: boolean): PartialAttribute[] {
-    const attributeTypesValues: Buffer[] = [ ...rootAttributeTypesValues ];
+    const attributeTypesValues: Buffer[] = permittedToSeeSchema
+        ? [] // Do not include the hard-coded list, otherwise, they'll be duplicated.
+        : [ ...rootAttributeTypesValues ];
     const attributes: PartialAttribute[] = [
+        new PartialAttribute(
+            Buffer.from("objectClass", "utf-8"),
+            [
+                Buffer.from("subentry", "utf-8"),
+                Buffer.from("subschema", "utf-8"),
+            ],
+        ),
         new PartialAttribute(
             Buffer.from("attributeTypes", "utf-8"),
             attributeTypesValues,

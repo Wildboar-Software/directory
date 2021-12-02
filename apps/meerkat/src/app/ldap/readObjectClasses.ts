@@ -47,11 +47,11 @@ function readObjectClasses (
             const fields: string[] = [
                 oc.id.toString(),
             ];
-            if (oc.name?.length) {
-                fields.push(`NAME ( ${oc.name.map((n) => `'${escape(n)}'`)} )`);
+            if (oc.ldapNames?.length) {
+                fields.push(`NAME ( ${oc.ldapNames.map((n) => `'${escape(n)}'`).join(" ")} )`);
             }
-            if (oc.description) {
-                fields.push(`DESC '${escape(oc.description)}'`);
+            if (oc.ldapDescription) {
+                fields.push(`DESC '${escape(oc.ldapDescription)}'`);
             }
             if (oc.obsolete) {
                 fields.push("OBSOLETE");

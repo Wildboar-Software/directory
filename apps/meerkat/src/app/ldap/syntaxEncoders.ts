@@ -69,13 +69,14 @@ function ock2str (ock: ObjectClassKind): string {
 
 function au2str (au: AttributeUsage): string {
     switch (au) {
-        case(AttributeUsage_dSAOperation): return "userApplications";
-        case(AttributeUsage_directoryOperation): return "directoryOperation";
-        case(AttributeUsage_distributedOperation): return "distributedOperation";
-        case(AttributeUsage_userApplications): return "dSAOperation";
+        case (AttributeUsage_userApplications): return "userApplications";
+        case (AttributeUsage_directoryOperation): return "directoryOperation";
+        case (AttributeUsage_distributedOperation): return "distributedOperation";
+        case (AttributeUsage_dSAOperation): return "dSAOperation";
         default: return "userApplications";
     }
 }
+
 
 export
 const objectClasses: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {

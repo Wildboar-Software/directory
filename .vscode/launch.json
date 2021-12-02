@@ -13,7 +13,7 @@
                 "<node_internals>/**"
             ],
             "outFiles": [
-                "${workspaceFolder}/**/*.js"
+                "${workspaceFolder}/dist/apps/meerkat/**/*.js"
             ]
         }
     ]

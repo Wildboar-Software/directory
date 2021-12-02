@@ -5,9 +5,6 @@ image:
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
-serviceAccount:
-  create: true
-  name:
 service:
   type: ClusterIP
 idm:
@@ -43,5 +40,5 @@ useDatabaseWhenThereAreXSubordinates: 1000
 entriesPerSubordinatesPage: 100
 transcodeValuestoDER: true
 transcodeDistinguishedValuesToDER: true
-bulkInsertMode: true
+bulkInsertMode: false
 # init

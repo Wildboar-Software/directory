@@ -589,7 +589,7 @@ function convertAttributeSelectiontoEIS (
     const selectedContexts: TypeAndContextAssertion[] = [];
     const returnAllUserAttributesExclusively: boolean = (selection.length === 0); // Case #1
     const returnAllUserAttributesInclusively: boolean = selection
-        .some((attr) => (attr[0] === 0x2A)); // Case #2
+        .some((attr) => (attr[0] === 0x2A)); // Case #2 "*"
     const returnNoAttributes: boolean = (
         (selection.length === 1)
         && !Buffer.compare(selection[0], Buffer.from([ 0x31, 0x2E, 0x31 ]))
@@ -683,7 +683,7 @@ function convertAttributeSelectiontoEIS (
                 };
             }
         })(),
-        selectedContexts.length // FIXME: This is causing duplicate attribute values to be read.
+        selectedContexts.length
             ? {
                 selectedContexts: selectedContexts,
             }

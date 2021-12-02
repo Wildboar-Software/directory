@@ -2,20 +2,42 @@ import {
     ASN1Element,
     ASN1UniversalType,
     ASN1TagClass,
+    BIT_STRING,
     OCTET_STRING,
     RELATIVE_OID,
     TIME_OF_DAY,
+    packBits,
 } from "asn1-ts";
 
 type SortKey = bigint | null;
 
+/**
+ * @description
+ *
+ * You might be wondering why the blank buffer begins with the most significant
+ * byte unset (assuming it is big-endian). This is because, outside of MySQL,
+ * unsigned integers are not supported. To work across multiple database, all
+ * of these values must be able to fit within signed big integers. With that in
+ * mind, you _could_ theoretically try to use the seven bits following the most
+ * significant bit, but it would mean that, to sort properly, you'd have to
+ * shift every byte over by one bit, which would be a far worse outcome. Seven
+ * bytes are generally enough to differentiate values of a given type.
+ *
+ * @returns
+ */
 function createBlankBigIntBuffer (): Buffer {
-    return Buffer.from([ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF ]);
+    return Buffer.from([ 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF ]);
+}
+
+function calculateSortKeyForBitString (bits: BIT_STRING): SortKey {
+    const buf = createBlankBigIntBuffer();
+    buf.set(packBits(bits).slice(0, 7), 1);
+    return buf.readBigUInt64BE();
 }
 
 function calculateSortKeyForOctetString (octetString: OCTET_STRING): SortKey {
     const buf = createBlankBigIntBuffer();
-    buf.set(octetString.slice(0, 8), 0);
+    buf.set(octetString.slice(0, 7), 1);
     return buf.readBigUInt64BE();
 }
 
@@ -23,7 +45,7 @@ function calculateSortKeyForObjectIdentifier (el: ASN1Element): SortKey {
     const oid = el.objectIdentifier;
     const nodes = oid.nodes;
     const buf = createBlankBigIntBuffer();
-    buf.set(el.value.slice(0, 8), 0);
+    buf.set(el.value.slice(0, 7), 1);
     buf.writeUInt16BE(Math.min(nodes[nodes.length - 2], 65535), 4);
     buf.writeUInt16BE(Math.min(nodes[nodes.length - 1], 65535), 6);
     return buf.readBigUInt64BE();
@@ -31,8 +53,9 @@ function calculateSortKeyForObjectIdentifier (el: ASN1Element): SortKey {
 
 function calculateSortKeyForROID (roid: RELATIVE_OID): SortKey {
     const buf = createBlankBigIntBuffer();
+    buf[1] = Math.max(roid[0], 0xFF);
     roid
-        .slice(0, 4)
+        .slice(1, 4)
         .forEach((arc, i) => {
             buf.writeUInt16BE(Math.min(arc, 65535), i * 2);
         });
@@ -41,20 +64,20 @@ function calculateSortKeyForROID (roid: RELATIVE_OID): SortKey {
 
 function calculateSortKeyForReal (el: ASN1Element): SortKey {
     const buf = createBlankBigIntBuffer();
-    buf.set(el.value.slice(0, 8), 0);
+    buf.set(el.value.slice(0, 7), 1);
     return buf.readBigUInt64BE();
 }
 
 function calculateSortKeyForString (str: string): SortKey {
     const buf = createBlankBigIntBuffer();
-    buf.set(Buffer.from(str.toLowerCase(), "utf-8").slice(0, 8), 0);
+    buf.set(Buffer.from(str.toLowerCase(), "utf-8").slice(0, 7), 1);
     return buf.readBigUInt64BE();
 }
 
 function calculateSortKeyForNumericString (str: string): SortKey {
     const buf = createBlankBigIntBuffer();
     const normalized = str.replace(/\s+/, "");
-    buf.set(Buffer.from(normalized, "utf-8").slice(0, 8), 0);
+    buf.set(Buffer.from(normalized, "utf-8").slice(0, 7), 1);
     return buf.readBigUInt64BE();
 }
 
@@ -76,7 +99,7 @@ function calculateSortKey (element: ASN1Element): SortKey {
             case (ASN1UniversalType.endOfContent): return null;
             case (ASN1UniversalType.boolean): return BigInt(element.boolean ? 1 : 0);
             case (ASN1UniversalType.integer): return BigInt(element.integer);
-            case (ASN1UniversalType.bitString): return null;
+            case (ASN1UniversalType.bitString): return calculateSortKeyForBitString(element.bitString);
             case (ASN1UniversalType.octetString): return calculateSortKeyForOctetString(element.octetString);
             case (ASN1UniversalType.nill): return null;
             case (ASN1UniversalType.objectIdentifier): return calculateSortKeyForObjectIdentifier(element);

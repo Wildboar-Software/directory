@@ -16,10 +16,10 @@ function escape (str: string): string {
 
 function au2str (au: AttributeUsage): string {
     switch (au) {
-        case(AttributeUsage_dSAOperation): return "userApplications";
-        case(AttributeUsage_directoryOperation): return "directoryOperation";
-        case(AttributeUsage_distributedOperation): return "distributedOperation";
-        case(AttributeUsage_userApplications): return "dSAOperation";
+        case (AttributeUsage_userApplications): return "userApplications";
+        case (AttributeUsage_directoryOperation): return "directoryOperation";
+        case (AttributeUsage_distributedOperation): return "distributedOperation";
+        case (AttributeUsage_dSAOperation): return "dSAOperation";
         default: return "userApplications";
     }
 }
@@ -49,11 +49,11 @@ function readAttributeTypes (
             const fields: string[] = [
                 attr.id.toString(),
             ];
-            if (attr.name?.length) {
-                fields.push(`NAME ( ${attr.name.map((n) => `'${escape(n)}'`)} )`);
+            if (attr.ldapNames?.length) {
+                fields.push(`NAME ( ${attr.ldapNames.map((n) => `'${escape(n)}'`).join(" ")} )`);
             }
-            if (attr.description) {
-                fields.push(`DESC '${escape(attr.description)}'`);
+            if (attr.ldapDescription) {
+                fields.push(`DESC '${escape(attr.ldapDescription)}'`);
             }
             if (attr.obsolete) {
                 fields.push("OBSOLETE");
