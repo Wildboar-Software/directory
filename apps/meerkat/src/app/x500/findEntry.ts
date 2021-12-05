@@ -27,16 +27,9 @@ async function findEntry (
     const query: DistinguishedName = [ ...dn ];
     const queriedRDN = query.shift();
     if (!queriedRDN) {
-        return undefined;
+        return undefined; // This should never happen.
     }
-    const rdnMatched = compareRDN(queriedRDN, currentVertex.dse.rdn, NAMING_MATCHER);
-    if (!rdnMatched) {
-        return undefined;
-    }
-    if (query.length === 0) {
-        return currentVertex; // We matched the last RDN of the query.
-    }
-    let cursorId: number = 0;
+    let cursorId: number = currentVertex.subordinates?.[0]?.dse.id ?? 0;
     const getNextBatchOfSubordinates = () => readChildren(
         ctx,
         currentVertex,
@@ -60,6 +53,14 @@ async function findEntry (
     let subordinates = await getNextBatchOfSubordinates();
     while (subordinates.length) {
         for (const subordinate of subordinates) {
+            const rdnMatched = compareRDN(queriedRDN, subordinate.dse.rdn, NAMING_MATCHER);
+            if (!rdnMatched) {
+                cursorId = subordinate.dse.id;
+                continue;
+            }
+            if (query.length === 0) {
+                return subordinate;
+            }
             const found = await findEntry(ctx, subordinate, query, derefAliases);
             if (found) {
                 return found;

@@ -9,6 +9,9 @@ import readAttributes from "./readAttributes";
 import type {
     ContextSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
+import {
+    EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
 
 export
 async function readEntryInformation (
@@ -30,10 +33,10 @@ async function readEntryInformation (
         ...collectiveAttributes,
     ];
     return attributes
-        .map((attribute): EntryInformation_information_Item => (
+        .map((attribute): EntryInformation_information_Item => ((
             attribute.values.length
             + (attribute.valuesWithContext?.length ?? 0)
-        )
+        ) && (eis?.infoTypes !== typesOnly))
             ? {
                 attribute,
             }

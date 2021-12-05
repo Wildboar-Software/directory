@@ -157,6 +157,49 @@ import {
 import {
     ModifyDNArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
+import {
+    EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+import {
+    administerPassword,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+import {
+    AdministerPasswordArgument,
+    _encode_AdministerPasswordArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
+import {
+    AdministerPasswordArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta";
+import {
+    changePassword,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+import {
+    ChangePasswordArgument,
+    _encode_ChangePasswordArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta";
+import {
+    ChangePasswordArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgumentData.ta";
+import {
+    search,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+import {
+    SearchArgument,
+    _encode_SearchArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+import {
+    SearchArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+import {
+    SearchArgumentData_subset,
+    SearchArgumentData_subset_baseObject,
+    SearchArgumentData_subset_oneLevel,
+    SearchArgumentData_subset_wholeSubtree,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+import {
+    SearchResult,
+    _decode_SearchResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 
 jest.setTimeout(10000);
 
@@ -190,6 +233,16 @@ function frame (ber: ASN1Element): Buffer {
 
 const HOST: string = "localhost";
 const PORT: number = 4632;
+
+const encodedDesc = _encode_UnboundedDirectoryString({
+    uTF8String: "testeroo",
+}, DER);
+
+function utf8 (str: string): ASN1Element {
+    return _encode_UnboundedDirectoryString({
+        uTF8String: str,
+    }, DER);
+}
 
 async function connect (): Promise<IDMConnection> {
     const dba = new DirectoryBindArgument(
@@ -299,10 +352,12 @@ function writeOperation (
 async function createTestRootNode (
     connection: IDMConnection,
     testId: string,
+    extraAttributes?: Attribute[],
 ): Promise<ResultOrError> {
     const encodedCN = _encode_UnboundedDirectoryString({
         uTF8String: testId,
     }, DER);
+
     const addTestRoot = createAddEntryArguments(
         createTestRootDN(testId),
         [
@@ -327,6 +382,14 @@ async function createTestRootNode (
                 ],
                 undefined,
             ),
+            new Attribute(
+                description["&id"],
+                [
+                    encodedDesc,
+                ],
+                undefined,
+            ),
+            ...(extraAttributes ?? []),
         ],
     );
     const invokeID = crypto.randomInt(1_000_000);
@@ -616,8 +679,86 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    it.skip("Search", async () => {
-
+    it("Search", async () => {
+        const testId = `Search-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const excludedResultId: string = "8DFCA253-EAE2-4C2D-AC6D-455340BF759E";
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            excludedResultId,
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            { // Filter out one result.
+                not: {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            commonName["&id"],
+                            utf8(excludedResultId),
+                            undefined,
+                        ),
+                    },
+                },
+            },
+            true,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                /**
+                 * You might think this search is supposed to return three
+                 * results, but don't forget: you are using subtree scope, so
+                 * the baseObject will be returned as a result too!
+                 */
+                expect(resData.searchInfo.entries.length).toBe((subordinates.length - 1) + 1); // For clarity.
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
     // This test is unnecessary, because almost every test creates an entry for test data.
@@ -676,7 +817,7 @@ describe("Meerkat DSA", () => {
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyEntry", async () => {
+    it("ModifyEntry", async () => {
         const testId = `ModifyEntry-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
@@ -724,17 +865,27 @@ describe("Meerkat DSA", () => {
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyDN", async () => {
+    it("ModifyDN", async () => {
         const testId = `ModifyDN-${(new Date()).toISOString()}`;
+        const newdesc = utf8(`${testId}-moved`);
         { // Setup
-            await createTestRootNode(connection!, testId);
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [newdesc],
+                    undefined,
+                ),
+            ]);
         }
         const dn = createTestRootDN(testId);
-        const newTestId = `ModifyDN-${(new Date()).toISOString()}`;
-        const newDN = createTestRootDN(newTestId);
         const reqData: ModifyDNArgumentData = new ModifyDNArgumentData(
             dn,
-            newDN[0],
+            [
+                new AttributeTypeAndValue(
+                    description["&id"],
+                    newdesc,
+                ),
+            ],
             false,
             undefined,
             [],
@@ -759,16 +910,81 @@ describe("Meerkat DSA", () => {
             modifyDN["&operationCode"]!,
             _encode_ModifyDNArgument(arg, DER),
         );
+        if ("error" in result) {
+            console.log(result.errcode);
+            console.log(result.error);
+        }
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    // TODO: Bookmark
-    it.skip("AdministerPassword", async () => {
-
+    it("AdministerPassword", async () => {
+        const testId = `AdministerPassword-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: AdministerPasswordArgumentData = new AdministerPasswordArgumentData(
+            dn,
+            {
+                clear: "asdf",
+            },
+        );
+        const arg: AdministerPasswordArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            administerPassword["&operationCode"]!,
+            _encode_AdministerPasswordArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ChangePassword", async () => {
-
+    it("ChangePassword", async () => {
+        const testId = `ChangePassword-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const INITIAL_PASSWORD: string = "asdf";
+        const FINAL_PASSWORD: string = "zxcv";
+        { // Setup: create an initial password
+            await createTestRootNode(connection!, testId);
+            const reqData: AdministerPasswordArgumentData = new AdministerPasswordArgumentData(
+                dn,
+                {
+                    clear: INITIAL_PASSWORD,
+                },
+            );
+            const arg: AdministerPasswordArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                administerPassword["&operationCode"]!,
+                _encode_AdministerPasswordArgument(arg, DER),
+            );
+            expect(("result" in result) && result.result).toBeTruthy();
+        }
+        const reqData: ChangePasswordArgumentData = new ChangePasswordArgumentData(
+            dn,
+            {
+                clear: INITIAL_PASSWORD,
+            },
+            {
+                clear: FINAL_PASSWORD,
+            },
+        );
+        const arg: ChangePasswordArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            changePassword["&operationCode"]!,
+            _encode_ChangePasswordArgument(arg, DER),
+        );
+        if ("error" in result) {
+            console.log(result.errcode);
+            console.log(result.error);
+        }
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
     it.skip("Read.modifyRightsRequest", async () => {
@@ -779,54 +995,63 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("Read.selection.infoTypes", async () => {
-        const testId = `Read-${(new Date()).toISOString()}`;
-        { // Setup
-            await createTestRootNode(connection!, testId);
-        }
-        const dn = createTestRootDN(testId);
-        const reqData: ReadArgumentData = new ReadArgumentData(
-            {
-                rdnSequence: dn,
-            },
-            undefined,
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        );
-        const arg: ReadArgument = {
-            unsigned: reqData,
-        };
-        const result = await writeOperation(
-            connection!,
-            read["&operationCode"]!,
-            _encode_ReadArgument(arg, DER),
-        );
-        if ("result" in result && result.result) {
-            const decoded = _decode_ReadResult(result.result);
-            const resData = getOptionallyProtectedValue(decoded);
-            const cn: EntryInformation_information_Item | undefined = resData.entry.information
-                ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"]));
-            if (cn && "attribute" in cn) {
-                expect(cn.attribute.values[0]?.utf8String).toBe(testId);
-            } else {
-                expect(false).toBeTruthy();
-            }
-        } else {
-            expect(false).toBeTruthy();
-        }
-    });
+    // it("Read.selection.infoTypes", async () => {
+    //     const testId = `Read.selection.infoTypes-${(new Date()).toISOString()}`;
+    //     { // Setup
+    //         await createTestRootNode(connection!, testId);
+    //     }
+    //     const dn = createTestRootDN(testId);
+    //     const selection = new EntryInformationSelection(
+    //         {
+    //             select: [
+    //                 new ObjectIdentifier([ 2, 5, 4, 3 ]),
+    //             ],
+    //         },
+    //         typesOnly,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //     );
+    //     const reqData: ReadArgumentData = new ReadArgumentData(
+    //         {
+    //             rdnSequence: dn,
+    //         },
+    //         selection,
+    //         undefined,
+    //         [],
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //         undefined,
+    //     );
+    //     const arg: ReadArgument = {
+    //         unsigned: reqData,
+    //     };
+    //     const result = await writeOperation(
+    //         connection!,
+    //         read["&operationCode"]!,
+    //         _encode_ReadArgument(arg, DER),
+    //     );
+    //     if ("result" in result && result.result) {
+    //         const decoded = _decode_ReadResult(result.result);
+    //         const resData = getOptionallyProtectedValue(decoded);
+    //         expect(resData.entry.information?.length).toBe(1);
+    //         const cn: EntryInformation_information_Item | undefined = resData.entry.information
+    //             ?.find((einfo) => ("attributeType" in einfo) && einfo.attributeType.isEqualTo(commonName["&id"]));
+    //         expect(cn).toBeDefined();
+    //     } else {
+    //         expect(false).toBeTruthy();
+    //     }
+    // });
 
     it.skip("Read.selection.contextSelection.selectedContexts.all", async () => {
 

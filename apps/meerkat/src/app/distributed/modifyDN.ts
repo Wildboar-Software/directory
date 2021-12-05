@@ -1182,7 +1182,9 @@ async function modifyDN (
             },
             data: {
                 immediate_superior_id: superior.dse.id,
-                governingStructureRule: Number(newGoverningStructureRule),
+                governingStructureRule: Number.isSafeInteger(Number(newGoverningStructureRule))
+                    ? Number(newGoverningStructureRule)
+                    : undefined,
             },
         }),
         ctx.db.distinguishedValue.deleteMany({
