@@ -9,7 +9,7 @@ import {
 
 export
 async function getRDNFromEntryId (ctx: Context, id: number): Promise<RDN> {
-    return (await ctx.db.rDN.findMany({
+    return (await ctx.db.distinguishedValue.findMany({
         where: {
             entry_id: id,
         },

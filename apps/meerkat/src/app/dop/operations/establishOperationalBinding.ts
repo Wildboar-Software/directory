@@ -246,7 +246,7 @@ async function establishOperationalBinding (
                     .map((ob) => ob.binding_identifier),
             );
             let newBindingIdentifier!: number;
-            if (typeof data.bindingID?.identifier === "number") {
+            if (typeof data.bindingID?.identifier === "number") { // TODO: This could be BigInt
                 if (alreadyTakenBindingIDs.has(data.bindingID.identifier)) {
                     throw new errors.OperationalBindingError(
                         ctx.i18n.t("err:ob_duplicate_identifier", {

@@ -4,18 +4,22 @@
 // appears shall be used. Models shall always be upper camel-cased.
 
 datasource db {
-    url      = env("DATABASE_URL")
-    // provider = "postgresql"
-    provider = "mysql"
+  url      = env("DATABASE_URL")
+  // provider = "postgresql"
+  provider = "mysql"
 }
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
-type OID = String // Period-delimited numeric-only object identifiers.
+type OID = String
 
-type OIDs = String // Space-delimited, period-delimited numeric-only object identifiers.
+// Period-delimited numeric-only object identifiers.
+
+type OIDs = String
+
+// Space-delimited, period-delimited numeric-only object identifiers.
 
 type Names = String
 
@@ -23,137 +27,140 @@ type Names = String
 // shall NOT be a part of this model. They should only be kept in the subentry,
 // just like collective attributes.
 model Entry {
-    id        Int     @id @default(autoincrement())
-    // LDAP operational attributes
-    // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
-    entryUUID String? // @db.Uuid
-    // A separate attribute for identifying a DSE. entryUUID cannot be used to
-    // identify DSEs, because in shadow DSEs, it may not be known.
-    dseUUID   String  @default(uuid())
+  id        Int     @id @default(autoincrement())
+  // LDAP operational attributes
+  // See IETF RFC 4512: https://datatracker.ietf.org/doc/html/rfc4512#section-3.
+  entryUUID String? // @db.Uuid
+  // A separate attribute for identifying a DSE. entryUUID cannot be used to
+  // identify DSEs, because in shadow DSEs, it may not be known.
+  dseUUID   String  @default(uuid())
 
-    immediate_superior_id Int?
-    immediate_superior    Entry? @relation(name: "superior", fields: [immediate_superior_id], references: [id])
+  immediate_superior_id Int?
+  immediate_superior    Entry? @relation(name: "superior", fields: [immediate_superior_id], references: [id])
 
-    // DSE Types
-    //   root          Boolean @default(false) // Indicated by having no immediate superior.
-    glue       Boolean @default(false)
-    cp         Boolean @default(false)
-    entry      Boolean @default(false)
-    // In theory, this could be inferred from the existence of aliased_entry_dn,
-    // but shadowing means that the SDSEType could portend that the entry is
-    // an alias without replicating the `aliasedEntryName` attribute.
-    alias      Boolean @default(false)
-    subr       Boolean @default(false)
-    nssr       Boolean @default(false)
-    //   supr          Boolean @default(false) // Only applies to the Root DSE. True if there is a Knowledge of type SUPERIOR.
-    xr         Boolean @default(false)
-    // In theory, this could be inferred from the existence of administrative
-    // role but shadowing means that the SDSEType could portend that the entry
-    // is an administrative point without replicating the `administrativeRole`
-    // attribute.
-    admPoint   Boolean @default(false)
-    subentry   Boolean @default(false)
-    shadow     Boolean @default(false)
-    immSupr    Boolean @default(false)
-    rhob       Boolean @default(false)
-    sa         Boolean @default(false)
-    dsSubentry Boolean @default(false)
-    //   familyMember  Boolean @default(false) True if parent or child in
-    //   ditBridge     Boolean @default(false) // Only applies to Root DSE if other DITs are defined.
-    //   writeableCopy Boolean @default(false) // Not used.
+  // DSE Types
+  //   root          Boolean @default(false) // Indicated by having no immediate superior.
+  glue       Boolean @default(false)
+  cp         Boolean @default(false)
+  entry      Boolean @default(false)
+  // In theory, this could be inferred from the existence of aliased_entry_dn,
+  // but shadowing means that the SDSEType could portend that the entry is
+  // an alias without replicating the `aliasedEntryName` attribute.
+  alias      Boolean @default(false)
+  subr       Boolean @default(false)
+  nssr       Boolean @default(false)
+  //   supr          Boolean @default(false) // Only applies to the Root DSE. True if there is a Knowledge of type SUPERIOR.
+  xr         Boolean @default(false)
+  // In theory, this could be inferred from the existence of administrative
+  // role but shadowing means that the SDSEType could portend that the entry
+  // is an administrative point without replicating the `administrativeRole`
+  // attribute.
+  admPoint   Boolean @default(false)
+  subentry   Boolean @default(false)
+  shadow     Boolean @default(false)
+  immSupr    Boolean @default(false)
+  rhob       Boolean @default(false)
+  sa         Boolean @default(false)
+  dsSubentry Boolean @default(false)
+  //   familyMember  Boolean @default(false) True if parent or child in
+  //   ditBridge     Boolean @default(false) // Only applies to Root DSE if other DITs are defined.
+  //   writeableCopy Boolean @default(false) // Not used.
 
-    // Single-valued attributes
-    createTimestamp  DateTime // Can be non-null: even SDSEs are required to transmit createTimestamp.
-    modifyTimestamp  DateTime // Can be non-null: even SDSEs are required to transmit modifyTimestamp.
-    deleteTimestamp  DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
-    creatorsName     Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    modifiersName    Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  // Single-valued attributes
+  createTimestamp DateTime // Can be non-null: even SDSEs are required to transmit createTimestamp.
+  modifyTimestamp DateTime // Can be non-null: even SDSEs are required to transmit modifyTimestamp.
+  deleteTimestamp DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
+  creatorsName    Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  modifiersName   Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
 
-    // This should be stored, rather than calculated. The reason for this is that
-    // the permitted superior structure rules refers to the governingStructureRule
-    // value of the superior entry. If this is not stored, it means that the
-    // governingStructureRule must be recursively calculated for every ancestor up
-    // until the subschema administrative point, which could be wrong as the rules
-    // change and new rules also permit the entry.
-    governingStructureRule Int?
+  // This should be stored, rather than calculated. The reason for this is that
+  // the permitted superior structure rules refers to the governingStructureRule
+  // value of the superior entry. If this is not stored, it means that the
+  // governingStructureRule must be recursively calculated for every ancestor up
+  // until the subschema administrative point, which could be wrong as the rules
+  // change and new rules also permit the entry.
+  governingStructureRule Int?
 
-    // The structural object class is not permitted to change for an entry.
-    structuralObjectClass OID?
+  // The structural object class is not permitted to change for an entry.
+  structuralObjectClass OID?
 
-    // Shadowing flags. See ITU Recommendation X.525 (2016), Section 7.2.1.
-    subordinate_completeness    Boolean?
-    attribute_completeness      Boolean?
-    attribute_values_incomplete Boolean?
+  // Shadowing flags. See ITU Recommendation X.525 (2016), Section 7.2.1.
+  subordinate_completeness    Boolean?
+  attribute_completeness      Boolean?
+  attribute_values_incomplete Boolean?
 
-    lastShadowUpdate DateTime?
+  lastShadowUpdate DateTime?
 
-    // Storage parameters
-    keep_children_in_database Boolean @default(false)
+  // Storage parameters
+  keep_children_in_database Boolean @default(false)
 
-    // Hierarchy Attributes
-    hierarchyParent_id Int?
-    hierarchyParent    Entry?  @relation(name: "parent", fields: [hierarchyParent_id], references: [id])
-    hierarchyParentDN  Json?
-    hierarchyLevel     Int?
-    hierarchyTopDN     Json?
-    hierarchyPath      String? // Period-delimited database IDs
+  // Hierarchy Attributes
+  // According to ITU X.501, Section 10.2:
+    // "A hierarchical group shall be confined to a single DSA."
+    // This means that we can just use database IDs to represent hierarchy members.
+  hierarchyParent_id Int?
+  hierarchyParent    Entry?  @relation(name: "parent", fields: [hierarchyParent_id], references: [id])
+  hierarchyParentDN  Json?
+  hierarchyLevel     Int?
+  hierarchyTopDN     Json?
+  hierarchyPath      String? // Period-delimited database IDs
 
-    subordinates               Entry[]                      @relation("superior")
-    hierarchicalChildren       Entry[]                      @relation("parent")
-    ACIItem                    ACIItem[]
-    Clearance                  Clearance[]
-    MatchingRuleUse            MatchingRuleUse[]
-    AttributeValue             AttributeValue[]
-    AccessPoint                AccessPoint[]
-    SubtreeSpecification       SubtreeSpecification[]
-    NonSpecificKnowledge       NonSpecificKnowledge[]
-    PwdModifyEntryAllowed      PwdModifyEntryAllowed[]
-    PwdChangeAllowed           PwdChangeAllowed[]
-    PwdMaxAge                  PwdMaxAge[]
-    PwdExpiryAge               PwdExpiryAge[]
-    PwdMinLength               PwdMinLength[]
-    NoDictionaryWords          NoDictionaryWords[]
-    NoPersonNames              NoPersonNames[]
-    NoGeographicalNames        NoGeographicalNames[]
-    PwdDictionaries            PwdDictionaries[]
-    PwdExpiryWarning           PwdExpiryWarning[]
-    PwdGraces                  PwdGraces[]
-    PwdFailureDuration         PwdFailureDuration[]
-    PwdLockoutDuration         PwdLockoutDuration[]
-    PwdMaxFailures             PwdMaxFailures[]
-    PwdMaxTimeInHistory        PwdMaxTimeInHistory[]
-    PwdMinTimeInHistory        PwdMinTimeInHistory[]
-    PwdHistorySlots            PwdHistorySlots[]
-    PwdRecentlyExpiredDuration PwdRecentlyExpiredDuration[]
-    Password                   Password[]
-    RDN                        RDN[]
-    EntryObjectClass           EntryObjectClass[]
-    AliasEntry                 Alias[]                      @relation("alias_entry")
-    AliasedEntry               Alias?                       @relation("aliased_entry")
-    EntryAdministrativeRole    EntryAdministrativeRole[]
-    EntryCollectiveExclusion   EntryCollectiveExclusion[]
-    EntryAccessControlScheme   EntryAccessControlScheme[]
+  subordinates               Entry[]                      @relation("superior")
+  hierarchicalChildren       Entry[]                      @relation("parent")
+  ACIItem                    ACIItem[]
+  Clearance                  Clearance[]
+  MatchingRuleUse            MatchingRuleUse[]
+  AttributeValue             AttributeValue[]
+  AccessPoint                AccessPoint[]
+  SubtreeSpecification       SubtreeSpecification[]
+  NonSpecificKnowledge       NonSpecificKnowledge[]
+  PwdModifyEntryAllowed      PwdModifyEntryAllowed[]
+  PwdChangeAllowed           PwdChangeAllowed[]
+  PwdMaxAge                  PwdMaxAge[]
+  PwdExpiryAge               PwdExpiryAge[]
+  PwdMinLength               PwdMinLength[]
+  NoDictionaryWords          NoDictionaryWords[]
+  NoPersonNames              NoPersonNames[]
+  NoGeographicalNames        NoGeographicalNames[]
+  PwdDictionaries            PwdDictionaries[]
+  PwdExpiryWarning           PwdExpiryWarning[]
+  PwdGraces                  PwdGraces[]
+  PwdFailureDuration         PwdFailureDuration[]
+  PwdLockoutDuration         PwdLockoutDuration[]
+  PwdMaxFailures             PwdMaxFailures[]
+  PwdMaxTimeInHistory        PwdMaxTimeInHistory[]
+  PwdMinTimeInHistory        PwdMinTimeInHistory[]
+  PwdHistorySlots            PwdHistorySlots[]
+  PwdRecentlyExpiredDuration PwdRecentlyExpiredDuration[]
+  Password                   Password[]
+  RDN                        DistinguishedValue[]
+  EntryObjectClass           EntryObjectClass[]
+  AliasEntry                 Alias[]                      @relation("alias_entry")
+  AliasedEntry               Alias?                       @relation("aliased_entry")
+  EntryAdministrativeRole    EntryAdministrativeRole[]
+  EntryCollectiveExclusion   EntryCollectiveExclusion[]
+  EntryAccessControlScheme   EntryAccessControlScheme[]
 
-    // @@unique([uniqueIdentifier])
-    DITStructureRule DITStructureRule[]
-    ContentRule      ContentRule[]
-    ContextUseRule   ContextUseRule[]
-    Friendship       Friendship[]
-    SearchRule       SearchRule[]
-    UniqueIdentifier UniqueIdentifier[]
-    @@unique([dseUUID])
-    @@unique([entryUUID])
-    @@index([immediate_superior_id, deleteTimestamp, subentry])
-    OperationalBinding OperationalBinding[]
+  DITStructureRule   DITStructureRule[]
+  ContentRule        ContentRule[]
+  ContextUseRule     ContextUseRule[]
+  Friendship         Friendship[]
+  SearchRule         SearchRule[]
+  UniqueIdentifier   UniqueIdentifier[]
+  OperationalBinding OperationalBinding[]
+  @@unique([dseUUID])
+  @@unique([entryUUID])
+  @@index([immediate_superior_id, deleteTimestamp, subentry])
+  ClearanceSecurityCategory ClearanceSecurityCategory[]
 }
 
 // Technically a userApplications attribute, but still has operational uses.
 // It is also multi-valued.
 model UniqueIdentifier {
-    id               Int   @id @default(autoincrement())
-    entry_id         Int
-    entry            Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    uniqueIdentifier Bytes // DER-encoded bitstring value (not tag and length bytes)
+  id               Int   @id @default(autoincrement())
+  entry_id         Int
+  entry            Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  uniqueIdentifier Bytes // DER-encoded bitstring value (not tag and length bytes)
 }
 
 // model UtmCoordinate {
@@ -166,92 +173,92 @@ model UniqueIdentifier {
 
 // There may be only one password per entry
 model Password {
-    id                       Int       @id @default(autoincrement())
-    entry_id                 Int
-    entry                    Entry     @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    encrypted                Bytes
-    algorithm_oid            String // OID
-    algorithm_parameters_der Bytes?
-    pwdStartTime             DateTime  @default(now())
-    pwdExpiryTime            DateTime?
-    pwdEndTime               DateTime?
-    pwdFails                 Int       @default(0)
-    pwdFailureTime           DateTime?
-    pwdGracesUsed            Int       @default(0)
+  id                       Int       @id @default(autoincrement())
+  entry_id                 Int
+  entry                    Entry     @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  encrypted                Bytes
+  algorithm_oid            String // OID
+  algorithm_parameters_der Bytes?
+  pwdStartTime             DateTime  @default(now())
+  pwdExpiryTime            DateTime?
+  pwdEndTime               DateTime?
+  pwdFails                 Int       @default(0)
+  pwdFailureTime           DateTime?
+  pwdGracesUsed            Int       @default(0)
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdModifyEntryAllowed {
-    id       Int     @id @default(autoincrement())
-    entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Boolean
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdChangeAllowed {
-    id       Int     @id @default(autoincrement())
-    entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Boolean
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdMaxAge {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdExpiryAge {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdMinLength {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model NoDictionaryWords {
-    id       Int     @id @default(autoincrement())
-    entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Boolean
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model NoPersonNames {
-    id       Int     @id @default(autoincrement())
-    entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Boolean
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model NoGeographicalNames {
-    id       Int     @id @default(autoincrement())
-    entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Boolean
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 // model PwdAlphabet {
@@ -262,91 +269,91 @@ model NoGeographicalNames {
 // }
 
 model PwdDictionaries {
-    id       Int    @id @default(autoincrement())
-    entry_id Int
-    entry    Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    String @db.MediumText
+  id       Int    @id @default(autoincrement())
+  entry_id Int
+  entry    Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    String @db.MediumText
 }
 
 model PwdExpiryWarning {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdGraces {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdFailureDuration {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdLockoutDuration {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdMaxFailures {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdMaxTimeInHistory {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdMinTimeInHistory {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdHistorySlots {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model PwdRecentlyExpiredDuration {
-    id       Int   @id @default(autoincrement())
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    value    Int
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 // AccessPoint ::= SET {
@@ -357,160 +364,168 @@ model PwdRecentlyExpiredDuration {
 //     ... }
 
 model AttributeValue {
-    id                         Int     @id @default(autoincrement())
-    entry_id                   Int
-    entry                      Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    type                       String // OID
-    tag_class                  Int     @db.SmallInt
-    constructed                Boolean
-    tag_number                 Int
-    ber                        Bytes
-    jer                        Json?
-    sort_key                   BigInt? @db.UnsignedBigInt
-    // A number that sorts the values according to the default ordering rule.
-    // attributeValueSecurityLabelContext
-    // At most one security label context can be assigned to an attribute value
-    security_label             Bytes?
-    security_policy_identifier String?
-    security_classification    Int?    @db.SmallInt
-    privacy_mark               String?
+  id                         Int     @id @default(autoincrement())
+  entry_id                   Int
+  entry                      Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  type                       String // OID
+  tag_class                  Int     @db.SmallInt
+  constructed                Boolean
+  tag_number                 Int
+  ber                        Bytes
+  jer                        Json?
+  sort_key                   BigInt? @db.UnsignedBigInt
+  // A number that sorts the values according to the default ordering rule.
+  // attributeValueSecurityLabelContext
+  // At most one security label context can be assigned to an attribute value
+  security_label             Bytes?
+  security_policy_identifier String?
+  security_classification    Int?    @db.SmallInt
+  privacy_mark               String?
 
-    // Not part of a specification, but still usable
-    ContextValue ContextValue[]
-    @@index([entry_id])
-    @@index([type, sort_key])
+  // Not part of a specification, but still usable
+  ContextValue ContextValue[]
+  @@index([entry_id])
+  @@index([type, sort_key])
 }
 
 model ContextValue {
-    id          Int            @id @default(autoincrement())
-    value_id    Int
-    value       AttributeValue @relation(fields: [value_id], references: [id], onDelete: Cascade)
-    type        OID
-    tag_class   Int            @db.SmallInt
-    constructed Boolean
-    tag_number  Int
-    ber         Bytes
-    hint        BigInt?
-    jer         Json?
-    fallback    Boolean
+  id          Int            @id @default(autoincrement())
+  value_id    Int
+  value       AttributeValue @relation(fields: [value_id], references: [id], onDelete: Cascade)
+  type        OID
+  tag_class   Int            @db.SmallInt
+  constructed Boolean
+  tag_number  Int
+  ber         Bytes
+  hint        BigInt?
+  jer         Json?
+  fallback    Boolean
 }
 
 // Should there be a separate Attribute Types table? No, because these have a functional aspect.
 // Should there be a separate Context Types table? No, because these have a functional aspect.
 
 enum ACIScope {
-    PRESCRIPTIVE
-    ENTRY
-    SUBENTRY
+  PRESCRIPTIVE
+  ENTRY
+  SUBENTRY
 }
 
 model ACIItem {
-    id                               Int      @id @default(autoincrement())
-    entry_id                         Int
-    entry                            Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    tag                              String
-    precedence                       Int
-    auth_level_basic_level           Int?
-    auth_level_basic_local_qualifier Int?
-    auth_level_basic_signed          Boolean?
-    ber                              Bytes
-    // The "other" alternative shall not be supported.
-    scope                            ACIScope
+  id                               Int      @id @default(autoincrement())
+  entry_id                         Int
+  entry                            Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  tag                              String
+  precedence                       Int
+  auth_level_basic_level           Int?
+  auth_level_basic_local_qualifier Int?
+  auth_level_basic_signed          Boolean?
+  ber                              Bytes
+  // The "other" alternative shall not be supported.
+  scope                            ACIScope
 }
 
 model Clearance {
-    id                          Int     @id @default(autoincrement())
-    entry_id                    Int
-    entry                       Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    policy_id                   String // OID
-    // From classList
-    unmarked                    Boolean
-    unclassified                Boolean
-    restricted                  Boolean
-    confidential                Boolean
-    secret                      Boolean
-    topSecret                   Boolean
-    security_categories_covered Json // { "1.3.4.6.1.25000.2": 1 }
-    ber                         Bytes // Still necessary for securityCategories
+  id           Int     @id @default(autoincrement())
+  entry_id     Int
+  entry        Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  policy_id    OID
+  // From classList
+  unmarked     Boolean @default(false)
+  unclassified Boolean @default(false)
+  restricted   Boolean @default(false)
+  confidential Boolean @default(false)
+  secret       Boolean @default(false)
+  topSecret    Boolean @default(false)
+}
+
+model ClearanceSecurityCategory {
+  id           Int   @id @default(autoincrement())
+  clearance_id Int
+  clearance    Entry @relation(fields: [clearance_id], references: [id], onDelete: Cascade)
+  type         OID
+  value        Bytes
+
+  @@index([clearance_id])
 }
 
 enum Knowledge {
-    MY_ACCESS_POINT
-    SUPERIOR
-    SPECIFIC
-    NON_SPECIFIC
-    SUPPLIER
-    CONSUMER
-    SECONDARY_SHADOW
-    // DIT_BRIDGE
-    OTHER
-    OB_REQUEST
-    OB_SHADOW_MASTER // Purely informational. From ShadowingAgreementInfo.master.
-    NON_SUPPLYING_MASTER
+  MY_ACCESS_POINT
+  SUPERIOR
+  SPECIFIC
+  NON_SPECIFIC
+  SUPPLIER
+  CONSUMER
+  SECONDARY_SHADOW
+  // DIT_BRIDGE
+  OTHER
+  OB_REQUEST
+  OB_SHADOW_MASTER // Purely informational. From ShadowingAgreementInfo.master.
+  NON_SUPPLYING_MASTER
 }
 
 // Type: MY, supr, supplier, consumer, secondary consumer, xr, immSupr, subr, nssr?
 // Satisfies AccessPoint, MasterOrShadowAccessPoint, SupplierOrConsumer, ConsumerInformation, and SupplierInformation
 model AccessPoint {
-    id                       Int                         @id @default(autoincrement())
-    ber                      Bytes
-    knowledge_type           Knowledge
-    ae_title                 Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    category                 Int?
-    chainingRequired         Boolean?
-    supplier_is_master       Boolean?
-    non_supplying_master_id  Int?
-    non_supplying_master     AccessPoint?                @relation("non_supplying_master", fields: [non_supplying_master_id], references: [id])
-    is_consumer_of_id        Int? // This comes from SupplierAndConsumers.consumers
-    is_consumer_of           AccessPoint?                @relation("is_consumer_of", fields: [is_consumer_of_id], references: [id])
-    entry_id                 Int?
-    entry                    Entry?                      @relation(fields: [entry_id], references: [id], onDelete: SetNull)
-    non_supplying_master_for AccessPoint[]               @relation("non_supplying_master")
-    consumers                AccessPoint[]               @relation("is_consumer_of")
-    operational_bindings     OperationalBinding[]        @relation("ob_access_point")
-    is_master_for            OperationalBinding[]        @relation("ob_master")
-    NSAP                     NetworkServiceAccessPoint[]
+  id                       Int                         @id @default(autoincrement())
+  ber                      Bytes
+  knowledge_type           Knowledge
+  ae_title                 Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  category                 Int?
+  chainingRequired         Boolean?
+  supplier_is_master       Boolean?
+  non_supplying_master_id  Int?
+  non_supplying_master     AccessPoint?                @relation("non_supplying_master", fields: [non_supplying_master_id], references: [id])
+  is_consumer_of_id        Int? // This comes from SupplierAndConsumers.consumers
+  is_consumer_of           AccessPoint?                @relation("is_consumer_of", fields: [is_consumer_of_id], references: [id])
+  entry_id                 Int?
+  entry                    Entry?                      @relation(fields: [entry_id], references: [id], onDelete: SetNull)
+  non_supplying_master_for AccessPoint[]               @relation("non_supplying_master")
+  consumers                AccessPoint[]               @relation("is_consumer_of")
+  operational_bindings     OperationalBinding[]        @relation("ob_access_point")
+  is_master_for            OperationalBinding[]        @relation("ob_master")
+  NSAP                     NetworkServiceAccessPoint[]
 }
 
 model NetworkServiceAccessPoint {
-    id              Int         @id @default(autoincrement())
-    ipv4            String? // @db.Inet
-    tcp_port        Int? // @db.SmallUnsignedInt
-    url             String?
-    bytes           Bytes
-    access_point_id Int
-    access_point    AccessPoint @relation(fields: [access_point_id], references: [id], onDelete: Cascade)
+  id              Int         @id @default(autoincrement())
+  ipv4            String? // @db.Inet
+  tcp_port        Int? // @db.SmallUnsignedInt
+  url             String?
+  bytes           Bytes
+  access_point_id Int
+  access_point    AccessPoint @relation(fields: [access_point_id], references: [id], onDelete: Cascade)
 }
 
 model NonSpecificKnowledge {
-    id       Int   @id @default(autoincrement())
-    ber      Bytes
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  id       Int   @id @default(autoincrement())
+  ber      Bytes
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 }
 
 model SubtreeSpecification {
-    id                   Int   @id @default(autoincrement())
-    base                 Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-    specific_exclusions  Json? // [{"chopBefore": [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]}]
-    minimum              Int   @default(0)
-    maximum              Int?
-    specification_filter Json? // {"and": [{"item": "2.5.4.10"}]}
-    ber                  Bytes
-    entry_id             Int
-    entry                Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  id                   Int   @id @default(autoincrement())
+  base                 Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  specific_exclusions  Json? // [{"chopBefore": [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]}]
+  minimum              Int   @default(0)
+  maximum              Int?
+  specification_filter Json? // {"and": [{"item": "2.5.4.10"}]}
+  ber                  Bytes
+  entry_id             Int
+  entry                Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 }
 
 model DitBridgeKnowledge {
-    id              Int     @id @default(autoincrement())
-    domain_local_id String?
-    ber             Bytes
+  id              Int     @id @default(autoincrement())
+  domain_local_id String?
+  ber             Bytes
 }
 
 enum ObjectClassKind {
-    ABSTRACT
-    STRUCTURAL
-    AUXILIARY
+  ABSTRACT
+  STRUCTURAL
+  AUXILIARY
 }
 
 // NAME-FORM ::= CLASS {
@@ -529,19 +544,19 @@ enum ObjectClassKind {
 //     ID                    &id }
 // Also satisfies NameFormDescription
 model NameForm {
-    id                  Int     @id @default(autoincrement())
-    namedObjectClass    OID
-    mandatoryAttributes OIDs // OIDs
-    optionalAttributes  OIDs? // OIDs
-    ldapName            String?
-    ldapDesc            String?
-    identifier          OID
-    name                Names?
-    description         String?
-    obsolete            Boolean @default(false)
+  id                  Int     @id @default(autoincrement())
+  namedObjectClass    OID
+  mandatoryAttributes OIDs // OIDs
+  optionalAttributes  OIDs? // OIDs
+  ldapName            String?
+  ldapDesc            String?
+  identifier          OID
+  name                Names?
+  description         String?
+  obsolete            Boolean @default(false)
 
-    @@unique([identifier])
-    @@index([namedObjectClass])
+  @@unique([identifier])
+  @@index([namedObjectClass])
 }
 
 // DITStructureRule ::= SEQUENCE {
@@ -552,18 +567,18 @@ model NameForm {
 //   ... }
 // Also satisfies DITStructureRuleDescription
 model DITStructureRule {
-    id                     Int     @id @default(autoincrement())
-    ruleIdentifier         Int
-    nameForm               OID
-    superiorStructureRules OIDs?
-    name                   Names?
-    description            String?
-    obsolete               Boolean @default(false)
-    entry_id               Int
-    entry                  Entry   @relation(fields: [entry_id], references: [id])
+  id                     Int     @id @default(autoincrement())
+  ruleIdentifier         Int
+  nameForm               OID
+  superiorStructureRules OIDs?
+  name                   Names?
+  description            String?
+  obsolete               Boolean @default(false)
+  entry_id               Int
+  entry                  Entry   @relation(fields: [entry_id], references: [id])
 
-    @@index([ruleIdentifier])
-    @@index([entry_id])
+  @@index([ruleIdentifier])
+  @@index([entry_id])
 }
 
 // CONTENT-RULE ::= CLASS {
@@ -580,19 +595,19 @@ model DITStructureRule {
 //   [MUST-NOT CONTAIN         &Precluded] }
 // Also satisfies DITContentRuleDescription
 model ContentRule {
-    id                   Int     @id @default(autoincrement())
-    structural_class     OID
-    auxiliary_classes    OIDs?
-    mandatory_attributes OIDs?
-    optional_attributes  OIDs?
-    precluded_attributes OIDs?
-    name                 Names?
-    description          String?
-    obsolete             Boolean @default(false)
-    entry_id             Int
-    entry                Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  id                   Int     @id @default(autoincrement())
+  structural_class     OID
+  auxiliary_classes    OIDs?
+  mandatory_attributes OIDs?
+  optional_attributes  OIDs?
+  precluded_attributes OIDs?
+  name                 Names?
+  description          String?
+  obsolete             Boolean @default(false)
+  entry_id             Int
+  entry                Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
-    @@unique([entry_id, structural_class])
+  @@unique([entry_id, structural_class])
 }
 
 // DIT-CONTEXT-USE-RULE ::= CLASS {
@@ -605,18 +620,18 @@ model ContentRule {
 //   [OPTIONAL CONTEXTS  &Optional] }
 // Also satisfies DITContextUseDescription
 model ContextUseRule {
-    id            Int     @id @default(autoincrement())
-    attributeType OID
-    mandatory     OIDs?
-    optional      OIDs?
-    name          Names?
-    description   String?
-    obsolete      Boolean @default(false)
-    entry_id      Int
-    entry         Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  id            Int     @id @default(autoincrement())
+  attributeType OID
+  mandatory     OIDs?
+  optional      OIDs?
+  name          Names?
+  description   String?
+  obsolete      Boolean @default(false)
+  entry_id      Int
+  entry         Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
-    // NOTE: X.501 does not say that this has to be unique by attribute type.
-    @@index([entry_id])
+  // NOTE: X.501 does not say that this has to be unique by attribute type.
+  @@index([entry_id])
 }
 
 // FRIENDS ::= CLASS {
@@ -627,16 +642,16 @@ model ContextUseRule {
 //   FRIENDS   &Friends }
 // Also satisfies FriendsDescription
 model Friendship {
-    id          Int     @id @default(autoincrement())
-    anchor      OID
-    friends     OIDs
-    name        Names?
-    description String?
-    obsolete    Boolean @default(false)
-    entry_id    Int
-    entry       Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  id          Int     @id @default(autoincrement())
+  anchor      OID
+  friends     OIDs
+  name        Names?
+  description String?
+  obsolete    Boolean @default(false)
+  entry_id    Int
+  entry       Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
-    @@unique([entry_id, anchor])
+  @@unique([entry_id, anchor])
 }
 
 // MatchingRuleDescription ::= SEQUENCE {
@@ -648,347 +663,269 @@ model Friendship {
 //                 -- describes the ASN.1 syntax
 //   ... }
 model MatchingRuleUse {
-    id          Int     @id @default(autoincrement())
-    identifier  OID
-    name        Names?
-    description String?
-    obsolete    Boolean @default(false)
-    information OIDs
+  id          Int     @id @default(autoincrement())
+  identifier  OID
+  name        Names?
+  description String?
+  obsolete    Boolean @default(false)
+  information OIDs
 
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
-    @@unique([entry_id, identifier])
+  @@unique([entry_id, identifier])
 }
 
 enum AttributeUsage {
-    USER_APPLICATIONS
-    DSA_OPERATION
-    DISTRIBUTED_OPERATION
-    DIRECTORY_OPERATION
+  USER_APPLICATIONS
+  DSA_OPERATION
+  DISTRIBUTED_OPERATION
+  DIRECTORY_OPERATION
 }
 
 model AttributeTypeDescription {
-    id              Int            @id @default(autoincrement())
-    identifier      OID
-    name            Names?
-    description     String?
-    obsolete        Boolean        @default(false)
-    derivation      OID?
-    equalityMatch   OID?
-    orderingMatch   OID?
-    substringsMatch OID?
-    attributeSyntax String?
-    multiValued     Boolean        @default(true)
-    collective      Boolean        @default(false)
-    userModifiable  Boolean        @default(true)
-    application     AttributeUsage @default(USER_APPLICATIONS)
+  id              Int            @id @default(autoincrement())
+  identifier      OID
+  name            Names?
+  description     String?
+  obsolete        Boolean        @default(false)
+  derivation      OID?
+  equalityMatch   OID?
+  orderingMatch   OID?
+  substringsMatch OID?
+  attributeSyntax String?
+  multiValued     Boolean        @default(true)
+  collective      Boolean        @default(false)
+  userModifiable  Boolean        @default(true)
+  application     AttributeUsage @default(USER_APPLICATIONS)
 
-    // Fields not present in AttributeTypeDescription
-    ldapSyntax      OID?
-    ldapNames       Names?
-    ldapDescription String?
-    dummy           Boolean @default(false)
+  // Fields not present in AttributeTypeDescription
+  ldapSyntax      OID?
+  ldapNames       Names?
+  ldapDescription String?
+  dummy           Boolean @default(false)
 
-    @@unique([identifier])
+  @@unique([identifier])
 }
 
 model ObjectClassDescription {
-    id              Int             @id @default(autoincrement())
-    identifier      String // OID
-    name            Names?
-    description     String?
-    obsolete        Boolean         @default(false)
-    subclassOf      OIDs?
-    kind            ObjectClassKind @default(STRUCTURAL)
-    mandatories     OIDs?
-    optionals       OIDs?
-    ldapNames       Names?
-    ldapDescription String?
+  id              Int             @id @default(autoincrement())
+  identifier      String // OID
+  name            Names?
+  description     String?
+  obsolete        Boolean         @default(false)
+  subclassOf      OIDs?
+  kind            ObjectClassKind @default(STRUCTURAL)
+  mandatories     OIDs?
+  optionals       OIDs?
+  ldapNames       Names?
+  ldapDescription String?
 
-    @@unique([identifier])
+  @@unique([identifier])
 }
 
 model ContextDescription {
-    id              Int     @id @default(autoincrement())
-    identifier      OID
-    name            Names?
-    description     String?
-    obsolete        Boolean @default(false)
-    syntax          String
-    assertionSyntax String?
+  id              Int     @id @default(autoincrement())
+  identifier      OID
+  name            Names?
+  description     String?
+  obsolete        Boolean @default(false)
+  syntax          String
+  assertionSyntax String?
 
-    @@unique([identifier])
+  @@unique([identifier])
 }
 
 // This also satisfies SearchRuleDescription
 model SearchRule {
-    id                          Int     @id @default(autoincrement())
-    rule_id                     Int     @unique
-    dmd_id                      OID // OID
-    service_type                OID? // OID
-    user_class                  Int?
-    // inputAttributeTypes
-    // attributeCombination
-    // outputAttributeTypes
-    family_grouping             Int?
-    family_return_member_select Int?
-    // relaxation
-    relaxation_minimum          Int     @default(1)
-    relaxation_maximum          Int?
-    additionalControl           OIDs?
-    base_object_allowed         Boolean @default(true)
-    one_level_allowed           Boolean @default(true)
-    whole_subtree_allowed       Boolean @default(true)
-    imposed_subset              Int?
-    entry_limit_default         Int?
-    entry_limit_max             Int?
-    ber                         Bytes
-    name                        Names?
-    description                 String?
+  id                          Int     @id @default(autoincrement())
+  rule_id                     Int     @unique
+  dmd_id                      OID // OID
+  service_type                OID? // OID
+  user_class                  Int?
+  // inputAttributeTypes
+  // attributeCombination
+  // outputAttributeTypes
+  family_grouping             Int?
+  family_return_member_select Int?
+  // relaxation
+  relaxation_minimum          Int     @default(1)
+  relaxation_maximum          Int?
+  additionalControl           OIDs?
+  base_object_allowed         Boolean @default(true)
+  one_level_allowed           Boolean @default(true)
+  whole_subtree_allowed       Boolean @default(true)
+  imposed_subset              Int?
+  entry_limit_default         Int?
+  entry_limit_max             Int?
+  ber                         Bytes
+  name                        Names?
+  description                 String?
 
-    entry_id Int
-    entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 
-    @@unique([dmd_id, rule_id])
-    @@index([rule_id])
-    @@index([user_class])
+  @@unique([dmd_id, rule_id])
+  @@index([rule_id])
+  @@index([user_class])
 }
-
-model Certificate {
-    id                            Int       @id @default(autoincrement())
-    version                       Int       @db.SmallInt
-    serial_number                 Bytes
-    issuer                        Json
-    subject                       Json
-    not_before                    DateTime
-    not_after                     DateTime
-    signature_alg                 OID
-    spki_alg                      OID
-    authority_key_identifier      Bytes
-    authority_cert_serial_number  Bytes
-    subject_key_identifier        Bytes
-    ca                            Boolean?
-    path_len                      Int?
-    key_usage_digitalSignature    Boolean?
-    key_usage_contentCommitment   Boolean?
-    key_usage_keyEncipherment     Boolean?
-    key_usage_dataEncipherment    Boolean?
-    key_usage_keyAgreement        Boolean?
-    key_usage_keyCertSign         Boolean?
-    key_usage_cRLSign             Boolean?
-    key_usage_encipherOnly        Boolean?
-    key_usage_decipherOnly        Boolean?
-    ext_key_usage                 OIDs
-    private_key_usage_not_before  DateTime?
-    private_key_usage_not_after   DateTime?
-    certificate_policies          OIDs
-    crl_distribution_points_count Int
-    revoked_time                  DateTime?
-    revoked_reason                Int?
-    signature_bytes               Bytes
-    subject_public_key_bytes      Bytes
-    certificate_der               Bytes
-}
-
-// model CertificateList {
-//     id                            Int       @id @default(autoincrement())
-// }
-
-// certificate (user and ca)
-// CertificateList
-// distributionpoint
-// certificate policy
-// CPS
-// pkiPath
-// attribute certificate
 
 enum OperationalBindingInitiator {
-    SYMMETRIC
-    ROLE_A
-    ROLE_B
+  SYMMETRIC
+  ROLE_A
+  ROLE_B
 }
 
 enum ShadowedKnowledgeType {
-    MASTER
-    SHADOW
-    BOTH
+  MASTER
+  SHADOW
+  BOTH
 }
 
 model OperationalBinding {
-    id                 Int                         @id @default(autoincrement())
-    entry_id           Int? // This is valuable for pointing to the CP of a shadowed context or HOB.
-    entry              Entry?                      @relation(fields: [entry_id], references: [id], onDelete: Restrict)
-    previous_id        Int?                        @unique // For when an OB gets modified.
-    previous           OperationalBinding?         @relation(name: "previous", fields: [previous_id], references: [id])
-    outbound           Boolean
-    uuid               String                      @default(uuid()) // @db.Uuid
-    binding_type       OID
-    binding_identifier Int
-    binding_version    Int
-    agreement_ber      Bytes
-    access_point_id    Int? // Made optional just so saveAccessPoint can be used.
-    access_point       AccessPoint?                 @relation("ob_access_point", fields: [access_point_id], references: [id])
-    initiator          OperationalBindingInitiator
-    initiator_ber      Bytes
-    validity_start     DateTime
-    validity_end       DateTime? // NULL means "until explicitly requested"
+  id                 Int                         @id @default(autoincrement())
+  entry_id           Int? // This is valuable for pointing to the CP of a shadowed context or HOB.
+  entry              Entry?                      @relation(fields: [entry_id], references: [id], onDelete: Restrict)
+  previous_id        Int?                        @unique // For when an OB gets modified.
+  previous           OperationalBinding?         @relation(name: "previous", fields: [previous_id], references: [id])
+  outbound           Boolean
+  uuid               String                      @default(uuid()) // @db.Uuid
+  binding_type       OID
+  binding_identifier Int
+  binding_version    Int
+  agreement_ber      Bytes
+  access_point_id    Int? // Made optional just so saveAccessPoint can be used.
+  access_point       AccessPoint?                @relation("ob_access_point", fields: [access_point_id], references: [id])
+  initiator          OperationalBindingInitiator
+  initiator_ber      Bytes
+  validity_start     DateTime
+  validity_end       DateTime? // NULL means "until explicitly requested"
 
-    // Security parameters
-    security_certification_path Bytes?
-    security_name               Json?
-    security_time               DateTime?
-    security_random             Bytes?
-    security_target             Int?      @db.SmallInt
-    security_operationCode      String?
-    security_errorProtection    Int?      @db.SmallInt
-    security_errorCode          String?
+  // Security parameters
+  security_certification_path Bytes?
+  security_name               Json?
+  security_time               DateTime?
+  security_random             Bytes?
+  security_target             Int?      @db.SmallInt
+  security_operationCode      String?
+  security_errorProtection    Int?      @db.SmallInt
+  security_errorCode          String?
 
-    // Hierarchical Operation Binding
-    new_context_prefix_rdn Json?
-    immediate_superior     Json?
+  // Hierarchical Operation Binding
+  new_context_prefix_rdn Json?
+  immediate_superior     Json?
 
-    // Shadowing Operational Binding
-    shadowed_context_prefix Json?
-    knowledge_type          ShadowedKnowledgeType?
-    subordinates            Boolean?
-    supply_contexts         OIDs? // length of 0 means "allContexts"
-    supplier_initiated      Boolean?
-    periodic_beginTime      DateTime?
-    periodic_windowSize     Int?
-    periodic_updateInterval Int?
-    othertimes              Boolean?
-    master_access_point_id  Int?
-    master_access_point     AccessPoint?           @relation("ob_master", fields: [master_access_point_id], references: [id])
-    secondary_shadows       Boolean?
+  // Shadowing Operational Binding
+  shadowed_context_prefix Json?
+  knowledge_type          ShadowedKnowledgeType?
+  subordinates            Boolean?
+  supply_contexts         OIDs? // length of 0 means "allContexts"
+  supplier_initiated      Boolean?
+  periodic_beginTime      DateTime?
+  periodic_windowSize     Int?
+  periodic_updateInterval Int?
+  othertimes              Boolean?
+  master_access_point_id  Int?
+  master_access_point     AccessPoint?           @relation("ob_master", fields: [master_access_point_id], references: [id])
+  secondary_shadows       Boolean?
 
-    // Source information
-    // This should be separate from the access point, because the IP used to
-    // send the request or proxy the request could differ from the access point
-    // of the originating DSA.
-    source_ip               String? // @db.Inet
-    source_tcp_port         Int?    @db.SmallInt
-    source_ae_title         Json?
-    source_credentials_type Int?    @db.SmallInt // 0 = simple, 1 = strong, 2 = external, 3 = spkm
-    source_certificate_path Bytes?
-    source_bind_token       Bytes?
-    source_strong_name      Json?
-    source_attr_cert_path   Bytes?
+  // Source information
+  // This should be separate from the access point, because the IP used to
+  // send the request or proxy the request could differ from the access point
+  // of the originating DSA.
+  source_ip               String? // @db.Inet
+  source_tcp_port         Int?    @db.SmallInt
+  source_ae_title         Json?
+  source_credentials_type Int?    @db.SmallInt // 0 = simple, 1 = strong, 2 = external, 3 = spkm
+  source_certificate_path Bytes?
+  source_bind_token       Bytes?
+  source_strong_name      Json?
+  source_attr_cert_path   Bytes?
 
-    // Status
-    requested_time      DateTime  @default(now())
-    responded_time      DateTime?
-    terminated_time     DateTime?
-    accepted            Boolean?
-    last_update         DateTime?
-    last_ob_problem     Int?      @db.SmallInt
-    last_shadow_problem Int?      @db.SmallInt
+  // Status
+  requested_time      DateTime  @default(now())
+  responded_time      DateTime?
+  terminated_time     DateTime?
+  accepted            Boolean?
+  last_update         DateTime?
+  last_ob_problem     Int?      @db.SmallInt
+  last_shadow_problem Int?      @db.SmallInt
 
-    OperationalBinding OperationalBinding[] @relation("previous")
-    @@unique([uuid])
-    @@unique([binding_type, binding_identifier, binding_version, terminated_time])
-    @@index([validity_end, validity_start])
-}
-
-// Only accept OB requests from DSAs that can be verified by:
-// 1. DNS + TLS
-// 2. Signed requests
-//
-model WhitelistedOperationalBinding {
-    id                 Int                          @id @default(autoincrement())
-    binding_type       OID
-    initiator          OperationalBindingInitiator?
-    min_validity_start DateTime?
-    max_validity_end   DateTime?
-    hostnames          String // Whitespace delimited.
-    subnet             String? // @db.Inet
-    permitted          Boolean // if true, it is whitelisted. If false, it is blacklisted.
+  OperationalBinding OperationalBinding[] @relation("previous")
+  @@unique([uuid])
+  @@unique([binding_type, binding_identifier, binding_version, terminated_time])
+  @@index([validity_end, validity_start])
 }
 
 model NamedObjectIdentifier {
-    id   Int    @id @default(autoincrement())
-    oid  OID
-    name String @db.VarChar(128)
+  id   Int    @id @default(autoincrement())
+  oid  OID
+  name String @db.VarChar(128)
 
-    @@unique([oid])
-    @@index([name])
+  @@unique([oid])
+  @@index([name])
 }
 
-model RDN {
-    id       BigInt  @id @default(autoincrement())
-    entry_id Int
-    entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    type     OID
-    value    Bytes
-    str      String?
+model DistinguishedValue {
+  id       BigInt  @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  type     OID
+  value    Bytes
+  str      String?
 
-    @@unique([entry_id, type])
+  @@unique([entry_id, type])
 }
 
 model EntryObjectClass {
-    id           BigInt @id @default(autoincrement())
-    entry_id     Int
-    entry        Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    object_class OID
+  id           BigInt @id @default(autoincrement())
+  entry_id     Int
+  entry        Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  object_class OID
 
-    @@unique([entry_id, object_class])
+  @@unique([entry_id, object_class])
 }
 
 model Alias {
-    id                 Int    @id @default(autoincrement())
-    alias_entry_id     Int
-    alias_entry        Entry  @relation(name: "alias_entry", fields: [alias_entry_id], references: [id], onDelete: Cascade)
-    aliased_entry_id   Int?   @unique
-    aliased_entry      Entry? @relation(name: "aliased_entry", fields: [aliased_entry_id], references: [id], onDelete: SetNull)
-    aliased_entry_name Json?
+  id                 Int    @id @default(autoincrement())
+  alias_entry_id     Int
+  alias_entry        Entry  @relation(name: "alias_entry", fields: [alias_entry_id], references: [id], onDelete: Cascade)
+  aliased_entry_id   Int?   @unique
+  aliased_entry      Entry? @relation(name: "aliased_entry", fields: [aliased_entry_id], references: [id], onDelete: SetNull)
+  aliased_entry_name Json?
 
-    @@unique([alias_entry_id])
-    @@index([aliased_entry_id])
+  @@unique([alias_entry_id])
+  @@index([aliased_entry_id])
 }
 
 model EntryAdministrativeRole {
-    id                 Int   @id @default(autoincrement())
-    entry_id           Int
-    entry              Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    administrativeRole OID
+  id                 Int   @id @default(autoincrement())
+  entry_id           Int
+  entry              Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  administrativeRole OID
 
-    @@unique([entry_id, administrativeRole])
+  @@unique([entry_id, administrativeRole])
 }
 
 model EntryCollectiveExclusion {
-    id                  Int   @id @default(autoincrement())
-    entry_id            Int
-    entry               Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    collectiveExclusion OID
+  id                  Int   @id @default(autoincrement())
+  entry_id            Int
+  entry               Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  collectiveExclusion OID
 
-    @@unique([entry_id, collectiveExclusion])
+  @@unique([entry_id, collectiveExclusion])
 }
 
 model EntryAccessControlScheme {
-    id                  Int   @id @default(autoincrement())
-    entry_id            Int
-    entry               Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-    accessControlScheme OID
+  id                  Int   @id @default(autoincrement())
+  entry_id            Int
+  entry               Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  accessControlScheme OID
 
-    @@unique([entry_id])
+  @@unique([entry_id])
 }
 
 model AltServer {
-    id  Int    @id @default(autoincrement())
-    uri String
+  id  Int    @id @default(autoincrement())
+  uri String
 }
-
-// According to ITU X.501, Section 10.2:
-// "A hierarchical group shall be confined to a single DSA."
-// This means that we can just use database IDs to represent hierarchy members.
-// model HierarchyMember {
-//     id           Int    @id @default(autoincrement())
-//     entry_id     Int
-//     entry        Entry  @relation(name: "entry", fields: [entry_id], references: [id])
-//     parent_id    Int
-//     parent_entry Entry  @relation(name: "parent", fields: [top_id], references: [id])
-//     top_id       Int
-//     top_entry    Entry  @relation(name: "top", fields: [top_id], references: [id])
-//     level        Int // Could be inferred from path...
-//     path         String
-// }

@@ -24,6 +24,7 @@ async function vertexFromDatabaseEntry (
                 (await ctx.db.entry.findMany({
                     take: 10_000_000,
                     where: {
+                        deleteTimestamp: null,
                         immediate_superior_id: dbe.id,
                     },
                 })).map((child) => vertexFromDatabaseEntry(ctx, ret, child)),

@@ -5,6 +5,7 @@ import IDMSegmentField from "./IDMSegmentField";
 import IDMSegment from "./IDMSegment";
 import { BERElement, ASN1Element, INTEGER, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
+    Request,
     IdmResult,
     IDM_PDU,
     _decode_IDM_PDU,
@@ -267,6 +268,14 @@ class IDMConnection {
     public async writeAbort (abort: Abort): Promise<void> {
         const idm: IDM_PDU = {
             abort,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeRequest (invokeID: INTEGER, opcode: Code, argument: ASN1Element): Promise<void> {
+        const request = new Request(invokeID, opcode, argument);
+        const idm: IDM_PDU = {
+            request,
         };
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }

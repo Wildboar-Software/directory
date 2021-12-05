@@ -1185,12 +1185,12 @@ async function modifyDN (
                 governingStructureRule: Number(newGoverningStructureRule),
             },
         }),
-        ctx.db.rDN.deleteMany({
+        ctx.db.distinguishedValue.deleteMany({
             where: {
                 entry_id: target.dse.id,
             },
         }),
-        ctx.db.rDN.createMany({
+        ctx.db.distinguishedValue.createMany({
             data: newRDN.map((atav) => ({
                 entry_id: target.dse.id,
                 type: atav.type_.toString(),

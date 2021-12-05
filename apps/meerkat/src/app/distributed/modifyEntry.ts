@@ -1695,8 +1695,8 @@ async function modifyEntry (
                 ),
             );
         }
-        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
-        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
+        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr)); // TODO: Can you just make a Set from another Set?
+        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr)); // TODO: Can you just make a Set from another Set?
     }
     const alreadyPresentObjectClasses = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
     for (const ocid of alreadyPresentObjectClasses) {
@@ -1710,8 +1710,8 @@ async function modifyEntry (
             }));
             continue;
         }
-        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
-        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
+        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr)); // TODO: Can you just make a Set from another Set?
+        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr)); // TODO: Can you just make a Set from another Set?
     }
 
     if (!ctx.config.bulkInsertMode) { // Check required attributes

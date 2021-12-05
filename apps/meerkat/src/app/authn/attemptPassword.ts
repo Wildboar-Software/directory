@@ -97,7 +97,7 @@ async function attemptPassword (
                 entry_id: vertex.dse.id,
             },
             data: {
-                pwdFailureTime: null,
+                pwdFailureTime: null, // REVIEW: Is this actually necessary?
                 pwdFails: 0,
             },
         });

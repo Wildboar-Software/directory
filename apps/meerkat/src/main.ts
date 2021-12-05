@@ -23,4 +23,9 @@ i18n
             addPath: path.join(__dirname, "./assets/locales/{{lng}}/language/{{ns}}.missing.json"),
         },
         initImmediate: false,
-    }).then(main);
+    })
+        .then(main)
+        .catch((e) => {
+            console.error(`COULD_NOT_START: ${e}`);
+            process.exit(1);
+        });

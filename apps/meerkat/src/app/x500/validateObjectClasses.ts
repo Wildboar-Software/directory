@@ -52,12 +52,12 @@ function validateObjectClasses (
             return false;
         }
     }
-    for (const s of structural) {
+    for (const s of structural.values()) {
         if (!chainIndex.has(s)) {
             return false; // There is an extraneous structural class outside of the chain.
         }
     }
-    for (const a of auxiliary) {
+    for (const a of auxiliary.values()) {
         const achain = getAncestorObjectClasses(ctx, a);
         for (const achainMember of achain) {
             if (
@@ -68,7 +68,7 @@ function validateObjectClasses (
             }
         }
     }
-    for (const a of abstract_) {
+    for (const a of abstract_.values()) {
         if (!parents.has(a)) {
             return false; // We have an abstract class that is not the parent of another class present.
         }

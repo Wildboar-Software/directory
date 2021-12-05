@@ -148,12 +148,12 @@ async function updateLocalSubr (
             }
         }
         await ctx.db.$transaction([
-            ctx.db.rDN.deleteMany({
+            ctx.db.distinguishedValue.deleteMany({
                 where: {
                     entry_id: oldSubordinate.dse.id,
                 },
             }),
-            ctx.db.rDN.createMany({
+            ctx.db.distinguishedValue.createMany({
                 data: newAgreement.rdn.map((atav) => ({
                     entry_id: oldSubordinate.dse.id,
                     type: atav.type_.toString(),

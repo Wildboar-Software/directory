@@ -115,7 +115,7 @@ function ldapResponseToListResult (
 ): ListResult {
     const limitProblem = ldapResultCodeToLimitProblem(done.resultCode);
     if (
-        (typeof limitProblem === "number")
+        (typeof limitProblem === "number") // TODO: This could be BigInt
         || (done.resultCode === LDAPResult_resultCode_unavailableCriticalExtension)
     ) {
         return {
@@ -221,7 +221,7 @@ function ldapResponseToSearchResult (
 ): SearchResult {
     const limitProblem = ldapResultCodeToLimitProblem(done.resultCode);
     if (
-        (typeof limitProblem === "number")
+        (typeof limitProblem === "number") // TODO: This could be BigInt
         || (done.resultCode === LDAPResult_resultCode_unavailableCriticalExtension)
     ) {
         return {

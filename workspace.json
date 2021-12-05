@@ -212,6 +212,31 @@
                 }
             },
             "tags": []
+        },
+        "x500-functional-tests": {
+            "root": "libs/x500-functional-tests",
+            "sourceRoot": "libs/x500-functional-tests/src",
+            "projectType": "library",
+            "targets": {
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "outputs": ["{options.outputFile}"],
+                    "options": {
+                        "lintFilePatterns": [
+                            "libs/x500-functional-tests/**/*.ts"
+                        ]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/libs/x500-functional-tests"],
+                    "options": {
+                        "jestConfig": "libs/x500-functional-tests/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                }
+            },
+            "tags": []
         }
     }
 }

@@ -209,6 +209,7 @@ async function removeEntry (
     const nonChildSubordinate = await ctx.db.entry.findFirst({
         where: {
             immediate_superior_id: target.dse.id,
+            deleteTimestamp: null,
             EntryObjectClass: {
                 none: {
                     object_class: CHILD,
