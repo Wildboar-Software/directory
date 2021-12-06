@@ -156,9 +156,9 @@ function *filterByTypeAndContextAssertion (
             yield value;
             continue;
         }
-        const TYPE_OID: string = value.type.toString();
+        // const TYPE_OID: string = value.type.toString();
         const typeAndContextAssertions = [
-            TYPE_OID,
+            // TYPE_OID, // This is already included from `getParentAttributeTypes()`
             ALL_ATTRIBUTE_TYPES,
             ...Array.from(getAttributeParentTypes(ctx, value.type)).map((oid) => oid.toString()),
         ]
@@ -249,7 +249,7 @@ async function readValues (
                     }
                     : undefined,
             },
-            include: {
+            include: { // TODO: Change this to a select so you can just select type and ber of the attribute value.
                 ContextValue: (contextSelection || ("selectedContexts" in contextSelection))
                     ? {
                         select: {
@@ -318,14 +318,13 @@ async function readValues (
                 return selectedUserAttributes.has(attr.type.toString());
             });
 
-    const valuesByType: Record<IndexableOID, Value[]> = groupByOID([
-        ...userAttributes,
-        ...operationalAttributes,
-        ...collectiveValues,
-    ], (value) => value.type);
-
     const newAssertions: TypeAndContextAssertion[] = [];
     if ("selectedContexts" in contextSelection) {
+        const valuesByType: Record<IndexableOID, Value[]> = groupByOID([
+            ...userAttributes,
+            ...operationalAttributes,
+            ...collectiveValues,
+        ], (value) => value.type);
         // This loop is just to handle TypeAndContextAssertion.[#].preference.
         const deselected: Set<IndexableOID> = new Set();
         for (const taca of contextSelection.selectedContexts) {

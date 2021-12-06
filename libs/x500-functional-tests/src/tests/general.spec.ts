@@ -39,6 +39,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import {
+    name,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import {
     commonName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
 import {
@@ -50,6 +53,9 @@ import {
 import {
     description,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa";
+import {
+    createTimestamp,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
 import {
     administrativeRole,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
@@ -200,6 +206,29 @@ import {
     SearchResult,
     _decode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+import {
+    Attribute_valuesWithContext_Item,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+import {
+    Context,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import {
+    ContextAssertion,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import {
+    TypeAndContextAssertion,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+import {
+    TypeAndContextAssertion_contextAssertions,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion-contextAssertions.ta";
+import {
+    localeContext,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
+import {
+    LocaleContextSyntax,
+    _encode_LocaleContextSyntax,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/LocaleContextSyntax.ta";
+import { strict as assert } from "assert";
 
 jest.setTimeout(10000);
 
@@ -991,74 +1020,261 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("Read.selection", async () => {
-
+    it("Read.selection", async () => {
+        const testId = `Read-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            {
+                select: [
+                    description["&id"],
+                ],
+            },
+            undefined,
+            {
+                select: [
+                    createTimestamp["&id"],
+                ],
+            },
+            undefined,
+            undefined,
+            undefined,
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            selection,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ReadResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            const cn: EntryInformation_information_Item | undefined = resData.entry.information
+                ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"]));
+            const d: EntryInformation_information_Item | undefined = resData.entry.information
+                ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(description["&id"]));
+            const cts: EntryInformation_information_Item | undefined = resData.entry.information
+                ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(createTimestamp["&id"]));
+            expect(cn).toBeUndefined();
+            expect(d).toBeDefined();
+            expect(cts).toBeDefined();
+            expect(resData.entry.information).toHaveLength(2);
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    // it("Read.selection.infoTypes", async () => {
-    //     const testId = `Read.selection.infoTypes-${(new Date()).toISOString()}`;
-    //     { // Setup
-    //         await createTestRootNode(connection!, testId);
-    //     }
-    //     const dn = createTestRootDN(testId);
-    //     const selection = new EntryInformationSelection(
-    //         {
-    //             select: [
-    //                 new ObjectIdentifier([ 2, 5, 4, 3 ]),
-    //             ],
-    //         },
-    //         typesOnly,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //     );
-    //     const reqData: ReadArgumentData = new ReadArgumentData(
-    //         {
-    //             rdnSequence: dn,
-    //         },
-    //         selection,
-    //         undefined,
-    //         [],
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //         undefined,
-    //     );
-    //     const arg: ReadArgument = {
-    //         unsigned: reqData,
-    //     };
-    //     const result = await writeOperation(
-    //         connection!,
-    //         read["&operationCode"]!,
-    //         _encode_ReadArgument(arg, DER),
-    //     );
-    //     if ("result" in result && result.result) {
-    //         const decoded = _decode_ReadResult(result.result);
-    //         const resData = getOptionallyProtectedValue(decoded);
-    //         expect(resData.entry.information?.length).toBe(1);
-    //         const cn: EntryInformation_information_Item | undefined = resData.entry.information
-    //             ?.find((einfo) => ("attributeType" in einfo) && einfo.attributeType.isEqualTo(commonName["&id"]));
-    //         expect(cn).toBeDefined();
-    //     } else {
-    //         expect(false).toBeTruthy();
-    //     }
-    // });
+    it("Read.selection.infoTypes", async () => {
+        const testId = `Read.selection.infoTypes-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            {
+                select: [
+                    commonName["&id"],
+                ],
+            },
+            typesOnly,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            selection,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ReadResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            expect(resData.entry.information?.length).toBe(1);
+            const cn: EntryInformation_information_Item | undefined = resData.entry.information
+                ?.find((einfo) => ("attributeType" in einfo) && einfo.attributeType.isEqualTo(commonName["&id"]));
+            expect(cn).toBeDefined();
+        } else {
+            expect(false).toBeTruthy();
+        }
+    });
 
     it.skip("Read.selection.contextSelection.selectedContexts.all", async () => {
 
     });
 
-    it.skip("Read.selection.contextSelection.selectedContexts.preference", async () => {
-
+    it.only("Read.selection.contextSelection.selectedContexts.preference", async () => {
+        const testId = `Read-${(new Date()).toISOString()}`;
+        const firstPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 5 ]),
+        }, DER);
+        const secondPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 6 ]),
+        }, DER);
+        const thirdPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 7 ]),
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("der entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [secondPreferredLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [thirdPreferredLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            {
+                selectedContexts: [
+                    new TypeAndContextAssertion(
+                        commonName["&id"],
+                        {
+                            preference: [
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        firstPreferredLocale,
+                                    ],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        secondPreferredLocale, // This should be the one that sticks.
+                                    ],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        thirdPreferredLocale,
+                                    ],
+                                ),
+                            ],
+                        },
+                    ),
+                ],
+            },
+            undefined,
+            undefined,
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            selection,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ReadResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            const cn: EntryInformation_information_Item[] = resData.entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"])) ?? [];
+            expect(cn).toHaveLength(1);
+            assert("attribute" in cn[0]);
+            const valuesWithContext = cn[0].attribute.valuesWithContext ?? [];
+            expect(valuesWithContext).toHaveLength(1);
+            const chosenValue = valuesWithContext[0].value.utf8String;
+            expect(chosenValue).toBe("der entry");
+            expect(valuesWithContext[0].contextList).toHaveLength(1);
+            expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+            expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(1);
+            const chosenLocale = valuesWithContext[0].contextList[0].contextValues[0].objectIdentifier;
+            expect(chosenLocale.isEqualTo(new ObjectIdentifier([ 1, 2, 3, 4, 6 ]))).toBeTruthy();
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
     it.skip("Read.selection.returnContexts", async () => {
@@ -1090,7 +1306,55 @@ describe("Meerkat DSA", () => {
     });
 
     it.skip("List.listFamily", async () => {
-
+        const testId = `List-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        await Promise.all([
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+        ].map((id) => createTestNode(connection!, dn, id)));
+        const reqData: ListArgumentData = new ListArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ListArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            list["&operationCode"]!,
+            _encode_ListArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ListResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("listInfo" in resData) {
+                expect(resData.listInfo.subordinates.length).toBe(3);
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
     it.skip("List pagination works", async () => {
@@ -1509,415 +1773,7 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("All protocol messages appear correct in Wireshark", async () => {
-
-    });
-
-    it.skip("An error is thrown when the hierarchyParent attribute refers to a DSE that is not within the same DSA", async () => {
-
-    });
-
-    it.skip("An error is thrown when the hierarchyParent attribute refers to a DSE that is not the ancestor of a compound entry", async () => {
-
-    });
-
-    it.skip("An error is thrown if an attribute is submitted with invalid syntax", async () => {
-
-    });
-
-    it.skip("An error is thrown if a value is added to an entry for which it already exists", async () => {
-
-    });
-
-    it.skip("An error is thrown when a context's syntax is invalid", async () => {
-
-    });
-
-    it.skip("An error is thrown if no invoke ID is specified in an abandon request", async () => {
-
-    });
-
-    it.skip("An error is thrown when a non-existent invocation is abandoned", async () => {
-
-    });
-
-    it.skip("An error is thrown when an operation is too far along to be abandoned (too late)", async () => {
-
-    });
-
-    it.skip("An error is thrown when an addEntry is attempted with no objectClass attribute specified", async () => {
-
-    });
-
-    it.skip("An error is thrown when an addEntry is attempted with an invalid set of object classes", async () => {
-
-    });
-
-    it.skip("An error is thrown when an addEntry is attempted with an object class of parent", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry is of object class alias and child", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry is of object class alias and parent", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry is beneath an alias", async () => {
-
-    });
-
-    it.skip("An error is thrown if a subentry is added below a non-administrative point DSE", async () => {
-
-    });
-
-    it.skip("An error is thrown if a subentry is added to another DSA with the targetSystem option", async () => {
-
-    });
-
-    it.skip("An error is thrown if the Root DSE is attempted to be added", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry is attempted to be added when it already exists", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry has a hierarchyParent attribute and is a child of a compound entry", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry contains unrecognized attribute types", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry attempts to add an attribute type that is NO-USER-MODIFICATION", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry attempts to add an attribute type that is DUMMY", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry attempts to add an attribute type that is COLLECTIVE", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry attempts to add an attribute type that is OBSOLETE", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry has an unrecognized object class", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry has an attribute not permitted by its object classes", async () => {
-
-    });
-
-    it.skip("An error is thrown if an added entry is missing a required attribute", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry has a distinguished value with an invalid syntax", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry's RDN has duplicated attribute types (not values)", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry's RDN has an unrecognized attribute type", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry's RDN has an attribute type that is prohibited in naming", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry's RDN has values not actually present in the entry (Technically, the X.500 standards says the DSA can add these)", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry is not permitted by any structural rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry has an auxiliary object class not permitted by any DIT content rule", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry has an attribute precluded by the relevant DIT content rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry at the first level is not an administrative point", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry is missing mandatory attributes required by DIT content rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry has an auxiliary object class not explicitly permitted by any DIT content rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry has contexts for an attribute type when there are no context use rules to permit it", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry has contexts for an attribute type when there are no context use rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry has an attribute value that is missing contexts required by context use rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry contains non-userApplications attributes but the manageDSAIT flag is not set", async () => {
-
-    });
-
-    it.skip("An error is thrown when a loop is detected in distributed processing", async () => {
-
-    });
-
-    it.skip("An error is thrown when an added entry already exists within an NSSR", async () => {
-
-    });
-
-    it.skip("An error is thrown when a renamed entry already exists within an NSSR", async () => {
-
-    });
-
-    it.skip("An error is thrown if there is an unmet critical extension (See check suitability procedure)", async () => {
-
-    });
-
-    it.skip("An error is thrown when a compare operation is attempted on an attribute type having no equality matching rule defined", async () => {
-
-    });
-
-    it.skip("An error is thrown when a target object is not found", async () => {
-
-    });
-
-    it.skip("An error is thrown when an operation other than list or search targets the Root DSE", async () => {
-
-    });
-
-    it.skip("An error is thrown when some prefix of the target object is an alias and dontDereferenceAliases is set", async () => {
-
-    });
-
-    it.skip("An error is thrown when a subentry is encountered above the target object", async () => {
-
-    });
-
-    it.skip("An error is thrown when an invalid pageNumber is supplied for pagination in a list operation", async () => {
-
-    });
-
-    it.skip("An error is thrown when an invalid pageSize is supplied for pagination in a list operation", async () => {
-
-    });
-
-    it.skip("An error is thrown when an invalid queryReference is supplied for pagination in a list operation", async () => {
-
-    });
-
-    it.skip("An error is thrown when an invalid pageNumber is supplied for pagination in a search operation", async () => {
-
-    });
-
-    it.skip("An error is thrown when an invalid pageSize is supplied for pagination in a search operation", async () => {
-
-    });
-
-    it.skip("An error is thrown when an invalid queryReference is supplied for pagination in a search operation", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry is moved outside of the DSA", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry is moved under a new superior that is outside of the DSA", async () => {
-
-    });
-
-    it.skip("An error is thrown when a child entry is moved", async () => {
-
-    });
-
-    it.skip("An error is thrown when an attempt is made to move the Root DSE", async () => {
-
-    });
-
-    it.skip("An error is thrown when an attempt is made to move an entry under a non-existent new superior", async () => {
-
-    });
-
-    it.skip("An error is thrown when an attempt is made to move an entry that has subordinates not within this DSA", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry is renamed to have the DN of an entry that already exists", async () => {
-
-    });
-
-    it.skip("An error is thrown when a superior DSA refuses to rename a context prefix", async () => {
-
-    });
-
-    it.skip("An error is thrown when no DIT structural rules permit a rename", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry is moved to a section of the DIT in which one of its auxiliary object classes are not permitted", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry with auxiliary object classes is moved to a section of the DIT in which one no DIT content rules are defined", async () => {
-
-    });
-
-    it.skip("An error is thrown when an RDN attribute type requires contexts per the context use rules of the new DIT location after a rename", async () => {
-
-    });
-
-    it.skip("An error is thrown when attribute type of entry's new RDN after a rename is not permitted by one of its object classes", async () => {
-
-    });
-
-    it.skip("An error is thrown when attribute type of entry's new RDN after a rename is precluded by relevant DIT content rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when a rename makes an entry both a hierarchical child and a child of a compound entry", async () => {
-
-    });
-
-    it.skip("An error is thrown when a rename adds an unrecognized attribute type to an entry's RDN", async () => {
-
-    });
-
-    it.skip("An error is thrown when a rename adds a value to an entry's RDN that has an invalid syntax for its type", async () => {
-
-    });
-
-    it.skip("An error is thrown when a rename uses a distinguished value that is not present in the entry", async () => {
-
-    });
-
-    it.skip("An error is thrown when a rename deletes the last value of a required attribute", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an unrecognized attribute", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an attribute value with an invalid syntax", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an attribute that is precluded by DIT content rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an attribute that is not permitted by object classes", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification deletes the last value of an attribute required by object classes", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification deletes the last value of an attribute required by DIT content rules", async () => {
-
-    });
-
-    it.skip("An error is thrown if a modified entry attempts to add an attribute type that is NO-USER-MODIFICATION", async () => {
-
-    });
-
-    it.skip("An error is thrown if a modified entry attempts to add an attribute type that is DUMMY", async () => {
-
-    });
-
-    it.skip("An error is thrown if a modified entry attempts to add an attribute type that is COLLECTIVE", async () => {
-
-    });
-
-    it.skip("An error is thrown if a modified entry attempts to add an attribute type that is OBSOLETE", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification deletes an attribute value used in the entry's RDN", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an attribute value without contexts (and no default value for said contexts) when the DIT context rules require those contexts", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an attribute value with contexts that are not permitted by DIT context rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an unrecognized object class", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification would change an entry's structural object class", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an auxiliary object class not permitted by DIT content rules", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an object class that is invalid with respect to the other object classes", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification adds an object class of 'parent'", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification would make the entry have object classes of 'alias' and 'child'", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification would make the entry have object classes of 'alias' and 'parent'", async () => {
-
-    });
-
-    it.skip("An error is thrown when an entry modification would make the entry both a child of a compound entry and a member of a hierarchical group", async () => {
-
-    });
-
-    it.skip("An error is thrown when a read operation reads no attribute values", async () => {
-
-    });
-
-    it.skip("An error is thrown when a removeEntry operation would remove an entry that has non-child subordinates", async () => {
-
-    });
-
-    it.skip("An error is thrown when a removeEntry operation targets a non-ancestor of a compound entry when familyGrouping is set to compoundEntry", async () => {
-
-    });
-
     it.skip("Requests are rejected when the DSA is hibernating", async () => {
-
-    });
-
-    it.skip("An error is thrown when an operational binding is attempted with the configured minimum authentication", async () => {
 
     });
 
