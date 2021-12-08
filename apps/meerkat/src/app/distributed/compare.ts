@@ -263,7 +263,7 @@ async function compare (
             select: typeAndSuperTypes,
         },
         undefined,
-        false,
+        true, // We need the contexts for evaluation.
         undefined,
     );
     const {

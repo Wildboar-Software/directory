@@ -1783,7 +1783,7 @@ async function search_i (
                     //     ? convertFilterToPrismaSelect(ctx, data.filter)
                     //     : {}),
                     subentry: subentries,
-                    EntryObjectClass: {
+                    EntryObjectClass: { // FIXME: This should be kept, but it hide child entries.
                         /**
                          * We do not iterate over child entries, because
                          * those will be returned--or not--with the
@@ -1847,7 +1847,7 @@ async function search_i (
              * those will be returned--or not--with the
              * ancestor entry.
              */
-            if (subordinate.dse.objectClass.has(CHILD)) {
+            if (subordinate.dse.objectClass.has(CHILD)) { // FIXME: This should be kept, but it hide child entries.
                 continue;
             }
             if (subordinate.dse.subr && !subordinate.dse.cp) {

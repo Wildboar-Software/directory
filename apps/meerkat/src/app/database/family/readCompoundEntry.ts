@@ -1,8 +1,8 @@
 import type { Vertex } from "@wildboar/meerkat-types";
 
-const getSubtree = (vertex: Vertex) => [
+const getSubtree = (vertex: Vertex): Vertex[] => [
     vertex,
-    ...(vertex.subordinates ?? []).map(getSubtree),
+    ...(vertex.subordinates ?? []).flatMap(getSubtree),
 ];
 
 export

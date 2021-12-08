@@ -238,7 +238,6 @@ async function readValues (
         }
     }
     let operationalAttributes: Value[] = [];
-    // TODO: I feel like this could be optimized to query fewer attributes.
     let userAttributes: Value[] = await Promise.all(
         (await ctx.db.attributeValue.findMany({
             where: {
@@ -249,8 +248,14 @@ async function readValues (
                     }
                     : undefined,
             },
-            include: { // TODO: Change this to a select so you can just select type and ber of the attribute value.
-                ContextValue: (contextSelection || ("selectedContexts" in contextSelection))
+            select: {
+                type: true,
+                ber: true,
+                ContextValue: (
+                    contextSelection
+                    || eis?.returnContexts
+                    // || ("selectedContexts" in contextSelection) // Why was this condition ever here?
+                )
                     ? {
                         select: {
                             type: true,
@@ -361,6 +366,21 @@ async function readValues (
     userAttributes = Array.from(filterByTypeAndContextAssertion(ctx, userAttributes, selectedContexts));
     operationalAttributes = Array.from(filterByTypeAndContextAssertion(ctx, operationalAttributes, selectedContexts));
     collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
+
+    if (!eis?.returnContexts) {
+        userAttributes = userAttributes.map((value) => ({
+            ...value,
+            contexts: undefined,
+        }));
+        operationalAttributes = operationalAttributes.map((value) => ({
+            ...value,
+            contexts: undefined,
+        }));
+        collectiveValues = collectiveValues.map((value) => ({
+            ...value,
+            contexts: undefined,
+        }));
+    }
 
     return {
         userAttributes,

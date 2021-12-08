@@ -1,4 +1,4 @@
-import { ASN1Element, FALSE_BIT, TRUE_BIT, ObjectIdentifier } from "asn1-ts";
+import { ASN1Element, FALSE_BIT, TRUE_BIT, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     BER,
     DER,
@@ -53,6 +53,9 @@ import {
 import {
     description,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa";
+import {
+    localityName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
 import {
     createTimestamp,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
@@ -229,6 +232,42 @@ import {
     _encode_LocaleContextSyntax,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/LocaleContextSyntax.ta";
 import { strict as assert } from "assert";
+import {
+    RelativeDistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+import {
+    organization,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organization.oa";
+import {
+    organizationalUnit,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalUnit.oa";
+import {
+    person,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa";
+import {
+    device,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/device.oa";
+import {
+    organizationName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa";
+import {
+    organizationalUnitName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa";
+import {
+    surname,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
+import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
+import {
+    family_information,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
+import {
+    FamilyReturn,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
+import {
+    FamilyReturn_memberSelect_compoundEntry,
+    FamilyReturn_memberSelect_contributingEntriesOnly,
+    FamilyReturn_memberSelect_participatingEntriesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
 
 jest.setTimeout(10000);
 
@@ -271,6 +310,10 @@ function utf8 (str: string): ASN1Element {
     return _encode_UnboundedDirectoryString({
         uTF8String: str,
     }, DER);
+}
+
+function oid (o: OBJECT_IDENTIFIER): ASN1Element {
+    return _encodeObjectIdentifier(o, DER);
 }
 
 async function connect (): Promise<IDMConnection> {
@@ -500,6 +543,240 @@ async function createTestNode (
             _encode_AddEntryArgument(addTestNode, DER),
         );
     });
+}
+
+async function createEntry (
+    connection: IDMConnection,
+    superiorDN: DistinguishedName,
+    rdn: RelativeDistinguishedName,
+    attributes: Attribute[],
+): Promise<ResultOrError> {
+    const addTestNode = createAddEntryArguments(
+        [
+            ...superiorDN,
+            rdn,
+        ],
+        attributes,
+    );
+    const invokeID = crypto.randomInt(1_000_000);
+    return new Promise((resolve) => {
+        connection.events.on(invokeID.toString(), (roe: ResultOrError) => {
+            if ("error" in roe) {
+                resolve(roe);
+            } else {
+                resolve({
+                    invokeId: {
+                        present: invokeID,
+                    },
+                    opCode: addEntry["&operationCode"]!,
+                    result: roe.result,
+                });
+            }
+        });
+        connection!.writeRequest(
+            invokeID,
+            addEntry["&operationCode"]!,
+            _encode_AddEntryArgument(addTestNode, DER),
+        );
+    });
+}
+
+const parentRDN: RelativeDistinguishedName = [
+    new AttributeTypeAndValue(
+        organizationName["&id"],
+        utf8("Wildboar Software"),
+    ),
+];
+
+/**
+ * @description
+ *
+ * organization
+ * - organizationalUnit
+ *   - person
+ *   - device
+ * - organizationalUnit
+ * - person
+ * - device
+ *
+ * @param connection
+ * @param superiorDN
+ */
+async function createCompoundEntry (
+    connection: IDMConnection,
+    superiorDN: DistinguishedName,
+): Promise<void> {
+    await createEntry(
+        connection,
+        superiorDN,
+        parentRDN,
+        [
+            new Attribute(
+                objectClass["&id"],
+                [oid(organization["&id"])],
+                undefined,
+            ),
+            new Attribute(
+                organizationName["&id"],
+                [utf8("Wildboar Software")],
+                undefined,
+            ),
+        ],
+    );
+
+    const level2A_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            organizationalUnitName["&id"],
+            utf8("Finance Department"),
+        ),
+    ];
+    await createEntry(
+        connection,
+        [ ...superiorDN, parentRDN ],
+        level2A_rdn,
+        [
+            new Attribute(
+                objectClass["&id"],
+                [oid(organizationalUnit["&id"]), oid(child["&id"])],
+                undefined,
+            ),
+            new Attribute(
+                organizationalUnitName["&id"],
+                [utf8("Finance Department")],
+                undefined,
+            ),
+        ],
+    );
+
+    const level2B_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            organizationalUnitName["&id"],
+            utf8("Fun Department"),
+        ),
+    ];
+    await createEntry(
+        connection,
+        [ ...superiorDN, parentRDN ],
+        level2B_rdn,
+        [
+            new Attribute(
+                objectClass["&id"],
+                [oid(organizationalUnit["&id"]), oid(child["&id"])],
+                undefined,
+            ),
+            new Attribute(
+                organizationalUnitName["&id"],
+                [utf8("Fun Department")],
+                undefined,
+            ),
+        ],
+    );
+
+    const level2C_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            commonName["&id"],
+            utf8("Chief Pain Officer Jonathan Wilbur"),
+        ),
+    ];
+    await createEntry(
+        connection,
+        [ ...superiorDN, parentRDN ],
+        level2C_rdn,
+        [
+            new Attribute(
+                objectClass["&id"],
+                [oid(person["&id"]), oid(child["&id"])],
+                undefined,
+            ),
+            new Attribute(
+                commonName["&id"],
+                [utf8("Chief Pain Officer Jonathan Wilbur")],
+                undefined,
+            ),
+            new Attribute(
+                surname["&id"],
+                [utf8("Wilbur")],
+                undefined,
+            ),
+        ],
+    );
+
+    const level2D_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            commonName["&id"],
+            utf8("Commodore 64 (128 KB memory extension)"),
+        ),
+    ];
+    await createEntry(
+        connection,
+        [ ...superiorDN, parentRDN ],
+        level2D_rdn,
+        [
+            new Attribute(
+                objectClass["&id"],
+                [oid(device["&id"]), oid(child["&id"])],
+                undefined,
+            ),
+            new Attribute(
+                commonName["&id"],
+                [utf8("Commodore 64 (128 KB memory extension)")],
+                undefined,
+            ),
+        ],
+    );
+
+    const level3A_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            commonName["&id"],
+            utf8("Bigfoot"),
+        ),
+    ];
+    await createEntry(
+        connection,
+        [ ...superiorDN, parentRDN, level2A_rdn ],
+        level3A_rdn,
+        [
+            new Attribute(
+                objectClass["&id"],
+                [oid(person["&id"]), oid(child["&id"])],
+                undefined,
+            ),
+            new Attribute(
+                commonName["&id"],
+                [utf8("Bigfoot")],
+                undefined,
+            ),
+            new Attribute(
+                surname["&id"],
+                [utf8("Garfunkel")],
+                undefined,
+            ),
+        ],
+    );
+
+    const level3B_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            commonName["&id"],
+            utf8("Bigfoot's iPhone 4"),
+        ),
+    ];
+    await createEntry(
+        connection,
+        [ ...superiorDN, parentRDN, level2A_rdn ],
+        level3B_rdn,
+        [
+            new Attribute(
+                objectClass["&id"],
+                [oid(device["&id"]), oid(child["&id"])],
+                undefined,
+            ),
+            new Attribute(
+                commonName["&id"],
+                [utf8("Bigfoot's iPhone 4")],
+                undefined,
+            ),
+        ],
+    );
 }
 
 describe("Meerkat DSA", () => {
@@ -792,7 +1069,7 @@ describe("Meerkat DSA", () => {
 
     // This test is unnecessary, because almost every test creates an entry for test data.
     it.skip("AddEntry", async () => {
-        const testId = "498B3BC2-71F1-4B62-81B4-0E889D897A94";
+        const testId = `AddEntry-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
         }
@@ -1021,7 +1298,7 @@ describe("Meerkat DSA", () => {
     });
 
     it("Read.selection", async () => {
-        const testId = `Read-${(new Date()).toISOString()}`;
+        const testId = `Read.selection-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
         }
@@ -1146,12 +1423,127 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    it.skip("Read.selection.contextSelection.selectedContexts.all", async () => {
-
+    it("Read.selection.contextSelection.selectedContexts.all", async () => {
+        const testId = `Read.selection.contextSelection.selectedContexts.all-${(new Date()).toISOString()}`;
+        const firstLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 5 ]),
+        }, DER);
+        const secondLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 6 ]),
+        }, DER);
+        const thirdLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 7 ]),
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("der entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [secondLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [firstLocale, thirdLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            {
+                selectedContexts: [
+                    new TypeAndContextAssertion(
+                        commonName["&id"],
+                        {
+                            all: [
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [firstLocale],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [thirdLocale],
+                                ),
+                            ],
+                        },
+                    ),
+                ],
+            },
+            true,
+            undefined,
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            selection,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ReadResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            const cn: EntryInformation_information_Item[] = resData.entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"])) ?? [];
+            expect(cn).toHaveLength(1);
+            assert("attribute" in cn[0]);
+            const valuesWithContext = cn[0].attribute.valuesWithContext ?? [];
+            expect(valuesWithContext).toHaveLength(1);
+            const chosenValue = valuesWithContext[0].value.utf8String;
+            expect(chosenValue).toBe("el entry");
+            expect(valuesWithContext[0].contextList).toHaveLength(1);
+            expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+            expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(2);
+            const chosenLocale1 = valuesWithContext[0].contextList[0].contextValues[0].objectIdentifier;
+            expect(chosenLocale1.isEqualTo(new ObjectIdentifier([ 1, 2, 3, 4, 5 ]))).toBeTruthy();
+            const chosenLocale2 = valuesWithContext[0].contextList[0].contextValues[1].objectIdentifier;
+            expect(chosenLocale2.isEqualTo(new ObjectIdentifier([ 1, 2, 3, 4, 7 ]))).toBeTruthy();
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.only("Read.selection.contextSelection.selectedContexts.preference", async () => {
-        const testId = `Read-${(new Date()).toISOString()}`;
+    it("Read.selection.contextSelection.selectedContexts.preference", async () => {
+        const testId = `Read.selection.contextSelection.selectedContexts.preference-${(new Date()).toISOString()}`;
         const firstPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
             localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 5 ]),
         }, DER);
@@ -1225,7 +1617,7 @@ describe("Meerkat DSA", () => {
                     ),
                 ],
             },
-            undefined,
+            true,
             undefined,
         );
         const reqData: ReadArgumentData = new ReadArgumentData(
@@ -1277,20 +1669,304 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    it.skip("Read.selection.returnContexts", async () => {
-
+    it("Read.selection.returnContexts", async () => {
+        const testId = `Read.selection.returnContexts-${(new Date()).toISOString()}`;
+        const locale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 5 ]),
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    localityName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [locale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const readEntry = (includeContexts: boolean) => {
+            const selection = new EntryInformationSelection(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                includeContexts,
+                undefined,
+            );
+            const reqData: ReadArgumentData = new ReadArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                selection,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            );
+            const arg: ReadArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                read["&operationCode"]!,
+                _encode_ReadArgument(arg, DER),
+            );
+        };
+        const resultWithContexts = await readEntry(true);
+        assert("result" in resultWithContexts);
+        assert(resultWithContexts.result);
+        { // With contexts
+            const decoded = _decode_ReadResult(resultWithContexts.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            const loc: EntryInformation_information_Item[] = resData.entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(localityName["&id"])) ?? [];
+            expect(loc).toHaveLength(1);
+            assert("attribute" in loc[0]);
+            const valuesWithContext = loc[0].attribute.valuesWithContext ?? [];
+            expect(valuesWithContext).toHaveLength(1);
+            const chosenValue = valuesWithContext[0].value.utf8String;
+            expect(chosenValue).toBe("el entry");
+            expect(valuesWithContext[0].contextList).toHaveLength(1);
+            expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+            expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(1);
+        }
+        const resultWithoutContexts = await readEntry(false);
+        assert("result" in resultWithoutContexts);
+        assert(resultWithoutContexts.result);
+        { // Without contexts
+            const decoded = _decode_ReadResult(resultWithoutContexts.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            const loc: EntryInformation_information_Item[] = resData.entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(localityName["&id"])) ?? [];
+            expect(loc).toHaveLength(1);
+            assert("attribute" in loc[0]);
+            const values = loc[0].attribute.values;
+            const valuesWithContext = loc[0].attribute.valuesWithContext ?? [];
+            expect(values).toHaveLength(1);
+            expect(valuesWithContext).toHaveLength(0);
+            const chosenValue = values[0].utf8String;
+            expect(chosenValue).toBe("el entry");
+        }
     });
 
-    it.skip("Read.selection.familyReturn.memberSelect.contributingEntriesOnly", async () => {
-
+    it("Read.selection.familyReturn.memberSelect.contributingEntriesOnly", async () => {
+        const testId = `Read...contributingEntriesOnly-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_contributingEntriesOnly,
+                undefined,
+            ),
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            selection,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ReadResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        expect(familyAttribute).toBeUndefined();
     });
 
-    it.skip("Read.selection.familyReturn.memberSelect.participantingEntriesOnly", async () => {
-
+    it("Read.selection.familyReturn.memberSelect.participantingEntriesOnly", async () => {
+        const testId = `Read...participantingEntriesOnly-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_participatingEntriesOnly,
+                undefined,
+            ),
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            selection,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ReadResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        expect(familyAttribute).toBeDefined();
+        assert(familyAttribute);
+        assert("attribute" in familyAttribute);
+        assert(familyAttribute.attribute.values[0]);
+        const families = familyAttribute.attribute.values.map((f) =>  family_information.decoderFor["&Type"]!(f));
+        const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
+        const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
+        const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
+        expect(orgs).toHaveLength(1);
+        expect(people).toHaveLength(1);
+        expect(devices).toHaveLength(1);
+        expect(orgs[0].familyEntries).toHaveLength(2);
+        expect(people[0].familyEntries).toHaveLength(1);
+        expect(devices[0].familyEntries).toHaveLength(1);
+        expect(people[0].familyEntries[0].rdn[0].value.utf8String).toBe("Chief Pain Officer Jonathan Wilbur");
+        expect(devices[0].familyEntries[0].rdn[0].value.utf8String).toBe("Commodore 64 (128 KB memory extension)");
+        expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(person["&id"]))));
+        expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(device["&id"]))));
     });
 
-    it.skip("Read.selection.familyReturn.memberSelect.compoundEntry", async () => {
-
+    it("Read.selection.familyReturn.memberSelect.compoundEntry", async () => {
+        const testId = `Read...contributingEntriesOnly-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_compoundEntry,
+                undefined,
+            ),
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            selection,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ReadResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        expect(familyAttribute).toBeDefined();
+        assert(familyAttribute);
+        assert("attribute" in familyAttribute);
+        assert(familyAttribute.attribute.values[0]);
+        const families = familyAttribute.attribute.values.map((f) =>  family_information.decoderFor["&Type"]!(f));
+        const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
+        const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
+        const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
+        expect(orgs).toHaveLength(1);
+        expect(people).toHaveLength(1);
+        expect(devices).toHaveLength(1);
+        expect(orgs[0].familyEntries).toHaveLength(2);
+        expect(people[0].familyEntries).toHaveLength(1);
+        expect(devices[0].familyEntries).toHaveLength(1);
+        expect(people[0].familyEntries[0].rdn[0].value.utf8String).toBe("Chief Pain Officer Jonathan Wilbur");
+        expect(devices[0].familyEntries[0].rdn[0].value.utf8String).toBe("Commodore 64 (128 KB memory extension)");
+        expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(person["&id"]))));
+        expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(device["&id"]))));
     });
 
     it.skip("Read.selection.familyReturn.familySelect", async () => {
@@ -1306,7 +1982,7 @@ describe("Meerkat DSA", () => {
     });
 
     it.skip("List.listFamily", async () => {
-        const testId = `List-${(new Date()).toISOString()}`;
+        const testId = `List.listFamily-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
         }

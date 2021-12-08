@@ -30,6 +30,7 @@ async function readAttributes (
 ): Promise<ReadEntryAttributesReturn> {
     const values = await readValues(ctx, vertex, eis, relevantSubentries, operationContexts);
     const sizeFilter = getAttributeSizeFilter(attributeSizeLimit ?? Infinity);
+    // Unfortunately, Prisma does not currently give us a way to limit values by length.
     const userAttributes = attributeSizeLimit
         ? attributesFromValues(values.userAttributes).filter(sizeFilter)
         : attributesFromValues(values.userAttributes);

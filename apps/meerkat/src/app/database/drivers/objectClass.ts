@@ -16,6 +16,14 @@ import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import {
     objectClass,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import {
+    child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
+import {
+    parent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
+
+const PARENT: string = parent["&id"].toString();
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -38,6 +46,32 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    // If we are adding child object class, making the immediate superior of object class "parent."
+    if (
+        value.value.objectIdentifier.isEqualTo(child["&id"])
+        && vertex.immediateSuperior
+    ) {
+        if (!vertex.immediateSuperior.dse) {
+            console.log("Somehow a DSE was null....");
+        }
+        pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.upsert({
+            where: {
+                entry_id_object_class: {
+                    entry_id: vertex.immediateSuperior.dse.id,
+                    object_class: PARENT,
+                },
+            },
+            create: {
+                entry_id: vertex.immediateSuperior.dse.id,
+                object_class: PARENT,
+            },
+            update: {
+                entry_id: vertex.immediateSuperior.dse.id,
+                object_class: PARENT,
+            },
+        }));
+        vertex.immediateSuperior.dse.objectClass.add(PARENT);
+    }
     pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.create({
         data: {
             entry_id: vertex.dse.id,

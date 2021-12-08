@@ -33,7 +33,7 @@ async function readFamily (ctx: Context, ancestor: Vertex): Promise<Vertex> {
         },
     );
     return {
-        dse: ancestor.dse,
+        ...ancestor,
         subordinates: await Promise.all(
             subordinates
                 .filter((sub) => sub.dse.objectClass.has(CHILD))
