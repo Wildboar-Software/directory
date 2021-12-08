@@ -1898,7 +1898,7 @@ describe("Meerkat DSA", () => {
     });
 
     it("Read.selection.familyReturn.memberSelect.compoundEntry", async () => {
-        const testId = `Read...contributingEntriesOnly-${(new Date()).toISOString()}`;
+        const testId = `Read...compoundEntry-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
             await createTestRootNode(connection!, testId);
@@ -1970,7 +1970,69 @@ describe("Meerkat DSA", () => {
     });
 
     it.skip("Read.selection.familyReturn.familySelect", async () => {
-
+        const testId = `Read...compoundEntry-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_compoundEntry,
+                [organizationalUnit["&id"]],
+            ),
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            selection,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ReadResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        expect(familyAttribute).toBeDefined();
+        assert(familyAttribute);
+        assert("attribute" in familyAttribute);
+        assert(familyAttribute.attribute.values[0]);
+        const families = familyAttribute.attribute.values.map((f) =>  family_information.decoderFor["&Type"]!(f));
+        const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
+        const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
+        const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
+        expect(orgs).toHaveLength(1);
+        expect(people).toHaveLength(0);
+        expect(devices).toHaveLength(0);
+        expect(orgs[0].familyEntries).toHaveLength(2);
     });
 
     it.skip("Compare works with attribute subtyping", async () => {
