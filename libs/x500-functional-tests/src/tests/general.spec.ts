@@ -73,6 +73,7 @@ import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
+    ServiceControlOptions_noSubtypeMatch,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ServiceControls,
@@ -1969,8 +1970,8 @@ describe("Meerkat DSA", () => {
         expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(device["&id"]))));
     });
 
-    it.skip("Read.selection.familyReturn.familySelect", async () => {
-        const testId = `Read...compoundEntry-${(new Date()).toISOString()}`;
+    it("Read.selection.familyReturn.familySelect", async () => {
+        const testId = `Read...familySelect-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
             await createTestRootNode(connection!, testId);
@@ -2035,12 +2036,149 @@ describe("Meerkat DSA", () => {
         expect(orgs[0].familyEntries).toHaveLength(2);
     });
 
-    it.skip("Compare works with attribute subtyping", async () => {
-
+    it("Compare works with attribute subtyping", async () => {
+        const testId = `CompareWithAttributeSubtyping-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const encodedCN = _encode_UnboundedDirectoryString({
+            uTF8String: testId,
+        }, DER);
+        const dn = createTestRootDN(testId);
+        const do_compare = async (purported: AttributeValueAssertion) => {
+            const reqData: CompareArgumentData = new CompareArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                purported,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            );
+            const arg: CompareArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                compare["&operationCode"]!,
+                _encode_CompareArgument(arg, DER),
+            );
+        };
+        {
+            const shouldBeTrue: AttributeValueAssertion = new AttributeValueAssertion(
+                name["&id"],
+                encodedCN,
+                undefined,
+                undefined,
+            );
+            const result = await do_compare(shouldBeTrue);
+            if ("result" in result && result.result) {
+                const decoded = _decode_CompareResult(result.result);
+                const resData = getOptionallyProtectedValue(decoded);
+                expect(resData.matched).toBe(true);
+            } else {
+                expect(false).toBeTruthy();
+            }
+        }
+        {
+            const wrongCN = _encode_UnboundedDirectoryString({
+                uTF8String: "DEFINITElY wroNG",
+            }, DER);
+            const shouldBeFalse: AttributeValueAssertion = new AttributeValueAssertion(
+                name["&id"],
+                wrongCN,
+                undefined,
+                undefined,
+            );
+            const result = await do_compare(shouldBeFalse);
+            if ("result" in result && result.result) {
+                const decoded = _decode_CompareResult(result.result);
+                const resData = getOptionallyProtectedValue(decoded);
+                expect(resData.matched).toBe(false);
+            } else {
+                expect(false).toBeTruthy();
+            }
+        }
     });
 
-    it.skip("Compare disables subtype matching if noSubtypeMatch SCO set", async () => {
-
+    it("Compare disables subtype matching if noSubtypeMatch SCO set", async () => {
+        const testId = `CompareWithDisabledAttributeSubtyping-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const encodedCN = _encode_UnboundedDirectoryString({
+            uTF8String: testId,
+        }, DER);
+        const dn = createTestRootDN(testId);
+        const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+            Array(15).fill(FALSE_BIT));
+        serviceControlOptions[ServiceControlOptions_noSubtypeMatch] = TRUE_BIT;
+        const serviceControls = new ServiceControls(
+            serviceControlOptions,
+            undefined,
+            60,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const do_compare = async (purported: AttributeValueAssertion) => {
+            const reqData: CompareArgumentData = new CompareArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                purported,
+                [],
+                serviceControls,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            );
+            const arg: CompareArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                compare["&operationCode"]!,
+                _encode_CompareArgument(arg, DER),
+            );
+        };
+        {
+            const shouldBeFalse: AttributeValueAssertion = new AttributeValueAssertion(
+                name["&id"],
+                encodedCN,
+                undefined,
+                undefined,
+            );
+            const result = await do_compare(shouldBeFalse);
+            if ("result" in result && result.result) {
+                const decoded = _decode_CompareResult(result.result);
+                const resData = getOptionallyProtectedValue(decoded);
+                expect(resData.matched).toBe(false);
+            } else {
+                expect(false).toBeTruthy();
+            }
+        }
     });
 
     it.skip("List.listFamily", async () => {

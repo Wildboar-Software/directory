@@ -1,5 +1,5 @@
 import { Context, StoredContext, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_CompareArgument,
@@ -81,6 +81,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import getAttributeSubtypes from "../x500/getAttributeSubtypes";
+import {
+    ServiceControlOptions_noSubtypeMatch,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -111,7 +115,14 @@ async function compare (
     const op = ("present" in state.invokeId)
         ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
-    const typeAndSuperTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, data.purported.type_));
+    const noSubtypeMatch: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeMatch] === TRUE_BIT);
+    const typeAndSubtypes: AttributeType[] = noSubtypeMatch
+        ? [ data.purported.type_ ]
+        : [
+            data.purported.type_,
+            ...getAttributeSubtypes(ctx, data.purported.type_),
+        ];
     const targetDN = getDistinguishedName(target);
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
@@ -174,7 +185,7 @@ async function compare (
                 ),
             );
         }
-        for (const type_ of typeAndSuperTypes) {
+        for (const type_ of typeAndSubtypes) {
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
@@ -256,11 +267,11 @@ async function compare (
 
     const eis = new EntryInformationSelection(
         {
-            select: typeAndSuperTypes,
+            select: typeAndSubtypes,
         },
         undefined,
         {
-            select: typeAndSuperTypes,
+            select: typeAndSubtypes,
         },
         undefined,
         true, // We need the contexts for evaluation.
@@ -352,7 +363,8 @@ async function compare (
                 continue;
             }
         // operationContexts is used if assertedContexts is not used.
-        } else if (data.operationContexts) {
+        }
+        else if (data.operationContexts) {
             if ("allContexts" in data.operationContexts) {
                 matched = true;
                 break;

@@ -2098,7 +2098,7 @@ async function modifyEntry (
                 family,
                 (vertex: Vertex) => permittedEinfoIndex.get(vertex.dse.id) ?? [],
             )
-                .filter((fe) => (!familySelect || familySelect.has(fe.toString())));
+                .filter((fe) => (!familySelect || familySelect.has(fe.family_class.toString())));
             const familyInfoAttr: Attribute = new Attribute(
                 family_information["&id"],
                 familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
