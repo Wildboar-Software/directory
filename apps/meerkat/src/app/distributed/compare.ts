@@ -35,7 +35,6 @@ import {
 } from "../database/entry/readValues";
 import evaluateContextAssertion from "@wildboar/x500/src/lib/utils/evaluateContextAssertion";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";

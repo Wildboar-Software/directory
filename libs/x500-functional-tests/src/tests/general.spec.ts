@@ -2805,16 +2805,411 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    it.skip("Search.selection.contextSelection.selectedContexts.all", async () => {
-
+    it("Search.selection.contextSelection.selectedContexts.all", async () => {
+        const testId = `Search.selection.contextSelection.selectedContexts.all-${(new Date()).toISOString()}`;
+        const firstLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
+        }, DER);
+        const secondLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 6]),
+        }, DER);
+        const thirdLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 7]),
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("der entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [secondLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [firstLocale, thirdLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            {
+                selectedContexts: [
+                    new TypeAndContextAssertion(
+                        commonName["&id"],
+                        {
+                            all: [
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [firstLocale],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [thirdLocale],
+                                ),
+                            ],
+                        },
+                    ),
+                ],
+            },
+            true,
+            undefined,
+        );
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            true,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                expect(resData.searchInfo.entries.length).toBe(1);
+            const entry = resData.searchInfo.entries[0];
+            const cn: EntryInformation_information_Item[] = entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"])) ?? [];
+            expect(cn).toHaveLength(1);
+            assert("attribute" in cn[0]);
+            const valuesWithContext = cn[0].attribute.valuesWithContext ?? [];
+            expect(valuesWithContext).toHaveLength(1);
+            const chosenValue = valuesWithContext[0].value.utf8String;
+            expect(chosenValue).toBe("el entry");
+            expect(valuesWithContext[0].contextList).toHaveLength(1);
+            expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+            expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(2);
+            const chosenLocale1 = valuesWithContext[0].contextList[0].contextValues[0].objectIdentifier;
+            expect(chosenLocale1.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 5]))).toBeTruthy();
+            const chosenLocale2 = valuesWithContext[0].contextList[0].contextValues[1].objectIdentifier;
+            expect(chosenLocale2.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 7]))).toBeTruthy();
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("Search.selection.contextSelection.selectedContexts.preference", async () => {
-
+    it("Search.selection.contextSelection.selectedContexts.preference", async () => {
+        const testId = `Search.selection.contextSelection.selectedContexts.preference-${(new Date()).toISOString()}`;
+        const firstPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
+        }, DER);
+        const secondPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 6]),
+        }, DER);
+        const thirdPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 7]),
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("der entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [secondPreferredLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [thirdPreferredLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            {
+                selectedContexts: [
+                    new TypeAndContextAssertion(
+                        commonName["&id"],
+                        {
+                            preference: [
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        firstPreferredLocale,
+                                    ],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        secondPreferredLocale, // This should be the one that sticks.
+                                    ],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        thirdPreferredLocale,
+                                    ],
+                                ),
+                            ],
+                        },
+                    ),
+                ],
+            },
+            true,
+            undefined,
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            true,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                expect(resData.searchInfo.entries.length).toBe(1);
+                const entry = resData.searchInfo.entries[0];
+                const cn: EntryInformation_information_Item[] = entry.information
+                    ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"])) ?? [];
+                expect(cn).toHaveLength(1);
+                assert("attribute" in cn[0]);
+                const valuesWithContext = cn[0].attribute.valuesWithContext ?? [];
+                expect(valuesWithContext).toHaveLength(1);
+                const chosenValue = valuesWithContext[0].value.utf8String;
+                expect(chosenValue).toBe("der entry");
+                expect(valuesWithContext[0].contextList).toHaveLength(1);
+                expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+                expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(1);
+                const chosenLocale = valuesWithContext[0].contextList[0].contextValues[0].objectIdentifier;
+                expect(chosenLocale.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 6]))).toBeTruthy();
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("Search.selection.returnContexts", async () => {
-
+    it("Search.selection.returnContexts", async () => {
+        const testId = `Search.selection.returnContexts-${(new Date()).toISOString()}`;
+        const locale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    localityName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [locale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const readEntry = (includeContexts: boolean) => {
+            const selection = new EntryInformationSelection(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                includeContexts,
+                undefined,
+            );
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_baseObject,
+                undefined,
+                true,
+                selection,
+                undefined,
+                undefined,
+                undefined,
+                false,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        };
+        const resultWithContexts = await readEntry(true);
+        assert("result" in resultWithContexts);
+        assert(resultWithContexts.result);
+        { // With contexts
+            const decoded = _decode_SearchResult(resultWithContexts.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("searchInfo" in resData);
+            expect(resData.searchInfo.entries).toHaveLength(1);
+            const entry = resData.searchInfo.entries[0];
+            const loc: EntryInformation_information_Item[] = entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(localityName["&id"])) ?? [];
+            expect(loc).toHaveLength(1);
+            assert("attribute" in loc[0]);
+            const valuesWithContext = loc[0].attribute.valuesWithContext ?? [];
+            expect(valuesWithContext).toHaveLength(1);
+            const chosenValue = valuesWithContext[0].value.utf8String;
+            expect(chosenValue).toBe("el entry");
+            expect(valuesWithContext[0].contextList).toHaveLength(1);
+            expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+            expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(1);
+        }
+        const resultWithoutContexts = await readEntry(false);
+        assert("result" in resultWithoutContexts);
+        assert(resultWithoutContexts.result);
+        { // Without contexts
+            const decoded = _decode_SearchResult(resultWithoutContexts.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("searchInfo" in resData);
+            expect(resData.searchInfo.entries).toHaveLength(1);
+            const entry = resData.searchInfo.entries[0];
+            const loc: EntryInformation_information_Item[] = entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(localityName["&id"])) ?? [];
+            expect(loc).toHaveLength(1);
+            assert("attribute" in loc[0]);
+            const values = loc[0].attribute.values;
+            const valuesWithContext = loc[0].attribute.valuesWithContext ?? [];
+            expect(values).toHaveLength(1);
+            expect(valuesWithContext).toHaveLength(0);
+            const chosenValue = values[0].utf8String;
+            expect(chosenValue).toBe("el entry");
+        }
     });
 
     it.skip("Search.selection.familyReturn.memberSelect.contributingEntriesOnly", async () => {
