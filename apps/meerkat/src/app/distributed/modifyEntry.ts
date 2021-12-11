@@ -182,14 +182,9 @@ import attributeTypesPermittedForEveryEntry from "../x500/attributeTypesPermitte
 import {
     administrativeRole,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
-// import {
-//     id_oc_parent,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
-// import {
-//     id_oc_child,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
+    FamilyReturn_memberSelect_participatingEntriesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
 import readFamily from "../database/family/readFamily";
 import readCompoundEntry from "../database/family/readCompoundEntry";
@@ -2032,9 +2027,12 @@ async function modifyEntry (
 
     // TODO: Update Shadows
 
-    if (!ctx.config.bulkInsertMode && data.selection) {
-        const authorizedToReadEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_READ ]);
-        if (!authorizedToReadEntry) {
+    if (data.selection) {
+        if (
+            accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+            && !authorizedToEntry([ PERMISSION_CATEGORY_READ ])
+        ) {
             const result: ModifyEntryResult = {
                 null_: null,
             };
@@ -2071,6 +2069,7 @@ async function modifyEntry (
         if (
             data.selection?.familyReturn
             && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
+            && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_participatingEntriesOnly)
         ) {
             const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
                 ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
@@ -2132,7 +2131,6 @@ async function modifyEntry (
                     undefined,
                 ),
             },
-
         };
         return {
             result: {

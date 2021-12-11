@@ -68,11 +68,27 @@ function validateObjectClasses (
             }
         }
     }
-    for (const a of abstract_.values()) {
-        if (!parents.has(a)) {
-            return false; // We have an abstract class that is not the parent of another class present.
-        }
-    }
+    /**
+     * Object class kind `abstract` is not just used for inheritance. It can be
+     * used for computed classes, among which `parent` is an example
+     * specifically named in ITU Recommendation X.501:
+     *
+     * > In addition to its use for deriving other object classes, an abstract
+     * > object class value can be a derived value; that is, its presence is
+     * > computed or inferred by the Directory. For example, the parent object
+     * > class value for a particular entry is computed or inferred from the
+     * > presence of a family member, of auxiliary object class child,
+     * > immediately subordinate to the entry.
+     *
+     * I removed this check because entries having class `parent` were failing
+     * validation because the abstract class `parent` was not used as a
+     * superclass.
+     */
+    // for (const a of abstract_.values()) {
+    //     if (!parents.has(a)) {
+    //         return false; // We have an abstract class that is not the parent of another class present.
+    //     }
+    // }
     return true;
 }
 

@@ -1,8 +1,18 @@
-import { ASN1Element, FALSE_BIT, TRUE_BIT, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
+import {
+    ASN1Element,
+    FALSE_BIT,
+    TRUE_BIT,
+    ObjectIdentifier,
+    OBJECT_IDENTIFIER,
+    INTEGER,
+    FALSE,
+    TRUE,
+} from "asn1-ts";
 import {
     BER,
     DER,
     _encodeObjectIdentifier,
+    _encodeInteger,
 } from "asn1-ts/dist/node/functional";
 import * as net from "net";
 import {
@@ -158,6 +168,14 @@ import {
     ModifyEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
 import {
+    ModifyEntryResult,
+    _decode_ModifyEntryResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
+import {
+    ModifyEntryResultData,
+    _decode_ModifyEntryResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResultData.ta";
+import {
     modifyDN,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import {
@@ -257,6 +275,12 @@ import {
 import {
     surname,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
+import {
+    oidC,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC.oa";
+import {
+    oidCobj,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/oidCobj.oa";
 import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
 import {
     family_information,
@@ -307,14 +331,18 @@ const encodedDesc = _encode_UnboundedDirectoryString({
     uTF8String: "testeroo",
 }, DER);
 
-function utf8(str: string): ASN1Element {
+function utf8 (str: string): ASN1Element {
     return _encode_UnboundedDirectoryString({
         uTF8String: str,
     }, DER);
 }
 
-function oid(o: OBJECT_IDENTIFIER): ASN1Element {
+function oid (o: OBJECT_IDENTIFIER): ASN1Element {
     return _encodeObjectIdentifier(o, DER);
+}
+
+function int (i: INTEGER): ASN1Element {
+    return _encodeInteger(i, DER);
 }
 
 async function connect(): Promise<IDMConnection> {
@@ -1822,8 +1850,8 @@ describe("Meerkat DSA", () => {
         expect(familyAttribute).toBeUndefined();
     });
 
-    it("Read.selection.familyReturn.memberSelect.participantingEntriesOnly", async () => {
-        const testId = `Read...participantingEntriesOnly-${(new Date()).toISOString()}`;
+    it("Read.selection.familyReturn.memberSelect.participatingEntriesOnly", async () => {
+        const testId = `Read...participatingEntriesOnly-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
             await createTestRootNode(connection!, testId);
@@ -1874,24 +1902,7 @@ describe("Meerkat DSA", () => {
         const resData = getOptionallyProtectedValue(decoded);
         const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
             ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
-        expect(familyAttribute).toBeDefined();
-        assert(familyAttribute);
-        assert("attribute" in familyAttribute);
-        assert(familyAttribute.attribute.values[0]);
-        const families = familyAttribute.attribute.values.map((f) => family_information.decoderFor["&Type"]!(f));
-        const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
-        const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
-        const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
-        expect(orgs).toHaveLength(1);
-        expect(people).toHaveLength(1);
-        expect(devices).toHaveLength(1);
-        expect(orgs[0].familyEntries).toHaveLength(2);
-        expect(people[0].familyEntries).toHaveLength(1);
-        expect(devices[0].familyEntries).toHaveLength(1);
-        expect(people[0].familyEntries[0].rdn[0].value.utf8String).toBe("Chief Pain Officer Jonathan Wilbur");
-        expect(devices[0].familyEntries[0].rdn[0].value.utf8String).toBe("Commodore 64 (128 KB memory extension)");
-        expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(person["&id"]))));
-        expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(device["&id"]))));
+        expect(familyAttribute).toBeUndefined();
     });
 
     it("Read.selection.familyReturn.memberSelect.compoundEntry", async () => {
@@ -3216,7 +3227,7 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("Search.selection.familyReturn.memberSelect.participantingEntriesOnly", async () => {
+    it.skip("Search.selection.familyReturn.memberSelect.participatingEntriesOnly", async () => {
 
     });
 
@@ -3252,68 +3263,1222 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("ModifyEntry.changes.addAttribute", async () => {
-
+    it("ModifyEntry.changes.addAttribute", async () => {
+        const testId = `ModifyEntry.changes.addAttribute-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addAttribute: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyEntry.changes.removeAttribute", async () => {
-
+    it("ModifyEntry.changes.removeAttribute", async () => {
+        const testId = `ModifyEntry.changes.removeAttribute-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    removeAttribute: description["&id"],
+                },
+            ],
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyEntry.changes.addValues", async () => {
-
+    it("ModifyEntry.changes.addValues", async () => {
+        const testId = `ModifyEntry.changes.addValues-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyEntry.changes.removeValues", async () => {
+    it("ModifyEntry.changes.removeValues", async () => {
+        const testId = `ModifyEntry.changes.removeValues-${(new Date()).toISOString()}`;
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [desc],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
 
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    removeValues: new Attribute(
+                        description["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyEntry.changes.alterValues", async () => {
+    test.todo("ModifyEntry.changes.alterValues with REAL-typed attributes");
+    test.todo("Ensure that contexts are preserved with certain entry modifications");
 
+    it("ModifyEntry.changes.alterValues", async () => {
+        const testId = `ModifyEntry.changes.alterValues-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const newEntryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                oidC["&id"],
+                int(5),
+            ),
+        ];
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createEntry(
+                connection!,
+                dn,
+                newEntryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [oid(oidCobj["&id"])], // The only X.520 object class having INTEGER-typed attributes.
+                        undefined,
+                    ),
+                    new Attribute(
+                        oidC["&id"],
+                        [int(5)],
+                        undefined,
+                    ),
+                ],
+            );
+        }
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: [
+                    ...dn,
+                    newEntryRDN,
+                ],
+            },
+            [
+                {
+                    removeValues: new Attribute(
+                        oidC["&id"],
+                        [int(-2)],
+                        undefined,
+                    ),
+                },
+            ],
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
     it.skip("ModifyEntry.changes.resetValue", async () => {
-
+        const testId = `ModifyEntry.changes.resetValue-${(new Date()).toISOString()}`;
+        const desc1 = _encode_UnboundedDirectoryString({
+            uTF8String: "Mod 1",
+        }, DER);
+        const desc2 = _encode_UnboundedDirectoryString({
+            uTF8String: "Mod 2",
+        }, DER);
+        const desc3 = _encode_UnboundedDirectoryString({
+            uTF8String: "Mod 3",
+        }, DER);
+        const locale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 6]),
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [desc1],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            desc2,
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [locale],
+                                    FALSE, // This one should be deleted because fallback is FALSE.
+                                ),
+                            ],
+                        ),
+                        new Attribute_valuesWithContext_Item(
+                            desc3,
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [locale],
+                                    TRUE, // This one should NOT be deleted because fallback is TRUE.
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    resetValue: description["&id"],
+                },
+            ],
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
     it.skip("ModifyEntry.changes.replaceValues", async () => {
-
+        const testId = `ModifyEntry.changes.replaceValues-${(new Date()).toISOString()}`;
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [desc],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    replaceValues: new Attribute(
+                        description["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyEntry.selection", async () => {
-
+    // TODO: Bookmark
+    it("ModifyEntry.selection", async () => {
+        const testId = `ModifyEntry.selection-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            {
+                select: [
+                    description["&id"],
+                ],
+            },
+            undefined,
+            {
+                select: [
+                    createTimestamp["&id"],
+                ],
+            },
+            undefined,
+            undefined,
+            undefined,
+        );
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ModifyEntryResult(result.result);
+            assert("information" in decoded);
+            const resData = getOptionallyProtectedValue(decoded.information);
+            const entry = resData.entry;
+            assert(entry);
+            const cn: EntryInformation_information_Item | undefined = entry.information
+                ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"]));
+            const d: EntryInformation_information_Item | undefined = entry.information
+                ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(description["&id"]));
+            const cts: EntryInformation_information_Item | undefined = entry.information
+                ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(createTimestamp["&id"]));
+            expect(cn).toBeUndefined();
+            expect(d).toBeDefined();
+            expect(cts).toBeDefined();
+            expect(resData.entry?.information).toHaveLength(2);
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("ModifyEntry.selection.infoTypes", async () => {
-
+    it("ModifyEntry.selection.infoTypes", async () => {
+        const testId = `ModifyEntry.selection.infoTypes-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            {
+                select: [
+                    commonName["&id"],
+                ],
+            },
+            typesOnly,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ModifyEntryResult(result.result);
+            assert("information" in decoded);
+            const resData = getOptionallyProtectedValue(decoded.information);
+            assert(resData.entry);
+            expect(resData.entry.information?.length).toBe(1);
+            const cn: EntryInformation_information_Item | undefined = resData.entry.information
+                ?.find((einfo) => ("attributeType" in einfo) && einfo.attributeType.isEqualTo(commonName["&id"]));
+            expect(cn).toBeDefined();
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("ModifyEntry.selection.contextSelection.selectedContexts.all", async () => {
-
+    it("ModifyEntry.selection.contextSelection.selectedContexts.all", async () => {
+        const testId = `ModifyEntry.selection.contextSelection.selectedContexts.all-${(new Date()).toISOString()}`;
+        const firstLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
+        }, DER);
+        const secondLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 6]),
+        }, DER);
+        const thirdLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 7]),
+        }, DER);
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("der entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [secondLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [firstLocale, thirdLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            {
+                selectedContexts: [
+                    new TypeAndContextAssertion(
+                        commonName["&id"],
+                        {
+                            all: [
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [firstLocale],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [thirdLocale],
+                                ),
+                            ],
+                        },
+                    ),
+                ],
+            },
+            true,
+            undefined,
+        );
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ModifyEntryResult(result.result);
+            assert("information" in decoded);
+            const resData = getOptionallyProtectedValue(decoded.information);
+            assert(resData.entry);
+            const cn: EntryInformation_information_Item[] = resData.entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"])) ?? [];
+            expect(cn).toHaveLength(1);
+            assert("attribute" in cn[0]);
+            const valuesWithContext = cn[0].attribute.valuesWithContext ?? [];
+            expect(valuesWithContext).toHaveLength(1);
+            const chosenValue = valuesWithContext[0].value.utf8String;
+            expect(chosenValue).toBe("el entry");
+            expect(valuesWithContext[0].contextList).toHaveLength(1);
+            expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+            expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(2);
+            const chosenLocale1 = valuesWithContext[0].contextList[0].contextValues[0].objectIdentifier;
+            expect(chosenLocale1.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 5]))).toBeTruthy();
+            const chosenLocale2 = valuesWithContext[0].contextList[0].contextValues[1].objectIdentifier;
+            expect(chosenLocale2.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 7]))).toBeTruthy();
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("ModifyEntry.selection.contextSelection.selectedContexts.preference", async () => {
-
+    it("ModifyEntry.selection.contextSelection.selectedContexts.preference", async () => {
+        const testId = `ModifyEntry.selection.contextSelection.selectedContexts.preference-${(new Date()).toISOString()}`;
+        const firstPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
+        }, DER);
+        const secondPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 6]),
+        }, DER);
+        const thirdPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 7]),
+        }, DER);
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("der entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [secondPreferredLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [thirdPreferredLocale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            {
+                selectedContexts: [
+                    new TypeAndContextAssertion(
+                        commonName["&id"],
+                        {
+                            preference: [
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        firstPreferredLocale,
+                                    ],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        secondPreferredLocale, // This should be the one that sticks.
+                                    ],
+                                ),
+                                new ContextAssertion(
+                                    localeContext["&id"],
+                                    [
+                                        thirdPreferredLocale,
+                                    ],
+                                ),
+                            ],
+                        },
+                    ),
+                ],
+            },
+            true,
+            undefined,
+        );
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_ModifyEntryResult(result.result);
+            assert("information" in decoded);
+            const resData = getOptionallyProtectedValue(decoded.information);
+            assert(resData.entry);
+            const cn: EntryInformation_information_Item[] = resData.entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"])) ?? [];
+            expect(cn).toHaveLength(1);
+            assert("attribute" in cn[0]);
+            const valuesWithContext = cn[0].attribute.valuesWithContext ?? [];
+            expect(valuesWithContext).toHaveLength(1);
+            const chosenValue = valuesWithContext[0].value.utf8String;
+            expect(chosenValue).toBe("der entry");
+            expect(valuesWithContext[0].contextList).toHaveLength(1);
+            expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+            expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(1);
+            const chosenLocale = valuesWithContext[0].contextList[0].contextValues[0].objectIdentifier;
+            expect(chosenLocale.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 6]))).toBeTruthy();
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("ModifyEntry.selection.returnContexts", async () => {
-
+    it("ModifyEntry.selection.returnContexts", async () => {
+        const testId = `ModifyEntry.selection.returnContexts-${(new Date()).toISOString()}`;
+        const locale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
+        }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    localityName["&id"],
+                    [],
+                    [
+                        new Attribute_valuesWithContext_Item(
+                            utf8("el entry"),
+                            [
+                                new Context(
+                                    localeContext["&id"],
+                                    [locale],
+                                    undefined,
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const modify = (includeContexts: boolean) => {
+            const selection = new EntryInformationSelection(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                includeContexts,
+                undefined,
+            );
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                [], // Intentionally empty. We are only testing selection, not modification.
+                selection,
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+        };
+        const resultWithContexts = await modify(true);
+        assert("result" in resultWithContexts);
+        assert(resultWithContexts.result);
+        { // With contexts
+            const decoded = _decode_ModifyEntryResult(resultWithContexts.result);
+            assert("information" in decoded);
+            const resData = getOptionallyProtectedValue(decoded.information);
+            assert(resData.entry);
+            const loc: EntryInformation_information_Item[] = resData.entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(localityName["&id"])) ?? [];
+            expect(loc).toHaveLength(1);
+            assert("attribute" in loc[0]);
+            const valuesWithContext = loc[0].attribute.valuesWithContext ?? [];
+            expect(valuesWithContext).toHaveLength(1);
+            const chosenValue = valuesWithContext[0].value.utf8String;
+            expect(chosenValue).toBe("el entry");
+            expect(valuesWithContext[0].contextList).toHaveLength(1);
+            expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
+            expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(1);
+        }
+        const resultWithoutContexts = await modify(false);
+        assert("result" in resultWithoutContexts);
+        assert(resultWithoutContexts.result);
+        { // Without contexts
+            const decoded = _decode_ModifyEntryResult(resultWithoutContexts.result);
+            assert("information" in decoded);
+            const resData = getOptionallyProtectedValue(decoded.information);
+            assert(resData.entry);
+            const loc: EntryInformation_information_Item[] = resData.entry.information
+                ?.filter((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(localityName["&id"])) ?? [];
+            expect(loc).toHaveLength(1);
+            assert("attribute" in loc[0]);
+            const values = loc[0].attribute.values;
+            const valuesWithContext = loc[0].attribute.valuesWithContext ?? [];
+            expect(values).toHaveLength(1);
+            expect(valuesWithContext).toHaveLength(0);
+            const chosenValue = values[0].utf8String;
+            expect(chosenValue).toBe("el entry");
+        }
     });
 
-    it.skip("ModifyEntry.selection.familyReturn.memberSelect.contributingEntriesOnly", async () => {
-
+    it("ModifyEntry.selection.familyReturn.memberSelect.contributingEntriesOnly", async () => {
+        const testId = `ModifyEntry...contributingEntriesOnly-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_contributingEntriesOnly,
+                undefined,
+            ),
+        );
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ModifyEntryResult(result.result);
+        assert("information" in decoded);
+        const resData = getOptionallyProtectedValue(decoded.information);
+        assert(resData.entry);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        expect(familyAttribute).toBeUndefined();
     });
 
-    it.skip("ModifyEntry.selection.familyReturn.memberSelect.participantingEntriesOnly", async () => {
-
+    it("ModifyEntry.selection.familyReturn.memberSelect.participatingEntriesOnly", async () => {
+        const testId = `ModifyEntry...participatingEntriesOnly-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_participatingEntriesOnly,
+                undefined,
+            ),
+        );
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ModifyEntryResult(result.result);
+        assert("information" in decoded);
+        const resData = getOptionallyProtectedValue(decoded.information);
+        assert(resData.entry);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        expect(familyAttribute).toBeUndefined();
     });
 
-    it.skip("ModifyEntry.selection.familyReturn.memberSelect.compoundEntry", async () => {
-
+    it("ModifyEntry.selection.familyReturn.memberSelect.compoundEntry", async () => {
+        const testId = `ModifyEntry...compoundEntry-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_compoundEntry,
+                undefined,
+            ),
+        );
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: [...dn, parentRDN],
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ModifyEntryResult(result.result);
+        assert("information" in decoded);
+        const resData = getOptionallyProtectedValue(decoded.information);
+        assert(resData.entry);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        expect(familyAttribute).toBeDefined();
+        assert(familyAttribute);
+        assert("attribute" in familyAttribute);
+        assert(familyAttribute.attribute.values[0]);
+        const families = familyAttribute.attribute.values.map((f) => family_information.decoderFor["&Type"]!(f));
+        const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
+        const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
+        const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
+        expect(orgs).toHaveLength(1);
+        expect(people).toHaveLength(1);
+        expect(devices).toHaveLength(1);
+        expect(orgs[0].familyEntries).toHaveLength(2);
+        expect(people[0].familyEntries).toHaveLength(1);
+        expect(devices[0].familyEntries).toHaveLength(1);
+        expect(people[0].familyEntries[0].rdn[0].value.utf8String).toBe("Chief Pain Officer Jonathan Wilbur");
+        expect(devices[0].familyEntries[0].rdn[0].value.utf8String).toBe("Commodore 64 (128 KB memory extension)");
+        expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(person["&id"]))));
+        expect(orgs[0].familyEntries.some((f) => f.family_info?.some((fi) => fi.family_class.isEqualTo(device["&id"]))));
     });
 
-    it.skip("ModifyEntry.selection.familyReturn.familySelect", async () => {
-
+    it("ModifyEntry.selection.familyReturn.familySelect", async () => {
+        const testId = `ModifyEntry...familySelect-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_compoundEntry,
+                [organizationalUnit["&id"]],
+            ),
+        );
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: [...dn, parentRDN],
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        localityName["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ModifyEntryResult(result.result);
+        assert("information" in decoded);
+        const resData = getOptionallyProtectedValue(decoded.information);
+        assert(resData.entry);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        expect(familyAttribute).toBeDefined();
+        assert(familyAttribute);
+        assert("attribute" in familyAttribute);
+        assert(familyAttribute.attribute.values[0]);
+        const families = familyAttribute.attribute.values.map((f) => family_information.decoderFor["&Type"]!(f));
+        const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
+        const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
+        const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
+        expect(orgs).toHaveLength(1);
+        expect(people).toHaveLength(0);
+        expect(devices).toHaveLength(0);
+        expect(orgs[0].familyEntries).toHaveLength(2);
     });
 
     it("ModifyDN.newRDN", async () => {

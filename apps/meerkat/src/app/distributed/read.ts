@@ -67,6 +67,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
+    FamilyReturn_memberSelect_participatingEntriesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
 import readFamily from "../database/family/readFamily";
 import readCompoundEntry from "../database/family/readCompoundEntry";
@@ -218,6 +219,7 @@ async function read (
     if (
         data.selection?.familyReturn
         && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
+        && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_participatingEntriesOnly)
     ) {
         const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
             ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))

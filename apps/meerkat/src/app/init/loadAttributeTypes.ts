@@ -3,6 +3,10 @@ import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
 import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
 import attributeFromInformationObject from "./attributeFromInformationObject";
 import { AttributeUsage } from "@prisma/client";
+// FIXME: Add to collections from @wildboar/x500.
+import { oidC } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC.oa";
+import { oidC1 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC1.oa";
+import { oidC2 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC2.oa";
 import entryUUID from "../schema/attributes/entryUUID";
 import accessControlSchemeDriver from "../database/drivers/accessControlScheme";
 import accessControlSubentryListDriver from "../database/drivers/accessControlSubentryList";
@@ -91,7 +95,12 @@ import userPwdDriver from "../database/drivers/userPwd";
 
 export
 async function loadAttributeTypes (ctx: Context): Promise<void> {
-    Object.entries(x500at)
+    Object.entries({
+        ...x500at,
+        oidC,
+        oidC1,
+        oidC2,
+    })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
             ctx.attributeTypes.set(attr.id.toString(), attr);
