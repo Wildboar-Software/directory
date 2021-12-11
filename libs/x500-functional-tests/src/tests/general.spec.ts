@@ -288,7 +288,7 @@ const serviceControls = new ServiceControls(
     undefined,
 );
 
-function frame (ber: ASN1Element): Buffer {
+function frame(ber: ASN1Element): Buffer {
     const data = ber.toBytes();
     const lengthBytes = Buffer.allocUnsafe(4);
     lengthBytes.writeUInt32BE(data.length);
@@ -307,17 +307,17 @@ const encodedDesc = _encode_UnboundedDirectoryString({
     uTF8String: "testeroo",
 }, DER);
 
-function utf8 (str: string): ASN1Element {
+function utf8(str: string): ASN1Element {
     return _encode_UnboundedDirectoryString({
         uTF8String: str,
     }, DER);
 }
 
-function oid (o: OBJECT_IDENTIFIER): ASN1Element {
+function oid(o: OBJECT_IDENTIFIER): ASN1Element {
     return _encodeObjectIdentifier(o, DER);
 }
 
-async function connect (): Promise<IDMConnection> {
+async function connect(): Promise<IDMConnection> {
     const dba = new DirectoryBindArgument(
         undefined,
         undefined,
@@ -348,7 +348,7 @@ async function connect (): Promise<IDMConnection> {
     return idm;
 }
 
-function createAddEntryArguments (
+function createAddEntryArguments(
     dn: DistinguishedName,
     attributes: Attribute[],
 ): AddEntryArgument {
@@ -378,23 +378,27 @@ function createAddEntryArguments (
     return arg;
 }
 
-function createTestRootDN (
-    testId: string,
-): DistinguishedName {
+function createTestRDN (str: string): RelativeDistinguishedName {
     const encodedCN = _encode_UnboundedDirectoryString({
-        uTF8String: testId,
+        uTF8String: str,
     }, DER);
     return [
-        [
-            new AttributeTypeAndValue(
-                commonName["&id"]!,
-                encodedCN,
-            ),
-        ],
+        new AttributeTypeAndValue(
+            commonName["&id"]!,
+            encodedCN,
+        ),
     ];
 }
 
-function writeOperation (
+function createTestRootDN(
+    testId: string,
+): DistinguishedName {
+    return [
+        createTestRDN(testId),
+    ];
+}
+
+function writeOperation(
     connection: IDMConnection,
     opCode: Code,
     argument: ASN1Element,
@@ -422,7 +426,7 @@ function writeOperation (
     });
 }
 
-async function createTestRootNode (
+async function createTestRootNode(
     connection: IDMConnection,
     testId: string,
     extraAttributes?: Attribute[],
@@ -488,7 +492,7 @@ async function createTestRootNode (
     });
 }
 
-async function createTestNode (
+async function createTestNode(
     connection: IDMConnection,
     superiorDN: DistinguishedName,
     id: string,
@@ -546,7 +550,7 @@ async function createTestNode (
     });
 }
 
-async function createEntry (
+async function createEntry(
     connection: IDMConnection,
     superiorDN: DistinguishedName,
     rdn: RelativeDistinguishedName,
@@ -603,7 +607,7 @@ const parentRDN: RelativeDistinguishedName = [
  * @param connection
  * @param superiorDN
  */
-async function createCompoundEntry (
+async function createCompoundEntry(
     connection: IDMConnection,
     superiorDN: DistinguishedName,
 ): Promise<void> {
@@ -633,7 +637,7 @@ async function createCompoundEntry (
     ];
     await createEntry(
         connection,
-        [ ...superiorDN, parentRDN ],
+        [...superiorDN, parentRDN],
         level2A_rdn,
         [
             new Attribute(
@@ -657,7 +661,7 @@ async function createCompoundEntry (
     ];
     await createEntry(
         connection,
-        [ ...superiorDN, parentRDN ],
+        [...superiorDN, parentRDN],
         level2B_rdn,
         [
             new Attribute(
@@ -681,7 +685,7 @@ async function createCompoundEntry (
     ];
     await createEntry(
         connection,
-        [ ...superiorDN, parentRDN ],
+        [...superiorDN, parentRDN],
         level2C_rdn,
         [
             new Attribute(
@@ -710,7 +714,7 @@ async function createCompoundEntry (
     ];
     await createEntry(
         connection,
-        [ ...superiorDN, parentRDN ],
+        [...superiorDN, parentRDN],
         level2D_rdn,
         [
             new Attribute(
@@ -734,7 +738,7 @@ async function createCompoundEntry (
     ];
     await createEntry(
         connection,
-        [ ...superiorDN, parentRDN, level2A_rdn ],
+        [...superiorDN, parentRDN, level2A_rdn],
         level3A_rdn,
         [
             new Attribute(
@@ -763,7 +767,7 @@ async function createCompoundEntry (
     ];
     await createEntry(
         connection,
-        [ ...superiorDN, parentRDN, level2A_rdn ],
+        [...superiorDN, parentRDN, level2A_rdn],
         level3B_rdn,
         [
             new Attribute(
@@ -1217,10 +1221,6 @@ describe("Meerkat DSA", () => {
             modifyDN["&operationCode"]!,
             _encode_ModifyDNArgument(arg, DER),
         );
-        if ("error" in result) {
-            console.log(result.errcode);
-            console.log(result.error);
-        }
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
@@ -1287,10 +1287,6 @@ describe("Meerkat DSA", () => {
             changePassword["&operationCode"]!,
             _encode_ChangePasswordArgument(arg, DER),
         );
-        if ("error" in result) {
-            console.log(result.errcode);
-            console.log(result.error);
-        }
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
@@ -1427,13 +1423,13 @@ describe("Meerkat DSA", () => {
     it("Read.selection.contextSelection.selectedContexts.all", async () => {
         const testId = `Read.selection.contextSelection.selectedContexts.all-${(new Date()).toISOString()}`;
         const firstLocale: ASN1Element = _encode_LocaleContextSyntax({
-            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 5 ]),
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
         }, DER);
         const secondLocale: ASN1Element = _encode_LocaleContextSyntax({
-            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 6 ]),
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 6]),
         }, DER);
         const thirdLocale: ASN1Element = _encode_LocaleContextSyntax({
-            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 7 ]),
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 7]),
         }, DER);
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -1535,9 +1531,9 @@ describe("Meerkat DSA", () => {
             expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
             expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(2);
             const chosenLocale1 = valuesWithContext[0].contextList[0].contextValues[0].objectIdentifier;
-            expect(chosenLocale1.isEqualTo(new ObjectIdentifier([ 1, 2, 3, 4, 5 ]))).toBeTruthy();
+            expect(chosenLocale1.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 5]))).toBeTruthy();
             const chosenLocale2 = valuesWithContext[0].contextList[0].contextValues[1].objectIdentifier;
-            expect(chosenLocale2.isEqualTo(new ObjectIdentifier([ 1, 2, 3, 4, 7 ]))).toBeTruthy();
+            expect(chosenLocale2.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 7]))).toBeTruthy();
         } else {
             expect(false).toBeTruthy();
         }
@@ -1546,13 +1542,13 @@ describe("Meerkat DSA", () => {
     it("Read.selection.contextSelection.selectedContexts.preference", async () => {
         const testId = `Read.selection.contextSelection.selectedContexts.preference-${(new Date()).toISOString()}`;
         const firstPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
-            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 5 ]),
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
         }, DER);
         const secondPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
-            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 6 ]),
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 6]),
         }, DER);
         const thirdPreferredLocale: ASN1Element = _encode_LocaleContextSyntax({
-            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 7 ]),
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 7]),
         }, DER);
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -1664,7 +1660,7 @@ describe("Meerkat DSA", () => {
             expect(valuesWithContext[0].contextList[0].contextType.isEqualTo(localeContext["&id"])).toBeTruthy();
             expect(valuesWithContext[0].contextList[0].contextValues).toHaveLength(1);
             const chosenLocale = valuesWithContext[0].contextList[0].contextValues[0].objectIdentifier;
-            expect(chosenLocale.isEqualTo(new ObjectIdentifier([ 1, 2, 3, 4, 6 ]))).toBeTruthy();
+            expect(chosenLocale.isEqualTo(new ObjectIdentifier([1, 2, 3, 4, 6]))).toBeTruthy();
         } else {
             expect(false).toBeTruthy();
         }
@@ -1673,7 +1669,7 @@ describe("Meerkat DSA", () => {
     it("Read.selection.returnContexts", async () => {
         const testId = `Read.selection.returnContexts-${(new Date()).toISOString()}`;
         const locale: ASN1Element = _encode_LocaleContextSyntax({
-            localeID1: new ObjectIdentifier([ 1, 2, 3, 4, 5 ]),
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
         }, DER);
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -1791,7 +1787,7 @@ describe("Meerkat DSA", () => {
         );
         const reqData: ReadArgumentData = new ReadArgumentData(
             {
-                rdnSequence: [ ...dn, parentRDN ],
+                rdnSequence: [...dn, parentRDN],
             },
             selection,
             undefined,
@@ -1846,7 +1842,7 @@ describe("Meerkat DSA", () => {
         );
         const reqData: ReadArgumentData = new ReadArgumentData(
             {
-                rdnSequence: [ ...dn, parentRDN ],
+                rdnSequence: [...dn, parentRDN],
             },
             selection,
             undefined,
@@ -1882,7 +1878,7 @@ describe("Meerkat DSA", () => {
         assert(familyAttribute);
         assert("attribute" in familyAttribute);
         assert(familyAttribute.attribute.values[0]);
-        const families = familyAttribute.attribute.values.map((f) =>  family_information.decoderFor["&Type"]!(f));
+        const families = familyAttribute.attribute.values.map((f) => family_information.decoderFor["&Type"]!(f));
         const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
         const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
         const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
@@ -1918,7 +1914,7 @@ describe("Meerkat DSA", () => {
         );
         const reqData: ReadArgumentData = new ReadArgumentData(
             {
-                rdnSequence: [ ...dn, parentRDN ],
+                rdnSequence: [...dn, parentRDN],
             },
             selection,
             undefined,
@@ -1954,7 +1950,7 @@ describe("Meerkat DSA", () => {
         assert(familyAttribute);
         assert("attribute" in familyAttribute);
         assert(familyAttribute.attribute.values[0]);
-        const families = familyAttribute.attribute.values.map((f) =>  family_information.decoderFor["&Type"]!(f));
+        const families = familyAttribute.attribute.values.map((f) => family_information.decoderFor["&Type"]!(f));
         const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
         const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
         const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
@@ -1990,7 +1986,7 @@ describe("Meerkat DSA", () => {
         );
         const reqData: ReadArgumentData = new ReadArgumentData(
             {
-                rdnSequence: [ ...dn, parentRDN ],
+                rdnSequence: [...dn, parentRDN],
             },
             selection,
             undefined,
@@ -2026,7 +2022,7 @@ describe("Meerkat DSA", () => {
         assert(familyAttribute);
         assert("attribute" in familyAttribute);
         assert(familyAttribute.attribute.values[0]);
-        const families = familyAttribute.attribute.values.map((f) =>  family_information.decoderFor["&Type"]!(f));
+        const families = familyAttribute.attribute.values.map((f) => family_information.decoderFor["&Type"]!(f));
         const orgs = families.filter((f) => f.family_class.isEqualTo(organizationalUnit["&id"]));
         const people = families.filter((f) => f.family_class.isEqualTo(person["&id"]));
         const devices = families.filter((f) => f.family_class.isEqualTo(device["&id"]));
@@ -2253,20 +2249,314 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("Search.subset.baseObject", async () => {
-
+    it("Search.subset.baseObject", async () => {
+        const testId = `Search-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            true,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                expect(resData.searchInfo.entries.length).toBe(1);
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("Search.subset.oneLevel", async () => {
-
+    it("Search.subset.oneLevel", async () => {
+        const testId = `Search-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const asdf: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            subordinateWithSubordinates,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, asdf, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_oneLevel,
+            undefined,
+            true,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                /**
+                 * You might think this search is supposed to return three
+                 * results, but don't forget: you are using subtree scope, so
+                 * the baseObject will be returned as a result too!
+                 */
+                expect(resData.searchInfo.entries.length).toBe((subordinates.length - 1) + 1); // For clarity.
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("Search.subset.wholeSubtree", async () => {
-
+    it("Search.subset.wholeSubtree", async () => {
+        const testId = `Search-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const asdf: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            subordinateWithSubordinates,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, asdf, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            true,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                expect(resData.searchInfo.entries.length).toBe(1 + subordinates.length + subordinates2.length);
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("Search.filter", async () => {
-
+    it("Search.filter", async () => {
+        const testId = `Search.filter-${(new Date()).toISOString()}`;
+        const excludedResultId: string = "8DFCA253-EAE2-4C2D-AC6D-455340BF759E";
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const asdf: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            subordinateWithSubordinates,
+            excludedResultId,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+            excludedResultId,
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, asdf, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            { // Filter out one result.
+                not: {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            commonName["&id"],
+                            utf8(excludedResultId),
+                            undefined,
+                        ),
+                    },
+                },
+            },
+            true,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                /**
+                 * You might think this search is supposed to return three
+                 * results, but don't forget: you are using subtree scope, so
+                 * the baseObject will be returned as a result too!
+                 */
+                expect(resData.searchInfo.entries.length).toBe(1 + subordinates.length + subordinates2.length - 2);
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
     it.skip("Search.searchControlOptions.searchAliases", async () => {
@@ -2317,12 +2607,202 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("Search.selection", async () => {
-
+    it("Search.selection", async () => {
+        const testId = `Search.selection-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const asdf: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            subordinateWithSubordinates,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, asdf, id)));
+        const selection = new EntryInformationSelection(
+            {
+                select: [
+                    description["&id"],
+                ],
+            },
+            undefined,
+            {
+                select: [
+                    createTimestamp["&id"],
+                ],
+            },
+            undefined,
+            undefined,
+            undefined,
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            true,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                expect(resData.searchInfo.entries.length).toBe(1 + subordinates.length + subordinates2.length);
+                for (const entry of resData.searchInfo.entries) {
+                    for (const einfo of entry.information ?? []) {
+                        assert("attribute" in einfo);
+                        expect(
+                            einfo.attribute.type_.isEqualTo(description["&id"])
+                            || einfo.attribute.type_.isEqualTo(createTimestamp["&id"])
+                        ).toBeTruthy();
+                    }
+                }
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
-    it.skip("Search.selection.infoTypes", async () => {
-
+    it("Search.selection.infoTypes", async () => {
+        const testId = `Search.selection.infoTypes-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const asdf: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            subordinateWithSubordinates,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, asdf, id)));
+        const selection = new EntryInformationSelection(
+            {
+                select: [
+                    description["&id"],
+                ],
+            },
+            typesOnly,
+            {
+                select: [
+                    createTimestamp["&id"],
+                ],
+            },
+            undefined,
+            undefined,
+            undefined,
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            true,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        if ("result" in result && result.result) {
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            if ("searchInfo" in resData) {
+                expect(resData.searchInfo.entries.length).toBe(1 + subordinates.length + subordinates2.length);
+                for (const entry of resData.searchInfo.entries) {
+                    for (const einfo of entry.information ?? []) {
+                        assert("attributeType" in einfo);
+                        expect(
+                            einfo.attributeType.isEqualTo(description["&id"])
+                            || einfo.attributeType.isEqualTo(createTimestamp["&id"])
+                        ).toBeTruthy();
+                    }
+                }
+            } else {
+                expect(false).toBeFalsy();
+            }
+        } else {
+            expect(false).toBeTruthy();
+        }
     });
 
     it.skip("Search.selection.contextSelection.selectedContexts.all", async () => {
@@ -2441,16 +2921,164 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("ModifyDN.newRDN", async () => {
-
+    it("ModifyDN.newRDN", async () => {
+        const testId = `ModifyDN.newRDN-${(new Date()).toISOString()}`;
+        const newdesc = utf8(`${testId}-moved`);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [newdesc],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: ModifyDNArgumentData = new ModifyDNArgumentData(
+            dn,
+            [
+                new AttributeTypeAndValue(
+                    description["&id"],
+                    newdesc,
+                ),
+            ],
+            false,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyDNArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyDN["&operationCode"]!,
+            _encode_ModifyDNArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyDN.deleteOldRDN", async () => {
-
+    it("ModifyDN.deleteOldRDN", async () => {
+        const testId = `ModifyDN.deleteOldRDN-${(new Date()).toISOString()}`;
+        const newdesc = utf8(`${testId}-moved`);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [newdesc],
+                    undefined,
+                ),
+                // Additional commonName value, because commonName is required
+                // and deleteOldRDN will delete the last value.
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("PlzNoDelete")],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: ModifyDNArgumentData = new ModifyDNArgumentData(
+            dn,
+            [
+                new AttributeTypeAndValue(
+                    description["&id"],
+                    newdesc,
+                ),
+            ],
+            false,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyDNArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyDN["&operationCode"]!,
+            _encode_ModifyDNArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyDN.newSuperior", async () => {
-
+    it("ModifyDN.newSuperior", async () => {
+        const sourceTestId = `ModifyDN.newSuperior-${(new Date()).toISOString()}`;
+        const destinationTestId = `ModifyDN.newSuperior-${(new Date()).toISOString()}-newDN`;
+        const newdesc = utf8(`${sourceTestId}-moved`);
+        { // Setup
+            await createTestRootNode(connection!, sourceTestId, [
+                new Attribute(
+                    description["&id"],
+                    [newdesc],
+                    undefined,
+                ),
+            ]);
+            await createTestRootNode(connection!, destinationTestId, [
+                new Attribute(
+                    description["&id"],
+                    [newdesc],
+                    undefined,
+                ),
+            ]);
+        }
+        const sourceDN = createTestRootDN(sourceTestId);
+        const destinationDN = createTestRootDN(destinationTestId);
+        const reqData: ModifyDNArgumentData = new ModifyDNArgumentData(
+            sourceDN,
+            [
+                new AttributeTypeAndValue(
+                    description["&id"],
+                    newdesc,
+                ),
+            ],
+            false,
+            destinationDN,
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        const arg: ModifyDNArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            modifyDN["&operationCode"]!,
+            _encode_ModifyDNArgument(arg, DER),
+        );
+        expect(("result" in result) && result.result).toBeTruthy();
     });
 
     it.skip("Name resolution continues in subordinate DSAs in a HOB", async () => {
