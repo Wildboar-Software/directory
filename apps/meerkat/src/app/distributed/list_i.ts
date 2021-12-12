@@ -196,6 +196,7 @@ async function list_i (
     let page: number = 0;
     let queryReference: string | undefined;
     let cursorId: number | undefined;
+    let processingEntriesWithSortKey: boolean = true;
     if (data.pagedResults) {
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
@@ -272,6 +273,7 @@ async function list_i (
             pagingRequest = paging.request;
             page = paging.pageIndex;
             cursorId = paging.cursorIds[0];
+            processingEntriesWithSortKey = paging.processingEntriesWithSortKey[0] ?? true;
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             conn.pagedResultsRequests.delete(queryReference);
@@ -377,24 +379,19 @@ async function list_i (
         );
         return authorizedToSortKey;
     })();
-    const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
+    const getNextBatchOfSubordinates = async (): Promise<[ number, Vertex, boolean ][]> => {
         return permittedToSort
-            ? await (async () => {
-                const results: Vertex[] = [];
-                const newCursorId = await readChildrenSorted(
+            ? await readChildrenSorted(
                     ctx,
                     target,
                     pagingRequest!.sortKeys![0].type_,
-                    results,
+                    processingEntriesWithSortKey,
                     pagingRequest?.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
                     pageSize,
                     undefined,
                     cursorId,
-                );
-                cursorId = newCursorId;
-                return results;
-            })()
-            : await readChildren(
+            )
+            : (await readChildren(
                 ctx,
                 target,
                 pageSize,
@@ -403,7 +400,7 @@ async function list_i (
                 {
                     subentry: subentries,
                 },
-            );
+            )).map((dse) => [ dse.dse.id, dse, false ]);
     };
     let skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
         ? (pageNumber * pageSize)
@@ -412,7 +409,7 @@ async function list_i (
     let limitExceeded: LimitProblem | undefined;
     let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
-        for (const subordinate of subordinatesInBatch) {
+        for (const [ newCursorId, subordinate, hasValue ] of subordinatesInBatch) {
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
@@ -436,11 +433,17 @@ async function list_i (
                 limitExceeded = LimitProblem_timeLimitExceeded;
                 break;
             }
-            cursorId = subordinate.dse.id;
             if (listItems.length >= pageSize) {
                 limitExceeded = LimitProblem_sizeLimitExceeded;
                 break;
             }
+            /**
+             * This MUST appear after processing the limits, because the entry
+             * has not really been "processed" if we bailed out of this loop
+             * because of limits.
+             */
+            cursorId = newCursorId;
+            processingEntriesWithSortKey = hasValue;
             if (subentries && !subordinate.dse.subentry) {
                 continue;
             }
@@ -583,6 +586,7 @@ async function list_i (
             cursorIds: cursorId
                 ? [ cursorId ]
                 : [],
+            processingEntriesWithSortKey: [ processingEntriesWithSortKey ],
         });
     }
 

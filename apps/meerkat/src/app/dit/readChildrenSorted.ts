@@ -4,58 +4,83 @@ import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 
+/**
+ * @description
+ * `hasValue` - Whether the subordinate had a value of the attribute type that
+ *  is being used as the sort key.
+ */
+export
+type SortedChild = [ cursorId: number, dse: Vertex, hasValue: boolean ];
+
+// TODO: Add EntryWhere to parameters
 export
 async function readChildrenSorted (
     ctx: Context,
     entry: Vertex,
     sortType: AttributeType,
-    output: Vertex[],
+    processingEntriesWithSortKey: boolean,
     reverse: boolean = false,
     take?: number,
     skip?: number,
     cursorId?: number,
-): Promise<number | undefined> {
+): Promise<SortedChild[]> {
     if (entry.dse.subentry || entry.dse.alias) {
-        return undefined;
+        return [];
     }
-    const take_: number = take ?? 1000000; // You MUST specify a "take" when cursors are used.
-    let newCursorId: number | undefined;
-    // Note that the X.500 specifications say that the "lowest" value must be
-    // used for the purposes of ordering.
-    const results = await Promise.all(
-        (await ctx.db.attributeValue.findMany({
-            take: take_,
-            skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
-            where: {
-                entry: {
-                    immediate_superior_id: entry.dse.id,
+    const takeRemaining: number = take ?? 1000000; // You MUST specify a "take" when cursors are used.
+    const results: SortedChild[] = [];
+
+    if (processingEntriesWithSortKey) {
+        // Note that the X.500 specifications say that the "lowest" value must be
+        // used for the purposes of ordering.
+        const resultsWithSortKey = await Promise.all(
+            (await ctx.db.attributeValue.findMany({
+                take: takeRemaining,
+                skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
+                cursor: (cursorId !== undefined)
+                    ? {
+                        id: cursorId,
+                    }
+                    : undefined,
+                where: {
+                    entry: {
+                        immediate_superior_id: entry.dse.id,
+                        deleteTimestamp: null,
+                    },
+                    type: sortType.toString(),
                 },
-                type: sortType.toString(),
-            },
-            orderBy: {
-                sort_key: reverse ? "desc" : "asc",
-            },
-            select: {
-                entry: true,
-                id: true,
-            },
-            distinct: ["entry_id"],
-        })).map((value) => {
-            newCursorId = value.id;
-            return vertexFromDatabaseEntry(ctx, entry, value.entry, true);
-        }),
-    );
-    output.push(...results);
-    if (results.length === take_) {
-        return newCursorId;
+                orderBy: {
+                    sort_key: reverse ? "desc" : "asc",
+                },
+                select: {
+                    entry: true,
+                    id: true,
+                },
+                distinct: ["entry_id"],
+            })).map(async (value): Promise<SortedChild> => [
+                value.id,
+                await vertexFromDatabaseEntry(ctx, entry, value.entry, true),
+                true,
+            ]),
+        );
+        results.push(...resultsWithSortKey);
     }
+
+    if (results.length >= takeRemaining) {
+        return results;
+    }
+
     /**
      * The query above will only return entries that have values of that type.
      * This query will fetch entries that DO NOT have that type.
+     *
+     * Note that, according to ITU Recommendation X.511, entries without values
+     * of the attribute type indicated by the `SortKey` are to be returned last,
+     * regardless of whether the results are reversed.
      */
     const resultsWithoutSortKey = await Promise.all(
         (await ctx.db.entry.findMany({
-            take: (take_ - results.length),
+            take: (takeRemaining - results.length),
             skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
             cursor: (cursorId !== undefined)
                 ? {
@@ -74,10 +99,14 @@ async function readChildrenSorted (
             orderBy: {
                 id: "asc",
             },
-        })).map((child) => vertexFromDatabaseEntry(ctx, entry, child, true)),
+        })).map(async (child): Promise<SortedChild>  => [
+            child.id,
+            await vertexFromDatabaseEntry(ctx, entry, child, true),
+            false,
+        ]),
     );
     results.push(...resultsWithoutSortKey);
-    return results[results.length - 1].dse.id ?? newCursorId;
+    return results;
 }
 
 export default readChildrenSorted;

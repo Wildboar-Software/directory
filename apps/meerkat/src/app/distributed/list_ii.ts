@@ -351,6 +351,12 @@ async function list_ii (
                 limitExceeded = LimitProblem_sizeLimitExceeded;
                 break;
             }
+            /**
+             * This MUST appear after processing the limits, because the entry
+             * has not really been "processed" if we bailed out of this loop
+             * because of limits.
+             */
+            cursorId = subordinate.dse.id;
             if (!(subordinate.dse.entry) && !(subordinate.dse.alias)) {
                 continue;
             }
@@ -436,6 +442,7 @@ async function list_ii (
             cursorIds: cursorId
                 ? [ cursorId ]
                 : [],
+            processingEntriesWithSortKey: [ true ],
         });
     }
 

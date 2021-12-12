@@ -1087,6 +1087,25 @@ interface PagedResultsRequestState {
      * the cursor ID at _each level_ of the subtree.
      */
     cursorIds: number[];
+
+    /**
+     * This property is an array of booleans that indicate whether, at a given
+     * depth of a search or list operation, the operation will continue upon
+     * entries that have values of the attribute type specified by the sort key.
+     * An index of this property corresponds to the cursor given by the same
+     * index in the `cursorIds` property.
+     *
+     * On a more technical level, this means that the cursor identified by the
+     * corresponding index of `cursorIds` corresponds to an ID of the
+     * `AttributeValue` table, rather than an ID of the `Entry` table. This is
+     * significant to how paged, sorted results work in Meerkat: cursor-based
+     * pagination over sorted attribute values, which are then used to look up
+     * their corresponding entries; once such attribute values are exhausted,
+     * the entry table is used directly for cursor-based pagination.
+     *
+     * If sorting is not used, this property has no meaning.
+     */
+    processingEntriesWithSortKey: boolean[];
 }
 
 export

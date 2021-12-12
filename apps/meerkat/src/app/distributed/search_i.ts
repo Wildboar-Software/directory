@@ -622,6 +622,7 @@ async function search_i (
         : undefined;
     const targetDN = getDistinguishedName(target);
     let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
+    let processingEntriesWithSortKey: boolean = searchState.paging?.[1].processingEntriesWithSortKey[searchState.depth] ?? true;
     if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
@@ -670,6 +671,7 @@ async function search_i (
             const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             const newPagingState: PagedResultsRequestState = {
                 cursorIds: [],
+                processingEntriesWithSortKey: [],
                 pageIndex: (((data.pagedResults.newRequest.pageNumber !== undefined)
                     ? Number(data.pagedResults.newRequest.pageNumber)
                     : 1) - 1),
@@ -703,6 +705,7 @@ async function search_i (
             }
             searchState.paging = [ queryReference, paging ];
             cursorId = searchState.paging[1].cursorIds[searchState.depth];
+            processingEntriesWithSortKey = searchState.paging[1].processingEntriesWithSortKey[searchState.depth] ?? true;
         } else if ("abandonQuery" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             conn.pagedResultsRequests.delete(queryReference);
@@ -1720,7 +1723,7 @@ async function search_i (
         return authorizedToSortKey;
     })();
 
-    const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
+    const getNextBatchOfSubordinates = async (): Promise<[ number, Vertex, boolean ][]> => {
         /**
          * We return no subordinates, because the family members will all be
          * returned because of the current target entry, even if the
@@ -1730,13 +1733,11 @@ async function search_i (
             return [];
         }
         return permittedToSort
-            ? await (async () => {
-                const results: Vertex[] = [];
-                const newCursorId = await readChildrenSorted(
+            ? await readChildrenSorted(
                     ctx,
                     target,
                     searchState.paging![1].request!.sortKeys![0].type_,
-                    results,
+                    processingEntriesWithSortKey,
                     searchState.paging![1].request.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
                     /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
                      * "Why don't you just fetch `pageSize` number of entries?"
@@ -1751,18 +1752,8 @@ async function search_i (
                     ctx.config.entriesPerSubordinatesPage,
                     undefined,
                     cursorId,
-                );
-                if (searchState.paging?.[1].cursorIds) {
-                    if (newCursorId === undefined) {
-                        searchState.paging[1].cursorIds = searchState.paging[1].cursorIds.slice(0, searchState.depth);
-                    } else {
-                        searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
-                    }
-                }
-                cursorId = newCursorId;
-                return results;
-            })()
-            : await readChildren(
+                )
+            : (await readChildren(
                 ctx,
                 target,
                 /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
@@ -1794,11 +1785,11 @@ async function search_i (
                         },
                     },
                 },
-            );
+            )).map((dse) => [ dse.dse.id, dse, false ]);
     };
     let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
-        for (const subordinate of subordinatesInBatch) {
+        for (const [ newCursorId, subordinate, hasValue ] of subordinatesInBatch) {
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
@@ -1833,11 +1824,10 @@ async function search_i (
                 );
                 return;
             }
-            if (!permittedToSort) {
-                cursorId = subordinate.dse.id;
-                if (searchState.paging?.[1].cursorIds) {
-                    searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
-                }
+            cursorId = newCursorId;
+            processingEntriesWithSortKey = hasValue;
+            if (searchState.paging?.[1].cursorIds) {
+                searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
             }
             if (subentries && !subordinate.dse.subentry) {
                 continue;

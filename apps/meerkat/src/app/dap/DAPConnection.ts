@@ -131,6 +131,7 @@ async function handleRequestAndErrors (
     try {
         await handleRequest(ctx, dap, request, stats);
     } catch (e) {
+        console.error(e);
         ctx.log.error(e.message);
         if (!stats.outcome) {
             stats.outcome = {};

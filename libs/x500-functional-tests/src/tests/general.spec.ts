@@ -293,6 +293,15 @@ import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
     FamilyReturn_memberSelect_participatingEntriesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
+import {
+    PagedResultsRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
+import {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import {
+    SortKey,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
 
 jest.setTimeout(10000);
 
@@ -304,12 +313,6 @@ const serviceControls = new ServiceControls(
     serviceControlOptions,
     undefined,
     60,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
 );
 
 function frame(ber: ASN1Element): Buffer {
@@ -388,17 +391,6 @@ function createAddEntryArguments(
         undefined,
         [],
         serviceControls,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
     );
     const arg: AddEntryArgument = {
         unsigned: reqData,
@@ -826,17 +818,9 @@ describe("Meerkat DSA", () => {
         expect(connection).toBeTruthy();
     });
 
-    it.skip("Server shuts down gracefully", async () => {
-
-    });
-
-    it.skip("Server checks for updates successfully", async () => {
-
-    });
-
-    it.skip("Server hibernates when the sentinel indicates a security issues", async () => {
-
-    });
+    it.todo("Server shuts down gracefully");
+    it.todo("Server checks for updates successfully");
+    it.todo("Server hibernates when the sentinel indicates a security issues");
 
     it("Read", async () => {
         const testId = `Read-${(new Date()).toISOString()}`;
@@ -848,19 +832,6 @@ describe("Meerkat DSA", () => {
             {
                 rdnSequence: dn,
             },
-            undefined,
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
             undefined,
         );
@@ -902,19 +873,6 @@ describe("Meerkat DSA", () => {
                     rdnSequence: dn,
                 },
                 purported,
-                [],
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
             );
             const arg: CompareArgument = {
                 unsigned: reqData,
@@ -981,19 +939,6 @@ describe("Meerkat DSA", () => {
             {
                 rdnSequence: dn,
             },
-            undefined,
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
             undefined,
         );
@@ -1131,19 +1076,6 @@ describe("Meerkat DSA", () => {
                     ],
                 ],
             },
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: RemoveEntryArgument = {
             unsigned: reqData,
@@ -1178,18 +1110,6 @@ describe("Meerkat DSA", () => {
                     ),
                 },
             ],
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
             undefined,
         );
@@ -1226,19 +1146,6 @@ describe("Meerkat DSA", () => {
                 ),
             ],
             false,
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
         );
         const arg: ModifyDNArgument = {
@@ -1350,19 +1257,6 @@ describe("Meerkat DSA", () => {
             },
             selection,
             undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ReadArgument = {
             unsigned: reqData,
@@ -1413,19 +1307,6 @@ describe("Meerkat DSA", () => {
                 rdnSequence: dn,
             },
             selection,
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
         );
         const arg: ReadArgument = {
@@ -1521,19 +1402,6 @@ describe("Meerkat DSA", () => {
                 rdnSequence: dn,
             },
             selection,
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
         );
         const arg: ReadArgument = {
@@ -1651,19 +1519,6 @@ describe("Meerkat DSA", () => {
             },
             selection,
             undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ReadArgument = {
             unsigned: reqData,
@@ -1734,19 +1589,6 @@ describe("Meerkat DSA", () => {
                     rdnSequence: dn,
                 },
                 selection,
-                undefined,
-                [],
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
                 undefined,
             );
             const arg: ReadArgument = {
@@ -1819,19 +1661,6 @@ describe("Meerkat DSA", () => {
             },
             selection,
             undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ReadArgument = {
             unsigned: reqData,
@@ -1874,19 +1703,6 @@ describe("Meerkat DSA", () => {
             },
             selection,
             undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ReadArgument = {
             unsigned: reqData,
@@ -1928,19 +1744,6 @@ describe("Meerkat DSA", () => {
                 rdnSequence: [...dn, parentRDN],
             },
             selection,
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
         );
         const arg: ReadArgument = {
@@ -2001,19 +1804,6 @@ describe("Meerkat DSA", () => {
             },
             selection,
             undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ReadArgument = {
             unsigned: reqData,
@@ -2058,19 +1848,6 @@ describe("Meerkat DSA", () => {
                     rdnSequence: dn,
                 },
                 purported,
-                [],
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
             );
             const arg: CompareArgument = {
                 unsigned: reqData,
@@ -2134,12 +1911,6 @@ describe("Meerkat DSA", () => {
             serviceControlOptions,
             undefined,
             60,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const do_compare = async (purported: AttributeValueAssertion) => {
             const reqData: CompareArgumentData = new CompareArgumentData(
@@ -2149,17 +1920,6 @@ describe("Meerkat DSA", () => {
                 purported,
                 [],
                 serviceControls,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
             );
             const arg: CompareArgument = {
                 unsigned: reqData,
@@ -2205,19 +1965,6 @@ describe("Meerkat DSA", () => {
             },
             undefined,
             undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ListArgument = {
             unsigned: reqData,
@@ -2240,25 +1987,257 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    it.skip("List pagination works", async () => {
-
+    it("List pagination works", async () => {
+        const testId = `List.pagination-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const pageSize: number = 5;
+        const subordinates: string[] = Array(pageSize * 4).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const encountered: Set<string> = new Set();
+        const nextPage = async (prr: PagedResultsRequest) => {
+            const reqData: ListArgumentData = new ListArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                prr,
+                undefined,
+            );
+            const arg: ListArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                list["&operationCode"]!,
+                _encode_ListArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const decoded = _decode_ListResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("listInfo" in resData);
+            expect(resData.listInfo.subordinates).toHaveLength(pageSize);
+            for (const sub of resData.listInfo.subordinates) {
+                const foundId: string = sub.rdn[0].value.utf8String;
+                expect(encountered.has(foundId)).toBeFalsy();
+                encountered.add(foundId);
+            }
+            return resData.listInfo.partialOutcomeQualifier?.queryReference;
+        };
+        const qr1 = await nextPage({
+            newRequest: new PagedResultsRequest_newRequest(
+                pageSize,
+            ),
+        });
+        assert(qr1);
+        const qr2 = await nextPage({
+            queryReference: qr1,
+        });
+        assert(qr2);
+        const qr3 = await nextPage({
+            queryReference: qr2,
+        });
+        assert(qr3);
+        const qr4 = await nextPage({
+            queryReference: qr3,
+        });
+        expect(qr4).toBeUndefined();
+        expect(encountered.size).toBe(pageSize * 4);
     });
 
-    it.skip("List pagination reverse works", async () => {
-
+    it("List pagination sorting works", async () => {
+        const testId = `List.pagination.sorting-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const pageSize: number = 5;
+        const subordinates: string[] = Array(pageSize * 4).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const encountered: Set<string> = new Set();
+        let lastResult: string | undefined;
+        const nextPage = async (prr: PagedResultsRequest) => {
+            const reqData: ListArgumentData = new ListArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                prr,
+                undefined,
+            );
+            const arg: ListArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                list["&operationCode"]!,
+                _encode_ListArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const decoded = _decode_ListResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("listInfo" in resData);
+            expect(resData.listInfo.subordinates).toHaveLength(pageSize);
+            for (const sub of resData.listInfo.subordinates) {
+                const foundId: string = sub.rdn[0].value.utf8String;
+                expect(encountered.has(foundId)).toBeFalsy();
+                encountered.add(foundId);
+                if (lastResult) {
+                    expect([ lastResult, foundId ].sort()).toEqual([ lastResult, foundId ]);
+                }
+                lastResult = foundId;
+            }
+            return resData.listInfo.partialOutcomeQualifier?.queryReference;
+        };
+        const qr1 = await nextPage({
+            newRequest: new PagedResultsRequest_newRequest(
+                pageSize,
+                [
+                    new SortKey(
+                        commonName["&id"],
+                    ),
+                ],
+            ),
+        });
+        assert(qr1);
+        const qr2 = await nextPage({
+            queryReference: qr1,
+        });
+        assert(qr2);
+        const qr3 = await nextPage({
+            queryReference: qr2,
+        });
+        assert(qr3);
+        const qr4 = await nextPage({
+            queryReference: qr3,
+        });
+        expect(qr4).toBeUndefined();
     });
 
-    it.skip("List pagination pageNumber works", async () => {
-
+    it("List pagination reverse works", async () => {
+        const testId = `List.pagination.reverse-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const pageSize: number = 5;
+        const subordinates: string[] = Array(pageSize * 4).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const encountered: Set<string> = new Set();
+        let lastResult: string | undefined;
+        const nextPage = async (prr: PagedResultsRequest) => {
+            const reqData: ListArgumentData = new ListArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                prr,
+                undefined,
+            );
+            const arg: ListArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                list["&operationCode"]!,
+                _encode_ListArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const decoded = _decode_ListResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("listInfo" in resData);
+            expect(resData.listInfo.subordinates).toHaveLength(pageSize);
+            for (const sub of resData.listInfo.subordinates) {
+                const foundId: string = sub.rdn[0].value.utf8String;
+                expect(encountered.has(foundId)).toBeFalsy();
+                encountered.add(foundId);
+                if (lastResult) {
+                    expect([ lastResult, foundId ].sort()).toEqual([ foundId, lastResult ]);
+                }
+                lastResult = foundId;
+            }
+            return resData.listInfo.partialOutcomeQualifier?.queryReference;
+        };
+        const qr1 = await nextPage({
+            newRequest: new PagedResultsRequest_newRequest(
+                pageSize,
+                [
+                    new SortKey(
+                        commonName["&id"],
+                    ),
+                ],
+                TRUE,
+            ),
+        });
+        assert(qr1);
+        const qr2 = await nextPage({
+            queryReference: qr1,
+        });
+        assert(qr2);
+        const qr3 = await nextPage({
+            queryReference: qr2,
+        });
+        assert(qr3);
+        const qr4 = await nextPage({
+            queryReference: qr3,
+        });
+        expect(qr4).toBeUndefined();
     });
 
-    it.skip("List pagination sorting works", async () => {
-
+    it("List pagination pageNumber works", async () => {
+        const testId = `List.pageNumber-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const pageSize: number = 5;
+        const subordinates: string[] = Array(pageSize * 4).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const encountered: Set<string> = new Set();
+        const nextPage = async (prr: PagedResultsRequest) => {
+            const reqData: ListArgumentData = new ListArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                prr,
+                undefined,
+            );
+            const arg: ListArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                list["&operationCode"]!,
+                _encode_ListArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const decoded = _decode_ListResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("listInfo" in resData);
+            expect(resData.listInfo.subordinates).toHaveLength(pageSize);
+            for (const sub of resData.listInfo.subordinates) {
+                const foundId: string = sub.rdn[0].value.utf8String;
+                expect(encountered.has(foundId)).toBeFalsy();
+                encountered.add(foundId);
+            }
+            return resData.listInfo.partialOutcomeQualifier?.queryReference;
+        };
+        const qr1 = await nextPage({
+            newRequest: new PagedResultsRequest_newRequest(
+                pageSize,
+                undefined,
+                undefined,
+                undefined,
+                3, // Skip three pages
+            ),
+        });
+        expect(qr1).toBeUndefined(); // There should only have been one more page to read.
     });
 
-    it.skip("List pagination unmerged works", async () => {
-
-    });
+    test.todo("List pagination unmerged works");
 
     it("Search.subset.baseObject", async () => {
         const testId = `Search-${(new Date()).toISOString()}`;
@@ -3287,18 +3266,6 @@ describe("Meerkat DSA", () => {
             ],
             undefined,
             [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -3328,18 +3295,6 @@ describe("Meerkat DSA", () => {
             ],
             undefined,
             [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -3374,19 +3329,6 @@ describe("Meerkat DSA", () => {
                     ),
                 },
             ],
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
         );
         const arg: ModifyEntryArgument = {
@@ -3431,18 +3373,6 @@ describe("Meerkat DSA", () => {
             ],
             undefined,
             [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -3505,18 +3435,6 @@ describe("Meerkat DSA", () => {
             ],
             undefined,
             [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -3585,18 +3503,6 @@ describe("Meerkat DSA", () => {
             ],
             undefined,
             [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -3639,18 +3545,6 @@ describe("Meerkat DSA", () => {
             ],
             undefined,
             [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -3663,7 +3557,6 @@ describe("Meerkat DSA", () => {
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    // TODO: Bookmark
     it("ModifyEntry.selection", async () => {
         const testId = `ModifyEntry.selection-${(new Date()).toISOString()}`;
         { // Setup
@@ -3704,18 +3597,6 @@ describe("Meerkat DSA", () => {
             ],
             selection,
             [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -3781,19 +3662,6 @@ describe("Meerkat DSA", () => {
                 },
             ],
             selection,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -3902,19 +3770,6 @@ describe("Meerkat DSA", () => {
                 },
             ],
             selection,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -4044,19 +3899,6 @@ describe("Meerkat DSA", () => {
                 },
             ],
             selection,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -4216,19 +4058,6 @@ describe("Meerkat DSA", () => {
                 },
             ],
             selection,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -4284,19 +4113,6 @@ describe("Meerkat DSA", () => {
                 },
             ],
             selection,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -4352,19 +4168,6 @@ describe("Meerkat DSA", () => {
                 },
             ],
             selection,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -4437,19 +4240,6 @@ describe("Meerkat DSA", () => {
                 },
             ],
             selection,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyEntryArgument = {
             unsigned: reqData,
@@ -4504,19 +4294,6 @@ describe("Meerkat DSA", () => {
             ],
             false,
             undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyDNArgument = {
             unsigned: reqData,
@@ -4558,19 +4335,6 @@ describe("Meerkat DSA", () => {
                 ),
             ],
             false,
-            undefined,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             undefined,
         );
         const arg: ModifyDNArgument = {
@@ -4616,19 +4380,6 @@ describe("Meerkat DSA", () => {
             ],
             false,
             destinationDN,
-            [],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         const arg: ModifyDNArgument = {
             unsigned: reqData,
