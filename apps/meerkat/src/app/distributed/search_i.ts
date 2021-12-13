@@ -672,10 +672,9 @@ async function search_i (
             const newPagingState: PagedResultsRequestState = {
                 cursorIds: [],
                 processingEntriesWithSortKey: [],
-                pageIndex: (((data.pagedResults.newRequest.pageNumber !== undefined)
-                    ? Number(data.pagedResults.newRequest.pageNumber)
-                    : 1) - 1),
+                pageIndex: pi,
                 request: data.pagedResults.newRequest,
+                alreadyReturnedById: new Set(),
             };
             searchState.paging = [ queryReference, newPagingState ];
             if (conn.pagedResultsRequests.size >= 5) {
@@ -1325,21 +1324,6 @@ async function search_i (
                     || (Array.isArray(matchedValues) && !!matchedValues.length)
                 );
                 if (matched || searchingForRootDSE) {
-                    if (searchState.skipsRemaining > 0) {
-                        // The specification never explicitly says that
-                        // separateFamilyMembers should make each family member
-                        // count towards the limits, but it would make sense.
-                        if (separateFamilyMembers || searchFamilyInEffect) {
-                            searchState.skipsRemaining -= familySubset
-                                .filter((vertex) => (
-                                    !familySelect
-                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
-                                )).length;
-                        } else {
-                            searchState.skipsRemaining--;
-                        }
-                        return;
-                    }
                     const einfos = await Promise.all(
                         familySubset.map((member) => readEntryInformation(
                             ctx,
@@ -1391,27 +1375,39 @@ async function search_i (
                     const filteredEinfos = einfos
                         .map(filterUnauthorizedEntryInformation);
                     if (separateFamilyMembers) {
-                        searchState.results.push(
-                            ...filteredEinfos
-                                .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
-                                .filter(([ , vertex ]) => (
-                                    !familySelect
-                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
-                                ))
-                                .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
-                                    {
-                                        rdnSequence: getDistinguishedName(vertex),
-                                    },
-                                    Boolean(vertex.dse.shadow),
-                                    attributeSizeLimit
-                                        ? permittedEinfo.filter(filterEntryInfoItemBySize)
-                                        : permittedEinfo,
-                                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                    // Only the ancestor can have partialName.
-                                    ((index === 0) && state.partialName && (searchState.depth === 0)),
-                                    undefined,
-                                )),
-                        );
+                        const familyMemberResults = filteredEinfos
+                            .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
+                            .filter(([ , vertex ]) => (
+                                (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
+                                && !((): boolean => {
+                                    const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
+                                    searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                                    return had;
+                                })()
+                                && ((): boolean => {
+                                    if (searchState.skipsRemaining === undefined) {
+                                        return true;
+                                    }
+                                    if (searchState.skipsRemaining > 0) {
+                                        searchState.skipsRemaining--;
+                                    }
+                                    return (searchState.skipsRemaining <= 0);
+                                })()
+                            ))
+                            .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
+                                {
+                                    rdnSequence: getDistinguishedName(vertex),
+                                },
+                                Boolean(vertex.dse.shadow),
+                                attributeSizeLimit
+                                    ? permittedEinfo.filter(filterEntryInfoItemBySize)
+                                    : permittedEinfo,
+                                incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                // Only the ancestor can have partialName.
+                                ((index === 0) && state.partialName && (searchState.depth === 0)),
+                                undefined,
+                            ));
+                        searchState.results.push(...familyMemberResults);
                         return;
                     }
                     if (familySubset.length > 1) {
@@ -1431,20 +1427,29 @@ async function search_i (
                             attribute: familyInfoAttr,
                         });
                     }
-                    searchState.results.push(
-                        new EntryInformation(
-                            {
-                                rdnSequence: getDistinguishedName(familySubset[0]),
-                            },
-                            Boolean(familySubset[0].dse.shadow),
-                            attributeSizeLimit
-                                ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-                                : filteredEinfos[0][1],
-                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                            (state.partialName && (searchState.depth === 0)),
-                            undefined,
-                        ),
-                    );
+                    if (
+                        (searchState.skipsRemaining <= 0)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(familySubset[0].dse.id)
+                    ) {
+                        searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                        searchState.results.push(
+                            new EntryInformation(
+                                {
+                                    rdnSequence: getDistinguishedName(familySubset[0]),
+                                },
+                                Boolean(familySubset[0].dse.shadow),
+                                attributeSizeLimit
+                                    ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                                    : filteredEinfos[0][1],
+                                filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                (state.partialName && (searchState.depth === 0)),
+                                undefined,
+                            ),
+                        );
+                    } else if ((searchState.skipsRemaining ?? 0) > 0) {
+                        searchState.skipsRemaining--;
+                        searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                    }
                     if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                         hierarchySelectionProcedure(
                             ctx,
@@ -1456,9 +1461,9 @@ async function search_i (
                 }
             }
         }
-        return;
+        return; // TODO: You can negate the if condition above and put this in the if block.
     } else if (!entryOnly) /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
-        if (
+        if ( // TODO: You can move this to the outer else if statement.
             (
                 (target.dse.subentry && subentries)
                 || (!target.dse.subentry && !subentries)
@@ -1498,14 +1503,6 @@ async function search_i (
                     || (Array.isArray(matchedValues) && !!matchedValues.length)
                 );
                 if (matched) {
-                    if (searchState.skipsRemaining > 0) {
-                        if (separateFamilyMembers) {
-                            searchState.skipsRemaining -= familySubset.length;
-                        } else {
-                            searchState.skipsRemaining--;
-                        }
-                        return;
-                    }
                     const einfos = await Promise.all(
                         familySubset.map((member) => readEntryInformation(
                             ctx,
@@ -1557,27 +1554,39 @@ async function search_i (
                     const filteredEinfos = einfos
                         .map(filterUnauthorizedEntryInformation);
                     if (separateFamilyMembers) {
-                        searchState.results.push(
-                            ...filteredEinfos
-                                .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
-                                .filter(([ , vertex ]) => (
-                                    !familySelect
-                                    || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? "")
-                                ))
-                                .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
-                                    {
-                                        rdnSequence: getDistinguishedName(vertex),
-                                    },
-                                    Boolean(vertex.dse.shadow),
-                                    attributeSizeLimit
-                                        ? permittedEinfo.filter(filterEntryInfoItemBySize)
-                                        : permittedEinfo,
-                                    incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                    // Only the ancestor can have partialName.
-                                    ((index === 0) && state.partialName && (searchState.depth === 0)),
-                                    undefined,
-                                )),
-                        );
+                        const familyMemberResults = filteredEinfos
+                            .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
+                            .filter(([ , vertex ]) => (
+                                (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
+                                && !((): boolean => {
+                                    const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
+                                    searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                                    return had;
+                                })()
+                                && ((): boolean => {
+                                    if (searchState.skipsRemaining === undefined) {
+                                        return true;
+                                    }
+                                    if (searchState.skipsRemaining > 0) {
+                                        searchState.skipsRemaining--;
+                                    }
+                                    return (searchState.skipsRemaining <= 0);
+                                })()
+                            ))
+                            .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
+                                {
+                                    rdnSequence: getDistinguishedName(vertex),
+                                },
+                                Boolean(vertex.dse.shadow),
+                                attributeSizeLimit
+                                    ? permittedEinfo.filter(filterEntryInfoItemBySize)
+                                    : permittedEinfo,
+                                incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                // Only the ancestor can have partialName.
+                                ((index === 0) && state.partialName && (searchState.depth === 0)),
+                                undefined,
+                            ));
+                        searchState.results.push(...familyMemberResults);
                         return;
                     } else {
                         if (familySubset.length > 1) {
@@ -1597,20 +1606,29 @@ async function search_i (
                                 attribute: familyInfoAttr,
                             });
                         }
-                        searchState.results.push(
-                            new EntryInformation(
-                                {
-                                    rdnSequence: getDistinguishedName(familySubset[0]),
-                                },
-                                Boolean(familySubset[0].dse.shadow),
-                                attributeSizeLimit
-                                    ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-                                    : filteredEinfos[0][1],
-                                filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                (state.partialName && (searchState.depth === 0)),
-                                undefined,
-                            ),
-                        );
+                        if (
+                            (searchState.skipsRemaining <= 0)
+                            && !searchState.paging?.[1].alreadyReturnedById.has(familySubset[0].dse.id)
+                        ) {
+                            searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                            searchState.results.push(
+                                new EntryInformation(
+                                    {
+                                        rdnSequence: getDistinguishedName(familySubset[0]),
+                                    },
+                                    Boolean(familySubset[0].dse.shadow),
+                                    attributeSizeLimit
+                                        ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                                        : filteredEinfos[0][1],
+                                    filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                                    (state.partialName && (searchState.depth === 0)),
+                                    undefined,
+                                ),
+                            );
+                        } else if ((searchState.skipsRemaining ?? 0) > 0) {
+                            searchState.skipsRemaining--;
+                            searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                        }
                     }
                     if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                         hierarchySelectionProcedure(
@@ -1824,11 +1842,6 @@ async function search_i (
                 );
                 return;
             }
-            cursorId = newCursorId;
-            processingEntriesWithSortKey = hasValue;
-            if (searchState.paging?.[1].cursorIds) {
-                searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
-            }
             if (subentries && !subordinate.dse.subentry) {
                 continue;
             }
@@ -1905,8 +1918,35 @@ async function search_i (
                 searchState,
             );
             searchState.depth--;
+            /**
+             * It is CRITICAL that this appears BEFORE the cursor update.
+             * Otherwise, you will not continue to return results from
+             * incompletely-searched subordinates.
+             */
             if (searchState.poq) {
                 return;
+            }
+            /**
+             * We record what entries we have recorded AFTER we recurse into the
+             * subordinates so that we do not have to recover our steps. The
+             * cursor ID being set means that we are finished with this
+             * subordinate completely.
+             *
+             * Note that, unlike with the list operation, the result size limits
+             * are checked near the start of the search procedure rather than
+             * within each iteration of its subordinates. An exceeded limit is
+             * indicated recursively to superiors through the search state's
+             * `poq` property (Partial Outcome Qualifier). Therefore, updating
+             * the cursor ID must happen only if we have not received a partial
+             * outcome qualifier from recursion, which is why we return from
+             * this procedure before we get to this part.
+             */
+            {
+                cursorId = newCursorId;
+                processingEntriesWithSortKey = hasValue;
+                if (searchState.paging?.[1].cursorIds) {
+                    searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
+                }
             }
         }
         subordinatesInBatch = await getNextBatchOfSubordinates();

@@ -587,6 +587,7 @@ async function list_i (
                 ? [ cursorId ]
                 : [],
             processingEntriesWithSortKey: [ processingEntriesWithSortKey ],
+            alreadyReturnedById: new Set(),
         });
     }
 

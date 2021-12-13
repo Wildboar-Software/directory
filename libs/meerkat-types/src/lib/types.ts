@@ -56,14 +56,13 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, PrismaPromise, Prisma, Entry } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { SupplierInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
 import type { ConsumerInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
 import type { SupplierAndConsumers } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
 import type { MasterAndShadowAccessPoints } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
 import type { DitBridgeKnowledge } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
-import type { PrismaPromise, Prisma } from "@prisma/client";
 import type { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import {
     AuthenticationLevel_basicLevels,
@@ -1106,6 +1105,11 @@ interface PagedResultsRequestState {
      * If sorting is not used, this property has no meaning.
      */
     processingEntriesWithSortKey: boolean[];
+
+    /**
+     * The entries already returned by the search or list operation.
+     */
+    alreadyReturnedById: Set<Entry["id"]>;
 }
 
 export

@@ -59,7 +59,7 @@ const BYTES_IN_A_UUID: number = 16;
  * request could consume considerably higher memory than expected. To prevent
  * this, a fixed page size is used. In the future, this may be configurable.
  */
- const ENTRIES_PER_BATCH: number = 1000;
+const ENTRIES_PER_BATCH: number = 1000;
 
 export
 async function search_ii (
@@ -177,6 +177,7 @@ async function search_ii (
                     ? Number(data.pagedResults.newRequest.pageNumber)
                     : 1) - 1),
                 request: data.pagedResults.newRequest,
+                alreadyReturnedById: new Set(),
             };
             searchState.paging = [ queryReference, newPagingState ];
             if (conn.pagedResultsRequests.size >= 5) {

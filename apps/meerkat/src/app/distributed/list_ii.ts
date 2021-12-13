@@ -443,6 +443,7 @@ async function list_ii (
                 ? [ cursorId ]
                 : [],
             processingEntriesWithSortKey: [ true ],
+            alreadyReturnedById: new Set(),
         });
     }
 
