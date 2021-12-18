@@ -42,6 +42,7 @@ import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptio
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
 import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
+import { _decode_Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
     const el = new BERElement();
@@ -84,11 +85,24 @@ async function dseFromDatabaseEntry (
             object_class: true,
         },
     });
+    const clearances = await ctx.db.clearance.findMany({
+        where: {
+            entry_id: dbe.id,
+        },
+        select: {
+            ber: true,
+        },
+    });
     const ret: DSE = {
         id: dbe.id,
         uuid: dbe.dseUUID,
         rdn,
         objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
+        clearances: clearances.map((c) => {
+            const el = new BERElement();
+            el.fromBytes(c.ber);
+            return _decode_Clearance(el);
+        }),
         uniqueIdentifier: (await ctx.db.uniqueIdentifier.findMany({
             where: {
                 entry_id: dbe.id,
@@ -214,7 +228,7 @@ async function dseFromDatabaseEntry (
     }
 
     if (ret.objectClass.has(ALIAS)) {
-        const aliasedEntry = await ctx.db.alias.findUnique({
+        const alias_ = await ctx.db.alias.findUnique({
             where: {
                 alias_entry_id: dbe.id,
             },
@@ -222,9 +236,11 @@ async function dseFromDatabaseEntry (
                 aliased_entry_name: true,
             },
         });
-        if (Array.isArray(aliasedEntry?.aliased_entry_name)) {
+        // We check that it is an array just to avoid any problems with this
+        // value being malformed in the database.
+        if (Array.isArray(alias_?.aliased_entry_name)) {
             ret.alias = {
-                aliasedEntryName: aliasedEntry!.aliased_entry_name
+                aliasedEntryName: alias_!.aliased_entry_name
                     .map((rdn: Record<string, string>) => rdnFromJson(rdn)),
             };
         } else {

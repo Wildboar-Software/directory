@@ -104,6 +104,9 @@ import type { i18n } from "i18next";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import type {
+    Clearance,
+} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -370,6 +373,7 @@ interface DSE {
     createTimestamp?: Date;
     modifyTimestamp?: Date;
     entryACI?: ACIItem[];
+    clearances?: Clearance[];
 
     // DSE type-specific data
     root?: RootDSE;
@@ -395,6 +399,7 @@ interface DSE {
 export
 interface Vertex {
     immediateSuperior?: Vertex;
+    materializedPath: string;
     subordinates: Vertex[] | null; // null means the subordinates are stored in the database.
     /**
      * The actual contents of the DSE are very purposefully stored in a nested

@@ -3,16 +3,14 @@ import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
 import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
 import attributeFromInformationObject from "./attributeFromInformationObject";
 import { AttributeUsage } from "@prisma/client";
-// FIXME: Add to collections from @wildboar/x500.
-import { oidC } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC.oa";
-import { oidC1 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC1.oa";
-import { oidC2 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC2.oa";
 import entryUUID from "../schema/attributes/entryUUID";
 import accessControlSchemeDriver from "../database/drivers/accessControlScheme";
 import accessControlSubentryListDriver from "../database/drivers/accessControlSubentryList";
 import administrativeRoleDriver from "../database/drivers/administrativeRole";
+import aliasedEntryNameDriver from "../database/drivers/aliasedEntryName";
 import altServerDriver from "../database/drivers/altServer";
 import attributeTypesDriver from "../database/drivers/attributeTypes";
+import clearanceDriver from "../database/drivers/clearance";
 import collectiveAttributeSubentryListDriver from "../database/drivers/collectiveAttributeSubentryList";
 import collectiveExclusionsDriver from "../database/drivers/collectiveExclusions";
 import consumerKnowledgeDriver from "../database/drivers/consumerKnowledge";
@@ -97,9 +95,6 @@ export
 async function loadAttributeTypes (ctx: Context): Promise<void> {
     Object.entries({
         ...x500at,
-        oidC,
-        oidC1,
-        oidC2,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
@@ -158,6 +153,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.matchingRulesSuitableForNaming.add(x500mr.intEmailMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.jidMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.numericStringMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(x500mr.objectIdentifierMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.octetStringMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.presentationAddressMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.telephoneNumberMatch["&id"].toString());
@@ -167,9 +163,11 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.matchingRulesSuitableForNaming.add(x500mr.uUIDPairMatch["&id"].toString());
     ctx.attributeTypes.get(x500at.accessControlScheme["&id"].toString())!.driver = accessControlSchemeDriver;
     ctx.attributeTypes.get(x500at.accessControlSubentryList["&id"].toString())!.driver = accessControlSubentryListDriver;
+    ctx.attributeTypes.get(x500at.aliasedEntryName["&id"].toString())!.driver = aliasedEntryNameDriver;
     ctx.attributeTypes.get(x500at.administrativeRole["&id"].toString())!.driver = administrativeRoleDriver;
     ctx.attributeTypes.get(x500at.altServer["&id"].toString())!.driver = altServerDriver;
     ctx.attributeTypes.get(x500at.attributeTypes["&id"].toString())!.driver = attributeTypesDriver;
+    ctx.attributeTypes.get(x500at.clearance["&id"].toString())!.driver = clearanceDriver;
     ctx.attributeTypes.get(x500at.collectiveAttributeSubentryList["&id"].toString())!.driver = collectiveAttributeSubentryListDriver;
     ctx.attributeTypes.get(x500at.collectiveExclusions["&id"].toString())!.driver = collectiveExclusionsDriver;
     ctx.attributeTypes.get(x500at.consumerKnowledge["&id"].toString())!.driver = consumerKnowledgeDriver;

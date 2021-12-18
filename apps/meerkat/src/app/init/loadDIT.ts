@@ -20,6 +20,7 @@ async function loadDIT (
         rootDSE = await ctx.db.entry.create({
             data: {
                 immediate_superior_id: null,
+                materialized_path: "",
                 entryUUID: randomUUID(),
                 glue: false,
                 cp: false,

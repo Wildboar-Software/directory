@@ -37,6 +37,9 @@ async function createEntry (
     const createdEntry = await ctx.db.entry.create({
         data: {
             immediate_superior_id: superior.dse.id,
+            materialized_path: superior.materializedPath.length
+                ? `${superior.materializedPath}.${superior.dse.id.toString()}`
+                : superior.dse.id.toString(),
             entryUUID: randomUUID(),
             creatorsName: [],
             modifiersName: [],

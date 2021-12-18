@@ -41,8 +41,8 @@ import {
 import {
     AddEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
-import type {
-    DistinguishedName,
+import {
+    DistinguishedName, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import {
     Attribute,
@@ -82,8 +82,21 @@ import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
+    ServiceControlOptions_preferChaining,
+    ServiceControlOptions_chainingProhibited,
+    ServiceControlOptions_localScope,
+    ServiceControlOptions_dontUseCopy,
+    ServiceControlOptions_dontDereferenceAliases,
+    ServiceControlOptions_subentries,
+    ServiceControlOptions_copyShallDo,
+    ServiceControlOptions_partialNameResolution,
     ServiceControlOptions_manageDSAIT,
     ServiceControlOptions_noSubtypeMatch,
+    ServiceControlOptions_noSubtypeSelection,
+    ServiceControlOptions_countFamily,
+    ServiceControlOptions_dontSelectFriends,
+    ServiceControlOptions_dontMatchFriends,
+    ServiceControlOptions_allowWriteableCopy,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ServiceControls,
@@ -302,6 +315,17 @@ import {
 import {
     SortKey,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
+import { aliasedEntryName } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
+import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import { serviceError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import { updateError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    NameProblem_aliasDereferencingProblem,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 
 jest.setTimeout(10000);
 
@@ -3129,8 +3153,81 @@ describe("Meerkat DSA", () => {
         expect(encountered.size).toBe(pageSize);
     });
 
-    it.skip("Search pagination sorting works", async () => {
-
+    it("Search pagination sorting works", async () => {
+        const testId = `Search.pagination-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const pageSize: number = 5;
+        const subordinatesLevel1: string[] = Array(pageSize * 2).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array((pageSize * 2) - 1).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id)));
+        const subordinateWithSubordinates: string = subordinatesLevel1[subordinatesLevel1.length - 1];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id)));
+        const encountered: Set<string> = new Set();
+        let lastResult: string | undefined;
+        const nextPage = async (prr: PagedResultsRequest) => {
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_wholeSubtree,
+                undefined,
+                undefined,
+                undefined,
+                prr,
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("searchInfo" in resData);
+            expect(resData.searchInfo.entries).toHaveLength(pageSize);
+            for (const entry of resData.searchInfo.entries) {
+                const rdn = entry.name.rdnSequence[entry.name.rdnSequence.length - 1];
+                const foundId: string = rdn[0].value.utf8String;
+                if (lastResult) {
+                    expect([ lastResult, foundId ].sort()).toEqual([ lastResult, foundId ]);
+                }
+                expect(encountered.has(foundId)).toBeFalsy();
+                encountered.add(foundId);
+            }
+            return resData.searchInfo.partialOutcomeQualifier?.queryReference;
+        };
+        const qr1 = await nextPage({
+            newRequest: new PagedResultsRequest_newRequest(
+                pageSize,
+                [
+                    new SortKey(
+                        commonName["&id"],
+                    ),
+                ],
+            ),
+        });
+        assert(qr1);
+        const qr2 = await nextPage({
+            queryReference: qr1,
+        });
+        assert(qr2);
+        const qr3 = await nextPage({
+            queryReference: qr2,
+        });
+        assert(qr3);
+        const qr4 = await nextPage({
+            queryReference: qr3,
+        });
+        expect(qr4).toBeUndefined();
+        expect(encountered.size).toBe(pageSize * 4);
     });
 
     it.skip("Search pagination reverse works", async () => {
@@ -4315,8 +4412,81 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("ServiceControlOptions.dontDereferenceAliases", async () => {
-
+    it.only("ServiceControlOptions.dontDereferenceAliases", async () => {
+        const testId = `ServiceControlOptions.dontDereferenceAliases-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const asdf: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            subordinateWithSubordinates,
+        ];
+        // It's stupid to use this in the RDN, but alias is a _structural_ object class.
+        const aliasRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(alias["&id"]),
+            ),
+        ];
+        await createEntry( // Creates an alias that points to `subordinateWithSubordinates`.
+            connection!,
+            dn,
+            aliasRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName(asdf, DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, asdf, id)));
+        const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+            Array(15).fill(FALSE_BIT));
+        serviceControlOptions[ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, aliasRDN, createTestRDN("F601D2D2-9B45-4068-9A4F-55FF18E3215D") ],
+            },
+            undefined,
+            undefined,
+            [],
+            new ServiceControls(
+                serviceControlOptions,
+            ),
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("error" in result);
+        assert(result.errcode);
+        expect(compareCode(result.errcode, nameError["&errorCode"]!)).toBeTruthy();
+        const param = nameError.decoderFor["&ParameterType"]!(result.error);
+        const data = getOptionallyProtectedValue(param);
+        expect(data.problem).toBe(NameProblem_aliasDereferencingProblem);
+        // expect(data.aliasDereferenced).toBe(FALSE); // May be undefined.
+        // The matched name should be the alias, not the aliased entry.
+        expect(data.matched.rdnSequence).toHaveLength(2);
+        expect(data.matched.rdnSequence[1]).toHaveLength(1);
+        expect(data.matched.rdnSequence[1][0].type_.toString()).toBe(objectClass["&id"].toString());
     });
 
     it.skip("ServiceControlOptions.subentries", async () => {
@@ -4698,5 +4868,8 @@ describe("Meerkat DSA", () => {
     it.skip("Chained changePassword works", async () => {
 
     });
+
+    it.todo("Hierarchy attributes update correctly when the hierarchy changes");
+    it.todo("Alias attributes update correctly when aliases change."); // This might actually not be required.
 
 });
