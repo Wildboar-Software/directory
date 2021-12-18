@@ -828,7 +828,7 @@ async function createCompoundEntry(
     );
 }
 
-describe("Meerkat DSA", () => {
+describe("Meerkat DSA", () => { // TODO: Bookmark
 
     let connection: IDMConnection | undefined;
 
@@ -845,6 +845,73 @@ describe("Meerkat DSA", () => {
     it.todo("Server shuts down gracefully");
     it.todo("Server checks for updates successfully");
     it.todo("Server hibernates when the sentinel indicates a security issues");
+
+    it("alias dereferencing works", async () => {
+        const testId = `alias-deref-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const aliasedDN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            subordinateWithSubordinates,
+        ];
+        // It's stupid to use this in the RDN, but alias is a _structural_ object class.
+        const aliasRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(alias["&id"]),
+            ),
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, aliasedDN, id)));
+        // This should be done after the aliased entry is created so you do not
+        // get warnings about the aliased entry not existing.
+        await createEntry( // Creates an alias that points to `subordinateWithSubordinates`.
+            connection!,
+            dn,
+            aliasRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName(aliasedDN, DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, aliasRDN, createTestRDN("F601D2D2-9B45-4068-9A4F-55FF18E3215D") ],
+            },
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const param = _decode_ReadResult(result.result);
+        const data = getOptionallyProtectedValue(param);
+        expect(data.aliasDereferenced).toBe(TRUE);
+        expect(data.entry.name.rdnSequence).toHaveLength(3);
+        expect(data.entry.name.rdnSequence[2]).toHaveLength(1);
+        expect(data.entry.name.rdnSequence[2][0].value.utf8String).toBe("F601D2D2-9B45-4068-9A4F-55FF18E3215D");
+    });
 
     it("Read", async () => {
         const testId = `Read-${(new Date()).toISOString()}`;
@@ -4412,14 +4479,14 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.only("ServiceControlOptions.dontDereferenceAliases", async () => {
+    it("ServiceControlOptions.dontDereferenceAliases", async () => {
         const testId = `ServiceControlOptions.dontDereferenceAliases-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
         }
         const dn = createTestRootDN(testId);
         const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
-        const asdf: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const aliasedDN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
         const subordinates = [
             subordinateWithSubordinates,
         ];
@@ -4430,6 +4497,15 @@ describe("Meerkat DSA", () => {
                 oid(alias["&id"]),
             ),
         ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, aliasedDN, id)));
+        // This should be done after the aliased entry is created so you do not
+        // get warnings about the aliased entry not existing.
         await createEntry( // Creates an alias that points to `subordinateWithSubordinates`.
             connection!,
             dn,
@@ -4442,18 +4518,11 @@ describe("Meerkat DSA", () => {
                 ),
                 new Attribute(
                     aliasedEntryName["&id"],
-                    [ _encode_DistinguishedName(asdf, DER) ],
+                    [ _encode_DistinguishedName(aliasedDN, DER) ],
                     undefined,
                 ),
             ],
         );
-        const subordinates2 = [
-            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
-            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
-            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
-        ];
-        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
-        await Promise.all(subordinates2.map((id) => createTestNode(connection!, asdf, id)));
         const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
             Array(15).fill(FALSE_BIT));
         serviceControlOptions[ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;

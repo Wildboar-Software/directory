@@ -1058,7 +1058,7 @@ async function findDSE (
                     newN,
                     newState,
                 );
-                if (!state.entrySuitable) {
+                if (!newState.entrySuitable) {
                     throw new errors.NameError(
                         ctx.i18n.t("err:alias_problem"),
                         new NameErrorData(
@@ -1079,6 +1079,7 @@ async function findDSE (
                         ),
                     );
                 }
+                Object.assign(state, newState);
                 return;
             }
         }

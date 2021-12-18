@@ -45,6 +45,11 @@ const addValue: SpecialAttributeDatabaseEditor = async (
 ): Promise<void> => {
     const decodedName = _decode_DistinguishedName(value.value);
     const aliasedEntry = await findEntry(ctx, ctx.dit.root, decodedName, true);
+    if (!aliasedEntry) {
+        ctx.log.warn("log:aliased_does_not_exist", {
+            uuid: vertex.dse.uuid,
+        });
+    }
     pendingUpdates.otherWrites.push(ctx.db.alias.create({
         data: {
             alias_entry_id: vertex.dse.id,
