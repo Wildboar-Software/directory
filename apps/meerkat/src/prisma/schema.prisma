@@ -35,6 +35,7 @@ model Entry {
   // identify DSEs, because in shadow DSEs, it may not be known.
   dseUUID   String  @default(uuid())
 
+  materialized_path     String
   immediate_superior_id Int?
   immediate_superior    Entry? @relation(name: "superior", fields: [immediate_superior_id], references: [id])
 
@@ -96,8 +97,8 @@ model Entry {
 
   // Hierarchy Attributes
   // According to ITU X.501, Section 10.2:
-    // "A hierarchical group shall be confined to a single DSA."
-    // This means that we can just use database IDs to represent hierarchy members.
+  // "A hierarchical group shall be confined to a single DSA."
+  // This means that we can just use database IDs to represent hierarchy members.
   hierarchyParent_id Int?
   hierarchyParent    Entry?  @relation(name: "parent", fields: [hierarchyParent_id], references: [id])
   hierarchyParentDN  Json?
@@ -151,7 +152,6 @@ model Entry {
   @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
-  ClearanceSecurityCategory ClearanceSecurityCategory[]
 }
 
 // Technically a userApplications attribute, but still has operational uses.
@@ -426,23 +426,25 @@ model ACIItem {
 }
 
 model Clearance {
-  id           Int     @id @default(autoincrement())
-  entry_id     Int
-  entry        Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  policy_id    OID
+  id                        Int                         @id @default(autoincrement())
+  entry_id                  Int
+  entry                     Entry                       @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  policy_id                 OID
   // From classList
-  unmarked     Boolean @default(false)
-  unclassified Boolean @default(false)
-  restricted   Boolean @default(false)
-  confidential Boolean @default(false)
-  secret       Boolean @default(false)
-  topSecret    Boolean @default(false)
+  unmarked                  Boolean                     @default(false)
+  unclassified              Boolean                     @default(false)
+  restricted                Boolean                     @default(false)
+  confidential              Boolean                     @default(false)
+  secret                    Boolean                     @default(false)
+  topSecret                 Boolean                     @default(false)
+  ber                       Bytes
+  ClearanceSecurityCategory ClearanceSecurityCategory[]
 }
 
 model ClearanceSecurityCategory {
-  id           Int   @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   clearance_id Int
-  clearance    Entry @relation(fields: [clearance_id], references: [id], onDelete: Cascade)
+  clearance    Clearance @relation(fields: [clearance_id], references: [id], onDelete: Cascade)
   type         OID
   value        Bytes
 

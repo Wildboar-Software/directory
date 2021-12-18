@@ -3,6 +3,7 @@ CREATE TABLE `Entry` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entryUUID` VARCHAR(191) NULL,
     `dseUUID` VARCHAR(191) NOT NULL,
+    `materialized_path` VARCHAR(191) NOT NULL,
     `immediate_superior_id` INTEGER NULL,
     `glue` BOOLEAN NOT NULL DEFAULT false,
     `cp` BOOLEAN NOT NULL DEFAULT false,
@@ -305,15 +306,25 @@ CREATE TABLE `Clearance` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `policy_id` VARCHAR(191) NOT NULL,
-    `unmarked` BOOLEAN NOT NULL,
-    `unclassified` BOOLEAN NOT NULL,
-    `restricted` BOOLEAN NOT NULL,
-    `confidential` BOOLEAN NOT NULL,
-    `secret` BOOLEAN NOT NULL,
-    `topSecret` BOOLEAN NOT NULL,
-    `security_categories_covered` JSON NOT NULL,
+    `unmarked` BOOLEAN NOT NULL DEFAULT false,
+    `unclassified` BOOLEAN NOT NULL DEFAULT false,
+    `restricted` BOOLEAN NOT NULL DEFAULT false,
+    `confidential` BOOLEAN NOT NULL DEFAULT false,
+    `secret` BOOLEAN NOT NULL DEFAULT false,
+    `topSecret` BOOLEAN NOT NULL DEFAULT false,
     `ber` LONGBLOB NOT NULL,
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ClearanceSecurityCategory` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `clearance_id` INTEGER NOT NULL,
+    `type` VARCHAR(191) NOT NULL,
+    `value` LONGBLOB NOT NULL,
+
+    INDEX `ClearanceSecurityCategory_clearance_id_idx`(`clearance_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -559,45 +570,6 @@ CREATE TABLE `SearchRule` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Certificate` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `version` SMALLINT NOT NULL,
-    `serial_number` LONGBLOB NOT NULL,
-    `issuer` JSON NOT NULL,
-    `subject` JSON NOT NULL,
-    `not_before` DATETIME(3) NOT NULL,
-    `not_after` DATETIME(3) NOT NULL,
-    `signature_alg` VARCHAR(191) NOT NULL,
-    `spki_alg` VARCHAR(191) NOT NULL,
-    `authority_key_identifier` LONGBLOB NOT NULL,
-    `authority_cert_serial_number` LONGBLOB NOT NULL,
-    `subject_key_identifier` LONGBLOB NOT NULL,
-    `ca` BOOLEAN NULL,
-    `path_len` INTEGER NULL,
-    `key_usage_digitalSignature` BOOLEAN NULL,
-    `key_usage_contentCommitment` BOOLEAN NULL,
-    `key_usage_keyEncipherment` BOOLEAN NULL,
-    `key_usage_dataEncipherment` BOOLEAN NULL,
-    `key_usage_keyAgreement` BOOLEAN NULL,
-    `key_usage_keyCertSign` BOOLEAN NULL,
-    `key_usage_cRLSign` BOOLEAN NULL,
-    `key_usage_encipherOnly` BOOLEAN NULL,
-    `key_usage_decipherOnly` BOOLEAN NULL,
-    `ext_key_usage` VARCHAR(191) NOT NULL,
-    `private_key_usage_not_before` DATETIME(3) NULL,
-    `private_key_usage_not_after` DATETIME(3) NULL,
-    `certificate_policies` VARCHAR(191) NOT NULL,
-    `crl_distribution_points_count` INTEGER NOT NULL,
-    `revoked_time` DATETIME(3) NULL,
-    `revoked_reason` INTEGER NULL,
-    `signature_bytes` LONGBLOB NOT NULL,
-    `subject_public_key_bytes` LONGBLOB NOT NULL,
-    `certificate_der` LONGBLOB NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `OperationalBinding` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NULL,
@@ -658,20 +630,6 @@ CREATE TABLE `OperationalBinding` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `WhitelistedOperationalBinding` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `binding_type` VARCHAR(191) NOT NULL,
-    `initiator` ENUM('SYMMETRIC', 'ROLE_A', 'ROLE_B') NULL,
-    `min_validity_start` DATETIME(3) NULL,
-    `max_validity_end` DATETIME(3) NULL,
-    `hostnames` VARCHAR(191) NOT NULL,
-    `subnet` VARCHAR(191) NULL,
-    `permitted` BOOLEAN NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `NamedObjectIdentifier` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `oid` VARCHAR(191) NOT NULL,
@@ -683,14 +641,14 @@ CREATE TABLE `NamedObjectIdentifier` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `RDN` (
+CREATE TABLE `DistinguishedValue` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `type` VARCHAR(191) NOT NULL,
     `value` LONGBLOB NOT NULL,
     `str` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `RDN_entry_id_type_key`(`entry_id`, `type`),
+    UNIQUE INDEX `DistinguishedValue_entry_id_type_key`(`entry_id`, `type`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -834,6 +792,9 @@ ALTER TABLE `ACIItem` ADD CONSTRAINT `ACIItem_entry_id_fkey` FOREIGN KEY (`entry
 ALTER TABLE `Clearance` ADD CONSTRAINT `Clearance_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `ClearanceSecurityCategory` ADD CONSTRAINT `ClearanceSecurityCategory_clearance_id_fkey` FOREIGN KEY (`clearance_id`) REFERENCES `Clearance`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_non_supplying_master_id_fkey` FOREIGN KEY (`non_supplying_master_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -882,7 +843,7 @@ ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_access_point
 ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_master_access_point_id_fkey` FOREIGN KEY (`master_access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `RDN` ADD CONSTRAINT `RDN_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `DistinguishedValue` ADD CONSTRAINT `DistinguishedValue_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `EntryObjectClass` ADD CONSTRAINT `EntryObjectClass_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
