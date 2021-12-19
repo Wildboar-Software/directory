@@ -1005,8 +1005,10 @@ async function search_i (
             return !!ctx.attributeTypes.get(at.toString())?.compatibleMatchingRules.has(mr.toString());
         },
         isAttributeSubtype: (attributeType: OBJECT_IDENTIFIER, parentType: OBJECT_IDENTIFIER): boolean => {
-            const subtypes = getAttributeSubtypes(ctx, parentType);
-            return subtypes.some((st) => st.isEqualTo(attributeType));
+            return (
+                attributeType.isEqualTo(parentType)
+                || getAttributeSubtypes(ctx, parentType).some((st) => st.isEqualTo(attributeType))
+            );
         },
         permittedToMatch: (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
             if (

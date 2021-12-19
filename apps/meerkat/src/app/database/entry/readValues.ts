@@ -260,7 +260,10 @@ async function readValues (
                             : Array.from(selectedUserAttributes)
                                 .flatMap((type_) => {
                                     const subtypes = getAttributeSubtypes(ctx, ObjectIdentifier.fromString(type_));
-                                    return subtypes.map((st) => st.toString());
+                                    return [
+                                        type_,
+                                        ...subtypes.map((st) => st.toString()),
+                                    ];
                                 }),
                     }
                     : undefined,

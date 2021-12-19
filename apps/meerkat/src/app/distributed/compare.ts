@@ -266,11 +266,11 @@ async function compare (
 
     const eis = new EntryInformationSelection(
         {
-            select: typeAndSubtypes,
+            select: [ data.purported.type_ ],
         },
         undefined,
         {
-            select: typeAndSubtypes,
+            select: [ data.purported.type_ ],
         },
         undefined,
         true, // We need the contexts for evaluation.
@@ -284,6 +284,7 @@ async function compare (
         selection: eis,
         relevantSubentries,
         operationContexts: data.operationContexts,
+        noSubtypeSelection: noSubtypeMatch,
     });
     const values = [
         ...userAttributes,
