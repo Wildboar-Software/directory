@@ -277,10 +277,14 @@ async function compare (
         undefined,
     );
     const {
-        userAttributes,
-        operationalAttributes,
+        userValues: userAttributes,
+        operationalValues: operationalAttributes,
         collectiveValues,
-    } = await readValues(ctx, target, eis, relevantSubentries, data.operationContexts);
+    } = await readValues(ctx, target, {
+        selection: eis,
+        relevantSubentries,
+        operationContexts: data.operationContexts,
+    });
     const values = [
         ...userAttributes,
         ...operationalAttributes,

@@ -317,6 +317,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
 import { aliasedEntryName } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
 import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
+import { collectiveAttributeSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 import { serviceError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
@@ -326,6 +328,15 @@ import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstract
 import {
     NameProblem_aliasDereferencingProblem,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+import {
+    SubtreeSpecification,
+    _encode_SubtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+import {
+    subtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
+import { subtree } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
+import { SearchRequest_scope_baseObject, SearchRequest_scope_singleLevel, SearchRequest_scope_wholeSubtree } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
 
 jest.setTimeout(10000);
 
@@ -540,6 +551,7 @@ async function createTestNode(
     connection: IDMConnection,
     superiorDN: DistinguishedName,
     id: string,
+    extraAttributes?: Attribute[],
 ): Promise<ResultOrError> {
     const encodedCN = _encode_UnboundedDirectoryString({
         uTF8String: id,
@@ -569,6 +581,7 @@ async function createTestNode(
                 ],
                 undefined,
             ),
+            ...(extraAttributes ?? []),
         ],
     );
     const invokeID = crypto.randomInt(1_000_000);
@@ -2032,7 +2045,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             if ("result" in result && result.result) {
                 const decoded = _decode_CompareResult(result.result);
                 const resData = getOptionallyProtectedValue(decoded);
-                expect(resData.matched).toBe(false);
+                expect(resData.matched).toBe(FALSE);
             } else {
                 expect(false).toBeTruthy();
             }
@@ -4558,28 +4571,586 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(data.matched.rdnSequence[1][0].type_.toString()).toBe(objectClass["&id"].toString());
     });
 
-    it.skip("ServiceControlOptions.subentries", async () => {
+    it("Search ServiceControlOptions.subentries", async () => {
+        const testId = `Search.ServiceControlOptions.subentries-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const withSubordinatesDN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            subordinateWithSubordinates,
+        ];
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    _encodeObjectIdentifier(id_ar_autonomousArea, DER),
+                ],
+                undefined,
+            ),
+        ])));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, withSubordinatesDN, id)));
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry(
+            connection!,
+            withSubordinatesDN,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
 
+        const search_ = (scope: number) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_subentries] = TRUE_BIT;
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                scope,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        };
+        const baseObjectResponse = await search_(SearchRequest_scope_baseObject);
+        const singleLevelResponse = await search_(SearchRequest_scope_singleLevel);
+        const wholeSubtreeResponse = await search_(SearchRequest_scope_wholeSubtree);
+        assert("result" in baseObjectResponse);
+        assert("result" in singleLevelResponse);
+        assert("result" in wholeSubtreeResponse);
+        assert(baseObjectResponse.result);
+        assert(singleLevelResponse.result);
+        assert(wholeSubtreeResponse.result);
+        const baseObjectResult = _decode_SearchResult(baseObjectResponse.result);
+        const singleLevelResult = _decode_SearchResult(singleLevelResponse.result);
+        const wholeSubtreeResult = _decode_SearchResult(wholeSubtreeResponse.result);
+        const baseObjectData = getOptionallyProtectedValue(baseObjectResult);
+        const singleLevelData = getOptionallyProtectedValue(singleLevelResult);
+        const wholeSubtreeData = getOptionallyProtectedValue(wholeSubtreeResult);
+        assert("searchInfo" in baseObjectData);
+        assert("searchInfo" in singleLevelData);
+        assert("searchInfo" in wholeSubtreeData);
+        expect(baseObjectData.searchInfo.entries).toHaveLength(0);
+        expect(singleLevelData.searchInfo.entries).toHaveLength(1);
+        /**
+         * Even the subtree search should still only return one subentry,
+         * because it should not recurse into the second level to find the
+         * second subentry.
+         */
+        expect(wholeSubtreeData.searchInfo.entries).toHaveLength(1);
+    });
+
+    it("List ServiceControlOptions.subentries", async () => {
+        const testId = `List.ServiceControlOptions.subentries-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const withSubordinatesDN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            subordinateWithSubordinates,
+        ];
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    _encodeObjectIdentifier(id_ar_autonomousArea, DER),
+                ],
+                undefined,
+            ),
+        ])));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, withSubordinatesDN, id)));
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry(
+            connection!,
+            withSubordinatesDN,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+            Array(15).fill(FALSE_BIT));
+        serviceControlOptions[ServiceControlOptions_subentries] = TRUE_BIT;
+        const reqData: ListArgumentData = new ListArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            undefined,
+            undefined,
+            [],
+            new ServiceControls(
+                serviceControlOptions,
+            ),
+        );
+        const arg: ListArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            list["&operationCode"]!,
+            _encode_ListArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const result = _decode_ListResult(response.result);
+        const data = getOptionallyProtectedValue(result);
+        assert("listInfo" in data);
+        expect(data.listInfo.subordinates).toHaveLength(1);
+        expect(data.listInfo.subordinates[0].rdn[0].value.utf8String).toBe("hello");
     });
 
     it.skip("ServiceControlOptions.copyShallDo", async () => {
 
     });
 
-    it.skip("ServiceControlOptions.partialNameResolution", async () => {
+    // NOTE: partialNameResolution only applies to search and read operations.
+    it("Search ServiceControlOptions.partialNameResolution", async () => {
+        const testId = `Search.partialNameResolution-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const withSubordinatesDN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            subordinateWithSubordinates,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    _encodeObjectIdentifier(id_ar_autonomousArea, DER),
+                ],
+                undefined,
+            ),
+        ])));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, withSubordinatesDN, id)));
+        const search_ = (scope: number) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_partialNameResolution] = TRUE_BIT;
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: [ ...withSubordinatesDN, createTestRDN("does not exist") ],
+                },
+                scope,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        };
+        const baseObjectResponse = await search_(SearchRequest_scope_baseObject);
+        const singleLevelResponse = await search_(SearchRequest_scope_singleLevel);
+        const wholeSubtreeResponse = await search_(SearchRequest_scope_wholeSubtree);
+        assert("result" in baseObjectResponse);
+        assert("result" in singleLevelResponse);
+        assert("result" in wholeSubtreeResponse);
+        assert(baseObjectResponse.result);
+        assert(singleLevelResponse.result);
+        assert(wholeSubtreeResponse.result);
+        const baseObjectResult = _decode_SearchResult(baseObjectResponse.result);
+        const singleLevelResult = _decode_SearchResult(singleLevelResponse.result);
+        const wholeSubtreeResult = _decode_SearchResult(wholeSubtreeResponse.result);
+        const baseObjectData = getOptionallyProtectedValue(baseObjectResult);
+        const singleLevelData = getOptionallyProtectedValue(singleLevelResult);
+        const wholeSubtreeData = getOptionallyProtectedValue(wholeSubtreeResult);
+        assert("searchInfo" in baseObjectData);
+        assert("searchInfo" in singleLevelData);
+        assert("searchInfo" in wholeSubtreeData);
+        expect(baseObjectData.searchInfo.entries).toHaveLength(1);
+        expect(singleLevelData.searchInfo.entries).toHaveLength(3);
+        expect(wholeSubtreeData.searchInfo.entries).toHaveLength(4);
+    });
 
+    // NOTE: partialNameResolution only applies to search and read operations.
+    it("Read ServiceControlOptions.partialNameResolution", async () => {
+        const testId = `Read.partialNameResolution-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+            Array(15).fill(FALSE_BIT));
+        serviceControlOptions[ServiceControlOptions_partialNameResolution] = TRUE_BIT;
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, createTestRDN("does not exist") ],
+            },
+            undefined,
+            undefined,
+            [],
+            new ServiceControls(
+                serviceControlOptions,
+            ),
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ReadResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        const cn: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"]));
+        assert(cn);
+        assert("attribute" in cn);
+        expect(cn.attribute.values[0]?.utf8String).toBe(testId);
     });
 
     it.skip("ServiceControlOptions.manageDSAIT", async () => {
 
     });
 
-    it.skip("ServiceControlOptions.noSubtypeMatch", async () => {
-
+    it("Search ServiceControlOptions.noSubtypeMatch", async () => {
+        const testId = `Search.noSubtypeMatch-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const withSubordinatesDN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            subordinateWithSubordinates,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    _encodeObjectIdentifier(id_ar_autonomousArea, DER),
+                ],
+                undefined,
+            ),
+        ])));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, withSubordinatesDN, id)));
+        const search_ = (noSubtypeMatch: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_noSubtypeMatch] = noSubtypeMatch;
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: withSubordinatesDN,
+                },
+                SearchArgumentData_subset_baseObject,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            name["&id"],
+                            utf8(subordinateWithSubordinates),
+                        ),
+                    },
+                },
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        };
+        const withSubtypeMatchingResponse = await search_(FALSE_BIT);
+        const withoutSubtypeMatchingResponse = await search_(TRUE_BIT);
+        assert("result" in withSubtypeMatchingResponse);
+        assert("result" in withoutSubtypeMatchingResponse);
+        assert(withSubtypeMatchingResponse.result);
+        assert(withoutSubtypeMatchingResponse.result);
+        const withSubtypeMatchingResult = _decode_SearchResult(withSubtypeMatchingResponse.result);
+        const withoutSubtypeMatchingResult = _decode_SearchResult(withoutSubtypeMatchingResponse.result);
+        const withSubtypeMatchingData = getOptionallyProtectedValue(withSubtypeMatchingResult);
+        const withoutSubtypeMatchingData = getOptionallyProtectedValue(withoutSubtypeMatchingResult);
+        assert("searchInfo" in withSubtypeMatchingData);
+        assert("searchInfo" in withoutSubtypeMatchingData);
+        expect(withSubtypeMatchingData.searchInfo.entries).toHaveLength(1);
+        expect(withoutSubtypeMatchingData.searchInfo.entries).toHaveLength(0);
     });
 
-    it.skip("ServiceControlOptions.noSubtypeSelection", async () => {
-
+    // TODO: This for read, search, and modifyEntry.
+    it("Search ServiceControlOptions.noSubtypeSelection", async () => {
+        const testId = `Search.noSubtypeSelection-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const withSubordinatesDN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const subordinates = [
+            subordinateWithSubordinates,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    _encodeObjectIdentifier(id_ar_autonomousArea, DER),
+                ],
+                undefined,
+            ),
+        ])));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, withSubordinatesDN, id)));
+        const search_ = (noSubtypeSelection: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_noSubtypeSelection] = noSubtypeSelection;
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: withSubordinatesDN,
+                },
+                SearchArgumentData_subset_baseObject,
+                undefined,
+                undefined,
+                new EntryInformationSelection(
+                    {
+                        select: [ name["&id"] ],
+                    },
+                ),
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        };
+        const withSubtypeResponse = await search_(FALSE_BIT);
+        const withoutSubtypeResponse = await search_(TRUE_BIT);
+        assert("result" in withSubtypeResponse);
+        assert("result" in withoutSubtypeResponse);
+        assert(withSubtypeResponse.result);
+        assert(withoutSubtypeResponse.result);
+        const withSubtypeResult = _decode_SearchResult(withSubtypeResponse.result);
+        const withoutSubtypeResult = _decode_SearchResult(withoutSubtypeResponse.result);
+        const withSubtypeData = getOptionallyProtectedValue(withSubtypeResult);
+        const withoutSubtypeData = getOptionallyProtectedValue(withoutSubtypeResult);
+        assert("searchInfo" in withSubtypeData);
+        assert("searchInfo" in withoutSubtypeData);
+        expect(withSubtypeData.searchInfo.entries).toHaveLength(1);
+        expect(withoutSubtypeData.searchInfo.entries).toHaveLength(1);
+        expect(withSubtypeData.searchInfo.entries[0].information
+            ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(commonName["&id"]))).toBeTruthy();
+        expect(withoutSubtypeData.searchInfo.entries[0].information
+            ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(commonName["&id"]))).toBeFalsy();
     });
 
     it.skip("ServiceControlOptions.countFamily", async () => {

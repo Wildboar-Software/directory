@@ -126,6 +126,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     ServiceControlOptions_manageDSAIT,
+    ServiceControlOptions_noSubtypeSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ServiceErrorData,
@@ -804,9 +805,11 @@ async function executeAlterValues (
         undefined,
     );
     const {
-        userAttributes,
-        operationalAttributes,
-    } = await readValues(ctx, entry, eis);
+        userValues: userAttributes,
+        operationalValues: operationalAttributes,
+    } = await readValues(ctx, entry, {
+        selection: eis,
+    });
     const values = [
         ...userAttributes,
         ...operationalAttributes,
@@ -1425,6 +1428,8 @@ async function modifyEntry (
     // const isChild: boolean = target.dse.objectClass.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+    const noSubtypeSelection: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
     const attributeSizeLimit: number | undefined = (
         Number.isSafeInteger(Number(data.serviceControls?.attributeSizeLimit))
         && (Number(data.serviceControls?.attributeSizeLimit) >= MINIMUM_MAX_ATTR_SIZE)
@@ -2061,10 +2066,13 @@ async function modifyEntry (
             conn.authLevel,
             relevantTuples,
             accessControlScheme,
-            data.selection,
-            relevantSubentries,
-            data.operationContexts,
-            attributeSizeLimit,
+            {
+                selection: data.selection,
+                relevantSubentries,
+                operationContexts: data.operationContexts,
+                attributeSizeLimit,
+                noSubtypeSelection,
+            },
         );
         if (
             data.selection?.familyReturn
@@ -2085,9 +2093,11 @@ async function modifyEntry (
                         conn.authLevel,
                         relevantTuples,
                         accessControlScheme,
-                        data.selection,
-                        relevantSubentries,
-                        data.operationContexts,
+                        {
+                            selection: data.selection,
+                            relevantSubentries,
+                            operationContexts: data.operationContexts,
+                        },
                     )),
             );
             const permittedEinfoIndex: Map<number, EntryInformation_information_Item[]> = new Map(

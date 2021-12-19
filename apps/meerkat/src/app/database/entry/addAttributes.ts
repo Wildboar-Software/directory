@@ -2,7 +2,7 @@ import type {
     Context,
     Vertex,
 } from "@wildboar/meerkat-types";
-import type { PrismaPromise, Prisma } from "@prisma/client";
+import type { PrismaPromise } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import addValues from "./addValues";
 import {

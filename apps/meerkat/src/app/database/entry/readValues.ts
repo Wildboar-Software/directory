@@ -42,6 +42,7 @@ import evaluateContextAssertion from "@wildboar/x500/src/lib/utils/evaluateConte
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
 
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 // TODO: Explore making this a temporalContext
@@ -50,9 +51,17 @@ const DEFAULT_CAD: ContextSelection = {
 };
 
 export
-interface ReadEntryAttributesReturn {
-    userAttributes: Value[];
-    operationalAttributes: Value[];
+interface ReadValuesOptions {
+    readonly selection?: EntryInformationSelection;
+    readonly relevantSubentries?: Vertex[];
+    readonly operationContexts?: ContextSelection;
+    readonly noSubtypeSelection?: boolean;
+}
+
+export
+interface ReadValuesReturn {
+    userValues: Value[];
+    operationalValues: Value[];
     collectiveValues: Value[];
     // incompleteEntry: boolean;
     // derivedEntry: boolean; // If joins or families are used.
@@ -196,11 +205,10 @@ export
 async function readValues (
     ctx: Context,
     entry: Vertex,
-    eis?: EntryInformationSelection,
-    relevantSubentries?: Vertex[],
+    options?: ReadValuesOptions,
     operationContexts?: ContextSelection,
-): Promise<ReadEntryAttributesReturn> {
-    const cadSubentries: Vertex[] = relevantSubentries
+): Promise<ReadValuesReturn> {
+    const cadSubentries: Vertex[] = options?.relevantSubentries
         ?.filter((subentry) => (
             subentry.dse.subentry
             && subentry.dse.objectClass.has(CAD_SUBENTRY)
@@ -210,7 +218,7 @@ async function readValues (
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
      * Per ITU X.501 (2016), Section 8.9.2.2.
      */
-    const contextSelection: ContextSelection = eis?.contextSelection
+    const contextSelection: ContextSelection = options?.selection?.contextSelection
         ?? operationContexts
         ?? (cadSubentries.length
             ? {
@@ -219,22 +227,25 @@ async function readValues (
             }
             : undefined)
         ?? DEFAULT_CAD;
-    const selectedUserAttributes: Set<IndexableOID> | null = (eis?.attributes && ("select" in eis.attributes))
-        ? new Set(eis.attributes.select.map((oid) => oid.toString()))
+    const selectedUserAttributes: Set<IndexableOID> | null = (
+        options?.selection?.attributes
+        && ("select" in options.selection.attributes)
+    )
+        ? new Set(options?.selection.attributes.select.map((oid) => oid.toString()))
         : null;
-    if (selectedUserAttributes && relevantSubentries) {
+    if (selectedUserAttributes && options?.relevantSubentries) {
         for (const attr of Array.from(selectedUserAttributes ?? [])) {
-            addFriends(relevantSubentries, selectedUserAttributes, ObjectIdentifier.fromString(attr));
+            addFriends(options.relevantSubentries, selectedUserAttributes, ObjectIdentifier.fromString(attr));
         }
     }
-    const selectedOperationalAttributes: Set<IndexableOID> | null | undefined = eis?.extraAttributes
-        ? (("select" in eis.extraAttributes)
-            ? new Set(eis.extraAttributes.select.map((oid) => oid.toString()))
+    const selectedOperationalAttributes: Set<IndexableOID> | null | undefined = options?.selection?.extraAttributes
+        ? (("select" in options.selection.extraAttributes)
+            ? new Set(options.selection.extraAttributes.select.map((oid) => oid.toString()))
             : null)
         : undefined;
-    if (selectedOperationalAttributes && relevantSubentries) {
+    if (selectedOperationalAttributes && options?.relevantSubentries) {
         for (const attr of Array.from(selectedOperationalAttributes ?? [])) {
-            addFriends(relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
+            addFriends(options.relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
         }
     }
     let operationalAttributes: Value[] = [];
@@ -244,7 +255,13 @@ async function readValues (
                 entry_id: entry.dse.id,
                 type: selectedUserAttributes
                     ? {
-                        in: Array.from(selectedUserAttributes),
+                        in: options?.noSubtypeSelection
+                            ? Array.from(selectedUserAttributes)
+                            : Array.from(selectedUserAttributes)
+                                .flatMap((type_) => {
+                                    const subtypes = getAttributeSubtypes(ctx, ObjectIdentifier.fromString(type_));
+                                    return subtypes.map((st) => st.toString());
+                                }),
                     }
                     : undefined,
             },
@@ -253,7 +270,7 @@ async function readValues (
                 ber: true,
                 ContextValue: (
                     contextSelection
-                    || eis?.returnContexts
+                    || options?.selection?.returnContexts
                     // || ("selectedContexts" in contextSelection) // Why was this condition ever here?
                 )
                     ? {
@@ -264,7 +281,7 @@ async function readValues (
                     }
                     : undefined,
             },
-            distinct: (eis?.infoTypes === typesOnly)
+            distinct: (options?.selection?.infoTypes === typesOnly)
                 ? ["type"]
                 : undefined,
         }))
@@ -294,14 +311,14 @@ async function readValues (
 
     for (const reader of userAttributeReaderToExecute) {
         try {
-            userAttributes.push(...await reader(ctx, entry, relevantSubentries));
+            userAttributes.push(...await reader(ctx, entry, options?.relevantSubentries));
         } catch (e) {
             continue;
         }
     }
     for (const reader of operationalAttributeReadersToExecute) {
         try {
-            operationalAttributes.push(...await reader(ctx, entry, relevantSubentries));
+            operationalAttributes.push(...await reader(ctx, entry, options?.relevantSubentries));
         } catch (e) {
             continue;
         }
@@ -312,8 +329,8 @@ async function readValues (
      * are applied to a subentry, the subentry could have duplicated collective
      * values listed as both its collective values and user values.
      */
-    let collectiveValues: Value[] = ((relevantSubentries && entry.dse.entry && !entry.dse.subentry)
-        ? readCollectiveValues(ctx, entry, relevantSubentries)
+    let collectiveValues: Value[] = ((options?.relevantSubentries && entry.dse.entry && !entry.dse.subentry)
+        ? readCollectiveValues(ctx, entry, options?.relevantSubentries)
         : [])
             .filter((attr) => {
                 if (!selectedUserAttributes) {
@@ -367,7 +384,7 @@ async function readValues (
     operationalAttributes = Array.from(filterByTypeAndContextAssertion(ctx, operationalAttributes, selectedContexts));
     collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
 
-    if (!eis?.returnContexts) {
+    if (!options?.selection?.returnContexts) {
         userAttributes = userAttributes.map((value) => ({
             ...value,
             contexts: undefined,
@@ -383,8 +400,8 @@ async function readValues (
     }
 
     return {
-        userAttributes,
-        operationalAttributes,
+        userValues: userAttributes,
+        operationalValues: operationalAttributes,
         collectiveValues,
     };
 }

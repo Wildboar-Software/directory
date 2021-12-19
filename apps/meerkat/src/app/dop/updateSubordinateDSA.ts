@@ -226,7 +226,9 @@ async function updateSubordinateDSA (
             const {
                 userAttributes,
                 operationalAttributes,
-            } = await readAttributes(ctx, current, admPointEIS);
+            } = await readAttributes(ctx, current, {
+                selection: admPointEIS,
+            });
             admPointAttributes.push(
                 ...userAttributes,
                 ...operationalAttributes,
@@ -243,7 +245,9 @@ async function updateSubordinateDSA (
                             const {
                                 userAttributes,
                                 operationalAttributes,
-                            } = await readAttributes(ctx, sub, subentryEIS);
+                            } = await readAttributes(ctx, sub, {
+                                selection: subentryEIS,
+                            });
                             return new SubentryInfo(
                                 sub.dse.rdn,
                                 [

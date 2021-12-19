@@ -1,16 +1,10 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
-    EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import type {
     AuthenticationLevel,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
-import type {
-    ContextSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
 import readEntryInformation from "./readEntryInformation";
 import { OBJECT_IDENTIFIER } from "asn1-ts";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
@@ -24,6 +18,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 import accessControlSchemesThatUseACIItems from "../../authz/accessControlSchemesThatUseACIItems";
+import type { ReadAttributesOptions } from "./readAttributes";
 
 export
 interface ReadPermittedEntryInformationReturn {
@@ -38,19 +33,13 @@ async function readPermittedEntryInformation (
     authLevel: AuthenticationLevel,
     relevantTuples: ACDFTupleExtended[],
     accessControlScheme?: OBJECT_IDENTIFIER,
-    eis?: EntryInformationSelection,
-    relevantSubentries?: Vertex[],
-    operationContexts?: ContextSelection,
-    attributeSizeLimit?: number,
+    options?: ReadAttributesOptions,
 ): Promise<ReadPermittedEntryInformationReturn> {
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const einfo: EntryInformation_information_Item[] = await readEntryInformation(
         ctx,
         target,
-        eis,
-        relevantSubentries,
-        operationContexts,
-        attributeSizeLimit,
+        options,
     );
     if (
         !accessControlScheme

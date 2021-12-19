@@ -271,18 +271,17 @@ async function findDSE (
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
 
-    const node_candidateRefs_empty_2 = async (): Promise<Vertex | undefined> => {
+    const node_candidateRefs_empty_2 = async (): Promise<void> => {
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
             // DEVIATION: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             state.NRcontinuationList.push(...candidateRefs);
-            return undefined; // entry unsuitable
         } else {
-            return candidateRefsEmpty_yes_branch();
+            await candidateRefsEmpty_yes_branch();
         }
     };
 
-    const node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false = async (): Promise<Vertex | undefined> => {
+    const node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false = async (): Promise<void> => {
         if (dse_i.dse.shadow?.subordinateCompleteness === false) {
             if (!lastCP) {
                 ctx.log.warn(ctx.i18n.t("log:shadow_not_under_cp", {
@@ -304,7 +303,7 @@ async function findDSE (
                     lastEntryFound,
                 ),
             });
-            return undefined; // Entry unsuitable.
+            return; // Entry unsuitable.
         }
         if (dse_lastEntryFound?.dse.nssr) {
             const cr = new ContinuationReference(
@@ -343,12 +342,12 @@ async function findDSE (
             candidateRefs.push(cr);
             // DEVIATION: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             state.NRcontinuationList.push(...candidateRefs);
-            return undefined;
+            return; // entry unsuitable.
         }
-        return node_candidateRefs_empty_2();
+        await node_candidateRefs_empty_2();
     };
 
-    const candidateRefsEmpty_yes_branch = async (): Promise<Vertex | undefined> => {
+    const candidateRefsEmpty_yes_branch = async (): Promise<void> => {
         if (partialNameResolution === FALSE) {
             throw new errors.NameError(
                 ctx.i18n.t("err:entry_not_found"),
@@ -370,6 +369,8 @@ async function findDSE (
                 ),
             );
         } else {
+            state.entrySuitable = true;
+            state.foundDSE = dse_i;
             state.partialName = true;
             state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
                 operationProgress: new OperationProgress(
@@ -377,22 +378,20 @@ async function findDSE (
                     undefined,
                 ),
             });
-            return dse_i;
         }
     };
 
-    const candidateRefsEmpty1_Branch = async (): Promise<Vertex | undefined> => {
+    const candidateRefsEmpty1_Branch = async (): Promise<void> => {
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
             // DEVIATION: The spec seems to suggest only adding one CR to the NRCL. Can I add them all?
             state.NRcontinuationList.push(...candidateRefs);
-            return undefined; // entry unsuitable
         } else {
-            return candidateRefsEmpty_yes_branch();
+            await candidateRefsEmpty_yes_branch();
         }
     };
 
-    const targetNotFoundSubprocedure_notStarted_branch = async (): Promise<Vertex | undefined> => {
+    const targetNotFoundSubprocedure_notStarted_branch = async (): Promise<void> => {
         if (lastEntryFound === 0) {
             if (ctx.dit.root.dse.supr) { // If this is NOT a first-level DSA.
                 // REVIEW: superiorKnowledge is a multi-valued attribute. Should you create multiple CRs?
@@ -425,7 +424,8 @@ async function findDSE (
                     undefined,
                 );
                 candidateRefs.push(cr);
-                return candidateRefsEmpty1_Branch();
+                await candidateRefsEmpty1_Branch();
+                return;
             } else { // Root DSE is not of type subr (meaning that this IS a first-level DSA.)
                 if (m === 0) { // ...and the operation was directed at the root DSE.
                     // Step 5.
@@ -439,7 +439,9 @@ async function findDSE (
                                 undefined,
                             ),
                         });
-                        return dse_i; // Entry suitable.
+                        state.entrySuitable = true;
+                        state.foundDSE = dse_i;
+                        return;
                     } else {
                         throw new errors.NameError(
                             // REVIEW: This seems incorrect to me... What about read or modifyEntry?
@@ -499,7 +501,8 @@ async function findDSE (
                         );
                         candidateRefs.push(cr);
                     });
-                    return candidateRefsEmpty1_Branch();
+                    await candidateRefsEmpty1_Branch();
+                    return;
                 }
             }
         } else { // Last entry found !== 0
@@ -509,20 +512,23 @@ async function findDSE (
                     state.chainingArguments.operationProgress?.nextRDNToBeResolved,
                 ),
             });
-            return node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false();
+            await node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false();
+            return;
         }
     };
 
-    const targetNotFoundSubprocedure = async () => {
+    const targetNotFoundSubprocedure = async (): Promise<void> => {
         const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
         switch (nameResolutionPhase) {
             case (OperationProgress_nameResolutionPhase_notStarted): {
-                return targetNotFoundSubprocedure_notStarted_branch();
+                await targetNotFoundSubprocedure_notStarted_branch();
+                return;
             }
             case (OperationProgress_nameResolutionPhase_proceeding): {
                 const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
                 if (lastEntryFound >= (nextRDNToBeResolved ?? 0)) {
-                    return node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false();
+                    await node_is_dse_i_shadow_and_with_subordinate_completeness_flag_false();
+                    return;
                 }
                 if (
                     (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate)

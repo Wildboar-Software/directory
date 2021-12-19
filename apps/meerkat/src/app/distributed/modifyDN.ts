@@ -1040,20 +1040,22 @@ async function modifyDN (
                     : undefined;
                 const matcher = matchingRule?.matcher;
                 const {
-                    userAttributes,
-                    operationalAttributes,
-                } = await readValues(ctx, target, new EntryInformationSelection(
-                    {
-                        select: [ atav.type_ ],
-                    },
-                    undefined,
-                    {
-                        select: [ atav.type_ ],
-                    },
-                    undefined,
-                    false,
-                    undefined,
-                ));
+                    userValues: userAttributes,
+                    operationalValues: operationalAttributes,
+                } = await readValues(ctx, target, {
+                    selection: new EntryInformationSelection(
+                        {
+                            select: [ atav.type_ ],
+                        },
+                        undefined,
+                        {
+                            select: [ atav.type_ ],
+                        },
+                        undefined,
+                        false,
+                        undefined,
+                    ),
+                });
                 const attributes = [
                     ...userAttributes,
                     ...operationalAttributes,
@@ -1098,20 +1100,22 @@ async function modifyDN (
             }
             const matcher = EQUALITY_MATCHER(atav.type_);
             const {
-                userAttributes,
-                operationalAttributes,
-            } = await readValues(ctx, target, new EntryInformationSelection(
-                {
-                    select: [ atav.type_ ],
-                },
-                undefined,
-                {
-                    select: [ atav.type_ ],
-                },
-                undefined,
-                undefined,
-                undefined,
-            ));
+                userValues: userAttributes,
+                operationalValues: operationalAttributes,
+            } = await readValues(ctx, target, {
+                selection: new EntryInformationSelection(
+                    {
+                        select: [ atav.type_ ],
+                    },
+                    undefined,
+                    {
+                        select: [ atav.type_ ],
+                    },
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            });
             const values = [
                 ...userAttributes,
                 ...operationalAttributes,

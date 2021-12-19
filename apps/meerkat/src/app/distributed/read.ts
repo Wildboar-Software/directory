@@ -96,6 +96,9 @@ import {
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
+import {
+    ServiceControlOptions_noSubtypeSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 
 export
 async function read (
@@ -204,16 +207,23 @@ async function read (
     )
         ? Number(data.serviceControls!.attributeSizeLimit)
         : undefined;
+
+    const noSubtypeSelection: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
+
     const permittedEntryInfo = await readPermittedEntryInformation(
         ctx,
         target,
         conn.authLevel,
         relevantTuples,
         accessControlScheme,
-        data.selection,
-        relevantSubentries,
-        data.operationContexts,
-        attributeSizeLimit,
+        {
+            selection: data.selection,
+            relevantSubentries,
+            operationContexts: data.operationContexts,
+            attributeSizeLimit,
+            noSubtypeSelection,
+        },
     );
 
     if (
@@ -235,10 +245,13 @@ async function read (
                     conn.authLevel,
                     relevantTuples,
                     accessControlScheme,
-                    data.selection,
-                    relevantSubentries,
-                    data.operationContexts,
-                    attributeSizeLimit,
+                    {
+                        selection: data.selection,
+                        relevantSubentries,
+                        operationContexts: data.operationContexts,
+                        attributeSizeLimit,
+                        noSubtypeSelection,
+                    },
                 )),
         );
         const permittedEinfoIndex: Map<number, EntryInformation_information_Item[]> = new Map(

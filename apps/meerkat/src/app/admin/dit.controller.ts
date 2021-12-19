@@ -289,10 +289,12 @@ export class DitController {
         const rdn: RelativeDistinguishedName = await getRDNFromEntryId(this.ctx, entry.id);
         const vertex = await vertexFromDatabaseEntry(this.ctx, undefined, entry, true);
         const {
-            userAttributes,
-            operationalAttributes,
+            userValues: userAttributes,
+            operationalValues: operationalAttributes,
             collectiveValues,
-        } = await readValues(this.ctx, vertex, selectAllInfo);
+        } = await readValues(this.ctx, vertex, {
+            selection: selectAllInfo,
+        });
         const attributes: [ string, string, string ][] = [
             ...userAttributes,
             ...operationalAttributes,

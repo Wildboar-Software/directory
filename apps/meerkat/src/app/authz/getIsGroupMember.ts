@@ -22,6 +22,33 @@ import {
 const GROUP_OF_NAMES: string = groupOfNames["&id"].toString();
 const GROUP_OF_UNIQUE_NAMES: string = groupOfUniqueNames["&id"].toString();
 
+const selectOnlyUniqueIdentifier = new EntryInformationSelection(
+    {
+        select: [
+            uniqueIdentifier["&id"],
+        ],
+    },
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+);
+
+const selectMemberships = new EntryInformationSelection(
+    {
+        select: [
+            member["&id"],
+            uniqueMember["&id"],
+        ],
+    },
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+);
+
 export
 function getIsGroupMember (
     ctx: Context,
@@ -46,18 +73,9 @@ function getIsGroupMember (
             if (!userEntry) {
                 return undefined;
             }
-            const { userAttributes: uniqueIdentifiers } = await readValues(ctx, userEntry, new EntryInformationSelection(
-                {
-                    select: [
-                        uniqueIdentifier["&id"],
-                    ],
-                },
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-            ));
+            const { userValues: uniqueIdentifiers } = await readValues(ctx, userEntry, {
+                selection: selectOnlyUniqueIdentifier,
+            });
             const someUIDMatched: boolean = uniqueIdentifiers
                 .some((uid) => !Buffer.compare(
                     Buffer.from(uid.value.bitString),
@@ -73,19 +91,9 @@ function getIsGroupMember (
                 return undefined;
             }
         }
-        const { userAttributes: groupAttributes } = await readValues(ctx, groupEntry, new EntryInformationSelection(
-            {
-                select: [
-                    member["&id"],
-                    uniqueMember["&id"],
-                ],
-            },
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        ));
+        const { userValues: groupAttributes } = await readValues(ctx, groupEntry, {
+            selection: selectMemberships,
+        });
         for (const attr of groupAttributes) {
             if (attr.type.isEqualTo(member["&id"])) {
                 const decodedValue = _decode_DistinguishedName(attr.value);

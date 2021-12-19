@@ -75,6 +75,8 @@ import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import {
+    ServiceControlOptions_noSubtypeMatch,
+    ServiceControlOptions_noSubtypeSelection,
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
@@ -222,13 +224,13 @@ import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import getACIItems from "../authz/getACIItems";
-import isAttributeSubtype from "../x500/isAttributeSubtype";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import type {
     SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 import getAttributeSizeFilter from "../x500/getAttributeSizeFilter";
+import getAttributeSubtypes from "../x500/getAttributeSubtypes";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -911,6 +913,10 @@ async function search_i (
         : (data.filter ?? SearchArgumentData._default_value_for_filter);
     const serviceControlOptions = data.serviceControls?.options;
     // Service controls
+    const noSubtypeMatch: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeMatch] === TRUE_BIT);
+    const noSubtypeSelection: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
     const dontUseCopy: boolean = (
         serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
@@ -954,7 +960,13 @@ async function search_i (
             userAttributes,
             operationalAttributes,
             collectiveAttributes,
-        } = await readAttributes(ctx, target, eis, relevantSubentries, data.operationContexts, attributeSizeLimit);
+        } = await readAttributes(ctx, target, {
+            selection: eis,
+            relevantSubentries,
+            operationContexts: data.operationContexts,
+            attributeSizeLimit,
+            noSubtypeSelection: noSubtypeMatch, // This selection of info is used for filtering, not the actual return.
+        });
         const attributes = [
             ...userAttributes,
             ...operationalAttributes,
@@ -993,7 +1005,8 @@ async function search_i (
             return !!ctx.attributeTypes.get(at.toString())?.compatibleMatchingRules.has(mr.toString());
         },
         isAttributeSubtype: (attributeType: OBJECT_IDENTIFIER, parentType: OBJECT_IDENTIFIER): boolean => {
-            return !!isAttributeSubtype(ctx, attributeType, parentType);
+            const subtypes = getAttributeSubtypes(ctx, parentType);
+            return subtypes.some((st) => st.isEqualTo(attributeType));
         },
         permittedToMatch: (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
             if (
@@ -1328,9 +1341,13 @@ async function search_i (
                         familySubset.map((member) => readEntryInformation(
                             ctx,
                             member,
-                            data.selection,
-                            relevantSubentries,
-                            data.operationContexts,
+                            {
+                                selection: data.selection,
+                                relevantSubentries,
+                                operationContexts: data.operationContexts,
+                                attributeSizeLimit,
+                                noSubtypeSelection,
+                            },
                         )),
                     );
                     if (
@@ -1507,9 +1524,13 @@ async function search_i (
                         familySubset.map((member) => readEntryInformation(
                             ctx,
                             member,
-                            data.selection,
-                            relevantSubentries,
-                            data.operationContexts,
+                            {
+                                selection: data.selection,
+                                relevantSubentries,
+                                operationContexts: data.operationContexts,
+                                attributeSizeLimit,
+                                noSubtypeSelection,
+                            },
                         )),
                     );
                     if (

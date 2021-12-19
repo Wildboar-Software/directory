@@ -2,14 +2,8 @@ import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import type {
-    EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import readValues from "./readValues";
+import readValues, { ReadValuesOptions } from "./readValues";
 import attributesFromValues from "../../x500/attributesFromValues";
-import type {
-    ContextSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
 import getAttributeSizeFilter from "../../x500/getAttributeSizeFilter";
 
 export
@@ -20,24 +14,26 @@ interface ReadEntryAttributesReturn {
 };
 
 export
+interface ReadAttributesOptions extends ReadValuesOptions {
+    readonly attributeSizeLimit?: number;
+}
+
+export
 async function readAttributes (
     ctx: Context,
     vertex: Vertex,
-    eis?: EntryInformationSelection,
-    relevantSubentries?: Vertex[],
-    operationContexts?: ContextSelection,
-    attributeSizeLimit?: number,
+    options?: ReadAttributesOptions,
 ): Promise<ReadEntryAttributesReturn> {
-    const values = await readValues(ctx, vertex, eis, relevantSubentries, operationContexts);
-    const sizeFilter = getAttributeSizeFilter(attributeSizeLimit ?? Infinity);
+    const values = await readValues(ctx, vertex, options);
+    const sizeFilter = getAttributeSizeFilter(options?.attributeSizeLimit ?? Infinity);
     // Unfortunately, Prisma does not currently give us a way to limit values by length.
-    const userAttributes = attributeSizeLimit
-        ? attributesFromValues(values.userAttributes).filter(sizeFilter)
-        : attributesFromValues(values.userAttributes);
-    const operationalAttributes = attributeSizeLimit
-        ? attributesFromValues(values.operationalAttributes).filter(sizeFilter)
-        : attributesFromValues(values.operationalAttributes);
-    const collectiveAttributes = attributeSizeLimit
+    const userAttributes = options?.attributeSizeLimit
+        ? attributesFromValues(values.userValues).filter(sizeFilter)
+        : attributesFromValues(values.userValues);
+    const operationalAttributes = options?.attributeSizeLimit
+        ? attributesFromValues(values.operationalValues).filter(sizeFilter)
+        : attributesFromValues(values.operationalValues);
+    const collectiveAttributes = options?.attributeSizeLimit
         ? attributesFromValues(values.collectiveValues).filter(sizeFilter)
         : attributesFromValues(values.collectiveValues);
     return {
