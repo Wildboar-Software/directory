@@ -376,7 +376,7 @@ async function dseFromDatabaseEntry (
         );
 
         ret.subentry = {
-            commonName: "",
+            commonName: "", // FIXME:
             subtreeSpecification,
             prescriptiveACI,
             collectiveAttributes,

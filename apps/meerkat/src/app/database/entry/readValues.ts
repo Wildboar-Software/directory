@@ -117,6 +117,7 @@ function addFriends (
     if (friendship) {
         for (const friend of friendship.friends) {
             if (!selectedUserAttributes.has(friend.toString())) {
+                selectedUserAttributes.add(friend.toString());
                 addFriends(relevantSubentries, selectedUserAttributes, friend);
             }
         }
@@ -207,7 +208,6 @@ async function readValues (
     ctx: Context,
     entry: Vertex,
     options?: ReadValuesOptions,
-    operationContexts?: ContextSelection,
 ): Promise<ReadValuesReturn> {
     const cadSubentries: Vertex[] = options?.relevantSubentries
         ?.filter((subentry) => (
@@ -220,7 +220,7 @@ async function readValues (
      * Per ITU X.501 (2016), Section 8.9.2.2.
      */
     const contextSelection: ContextSelection = options?.selection?.contextSelection
-        ?? operationContexts
+        ?? options?.operationContexts
         ?? (cadSubentries.length
             ? {
                 selectedContexts: cadSubentries
@@ -235,7 +235,7 @@ async function readValues (
         ? new Set(options?.selection.attributes.select.map((oid) => oid.toString()))
         : null;
     if (selectedUserAttributes && options?.relevantSubentries && !options?.dontSelectFriends) {
-        for (const attr of Array.from(selectedUserAttributes ?? [])) {
+        for (const attr of Array.from(selectedUserAttributes.values() ?? [])) {
             addFriends(options.relevantSubentries, selectedUserAttributes, ObjectIdentifier.fromString(attr));
         }
     }
@@ -245,7 +245,7 @@ async function readValues (
             : null)
         : undefined;
     if (selectedOperationalAttributes && options?.relevantSubentries && !options?.dontSelectFriends) {
-        for (const attr of Array.from(selectedOperationalAttributes ?? [])) {
+        for (const attr of Array.from(selectedOperationalAttributes.values() ?? [])) {
             addFriends(options.relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
         }
     }

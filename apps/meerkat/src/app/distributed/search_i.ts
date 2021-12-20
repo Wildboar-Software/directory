@@ -1940,8 +1940,8 @@ async function search_i (
                 conn,
                 {
                     ...state,
-                    admPoints: subordinate.dse.admPoint
-                        ? [ ...state.admPoints, subordinate ]
+                    admPoints: target.dse.admPoint
+                        ? [ ...state.admPoints, target ] // FIXME: Reset if autonomous
                         : [ ...state.admPoints ],
                     chainingArguments: newChainingArguments,
                     foundDSE: subordinate,

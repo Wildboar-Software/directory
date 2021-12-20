@@ -315,7 +315,11 @@ export class DitController {
                         return defaultEncoder(attr.value);
                     }
                     const encoder = ldapSyntax.encoder;
-                    return Buffer.from(encoder(attr.value)).toString("utf-8");
+                    try {
+                        return Buffer.from(encoder(attr.value)).toString("utf-8");
+                    } catch {
+                        return "COULD NOT DECODE";
+                    }
                 })(),
                 Array.from(attr.contexts?.values() ?? [])
                     .map((context) => context.contextType.toString())

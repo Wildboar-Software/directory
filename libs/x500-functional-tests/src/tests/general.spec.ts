@@ -78,6 +78,9 @@ import {
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import {
+    id_ar_subschemaAdminSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
@@ -318,7 +321,12 @@ import {
 import { aliasedEntryName } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
 import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
 import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
-import { collectiveAttributeSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
+import {
+    collectiveAttributeSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
+import {
+    subschema,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 import { serviceError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
@@ -335,8 +343,21 @@ import {
 import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
-import { subtree } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
-import { SearchRequest_scope_baseObject, SearchRequest_scope_singleLevel, SearchRequest_scope_wholeSubtree } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
+import {
+    nameForms,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+import {
+    NameFormDescription,
+    _encode_NameFormDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+import {
+    NameFormInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
+import {
+    FriendsDescription,
+    _encode_FriendsDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
 
 jest.setTimeout(10000);
 
@@ -4643,7 +4664,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             ],
         );
 
-        const search_ = (scope: number) => {
+        const search_ = (scope: INTEGER) => {
             const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
                 Array(15).fill(FALSE_BIT));
             serviceControlOptions[ServiceControlOptions_subentries] = TRUE_BIT;
@@ -4679,9 +4700,9 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 _encode_SearchArgument(arg, DER),
             );
         };
-        const baseObjectResponse = await search_(SearchRequest_scope_baseObject);
-        const singleLevelResponse = await search_(SearchRequest_scope_singleLevel);
-        const wholeSubtreeResponse = await search_(SearchRequest_scope_wholeSubtree);
+        const baseObjectResponse = await search_(SearchArgumentData_subset_baseObject);
+        const singleLevelResponse = await search_(SearchArgumentData_subset_oneLevel);
+        const wholeSubtreeResponse = await search_(SearchArgumentData_subset_wholeSubtree);
         assert("result" in baseObjectResponse);
         assert("result" in singleLevelResponse);
         assert("result" in wholeSubtreeResponse);
@@ -4859,7 +4880,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             ),
         ])));
         await Promise.all(subordinates2.map((id) => createTestNode(connection!, withSubordinatesDN, id)));
-        const search_ = (scope: number) => {
+        const search_ = (scope: INTEGER) => {
             const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
                 Array(15).fill(FALSE_BIT));
             serviceControlOptions[ServiceControlOptions_partialNameResolution] = TRUE_BIT;
@@ -4895,9 +4916,9 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 _encode_SearchArgument(arg, DER),
             );
         };
-        const baseObjectResponse = await search_(SearchRequest_scope_baseObject);
-        const singleLevelResponse = await search_(SearchRequest_scope_singleLevel);
-        const wholeSubtreeResponse = await search_(SearchRequest_scope_wholeSubtree);
+        const baseObjectResponse = await search_(SearchArgumentData_subset_baseObject);
+        const singleLevelResponse = await search_(SearchArgumentData_subset_oneLevel);
+        const wholeSubtreeResponse = await search_(SearchArgumentData_subset_wholeSubtree);
         assert("result" in baseObjectResponse);
         assert("result" in singleLevelResponse);
         assert("result" in wholeSubtreeResponse);
@@ -5298,12 +5319,232 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(countFamilyData.searchInfo.entries).toHaveLength(1);
     });
 
-    it.skip("ServiceControlOptions.dontSelectFriends", async () => {
-
+    // TODO: Do this for read and modifyEntry too.
+    it("ServiceControlOptions.dontSelectFriends", async () => {
+        const testId = `ServiceControlOptions.dontSelectFriends-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_subschemaAdminSpecificArea)],
+                    undefined,
+                ),
+            ]);
+        }
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                description["&id"],
+                [utf8(`Description for ${id}`)],
+                undefined,
+            ),
+        ])));
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(subschema["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    friends["&id"],
+                    [
+                        _encode_FriendsDescription(new FriendsDescription(
+                            commonName["&id"],
+                            [
+                                {
+                                    uTF8String: "DELETEME",
+                                },
+                            ],
+                            {
+                                uTF8String: "Test name-form. Please delete.",
+                            },
+                            false,
+                            [
+                                description["&id"],
+                            ],
+                            [],
+                        ), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        const search_ = (dontSelectFriends: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_dontSelectFriends] = dontSelectFriends;
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                    // rdnSequence: [ ...dn, createTestRDN("E338ECE9-0100-4499-BEEE-2F3F766B669C") ],
+                },
+                SearchArgumentData_subset_oneLevel,
+                undefined,
+                undefined,
+                new EntryInformationSelection(
+                    { // We select only commonName, but if the friendship
+                        // created above works, the results should also include
+                        // the description.
+                        select: [ commonName["&id"] ],
+                    },
+                ),
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        };
+        const defaultResponse = await search_(FALSE_BIT);
+        const noFriendsResponse = await search_(TRUE_BIT);
+        assert("result" in defaultResponse);
+        assert("result" in noFriendsResponse);
+        assert(defaultResponse.result);
+        assert(noFriendsResponse.result);
+        const defaultResult = _decode_SearchResult(defaultResponse.result);
+        const noFriendsResult = _decode_SearchResult(noFriendsResponse.result);
+        const defaultData = getOptionallyProtectedValue(defaultResult);
+        const noFriendsData = getOptionallyProtectedValue(noFriendsResult);
+        assert("searchInfo" in defaultData);
+        assert("searchInfo" in noFriendsData);
+        expect(defaultData.searchInfo.entries).toHaveLength(subordinates.length);
+        expect(noFriendsData.searchInfo.entries).toHaveLength(subordinates.length);
+        for (const entry of defaultData.searchInfo.entries) {
+            const descriptionPresent: boolean = entry.information
+                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
+            expect(descriptionPresent).toBeTruthy();
+        }
+        for (const entry of noFriendsData.searchInfo.entries) {
+            const descriptionPresent: boolean = entry.information
+                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
+            expect(descriptionPresent).toBeFalsy();
+        }
     });
 
     it.skip("ServiceControlOptions.dontMatchFriends", async () => {
-
+        const testId = `ServiceControlOptions.dontMatchFriends-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+        ];
+        const sizeLimit: number = subordinates.length - 2;
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const search_ = (dontMatchFriends: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_dontMatchFriends] = dontMatchFriends;
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                    undefined,
+                    undefined,
+                    sizeLimit,
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        };
+        const defaultResponse = await search_(FALSE_BIT);
+        const noFriendsResponse = await search_(TRUE_BIT);
+        assert("result" in defaultResponse);
+        assert("result" in noFriendsResponse);
+        assert(defaultResponse.result);
+        assert(noFriendsResponse.result);
+        const defaultResult = _decode_SearchResult(defaultResponse.result);
+        const noFriendsResult = _decode_SearchResult(noFriendsResponse.result);
+        const defaultData = getOptionallyProtectedValue(defaultResult);
+        const noFriendsData = getOptionallyProtectedValue(noFriendsResult);
+        assert("searchInfo" in defaultData);
+        assert("searchInfo" in noFriendsData);
+        expect(defaultData.searchInfo.entries).toHaveLength(subordinates.length);
+        expect(noFriendsData.searchInfo.entries).toHaveLength(subordinates.length);
+        for (const entry of defaultData.searchInfo.entries) {
+            const descriptionPresent: boolean = entry.information
+                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
+            expect(descriptionPresent).toBeTruthy();
+        }
+        for (const entry of noFriendsData.searchInfo.entries) {
+            const descriptionPresent: boolean = entry.information
+                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
+            expect(descriptionPresent).toBeFalsy();
+        }
     });
 
     it.skip("ServiceControlOptions.allowWriteableCopy", async () => {

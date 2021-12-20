@@ -19,7 +19,7 @@ async function getRelevantSubentries (
     admPoint: Vertex,
 ): Promise<Vertex[]> {
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
-    const children = await readChildren(ctx, admPoint);
+    const children = await readChildren(ctx, admPoint); // FIXME: Make this select only subentries.
     return children
         .filter((child) => (
             child.dse.subentry
@@ -28,9 +28,9 @@ async function getRelevantSubentries (
                 entryDN,
                 Array.isArray(entry)
                     ? entry
-                    : Array.from(entry.dse.objectClass).map(ObjectIdentifier.fromString),
+                    : Array.from(entry.dse.objectClass.values()).map(ObjectIdentifier.fromString),
                 subtree,
-                getDistinguishedName(child),
+                getDistinguishedName(admPoint),
                 EQUALITY_MATCHER,
             ))
         ));

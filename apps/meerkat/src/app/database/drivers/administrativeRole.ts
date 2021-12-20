@@ -40,12 +40,21 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    const OID: string = value.value.objectIdentifier.toString();
     pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.create({
         data: {
             entry_id: vertex.dse.id,
-            administrativeRole: value.value.objectIdentifier.toString(),
+            administrativeRole: OID,
         },
     }));
+    pendingUpdates.entryUpdate.admPoint = true;
+    if (vertex.dse.admPoint) {
+        vertex.dse.admPoint.administrativeRole.add(OID);
+    } else {
+        vertex.dse.admPoint = {
+            administrativeRole: new Set([ OID ]),
+        };
+    }
 };
 
 export
@@ -61,12 +70,16 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     ) {
         pendingUpdates.entryUpdate.admPoint = false;
     }
+    const OID: string = value.value.objectIdentifier.toString();
     pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            administrativeRole: value.value.objectIdentifier.toString(),
+            administrativeRole: OID,
         },
     }));
+    if (vertex.dse.admPoint) {
+        vertex.dse.admPoint.administrativeRole.delete(OID);
+    }
 };
 
 export
@@ -81,6 +94,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
         },
     }));
     pendingUpdates.entryUpdate.admPoint = false;
+    delete vertex.dse.admPoint;
 };
 
 export
@@ -88,11 +102,7 @@ const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<number> => {
-    return ctx.db.entryAdministrativeRole.count({
-        where: {
-            entry_id: vertex.dse.id,
-        },
-    });
+    return vertex.dse.admPoint?.administrativeRole.size ?? 0;
 };
 
 export
@@ -100,11 +110,7 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return !!(await ctx.db.entryAdministrativeRole.findFirst({
-        where: {
-            entry_id: vertex.dse.id,
-        },
-    }));
+    return (vertex.dse.admPoint?.administrativeRole.size ?? 0) > 0;
 };
 
 export
@@ -113,12 +119,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    return !!(await ctx.db.entryAdministrativeRole.findFirst({
-        where: {
-            entry_id: vertex.dse.id,
-            administrativeRole: value.value.objectIdentifier.toString(),
-        },
-    }));
+    return vertex.dse.admPoint?.administrativeRole.has(value.value.objectIdentifier.toString()) ?? false;
 };
 
 export
