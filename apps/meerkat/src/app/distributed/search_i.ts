@@ -77,6 +77,8 @@ import {
 import {
     ServiceControlOptions_noSubtypeMatch,
     ServiceControlOptions_noSubtypeSelection,
+    ServiceControlOptions_dontSelectFriends,
+    ServiceControlOptions_dontMatchFriends,
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
@@ -917,6 +919,10 @@ async function search_i (
         data.serviceControls?.options?.[ServiceControlOptions_noSubtypeMatch] === TRUE_BIT);
     const noSubtypeSelection: boolean = (
         data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
+    const dontSelectFriends: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
+    const dontMatchFriends: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_dontMatchFriends] === TRUE_BIT);
     const dontUseCopy: boolean = (
         serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
@@ -966,6 +972,7 @@ async function search_i (
             operationContexts: data.operationContexts,
             attributeSizeLimit,
             noSubtypeSelection: noSubtypeMatch, // This selection of info is used for filtering, not the actual return.
+            dontSelectFriends: dontMatchFriends, // This selection of info is used for filtering, not the actual return.
         });
         const attributes = [
             ...userAttributes,
@@ -1349,6 +1356,7 @@ async function search_i (
                                 operationContexts: data.operationContexts,
                                 attributeSizeLimit,
                                 noSubtypeSelection,
+                                dontSelectFriends,
                             },
                         )),
                     );
@@ -1532,6 +1540,7 @@ async function search_i (
                                 operationContexts: data.operationContexts,
                                 attributeSizeLimit,
                                 noSubtypeSelection,
+                                dontSelectFriends,
                             },
                         )),
                     );

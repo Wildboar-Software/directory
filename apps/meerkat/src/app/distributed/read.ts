@@ -98,6 +98,7 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 import {
     ServiceControlOptions_noSubtypeSelection,
+    ServiceControlOptions_dontSelectFriends,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 
 export
@@ -210,6 +211,8 @@ async function read (
 
     const noSubtypeSelection: boolean = (
         data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
+    const dontSelectFriends: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
 
     const permittedEntryInfo = await readPermittedEntryInformation(
         ctx,
@@ -223,6 +226,7 @@ async function read (
             operationContexts: data.operationContexts,
             attributeSizeLimit,
             noSubtypeSelection,
+            dontSelectFriends,
         },
     );
 

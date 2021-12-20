@@ -5047,40 +5047,19 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(withoutSubtypeMatchingData.searchInfo.entries).toHaveLength(0);
     });
 
-    // TODO: This for read, search, and modifyEntry.
     it("Search ServiceControlOptions.noSubtypeSelection", async () => {
         const testId = `Search.noSubtypeSelection-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
         }
         const dn = createTestRootDN(testId);
-        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
-        const withSubordinatesDN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
-        const subordinates = [
-            subordinateWithSubordinates,
-        ];
-        const subordinates2 = [
-            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
-            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
-            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
-        ];
-        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
-            new Attribute(
-                administrativeRole["&id"],
-                [
-                    _encodeObjectIdentifier(id_ar_autonomousArea, DER),
-                ],
-                undefined,
-            ),
-        ])));
-        await Promise.all(subordinates2.map((id) => createTestNode(connection!, withSubordinatesDN, id)));
         const search_ = (noSubtypeSelection: typeof TRUE_BIT | typeof FALSE_BIT) => {
             const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
                 Array(15).fill(FALSE_BIT));
             serviceControlOptions[ServiceControlOptions_noSubtypeSelection] = noSubtypeSelection;
             const reqData: SearchArgumentData = new SearchArgumentData(
                 {
-                    rdnSequence: withSubordinatesDN,
+                    rdnSequence: dn,
                 },
                 SearchArgumentData_subset_baseObject,
                 undefined,
@@ -5134,8 +5113,189 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(commonName["&id"]))).toBeFalsy();
     });
 
-    it.skip("ServiceControlOptions.countFamily", async () => {
+    it("Read ServiceControlOptions.noSubtypeSelection", async () => {
+        const testId = `Read.noSubtypeSelection-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const read_ = (noSubtypeSelection: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_noSubtypeSelection] = noSubtypeSelection;
+            const reqData: ReadArgumentData = new ReadArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                new EntryInformationSelection(
+                    {
+                        select: [ name["&id"] ],
+                    },
+                ),
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: ReadArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                read["&operationCode"]!,
+                _encode_ReadArgument(arg, DER),
+            );
+        };
+        const withSubtypeResponse = await read_(FALSE_BIT);
+        const withoutSubtypeResponse = await read_(TRUE_BIT);
+        assert("result" in withSubtypeResponse);
+        /**
+         * If returned data.length === 0, read throws.
+         */
+        assert("error" in withoutSubtypeResponse);
+        assert(withSubtypeResponse.result);
+        // assert(withoutSubtypeResponse.result);
+        const withSubtypeResult = _decode_ReadResult(withSubtypeResponse.result);
+        // const withoutSubtypeResult = _decode_ReadResult(withoutSubtypeResponse.result);
+        const withSubtypeData = getOptionallyProtectedValue(withSubtypeResult);
+        // const withoutSubtypeData = getOptionallyProtectedValue(withoutSubtypeResult);
+        expect(withSubtypeData.entry.information
+            ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(commonName["&id"]))).toBeTruthy();
+        // expect(withoutSubtypeData.entry.information
+        //     ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(commonName["&id"]))).toBeFalsy();
+    });
 
+    it("ModifyEntry ServiceControlOptions.noSubtypeSelection", async () => {
+        const testId = `ModifyEntry.noSubtypeSelection-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const search_ = (noSubtypeSelection: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const desc = _encode_UnboundedDirectoryString({
+                uTF8String: `Entry successfully modified. noSubtypeSelection = ${noSubtypeSelection}.`,
+            }, DER);
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_noSubtypeSelection] = noSubtypeSelection;
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                [
+                    {
+                        addValues: new Attribute(
+                            description["&id"],
+                            [desc],
+                            undefined,
+                        ),
+                    },
+                ],
+                new EntryInformationSelection(
+                    {
+                        select: [ name["&id"] ],
+                    },
+                ),
+                undefined,
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+        };
+        const withSubtypeResponse = await search_(FALSE_BIT);
+        const withoutSubtypeResponse = await search_(TRUE_BIT);
+        assert("result" in withSubtypeResponse);
+        assert("result" in withoutSubtypeResponse);
+        assert(withSubtypeResponse.result);
+        assert(withoutSubtypeResponse.result);
+        const withSubtypeResult = _decode_ModifyEntryResult(withSubtypeResponse.result);
+        const withoutSubtypeResult = _decode_ModifyEntryResult(withoutSubtypeResponse.result);
+        assert("information" in withSubtypeResult);
+        assert("information" in withoutSubtypeResult);
+        const withSubtypeData = getOptionallyProtectedValue(withSubtypeResult.information);
+        const withoutSubtypeData = getOptionallyProtectedValue(withoutSubtypeResult.information);
+        expect(withSubtypeData.entry?.information
+            ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(commonName["&id"]))).toBeTruthy();
+        expect(withoutSubtypeData.entry?.information
+            ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(commonName["&id"]))).toBeFalsy();
+    });
+
+    it("ServiceControlOptions.countFamily", async () => {
+        const testId = `ServiceControlOptions.countFamily-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+        ];
+        const sizeLimit: number = subordinates.length - 2;
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const search_ = (countFamily: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_countFamily] = countFamily;
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                    undefined,
+                    undefined,
+                    sizeLimit,
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        };
+        const defaultResponse = await search_(FALSE_BIT);
+        const countFamilyResponse = await search_(TRUE_BIT);
+        assert("result" in defaultResponse);
+        assert("result" in countFamilyResponse);
+        assert(defaultResponse.result);
+        assert(countFamilyResponse.result);
+        const defaultResult = _decode_SearchResult(defaultResponse.result);
+        const countFamilyResult = _decode_SearchResult(countFamilyResponse.result);
+        const defaultData = getOptionallyProtectedValue(defaultResult);
+        const countFamilyData = getOptionallyProtectedValue(countFamilyResult);
+        assert("searchInfo" in defaultData);
+        assert("searchInfo" in countFamilyData);
+        expect(defaultData.searchInfo.entries).toHaveLength(sizeLimit);
+        expect(countFamilyData.searchInfo.entries).toHaveLength(1);
     });
 
     it.skip("ServiceControlOptions.dontSelectFriends", async () => {
@@ -5150,8 +5310,61 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("An entry with a multi-valued RDN can be found", async () => {
-
+    it("An entry with a multi-valued RDN can be found", async () => {
+        const testId = `Find multi-valued RDN-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const mvRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("asdf"),
+            ),
+            new AttributeTypeAndValue(
+                description["&id"],
+                utf8("qwer"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            mvRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(applicationProcess["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("asdf")],
+                    undefined,
+                ),
+                new Attribute(
+                    description["&id"],
+                    [utf8("qwer")],
+                    undefined,
+                ),
+            ],
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, mvRDN ],
+            },
+            undefined,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
     });
 
     it.skip("An autonomous administrative point resets all applicable administrative points", async () => {

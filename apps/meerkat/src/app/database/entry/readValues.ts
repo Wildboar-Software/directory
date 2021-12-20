@@ -56,6 +56,7 @@ interface ReadValuesOptions {
     readonly relevantSubentries?: Vertex[];
     readonly operationContexts?: ContextSelection;
     readonly noSubtypeSelection?: boolean;
+    readonly dontSelectFriends?: boolean;
 }
 
 export
@@ -233,7 +234,7 @@ async function readValues (
     )
         ? new Set(options?.selection.attributes.select.map((oid) => oid.toString()))
         : null;
-    if (selectedUserAttributes && options?.relevantSubentries) {
+    if (selectedUserAttributes && options?.relevantSubentries && !options?.dontSelectFriends) {
         for (const attr of Array.from(selectedUserAttributes ?? [])) {
             addFriends(options.relevantSubentries, selectedUserAttributes, ObjectIdentifier.fromString(attr));
         }
@@ -243,7 +244,7 @@ async function readValues (
             ? new Set(options.selection.extraAttributes.select.map((oid) => oid.toString()))
             : null)
         : undefined;
-    if (selectedOperationalAttributes && options?.relevantSubentries) {
+    if (selectedOperationalAttributes && options?.relevantSubentries && !options?.dontSelectFriends) {
         for (const attr of Array.from(selectedOperationalAttributes ?? [])) {
             addFriends(options.relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
         }

@@ -127,6 +127,7 @@ import {
 import {
     ServiceControlOptions_manageDSAIT,
     ServiceControlOptions_noSubtypeSelection,
+    ServiceControlOptions_dontSelectFriends,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ServiceErrorData,
@@ -1430,6 +1431,8 @@ async function modifyEntry (
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const noSubtypeSelection: boolean = (
         data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
+    const dontSelectFriends: boolean = (
+        data.serviceControls?.options?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
     const attributeSizeLimit: number | undefined = (
         Number.isSafeInteger(Number(data.serviceControls?.attributeSizeLimit))
         && (Number(data.serviceControls?.attributeSizeLimit) >= MINIMUM_MAX_ATTR_SIZE)
@@ -2072,6 +2075,7 @@ async function modifyEntry (
                 operationContexts: data.operationContexts,
                 attributeSizeLimit,
                 noSubtypeSelection,
+                dontSelectFriends,
             },
         );
         if (
