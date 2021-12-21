@@ -233,6 +233,9 @@ import type {
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 import getAttributeSizeFilter from "../x500/getAttributeSizeFilter";
 import getAttributeSubtypes from "../x500/getAttributeSubtypes";
+import {
+    id_soc_subschema,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -997,6 +1000,13 @@ async function search_i (
             undefined,
         );
     };
+    const subschemaSubentry = relevantSubentries
+        .filter((sub) => sub.dse.objectClass.has(id_soc_subschema.toString()))
+        .sort((a, b) => {
+            const adn = getDistinguishedName(a);
+            const bdn = getDistinguishedName(b);
+            return (bdn.length - adn.length);
+        })[0]; // Select the nearest subschema
     const filterOptions: EvaluateFilterSettings = {
         getEqualityMatcher: getEqualityMatcherGetter(ctx),
         getOrderingMatcher: getOrderingMatcherGetter(ctx),
@@ -1016,6 +1026,14 @@ async function search_i (
                 attributeType.isEqualTo(parentType)
                 || getAttributeSubtypes(ctx, parentType).some((st) => st.isEqualTo(attributeType))
             );
+        },
+        getFriends: (attributeType: OBJECT_IDENTIFIER): OBJECT_IDENTIFIER[] => {
+            if (dontMatchFriends) {
+                return [];
+            }
+            const friendship = subschemaSubentry.dse.subentry?.friendships
+                ?.find((f) => f.anchor.isEqualTo(attributeType));
+            return friendship ? [ ...friendship.friends ] : [];
         },
         permittedToMatch: (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
             if (

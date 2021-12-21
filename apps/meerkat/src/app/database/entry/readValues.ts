@@ -97,17 +97,33 @@ interface ReadValuesReturn {
 //       ...},
 //     ... }
 
-// This is so friends of friends, recursively, can be added.
+/**
+ * @summary Add friend attribute types to the selected attribute types
+ * @description
+ *
+ * Note that this implementation DOES NOT recurse, because, per ITU
+ * Recommendation X.501 (2016), Section 8.7:
+ *
+ * > If an anchor attribute A has a friend B, and B has a friend C, it cannot be
+ * > deduced that C is a friend of A.
+ *
+ * Therefore, there is no need to determine the friends of the friends
+ * recursively; a single sweep is sufficient.
+ *
+ * It is also important that friend resolution occurs _before_ subtype
+ * resolution, because subtypes of friends are also friends.
+ *
+ * @param relevantSubentries
+ * @param selectedUserAttributes
+ * @param type_
+ */
 function addFriends (
     relevantSubentries: Vertex[],
     selectedUserAttributes: Set<IndexableOID>,
     type_: OBJECT_IDENTIFIER,
 ): void {
     const friendship = relevantSubentries
-        .filter((sub) => (
-            sub.dse.objectClass.has(id_soc_subschema.toString())
-            && sub.dse.subentry?.friendships
-        ))
+        .filter((sub) => sub.dse.objectClass.has(id_soc_subschema.toString()) && sub.dse.subentry)
         .sort((a, b) => {
             const adn = getDistinguishedName(a);
             const bdn = getDistinguishedName(b);
@@ -118,7 +134,8 @@ function addFriends (
         for (const friend of friendship.friends) {
             if (!selectedUserAttributes.has(friend.toString())) {
                 selectedUserAttributes.add(friend.toString());
-                addFriends(relevantSubentries, selectedUserAttributes, friend);
+                // Keeping this in here, commented out, to show you that you SHALL NOT do this:
+                // addFriends(relevantSubentries, selectedUserAttributes, friend);
             }
         }
     }

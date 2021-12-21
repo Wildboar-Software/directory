@@ -5468,20 +5468,87 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    it.skip("ServiceControlOptions.dontMatchFriends", async () => {
+    // TODO:
+    it.only("ServiceControlOptions.dontMatchFriends", async () => {
         const testId = `ServiceControlOptions.dontMatchFriends-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
-            await createTestRootNode(connection!, testId);
-            await createCompoundEntry(connection!, dn);
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_subschemaAdminSpecificArea)],
+                    undefined,
+                ),
+            ]);
         }
+        const soughtId: string = "E338ECE9-0100-4499-BEEE-2F3F766B669C";
         const subordinates = [
-            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
-            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
-            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            soughtId,
         ];
-        const sizeLimit: number = subordinates.length - 2;
-        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                description["&id"],
+                [utf8(`description-${id}`)],
+                undefined,
+            ),
+        ])));
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(subschema["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    friends["&id"],
+                    [
+                        _encode_FriendsDescription(new FriendsDescription(
+                            commonName["&id"],
+                            [
+                                {
+                                    uTF8String: "DELETEME",
+                                },
+                            ],
+                            {
+                                uTF8String: "Test name-form. Please delete.",
+                            },
+                            false,
+                            [
+                                description["&id"],
+                            ],
+                            [],
+                        ), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
         const search_ = (dontMatchFriends: typeof TRUE_BIT | typeof FALSE_BIT) => {
             const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
                 Array(15).fill(FALSE_BIT));
@@ -5491,7 +5558,14 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                     rdnSequence: dn,
                 },
                 SearchArgumentData_subset_oneLevel,
-                undefined,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            commonName["&id"],
+                            utf8(`description-${soughtId}`),
+                        ),
+                    },
+                },
                 undefined,
                 undefined,
                 undefined,
@@ -5507,9 +5581,6 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 [],
                 new ServiceControls(
                     serviceControlOptions,
-                    undefined,
-                    undefined,
-                    sizeLimit,
                 ),
             );
             const arg: SearchArgument = {
@@ -5533,18 +5604,8 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         const noFriendsData = getOptionallyProtectedValue(noFriendsResult);
         assert("searchInfo" in defaultData);
         assert("searchInfo" in noFriendsData);
-        expect(defaultData.searchInfo.entries).toHaveLength(subordinates.length);
-        expect(noFriendsData.searchInfo.entries).toHaveLength(subordinates.length);
-        for (const entry of defaultData.searchInfo.entries) {
-            const descriptionPresent: boolean = entry.information
-                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
-            expect(descriptionPresent).toBeTruthy();
-        }
-        for (const entry of noFriendsData.searchInfo.entries) {
-            const descriptionPresent: boolean = entry.information
-                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
-            expect(descriptionPresent).toBeFalsy();
-        }
+        expect(defaultData.searchInfo.entries).toHaveLength(1);
+        expect(noFriendsData.searchInfo.entries).toHaveLength(0);
     });
 
     it.skip("ServiceControlOptions.allowWriteableCopy", async () => {
