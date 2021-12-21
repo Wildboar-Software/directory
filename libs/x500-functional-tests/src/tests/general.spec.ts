@@ -5319,9 +5319,8 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(countFamilyData.searchInfo.entries).toHaveLength(1);
     });
 
-    // TODO: Do this for read and modifyEntry too.
-    it("ServiceControlOptions.dontSelectFriends", async () => {
-        const testId = `ServiceControlOptions.dontSelectFriends-${(new Date()).toISOString()}`;
+    it("Search ServiceControlOptions.dontSelectFriends", async () => {
+        const testId = `Search.dontSelectFriends-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -5406,7 +5405,6 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             const reqData: SearchArgumentData = new SearchArgumentData(
                 {
                     rdnSequence: dn,
-                    // rdnSequence: [ ...dn, createTestRDN("E338ECE9-0100-4499-BEEE-2F3F766B669C") ],
                 },
                 SearchArgumentData_subset_oneLevel,
                 undefined,
@@ -5468,8 +5466,278 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    // TODO:
-    it.only("ServiceControlOptions.dontMatchFriends", async () => {
+    it("Read ServiceControlOptions.dontSelectFriends", async () => {
+        const testId = `Read.dontSelectFriends-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_subschemaAdminSpecificArea)],
+                    undefined,
+                ),
+            ]);
+        }
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                description["&id"],
+                [utf8(`Description for ${id}`)],
+                undefined,
+            ),
+        ])));
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(subschema["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    friends["&id"],
+                    [
+                        _encode_FriendsDescription(new FriendsDescription(
+                            commonName["&id"],
+                            [
+                                {
+                                    uTF8String: "DELETEME",
+                                },
+                            ],
+                            {
+                                uTF8String: "Test name-form. Please delete.",
+                            },
+                            false,
+                            [
+                                description["&id"],
+                            ],
+                            [],
+                        ), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        const do_ = (dontSelectFriends: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_dontSelectFriends] = dontSelectFriends;
+            const reqData: ReadArgumentData = new ReadArgumentData(
+                {
+                    rdnSequence: [ ...dn, createTestRDN("E338ECE9-0100-4499-BEEE-2F3F766B669C") ],
+                },
+                new EntryInformationSelection(
+                    {
+                        select: [ commonName["&id"] ],
+                    },
+                ),
+                undefined,
+                [],
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: ReadArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                read["&operationCode"]!,
+                _encode_ReadArgument(arg, DER),
+            );
+        };
+        const defaultResponse = await do_(FALSE_BIT);
+        const noFriendsResponse = await do_(TRUE_BIT);
+        assert("result" in defaultResponse);
+        assert("result" in noFriendsResponse);
+        assert(defaultResponse.result);
+        assert(noFriendsResponse.result);
+        const defaultResult = _decode_ReadResult(defaultResponse.result);
+        const noFriendsResult = _decode_ReadResult(noFriendsResponse.result);
+        const defaultData = getOptionallyProtectedValue(defaultResult);
+        const noFriendsData = getOptionallyProtectedValue(noFriendsResult);
+        {
+            const descriptionPresent: boolean = defaultData.entry.information
+                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
+            expect(descriptionPresent).toBeTruthy();
+        }
+        {
+            const descriptionPresent: boolean = noFriendsData.entry.information
+                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
+            expect(descriptionPresent).toBeFalsy();
+        }
+    });
+
+    it("ModifyEntry ServiceControlOptions.dontSelectFriends", async () => {
+        const testId = `ModifyEntry.dontSelectFriends-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_subschemaAdminSpecificArea)],
+                    undefined,
+                ),
+            ]);
+        }
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                description["&id"],
+                [utf8(`Description for ${id}`)],
+                undefined,
+            ),
+        ])));
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(subschema["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    friends["&id"],
+                    [
+                        _encode_FriendsDescription(new FriendsDescription(
+                            commonName["&id"],
+                            [
+                                {
+                                    uTF8String: "DELETEME",
+                                },
+                            ],
+                            {
+                                uTF8String: "Test name-form. Please delete.",
+                            },
+                            false,
+                            [
+                                description["&id"],
+                            ],
+                            [],
+                        ), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        const do_ = (dontSelectFriends: typeof TRUE_BIT | typeof FALSE_BIT) => {
+            const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
+                Array(15).fill(FALSE_BIT));
+            serviceControlOptions[ServiceControlOptions_dontSelectFriends] = dontSelectFriends;
+            const desc = _encode_UnboundedDirectoryString({
+                uTF8String: `Entry successfully modified. dontSelectFriends: ${dontSelectFriends}`,
+            }, DER);
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: [ ...dn, createTestRDN("E338ECE9-0100-4499-BEEE-2F3F766B669C") ],
+                },
+                [
+                    {
+                        addValues: new Attribute(
+                            description["&id"],
+                            [desc],
+                            undefined,
+                        ),
+                    },
+                ],
+                new EntryInformationSelection(
+                    {
+                        select: [ commonName["&id"] ],
+                    },
+                ),
+                undefined,
+                new ServiceControls(
+                    serviceControlOptions,
+                ),
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+        };
+        const defaultResponse = await do_(FALSE_BIT);
+        const noFriendsResponse = await do_(TRUE_BIT);
+        assert("result" in defaultResponse);
+        assert("result" in noFriendsResponse);
+        assert(defaultResponse.result);
+        assert(noFriendsResponse.result);
+        const defaultResult = _decode_ModifyEntryResult(defaultResponse.result);
+        const noFriendsResult = _decode_ModifyEntryResult(noFriendsResponse.result);
+        assert("information" in defaultResult);
+        assert("information" in noFriendsResult);
+        const defaultData = getOptionallyProtectedValue(defaultResult.information);
+        const noFriendsData = getOptionallyProtectedValue(noFriendsResult.information);
+        {
+            const descriptionPresent: boolean = defaultData.entry?.information
+                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
+            expect(descriptionPresent).toBeTruthy();
+        }
+        {
+            const descriptionPresent: boolean = noFriendsData.entry?.information
+                ?.some((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"])) ?? false;
+            expect(descriptionPresent).toBeFalsy();
+        }
+    });
+
+    it("ServiceControlOptions.dontMatchFriends", async () => {
         const testId = `ServiceControlOptions.dontMatchFriends-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
