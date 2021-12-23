@@ -6,8 +6,8 @@ import type {
     WithOutcomeStatistics,
     PagedResultsRequestState,
     IndexableOID,
-    Value,
-    StoredContext,
+    // Value,
+    // StoredContext,
     DIT,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
@@ -210,9 +210,9 @@ import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInf
 import type {
     Filter,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import type {
-    FilterItem,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
+// import type {
+//     FilterItem,
+// } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
 import {
     AttributeValueAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
@@ -236,6 +236,14 @@ import getAttributeSubtypes from "../x500/getAttributeSubtypes";
 import {
     id_soc_subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
+import {
+    FamilyReturn,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
+import {
+    FamilyReturn_memberSelect_contributingEntriesOnly,
+    FamilyReturn_memberSelect_participatingEntriesOnly,
+    FamilyReturn_memberSelect_compoundEntry,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -903,15 +911,17 @@ async function search_i (
         ? {
             and: [
                 (data.filter ?? SearchArgumentData._default_value_for_filter),
-                data.baseObject.rdnSequence
+                ...data.baseObject.rdnSequence
                     .slice(targetDN.length)
-                    .flatMap((unmatchedRDN: RDN): FilterItem[] => unmatchedRDN
-                        .map((atav): FilterItem => ({
-                            equality: new AttributeValueAssertion(
-                                atav.type_,
-                                atav.value,
-                                undefined,
-                            ),
+                    .flatMap((unmatchedRDN: RDN): Filter[] => unmatchedRDN
+                        .map((atav): Filter => ({
+                            item: {
+                                equality: new AttributeValueAssertion(
+                                    atav.type_,
+                                    atav.value,
+                                    undefined,
+                                ),
+                            },
                         }))),
             ],
         }
@@ -969,7 +979,7 @@ async function search_i (
             userAttributes,
             operationalAttributes,
             collectiveAttributes,
-        } = await readAttributes(ctx, target, {
+        } = await readAttributes(ctx, vertex, {
             selection: eis,
             relevantSubentries,
             operationContexts: data.operationContexts,
@@ -1031,7 +1041,7 @@ async function search_i (
             if (dontMatchFriends) {
                 return [];
             }
-            const friendship = subschemaSubentry.dse.subentry?.friendships
+            const friendship = subschemaSubentry?.dse.subentry?.friendships
                 ?.find((f) => f.anchor.isEqualTo(attributeType));
             return friendship ? [ ...friendship.friends ] : [];
         },
@@ -1222,50 +1232,50 @@ async function search_i (
     };
 
     if (target.dse.alias && searchAliases) {
-        const authorizedToReadEntry: boolean = authorized([
-            PERMISSION_CATEGORY_READ,
-        ]);
-        const {
-            authorized: authorizedToReadAliasedEntryName,
-        } = bacACDF(
-            relevantTuples,
-            conn.authLevel,
-            {
-                attributeType: id_at_aliasedEntryName,
-            },
-            [
-                PERMISSION_CATEGORY_READ,
-            ],
-            EQUALITY_MATCHER,
-        );
-        const {
-            authorized: authorizedToReadAliasedEntryNameValue,
-        } = bacACDF(
-            relevantTuples,
-            conn.authLevel,
-            {
-                value: new AttributeTypeAndValue(
-                    id_at_aliasedEntryName,
-                    _encode_DistinguishedName(target.dse.alias.aliasedEntryName, DER),
-                ),
-            },
-            [
-                PERMISSION_CATEGORY_READ,
-            ],
-            EQUALITY_MATCHER,
-        );
         if (
-            !authorizedToReadEntry
-            || !authorizedToReadAliasedEntryName
-            || !authorizedToReadAliasedEntryNameValue
+            accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
         ) {
-            return; // REVIEW: This is not totally correct.
+            const authorizedToReadEntry: boolean = authorized([
+                PERMISSION_CATEGORY_READ,
+            ]);
+            const {
+                authorized: authorizedToReadAliasedEntryName,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    attributeType: id_at_aliasedEntryName,
+                },
+                [
+                    PERMISSION_CATEGORY_READ,
+                ],
+                EQUALITY_MATCHER,
+            );
+            const {
+                authorized: authorizedToReadAliasedEntryNameValue,
+            } = bacACDF(
+                relevantTuples,
+                conn.authLevel,
+                {
+                    value: new AttributeTypeAndValue(
+                        id_at_aliasedEntryName,
+                        _encode_DistinguishedName(target.dse.alias.aliasedEntryName, DER),
+                    ),
+                },
+                [
+                    PERMISSION_CATEGORY_READ,
+                ],
+                EQUALITY_MATCHER,
+            );
+            if (
+                !authorizedToReadEntry
+                || !authorizedToReadAliasedEntryName
+                || !authorizedToReadAliasedEntryNameValue
+            ) {
+                return; // REVIEW: This is not totally correct.
+            }
         }
-        // const searchAliasState: SearchState = {
-        //     chaining: state.chainingResults,
-        //     depth: 0,
-        //     results: [],
-        // };
         await searchAliasesProcedure(
             ctx,
             conn,
@@ -1309,6 +1319,8 @@ async function search_i (
         }
         }
     })();
+    const familyReturn: FamilyReturn = data.selection?.familyReturn
+        ?? EntryInformationSelection._default_value_for_familyReturn;
     if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) {
         // Nothing needs to be done here. Proceed to step 6.
         // This no-op section is basically so that a one-level search does not
@@ -1385,23 +1397,28 @@ async function search_i (
                     ) {
                         for (let i = 0; i < einfos.length; i++) {
                             const matchedValuesAttributes = attributesFromValues(
-                                matchedValues
-                                    .filter((mv) => (mv.entryIndex === i))
-                                    .map((mv): Value => ({
-                                        ...mv,
-                                        contexts: mv.contexts
-                                            ? mv.contexts.map((context): StoredContext => ({
-                                                    contextType: context.contextType,
-                                                    fallback: context.fallback ?? false,
-                                                    contextValues: context.contextValues,
-                                                }))
-                                            : undefined,
-                                    })),
+                                matchedValues.filter((mv) => (mv.entryIndex === i)),
                             );
                             const matchedValuesTypes: Set<IndexableOID> = new Set(
                                 matchedValuesAttributes.map((mva) => mva.type_.toString()),
                             );
                             const einfo = einfos[i];
+                            /**
+                             * Remember: matchedValuesOnly only filters the
+                             * values of attributes that contributed to the
+                             * match. All other information is returned
+                             * unchanged. This was actually a point of
+                             * confusion to the IETF LDAP working group, which
+                             * is why LDAP's matchedValues extension does not
+                             * align with DAP's matchedValuesOnly boolean.
+                             *
+                             * See: https://www.rfc-editor.org/rfc/rfc3876.html#section-3
+                             *
+                             * This was later clarified in the X.500 standards.
+                             * There is a notable increase in detail in X.511's
+                             * description of matchedValuesOnly in the 2001
+                             * version of the specification.
+                             */
                             einfos[i] = [
                                 ...einfo
                                     .filter((e) => {
@@ -1417,6 +1434,30 @@ async function search_i (
                             ];
                         }
                     } // End of matchedValuesOnly handling.
+                    const familyMembersToBeReturned = ((): Set<number> | null => { // null means "all"
+                        switch (familyReturn.memberSelect) {
+                            case (FamilyReturn_memberSelect_contributingEntriesOnly as number): { // Bizarre TypeScript bug.
+                                if (Array.isArray(matchedValues)) {
+                                    return new Set(matchedValues.map((mv) => familySubset[mv.entryIndex].dse.id));
+                                } else {
+                                    // If we don't have a matchedValues array,
+                                    // we just fall back on returning the common
+                                    // ancestor. If that's not defined (should
+                                    // never happen), we fall back on `null`.
+                                    return familySubset[0] ? new Set([familySubset[0].dse.id]) : null;
+                                }
+                            }
+                            case (FamilyReturn_memberSelect_participatingEntriesOnly as number): { // Bizarre TypeScript bug.
+                                return new Set(familySubset.map((_, i) => familySubset[i].dse.id));
+                            }
+                            case (FamilyReturn_memberSelect_compoundEntry as number): {  // Bizarre TypeScript bug.
+                                return null;
+                            }
+                            default: {
+                                throw new Error();
+                            }
+                        }
+                    })();
                     const filteredEinfos = einfos
                         .map(filterUnauthorizedEntryInformation);
                     if (separateFamilyMembers) {
@@ -1426,7 +1467,7 @@ async function search_i (
                                 (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
                                 && !((): boolean => {
                                     const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
-                                    searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                                    searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
                                     return had;
                                 })()
                                 && ((): boolean => {
@@ -1438,6 +1479,10 @@ async function search_i (
                                     }
                                     return (searchState.skipsRemaining <= 0);
                                 })()
+                                && ( // Is this part of the familyReturn member selection?
+                                    !familyMembersToBeReturned
+                                    || familyMembersToBeReturned.has(vertex.dse.id)
+                                )
                             ))
                             .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
                                 {
@@ -1456,7 +1501,15 @@ async function search_i (
                         return;
                     }
                     if (familySubset.length > 1) {
-                        const subset = keepSubsetOfDITById(family, new Set(familySubset.map((member) => member.dse.id)));
+                        const subset = keepSubsetOfDITById(
+                            family,
+                            new Set(familySubset
+                                .filter((vertex) => ( // Is this part of the familyReturn member selection?
+                                    !familyMembersToBeReturned
+                                    || familyMembersToBeReturned.has(vertex.dse.id)
+                                ))
+                                .map((member) => member.dse.id)),
+                        );
                         const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                             subset,
                             (vertex: Vertex) => filteredEinfos[
@@ -1547,7 +1600,7 @@ async function search_i (
                     (matchedValues === true)
                     || (Array.isArray(matchedValues) && !!matchedValues.length)
                 );
-                if (matched) {
+                if (matched) { // TODO: Break and do this outside of the for loop
                     const einfos = await Promise.all(
                         familySubset.map((member) => readEntryInformation(
                             ctx,
@@ -1569,23 +1622,28 @@ async function search_i (
                     ) {
                         for (let i = 0; i < einfos.length; i++) {
                             const matchedValuesAttributes = attributesFromValues(
-                                matchedValues
-                                    .filter((mv) => (mv.entryIndex === i))
-                                    .map((mv): Value => ({
-                                        ...mv,
-                                        contexts: mv.contexts
-                                            ? mv.contexts.map((context): StoredContext => ({
-                                                    contextType: context.contextType,
-                                                    fallback: context.fallback ?? false,
-                                                    contextValues: context.contextValues,
-                                                }))
-                                            : undefined,
-                                    })),
+                                matchedValues.filter((mv) => (mv.entryIndex === i)),
                             );
                             const matchedValuesTypes: Set<IndexableOID> = new Set(
                                 matchedValuesAttributes.map((mva) => mva.type_.toString()),
                             );
                             const einfo = einfos[i];
+                            /**
+                             * Remember: matchedValuesOnly only filters the
+                             * values of attributes that contributed to the
+                             * match. All other information is returned
+                             * unchanged. This was actually a point of
+                             * confusion to the IETF LDAP working group, which
+                             * is why LDAP's matchedValues extension does not
+                             * align with DAP's matchedValuesOnly boolean.
+                             *
+                             * See: https://www.rfc-editor.org/rfc/rfc3876.html#section-3
+                             *
+                             * This was later clarified in the X.500 standards.
+                             * There is a notable increase in detail in X.511's
+                             * description of matchedValuesOnly in the 2001
+                             * version of the specification.
+                             */
                             einfos[i] = [
                                 ...einfo
                                     .filter((e) => {
@@ -1601,6 +1659,30 @@ async function search_i (
                             ];
                         }
                     } // End of matchedValuesOnly handling.
+                    const familyMembersToBeReturned = ((): Set<number> | null => { // null means "all"
+                        switch (familyReturn.memberSelect) {
+                            case (FamilyReturn_memberSelect_contributingEntriesOnly as number): { // Bizarre TypeScript bug.
+                                if (Array.isArray(matchedValues)) {
+                                    return new Set(matchedValues.map((mv) => familySubset[mv.entryIndex].dse.id));
+                                } else {
+                                    // If we don't have a matchedValues array,
+                                    // we just fall back on returning the common
+                                    // ancestor. If that's not defined (should
+                                    // never happen), we fall back on `null`.
+                                    return familySubset[0] ? new Set([familySubset[0].dse.id]) : null;
+                                }
+                            }
+                            case (FamilyReturn_memberSelect_participatingEntriesOnly as number): { // Bizarre TypeScript bug.
+                                return new Set(familySubset.map((_, i) => familySubset[i].dse.id));
+                            }
+                            case (FamilyReturn_memberSelect_compoundEntry as number): {  // Bizarre TypeScript bug.
+                                return null;
+                            }
+                            default: {
+                                throw new Error();
+                            }
+                        }
+                    })();
                     const filteredEinfos = einfos
                         .map(filterUnauthorizedEntryInformation);
                     if (separateFamilyMembers) {
@@ -1610,7 +1692,7 @@ async function search_i (
                                 (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
                                 && !((): boolean => {
                                     const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
-                                    searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                                    searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
                                     return had;
                                 })()
                                 && ((): boolean => {
@@ -1622,6 +1704,10 @@ async function search_i (
                                     }
                                     return (searchState.skipsRemaining <= 0);
                                 })()
+                                && ( // Is this part of the familyReturn member selection?
+                                    !familyMembersToBeReturned
+                                    || familyMembersToBeReturned.has(vertex.dse.id)
+                                )
                             ))
                             .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
                                 {
@@ -1639,8 +1725,16 @@ async function search_i (
                         searchState.results.push(...familyMemberResults);
                         return;
                     } else {
-                        if (familySubset.length > 1) {
-                            const subset = keepSubsetOfDITById(family, new Set(familySubset.map((member) => member.dse.id)));
+                        if (familySubset.length > 1) { // If there actually are children.
+                            const subset = keepSubsetOfDITById(
+                                family,
+                                new Set(familySubset
+                                    .filter((vertex) => ( // Is this part of the familyReturn member selection?
+                                        !familyMembersToBeReturned
+                                        || familyMembersToBeReturned.has(vertex.dse.id)
+                                    ))
+                                    .map((member) => member.dse.id)),
+                            );
                             const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                                 subset,
                                 (vertex: Vertex) => filteredEinfos[
@@ -1893,6 +1987,11 @@ async function search_i (
                 return;
             }
             if (subentries && !subordinate.dse.subentry) {
+                cursorId = newCursorId;
+                processingEntriesWithSortKey = hasValue;
+                if (searchState.paging?.[1].cursorIds) {
+                    searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
+                }
                 continue;
             }
             /**
@@ -1901,6 +2000,11 @@ async function search_i (
              * ancestor entry.
              */
             if (subordinate.dse.objectClass.has(CHILD)) { // FIXME: This should be kept, but it hide child entries.
+                cursorId = newCursorId;
+                processingEntriesWithSortKey = hasValue;
+                if (searchState.paging?.[1].cursorIds) {
+                    searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
+                }
                 continue;
             }
             if (subordinate.dse.subr && !subordinate.dse.cp) {

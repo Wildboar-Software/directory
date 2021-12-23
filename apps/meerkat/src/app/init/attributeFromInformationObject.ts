@@ -26,7 +26,9 @@ function attributeFromInformationObject (io: ATTRIBUTE, name?: string): Attribut
         ldapNames: io["&ldapName"],
         ldapDescription: io["&ldapDesc"],
         compatibleMatchingRules: new Set(),
-        validator: (value: ASN1Element) => io.decoderFor["&Type"]!(value),
+        validator: io.decoderFor["&Type"]
+            ? (value: ASN1Element) => io.decoderFor["&Type"]!(value)
+            : undefined,
     };
 }
 

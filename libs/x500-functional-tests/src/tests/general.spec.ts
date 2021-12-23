@@ -79,6 +79,12 @@ import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import {
+    id_ar_collectiveAttributeSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
+import {
+    id_ar_collectiveAttributeInnerArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeInnerArea.va";
+import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 import * as crypto from "crypto";
@@ -358,6 +364,24 @@ import {
     FriendsDescription,
     _encode_FriendsDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
+import {
+    SearchControlOptions,
+    SearchControlOptions_checkOverspecified,
+    SearchControlOptions_dnAttribute,
+    SearchControlOptions_entryCount,
+    SearchControlOptions_includeAllAreas,
+    SearchControlOptions_matchOnResidualName,
+    SearchControlOptions_noSystemRelaxation,
+    SearchControlOptions_performExactly,
+    SearchControlOptions_searchAliases,
+    SearchControlOptions_searchFamily,
+    SearchControlOptions_separateFamilyMembers,
+    SearchControlOptions_useSubset,
+    SearchControlOptions_matchedValuesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import {
+    collectiveOrganizationName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/collectiveOrganizationName.oa";
 
 jest.setTimeout(10000);
 
@@ -871,14 +895,6 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             connection = await connect();
         }
     });
-
-    it("Server comes online", async () => {
-        expect(connection).toBeTruthy();
-    });
-
-    it.todo("Server shuts down gracefully");
-    it.todo("Server checks for updates successfully");
-    it.todo("Server hibernates when the sentinel indicates a security issues");
 
     it("alias dereferencing works", async () => {
         const testId = `alias-deref-${(new Date()).toISOString()}`;
@@ -2553,12 +2569,157 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    it.skip("Search.searchControlOptions.searchAliases", async () => {
-
+    it("Search.searchControlOptions.searchAliases", async () => {
+        const testId = `searchControlOptions.searchAliases-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        // It's stupid to use this in the RDN, but alias is a _structural_ object class.
+        const aliasRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(alias["&id"]),
+            ),
+        ];
+        const subordinateWithSubordinates: string = "1ED2AD20-A11F-42EC-81CB-4D6843CA6ACD";
+        const grandchildrenDN: DistinguishedName = [
+            ...dn,
+            createTestRDN(subordinateWithSubordinates),
+        ];
+        const aliasedId: string = "E338ECE9-0100-4499-BEEE-2F3F766B669C";
+        const aliasedDN: DistinguishedName = [
+            ...dn,
+            createTestRDN(aliasedId),
+        ];
+        const subordinates = [
+            aliasedId,
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            subordinateWithSubordinates,
+        ];
+        const subordinates2 = [
+            "0113FF8E-0107-4468-AE19-415DEEB0C5B7",
+            "F601D2D2-9B45-4068-9A4F-55FF18E3215D",
+            "201A2FE2-6D48-4E2B-A925-5275F2D56F39",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        await Promise.all(subordinates2.map((id) => createTestNode(connection!, grandchildrenDN, id)));
+        // This should be done after the aliased entry is created so you do not
+        // get warnings about the aliased entry not existing.
+        await createEntry( // Creates an alias that points to `subordinateWithSubordinates`.
+            connection!,
+            grandchildrenDN,
+            aliasRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName(aliasedDN, DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: grandchildrenDN,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            true,
+            undefined,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        const foundAliased: boolean = resData.searchInfo.entries
+            .some((e) => {
+                const rdn = e.name.rdnSequence[e.name.rdnSequence.length - 1];
+                return (rdn[0].value.utf8String === aliasedId);
+            });
+        expect(foundAliased).toBeTruthy();
     });
 
-    it.skip("Search.searchControlOptions.matchedValuesOnly", async () => {
-
+    it("Search.searchControlOptions.matchedValuesOnly", async () => {
+        const testId = `searchControlOptions.matchedValuesOnly-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("other"),
+                        utf8("common"),
+                        utf8("name"),
+                        utf8("values"),
+                    ],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        searchControlOptions[SearchControlOptions_matchedValuesOnly] = TRUE_BIT;
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                item: {
+                    equality: new AttributeValueAssertion(
+                        commonName["&id"],
+                        utf8(testId),
+                    ),
+                },
+            },
+            undefined,
+            undefined,
+            undefined,
+            TRUE, // matchedValuesOnly
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(1);
+        const entry = resData.searchInfo.entries[0];
+        // Remember, matchedValuesOnly only filters out values of attributes
+        // that contributed to the match, so this entry SHOULD contain more
+        // attributes than just commonName.
+        const cn = entry.information
+            ?.find((attr) => ("attribute" in attr) && attr.attribute.type_.isEqualTo(commonName["&id"]));
+        assert(cn);
+        assert("attribute" in cn);
+        expect(cn.attribute.values).toHaveLength(1); // Only one value matched.
     });
 
     it.skip("Search.searchControlOptions.checkOverspecified", async () => {
@@ -2577,12 +2738,115 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("Search.searchControlOptions.dnAttribute", async () => {
-
+    it("Search.searchControlOptions.dnAttribute", async () => {
+        const testId = `searchControlOptions.dnAttribute-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateId: string = "E338ECE9-0100-4499-BEEE-2F3F766B669C";
+        const subordinates = [
+            subordinateId,
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const subordinateRDN = createTestRDN(subordinateId);
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        searchControlOptions[SearchControlOptions_dnAttribute] = TRUE_BIT;
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, subordinateRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                item: {
+                    equality: new AttributeValueAssertion(
+                        commonName["&id"],
+                        utf8(testId),
+                    ),
+                },
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(1);
     });
 
-    it.skip("Search.searchControlOptions.matchOnResidualName", async () => {
-
+    it("Search.searchControlOptions.matchOnResidualName", async () => {
+        const testId = `searchControlOptions.matchOnResidualName-${(new Date()).toISOString()}`;
+        const nonExistingSubordinateId: string = "E338ECE9-0100-4499-BEEE-2F3F766B669C";
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [utf8(nonExistingSubordinateId)],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const subordinateRDN = createTestRDN(nonExistingSubordinateId);
+        const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(15).fill(FALSE_BIT));
+        serviceControlOptions[ServiceControlOptions_partialNameResolution] = TRUE_BIT;
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        searchControlOptions[SearchControlOptions_matchOnResidualName] = TRUE_BIT;
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, subordinateRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            [],
+            new ServiceControls(
+                serviceControlOptions,
+            ),
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(1);
     });
 
     it.skip("Search.searchControlOptions.entryCount", async () => {
@@ -2594,6 +2858,54 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
     });
 
     it.skip("Search.searchControlOptions.separateFamilyMembers", async () => {
+        const testId = `searchControlOptions.separateFamilyMembers-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            undefined,
+            new EntryInformationSelection(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                new FamilyReturn( // Without this, there will be no family information to return.
+                    FamilyReturn_memberSelect_compoundEntry,
+                ),
+            ),
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries.length).toBeGreaterThan(1);
 
     });
 
@@ -6021,24 +6333,102 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("Directory bind with correct simple credentials permits access", async () => {
-
-    });
-
-    it.skip("Directory bind with incorrect simple credentials denies access", async () => {
-
-    });
-
-    it.skip("Directory bind does not reveal which objects exist by displaying a different error message when the bind DN is wrong than when the password is wrong", async () => {
-
-    });
-
-    it.skip("Collective attributes appear in entries within a collective attribute specific area", async () => {
-
+    it.only("Collective attributes appear in entries within a collective attribute specific area", async () => {
+        const testId = `collective-attribute-specific-area-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_collectiveAttributeSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        const collectiveOrgName = "Illuminati";
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationName["&id"],
+                    [utf8(collectiveOrgName)],
+                    undefined,
+                ),
+            ],
+        );
+        const subordinatesLevel1: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id)));
+        const subordinateWithSubordinates: string = subordinatesLevel1[subordinatesLevel1.length - 1];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        for (const entry of resData.searchInfo.entries) {
+            const isTheInheritedCollectiveAttribute = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgName)
+            );
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute)).toBeTruthy();
+        }
     });
 
     it.skip("Collective attributes appear in entries within a collective attribute inner area", async () => {
-
+        const testId = `collective-attribute-inner-area-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
     });
 
     it.skip("Collective attributes are excluded via collectiveExclusions", async () => {
@@ -6061,155 +6451,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("Requests are rejected when the DSA is hibernating", async () => {
-
-    });
-
-    it.skip("A superior DSA can establish an HOB", async () => {
-
-    });
-
-    it.skip("A subordinate DSA can accept an HOB", async () => {
-
-    });
-
-    it.skip("A modification to a subordinate DSA's context prefix updates the superior DSA (Technically not required by X.500 standards)", async () => {
-
-    });
-
-    it.skip("A modification to a subordinate DSA's subentry under the context prefix updates the superior DSA (Technically not required by X.500 standards)", async () => {
-
-    });
-
-    it.skip("A modification to a context prefix's name or location results in an update to the superior DSA in an HOB", async () => {
-
-    });
-
-    it.skip("A modification to a context prefix's subentry's name or location results in an update to the superior DSA in an HOB", async () => {
-
-    });
-
-    it.skip("A modification to a context prefix results in an update to the superior DSA in an HOB", async () => {
-
-    });
-
-    it.skip("A modification to a context prefix's subentry results in an update to the superior DSA in an HOB", async () => {
-
-    });
-
-    it.skip("A deletion of a context prefix's subentries results in an update to the superior DSA in an HOB", async () => {
-
-    });
-
-    it.skip("A deletion of a context prefix results in a termination of the superior HOB", async () => {
-
-    });
-
-    it.skip("An update to an administrative point above an HOB or NHOB will correctly update the subordinate DSA(s)", async () => {
-
-    });
-
-    it.skip("An HOB context prefix update is rejected if the old agreement names a context prefix that cannot be found", async () => {
-
-    });
-
-    it.skip("An HOB context prefix update is rejected if the old agreement names a context prefix that has no superior", async () => {
-
-    });
-
-    it.skip("An HOB context prefix update is rejected if it updates entries from a 'grandfather' naming context that belongs to the subordinate DSA (or these updates are just ignored)", async () => {
-
-    });
-
-    it.skip("An HOB update that attempts to update a 'subr' DSE that is not really a 'subr' will be rejected", async () => {
-
-    });
-
-    it.skip("An HOB that attempts to create a context prefix that contains an alias or subentry will be automatically rejected", async () => {
-
-    });
-
-    it.skip("An HOB that attempts to update a context prefix such that it contains an alias or subentry will be automatically rejected", async () => {
-
-    });
-
-    it.skip("An HOB that attempts to create an agreement that differs from the context prefix info will be automatically rejected", async () => {
-
-    });
-
-    it.skip("An HOB that attempts to modify an agreement such that it differs from the context prefix info will be automatically rejected", async () => {
-
-    });
-
-    it.skip("Operational bindings cannot be created with identifiers that are already in use", async () => {
-
-    });
-
-    it.skip("Operational binding updates that use an operational binding identifier that is not in use are rejected", async () => {
-
-    });
-
-    it.skip("Operational binding updates with a version number that is less than the current version number are rejected automatically", async () => {
-
-    });
-
-    it.skip("Roles cannot be reversed in a modification HOB", async () => {
-
-    });
-
-    it.skip("A nefarious DSA cannot update an operational binding without authenticating as the exact same principal as the one that created the operational binding", async () => {
-
-    });
-
-    it.skip("A nefarious DSA cannot delete an operational binding without authenticating as the exact same principal as the one that created the operational binding", async () => {
-
-    });
-
     it.skip("An entry modification is not allowed to happen to a DSE of type shadow", async () => {
-
-    });
-
-    it.skip("An denial of service does not happen at the IDM layer if single-byte packets are sent", async () => {
-
-    });
-
-    it.skip("The DSA refuses an excessive number of connections from the same remote address", async () => {
-
-    });
-
-    it.skip("Memory leaks do not occur", async () => {
-
-    });
-
-    it.skip("An idle IDM socket is eventually closed", async () => {
-
-    });
-
-    it.skip("An idle TCP socket is eventually closed", async () => {
-
-    });
-
-    it.skip("An idle LDAP connection is eventually closed", async () => {
-
-    });
-
-    it.skip("StartTLS cannot be used to recursively encapsulate traffic", async () => {
-
-    });
-
-    it.skip("An invalid password attempt increments the number of password failures", async () => {
-
-    });
-
-    it.skip("An valid password attempt resets the number of password failures to 0", async () => {
-
-    });
-
-    it.skip("An invalid password attempt updates the pwdFailureTime", async () => {
-
-    });
-
-    it.skip("The password is never returned in an entry", async () => {
 
     });
 
@@ -6221,55 +6463,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("A password's pwdStartTime attribute is set correctly", async () => {
-
-    });
-
     it.skip("An entry's structural object class is calculated correctly", async () => {
-
-    });
-
-    it.skip("Chained read works", async () => {
-
-    });
-
-    it.skip("Chained compare works", async () => {
-
-    });
-
-    it.skip("Chained abandon works", async () => {
-
-    });
-
-    it.skip("Chained list works", async () => {
-
-    });
-
-    it.skip("Chained search works", async () => {
-
-    });
-
-    it.skip("Chained addEntry works", async () => {
-
-    });
-
-    it.skip("Chained removeEntry works", async () => {
-
-    });
-
-    it.skip("Chained modifyEntry works", async () => {
-
-    });
-
-    it.skip("Chained modifyDN works", async () => {
-
-    });
-
-    it.skip("Chained administerPassword works", async () => {
-
-    });
-
-    it.skip("Chained changePassword works", async () => {
 
     });
 

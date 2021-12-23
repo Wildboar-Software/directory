@@ -580,6 +580,14 @@ async function addEntry (
         }
     }
 
+    const missingMandatoryAttributes: Set<IndexableOID> = new Set();
+    const optionalAttributes: Set<IndexableOID> = new Set(
+        attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
+    );
+    if (isEntry) {
+        optionalAttributes.add(id_oa_collectiveExclusions.toString());
+        optionalAttributes.add(administrativeRole["&id"].toString());
+    }
     const nonUserApplicationAttributes: AttributeType[] = [];
     if (!ctx.config.bulkInsertMode) {
         if (
@@ -692,6 +700,7 @@ async function addEntry (
             }
             if (spec.collective) {
                 collectiveAttributes.push(attr.type_);
+                optionalAttributes.add(attr.type_.toString());
             }
             if (spec.obsolete) {
                 obsoleteAttributes.push(attr.type_);
@@ -856,14 +865,6 @@ async function addEntry (
         }
     }
 
-    const missingMandatoryAttributes: Set<IndexableOID> = new Set();
-    const optionalAttributes: Set<IndexableOID> = new Set(
-        attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
-    );
-    if (isEntry) {
-        optionalAttributes.add(id_oa_collectiveExclusions.toString());
-        optionalAttributes.add(administrativeRole["&id"].toString());
-    }
     if (!ctx.config.bulkInsertMode) {
         objectClasses
             .map((oc) => ctx.objectClasses.get(oc.toString()))

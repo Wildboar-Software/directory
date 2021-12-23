@@ -12,7 +12,9 @@ function contextTypeFromInformationObject (io: CONTEXT, matcher: ContextMatcher,
         absentMatch: io["&absentMatch"] ?? TRUE,
         matcher,
         syntax: syntax ?? "",
-        validator: (value: ASN1Element) => io.decoderFor["&Type"]!(value),
+        validator: io.decoderFor["&Type"]
+            ? (value: ASN1Element) => io.decoderFor["&Type"]!(value)
+            : undefined,
     };
 }
 

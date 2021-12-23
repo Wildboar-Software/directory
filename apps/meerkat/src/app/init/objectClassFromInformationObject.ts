@@ -14,16 +14,8 @@ function objectClassFromInformationObject (io: OBJECT_CLASS): ObjectClassInfo {
         id: io["&id"],
         superclasses: new Set(io["&Superclasses"]?.map((sc) => sc["&id"].toString()) ?? []),
         kind: io["&kind"] ?? ObjectClassKind_structural,
-        mandatoryAttributes: new Set(
-            io["&MandatoryAttributes"]
-                ? io["&MandatoryAttributes"].map((attr) => attr["&id"]?.toString() ?? "")
-                : [],
-        ),
-        optionalAttributes: new Set(
-            io["&OptionalAttributes"]
-                ? io["&OptionalAttributes"].map((attr) => attr["&id"]?.toString() ?? "")
-                : [],
-        ),
+        mandatoryAttributes: new Set(io["&MandatoryAttributes"]?.map((attr) => attr["&id"]?.toString() ?? "") ?? []),
+        optionalAttributes: new Set(io["&OptionalAttributes"]?.map((attr) => attr["&id"]?.toString() ?? "") ?? []),
         ldapNames: io["&ldapName"],
         ldapDescription: io["&ldapDesc"],
     };

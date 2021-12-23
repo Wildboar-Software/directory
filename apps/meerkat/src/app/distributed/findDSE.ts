@@ -977,6 +977,183 @@ async function findDSE (
                 ),
             );
         }
+        /**
+         * It is CRITICAL that the following `if` blocks appear in the order
+         * described in step 7 of ITU Recommendation X.518 (2016), Section
+         * 18.3.1.
+         *
+         * I discovered this because not doing so meant that administrative
+         * points were counting themselves as relevant administrative points.
+         */
+        if (dse_i.dse.cp && dse_i.dse.shadow) {
+            lastCP = dse_i;
+        }
+        if (dse_i.dse.admPoint) {
+            /**
+             * NOTE: You cannot remove "overridden" administrative points, such
+             * as removing all previous access control inner areas when an
+             * access control specific area is encountered, because
+             * administrative points may have multiple administrative roles.
+             *
+             * Instead, the behavior of ignoring overridden administrative
+             * points should be handled wherever they are actually used.
+             */
+            if (dse_i.dse.admPoint.administrativeRole.has(autonomousArea)) {
+                state.admPoints.length = 0;
+            }
+            state.admPoints.push(dse_i);
+        }
+        if (
+            dse_i.dse.subr
+            || dse_i.dse.xr
+            || dse_i.dse.immSupr
+            || dse_i.dse.ditBridge
+        ) {
+            const knowledges = dse_i.dse.subr?.specificKnowledge
+                ?? dse_i.dse.xr?.specificKnowledge
+                ?? dse_i.dse.immSupr?.specificKnowledge
+                ?? dse_i.dse.ditBridge?.ditBridgeKnowledge.flatMap((dbk) => dbk.accessPoints);
+            const referenceType: ReferenceType = ((): ReferenceType => {
+                if (dse_i.dse.subr) {
+                    return ReferenceType_subordinate;
+                }
+                if (dse_i.dse.immSupr) {
+                    return ReferenceType_immediateSuperior;
+                }
+                if (dse_i.dse.ditBridge) {
+                    return ReferenceType_ditBridge;
+                }
+                return ReferenceType_cross;
+            })();
+            const masters: MasterOrShadowAccessPoint[] = [];
+            const shadows: MasterOrShadowAccessPoint[] = [];
+            knowledges!.forEach((mosap) => {
+                if (mosap.category === MasterOrShadowAccessPoint_category_master) {
+                    masters.push(mosap);
+                } else if (mosap.category === MasterOrShadowAccessPoint_category_shadow) {
+                    shadows.push(mosap);
+                }
+            });
+            const mainAP = masters.pop() ?? shadows.pop();
+            if (!mainAP) {
+                return;
+            }
+            const cr = new ContinuationReference(
+                { // REVIEW: This might be technically incorrect.
+                    rdnSequence: getDistinguishedName(dse_i), // Also requires Access Control checking
+                },
+                undefined,
+                new OperationProgress(
+                    OperationProgress_nameResolutionPhase_proceeding,
+                    i,
+                ),
+                i,
+                referenceType,
+                [
+                    new AccessPointInformation(
+                        mainAP.ae_title,
+                        mainAP.address,
+                        mainAP.protocolInformation,
+                        mainAP.category,
+                        mainAP.chainingRequired,
+                        [ ...shadows, ...masters ]
+                            .map((ap) => new MasterOrShadowAccessPoint(
+                                ap.ae_title,
+                                ap.address,
+                                ap.protocolInformation,
+                                ap.category,
+                                ap.chainingRequired,
+                            )),
+                    ),
+                ],
+                undefined,
+                undefined,
+                undefined, // Return to DUA not supported.
+                nssrEncountered,
+            );
+            candidateRefs.push(cr);
+        }
+        if (dse_i.dse.entry) {
+            if (i === m) {
+                const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
+                if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
+                    await targetFoundSubprocedure();
+                    return;
+                }
+                // if (true) {
+                if (manageDSAITPlaneRefElement || manageDSAIT) {
+                    state.foundDSE = dse_i;
+                    state.entrySuitable = true;
+                    return;
+                }
+                if (
+                    (state.chainingArguments.referenceType === ReferenceType_supplier)
+                    || (state.chainingArguments.referenceType === ReferenceType_master)
+                ) {
+                    await targetFoundSubprocedure();
+                    return;
+                }
+                if (
+                    !compareCode(state.operationCode, id_opcode_list)
+                    && !compareCode(state.operationCode, id_opcode_search)
+                ) {
+                    state.foundDSE = dse_i;
+                    state.entrySuitable = true;
+                    return;
+                }
+                if (!await someSubordinatesAreCP(ctx, dse_i)) {
+                    throw new errors.ServiceError(
+                        // REVIEW: I am not really sure about this error message.
+                        ctx.i18n.t("err:invalid_reference_no_reason_to_search_here"),
+                        new ServiceErrorData(
+                            ServiceProblem_invalidReference,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+                state.foundDSE = dse_i;
+                state.entrySuitable = true;
+                return;
+            } else {
+                lastEntryFound = i;
+                dse_lastEntryFound = dse_i;
+            }
+        }
+        if (dse_i.dse.subentry) {
+            if (i === m) {
+                await targetFoundSubprocedure();
+                return;
+            } else {
+                throw new errors.NameError(
+                    ctx.i18n.t("err:reached_subentry_above_target"),
+                    new NameErrorData(
+                        NameProblem_noSuchObject,
+                        {
+                            rdnSequence: getDistinguishedName(dse_i),
+                        },
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            nameError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
         if (dse_i.dse.alias) {
             if (dontDereferenceAliases) {
                 if (i === m) {
@@ -1088,175 +1265,6 @@ async function findDSE (
                 Object.assign(state, newState);
                 return;
             }
-        }
-        if (dse_i.dse.subentry) {
-            if (i === m) {
-                await targetFoundSubprocedure();
-                return;
-            } else {
-                throw new errors.NameError(
-                    ctx.i18n.t("err:reached_subentry_above_target"),
-                    new NameErrorData(
-                        NameProblem_noSuchObject,
-                        {
-                            rdnSequence: getDistinguishedName(dse_i),
-                        },
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            undefined,
-                            nameError["&errorCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        state.chainingArguments.aliasDereferenced,
-                        undefined,
-                    ),
-                );
-            }
-        }
-        if (dse_i.dse.entry) {
-            if (i === m) {
-                const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
-                if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
-                    await targetFoundSubprocedure();
-                    return;
-                }
-                // if (true) {
-                if (manageDSAITPlaneRefElement || manageDSAIT) {
-                    state.foundDSE = dse_i;
-                    state.entrySuitable = true;
-                    return;
-                }
-                if (
-                    (state.chainingArguments.referenceType === ReferenceType_supplier)
-                    || (state.chainingArguments.referenceType === ReferenceType_master)
-                ) {
-                    await targetFoundSubprocedure();
-                    return;
-                }
-                if (
-                    !compareCode(state.operationCode, id_opcode_list)
-                    && !compareCode(state.operationCode, id_opcode_search)
-                ) {
-                    state.foundDSE = dse_i;
-                    state.entrySuitable = true;
-                    return;
-                }
-                if (!await someSubordinatesAreCP(ctx, dse_i)) {
-                    throw new errors.ServiceError(
-                        // REVIEW: I am not really sure about this error message.
-                        ctx.i18n.t("err:invalid_reference_no_reason_to_search_here"),
-                        new ServiceErrorData(
-                            ServiceProblem_invalidReference,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                conn.boundNameAndUID?.dn,
-                                undefined,
-                                serviceError["&errorCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            state.chainingArguments.aliasDereferenced,
-                            undefined,
-                        ),
-                    );
-                }
-                state.foundDSE = dse_i;
-                state.entrySuitable = true;
-                return;
-            } else {
-                lastEntryFound = i;
-                dse_lastEntryFound = dse_i;
-            }
-        }
-        if (
-            dse_i.dse.subr
-            || dse_i.dse.xr
-            || dse_i.dse.immSupr
-            || dse_i.dse.ditBridge
-        ) {
-            const knowledges = dse_i.dse.subr?.specificKnowledge
-                ?? dse_i.dse.xr?.specificKnowledge
-                ?? dse_i.dse.immSupr?.specificKnowledge
-                ?? dse_i.dse.ditBridge?.ditBridgeKnowledge.flatMap((dbk) => dbk.accessPoints);
-            const referenceType: ReferenceType = ((): ReferenceType => {
-                if (dse_i.dse.subr) {
-                    return ReferenceType_subordinate;
-                }
-                if (dse_i.dse.immSupr) {
-                    return ReferenceType_immediateSuperior;
-                }
-                if (dse_i.dse.ditBridge) {
-                    return ReferenceType_ditBridge;
-                }
-                return ReferenceType_cross;
-            })();
-            const masters: MasterOrShadowAccessPoint[] = [];
-            const shadows: MasterOrShadowAccessPoint[] = [];
-            knowledges!.forEach((mosap) => {
-                if (mosap.category === MasterOrShadowAccessPoint_category_master) {
-                    masters.push(mosap);
-                } else if (mosap.category === MasterOrShadowAccessPoint_category_shadow) {
-                    shadows.push(mosap);
-                }
-            });
-            const mainAP = masters.pop() ?? shadows.pop();
-            if (!mainAP) {
-                return;
-            }
-            const cr = new ContinuationReference(
-                { // REVIEW: This might be technically incorrect.
-                    rdnSequence: getDistinguishedName(dse_i), // Also requires Access Control checking
-                },
-                undefined,
-                new OperationProgress(
-                    OperationProgress_nameResolutionPhase_proceeding,
-                    i,
-                ),
-                i,
-                referenceType,
-                [
-                    new AccessPointInformation(
-                        mainAP.ae_title,
-                        mainAP.address,
-                        mainAP.protocolInformation,
-                        mainAP.category,
-                        mainAP.chainingRequired,
-                        [ ...shadows, ...masters ]
-                            .map((ap) => new MasterOrShadowAccessPoint(
-                                ap.ae_title,
-                                ap.address,
-                                ap.protocolInformation,
-                                ap.category,
-                                ap.chainingRequired,
-                            )),
-                    ),
-                ],
-                undefined,
-                undefined,
-                undefined, // Return to DUA not supported.
-                nssrEncountered,
-            );
-            candidateRefs.push(cr);
-        }
-        if (dse_i.dse.admPoint) {
-            /**
-             * NOTE: You cannot remove "overridden" administrative points, such
-             * as removing all previous access control inner areas when an
-             * access control specific area is encountered, because
-             * administrative points may have multiple administrative roles.
-             *
-             * Instead, the behavior of ignoring overridden administrative
-             * points should be handled wherever they are actually used.
-             */
-            if (dse_i.dse.admPoint.administrativeRole.has(autonomousArea)) {
-                state.admPoints.length = 0;
-            }
-            state.admPoints.push(dse_i);
-        }
-        if (dse_i.dse.cp && dse_i.dse.shadow) {
-            lastCP = dse_i;
         }
     }
     throw new errors.ServiceError(
