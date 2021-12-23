@@ -154,4 +154,8 @@ describe.skip("Meerkat DSA Basic Access Control", () => {
 
     });
 
+    it.skip("Subordinate access control specific administrative points override a superior access control specific administrative point", async () => {
+
+    });
+
 });

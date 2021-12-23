@@ -43,6 +43,14 @@ import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDesc
 import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
 import { _decode_Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
+import {
+    contextAssertionDefaults,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
+import {
+    TypeAndContextAssertion,
+    _decode_TypeAndContextAssertion,
+    _encode_TypeAndContextAssertion,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
     const el = new BERElement();
@@ -375,8 +383,17 @@ async function dseFromDatabaseEntry (
             ),
         );
 
+        const cads = await ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: dbe.id,
+                type: contextAssertionDefaults["&id"].toString(),
+            },
+            select: {
+                ber: true,
+            },
+        });
+
         ret.subentry = {
-            commonName: "", // FIXME:
             subtreeSpecification,
             prescriptiveACI,
             collectiveAttributes,
@@ -386,6 +403,16 @@ async function dseFromDatabaseEntry (
             friendships: await readFriendsDescriptions(ctx, dbe.id),
             matchingRuleUse: await readMatchingRuleUseDescriptions(ctx, dbe.id),
         };
+        if (cads.length) {
+            if (!ret.subentry.contextAssertionDefaults) {
+                ret.subentry.contextAssertionDefaults = [];
+            }
+            ret.subentry.contextAssertionDefaults.push(...cads.map((cad) => {
+                const el = new BERElement();
+                el.fromBytes(cad.ber);
+                return _decode_TypeAndContextAssertion(el);
+            }));
+        }
     }
 
     if (dbe.shadow) {

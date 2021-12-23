@@ -291,7 +291,6 @@ interface AdministrativePointDSE {
 
 export
 interface SubentryDSE {
-    commonName: string;
     subtreeSpecification: SubtreeSpecification[];
     prescriptiveACI?: ACIItem[];
     collectiveAttributes?: Attribute[];

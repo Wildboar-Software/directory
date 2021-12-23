@@ -22,9 +22,6 @@ import type {
     ContextSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
 import {
-    contextAssertionSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
-import {
     id_soc_subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
 import groupByOID from "../../utils/groupByOID";
@@ -43,8 +40,8 @@ import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
+import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults";
 
-const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 // TODO: Explore making this a temporalContext
 const DEFAULT_CAD: ContextSelection = {
     allContexts: null,
@@ -200,6 +197,7 @@ function *filterByTypeAndContextAssertion (
             c.contextValues,
             c.fallback,
         ));
+        let everyTacaMatched: boolean = true;
         for (const taca of typeAndContextAssertions) {
             if ("all" in taca.contextAssertions) {
                 const match = taca.contextAssertions.all.every((ca): boolean => evaluateContextAssertion(
@@ -208,14 +206,18 @@ function *filterByTypeAndContextAssertion (
                     (contextType: OBJECT_IDENTIFIER) => ctx.contextTypes.get(contextType.toString())?.matcher,
                     (contextType: OBJECT_IDENTIFIER) => ctx.contextTypes.get(contextType.toString())?.absentMatch ?? false,
                 ));
-                if (match) {
-                    yield value;
+                if (!match) {
+                    everyTacaMatched = false;
+                    break;
                 }
             } else if ("preference" in taca.contextAssertions) {
                 continue; // Already handled.
             } else {
                 continue;
             }
+        }
+        if (everyTacaMatched) {
+            yield value;
         }
     }
 }
@@ -226,22 +228,24 @@ async function readValues (
     entry: Vertex,
     options?: ReadValuesOptions,
 ): Promise<ReadValuesReturn> {
-    const cadSubentries: Vertex[] = options?.relevantSubentries
-        ?.filter((subentry) => (
-            subentry.dse.subentry
-            && subentry.dse.objectClass.has(CAD_SUBENTRY)
-            && subentry.dse.subentry?.contextAssertionDefaults?.length
-        )) ?? [];
+    const cads: TypeAndContextAssertion[] = options?.relevantSubentries
+        ? getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
+        : [];
+    // const cadSubentries: Vertex[] = options?.relevantSubentries
+    //     ?.filter((subentry) => (
+    //         subentry.dse.subentry
+    //         && subentry.dse.objectClass.has(CAD_SUBENTRY)
+    //         && subentry.dse.subentry?.contextAssertionDefaults?.length
+    //     )) ?? [];
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
      * Per ITU X.501 (2016), Section 8.9.2.2.
      */
     const contextSelection: ContextSelection = options?.selection?.contextSelection
         ?? options?.operationContexts
-        ?? (cadSubentries.length
+        ?? (cads.length
             ? {
-                selectedContexts: cadSubentries
-                    .flatMap((subentry) => subentry.dse.subentry!.contextAssertionDefaults!),
+                selectedContexts: cads,
             }
             : undefined)
         ?? DEFAULT_CAD;

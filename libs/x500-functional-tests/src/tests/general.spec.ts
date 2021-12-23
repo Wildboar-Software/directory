@@ -87,6 +87,9 @@ import {
 import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
+import {
+    id_ar_contextDefaultSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
@@ -261,6 +264,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
 import {
     TypeAndContextAssertion,
+    _encode_TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 import {
     TypeAndContextAssertion_contextAssertions,
@@ -382,6 +386,21 @@ import {
 import {
     collectiveOrganizationName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/collectiveOrganizationName.oa";
+import {
+    collectiveOrganizationalUnitName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/collectiveOrganizationalUnitName.oa";
+import {
+    collectiveLocalityName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/collectiveLocalityName.oa";
+import {
+    collectiveExclusions,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveExclusions.oa";
+import {
+    contextAssertionDefaults,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
+import {
+    contextAssertionSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
 
 jest.setTimeout(10000);
 
@@ -6257,14 +6276,6 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("Wide DITs do not take too long to search", async () => {
-
-    });
-
-    it.skip("Tall DITs do not take too long to search", async () => {
-
-    });
-
     it.skip("Search with FamilyGrouping.entryOnly", async () => {
 
     });
@@ -6333,7 +6344,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.only("Collective attributes appear in entries within a collective attribute specific area", async () => {
+    it("Collective attributes appear in entries within a collective attribute specific area", async () => {
         const testId = `collective-attribute-specific-area-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -6423,36 +6434,1054 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    it.skip("Collective attributes appear in entries within a collective attribute inner area", async () => {
+    it("Collective attributes appear in entries within a collective attribute inner area", async () => {
         const testId = `collective-attribute-inner-area-${(new Date()).toISOString()}`;
         { // Setup
-            await createTestRootNode(connection!, testId);
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_collectiveAttributeSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
         }
         const dn = createTestRootDN(testId);
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        const subentry2RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("world"),
+            ),
+        ];
+        const collectiveOrgName = "Illuminati";
+        const collectiveOrgUnitName = "Anime Fanatics";
+        const subordinatesLevel1: string[] = Array(1).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_collectiveAttributeInnerArea),
+                ],
+                undefined,
+            ),
+        ])));
+        const subordinateWithSubordinates: string = subordinatesLevel1[0];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id)));
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationName["&id"],
+                    [utf8(collectiveOrgName)],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry(
+            connection!,
+            level2DN,
+            subentry2RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("world"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationalUnitName["&id"],
+                    [utf8(collectiveOrgUnitName)],
+                    undefined,
+                ),
+            ],
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: level2DN,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        for (const entry of resData.searchInfo.entries) {
+            const isTheInheritedCollectiveAttribute1 = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgName)
+            );
+            const isTheInheritedCollectiveAttribute2 = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationalUnitName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgUnitName)
+            );
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute1)).toBeTruthy();
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute2)).toBeTruthy();
+        }
     });
 
-    it.skip("Collective attributes are excluded via collectiveExclusions", async () => {
-
+    it("Collective attributes from CASAs are excluded via collectiveExclusions", async () => {
+        const testId = `collective-exclusions-from-casa-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_collectiveAttributeSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        const collectiveOrgName = "Illuminati";
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationName["&id"],
+                    [utf8(collectiveOrgName)],
+                    undefined,
+                ),
+            ],
+        );
+        const subordinatesLevel1: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                collectiveExclusions["&id"],
+                [oid(collectiveOrganizationName["&id"])],
+                undefined,
+            ),
+        ])));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            // The admin point does not have collective exclusions, so we use
+            // oneLevel search.
+            SearchArgumentData_subset_oneLevel,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        for (const entry of resData.searchInfo.entries) {
+            const isTheInheritedCollectiveAttribute = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgName)
+            );
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute)).toBeFalsy();
+        }
     });
 
-    it.skip("Subordinate collective attribute specific administrative points override a superior collective attribute specific administrative point", async () => {
-
+    it("Collective attributes from CAIAs are excluded via collectiveExclusions", async () => {
+        const testId = `collective-exclusions-from-caia-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_collectiveAttributeSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        const subentry2RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("world"),
+            ),
+        ];
+        const collectiveOrgName = "Illuminati";
+        const collectiveOrgUnitName = "Anime Fanatics";
+        const subordinatesLevel1: string[] = Array(1).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_collectiveAttributeInnerArea),
+                ],
+                undefined,
+            ),
+        ])));
+        const subordinateWithSubordinates: string = subordinatesLevel1[0];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id, [
+            new Attribute(
+                collectiveExclusions["&id"],
+                [oid(collectiveOrganizationalUnitName["&id"])],
+                undefined,
+            ),
+        ])));
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationName["&id"],
+                    [utf8(collectiveOrgName)],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry(
+            connection!,
+            level2DN,
+            subentry2RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("world"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationalUnitName["&id"],
+                    [utf8(collectiveOrgUnitName)],
+                    undefined,
+                ),
+            ],
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: level2DN,
+            },
+            SearchArgumentData_subset_oneLevel,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        for (const entry of resData.searchInfo.entries) {
+            const isTheInheritedCollectiveAttribute1 = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgName)
+            );
+            const isTheInheritedCollectiveAttribute2 = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationalUnitName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgUnitName)
+            );
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute1)).toBeTruthy();
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute2)).toBeFalsy();
+        }
     });
 
-    it.skip("Subordinate access control specific administrative points override a superior access control specific administrative point", async () => {
-
+    it("Subordinate collective attribute specific administrative points override a superior collective attribute specific administrative point", async () => {
+        const testId = `casa-overrides-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_collectiveAttributeSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("foo"),
+            ),
+        ];
+        const subentry2RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("bar"),
+            ),
+        ];
+        const subentry3RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("baz"),
+            ),
+        ];
+        const collectiveOrgName = "Illuminati";
+        const collectiveOrgUnitName = "Anime Fanatics";
+        const collectiveLocName = "Bananaville";
+        const subordinatesLevel1: string[] = Array(1).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array(1).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel3: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_collectiveAttributeInnerArea),
+                ],
+                undefined,
+            ),
+        ])));
+        const leve1Id: string = subordinatesLevel1[0];
+        const leve2Id: string = subordinatesLevel2[0];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(leve1Id) ];
+        const level3DN: DistinguishedName = [ ...level2DN, createTestRDN(leve2Id) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_collectiveAttributeSpecificArea),
+                ],
+                undefined,
+            ),
+        ])));
+        await Promise.all(subordinatesLevel3.map((id) => createTestNode(connection!, level3DN, id)));
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("foo"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationName["&id"],
+                    [utf8(collectiveOrgName)],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry(
+            connection!,
+            level2DN,
+            subentry2RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("bar"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationalUnitName["&id"],
+                    [utf8(collectiveOrgUnitName)],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry(
+            connection!,
+            level3DN,
+            subentry3RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("baz"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveLocalityName["&id"],
+                    [utf8(collectiveLocName)],
+                    undefined,
+                ),
+            ],
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: level3DN,
+            },
+            SearchArgumentData_subset_oneLevel,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        for (const entry of resData.searchInfo.entries) {
+            const isTheInheritedCollectiveAttribute1 = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgName)
+            );
+            const isTheInheritedCollectiveAttribute2 = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationalUnitName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgUnitName)
+            );
+            const isTheInheritedCollectiveAttribute3 = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveLocalityName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveLocName)
+            );
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute1)).toBeFalsy();
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute2)).toBeFalsy();
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute3)).toBeTruthy();
+        }
     });
 
-    it.skip("Subordinate subschema administrative points override a superior subschema administrative point", async () => {
-
+    it("Subordinate subschema administrative points override a superior subschema administrative point", async () => {
+        const testId = `subschema-overrides-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_subschemaAdminSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        const subentry2RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("world"),
+            ),
+        ];
+        const subordinatesLevel1: string[] = Array(1).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_subschemaAdminSpecificArea),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                description["&id"],
+                [utf8(`description-${id}`)],
+                undefined,
+            ),
+        ])));
+        const subordinateWithSubordinates: string = subordinatesLevel1[0];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id, [
+            new Attribute(
+                description["&id"],
+                [utf8(`description-${id}`)],
+                undefined,
+            ),
+        ])));
+        const anchorType: OBJECT_IDENTIFIER = commonName["&id"];
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(subschema["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    friends["&id"],
+                    [
+                        _encode_FriendsDescription(new FriendsDescription(
+                            anchorType,
+                            [
+                                {
+                                    uTF8String: "DELETEME",
+                                },
+                            ],
+                            {
+                                uTF8String: "Test name-form. Please delete.",
+                            },
+                            false,
+                            [
+                                description["&id"],
+                            ],
+                            [],
+                        ), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry(
+            connection!,
+            level2DN,
+            subentry2RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(subschema["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("world"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        const search_ = (base: DistinguishedName) => {
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: base,
+                },
+                SearchArgumentData_subset_oneLevel,
+                undefined,
+                undefined,
+                new EntryInformationSelection(
+                    {
+                        select: [ anchorType ],
+                    },
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        }
+        /**
+         * Check that description is present in superior subschema admin area,
+         * because, in that subschema administrative area, description is a
+         * friend of commonName.
+         */
+        {
+            const response = await search_(dn);
+            assert("result" in response);
+            assert(response.result);
+            const decoded = _decode_SearchResult(response.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("searchInfo" in resData);
+            for (const entry of resData.searchInfo.entries) {
+                const descriptionFound: boolean = entry.information?.some((info) => (
+                    ("attribute" in info)
+                    && info.attribute.type_.isEqualTo(description["&id"])
+                )) ?? false;
+                expect(descriptionFound).toBeTruthy();
+            }
+        }
+        /**
+         * Check that description is NOT present in the subordinate subschema
+         * admin area, because, in that subschema administrative area,
+         * description is NOT a friend of commonName.
+         */
+        {
+            const response = await search_(level2DN);
+            assert("result" in response);
+            assert(response.result);
+            const decoded = _decode_SearchResult(response.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("searchInfo" in resData);
+            for (const entry of resData.searchInfo.entries) {
+                const descriptionFound: boolean = entry.information?.some((info) => (
+                    ("attribute" in info)
+                    && info.attribute.type_.isEqualTo(description["&id"])
+                )) ?? false;
+                expect(descriptionFound).toBeFalsy();
+            }
+        }
     });
 
-    it.skip("Subordinate CAD administrative points override a superior CAD administrative point", async () => {
-
-    });
-
-    it.skip("An entry modification is not allowed to happen to a DSE of type shadow", async () => {
-
+    it.only("Subordinate CAD administrative points override a superior CAD administrative point", async () => {
+        const testId = `context-assertion-default-overrides-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_contextDefaultSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+        }
+        const firstLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
+        }, DER);
+        const secondLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 6]),
+        }, DER);
+        const thirdLocale: ASN1Element = _encode_LocaleContextSyntax({
+            localeID1: new ObjectIdentifier([1, 2, 3, 4, 7]),
+        }, DER);
+        const dn = createTestRootDN(testId);
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("hello"),
+            ),
+        ];
+        const subentry2RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("world"),
+            ),
+        ];
+        const subordinatesLevel1: string[] = Array(1).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_contextDefaultSpecificArea),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                description["&id"],
+                [],
+                [
+                    new Attribute_valuesWithContext_Item(
+                        utf8(`der description-${id}`),
+                        [
+                            new Context(
+                                localeContext["&id"],
+                                [firstLocale],
+                                false,
+                            ),
+                        ]
+                    ),
+                    new Attribute_valuesWithContext_Item(
+                        utf8(`el description-${id}`),
+                        [
+                            new Context(
+                                localeContext["&id"],
+                                [secondLocale],
+                                false,
+                            ),
+                        ]
+                    ),
+                ],
+            ),
+        ])));
+        const subordinateWithSubordinates: string = subordinatesLevel1[0];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id, [
+            new Attribute(
+                description["&id"],
+                [],
+                [
+                    new Attribute_valuesWithContext_Item(
+                        utf8(`der description-${id}`),
+                        [
+                            new Context(
+                                localeContext["&id"],
+                                [firstLocale],
+                                false,
+                            ),
+                        ]
+                    ),
+                    new Attribute_valuesWithContext_Item(
+                        utf8(`le description-${id}`),
+                        [
+                            new Context(
+                                localeContext["&id"],
+                                [thirdLocale],
+                                false,
+                            ),
+                        ]
+                    ),
+                ],
+            ),
+        ])));
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(contextAssertionSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("hello"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    contextAssertionDefaults["&id"],
+                    [
+                        _encode_TypeAndContextAssertion(new TypeAndContextAssertion(
+                            description["&id"],
+                            {
+                                all: [
+                                    new ContextAssertion(
+                                        localeContext["&id"],
+                                        [firstLocale],
+                                    ),
+                                ],
+                            },
+                        ), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry(
+            connection!,
+            level2DN,
+            subentry2RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(contextAssertionSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("world"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    contextAssertionDefaults["&id"],
+                    [
+                        _encode_TypeAndContextAssertion(new TypeAndContextAssertion(
+                            description["&id"],
+                            {
+                                all: [
+                                    new ContextAssertion(
+                                        localeContext["&id"],
+                                        [thirdLocale],
+                                    ),
+                                ],
+                            },
+                        ), DER),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        const search_ = (base: DistinguishedName) => {
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: base,
+                },
+                SearchArgumentData_subset_oneLevel,
+                undefined,
+                undefined,
+                new EntryInformationSelection(
+                    {
+                        select: [ description["&id"] ],
+                    },
+                ),
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+        }
+        {
+            const response = await search_(dn);
+            assert("result" in response);
+            assert(response.result);
+            const decoded = _decode_SearchResult(response.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("searchInfo" in resData);
+            for (const entry of resData.searchInfo.entries) {
+                const desc = entry.information?.find((info) => (
+                    ("attribute" in info)
+                    && info.attribute.type_.isEqualTo(description["&id"])
+                ));
+                assert(desc);
+                assert("attribute" in desc);
+                assert(desc.attribute.values);
+                expect(desc.attribute.values).toHaveLength(1);
+                const value = desc.attribute.values[0];
+                expect(value.utf8String.startsWith("der description-")).toBeTruthy();
+            }
+        }
+        {
+            const response = await search_(level2DN);
+            assert("result" in response);
+            assert(response.result);
+            const decoded = _decode_SearchResult(response.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("searchInfo" in resData);
+            for (const entry of resData.searchInfo.entries) {
+                const desc = entry.information?.find((info) => (
+                    ("attribute" in info)
+                    && info.attribute.type_.isEqualTo(description["&id"])
+                ));
+                assert(desc);
+                assert("attribute" in desc);
+                assert(desc.attribute.values);
+                expect(desc.attribute.values).toHaveLength(1);
+                const value = desc.attribute.values[0];
+                expect(value.utf8String.startsWith("le description-")).toBeTruthy();
+            }
+        }
     });
 
     it.skip("If an entry has hierarchical children its hierarchyBelow attribute has a value of TRUE", async () => {
@@ -6464,10 +7493,13 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
     });
 
     it.skip("An entry's structural object class is calculated correctly", async () => {
-
+        // This is better tested via unit tests.
     });
 
     it.todo("Hierarchy attributes update correctly when the hierarchy changes");
     it.todo("Alias attributes update correctly when aliases change."); // This might actually not be required.
+
+    // Can't really be tested right now, because there's no way to remotely create a shadow entry.
+    it.todo("An entry modification is not allowed to happen to a DSE of type shadow");
 
 });
