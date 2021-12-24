@@ -54,10 +54,22 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import { ASN1Element } from "asn1-ts";
 
+/**
+ * Error types that relate to operation errors in the X.500 directory protocols.
+ */
 export
 abstract class DirectoryError extends Error {
     public static readonly errcode: Code;
     public abstract getErrCode (): Code;
+}
+
+/**
+ * Error types that relate to transport-layer errors, such as those indicated
+ * by IDM Reject or Abort PDUs, or ISO transport errors.
+ */
+export
+abstract class TransportError extends Error {
+
 }
 
 export
@@ -180,10 +192,17 @@ class ChainedError extends Error {
     }
 }
 
-export
-class UnknownOperationError extends Error {
-    constructor (message?: string) {
-        super(message ?? "Unknown operation.");
-        Object.setPrototypeOf(this, UnknownOperationError.prototype);
-    }
-}
+// Errors based on IDM Reject and Abort reasons
+// These are only the errors that the DSA would throw, not those that it might receive.
+
+export class DuplicateInvokeIdError extends TransportError {}
+export class UnsupportedOperationError extends TransportError {}
+export class UnknownOperationError extends TransportError {}
+export class MistypedPDUError extends TransportError {}
+export class MistypedArgumentError extends TransportError {}
+export class ResourceLimitationError extends TransportError {}
+export class UnknownError extends TransportError {}
+export class UnboundRequestError extends TransportError {}
+export class InvalidProtocolError extends TransportError {}
+export class ReasonNotSpecifiedError extends TransportError {}
+// ConnectionFailedError?

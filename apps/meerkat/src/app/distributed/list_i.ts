@@ -11,8 +11,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import readChildren from "../dit/readChildren";
-import readChildrenSorted from "../dit/readChildrenSorted";
+import readSubordinates from "../dit/readSubordinates";
+import readSubordinatesSorted from "../dit/readSubordinatesSorted";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { AccessPointInformation, ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -381,7 +381,7 @@ async function list_i (
     })();
     const getNextBatchOfSubordinates = async (): Promise<[ number, Vertex, boolean ][]> => {
         return permittedToSort
-            ? await readChildrenSorted(
+            ? await readSubordinatesSorted(
                     ctx,
                     target,
                     pagingRequest!.sortKeys![0].type_,
@@ -391,7 +391,7 @@ async function list_i (
                     undefined,
                     cursorId,
             )
-            : (await readChildren(
+            : (await readSubordinates(
                 ctx,
                 target,
                 pageSize,

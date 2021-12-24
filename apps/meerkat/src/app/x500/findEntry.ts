@@ -1,6 +1,6 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { Context, DIT, Vertex } from "@wildboar/meerkat-types";
-import readChildren from "../dit/readChildren";
+import readSubordinates from "../dit/readSubordinates";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
@@ -30,7 +30,7 @@ async function findEntry (
         return undefined; // This should never happen.
     }
     let cursorId: number | undefined;
-    const getNextBatchOfSubordinates = () => readChildren(
+    const getNextBatchOfSubordinates = () => readSubordinates(
         ctx,
         currentVertex,
         ctx.config.entriesPerSubordinatesPage,

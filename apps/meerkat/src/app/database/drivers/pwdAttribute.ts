@@ -2,6 +2,7 @@ import type {
     Context,
     Vertex,
     Value,
+    PendingUpdates,
     AttributeTypeDatabaseDriver,
     SpecialAttributeDatabaseReader,
     SpecialAttributeDatabaseEditor,
@@ -10,26 +11,16 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import {
-    BERElement,
-    ObjectIdentifier,
-} from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
-import {
-    pwdEncAlg,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
-import {
-    AlgorithmIdentifier,
-    _decode_AlgorithmIdentifier,
-    _encode_AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
-import getScryptAlgorithmIdentifier from "../../x500/getScryptAlgorithmIdentifier";
-import NOOP from "./NOOP";
+import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import { pwdAttribute } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAttribute.oa";
+import { ObjectIdentifier } from "asn1-ts";
 import {
     pwdAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
 
 const ID_PWD_SUBENTRY: string = pwdAdminSubentry["&id"].toString();
+const PASSWORD_ATTRIBUTE_USED_BY_MEERKAT_DSA = userPwd["&id"];
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -40,53 +31,76 @@ const readValues: SpecialAttributeDatabaseReader = async (
         return [];
     }
     if (vertex.dse.shadow) {
-        const result = await ctx.db.passwordEncryptionAlgorithm.findUnique({
+        const result = await ctx.db.pwdAttribute.findUnique({
             where: {
                 entry_id: vertex.dse.id,
             },
             select: {
-                oid: true,
-                parameters: true,
+                pwd_attribute: true,
             },
         });
-        if (!result) {
-            return [];
-        }
-        const algid = new AlgorithmIdentifier(
-            ObjectIdentifier.fromString(result.oid),
-            result.parameters
-                ? (() => {
-                    const el = new BERElement();
-                    el.fromBytes(result.parameters);
-                    return el;
-                })()
-                : undefined,
-        );
         return result
             ? [
                 {
-                    type: pwdEncAlg["&id"],
-                    value: _encode_AlgorithmIdentifier(algid, DER),
+                    type: pwdAttribute["&id"],
+                    value: _encodeObjectIdentifier(ObjectIdentifier.fromString(result.pwd_attribute), DER),
                 },
             ]
             : [];
     }
     return [
         {
-            type: pwdEncAlg["&id"],
-            value: _encode_AlgorithmIdentifier(getScryptAlgorithmIdentifier(), DER),
+            type: pwdAttribute["&id"],
+            value: _encodeObjectIdentifier(PASSWORD_ATTRIBUTE_USED_BY_MEERKAT_DSA, DER),
         },
     ];
 };
 
 export
-const addValue: SpecialAttributeDatabaseEditor = NOOP;
+const addValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    pendingUpdates.otherWrites.push(ctx.db.pwdAttribute.create({
+        data: {
+            entry_id: vertex.dse.id,
+            pwd_attribute: value.value.objectIdentifier.toString(),
+        },
+    }));
+};
 
 export
-const removeValue: SpecialAttributeDatabaseEditor = NOOP;
+const removeValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdAttribute.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            pwd_attribute: value.value.objectIdentifier.toString(),
+        },
+    }));
+};
 
 export
-const removeAttribute: SpecialAttributeDatabaseRemover = NOOP;
+const removeAttribute: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.pwdAttribute.delete({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
+};
 
 export
 const countValues: SpecialAttributeCounter = async (
@@ -97,7 +111,7 @@ const countValues: SpecialAttributeCounter = async (
         return 0;
     }
     if (vertex.dse.shadow) {
-        return ctx.db.passwordEncryptionAlgorithm.count({
+        return ctx.db.pwdAttribute.count({
             where: {
                 entry_id: vertex.dse.id,
             },
@@ -112,12 +126,12 @@ export
 const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
-): Promise<boolean> => {
+) => {
     if (!vertex.dse.subentry) {
         return false;
     }
     if (vertex.dse.shadow) {
-        return !!(await ctx.db.passwordEncryptionAlgorithm.findFirst({
+        return !!(await ctx.db.pwdAttribute.findFirst({
             where: {
                 entry_id: vertex.dse.id,
             },
@@ -134,34 +148,24 @@ const hasValue: SpecialAttributeValueDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
     value: Value,
-): Promise<boolean> => {
+) => {
     if (!vertex.dse.subentry) {
         return false;
     }
     if (vertex.dse.shadow) {
-        return !!(await ctx.db.passwordEncryptionAlgorithm.findFirst({
+        return !!(await ctx.db.pwdAttribute.findFirst({
             where: {
                 entry_id: vertex.dse.id,
+                pwd_attribute: value.value.objectIdentifier.toString(),
             },
             select: {
                 id: true,
             },
         }));
     }
-    if (!(vertex.dse.subentry && vertex.immediateSuperior?.dse.objectClass.has(ID_PWD_SUBENTRY))) {
-        return false;
-    }
-    const ALGORITHM_USED_BY_MEERKAT_DSA = getScryptAlgorithmIdentifier();
-    const decoded = _decode_AlgorithmIdentifier(value.value);
-    if (!decoded.algorithm) {
-        return false;
-    }
-    return Boolean(
-        decoded.algorithm.isEqualTo(ALGORITHM_USED_BY_MEERKAT_DSA.algorithm)
-        && (decoded.parameters && ALGORITHM_USED_BY_MEERKAT_DSA.parameters)
-        && (decoded.parameters.length === ALGORITHM_USED_BY_MEERKAT_DSA.parameters.length)
-        && !Buffer.compare(decoded.parameters.toBytes(), ALGORITHM_USED_BY_MEERKAT_DSA.parameters.toBytes())
-    );
+    return (vertex.dse.subentry && vertex.immediateSuperior?.dse.objectClass.has(ID_PWD_SUBENTRY))
+        ? (value.value.objectIdentifier.isEqualTo(PASSWORD_ATTRIBUTE_USED_BY_MEERKAT_DSA))
+        : false;
 };
 
 export

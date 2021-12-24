@@ -8,7 +8,7 @@ import {
 import {
     id_soc_subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
-import readChildren from "./readChildren";
+import readSubordinates from "./readSubordinates";
 
 const MAX_TRAVERSAL: number = 100000;
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -24,7 +24,7 @@ async function getSubschemaSubentry (
     let i: number = 0;
     while (i < MAX_TRAVERSAL) {
         if (current.dse.admPoint?.administrativeRole.has(SUBSCHEMA)) {
-            const results = await readChildren(ctx, current, undefined, undefined, undefined, {
+            const results = await readSubordinates(ctx, current, undefined, undefined, undefined, {
                 subentry: true,
                 EntryObjectClass: {
                     some: {

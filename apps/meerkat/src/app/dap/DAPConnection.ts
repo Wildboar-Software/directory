@@ -4,6 +4,7 @@ import {
     PagedResultsRequestState,
     OperationStatistics,
     OperationInvocationInfo,
+    MistypedPDUError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { IDMConnection } from "@wildboar/idm";
@@ -30,9 +31,19 @@ import { _encode_SecurityErrorData } from "@wildboar/x500/src/lib/modules/Direct
 import { _encode_ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { _encode_UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
+    IdmReject_reason_duplicateInvokeIDRequest,
+    IdmReject_reason_unsupportedOperationRequest,
     IdmReject_reason_unknownOperationRequest,
+    IdmReject_reason_mistypedPDU,
+    IdmReject_reason_mistypedArgumentRequest,
+    IdmReject_reason_resourceLimitationRequest,
+    IdmReject_reason_unknownError,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
-import { Abort_reasonNotSpecified } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+import {
+    Abort_unboundRequest,
+    Abort_invalidProtocol,
+    Abort_reasonNotSpecified,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import {
     SecurityProblem_noInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
@@ -53,9 +64,6 @@ import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { EventEmitter } from "events";
-import {
-    IdmReject_reason_duplicateInvokeIDRequest,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
@@ -79,7 +87,7 @@ async function handleRequest (
     stats: OperationStatistics,
 ): Promise<void> {
     if (!("local" in request.opcode)) {
-        throw new Error();
+        throw new MistypedPDUError();
     }
     const result = await OperationDispatcher.dispatchDAPRequest(
         ctx,
@@ -197,8 +205,26 @@ async function handleRequestAndErrors (
                     return null;
                 }
             }).filter((ainfo): ainfo is string => !!ainfo);
+        } else if (e instanceof errors.DuplicateInvokeIdError) {
+            await dap.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        } else if (e instanceof errors.UnsupportedOperationError) {
+            await dap.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
         } else if (e instanceof errors.UnknownOperationError) {
             await dap.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+        } else if (e instanceof errors.MistypedPDUError) {
+            await dap.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+        } else if (e instanceof errors.MistypedArgumentError) {
+            await dap.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
+        } else if (e instanceof errors.ResourceLimitationError) {
+            await dap.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+        } else if (e instanceof errors.UnknownError) {
+            await dap.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+        } else if (e instanceof errors.UnboundRequestError) {
+            await dap.idm.writeAbort(Abort_unboundRequest).then(() => dap.idm.close());
+        } else if (e instanceof errors.InvalidProtocolError) {
+            await dap.idm.writeAbort(Abort_invalidProtocol).then(() => dap.idm.close());
+        } else if (e instanceof errors.ReasonNotSpecifiedError) {
+            await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.close());
         } else {
             await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.close());
         }

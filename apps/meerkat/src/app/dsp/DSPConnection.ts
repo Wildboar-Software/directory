@@ -3,6 +3,7 @@ import {
     ClientConnection,
     OperationStatistics,
     OperationInvocationInfo,
+    MistypedPDUError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -31,9 +32,19 @@ import { _encode_SecurityErrorData } from "@wildboar/x500/src/lib/modules/Direct
 import { _encode_ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { _encode_UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
+    IdmReject_reason_duplicateInvokeIDRequest,
+    IdmReject_reason_unsupportedOperationRequest,
     IdmReject_reason_unknownOperationRequest,
+    IdmReject_reason_mistypedPDU,
+    IdmReject_reason_mistypedArgumentRequest,
+    IdmReject_reason_resourceLimitationRequest,
+    IdmReject_reason_unknownError,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
-import { Abort_reasonNotSpecified } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+import {
+    Abort_unboundRequest,
+    Abort_invalidProtocol,
+    Abort_reasonNotSpecified,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import { bind as doBind } from "../authn/dsaBind";
 import {
     dSABind,
@@ -56,9 +67,6 @@ import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import { EventEmitter } from "events";
-import {
-    IdmReject_reason_duplicateInvokeIDRequest,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
@@ -70,7 +78,7 @@ async function handleRequest (
     stats: OperationStatistics,
 ): Promise<void> {
     if (!("local" in request.opcode)) {
-        throw new Error();
+        throw new MistypedPDUError();
     }
     const result = await OperationDispatcher.dispatchDSPRequest(
         ctx,
@@ -186,8 +194,26 @@ async function handleRequestAndErrors (
                     return null;
                 }
             }).filter((ainfo): ainfo is string => !!ainfo);
+        } else if (e instanceof errors.DuplicateInvokeIdError) {
+            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        } else if (e instanceof errors.UnsupportedOperationError) {
+            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
         } else if (e instanceof errors.UnknownOperationError) {
             await dsp.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+        } else if (e instanceof errors.MistypedPDUError) {
+            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+        } else if (e instanceof errors.MistypedArgumentError) {
+            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
+        } else if (e instanceof errors.ResourceLimitationError) {
+            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+        } else if (e instanceof errors.UnknownError) {
+            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+        } else if (e instanceof errors.UnboundRequestError) {
+            await dsp.idm.writeAbort(Abort_unboundRequest).then(() => dsp.idm.close());
+        } else if (e instanceof errors.InvalidProtocolError) {
+            await dsp.idm.writeAbort(Abort_invalidProtocol).then(() => dsp.idm.close());
+        } else if (e instanceof errors.ReasonNotSpecifiedError) {
+            await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.close());
         } else {
             await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.close());
         }

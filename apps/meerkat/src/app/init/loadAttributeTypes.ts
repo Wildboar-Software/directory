@@ -4,6 +4,8 @@ import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
 import attributeFromInformationObject from "./attributeFromInformationObject";
 import { AttributeUsage } from "@prisma/client";
 import entryUUID from "../schema/attributes/entryUUID";
+import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
 import accessControlSchemeDriver from "../database/drivers/accessControlScheme";
 import accessControlSubentryListDriver from "../database/drivers/accessControlSubentryList";
 import administrativeRoleDriver from "../database/drivers/administrativeRole";
@@ -49,7 +51,7 @@ import pwdAdminSubentryListDriver from "../database/drivers/pwdAdminSubentryList
 // import pwdAlphabetDriver from "../database/drivers/pwdAlphabet";
 import pwdChangeAllowedDriver from "../database/drivers/pwdChangeAllowed";
 import pwdDictionariesDriver from "../database/drivers/pwdDictionaries";
-// import pwdEncAlgDriver from "../database/drivers/pwdEncAlg";
+import pwdEncAlgDriver from "../database/drivers/pwdEncAlg";
 import pwdEndTimeDriver from "../database/drivers/pwdEndTime";
 import pwdExpiryAgeDriver from "../database/drivers/pwdExpiryAge";
 import pwdExpiryTimeDriver from "../database/drivers/pwdExpiryTime";
@@ -88,8 +90,9 @@ import supportedSASLMechanismsDriver from "../database/drivers/supportedSASLMech
 import uniqueIdentifierDriver from "../database/drivers/uniqueIdentifier";
 import userPasswordDriver from "../database/drivers/userPassword";
 import userPwdDriver from "../database/drivers/userPwd";
-// import userPwdHistoryDriver from "../database/drivers/userPwdHistory";
-// import userPwdRecentlyExpiredDriver from "../database/drivers/userPwdRecentlyExpired";
+import userPwdHistoryDriver from "../database/drivers/userPwdHistory";
+import userPwdRecentlyExpiredDriver from "../database/drivers/userPwdRecentlyExpired";
+import pwdAttributeDriver from "../database/drivers/pwdAttribute";
 
 export
 async function loadAttributeTypes (ctx: Context): Promise<void> {
@@ -204,9 +207,10 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.prescriptiveACI["&id"].toString())!.driver = prescriptiveACIDriver;
     ctx.attributeTypes.get(x500at.pwdAdminSubentryList["&id"].toString())!.driver = pwdAdminSubentryListDriver;
     // ctx.attributeTypes.get(x500at.pwdAlphabet["&id"].toString())!.driver = pwdAlphabetDriver;
+    ctx.attributeTypes.get(x500at.pwdAttribute["&id"].toString())!.driver = pwdAttributeDriver;
     ctx.attributeTypes.get(x500at.pwdChangeAllowed["&id"].toString())!.driver = pwdChangeAllowedDriver;
     ctx.attributeTypes.get(x500at.pwdDictionaries["&id"].toString())!.driver = pwdDictionariesDriver;
-    // ctx.attributeTypes.get(x500at.pwdEncAlg["&id"].toString())!.driver = pwdEncAlgDriver;
+    ctx.attributeTypes.get(x500at.pwdEncAlg["&id"].toString())!.driver = pwdEncAlgDriver;
     ctx.attributeTypes.get(x500at.pwdEndTime["&id"].toString())!.driver = pwdEndTimeDriver;
     ctx.attributeTypes.get(x500at.pwdExpiryAge["&id"].toString())!.driver = pwdExpiryAgeDriver;
     ctx.attributeTypes.get(x500at.pwdExpiryTime["&id"].toString())!.driver = pwdExpiryTimeDriver;
@@ -245,8 +249,8 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.uniqueIdentifier["&id"].toString())!.driver = uniqueIdentifierDriver;
     ctx.attributeTypes.get(x500at.userPassword["&id"].toString())!.driver = userPasswordDriver;
     ctx.attributeTypes.get(x500at.userPwd["&id"].toString())!.driver = userPwdDriver;
-    // ctx.attributeTypes.get(x500at.userPwdHistory["&id"].toString())!.driver = userPwdHistoryDriver;
-    // ctx.attributeTypes.get(x500at.userPwdRecentlyExpired["&id"].toString())!.driver = userPwdRecentlyExpiredDriver;
+    ctx.attributeTypes.get(userPwdHistory["&id"].toString())!.driver = userPwdHistoryDriver;
+    ctx.attributeTypes.get(userPwdRecentlyExpired["&id"].toString())!.driver = userPwdRecentlyExpiredDriver;
 }
 
 export default loadAttributeTypes;

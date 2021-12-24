@@ -3,6 +3,7 @@ import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import type { Prisma } from "@prisma/client";
 
 /**
  * @description
@@ -12,9 +13,8 @@ import type {
 export
 type SortedChild = [ cursorId: number, dse: Vertex, hasValue: boolean ];
 
-// TODO: Add EntryWhere to parameters
 export
-async function readChildrenSorted (
+async function readSubordinatesSorted (
     ctx: Context,
     entry: Vertex,
     sortType: AttributeType,
@@ -23,6 +23,7 @@ async function readChildrenSorted (
     take?: number,
     skip?: number,
     cursorId?: number,
+    where?: Partial<Prisma.EntryWhereInput>,
 ): Promise<SortedChild[]> {
     if (entry.dse.subentry || entry.dse.alias) {
         return [];
@@ -44,6 +45,7 @@ async function readChildrenSorted (
                     : undefined,
                 where: {
                     entry: {
+                        ...where,
                         immediate_superior_id: entry.dse.id,
                         deleteTimestamp: null,
                     },
@@ -109,4 +111,4 @@ async function readChildrenSorted (
     return results;
 }
 
-export default readChildrenSorted;
+export default readSubordinatesSorted;

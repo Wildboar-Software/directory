@@ -3,7 +3,6 @@ import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import findEntry from "../../x500/findEntry";
-import readChildren from "../../dit/readChildren";
 import deleteEntry from "../../database/deleteEntry";
 
 export

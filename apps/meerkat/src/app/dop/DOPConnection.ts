@@ -10,7 +10,9 @@ import {
     ServiceError,
     UpdateError,
     UnknownOperationError,
+    MistypedPDUError,
 } from "@wildboar/meerkat-types";
+import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import { IDMConnection } from "@wildboar/idm";
 import {
@@ -37,9 +39,19 @@ import {
 import { _encode_ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { _encode_UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
+    IdmReject_reason_duplicateInvokeIDRequest,
+    IdmReject_reason_unsupportedOperationRequest,
     IdmReject_reason_unknownOperationRequest,
+    IdmReject_reason_mistypedPDU,
+    IdmReject_reason_mistypedArgumentRequest,
+    IdmReject_reason_resourceLimitationRequest,
+    IdmReject_reason_unknownError,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
-import { Abort_reasonNotSpecified } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+import {
+    Abort_unboundRequest,
+    Abort_invalidProtocol,
+    Abort_reasonNotSpecified,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import {
     Versions_v1,
     Versions_v2,
@@ -97,7 +109,7 @@ async function handleRequest (
     request: Request,
 ): Promise<void> {
     if (!("local" in request.opcode)) {
-        throw new Error();
+        throw new MistypedPDUError();
     }
     switch (request.opcode.local) {
     case (100): { // establish
@@ -212,6 +224,26 @@ async function handleRequestAndErrors (
             await dop.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof UnknownOperationError) {
             await dop.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+        } else if (e instanceof errors.DuplicateInvokeIdError) {
+            await dop.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        } else if (e instanceof errors.UnsupportedOperationError) {
+            await dop.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
+        } else if (e instanceof errors.UnknownOperationError) {
+            await dop.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+        } else if (e instanceof errors.MistypedPDUError) {
+            await dop.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+        } else if (e instanceof errors.MistypedArgumentError) {
+            await dop.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
+        } else if (e instanceof errors.ResourceLimitationError) {
+            await dop.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+        } else if (e instanceof errors.UnknownError) {
+            await dop.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+        } else if (e instanceof errors.UnboundRequestError) {
+            await dop.idm.writeAbort(Abort_unboundRequest).then(() => dop.idm.close());
+        } else if (e instanceof errors.InvalidProtocolError) {
+            await dop.idm.writeAbort(Abort_invalidProtocol).then(() => dop.idm.close());
+        } else if (e instanceof errors.ReasonNotSpecifiedError) {
+            await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.close());
         } else {
             await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.close());
         }

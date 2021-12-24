@@ -3,7 +3,7 @@ import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import type { Prisma } from "@prisma/client";
 
 export
-async function readChildren (
+async function readSubordinates (
     ctx: Context,
     entry: Vertex,
     take?: number,
@@ -53,4 +53,4 @@ async function readChildren (
         ;
 }
 
-export default readChildren;
+export default readSubordinates;

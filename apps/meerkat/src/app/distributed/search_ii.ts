@@ -21,7 +21,7 @@ import {
 import {
     AbandonedData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
-import readChildren from "../dit/readChildren";
+import readSubordinates from "../dit/readSubordinates";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import checkSuitabilityProcedure from "./checkSuitability";
 import createSecurityParameters from "../x500/createSecurityParameters";
@@ -246,7 +246,7 @@ async function search_ii (
         }
     }
 
-    let subordinatesInBatch = await readChildren(
+    let subordinatesInBatch = await readSubordinates(
         ctx,
         target,
         ENTRIES_PER_BATCH,
@@ -341,7 +341,7 @@ async function search_ii (
             );
             searchState.depth--;
         }
-        subordinatesInBatch = await readChildren(
+        subordinatesInBatch = await readSubordinates(
             ctx,
             target,
             ENTRIES_PER_BATCH,

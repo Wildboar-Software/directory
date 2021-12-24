@@ -3,6 +3,10 @@
 // as an attribute type, in which case, the casing in which that thing normally
 // appears shall be used. Models shall always be upper camel-cased.
 
+// Remember when you examine this schema: shadowing could be used, which means
+// that all attributes necessary for an entry may not actually be present in
+// _this_ database.
+
 datasource db {
   url      = env("DATABASE_URL")
   // provider = "postgresql"
@@ -22,6 +26,10 @@ type OIDs = String
 // Space-delimited, period-delimited numeric-only object identifiers.
 
 type Names = String
+
+type BER = Bytes
+
+type DER = Bytes
 
 // Subentry attributes, such as those documented in X.501, Section 14.4.3,
 // shall NOT be a part of this model. They should only be kept in the subentry,
@@ -103,6 +111,8 @@ model Entry {
   hierarchyParent    Entry?  @relation(name: "parent", fields: [hierarchyParent_id], references: [id])
   hierarchyParentDN  Json?
   hierarchyLevel     Int?
+  hierarchyTop_id    Int?
+  hierarchyTop       Entry?  @relation(name: "top", fields: [hierarchyTop_id], references: [id])
   hierarchyTopDN     Json?
   hierarchyPath      String? // Period-delimited database IDs
 
@@ -141,17 +151,21 @@ model Entry {
   EntryAdministrativeRole    EntryAdministrativeRole[]
   EntryCollectiveExclusion   EntryCollectiveExclusion[]
   EntryAccessControlScheme   EntryAccessControlScheme[]
-
-  DITStructureRule   DITStructureRule[]
-  ContentRule        ContentRule[]
-  ContextUseRule     ContextUseRule[]
-  Friendship         Friendship[]
-  SearchRule         SearchRule[]
-  UniqueIdentifier   UniqueIdentifier[]
-  OperationalBinding OperationalBinding[]
+  DITStructureRule           DITStructureRule[]
+  ContentRule                ContentRule[]
+  ContextUseRule             ContextUseRule[]
+  Friendship                 Friendship[]
+  SearchRule                 SearchRule[]
+  UniqueIdentifier           UniqueIdentifier[]
+  OperationalBinding         OperationalBinding[]
+  PwdAttribute               PwdAttribute[]
+  PasswordHistory            PasswordHistory[]
+  PasswordRecentlyExpired    PasswordRecentlyExpired[]
+  Entry                      Entry[]                      @relation("top")
   @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
+  PasswordEncryptionAlgorithm PasswordEncryptionAlgorithm[]
 }
 
 // Technically a userApplications attribute, but still has operational uses.
@@ -187,6 +201,47 @@ model Password {
   pwdGracesUsed            Int       @default(0)
 
   @@unique([entry_id])
+}
+
+// This will always be userPwd for Meerkat DSA. This is really just here because
+// shadowed suppliers might not use the same pwdAttribute.
+model PwdAttribute {
+  id            BigInt @id @default(autoincrement())
+  entry_id      Int
+  entry         Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  pwd_attribute OID
+
+  @@unique([entry_id])
+}
+
+model PasswordHistory {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  time     DateTime
+  password BER
+
+  @@unique([entry_id, time])
+}
+
+// You might think "isn't this already covered by Password.pwdExpiryTime?"
+// Generally, yes, but with shadowing, this attribute might be replicated
+// without the passwords themselves. (A strange setup, but possible.)
+model PasswordRecentlyExpired {
+  id       Int   @id @default(autoincrement())
+  entry_id Int   @unique
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  password BER
+}
+
+// This only exists for shadowing. Otherwise, it's value is always Meerkat DSA's
+// hard-coded algorithm, which is currently scrypt.
+model PasswordEncryptionAlgorithm {
+  id         Int   @id @default(autoincrement())
+  entry_id   Int   @unique
+  entry      Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  oid        OID
+  parameters BER?
 }
 
 model PwdModifyEntryAllowed {
@@ -423,6 +478,9 @@ model ACIItem {
   ber                              Bytes
   // The "other" alternative shall not be supported.
   scope                            ACIScope
+
+  // For disabling ACI items in the database for debugging purposes.
+  active Boolean @default(true)
 }
 
 model Clearance {
@@ -931,3 +989,11 @@ model AltServer {
   id  Int    @id @default(autoincrement())
   uri String
 }
+
+// Just an idea for right now:
+// model PagedResultsRequest {
+//   id            BigInt     @id @default(autoincrement())
+//   connection    String      @default(uuid())
+//   request       BER
+//   pageIndex     Int       @default(0)
+// }

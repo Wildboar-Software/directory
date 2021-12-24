@@ -11,9 +11,12 @@ async function readEntryPassword (
     ctx: Context,
     entry: Vertex,
 ): Promise<UserPwd | null> {
-    const password = await ctx.db.password.findUnique({
+    const password = await ctx.db.password.findFirst({
         where: {
             id: entry.dse.id,
+            pwdExpiryTime: {
+                gt: new Date(),
+            },
         },
     });
     if (!password) {

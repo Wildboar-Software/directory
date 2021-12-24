@@ -18,6 +18,7 @@ import { ObjectIdentifier } from "asn1-ts";
 import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
+import { AssertionError } from "assert";
 
 const additionalObjectClasses: Record<string, OBJECT_CLASS> = {
     "subentry": subentry,
@@ -39,7 +40,7 @@ function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     case (PrismaObjectClassKind.STRUCTURAL): {
         return ObjectClassKind_structural;
     }
-    default: throw new Error();
+    default: throw new AssertionError();
     }
 }
 

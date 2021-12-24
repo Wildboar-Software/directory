@@ -1,4 +1,7 @@
-import type { Context } from "@wildboar/meerkat-types";
+import {
+    Context,
+    ServiceError,
+} from "@wildboar/meerkat-types";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     AccessPoint,
@@ -20,6 +23,16 @@ import {
     terminateOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/terminateOperationalBinding.oa";
 import { DER } from "asn1-ts/dist/node/functional";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    ServiceProblem_unavailable,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 export
 async function terminateByTypeAndBindingID (
@@ -27,10 +40,25 @@ async function terminateByTypeAndBindingID (
     targetSystem: AccessPoint,
     bindingType: OBJECT_IDENTIFIER,
     bindingID: OperationalBindingID,
+    aliasDereferenced?: boolean,
 ): Promise<ResultOrError> {
     const conn = await connect(ctx, targetSystem, dop_ip["&id"]!);
     if (!conn) {
-        throw new Error();
+        throw new ServiceError(
+            ctx.i18n.t("err:could_not_connect"),
+            new ServiceErrorData(
+                ServiceProblem_unavailable,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    serviceError["&errorCode"]
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+            ),
+        );
     }
     const data = new TerminateOperationalBindingArgumentData(
         bindingType,

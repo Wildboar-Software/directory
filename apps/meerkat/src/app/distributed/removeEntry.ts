@@ -318,6 +318,7 @@ async function removeEntry (
                     accessPoint,
                     id_op_binding_hierarchical,
                     bindingID,
+                    state.chainingArguments.aliasDereferenced,
                 )
                     .catch((e) => {
                         ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {

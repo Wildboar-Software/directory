@@ -3,7 +3,7 @@ import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
-import readChildren from "../dit/readChildren";
+import readSubordinates from "../dit/readSubordinates";
 import {
     ListArgument,
     _decode_ListArgument,
@@ -308,7 +308,7 @@ async function list_ii (
             ?? data.serviceControls?.sizeLimit
             ?? Infinity
     );
-    let subordinatesInBatch = await readChildren(
+    let subordinatesInBatch = await readSubordinates(
         ctx,
         target,
         pageSize,
@@ -420,7 +420,7 @@ async function list_ii (
         if (limitExceeded !== undefined) {
             break;
         }
-        subordinatesInBatch = await readChildren(
+        subordinatesInBatch = await readSubordinates(
             ctx,
             target,
             pageSize,

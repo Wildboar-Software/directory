@@ -59,7 +59,7 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import readChildren from "../dit/readChildren";
+import readSubordinates from "../dit/readSubordinates";
 import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
@@ -484,7 +484,7 @@ async function addEntry (
         );
     }
     if (!ctx.config.bulkInsertMode) {
-        const existingSiblings = await readChildren(ctx, immediateSuperior);
+        const existingSiblings = await readSubordinates(ctx, immediateSuperior);
         const entryAlreadyExists: boolean = existingSiblings
             .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
         if (entryAlreadyExists) {
@@ -548,6 +548,7 @@ async function addEntry (
             rdn,
             data.entry,
             data.targetSystem,
+            state.chainingArguments.aliasDereferenced,
             {
                 timeLimitInMilliseconds: timeRemainingInMilliseconds,
             },

@@ -41,7 +41,7 @@ import {
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
-import readChildren from "../dit/readChildren";
+import readSubordinates from "../dit/readSubordinates";
 import * as errors from "@wildboar/meerkat-types";
 import {
     ServiceProblem_timeLimitExceeded,
@@ -775,7 +775,7 @@ async function findDSE (
             if (rdnMatched) {
                 return [];
             }
-            return readChildren(
+            return readSubordinates(
                 ctx,
                 dse_i,
                 ctx.config.entriesPerSubordinatesPage,

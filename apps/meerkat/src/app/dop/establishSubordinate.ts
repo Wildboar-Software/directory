@@ -1,4 +1,8 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import {
+    Context,
+    Vertex,
+    ServiceError,
+} from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import type {
     AccessPoint,
@@ -49,7 +53,7 @@ import {
     SubentryInfo,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubentryInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import readChildren from "../dit/readChildren";
+import readSubordinates from "../dit/readSubordinates";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import admPointEIS from "./admPointEIS";
@@ -58,6 +62,15 @@ import readAttributes from "../database/entry/readAttributes";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    ServiceProblem_unavailable,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -170,6 +183,7 @@ async function establishSubordinate (
     newEntryRDN: RelativeDistinguishedName,
     newEntryInfo: Attribute[] | undefined,
     targetSystem: AccessPoint,
+    aliasDereferenced?: boolean,
     options?: EstablishSubordinateOptions,
 ): Promise<ResultOrError> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
@@ -181,7 +195,21 @@ async function establishSubordinate (
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
     });
     if (!conn) {
-        throw new Error();
+        throw new ServiceError(
+            ctx.i18n.t("err:could_not_connect"),
+            new ServiceErrorData(
+                ServiceProblem_unavailable,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    serviceError["&errorCode"]
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+            ),
+        );
     }
     const ditContext: X500Vertex[] = []; // To be reversed.
     let cpEncountered: boolean = false;
@@ -206,7 +234,7 @@ async function establishSubordinate (
                 ...operationalAttributes,
             );
 
-            const subordinates = await readChildren(ctx, current, undefined, undefined, undefined, {
+            const subordinates = await readSubordinates(ctx, current, undefined, undefined, undefined, {
                 subentry: true,
             });
             subentryInfos.push(

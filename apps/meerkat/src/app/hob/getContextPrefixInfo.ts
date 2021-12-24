@@ -31,7 +31,7 @@ import {
 import {
     _encode_ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import readChildren from "../dit/readChildren";
+import readSubordinates from "../dit/readSubordinates";
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier } from "asn1-ts";
 import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -85,7 +85,7 @@ async function getContextPrefixInfo (
                 ));
             }
 
-            (await readChildren(ctx, current, undefined, undefined, undefined, {
+            (await readSubordinates(ctx, current, undefined, undefined, undefined, {
                 subentry: true,
             }))
                 .filter((sub) => sub.dse.subentry)

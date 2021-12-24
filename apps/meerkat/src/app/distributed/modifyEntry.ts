@@ -49,6 +49,7 @@ import {
     AttributeProblem_contextViolation,
     AttributeProblem_undefinedAttributeType,
     AttributeProblem_constraintViolation,
+    AttributeProblem_invalidAttributeSyntax,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
     SecurityProblem_insufficientAccessRights,
@@ -245,16 +246,52 @@ function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
     );
 }
 
-function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Value {
+function getValueAlterer (
+    ctx: Context,
+    vertex: Vertex,
+    type_: OBJECT_IDENTIFIER,
+    toBeAddedElement: ASN1Element,
+    aliasDereferenced?: boolean,
+): (value: Value) => Value {
     const toBeAdded = (toBeAddedElement.tagNumber === ASN1UniversalType.integer)
         ? Number(toBeAddedElement.integer)
         : toBeAddedElement.real;
     return (value: Value): Value => {
+        const attributeErrorData = () => {
+            return new AttributeErrorData(
+                {
+                    rdnSequence: getDistinguishedName(vertex),
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        type_,
+                        value.value,
+                    ),
+                ],
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            );
+        };
         if (!isAcceptableTypeForAlterValues(value.value)) {
-            throw new Error();
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:invalid_type_for_alter_values"),
+                attributeErrorData(),
+            );
         }
         if (value.value.tagNumber !== toBeAddedElement.tagNumber) {
-            throw new Error();
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:invalid_type_for_alter_values"),
+                attributeErrorData(),
+            );
         }
         const currentValue = (value.value.tagNumber === ASN1UniversalType.integer)
             ? Number(value.value.integer)
@@ -758,7 +795,31 @@ async function executeAlterValues (
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     if (!isAcceptableTypeForAlterValues(mod.value)) {
-        throw new Error();
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:invalid_type_for_alter_values"),
+            new AttributeErrorData(
+                {
+                    rdnSequence: getDistinguishedName(entry),
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_constraintViolation,
+                        mod.type_,
+                        mod.value,
+                    ),
+                ],
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
     }
     if (
         accessControlScheme
@@ -785,7 +846,7 @@ async function executeAlterValues (
         }
     }
     const TYPE_OID: IndexableOID = mod.type_.toString();
-    const alterer = getValueAlterer(mod.value);
+    const alterer = getValueAlterer(ctx, entry, mod.type_, mod.value, aliasDereferenced);
     { // Modify the delta values.
         const deltaValues = delta.get(TYPE_OID);
         if (deltaValues) {

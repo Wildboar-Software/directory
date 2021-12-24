@@ -1,4 +1,9 @@
-import { Context, Vertex, UpdateError } from "@wildboar/meerkat-types";
+import {
+    Context,
+    Vertex,
+    ServiceError,
+    UpdateError,
+} from "@wildboar/meerkat-types";
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, BERElement, ObjectIdentifier } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import { connect, ConnectOptions } from "../net/connect";
@@ -68,7 +73,7 @@ import {
 import {
     _encode_ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import readChildren from "../dit/readChildren";
+import readSubordinates from "../dit/readSubordinates";
 import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
 import {
     id_op_binding_hierarchical,
@@ -83,6 +88,15 @@ import {
 import {
     updateError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    ServiceProblem_unavailable,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 export
 interface UpdateSuperiorOptions extends ConnectOptions, WriteOperationOptions {
@@ -138,7 +152,21 @@ async function updateSuperiorDSA (
                 timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
             });
             if (!conn) {
-                throw new Error();
+                throw new ServiceError(
+                    ctx.i18n.t("err:could_not_connect"),
+                    new ServiceErrorData(
+                        ServiceProblem_unavailable,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            undefined,
+                            undefined,
+                            serviceError["&errorCode"]
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        aliasDereferenced,
+                    ),
+                );
             }
             const timeRemainingForOperation: number | undefined = timeoutTime
                 ? differenceInMilliseconds(timeoutTime, new Date())
@@ -189,7 +217,7 @@ async function updateSuperiorDSA (
                     undefined,
                 ));
             }
-            (await readChildren(ctx, newCP, undefined, undefined, undefined, {
+            (await readSubordinates(ctx, newCP, undefined, undefined, undefined, {
                 subentry: true,
             }))
                 .filter((sub) => sub.dse.subentry)

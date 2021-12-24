@@ -6,7 +6,7 @@ import dnWithinSubtreeSpecification from "@wildboar/x500/src/lib/utils/dnWithinS
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import readChildren from "./readChildren";
+import readSubordinates from "./readSubordinates";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 
 const SUBENTRY: string = id_sc_subentry.toString();
@@ -19,7 +19,7 @@ async function getRelevantSubentries (
     admPoint: Vertex,
 ): Promise<Vertex[]> {
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
-    const children = await readChildren(ctx, admPoint); // FIXME: Make this select only subentries.
+    const children = await readSubordinates(ctx, admPoint); // FIXME: Make this select only subentries.
     return children
         .filter((child) => (
             child.dse.subentry

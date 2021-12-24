@@ -1,5 +1,5 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import readChildren from "../../dit/readChildren";
+import readSubordinates from "../../dit/readSubordinates";
 import {
     id_oc_parent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
@@ -18,7 +18,7 @@ async function readFamily (ctx: Context, ancestor: Vertex): Promise<Vertex> {
             subordinates: [],
         };
     }
-    const subordinates = await readChildren(
+    const subordinates = await readSubordinates(
         ctx,
         ancestor,
         undefined,

@@ -9,6 +9,7 @@ import type {
     // Value,
     // StoredContext,
     DIT,
+    MistypedArgumentError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
@@ -27,8 +28,8 @@ import {
     HierarchySelections_self,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
 import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier } from "asn1-ts";
-import readChildren from "../dit/readChildren";
-import readChildrenSorted from "../dit/readChildrenSorted";
+import readSubordinates from "../dit/readSubordinates";
+import readSubordinatesSorted from "../dit/readSubordinatesSorted";
 import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -1454,7 +1455,7 @@ async function search_i (
                                 return null;
                             }
                             default: {
-                                throw new Error();
+                                throw new errors.MistypedArgumentError();
                             }
                         }
                     })();
@@ -1679,7 +1680,7 @@ async function search_i (
                                 return null;
                             }
                             default: {
-                                throw new Error();
+                                throw new errors.MistypedArgumentError();
                             }
                         }
                     })();
@@ -1895,7 +1896,7 @@ async function search_i (
             return [];
         }
         return permittedToSort
-            ? await readChildrenSorted(
+            ? await readSubordinatesSorted(
                     ctx,
                     target,
                     searchState.paging![1].request!.sortKeys![0].type_,
@@ -1915,7 +1916,7 @@ async function search_i (
                     undefined,
                     cursorId,
                 )
-            : (await readChildren(
+            : (await readSubordinates(
                 ctx,
                 target,
                 /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
