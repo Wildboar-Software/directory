@@ -42,7 +42,7 @@ import {
     AddEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
 import {
-    DistinguishedName, _encode_DistinguishedName,
+    DistinguishedName, _decode_DistinguishedName, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import {
     Attribute,
@@ -401,8 +401,20 @@ import {
 import {
     contextAssertionSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
+import {
+    hierarchyParent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
+import {
+    hierarchyLevel,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyLevel.oa";
+import {
+    hierarchyTop,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyTop.oa";
+import {
+    hierarchyBelow,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyBelow.oa";
 
-jest.setTimeout(10000);
+jest.setTimeout(30000);
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
     Array(9).fill(FALSE_BIT));
@@ -7225,7 +7237,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    it.only("Subordinate CAD administrative points override a superior CAD administrative point", async () => {
+    it("Subordinate CAD administrative points override a superior CAD administrative point", async () => {
         const testId = `context-assertion-default-overrides-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -7484,8 +7496,221 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    it.skip("If an entry has hierarchical children its hierarchyBelow attribute has a value of TRUE", async () => {
-
+    // it("If an entry has hierarchical children its hierarchyBelow attribute has a value of TRUE", async () => {
+    it("Hierarchy attributes are correct for entries in a hierarchy", async () => {
+        const testId = `hierarchy-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const level1 = "01CAD649-3E25-45E7-B5B9-71E63C79F32A";
+        const level2 = "71996C80-D22B-4887-9D32-140FE3B1282D";
+        const level1RDN = createTestRDN(level1);
+        const level2RDN = createTestRDN(level2);
+        const level1DN = [ ...dn, level1RDN ];
+        const level2DN = [ ...dn, level2RDN ];
+        await createTestNode(connection!, dn, level1, [
+            new Attribute(
+                hierarchyParent["&id"],
+                [_encode_DistinguishedName(dn, DER)],
+                undefined,
+            ),
+        ]);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await createTestNode(connection!, dn, level2, [
+            new Attribute(
+                hierarchyParent["&id"],
+                [_encode_DistinguishedName(level1DN, DER)],
+                undefined,
+            ),
+        ]);
+        {
+            const reqData: ReadArgumentData = new ReadArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                new EntryInformationSelection(
+                    {
+                        allUserAttributes: null,
+                    },
+                    undefined,
+                    {
+                        allOperationalAttributes: null,
+                    },
+                ),
+            );
+            const arg: ReadArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                read["&operationCode"]!,
+                _encode_ReadArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const param = _decode_ReadResult(result.result);
+            const data = getOptionallyProtectedValue(param);
+            const top = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyTop["&id"]));
+            const below = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyBelow["&id"]));
+            const level = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyLevel["&id"]));
+            assert(top);
+            assert(below);
+            assert(level);
+            assert("attribute" in top);
+            assert("attribute" in below);
+            assert("attribute" in level);
+            expect(top.attribute.values).toHaveLength(1);
+            expect(below.attribute.values).toHaveLength(1);
+            expect(level.attribute.values).toHaveLength(1);
+            const topValue = top.attribute.values[0];
+            const belowValue = below.attribute.values[0];
+            const levelValue = level.attribute.values[0];
+            const topDN = _decode_DistinguishedName(topValue);
+            expect(belowValue.boolean).toBe(true);
+            expect(topDN).toHaveLength(1);
+            expect(topDN[0]).toHaveLength(1);
+            expect(topDN[0][0].type_.isEqualTo(commonName["&id"])).toBe(true);
+            expect(topDN[0][0].value.utf8String).toBe(testId);
+            expect(levelValue.integer).toBe(0);
+        }
+        {
+            const reqData: ReadArgumentData = new ReadArgumentData(
+                {
+                    rdnSequence: level1DN,
+                },
+                new EntryInformationSelection(
+                    {
+                        allUserAttributes: null,
+                    },
+                    undefined,
+                    {
+                        allOperationalAttributes: null,
+                    },
+                ),
+            );
+            const arg: ReadArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                read["&operationCode"]!,
+                _encode_ReadArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const param = _decode_ReadResult(result.result);
+            const data = getOptionallyProtectedValue(param);
+            const top = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyTop["&id"]));
+            const below = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyBelow["&id"]));
+            const level = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyLevel["&id"]));
+            const hparent = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyParent["&id"]));
+            assert(top);
+            assert(below);
+            assert(level);
+            assert(hparent);
+            assert("attribute" in top);
+            assert("attribute" in below);
+            assert("attribute" in level);
+            assert("attribute" in hparent);
+            expect(top.attribute.values).toHaveLength(1);
+            expect(below.attribute.values).toHaveLength(1);
+            expect(level.attribute.values).toHaveLength(1);
+            expect(hparent.attribute.values).toHaveLength(1);
+            const topValue = top.attribute.values[0];
+            const belowValue = below.attribute.values[0];
+            const levelValue = level.attribute.values[0];
+            const parentValue = hparent.attribute.values[0];
+            const topDN = _decode_DistinguishedName(topValue);
+            const parentDN = _decode_DistinguishedName(parentValue);
+            expect(belowValue.boolean).toBe(true);
+            expect(topDN).toHaveLength(1);
+            expect(topDN[0]).toHaveLength(1);
+            expect(topDN[0][0].type_.isEqualTo(commonName["&id"])).toBe(true);
+            expect(topDN[0][0].value.utf8String).toBe(testId);
+            expect(levelValue.integer).toBe(1);
+            expect(parentDN).toHaveLength(1);
+            expect(parentDN[0]).toHaveLength(1);
+            // expect(parentDN[1]).toHaveLength(1);
+            expect(parentDN[0][0].type_.isEqualTo(commonName["&id"])).toBe(true);
+            // expect(parentDN[1][0].type_.isEqualTo(commonName["&id"])).toBe(true);
+            expect(parentDN[0][0].value.utf8String).toBe(testId);
+            // expect(topDN[1][0].value.utf8String).toBe(testId);
+        }
+        {
+            const reqData: ReadArgumentData = new ReadArgumentData(
+                {
+                    rdnSequence: level2DN,
+                },
+                new EntryInformationSelection(
+                    {
+                        allUserAttributes: null,
+                    },
+                    undefined,
+                    {
+                        allOperationalAttributes: null,
+                    },
+                ),
+            );
+            const arg: ReadArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                read["&operationCode"]!,
+                _encode_ReadArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const param = _decode_ReadResult(result.result);
+            const data = getOptionallyProtectedValue(param);
+            const top = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyTop["&id"]));
+            const below = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyBelow["&id"]));
+            const level = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyLevel["&id"]));
+            const hparent = data.entry.information
+                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(hierarchyParent["&id"]));
+            assert(top);
+            assert(below);
+            assert(level);
+            assert(hparent);
+            assert("attribute" in top);
+            assert("attribute" in below);
+            assert("attribute" in level);
+            assert("attribute" in hparent);
+            expect(top.attribute.values).toHaveLength(1);
+            expect(below.attribute.values).toHaveLength(1);
+            expect(level.attribute.values).toHaveLength(1);
+            expect(hparent.attribute.values).toHaveLength(1);
+            const topValue = top.attribute.values[0];
+            const belowValue = below.attribute.values[0];
+            const levelValue = level.attribute.values[0];
+            const parentValue = hparent.attribute.values[0];
+            const topDN = _decode_DistinguishedName(topValue);
+            const parentDN = _decode_DistinguishedName(parentValue);
+            expect(belowValue.boolean).toBe(false);
+            expect(topDN).toHaveLength(1);
+            expect(topDN[0]).toHaveLength(1);
+            expect(topDN[0][0].type_.isEqualTo(commonName["&id"])).toBe(true);
+            expect(topDN[0][0].value.utf8String).toBe(testId);
+            expect(levelValue.integer).toBe(2);
+            expect(parentDN).toHaveLength(2);
+            expect(parentDN[0]).toHaveLength(1);
+            expect(parentDN[1]).toHaveLength(1);
+            expect(parentDN[0][0].type_.isEqualTo(commonName["&id"])).toBe(true);
+            expect(parentDN[1][0].type_.isEqualTo(commonName["&id"])).toBe(true);
+            expect(parentDN[0][0].value.utf8String).toBe(testId);
+            expect(parentDN[1][0].value.utf8String).toBe(level1);
+        }
     });
 
     it.skip("The hierarchyLevel attribute is always correct", async () => {

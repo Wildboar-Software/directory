@@ -472,6 +472,18 @@ async function dseFromDatabaseEntry (
         };
     }
 
+    if (typeof dbe.hierarchyLevel === "number") {
+        ret.hierarchy = {
+            level: dbe.hierarchyLevel,
+            parent: Array.isArray(dbe.hierarchyParentDN)
+                ? dbe.hierarchyParentDN.map(rdnFromJson)
+                : undefined,
+            top: Array.isArray(dbe.hierarchyTopDN)
+                ? dbe.hierarchyTopDN.map(rdnFromJson)
+                : undefined,
+        };
+    }
+
     if (dbe.keep_children_in_database) {
         return ret;
     }

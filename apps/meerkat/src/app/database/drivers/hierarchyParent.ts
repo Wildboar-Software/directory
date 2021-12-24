@@ -39,6 +39,7 @@ import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import createSecurityParameters from "../../x500/createSecurityParameters";
+import rdnFromJson from "../../x500/rdnFromJson";
 
 const CHILD: string = id_oc_child.toString();
 
@@ -145,19 +146,40 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         },
         select: {
             hierarchyPath: true,
+            hierarchyParentDN: true,
         },
     });
+    pendingUpdates.entryUpdate.hierarchyParentDN = dn.map(rdnToJson);
+    pendingUpdates.entryUpdate.hierarchyLevel = (parent.dse.hierarchy.level + 1);
+    pendingUpdates.entryUpdate.hierarchyTopDN = top.map(rdnToJson);
+    pendingUpdates.entryUpdate.hierarchyPath = parentRow?.hierarchyPath
+        ? parentRow.hierarchyPath + `.${vertex.dse.id}`
+        : vertex.dse.id.toString();
+    pendingUpdates.otherWrites.push(ctx.db.entry.update({
+        where: {
+            id: parent.dse.id,
+        },
+        data: {
+            hierarchyLevel: parent.dse.hierarchy.level ?? 0,
+            hierarchyPath: parentRow?.hierarchyPath ?? parent.dse.id.toString(),
+            hierarchyTopDN: top.map(rdnToJson),
+            // hierarchyParentDN: Array.isArray(parent.dse.hierarchy.parent)
+            //     ? parent.dse.hierarchy.parent.map(rdnToJson)
+            //     : undefined,
+        },
+    }));
+    parent.dse.hierarchy = {
+        top,
+        level: parent.dse.hierarchy.level ?? 0,
+        parent: Array.isArray(parentRow?.hierarchyParentDN)
+            ? parentRow!.hierarchyParentDN.map(rdnFromJson)
+            : undefined,
+    };
     pendingUpdates.entryUpdate.hierarchyParent = {
         connect: {
             id: parent.dse.id,
         },
     };
-    pendingUpdates.entryUpdate.hierarchyParentDN = dn.map(rdnToJson);
-    pendingUpdates.entryUpdate.hierarchyLevel = (parent.dse.hierarchy.level + 1);
-    pendingUpdates.entryUpdate.hierarchyTopDN = top.map(rdnToJson);
-    pendingUpdates.entryUpdate.hierarchyPath = parentRow
-        ? parentRow + `.${vertex.dse.id}`
-        : vertex.dse.id.toString();
 };
 
 export

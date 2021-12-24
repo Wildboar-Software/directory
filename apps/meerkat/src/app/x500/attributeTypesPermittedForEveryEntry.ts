@@ -4,6 +4,9 @@ import { id_at_objectClass } from "@wildboar/x500/src/lib/modules/InformationFra
 import {
     id_aca_entryACI,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
+import {
+    hierarchyParent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
 
 /**
  * @summary Array of object identifiers for attribute types that are always permitted in an entry.
@@ -16,6 +19,7 @@ export
 const attributeTypesPermittedForEveryEntry: OBJECT_IDENTIFIER[] = [
     id_at_objectClass,
     id_aca_entryACI,
+    hierarchyParent["&id"],
 ];
 
 export default attributeTypesPermittedForEveryEntry;

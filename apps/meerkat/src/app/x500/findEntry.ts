@@ -29,7 +29,7 @@ async function findEntry (
     if (!queriedRDN) {
         return undefined; // This should never happen.
     }
-    let cursorId: number = currentVertex.subordinates?.[0]?.dse.id ?? 0;
+    let cursorId: number | undefined;
     const getNextBatchOfSubordinates = () => readChildren(
         ctx,
         currentVertex,
