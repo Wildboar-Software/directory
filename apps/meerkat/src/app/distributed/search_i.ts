@@ -1489,7 +1489,7 @@ async function search_i (
                                 {
                                     rdnSequence: getDistinguishedName(vertex),
                                 },
-                                Boolean(vertex.dse.shadow),
+                                !vertex.dse.shadow,
                                 attributeSizeLimit
                                     ? permittedEinfo.filter(filterEntryInfoItemBySize)
                                     : permittedEinfo,
@@ -1536,7 +1536,7 @@ async function search_i (
                                 {
                                     rdnSequence: getDistinguishedName(familySubset[0]),
                                 },
-                                Boolean(familySubset[0].dse.shadow),
+                                !familySubset[0].dse.shadow,
                                 attributeSizeLimit
                                     ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
                                     : filteredEinfos[0][1],
@@ -1761,7 +1761,7 @@ async function search_i (
                                     {
                                         rdnSequence: getDistinguishedName(familySubset[0]),
                                     },
-                                    Boolean(familySubset[0].dse.shadow),
+                                    !familySubset[0].dse.shadow,
                                     attributeSizeLimit
                                         ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
                                         : filteredEinfos[0][1],
