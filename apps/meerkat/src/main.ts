@@ -5,6 +5,8 @@ import isDebugging from "is-debugging";
 import * as path from "path";
 import main from "./app/main";
 
+require("dotenv").config({ debug: isDebugging }); // eslint-disable-line
+
 i18n
     .use(I18FileSystemBackend)
     .init({
