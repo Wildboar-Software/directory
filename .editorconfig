@@ -24,3 +24,6 @@ indent_style = space
 
 [*.pem]
 end_of_line = unset
+
+[start-meerkat]
+end_of_line = lf

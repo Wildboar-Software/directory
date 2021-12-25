@@ -98,6 +98,8 @@ export
 async function loadAttributeTypes (ctx: Context): Promise<void> {
     Object.entries({
         ...x500at,
+        userPwdHistory,
+        userPwdRecentlyExpired,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
