@@ -5,11 +5,10 @@ summary: X.500 Directory (DSA) and LDAP Server
 description: |
   Fully-featured X.500 directory server / directory system agent (DSA)
   and Lightweight Directory Access Protocol (LDAP) server written in
-  TypeScript by Wildboar Software. 
-
+  TypeScript by Wildboar Software.
+license: MIT
 grade: devel
-confinement: devmode
-
+confinement: strict
 parts:
   dsa:
     plugin: npm
@@ -29,3 +28,8 @@ parts:
 apps:
   meerkat-dsa:
     command: ./start-meerkat
+    daemon: simple
+    refresh-mode: restart # Will be changed to "endure" eventually.
+    restart-condition: never # Booting up is resource intensive. You wouldn't want it to loop.
+    plugs:
+      - network-observe

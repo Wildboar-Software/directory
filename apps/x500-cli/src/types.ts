@@ -4,6 +4,8 @@ import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncod
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { X500ClientConfig } from "@wildboar/x500-cli-config";
+import type { Logger } from "winston";
 
 export
 type UUID = string;
@@ -62,10 +64,51 @@ interface LDAPSyntaxInfo {
 }
 
 export
+interface Named {
+    readonly name: string;
+}
+
+export
+interface Metadata extends Named {
+    labels?: Record<string, string>;
+    annotations?: Record<string, string>;
+}
+
+export
+interface ConfigAccessPoint {
+    readonly url: string;
+    readonly category?: "master" | "shadow";
+    readonly "disable-start-tls"?: boolean;
+    readonly "insecure-skip-tls-verify"?: boolean;
+    readonly "certificate-authority"?: string;
+}
+
+export
+interface ConfigDSA extends Named {
+    accessPoints: ConfigAccessPoint[];
+}
+
+export
+interface ConfigCredentials extends Named {
+}
+
+export
+interface Config {
+    readonly apiVersion: string;
+    readonly kind: "X500ClientConfig";
+    readonly metadata: Metadata;
+    readonly "current-context"?: string;
+    readonly preferences?: Record<string, string>;
+    readonly dsas: ConfigDSA[];
+
+}
+
+export
 interface Context {
-    log: typeof console;
+    log: Logger;
     attributes: Map<IndexableOID, AttributeInfo>;
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
+    config?: X500ClientConfig | null;
 }
 
 export default Context;

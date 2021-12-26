@@ -1,0 +1,45 @@
+apiVersion: v1.0.0
+kind: X500ClientConfig
+metadata:
+  name: example-configuration
+current-context: adminctx
+preferences:
+  logLevel: debug
+  sizeLimit: 1000
+  timeLimit: 10
+  attributeSizeLimit: 1000
+dsas:
+  - name: example-dsa
+    accessPoints:
+      - url: idm://localhost:4632
+        category: master
+        disable-start-tls: true
+      # - url: idms://localhost:4632
+      #   insecure-skip-tls-verify: true
+      #   certificate-authority: fake-ca-file
+credentials:
+  - name: admin
+    simple:
+      name: cn=admin
+      password:
+        unprotected: asdf1234!
+        # protected:
+        #   algorithmIdentifier:
+        #     algorithm: 2.16.840.1.101.3.4.2.10
+        #   hashValue: 05798F295534414C8EF3D23A370C2A3C
+  - name: elonmusk
+    strong:
+      name: cn=elon
+      certPath: /home/asdf/config/cert-chain.pem
+      attrCertPath: /home/asdf/config/attr-cert-chain.pem
+  - name: elon-sasl
+    sasl:
+      PLAIN:
+        username: elon
+        password: musk
+contexts:
+  - name: adminctx
+    context:
+      dsa: example-dsa
+      credential: admin
+      readOnly: false

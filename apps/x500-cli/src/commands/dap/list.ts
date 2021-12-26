@@ -14,9 +14,6 @@ import {
     ListResult,
     _decode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
-import {
-    PagedResultsRequest_newRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -27,6 +24,10 @@ import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
 import stringifyDN from "../../utils/stringifyDN";
+
+const DEFAULT_TIME_LIMIT: number = 10;
+const DEFAULT_SIZE_LIMIT: number = 1000;
+const DEFAULT_ATTRIBUTE_SIZE_LIMIT: number = 1000;
 
 export
 async function do_list (
@@ -39,25 +40,16 @@ async function do_list (
         {
             rdnSequence: objectName,
         },
-        // {
-        //     newRequest: new PagedResultsRequest_newRequest(
-        //         10,
-        //         undefined,
-        //         undefined,
-        //         undefined,
-        //         19,
-        //     ),
-        // },
         undefined,
         argv.listFamily,
         [],
         new ServiceControls(
             undefined,
             undefined,
-            10, // timeLimit
+            DEFAULT_TIME_LIMIT,
+            DEFAULT_SIZE_LIMIT,
             undefined,
-            undefined,
-            undefined,
+            DEFAULT_ATTRIBUTE_SIZE_LIMIT,
             undefined,
             undefined,
             undefined,
@@ -101,7 +93,7 @@ async function do_list (
     if ("listInfo" in resData) {
         resData.listInfo.subordinates
             .map((sub) => stringifyDN(ctx, [ sub.rdn ]))
-            .forEach((str, i) => ctx.log.info(`#${(i + 1).toString().padStart(4, "0")}: ${str}`));
+            .forEach((str, i) => console.log(`#${(i + 1).toString().padStart(4, "0")}: ${str}`));
         ctx.log.info("End of list.");
     } else if ("uncorrelatedListInfo" in resData) {
         ctx.log.warn("Uncorrelated info."); // FIXME:
