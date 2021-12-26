@@ -6,10 +6,7 @@ import type {
     WithOutcomeStatistics,
     PagedResultsRequestState,
     IndexableOID,
-    // Value,
-    // StoredContext,
     DIT,
-    MistypedArgumentError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
@@ -46,6 +43,9 @@ import {
 import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500/src/lib/utils/evaluateFilter";
+import {
+    CannotPerformExactly,
+} from "@wildboar/x500/src/lib/errors";
 import { EntryInformation } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 import {
     EntryInformation_information_Item,
@@ -141,6 +141,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     ServiceProblem_invalidQueryReference,
+    ServiceProblem_unsupportedMatchingUse,
     ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
@@ -182,7 +183,7 @@ import {
     // FamilyGrouping_multiStrand,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 import {
-    // SearchControlOptions_searchAliases,
+    SearchControlOptions_searchAliases,
     SearchControlOptions_matchedValuesOnly,
     // SearchControlOptions_checkOverspecified,
     SearchControlOptions_performExactly,
@@ -620,8 +621,11 @@ async function search_i (
         return sizeFilter(item.attribute);
     };
 
-    // const searchAliases: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchAliases]);
-    const matchedValuesOnly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchedValuesOnly]);
+    const searchAliases: boolean = data.searchAliases
+        ?? Boolean(data.searchControlOptions?.[SearchControlOptions_searchAliases])
+        ?? SearchArgumentData._default_value_for_searchAliases;
+    const matchedValuesOnly: boolean = data.matchedValuesOnly
+        || Boolean(data.searchControlOptions?.[SearchControlOptions_matchedValuesOnly]);
     // const checkOverspecified: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_checkOverspecified]);
     const performExactly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_performExactly]);
     // const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
@@ -901,7 +905,6 @@ async function search_i (
         }
     }
     const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
-    const searchAliases = data.searchAliases ?? SearchArgumentData._default_value_for_searchAliases;
     /**
      * NOTE: It is critical that entryOnly comes from ChainingArguments. The
      * default values are the OPPOSITE between ChainingArguments and CommonArguments.
@@ -1371,7 +1374,31 @@ async function search_i (
                 const familyInfos = await Promise.all(
                     familySubset.map((member) => readFamilyMemberInfo(member)),
                 );
-                const matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                let matchedValues!: ReturnType<typeof evaluateFilter>;
+                try {
+                    matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                } catch (e) {
+                    if (e instanceof CannotPerformExactly) {
+                        throw new errors.ServiceError(
+                            ctx.i18n.t("err:could_not_match_exactly"),
+                            new ServiceErrorData(
+                                ServiceProblem_unsupportedMatchingUse,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    conn.boundNameAndUID?.dn,
+                                    undefined,
+                                    id_errcode_serviceError,
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                state.chainingArguments.aliasDereferenced,
+                                undefined,
+                            ),
+                        );
+                    } else {
+                        continue;
+                    }
+                }
                 const matched: boolean = (
                     (matchedValues === true)
                     || (Array.isArray(matchedValues) && !!matchedValues.length)
@@ -1596,7 +1623,31 @@ async function search_i (
                 const familyInfos = await Promise.all(
                     familySubset.map((member) => readFamilyMemberInfo(member)),
                 );
-                const matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                let matchedValues!: ReturnType<typeof evaluateFilter>;
+                try {
+                    matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                } catch (e) {
+                    if (e instanceof CannotPerformExactly) {
+                        throw new errors.ServiceError(
+                            ctx.i18n.t("err:could_not_match_exactly"),
+                            new ServiceErrorData(
+                                ServiceProblem_unsupportedMatchingUse,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    conn.boundNameAndUID?.dn,
+                                    undefined,
+                                    id_errcode_serviceError,
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                state.chainingArguments.aliasDereferenced,
+                                undefined,
+                            ),
+                        );
+                    } else {
+                        continue;
+                    }
+                }
                 const matched: boolean = (
                     (matchedValues === true)
                     || (Array.isArray(matchedValues) && !!matchedValues.length)
@@ -1714,7 +1765,7 @@ async function search_i (
                                 {
                                     rdnSequence: getDistinguishedName(vertex),
                                 },
-                                Boolean(vertex.dse.shadow),
+                                !vertex.dse.shadow,
                                 attributeSizeLimit
                                     ? permittedEinfo.filter(filterEntryInfoItemBySize)
                                     : permittedEinfo,
