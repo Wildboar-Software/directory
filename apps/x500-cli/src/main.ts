@@ -1,7 +1,9 @@
 import yargs from "yargs/yargs";
 import ctx from "./ctx";
 import loadAttributeTypes from "./utils/loadAttributeTypes";
+import loadObjectClasses from "./utils/loadObjectClasses";
 import loadLDAPSyntaxes from "./utils/loadLDAPSyntaxes";
+import loadContextTypes from "./utils/loadContextTypes";
 import do_read from "./commands/dap/read";
 import do_list from "./commands/dap/list";
 import do_compare from "./commands/dap/compare";
@@ -30,6 +32,8 @@ import getConfig from "./getConfig";
 async function main () {
     loadLDAPSyntaxes(ctx);
     loadAttributeTypes(ctx);
+    loadObjectClasses(ctx);
+    loadContextTypes(ctx);
     ctx.config = await getConfig(ctx);
     try {
         yargs(process.argv.slice(2))

@@ -47,12 +47,16 @@ interface Connection {
     events: ConnectionEventEmitter;
 }
 
+export type ValuePrinter = (ctx: Context, value: ASN1Element) => string | undefined;
+
 export
 interface AttributeInfo {
     id: OBJECT_IDENTIFIER;
+    name?: string;
     ldapSyntax?: OBJECT_IDENTIFIER;
     ldapNames?: LDAPName[];
     ldapDescription?: string;
+    valuePrinter?: ValuePrinter;
 }
 
 export
@@ -100,14 +104,34 @@ interface Config {
     readonly "current-context"?: string;
     readonly preferences?: Record<string, string>;
     readonly dsas: ConfigDSA[];
+}
 
+export
+interface ContextTypeInfo {
+    id: OBJECT_IDENTIFIER;
+    name?: string;
+    // description?: string;
+    // obsolete?: boolean;
+    syntax?: string;
+    // assertionSyntax?: string;
+    // defaultValue?: () => ASN1Element;
+    // absentMatch: boolean; // Defaults to TRUE
+    valuePrinter?: ValuePrinter;
+}
+
+export
+interface ObjectClassInfo {
+    id: OBJECT_IDENTIFIER;
+    name?: string;
 }
 
 export
 interface Context {
     log: Logger;
     attributes: Map<IndexableOID, AttributeInfo>;
+    objectClasses: Map<IndexableOID, ObjectClassInfo>;
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
+    contextTypes: Map<IndexableOID, ContextTypeInfo>;
     config?: X500ClientConfig | null;
 }
 

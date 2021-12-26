@@ -15,6 +15,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import printCode from "../../printers/Code";
 import destringifyDN from "../../utils/destringifyDN";
+import printError from "../../printers/Error_";
 
 export
 async function do_removeEntry (
@@ -49,11 +50,7 @@ async function do_removeEntry (
         argument: _encode_RemoveEntryArgument(arg, DER),
     });
     if ("error" in outcome) {
-        if (outcome.errcode) {
-            ctx.log.error(printCode(outcome.errcode));
-        } else {
-            ctx.log.error("Uncoded error.");
-        }
+        printError(ctx, outcome);
         return;
     }
     if (!outcome.result) {

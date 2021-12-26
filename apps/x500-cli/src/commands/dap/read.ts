@@ -1,5 +1,5 @@
 import type { Connection, Context } from "../../types";
-import { ObjectIdentifier } from "asn1-ts";
+import { TRUE, FALSE } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     read,
@@ -15,15 +15,21 @@ import {
     ReadResult,
     _decode_ReadResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
-import type {
+import {
     DistinguishedName,
+    _decode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
+import printValue from "../../printers/Value";
+import { dn } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa";
+import stringifyDN from "../../utils/stringifyDN";
+import selectAll from "../../utils/selectAll";
+import printEntryInformation from "../../printers/EntryInformation";
 import {
-    EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+    AttributeValueAssertion,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
 
 export
 async function do_read (
@@ -36,21 +42,8 @@ async function do_read (
         {
             rdnSequence: objectName,
         },
-        new EntryInformationSelection(
-            {
-                select: [
-                    new ObjectIdentifier([ 2, 5, 4, 3 ]),
-                ],
-            },
-            0,
-            {
-                allOperationalAttributes: null,
-            },
-            undefined,
-            undefined,
-            undefined,
-        ),
-        undefined,
+        selectAll,
+        TRUE,
         [],
         undefined,
         undefined,
@@ -89,28 +82,47 @@ async function do_read (
     if ("signed" in result) {
         ctx.log.info("This response was signed.");
     }
-    ctx.log.info("Entry:");
-    resData.entry.information?.forEach((info) => {
-        if ("attribute" in info) {
-            ctx.log.info(info.attribute.type_.toString());
-            info.attribute.values.map((v) => {
-                ctx.log.info("\t" + v.toString());
-            });
-            info.attribute.valuesWithContext?.forEach((vwc) => {
-                ctx.log.info("\t" + vwc.value.toString());
-                vwc.contextList
-                    .forEach((c) => {
-                        ctx.log.info("\t\t" + c.contextType.toString() + (c.fallback ? " FALLBACK" : ""));
-                        c.contextValues
-                            .forEach((cv) => {
-                                ctx.log.info("\t\t\t" + cv.toString());
-                            });
-                    });
-            });
-        } else if ("attributeType" in info) {
-            ctx.log.info("Attribute of type: " + info.attributeType.toString());
-        }
-    });
+    if (resData.aliasDereferenced === TRUE) {
+        ctx.log.info("An alias was dereferenced.");
+    }
+    if (resData.performer) {
+        console.log("Operation performed by: " + stringifyDN(ctx, resData.performer));
+    }
+    printEntryInformation(ctx, resData.entry);
+    if (resData.modifyRights) {
+        console.log("----- Modify Rights -----");
+        resData.modifyRights.forEach((mr) => {
+            const add = Boolean(mr.permission[0]);
+            const delete_ = Boolean(mr.permission[1]);
+            const rename = Boolean(mr.permission[2]);
+            const move = Boolean(mr.permission[3]);
+            const permissions: string[] = [];
+            if (add) {
+                permissions.push("ADD");
+            }
+            if (delete_) {
+                permissions.push("DELETE");
+            }
+            if (rename) {
+                permissions.push("RENAME");
+            }
+            if (move) {
+                permissions.push("MOVE");
+            }
+            if ("entry" in mr.item) {
+                console.log(`ENTRY:\t\t${permissions.join(", ")}`);
+            }
+            else if ("attribute" in mr.item) {
+                console.log(`Attribute ${mr.item.attribute}:\t\t${permissions.join(", ")}`);
+            }
+            else if ("value" in mr.item && (mr.item.value instanceof AttributeValueAssertion)) {
+                console.log(`Value of type ${mr.item.value.type_}:\t\t${permissions.join(", ")}`);
+            }
+            else {
+                console.log("Not understood item in modifyRights.");
+            }
+        })
+    }
 }
 
 export default do_read;

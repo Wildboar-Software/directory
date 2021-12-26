@@ -4,9 +4,10 @@ import {
 import type { AttributeInfo } from "../types";
 
 export
-function attributeFromInformationObject (io: ATTRIBUTE): AttributeInfo {
+function attributeFromInformationObject (io: ATTRIBUTE, name?: string): AttributeInfo {
     return {
         id: io["&id"],
+        name,
         ldapSyntax: io["&ldapSyntax"],
         ldapNames: io["&ldapName"],
         ldapDescription: io["&ldapDesc"],

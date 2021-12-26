@@ -20,8 +20,10 @@ const ctx: Context = {
             new winston.transports.Console(),
         ],
     }),
-    attributes: new Map([]),
-    ldapSyntaxes: new Map([]),
+    attributes: new Map(),
+    objectClasses: new Map(),
+    ldapSyntaxes: new Map(),
+    contextTypes: new Map(),
 };
 
 export default ctx;
