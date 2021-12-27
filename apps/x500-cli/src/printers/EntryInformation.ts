@@ -3,12 +3,9 @@ import { TRUE, FALSE } from "asn1-ts";
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
-import {
-    _decode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import printValue from "./Value";
-import { dn } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa";
 import stringifyDN from "../utils/stringifyDN";
+import printAttributeValue from "./AttributeValue";
 
 export
 function printEntryInformation (
@@ -36,41 +33,25 @@ function printEntryInformation (
     }
     entry.information?.forEach((info) => {
         if ("attribute" in info) {
-            const spec = ctx.attributes.get(info.attribute.type_.toString());
+            const TYPE_OID: string = info.attribute.type_.toString();
+            const spec = ctx.attributes.get(TYPE_OID);
             if (spec?.name) {
-                console.log(`${spec.name} (${info.attribute.type_.toString()})`);
+                console.log(`${spec.name} (${TYPE_OID})`);
             } else {
-                console.log(info.attribute.type_.toString());
+                console.log(TYPE_OID);
             }
-            info.attribute.values.forEach((v) => {
-                if (spec?.ldapSyntax?.isEqualTo(dn["&id"])) {
-                    const dn_ = _decode_DistinguishedName(v);
-                    console.log("\t" + stringifyDN(ctx, dn_));
-                    return;
-                }
-                if (spec?.valuePrinter) {
-                    const printed = spec.valuePrinter(ctx, v);
-                    if (printed) {
-                        console.log("\t" + printed);
-                        return;
-                    } else {
-                        console.log("\t" + printValue(v));
-                        return;
-                    }
-                } else {
-                    console.log("\t" + printValue(v));
-                    return;
-                }
-            });
+            info.attribute.values
+                .forEach((v) => console.log("\t" + printAttributeValue(ctx, v, spec)));
             info.attribute.valuesWithContext?.forEach((vwc) => {
                 console.log("\t" + vwc.value.toString());
                 vwc.contextList
                     .forEach((c) => {
-                        const cspec = ctx.contextTypes.get(c.contextType.toString());
+                        const CONTEXT_TYPE_OID: string = c.contextType.toString();
+                        const cspec = ctx.contextTypes.get(CONTEXT_TYPE_OID);
                         if (cspec?.name) {
-                            console.log(`\t\t${cspec.name} (${c.contextType.toString()})` + (c.fallback ? " FALLBACK" : ""));
+                            console.log(`\t\t${cspec.name} (${CONTEXT_TYPE_OID})` + (c.fallback ? " FALLBACK" : ""));
                         } else {
-                            console.log("\t\t" + c.contextType.toString() + (c.fallback ? " FALLBACK" : ""));
+                            console.log("\t\t" + CONTEXT_TYPE_OID + (c.fallback ? " FALLBACK" : ""));
                         }
                         c.contextValues
                             .forEach((cv) => {
@@ -91,11 +72,12 @@ function printEntryInformation (
                     });
             });
         } else if ("attributeType" in info) {
-            const spec = ctx.attributes.get(info.attributeType.toString());
+            const TYPE_OID: string = info.attributeType.toString();
+            const spec = ctx.attributes.get(TYPE_OID);
             if (spec?.name) {
-                console.log(`${spec.name} (${info.attributeType.toString()})`);
+                console.log(`${spec.name} (${TYPE_OID})`);
             } else {
-                console.log(info.attributeType.toString());
+                console.log(TYPE_OID);
             }
         }
     });

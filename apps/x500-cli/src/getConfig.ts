@@ -60,7 +60,7 @@ async function getConfig (ctx: Context): Promise<X500ClientConfig | null> {
     const valid = validator(config);
     if (!valid) {
         ctx.log.error("Invalid configuration.");
-        ctx.log.error(validator.errors);
+        console.error(validator.errors);
     }
     return config as X500ClientConfig;
 }
