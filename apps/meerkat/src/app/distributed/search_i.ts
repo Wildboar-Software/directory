@@ -1153,13 +1153,13 @@ async function search_i (
     const filterUnauthorizedEntryInformation = (
         einfo: EntryInformation_information_Item[],
     ): [ boolean, EntryInformation_information_Item[] ] => {
+        let incompleteEntry: boolean = false;
         if (
             !accessControlScheme
             || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
         ) {
-            return [ true, einfo ];
+            return [ incompleteEntry, einfo ];
         }
-        let incompleteEntry: boolean = false;
         const permittedEinfo: EntryInformation_information_Item[] = [];
         for (const info of einfo) {
             if ("attribute" in info) {

@@ -11,6 +11,7 @@ import do_administerPassword from "./commands/dap/apw";
 import do_changePassword from "./commands/dap/cpw";
 import do_removeEntry from "./commands/dap/remove";
 import do_modifyDN from "./commands/dap/moddn";
+import do_search from "./commands/dap/search";
 import dap_add_country from "./yargs/dap_add_country";
 import dap_add_organization from "./yargs/dap_add_organization";
 import dap_add_organizationalUnit from "./yargs/dap_add_organizationalUnit";
@@ -24,7 +25,7 @@ import dap_add_process from "./yargs/dap_add_process";
 import dap_add_device from "./yargs/dap_add_device";
 import dap_add_dmd from "./yargs/dap_add_dmd";
 import dap_mod_become_admpoint from "./yargs/dap_mod_become_admpoint";
-import dap_search_new from "./yargs/dap_search_new";
+import dap_search from "./yargs/dap_search";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
 import getConfig from "./getConfig";
@@ -158,14 +159,7 @@ async function main () {
                         await do_removeEntry(ctx, connection, argv);
                         await connection.close();
                     })
-                    .command("search", "Search entries", (searchYargs) => {
-                        searchYargs
-                            .command(dap_search_new(ctx))
-                            // TODO: search continue
-                            // TODO: search abandon
-                            .demandCommand()
-                            ;
-                    })
+                    .command(dap_search(ctx))
                     .demandCommand()
             })
             .option("bindDN", {

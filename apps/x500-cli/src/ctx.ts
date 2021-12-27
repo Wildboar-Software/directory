@@ -12,9 +12,10 @@ winstonLogFormats.push(winston.format.printf(info => `${info.timestamp} [${info.
 
 const ctx: Context = {
     log: winston.createLogger({
-        level: isDebugging
-            ? "debug"
-            : "info",
+        level: "info",
+        // level: isDebugging
+        //     ? "debug"
+        //     : "info",
         format: winston.format.combine(...winstonLogFormats),
         transports: [
             new winston.transports.Console(),

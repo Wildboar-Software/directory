@@ -6,13 +6,18 @@ import {
 import printValue from "./Value";
 import stringifyDN from "../utils/stringifyDN";
 import printAttributeValue from "./AttributeValue";
+import chalk from "chalk";
+
+const colorize: (str: string) => string = process.env.NO_COLOR
+    ? (str: string): string => str
+    : chalk.cyanBright;
 
 export
 function printEntryInformation (
     ctx: Context,
     entry: EntryInformation,
 ): void {
-    console.log(`>>> Entry: ${stringifyDN(ctx, entry.name.rdnSequence)}`);
+    console.log(colorize(`>>> Entry: ${stringifyDN(ctx, entry.name.rdnSequence)}`));
     const unusualThings: string[] = [];
     if (entry.fromEntry === FALSE) {
         unusualThings.push("fromEntry: FALSE");

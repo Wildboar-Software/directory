@@ -1,4 +1,5 @@
 import type { Connection, Context } from "../../types";
+import { TRUE } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     search,
@@ -23,13 +24,11 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
-import stringifyDN from "../../utils/stringifyDN";
-import {
-    PagedResultsRequest_newRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import printError from "../../printers/Error_";
+import printEntryInformation from "../../printers/EntryInformation";
+import selectAll from "../../utils/selectAll";
 
 function subsetFromString (str: string): SearchArgumentData_subset {
     const str_ = str.toLowerCase();
@@ -50,6 +49,7 @@ async function search_new (
     conn: Connection,
     argv: any,
 ): Promise<void> {
+    console.log(argv.object);
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);
     const reqData: SearchArgumentData = new SearchArgumentData(
         {
@@ -57,21 +57,12 @@ async function search_new (
         },
         subsetFromString(argv.subset),
         undefined,
-        true,
-        undefined,
-        // {
-        //     newRequest: new PagedResultsRequest_newRequest(
-        //         10,
-        //         undefined,
-        //         undefined,
-        //         undefined,
-        //         3,
-        //     ),
-        // },
+        TRUE,
+        selectAll,
         undefined,
         undefined,
         undefined,
-        false,
+        TRUE,
         undefined,
         undefined,
         undefined,
@@ -100,11 +91,7 @@ async function search_new (
         argument: _encode_SearchArgument(arg, DER),
     });
     if ("error" in outcome) {
-        if (outcome.errcode) {
-            ctx.log.error(printCode(outcome.errcode));
-        } else {
-            ctx.log.error("Uncoded error.");
-        }
+        printError(ctx, outcome);
         return;
     }
     if (!outcome.result) {
@@ -117,42 +104,10 @@ async function search_new (
         ctx.log.info("This response was signed.");
     }
     if ("searchInfo" in resData) {
-        resData.searchInfo.entries
-            .forEach((e) => {
-                const dn = stringifyDN(ctx, e.name.rdnSequence);
-                ctx.log.info(`DN: ${dn}`);
-                e.information
-                    ?.forEach((einfo) => {
-                        if ("attributeType" in einfo) {
-                            ctx.log.info(`Attribute Type: ${einfo.attributeType.toString()}`);
-                        } else if ("attribute" in einfo) {
-                            const oid: string = einfo.attribute.type_.toString();
-                            const spec = ctx.attributes.get(oid);
-                            const name: string = spec?.ldapNames?.[0] ?? oid;
-                            const syntaxOID = spec?.ldapSyntax;
-                            if (!syntaxOID) {
-                                return; // FIXME:
-                            }
-                            const syntax = ctx.ldapSyntaxes.get(syntaxOID.toString());
-                            if (!syntax?.encoder) {
-                                return; // FIXME:
-                            }
-                            const encoder = syntax.encoder;
-                            // encoder()
-                            einfo.attribute.values
-                                .map((value) => {
-                                    const stringValue = encoder(value);
-                                    ctx.log.info(`${name}: ${stringValue}`);
-                                });
-                            einfo.attribute.valuesWithContext
-                                ?.map((vwc) => {
-                                    const stringValue = encoder(vwc.value);
-                                    ctx.log.info(`${name} (C): ${stringValue}`);
-                                });
-                        }
-                    });
-                ctx.log.info("-----");
-            })
+        resData.searchInfo.entries.forEach((e) => {
+            printEntryInformation(ctx, e);
+            console.log();
+        });
         ctx.log.info("End of search.");
     } else if ("uncorrelatedSearchInfo" in resData) {
         ctx.log.warn("Uncorrelated info."); // FIXME:
