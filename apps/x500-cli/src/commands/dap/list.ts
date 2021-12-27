@@ -20,10 +20,10 @@ import type {
 import {
     ServiceControls,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
 import stringifyDN from "../../utils/stringifyDN";
+import printError from "../../printers/Error_";
 
 const DEFAULT_TIME_LIMIT: number = 10;
 const DEFAULT_SIZE_LIMIT: number = 1000;
@@ -74,11 +74,7 @@ async function do_list (
         argument: _encode_ListArgument(arg, DER),
     });
     if ("error" in outcome) {
-        if (outcome.errcode) {
-            ctx.log.error(printCode(outcome.errcode));
-        } else {
-            ctx.log.error("Uncoded error.");
-        }
+        printError(ctx, outcome);
         return;
     }
     if (!outcome.result) {

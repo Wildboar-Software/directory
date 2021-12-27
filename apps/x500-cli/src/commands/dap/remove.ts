@@ -13,7 +13,6 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import printCode from "../../printers/Code";
 import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
 

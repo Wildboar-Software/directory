@@ -28,6 +28,11 @@ import {
 import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
+import chalk from "chalk";
+
+const colorize: (str: string) => string = process.env.NO_COLOR
+    ? (str: string): string => str
+    : chalk.red;
 
 const securityErrorProblemNames: Map<number, string> = new Map(
     Object.entries(secp)
@@ -72,15 +77,15 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
     if (compareCode(e.errcode, securityError["&errorCode"]!)) {
         const param = securityError.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
-        console.error(
+        console.error(colorize(
             "SECURITY ERROR: "
             + securityErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
-        );
+        ));
         if (data.aliasDereferenced) {
-            console.error(ALIAS_DEREFED);
+            console.error(colorize(ALIAS_DEREFED));
         }
         if (data.performer) {
-            console.error("This error was produced by: " + stringifyDN(ctx, data.performer));
+            console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
         // This is never explained in the X.511 specifications.
         // if (data.encPwdInfo?.algorithms?.length) {
@@ -91,76 +96,80 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
     if (compareCode(e.errcode, serviceError["&errorCode"]!)) {
         const param = serviceError.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
-        console.error(
+        console.error(colorize(
             "SERVICE ERROR: "
             + serviceErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
-        );
+        ));
         if (data.aliasDereferenced) {
-            console.error(ALIAS_DEREFED);
+            console.error(colorize(ALIAS_DEREFED));
         }
         if (data.performer) {
-            console.error("This error was produced by: " + stringifyDN(ctx, data.performer));
+            console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
         return;
     }
     if (compareCode(e.errcode, nameError["&errorCode"]!)) {
         const param = nameError.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
-        console.error(
+        console.error(colorize(
             "NAME ERROR: "
             + nameErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
-        );
-        console.error("This is the name that matched: " + stringifyDN(ctx, data.matched.rdnSequence));
+        ));
+        if (data.matched.rdnSequence.length) {
+            console.error(colorize("This is the name that matched: " + stringifyDN(ctx, data.matched.rdnSequence)));
+        } else {
+            console.error(colorize("This is the name that matched: <Root DSE>"));
+        }
         if (data.aliasDereferenced) {
-            console.error(ALIAS_DEREFED);
+            console.error(colorize(ALIAS_DEREFED));
         }
         if (data.performer) {
-            console.error("This error was produced by: " + stringifyDN(ctx, data.performer));
+            console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
         return;
     }
     if (compareCode(e.errcode, attributeError["&errorCode"]!)) {
         const param = attributeError.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
-        console.error(
+        console.error(colorize(
             "This is the object to which the operation applied: "
             + stringifyDN(ctx, data.object.rdnSequence),
-        );
+        ));
         for (let i = 0; i < data.problems.length; i++) {
             const problem = data.problems[i];
             const probStr: string = attributeErrorProblemNames.get(problem.problem as number) ?? UNKNOWN_PROBLEM;
             const TYPE_OID: string = problem.type_.toString();
             const spec = ctx.attributes.get(TYPE_OID);
             if (spec?.name) {
-                console.log(`${spec.name} (${TYPE_OID})`);
+                console.error(`${spec.name} (${TYPE_OID})`);
             } else {
-                console.log(TYPE_OID);
+                console.error(TYPE_OID);
             }
             const type_: string = (spec?.name) ? `${spec.name} (${TYPE_OID})` : TYPE_OID;
             if (problem.value) {
-                console.error(
+                console.error(colorize(
                     `Problem #${(i + 1)}: ${probStr} for this value of attribute type ${type_}: `
                     + printAttributeValue(ctx, problem.value, spec),
-                );
+                ));
             } else {
                 console.error(`Problem #${(i + 1)}: ${probStr} for attribute type ${type_}`);
             }
         }
         if (data.aliasDereferenced) {
-            console.error(ALIAS_DEREFED);
+            console.error(colorize(ALIAS_DEREFED));
         }
         if (data.performer) {
-            console.error("This error was produced by: " + stringifyDN(ctx, data.performer));
+            console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
         return;
     }
     if (compareCode(e.errcode, updateError["&errorCode"]!)) {
         const param = updateError.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
-        console.error(
+        console.error(colorize(
             "UPDATE ERROR: "
             + updateErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
-        );
+        ));
         const attributeInfo = data.attributeInfo ?? [];
         for (let i = 0; i < attributeInfo.length; i++) {
             const info = attributeInfo[i];
@@ -176,66 +185,66 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
             }
         }
         if (data.aliasDereferenced) {
-            console.error(ALIAS_DEREFED);
+            console.error(colorize(ALIAS_DEREFED));
         }
         if (data.performer) {
-            console.error("This error was produced by: " + stringifyDN(ctx, data.performer));
+            console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
         return;
     }
     if (compareCode(e.errcode, referral["&errorCode"]!)) {
         const param = referral.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
-        console.error("The performing DSA has referred you to the following DSA(s) to continue your request: ");
+        console.error(colorize("The performing DSA has referred you to the following DSA(s) to continue your request: "));
         for (const api of data.candidate.accessPoints) {
-            console.error(`DSA Application Entity: ${stringifyDN(ctx, api.ae_title.rdnSequence)}`);
-            console.error("Network access points:");
+            console.error(colorize(`DSA Application Entity: ${stringifyDN(ctx, api.ae_title.rdnSequence)}`));
+            console.error(colorize("Network access points:"));
             for (let i = 0; i < api.address.nAddresses.length; i++) {
                 const naddr = api.address.nAddresses[i];
                 const uri: string | undefined = naddrToURI(naddr);
                 if (!uri) {
-                    console.error("\t" + `${i + 1}. ${Buffer.from(naddr).toString("hex")}`);
+                    console.error(colorize("\t" + `${i + 1}. ${Buffer.from(naddr).toString("hex")}`));
                     continue;
                 }
-                console.error("\t" + `${i + 1}. ${uri}`);
+                console.error(colorize("\t" + `${i + 1}. ${uri}`));
             }
             if (api.chainingRequired) {
-                console.error("The referring DSA has reported that chaining is required for use of this DSA.");
+                console.error(colorize("The referring DSA has reported that chaining is required for use of this DSA."));
             }
             if (api.category && (api.category !== MasterOrShadowAccessPoint_category_master)) {
-                console.error("The referring DSA has reported that this DSA is not a master DSA.");
+                console.error(colorize("The referring DSA has reported that this DSA is not a master DSA."));
             }
             if (!api.additionalPoints?.length) {
                 continue;
             }
-            console.error("Additional access points:");
+            console.error(colorize("Additional access points:"));
             for (const aap of api.additionalPoints ?? []) {
-                console.error("\t" + `DSA Application Entity: ${stringifyDN(ctx, aap.ae_title.rdnSequence)}`);
-                console.error("\tNetwork access points:");
+                console.error(colorize("\t" + `DSA Application Entity: ${stringifyDN(ctx, aap.ae_title.rdnSequence)}`));
+                console.error(colorize("\tNetwork access points:"));
                 for (let i = 0; i < aap.address.nAddresses.length; i++) {
                     const naddr = aap.address.nAddresses[i];
                     const uri: string | undefined = naddrToURI(naddr);
                     if (!uri) {
-                        console.error("\t\t" + `${i + 1}. ${Buffer.from(naddr).toString("hex")}`);
+                        console.error(colorize("\t\t" + `${i + 1}. ${Buffer.from(naddr).toString("hex")}`));
                         continue;
                     }
-                    console.error("\t\t" + `${i + 1}. ${uri}`);
+                    console.error(colorize("\t\t" + `${i + 1}. ${uri}`));
                 }
                 if (aap.chainingRequired) {
-                    console.error("\tThe referring DSA has reported that chaining is required for use of this DSA.");
+                    console.error(colorize("\tThe referring DSA has reported that chaining is required for use of this DSA."));
                 }
                 if (aap.category && (aap.category !== MasterOrShadowAccessPoint_category_master)) {
-                    console.error("\tThe referring DSA has reported that this DSA is not a master DSA.");
+                    console.error(colorize("\tThe referring DSA has reported that this DSA is not a master DSA."));
                 }
-                console.error("\t-----");
+                console.error(colorize("\t-----"));
             }
-            console.error("-----");
+            console.error(colorize("-----"));
         }
         if (data.aliasDereferenced) {
-            console.error(ALIAS_DEREFED);
+            console.error(colorize(ALIAS_DEREFED));
         }
         if (data.performer) {
-            console.error("This error was produced by: " + stringifyDN(ctx, data.performer));
+            console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
         return;
     }
@@ -243,30 +252,30 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         const param = abandoned.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
         if (data.problem === AbandonedProblem_pagingAbandoned) {
-            console.error("Paging abandoned.");
+            console.error(colorize("Paging abandoned."));
         } else {
-            console.error("Abandoned.");
+            console.error(colorize("Abandoned."));
         }
         if (data.aliasDereferenced) {
-            console.error(ALIAS_DEREFED);
+            console.error(colorize(ALIAS_DEREFED));
         }
         if (data.performer) {
-            console.error("This error was produced by: " + stringifyDN(ctx, data.performer));
+            console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
         return;
     }
     if (compareCode(e.errcode, abandonFailed["&errorCode"]!)) {
         const param = abandonFailed.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
-        console.error(
+        console.error(colorize(
             "ABANDON FAILED ERROR: "
             + abandonFailedProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
-        );
+        ));
         if (data.aliasDereferenced) {
-            console.error(ALIAS_DEREFED);
+            console.error(colorize(ALIAS_DEREFED));
         }
         if (data.performer) {
-            console.error("This error was produced by: " + stringifyDN(ctx, data.performer));
+            console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
         return;
     }

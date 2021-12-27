@@ -16,8 +16,8 @@ import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import { DER } from "asn1-ts/dist/node/functional";
-import printCode from "../../printers/Code";
 import destringifyDN from "../../utils/destringifyDN";
+import printError from "../../printers/Error_";
 
 export
 async function do_addEntry (
@@ -55,11 +55,7 @@ async function do_addEntry (
         argument: _encode_AddEntryArgument(arg, DER),
     });
     if ("error" in outcome) {
-        if (outcome.errcode) {
-            ctx.log.error(printCode(outcome.errcode));
-        } else {
-            ctx.log.error("Uncoded error.");
-        }
+        printError(ctx, outcome);
         return;
     }
     if (!outcome.result) {

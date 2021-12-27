@@ -1,5 +1,5 @@
 import type { Connection, Context } from "../../types";
-import { TRUE, FALSE } from "asn1-ts";
+import { TRUE } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     read,
@@ -17,19 +17,16 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
 import {
     DistinguishedName,
-    _decode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
-import printValue from "../../printers/Value";
-import { dn } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa";
 import stringifyDN from "../../utils/stringifyDN";
 import selectAll from "../../utils/selectAll";
 import printEntryInformation from "../../printers/EntryInformation";
 import {
     AttributeValueAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
+import printError from "../../printers/Error_";
 
 export
 async function do_read (
@@ -66,11 +63,7 @@ async function do_read (
         argument: _encode_ReadArgument(arg, DER),
     });
     if ("error" in outcome) {
-        if (outcome.errcode) {
-            ctx.log.error(printCode(outcome.errcode));
-        } else {
-            ctx.log.error("Uncoded error.");
-        }
+        printError(ctx, outcome);
         return;
     }
     if (!outcome.result) {

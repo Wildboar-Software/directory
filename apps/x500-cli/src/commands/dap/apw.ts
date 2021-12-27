@@ -13,10 +13,10 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import printCode from "../../printers/Code";
 import destringifyDN from "../../utils/destringifyDN";
 import MutableWriteable from "../../utils/MutableWriteable";
 import * as readline from "readline";
+import printError from "../../printers/Error_";
 
 const mutedOut = new MutableWriteable();
 
@@ -58,11 +58,7 @@ async function do_administerPassword (
         argument: _encode_AdministerPasswordArgument(arg, DER),
     });
     if ("error" in outcome) {
-        if (outcome.errcode) {
-            ctx.log.error(printCode(outcome.errcode));
-        } else {
-            ctx.log.error("Uncoded error.");
-        }
+        printError(ctx, outcome);
         return;
     }
     if (!outcome.result) {

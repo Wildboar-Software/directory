@@ -42,6 +42,7 @@
         "@wildboar/x500": "^1.0.35",
         "asn1-ts": "^7.0.1",
         "axios": "^0.21.1",
+        "chalk": "^4.1.2",
         "class-transformer": "^0.4.0",
         "class-validator": "^0.13.1",
         "date-fns": "^2.23.0",

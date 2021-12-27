@@ -17,13 +17,13 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import printCode from "../../printers/Code";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
 import {
     AttributeValueAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
 import { DERElement } from "asn1-ts";
+import printError from "../../printers/Error_";
 
 export
 async function do_compare (
@@ -73,11 +73,7 @@ async function do_compare (
         argument: _encode_CompareArgument(arg, DER),
     });
     if ("error" in outcome) {
-        if (outcome.errcode) {
-            ctx.log.error(printCode(outcome.errcode));
-        } else {
-            ctx.log.error("Uncoded error.");
-        }
+        printError(ctx, outcome);
         return;
     }
     if (!outcome.result) {
@@ -89,6 +85,7 @@ async function do_compare (
     if ("signed" in result) {
         ctx.log.info("This response was signed.");
     }
+    console.log(resData.matched ? "TRUE" : "FALSE");
 }
 
 export default do_compare;
