@@ -75,19 +75,19 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
     //     children: [],
     // });
 
-    Object.entries(x500oc).forEach(([ name, oc ]) => {
+    Object.entries({
+        ...x500oc,
+        ...additionalObjectClasses,
+    }).forEach(([ name, oc ]) => {
+        const norm = name.toLowerCase();
         ctx.nameToObjectIdentifier.set(name, oc["&id"]);
+        ctx.objectIdentifierToName.set(oc["&id"].toString(), name);
+        ctx.nameToObjectIdentifier.set(norm, oc["&id"]);
+        ctx.objectIdentifierToName.set(oc["&id"].toString(), norm);
         oc["&ldapName"]?.map((ldapName) => {
             ctx.nameToObjectIdentifier.set(ldapName, oc["&id"]);
+            ctx.nameToObjectIdentifier.set(ldapName.toLowerCase(), oc["&id"]);
         });
-        ctx.objectIdentifierToName.set(oc["&id"].toString(), name);
-    });
-    Object.entries(additionalObjectClasses).forEach(([ name, oc ]) => {
-        ctx.nameToObjectIdentifier.set(name, oc["&id"]);
-        oc["&ldapName"]?.map((ldapName) => {
-            ctx.nameToObjectIdentifier.set(ldapName, oc["&id"]);
-        });
-        ctx.objectIdentifierToName.set(oc["&id"].toString(), name);
     });
 }
 

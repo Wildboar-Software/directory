@@ -195,7 +195,7 @@ const NOT_UNDERSTOOD: DAPFilter = {
 };
 
 function getLDAPDecoder (ctx: Context, descriptor: string): LDAPSyntaxDecoder | null {
-    const spec = ctx.attributeTypes.get(descriptor);
+    const spec = ctx.attributeTypes.get(descriptor.toLowerCase());
     if (!spec) {
         return null;
     }
@@ -217,7 +217,7 @@ function getLDAPDecoder (ctx: Context, descriptor: string): LDAPSyntaxDecoder | 
 }
 
 function getLDAPDecoderForEqualityMatcher (ctx: Context, descriptor: string): LDAPSyntaxDecoder | null {
-    const spec = ctx.attributeTypes.get(descriptor);
+    const spec = ctx.attributeTypes.get(descriptor.toLowerCase());
     if (!spec) {
         return null;
     }
@@ -266,7 +266,7 @@ function createAttributeErrorData (ctx: Context, descriptor: string): [ string, 
 
 function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification): EntryModification {
     const desc = normalizeAttributeDescription(mod.modification.type_);
-    const spec = ctx.attributeTypes.get(desc);
+    const spec = ctx.attributeTypes.get(desc.toLowerCase());
     if (!spec?.ldapSyntax) {
         throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
     }
@@ -397,7 +397,7 @@ function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification):
 
 function convert_ldap_ava_to_dap_ava (ctx: Context, ava: LDAPAttributeValueAssertion): AttributeValueAssertion {
     const desc = normalizeAttributeDescription(ava.attributeDesc);
-    const spec = ctx.attributeTypes.get(desc);
+    const spec = ctx.attributeTypes.get(desc.toLowerCase());
     if (!spec) {
         throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
     }
@@ -468,7 +468,7 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
     }
     else if ("substrings" in filter) {
         const desc = normalizeAttributeDescription(filter.substrings.type_);
-        const spec = ctx.attributeTypes.get(desc);
+        const spec = ctx.attributeTypes.get(desc.toLowerCase());
         if (!spec?.ldapSyntax) {
             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
         }
@@ -518,7 +518,7 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
     }
     else if ("present" in filter) {
         const desc = normalizeAttributeDescription(filter.present);
-        const spec = ctx.attributeTypes.get(desc);
+        const spec = ctx.attributeTypes.get(desc.toLowerCase());
         if (!spec) {
             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
         }
@@ -540,7 +540,7 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
             return NOT_UNDERSTOOD;
         }
         const mrDesc = filter.extensibleMatch.matchingRule
-            ? normalizeAttributeDescription(filter.extensibleMatch.matchingRule)
+            ? normalizeAttributeDescription(filter.extensibleMatch.matchingRule).toLowerCase()
             : undefined;
         const matchingRule = mrDesc
             ? ctx.equalityMatchingRules.get(mrDesc)
@@ -548,7 +548,7 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
                 ?? ctx.substringsMatchingRules.get(mrDesc)
             : undefined;
         const desc = normalizeAttributeDescription(filter.extensibleMatch.type_);
-        const spec = ctx.attributeTypes.get(desc);
+        const spec = ctx.attributeTypes.get(desc.toLowerCase());
         const ldapSyntaxOID = (
             matchingRule?.ldapAssertionSyntax
             && ctx.ldapSyntaxes.get(matchingRule.ldapAssertionSyntax.toString())
@@ -600,7 +600,7 @@ function convertAttributeSelectiontoEIS (
         .flatMap((attr) => {
             const desc = normalizeAttributeDescription(attr);
             if (desc.startsWith("@")) { // See: https://www.rfc-editor.org/rfc/rfc4529.html
-                const oc = ctx.objectClasses.get(desc.slice(1));
+                const oc = ctx.objectClasses.get(desc.slice(1).toLowerCase());
                 if (!oc) {
                     return [];
                 }
@@ -609,7 +609,7 @@ function convertAttributeSelectiontoEIS (
                     ...Array.from(oc.optionalAttributes.values()).map(ObjectIdentifier.fromString),
                 ];
             }
-            const spec = ctx.attributeTypes.get(desc);
+            const spec = ctx.attributeTypes.get(desc.toLowerCase());
             if (!spec) {
                 return [];
             }
@@ -820,10 +820,10 @@ function ldapRequestToDAPRequest (
                     : undefined;
                 reverse = skElements
                     .find((ske) => (ske.tagNumber === 1))?.boolean ?? false;
-                const attrSpec = ctx.attributeTypes.get(attributeTypeDesc);
+                const attrSpec = ctx.attributeTypes.get(attributeTypeDesc.toLowerCase());
                 if (attrSpec) {
                     const mrSpec = orderingRuleDesc
-                        ? ctx.orderingMatchingRules.get(orderingRuleDesc)
+                        ? ctx.orderingMatchingRules.get(orderingRuleDesc.toLowerCase())
                         : undefined;
                     sortKey = new SortKey(
                         attrSpec?.id,
@@ -994,7 +994,7 @@ function ldapRequestToDAPRequest (
                 req.protocolOp.addRequest.attributes
                     .map((attr): Attribute | undefined => {
                         const desc = normalizeAttributeDescription(attr.type_);
-                        const spec = ctx.attributeTypes.get(desc);
+                        const spec = ctx.attributeTypes.get(desc.toLowerCase());
                         const decoder = getLDAPDecoder(ctx, desc);
                         if (!decoder) {
                             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
@@ -1165,7 +1165,7 @@ function ldapRequestToDAPRequest (
     }
     else if ("compareRequest" in req.protocolOp) {
         const desc = normalizeAttributeDescription(req.protocolOp.compareRequest.ava.attributeDesc);
-        const spec = ctx.attributeTypes.get(desc);
+        const spec = ctx.attributeTypes.get(desc.toLowerCase());
         if (!spec?.ldapSyntax) {
             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
         }

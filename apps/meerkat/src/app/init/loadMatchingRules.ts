@@ -1,4 +1,9 @@
-import type { Context, MatchingRuleInfo } from "@wildboar/meerkat-types";
+import type {
+    Context,
+    MatchingRuleInfo,
+    SortKeyGetter,
+    SortKey,
+} from "@wildboar/meerkat-types";
 import type {
     MATCHING_RULE,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca";
@@ -269,6 +274,29 @@ import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch";
 import entryUUID from "../schema/attributes/entryUUID";
 import uuidMatch from "../matching/equality/uuidMatch";
 import uuidOrderingMatch from "../matching/ordering/uuidOrderingMatch";
+import type { ASN1Element } from "asn1-ts";
+import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+import {
+    _decode_UnboundedDirectoryString,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+
+const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
+    const ds = _decode_UnboundedDirectoryString(element);
+    const str = directoryStringToString(ds).toUpperCase();
+    const buf = Buffer.from([ 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF ]);
+    buf.set(Buffer.from(str, "utf-8").slice(0, 7), 1);
+    return buf.readBigUInt64BE();
+};
+
+const caseExactSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
+    const ds = _decode_UnboundedDirectoryString(element);
+    const str = directoryStringToString(ds);
+    const buf = Buffer.from([ 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF ]);
+    buf.set(Buffer.from(str, "utf-8").slice(0, 7), 1);
+    return buf.readBigUInt64BE();
+};
+
+// A separate UUID sort key getter is not necessary, because it does the same thing as OCTET STRING.
 
 function toInfo <Matcher> (
     mr: MATCHING_RULE,
@@ -376,15 +404,30 @@ function loadMatchingRules (ctx: Context): void {
 
     equalityInfo
         .forEach(([ mr, matcher ]) => {
-            ctx.equalityMatchingRules.set(mr["&id"].toString(), toInfo(mr, matcher));
+            const info = toInfo(mr, matcher);
+            ctx.equalityMatchingRules.set(mr["&id"].toString(), info);
+            mr["&ldapName"]?.forEach((name) => {
+                ctx.equalityMatchingRules.set(name, info);
+                ctx.equalityMatchingRules.set(name.toLowerCase(), info);
+            });
         });
     orderingInfo
         .forEach(([ mr, matcher ]) => {
-            ctx.orderingMatchingRules.set(mr["&id"].toString(), toInfo(mr, matcher));
+            const info = toInfo(mr, matcher);
+            ctx.orderingMatchingRules.set(mr["&id"].toString(), info);
+            mr["&ldapName"]?.forEach((name) => {
+                ctx.orderingMatchingRules.set(name, info);
+                ctx.orderingMatchingRules.set(name.toLowerCase(), info);
+            });
         });
     substringsInfo
         .forEach(([ mr, matcher ]) => {
-            ctx.substringsMatchingRules.set(mr["&id"].toString(), toInfo(mr, matcher));
+            const info = toInfo(mr, matcher);
+            ctx.substringsMatchingRules.set(mr["&id"].toString(), info);
+            mr["&ldapName"]?.forEach((name) => {
+                ctx.substringsMatchingRules.set(name, info);
+                ctx.substringsMatchingRules.set(name.toLowerCase(), info);
+            });
         });
 
     ctx.approxMatchingRules.set(
@@ -493,6 +536,9 @@ function loadMatchingRules (ctx: Context): void {
             name: ["uuidMatch"],
         },
     );
+
+    ctx.orderingMatchingRules.get(x500mr.caseExactOrderingMatch["&id"]!.toString())!.sortKeyGetter = caseExactSortKeyGetter;
+    ctx.orderingMatchingRules.get(x500mr.caseIgnoreOrderingMatch["&id"]!.toString())!.sortKeyGetter = caseIgnoreSortKeyGetter;
 }
 
 export default loadMatchingRules;
