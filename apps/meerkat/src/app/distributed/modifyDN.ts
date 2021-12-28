@@ -1179,6 +1179,25 @@ async function modifyDN (
         target.immediateSuperior.subordinates.splice(entryIndex, 1); // Remove from the current parent.
         superior?.subordinates?.push(target); // Move to the new parent.
     }
+    const oldMaterializedPathPrefix: string = target.immediateSuperior.dse.root
+        ? (target.dse.id.toString() + ".")
+        : `${target.materializedPath}.${target.dse.id}.`;
+    const newMaterializedPath: string = superior.dse.root
+        ? ""
+        : (superior.materializedPath.length
+            ? `${superior.materializedPath}${superior.dse.id.toString() + "."}`
+            : superior.dse.id.toString() + ".");
+    const materializedPathsToUpdate = await ctx.db.entry.findMany({
+        where: {
+            materialized_path: {
+                startsWith: oldMaterializedPathPrefix,
+            },
+        },
+        select: {
+            id: true,
+            materialized_path: true,
+        },
+    });
     await ctx.db.$transaction([
         ctx.db.entry.update({
             where: {
@@ -1189,6 +1208,7 @@ async function modifyDN (
                 governingStructureRule: Number.isSafeInteger(Number(newGoverningStructureRule))
                     ? Number(newGoverningStructureRule)
                     : undefined,
+                materialized_path: newMaterializedPath,
             },
         }),
         ctx.db.distinguishedValue.deleteMany({
@@ -1203,6 +1223,19 @@ async function modifyDN (
                 value: Buffer.from(atav.value.toBytes()),
             })),
         }),
+        ...materializedPathsToUpdate.map((mp) => ctx.db.entry.update({
+            where: {
+                id: mp.id,
+            },
+            data: {
+                materialized_path: mp.materialized_path.replace(
+                    oldMaterializedPathPrefix,
+                    newMaterializedPath.length
+                        ? `${newMaterializedPath}.${target.dse.id}.`
+                        : target.dse.id.toString() + ".",
+                ),
+            },
+        })),
     ]);
     target.dse.rdn = data.newRDN; // Update the RDN.
     if (data.deleteOldRDN) {
@@ -1228,6 +1261,10 @@ async function modifyDN (
                 }));
             }
         }
+    }
+
+    for (const mp of materializedPathsToUpdate) {
+        await ctx.db
     }
 
     if (target.dse.entry || target.dse.alias || target.dse.subentry) {

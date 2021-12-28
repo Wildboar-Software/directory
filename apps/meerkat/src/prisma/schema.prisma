@@ -9,27 +9,14 @@
 
 datasource db {
   url      = env("DATABASE_URL")
-  // provider = "postgresql"
   provider = "mysql"
+  // provider = "postgresql"
+  // provider = "sqlserver"
 }
 
 generator client {
   provider = "prisma-client-js"
 }
-
-type OID = String
-
-// Period-delimited numeric-only object identifiers.
-
-type OIDs = String
-
-// Space-delimited, period-delimited numeric-only object identifiers.
-
-type Names = String
-
-type BER = Bytes
-
-type DER = Bytes
 
 // Subentry attributes, such as those documented in X.501, Section 14.4.3,
 // shall NOT be a part of this model. They should only be kept in the subentry,
@@ -91,7 +78,7 @@ model Entry {
   governingStructureRule Int?
 
   // The structural object class is not permitted to change for an entry.
-  structuralObjectClass OID?
+  structuralObjectClass String? @db.VarChar(128) // OID
 
   // Shadowing flags. See ITU Recommendation X.525 (2016), Section 7.2.1.
   subordinate_completeness    Boolean?
@@ -116,56 +103,61 @@ model Entry {
   hierarchyTopDN     Json?
   hierarchyPath      String? // Period-delimited database IDs
 
-  subordinates               Entry[]                      @relation("superior")
-  hierarchicalChildren       Entry[]                      @relation("parent")
-  ACIItem                    ACIItem[]
-  Clearance                  Clearance[]
-  MatchingRuleUse            MatchingRuleUse[]
-  AttributeValue             AttributeValue[]
-  AccessPoint                AccessPoint[]
-  SubtreeSpecification       SubtreeSpecification[]
-  NonSpecificKnowledge       NonSpecificKnowledge[]
-  PwdModifyEntryAllowed      PwdModifyEntryAllowed[]
-  PwdChangeAllowed           PwdChangeAllowed[]
-  PwdMaxAge                  PwdMaxAge[]
-  PwdExpiryAge               PwdExpiryAge[]
-  PwdMinLength               PwdMinLength[]
-  NoDictionaryWords          NoDictionaryWords[]
-  NoPersonNames              NoPersonNames[]
-  NoGeographicalNames        NoGeographicalNames[]
-  PwdDictionaries            PwdDictionaries[]
-  PwdExpiryWarning           PwdExpiryWarning[]
-  PwdGraces                  PwdGraces[]
-  PwdFailureDuration         PwdFailureDuration[]
-  PwdLockoutDuration         PwdLockoutDuration[]
-  PwdMaxFailures             PwdMaxFailures[]
-  PwdMaxTimeInHistory        PwdMaxTimeInHistory[]
-  PwdMinTimeInHistory        PwdMinTimeInHistory[]
-  PwdHistorySlots            PwdHistorySlots[]
-  PwdRecentlyExpiredDuration PwdRecentlyExpiredDuration[]
-  Password                   Password[]
-  RDN                        DistinguishedValue[]
-  EntryObjectClass           EntryObjectClass[]
-  AliasEntry                 Alias[]                      @relation("alias_entry")
-  AliasedEntry               Alias?                       @relation("aliased_entry")
-  EntryAdministrativeRole    EntryAdministrativeRole[]
-  EntryCollectiveExclusion   EntryCollectiveExclusion[]
-  EntryAccessControlScheme   EntryAccessControlScheme[]
-  DITStructureRule           DITStructureRule[]
-  ContentRule                ContentRule[]
-  ContextUseRule             ContextUseRule[]
-  Friendship                 Friendship[]
-  SearchRule                 SearchRule[]
-  UniqueIdentifier           UniqueIdentifier[]
-  OperationalBinding         OperationalBinding[]
-  PwdAttribute               PwdAttribute[]
-  PasswordHistory            PasswordHistory[]
-  PasswordRecentlyExpired    PasswordRecentlyExpired[]
-  Entry                      Entry[]                      @relation("top")
+  subordinates                Entry[]                       @relation("superior")
+  hierarchicalChildren        Entry[]                       @relation("parent")
+  ACIItem                     ACIItem[]
+  Clearance                   Clearance[]
+  MatchingRuleUse             MatchingRuleUse[]
+  AttributeValue              AttributeValue[]
+  AccessPoint                 AccessPoint[]
+  SubtreeSpecification        SubtreeSpecification[]
+  NonSpecificKnowledge        NonSpecificKnowledge[]
+  PwdModifyEntryAllowed       PwdModifyEntryAllowed[]
+  PwdChangeAllowed            PwdChangeAllowed[]
+  PwdMaxAge                   PwdMaxAge[]
+  PwdExpiryAge                PwdExpiryAge[]
+  PwdMinLength                PwdMinLength[]
+  NoDictionaryWords           NoDictionaryWords[]
+  NoPersonNames               NoPersonNames[]
+  NoGeographicalNames         NoGeographicalNames[]
+  PwdDictionaries             PwdDictionaries[]
+  PwdExpiryWarning            PwdExpiryWarning[]
+  PwdGraces                   PwdGraces[]
+  PwdFailureDuration          PwdFailureDuration[]
+  PwdLockoutDuration          PwdLockoutDuration[]
+  PwdMaxFailures              PwdMaxFailures[]
+  PwdMaxTimeInHistory         PwdMaxTimeInHistory[]
+  PwdMinTimeInHistory         PwdMinTimeInHistory[]
+  PwdHistorySlots             PwdHistorySlots[]
+  PwdRecentlyExpiredDuration  PwdRecentlyExpiredDuration[]
+  Password                    Password[]
+  RDN                         DistinguishedValue[]
+  EntryObjectClass            EntryObjectClass[]
+  AliasEntry                  Alias[]                       @relation("alias_entry")
+  AliasedEntry                Alias?                        @relation("aliased_entry")
+  EntryAdministrativeRole     EntryAdministrativeRole[]
+  EntryCollectiveExclusion    EntryCollectiveExclusion[]
+  EntryAccessControlScheme    EntryAccessControlScheme[]
+  DITStructureRule            DITStructureRule[]
+  ContentRule                 ContentRule[]
+  ContextUseRule              ContextUseRule[]
+  Friendship                  Friendship[]
+  SearchRule                  SearchRule[]
+  UniqueIdentifier            UniqueIdentifier[]
+  OperationalBinding          OperationalBinding[]
+  PwdAttribute                PwdAttribute[]
+  PasswordHistory             PasswordHistory[]
+  PasswordRecentlyExpired     PasswordRecentlyExpired[]
+  Entry                       Entry[]                       @relation("top")
+  PasswordEncryptionAlgorithm PasswordEncryptionAlgorithm[]
+
   @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
-  PasswordEncryptionAlgorithm PasswordEncryptionAlgorithm[]
+  @@index([hierarchyTop_id, hierarchyLevel])
+  @@index([hierarchyParent_id])
+  @@index([hierarchyPath])
+  EnqueuedSearchResult EnqueuedSearchResult[]
 }
 
 // Technically a userApplications attribute, but still has operational uses.
@@ -191,7 +183,7 @@ model Password {
   entry_id                 Int
   entry                    Entry     @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   encrypted                Bytes
-  algorithm_oid            String // OID
+  algorithm_oid            String    @db.VarChar(128) // OID
   algorithm_parameters_der Bytes?
   pwdStartTime             DateTime  @default(now())
   pwdExpiryTime            DateTime?
@@ -209,7 +201,7 @@ model PwdAttribute {
   id            BigInt @id @default(autoincrement())
   entry_id      Int
   entry         Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  pwd_attribute OID
+  pwd_attribute String @db.VarChar(128) // OID
 
   @@unique([entry_id])
 }
@@ -219,7 +211,7 @@ model PasswordHistory {
   entry_id Int
   entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   time     DateTime
-  password BER
+  password Bytes // BER
 
   @@unique([entry_id, time])
 }
@@ -231,17 +223,17 @@ model PasswordRecentlyExpired {
   id       Int   @id @default(autoincrement())
   entry_id Int   @unique
   entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  password BER
+  password Bytes // BER
 }
 
 // This only exists for shadowing. Otherwise, it's value is always Meerkat DSA's
 // hard-coded algorithm, which is currently scrypt.
 model PasswordEncryptionAlgorithm {
-  id         Int   @id @default(autoincrement())
-  entry_id   Int   @unique
-  entry      Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  oid        OID
-  parameters BER?
+  id         Int    @id @default(autoincrement())
+  entry_id   Int    @unique
+  entry      Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  oid        String @db.VarChar(128) // OID
+  parameters Bytes? // BER
 }
 
 model PwdModifyEntryAllowed {
@@ -327,7 +319,7 @@ model PwdDictionaries {
   id       Int    @id @default(autoincrement())
   entry_id Int
   entry    Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    String @db.MediumText
+  value    String @db.Text
 }
 
 model PwdExpiryWarning {
@@ -422,13 +414,13 @@ model AttributeValue {
   id                         Int     @id @default(autoincrement())
   entry_id                   Int
   entry                      Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  type                       String // OID
+  type                       String  @db.VarChar(128) // OID
   tag_class                  Int     @db.SmallInt
   constructed                Boolean
   tag_number                 Int
   ber                        Bytes
   jer                        Json?
-  sort_key                   BigInt? @db.UnsignedBigInt
+  sort_key                   BigInt?
   // A number that sorts the values according to the default ordering rule.
   // attributeValueSecurityLabelContext
   // At most one security label context can be assigned to an attribute value
@@ -447,7 +439,7 @@ model ContextValue {
   id          Int            @id @default(autoincrement())
   value_id    Int
   value       AttributeValue @relation(fields: [value_id], references: [id], onDelete: Cascade)
-  type        OID
+  type        String         @db.VarChar(128) // OID
   tag_class   Int            @db.SmallInt
   constructed Boolean
   tag_number  Int
@@ -487,7 +479,7 @@ model Clearance {
   id                        Int                         @id @default(autoincrement())
   entry_id                  Int
   entry                     Entry                       @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  policy_id                 OID
+  policy_id                 String                      @db.VarChar(128) // OID
   // From classList
   unmarked                  Boolean                     @default(false)
   unclassified              Boolean                     @default(false)
@@ -503,7 +495,7 @@ model ClearanceSecurityCategory {
   id           Int       @id @default(autoincrement())
   clearance_id Int
   clearance    Clearance @relation(fields: [clearance_id], references: [id], onDelete: Cascade)
-  type         OID
+  type         String    @db.VarChar(128) // OID
   value        Bytes
 
   @@index([clearance_id])
@@ -605,13 +597,13 @@ enum ObjectClassKind {
 // Also satisfies NameFormDescription
 model NameForm {
   id                  Int     @id @default(autoincrement())
-  namedObjectClass    OID
-  mandatoryAttributes OIDs // OIDs
-  optionalAttributes  OIDs? // OIDs
-  ldapName            String?
-  ldapDesc            String?
-  identifier          OID
-  name                Names?
+  namedObjectClass    String  @db.VarChar(128) // OID
+  mandatoryAttributes String  @db.Text // OIDs
+  optionalAttributes  String? @db.Text // OIDs
+  ldapName            String? @db.Text
+  ldapDesc            String? @db.Text
+  identifier          String  @db.VarChar(128) // OID
+  name                String?
   description         String?
   obsolete            Boolean @default(false)
 
@@ -629,9 +621,9 @@ model NameForm {
 model DITStructureRule {
   id                     Int     @id @default(autoincrement())
   ruleIdentifier         Int
-  nameForm               OID
-  superiorStructureRules OIDs?
-  name                   Names?
+  nameForm               String  @db.VarChar(128) // OID
+  superiorStructureRules String? @db.Text // OIDs
+  name                   String?
   description            String?
   obsolete               Boolean @default(false)
   entry_id               Int
@@ -656,12 +648,12 @@ model DITStructureRule {
 // Also satisfies DITContentRuleDescription
 model ContentRule {
   id                   Int     @id @default(autoincrement())
-  structural_class     OID
-  auxiliary_classes    OIDs?
-  mandatory_attributes OIDs?
-  optional_attributes  OIDs?
-  precluded_attributes OIDs?
-  name                 Names?
+  structural_class     String  @db.VarChar(128) // OID
+  auxiliary_classes    String? @db.Text // OIDs
+  mandatory_attributes String? @db.Text // OIDs
+  optional_attributes  String? @db.Text // OIDs
+  precluded_attributes String? @db.Text // OIDs
+  name                 String?
   description          String?
   obsolete             Boolean @default(false)
   entry_id             Int
@@ -681,10 +673,10 @@ model ContentRule {
 // Also satisfies DITContextUseDescription
 model ContextUseRule {
   id            Int     @id @default(autoincrement())
-  attributeType OID
-  mandatory     OIDs?
-  optional      OIDs?
-  name          Names?
+  attributeType String  @db.VarChar(128) // OID
+  mandatory     String? @db.Text // OIDs
+  optional      String? @db.Text // OIDs
+  name          String?
   description   String?
   obsolete      Boolean @default(false)
   entry_id      Int
@@ -703,9 +695,9 @@ model ContextUseRule {
 // Also satisfies FriendsDescription
 model Friendship {
   id          Int     @id @default(autoincrement())
-  anchor      OID
-  friends     OIDs
-  name        Names?
+  anchor      String  @db.VarChar(128) // OID
+  friends     String  @db.Text // OIDs
+  name        String?
   description String?
   obsolete    Boolean @default(false)
   entry_id    Int
@@ -724,11 +716,11 @@ model Friendship {
 //   ... }
 model MatchingRuleUse {
   id          Int     @id @default(autoincrement())
-  identifier  OID
-  name        Names?
+  identifier  String  @db.VarChar(128) // OID
+  name        String?
   description String?
   obsolete    Boolean @default(false)
-  information OIDs
+  information String  @db.Text // OIDs
 
   entry_id Int
   entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -745,14 +737,14 @@ enum AttributeUsage {
 
 model AttributeTypeDescription {
   id              Int            @id @default(autoincrement())
-  identifier      OID
-  name            Names?
+  identifier      String         @db.VarChar(128) // OID
+  name            String?
   description     String?
   obsolete        Boolean        @default(false)
-  derivation      OID?
-  equalityMatch   OID?
-  orderingMatch   OID?
-  substringsMatch OID?
+  derivation      String?        @db.VarChar(128) // OID
+  equalityMatch   String?        @db.VarChar(128) // OID
+  orderingMatch   String?        @db.VarChar(128) // OID
+  substringsMatch String?        @db.VarChar(128) // OID
   attributeSyntax String?
   multiValued     Boolean        @default(true)
   collective      Boolean        @default(false)
@@ -760,8 +752,8 @@ model AttributeTypeDescription {
   application     AttributeUsage @default(USER_APPLICATIONS)
 
   // Fields not present in AttributeTypeDescription
-  ldapSyntax      OID?
-  ldapNames       Names?
+  ldapSyntax      String? @db.VarChar(128) // OID
+  ldapNames       String?
   ldapDescription String?
   dummy           Boolean @default(false)
 
@@ -770,15 +762,15 @@ model AttributeTypeDescription {
 
 model ObjectClassDescription {
   id              Int             @id @default(autoincrement())
-  identifier      String // OID
-  name            Names?
+  identifier      String          @db.VarChar(128) // OID
+  name            String?
   description     String?
   obsolete        Boolean         @default(false)
-  subclassOf      OIDs?
+  subclassOf      String?         @db.Text // OIDs
   kind            ObjectClassKind @default(STRUCTURAL)
-  mandatories     OIDs?
-  optionals       OIDs?
-  ldapNames       Names?
+  mandatories     String?         @db.Text // OIDs
+  optionals       String?         @db.Text // OIDs
+  ldapNames       String?
   ldapDescription String?
 
   @@unique([identifier])
@@ -786,8 +778,8 @@ model ObjectClassDescription {
 
 model ContextDescription {
   id              Int     @id @default(autoincrement())
-  identifier      OID
-  name            Names?
+  identifier      String  @db.VarChar(128) // OID
+  name            String?
   description     String?
   obsolete        Boolean @default(false)
   syntax          String
@@ -800,8 +792,8 @@ model ContextDescription {
 model SearchRule {
   id                          Int     @id @default(autoincrement())
   rule_id                     Int     @unique
-  dmd_id                      OID // OID
-  service_type                OID? // OID
+  dmd_id                      String  @db.VarChar(128) // OID
+  service_type                String? @db.VarChar(128) // OID
   user_class                  Int?
   // inputAttributeTypes
   // attributeCombination
@@ -811,7 +803,7 @@ model SearchRule {
   // relaxation
   relaxation_minimum          Int     @default(1)
   relaxation_maximum          Int?
-  additionalControl           OIDs?
+  additionalControl           String? @db.Text // OIDs
   base_object_allowed         Boolean @default(true)
   one_level_allowed           Boolean @default(true)
   whole_subtree_allowed       Boolean @default(true)
@@ -819,7 +811,7 @@ model SearchRule {
   entry_limit_default         Int?
   entry_limit_max             Int?
   ber                         Bytes
-  name                        Names?
+  name                        String?
   description                 String?
 
   entry_id Int
@@ -850,7 +842,7 @@ model OperationalBinding {
   previous           OperationalBinding?         @relation(name: "previous", fields: [previous_id], references: [id])
   outbound           Boolean
   uuid               String                      @default(uuid()) // @db.Uuid
-  binding_type       OID
+  binding_type       String                      @db.VarChar(128) // OID
   binding_identifier Int
   binding_version    Int
   agreement_ber      Bytes
@@ -879,7 +871,7 @@ model OperationalBinding {
   shadowed_context_prefix Json?
   knowledge_type          ShadowedKnowledgeType?
   subordinates            Boolean?
-  supply_contexts         OIDs? // length of 0 means "allContexts"
+  supply_contexts         String?                @db.Text // OIDs length of 0 means "allContexts"
   supplier_initiated      Boolean?
   periodic_beginTime      DateTime?
   periodic_windowSize     Int?
@@ -919,7 +911,7 @@ model OperationalBinding {
 
 model NamedObjectIdentifier {
   id   Int    @id @default(autoincrement())
-  oid  OID
+  oid  String @db.VarChar(128) // OID
   name String @db.VarChar(128)
 
   @@unique([oid])
@@ -930,7 +922,7 @@ model DistinguishedValue {
   id       BigInt  @id @default(autoincrement())
   entry_id Int
   entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  type     OID
+  type     String  @db.VarChar(128) // OID
   value    Bytes
   str      String?
 
@@ -941,7 +933,7 @@ model EntryObjectClass {
   id           BigInt @id @default(autoincrement())
   entry_id     Int
   entry        Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  object_class OID
+  object_class String @db.VarChar(128) // OID
 
   @@unique([entry_id, object_class])
 }
@@ -959,28 +951,28 @@ model Alias {
 }
 
 model EntryAdministrativeRole {
-  id                 Int   @id @default(autoincrement())
+  id                 Int    @id @default(autoincrement())
   entry_id           Int
-  entry              Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  administrativeRole OID
+  entry              Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  administrativeRole String @db.VarChar(128) // OID
 
   @@unique([entry_id, administrativeRole])
 }
 
 model EntryCollectiveExclusion {
-  id                  Int   @id @default(autoincrement())
+  id                  Int    @id @default(autoincrement())
   entry_id            Int
-  entry               Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  collectiveExclusion OID
+  entry               Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  collectiveExclusion String @db.VarChar(128) // OID
 
   @@unique([entry_id, collectiveExclusion])
 }
 
 model EntryAccessControlScheme {
-  id                  Int   @id @default(autoincrement())
+  id                  Int    @id @default(autoincrement())
   entry_id            Int
-  entry               Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  accessControlScheme OID
+  entry               Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  accessControlScheme String @db.VarChar(128) // OID
 
   @@unique([entry_id])
 }
@@ -997,3 +989,27 @@ model AltServer {
 //   request       BER
 //   pageIndex     Int       @default(0)
 // }
+
+// To help with future migrations. This is so Meerkat DSA can do migrations
+// without Prisma (such as by refreshing sort keys, materialized paths, etc.)
+model InstalledVersions {
+  id                 Int      @id @default(autoincrement())
+  installedTimestamp DateTime @default(now())
+  version            String
+  migration_problems String?  @db.Text
+
+  @@index([version])
+}
+
+// To save, sort, and paginate over a large number of search results.
+model EnqueuedSearchResult {
+  id              Int    @id @default(autoincrement())
+  connection_uuid String @db.VarChar(40) // UUID of the connection.
+  query_uuid      String @db.VarChar(40) // Could be a pagination UUID or something else.
+  result_index    Int // The 0-based index in which this entry appears in the results.
+  entry_id        Int
+  entry           Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  entry_info      Bytes // BER-encoded EntryInformation
+
+  @@unique([connection_uuid, query_uuid, result_index])
+}

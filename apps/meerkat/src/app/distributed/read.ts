@@ -231,7 +231,8 @@ async function read (
     );
 
     if (
-        data.selection?.familyReturn
+        target.dse.familyMember
+        && data.selection?.familyReturn
         && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
         && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_participatingEntriesOnly)
     ) {

@@ -1,6 +1,6 @@
 import IDMVersion from "./IDMVersion";
 
-export default
+export
 interface IDMSegment {
     version: IDMVersion;
     final: boolean;
@@ -8,3 +8,5 @@ interface IDMSegment {
     length: number;
     data: Buffer;
 }
+
+export default IDMSegment;

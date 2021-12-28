@@ -269,6 +269,7 @@ async function addEntry (
     const isParent: boolean = objectClassesIndex.has(id_oc_parent.toString());
     const isChild: boolean = objectClassesIndex.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
+    const isFirstLevel: boolean = !!immediateSuperior.dse.root;
 
     if (isParent) {
         throw new errors.UpdateError(
@@ -300,35 +301,66 @@ async function addEntry (
         );
     }
 
-    if (isChild && isAlias) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:cannot_be_alias_and_child"),
-            new UpdateErrorData(
-                UpdateProblem_objectClassViolation,
-                [
-                    {
-                        attribute: new Attribute(
-                            id_at_objectClass,
-                            [
-                                _encodeObjectIdentifier(id_oc_alias, DER),
-                                _encodeObjectIdentifier(id_oc_child, DER),
-                            ],
-                            undefined,
-                        ),
-                    },
-                ],
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
+    if (isChild) {
+        if (isFirstLevel) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:cannot_be_first_level_and_child"),
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attribute: new Attribute(
+                                id_at_objectClass,
+                                [
+                                    _encodeObjectIdentifier(id_oc_child, DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
                     undefined,
-                    updateError["&errorCode"],
                 ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
+            );
+        }
+        if (isAlias) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:cannot_be_alias_and_child"),
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attribute: new Attribute(
+                                id_at_objectClass,
+                                [
+                                    _encodeObjectIdentifier(id_oc_alias, DER),
+                                    _encodeObjectIdentifier(id_oc_child, DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
     }
 
     if (isParent && isAlias) {

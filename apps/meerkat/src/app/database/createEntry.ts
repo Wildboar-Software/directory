@@ -14,7 +14,7 @@ import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias
 // import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
 import addValues from "./entry/addValues";
 import { strict as assert } from "assert";
-import { randomBytes, randomUUID } from "crypto";
+import { randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 
 export
@@ -29,7 +29,6 @@ async function createEntry (
     const objectClasses = values
         .filter((value) => value.type.isEqualTo(objectClass["&id"]))
         .map((value) => value.value.objectIdentifier);
-    // This entry is intentionally created as deleted first, in case the transaction fails.
     const isSubentry = objectClasses.some((oc) => oc.isEqualTo(subentry["&id"]));
     const isAlias = objectClasses.some((oc) => oc.isEqualTo(alias["&id"]));
     // const isFamilyMember = objectClasses.some((oc) => (oc.isEqualTo(parent["&id"]) || oc.isEqualTo(child["&id"])));
@@ -37,14 +36,17 @@ async function createEntry (
     const createdEntry = await ctx.db.entry.create({
         data: {
             immediate_superior_id: superior.dse.id,
-            materialized_path: superior.materializedPath.length
-                ? `${superior.materializedPath}.${superior.dse.id.toString()}`
-                : superior.dse.id.toString(),
+            materialized_path: superior.dse.root
+                ? ""
+                : (superior.materializedPath.length
+                    ? `${superior.materializedPath}${superior.dse.id.toString() + "."}`
+                    : superior.dse.id.toString() + "."),
             entryUUID: randomUUID(),
             creatorsName: [],
             modifiersName: [],
             createTimestamp: now,
             modifyTimestamp: now,
+            // This entry is intentionally created as deleted first, in case the transaction fails.
             deleteTimestamp: now,
             glue: entryInit.glue,
             cp: entryInit.cp,
@@ -83,14 +85,6 @@ async function createEntry (
             },
             data: {
                 deleteTimestamp: null,
-                UniqueIdentifier: {
-                    create: {
-                        uniqueIdentifier: Buffer.concat([
-                            Buffer.from([ 0 ]),
-                            randomBytes(8),
-                        ]),
-                    },
-                },
             },
         }),
     ]);

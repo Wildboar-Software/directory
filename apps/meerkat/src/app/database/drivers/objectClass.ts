@@ -22,6 +22,12 @@ import {
 import {
     parent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
+import {
+    alias,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import {
+    subentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
 
 const PARENT: string = parent["&id"].toString();
 
@@ -46,13 +52,17 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    const oid = value.value.objectIdentifier;
+    if (oid.isEqualTo(subentry["&id"])) {
+        pendingUpdates.entryUpdate.subentry = true;
+    }
+    else if (oid.isEqualTo(alias["&id"])) {
+        pendingUpdates.entryUpdate.alias = true;
+    }
     // If we are adding child object class, making the immediate superior of object class "parent."
-    if (
-        value.value.objectIdentifier.isEqualTo(child["&id"])
-        && vertex.immediateSuperior
-    ) {
-        if (!vertex.immediateSuperior.dse) {
-            console.log("Somehow a DSE was null....");
+    else if (oid.isEqualTo(child["&id"]) && vertex.immediateSuperior) {
+        if (vertex.immediateSuperior.dse.root) {
+            throw new Error();
         }
         pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.upsert({
             where: {
@@ -71,6 +81,14 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             },
         }));
         vertex.immediateSuperior.dse.objectClass.add(PARENT);
+        if (vertex.immediateSuperior.dse.familyMember) {
+            vertex.immediateSuperior.dse.familyMember.parent = true;
+        } else {
+            vertex.immediateSuperior.dse.familyMember = {
+                parent: true,
+                child: false,
+            };
+        }
     }
     pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.create({
         data: {

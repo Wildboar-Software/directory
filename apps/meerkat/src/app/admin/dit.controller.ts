@@ -36,6 +36,13 @@ import findEntry from "../x500/findEntry";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+import {
+    distinguishedNameMatch,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/distinguishedNameMatch.oa";
+import {
+    _decode_DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 const selectAllInfo = new EntryInformationSelection(
     {
@@ -307,6 +314,11 @@ export class DitController {
                 })(),
                 ((): string => {
                     const spec = this.ctx.attributeTypes.get(attr.type.toString());
+                    if (spec?.equalityMatchingRule?.isEqualTo(distinguishedNameMatch["&id"])) {
+                        const dn_ = _decode_DistinguishedName(attr.value);
+                        // Reverse the DN so that it is an X.500-style DN, not an LDAP DN.
+                        return Buffer.from(encodeLDAPDN(this.ctx, dn_.reverse())).toString("utf-8");
+                    }
                     if (!spec?.ldapSyntax) {
                         return defaultEncoder(attr.value);
                     }

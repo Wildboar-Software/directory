@@ -1,2 +1,2 @@
-export { default as LDAPSocket } from "./lib/LDAPSocket";
-export { default as LDAPSocketOptions } from "./lib/LDAPSocketOptions";
+export * from "./lib/LDAPSocket";
+export * from "./lib/LDAPSocketOptions";

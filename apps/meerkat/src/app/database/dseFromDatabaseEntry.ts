@@ -37,6 +37,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
 import getRDNFromEntryId from "./getRDNFromEntryId";
 import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import { parent } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
+import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
 import readDITContentRuleDescriptions from "./readers/readDITContentRuleDescriptions";
 import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptions";
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
@@ -59,12 +61,14 @@ function toACIItem (dbaci: DatabaseACIItem): ACIItem {
 }
 
 const ALIAS: string = alias["&id"].toString();
+const PARENT: string = parent["&id"].toString();
+const CHILD: string = child["&id"].toString();
 let collectiveAttributeTypes: string[] = [];
 
 export
 async function dseFromDatabaseEntry (
     ctx: Context,
-    dbe: DatabaseEntry,
+    dbe: DatabaseEntry, // TODO: Extend with optional relation queries to improve performance. (e.g. "& { EntryObjectClass: ... }")
 ): Promise<DSE> {
     const acis = ctx.config.bulkInsertMode
         ? []
@@ -142,6 +146,27 @@ async function dseFromDatabaseEntry (
         modifyTimestamp: dbe.modifyTimestamp ?? undefined,
         entryACI,
     };
+
+    if (ret.objectClass.has(PARENT)) {
+        if (ret.familyMember) {
+            ret.familyMember.parent = true;
+        } else {
+            ret.familyMember = {
+                parent: true,
+                child: false,
+            };
+        }
+    }
+    if (ret.objectClass.has(CHILD)) {
+        if (ret.familyMember) {
+            ret.familyMember.child = true;
+        } else {
+            ret.familyMember = {
+                parent: false,
+                child: true,
+            };
+        }
+    }
 
     if (dbe.immediate_superior_id === null) { // root and possibly supr
         ret.root = {
@@ -485,7 +510,7 @@ async function dseFromDatabaseEntry (
     }
 
     if (dbe.keep_children_in_database) {
-        return ret;
+        return ret; // FIXME: Uhh... what?
     }
     return ret;
 }

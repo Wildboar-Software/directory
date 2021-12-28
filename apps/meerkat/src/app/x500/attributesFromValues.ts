@@ -13,7 +13,7 @@ import groupByOID from "../utils/groupByOID";
 export
 function attributesFromValues (values: Value[]): Attribute[] {
     const valuesByType: Record<IndexableOID, Value[]> = groupByOID<Value>(values, (value) => value.type);
-    return Object.values(valuesByType).map((atavs) => {
+    return Object.values(valuesByType).map((atavs) => { // TODO: I think there is a more performant way to implement.
         return new Attribute(
             atavs[0].type,
             atavs

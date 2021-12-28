@@ -106,8 +106,17 @@ import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import failover from "../utils/failover";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import {
+    child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
+import {
+    parent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
+import type { Prisma } from "@prisma/client";
 
 const BYTES_IN_A_UUID: number = 16;
+const PARENT: string = parent["&id"].toString();
+const CHILD: string = child["&id"].toString();
 
 export
 async function list_i (
@@ -379,6 +388,16 @@ async function list_i (
         );
         return authorizedToSortKey;
     })();
+    const whereArgs: Partial<Prisma.EntryWhereInput> = {
+        subentry: subentries,
+        EntryObjectClass: (data.listFamily && target.dse.objectClass.has(PARENT))
+            ? {
+                some: {
+                    object_class: CHILD,
+                },
+            }
+            : undefined,
+    };
     const getNextBatchOfSubordinates = async (): Promise<[ number, Vertex, boolean ][]> => {
         return permittedToSort
             ? await readSubordinatesSorted(
@@ -390,6 +409,7 @@ async function list_i (
                     pageSize,
                     undefined,
                     cursorId,
+                    whereArgs,
             )
             : (await readSubordinates(
                 ctx,
@@ -397,9 +417,7 @@ async function list_i (
                 pageSize,
                 undefined,
                 cursorId,
-                {
-                    subentry: subentries,
-                },
+                whereArgs,
             )).map((dse) => [ dse.dse.id, dse, false ]);
     };
     let skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))

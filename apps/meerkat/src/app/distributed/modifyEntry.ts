@@ -5,6 +5,7 @@ import {
     Value,
     ClientConnection,
     OperationReturn,
+    PendingUpdates,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { TRUE_BIT } from "asn1-ts";
@@ -212,6 +213,10 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
+import { addValue } from "../database/drivers/administrativeRole";
+import {
+    id_ar_autonomousArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1489,6 +1494,7 @@ async function modifyEntry (
     // const isParent: boolean = target.dse.objectClass.has(id_oc_parent.toString());
     // const isChild: boolean = target.dse.objectClass.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
+    const isFirstLevel: boolean = !!target.immediateSuperior?.dse.root;
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const noSubtypeSelection: boolean = (
         data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
@@ -1929,41 +1935,73 @@ async function modifyEntry (
         const hasAliasObjectClass: boolean = objectClasses
             .some((oc) => oc.isEqualTo(alias["&id"]));
 
-        /**
-         * From ITU Recommendation X.501 (2016), Section 13.3.3:
-         *
-         * > Neither the parent nor the child object classes shall be combined
-         * > with the alias object class to form an alias entry.
-         */
-        if (hasChildObjectClass && hasAliasObjectClass) {
-            throw new errors.UpdateError(
-                ctx.i18n.t("err:cannot_be_alias_and_child"),
-                new UpdateErrorData(
-                    UpdateProblem_objectClassViolation,
-                    [
-                        {
-                            attribute: new Attribute(
-                                objectClass["&id"],
-                                [
-                                    _encodeObjectIdentifier(alias["&id"], DER),
-                                    _encodeObjectIdentifier(child["&id"], DER),
-                                ],
-                                undefined,
-                            ),
-                        },
-                    ],
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
+        if (hasChildObjectClass) {
+            if (isFirstLevel) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:cannot_be_first_level_and_child"),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attribute: new Attribute(
+                                    objectClass["&id"],
+                                    [
+                                        _encodeObjectIdentifier(alias["&id"], DER),
+                                        _encodeObjectIdentifier(child["&id"], DER),
+                                    ],
+                                    undefined,
+                                ),
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
-                        updateError["&errorCode"],
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
+                );
+            }
+            /**
+             * From ITU Recommendation X.501 (2016), Section 13.3.3:
+             *
+             * > Neither the parent nor the child object classes shall be combined
+             * > with the alias object class to form an alias entry.
+             */
+            if (hasAliasObjectClass) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:cannot_be_alias_and_child"),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attribute: new Attribute(
+                                    objectClass["&id"],
+                                    [
+                                        _encodeObjectIdentifier(alias["&id"], DER),
+                                        _encodeObjectIdentifier(child["&id"], DER),
+                                    ],
+                                    undefined,
+                                ),
+                            },
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
         }
         if (target.dse.objectClass.has(parent["&id"].toString()) && hasAliasObjectClass) {
             throw new errors.UpdateError(
@@ -2071,6 +2109,49 @@ async function modifyEntry (
         }));
     }
 
+    /**
+     * The X.500 specifications state that first-level DSEs MUST be
+     * administrative points, but does not elaborate. For technical reasons, it
+     * is hard to check _before_ the update if all values of
+     * `administrativeRole` have been removed, and therefore, that the entry is
+     * no longer an administrative point. However, we can _automatically_
+     * make the entry an autonomous administrative point if it no longer appears
+     * to be an administrative point. This means that users will no longer be
+     * presented with an error if they modify first-level DSEs such that they
+     * are no longer administrative points, but it gets the job done.
+     */
+    if (!target.dse.admPoint && target.immediateSuperior?.dse.root) {
+        const addAdministrativeRoleUpdates: PendingUpdates = {
+            entryUpdate: {},
+            otherWrites: [],
+        };
+        await addValue(ctx, target, {
+            type: administrativeRole["&id"],
+            value: _encodeObjectIdentifier(id_ar_autonomousArea, DER),
+        }, addAdministrativeRoleUpdates);
+        await ctx.db.$transaction([
+            ctx.db.entry.update({
+                where: {
+                    id: target.dse.id,
+                },
+                data: addAdministrativeRoleUpdates.entryUpdate,
+            }),
+            ...addAdministrativeRoleUpdates.otherWrites,
+        ]);
+        const dbe = await ctx.db.entry.findUnique({
+            where: {
+                id: target.dse.id,
+            },
+        });
+        if (dbe) {
+            target.dse = await dseFromDatabaseEntry(ctx, dbe);
+        } else {
+            ctx.log.warn(ctx.i18n.t("log:entry_deleted_while_being_modified", {
+                id: target.dse.uuid,
+            }));
+        }
+    }
+
     // Update relevant hierarchical operational bindings
     if (!ctx.config.bulkInsertMode && (target.dse.admPoint || target.dse.subentry)) {
         const admPoint: Vertex | undefined = target.dse.admPoint
@@ -2140,7 +2221,8 @@ async function modifyEntry (
             },
         );
         if (
-            data.selection?.familyReturn
+            target.dse.familyMember
+            && data.selection?.familyReturn
             && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
             && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_participatingEntriesOnly)
         ) {

@@ -25,7 +25,7 @@ CREATE TABLE `Entry` (
     `creatorsName` JSON NULL,
     `modifiersName` JSON NULL,
     `governingStructureRule` INTEGER NULL,
-    `structuralObjectClass` VARCHAR(191) NULL,
+    `structuralObjectClass` VARCHAR(128) NULL,
     `subordinate_completeness` BOOLEAN NULL,
     `attribute_completeness` BOOLEAN NULL,
     `attribute_values_incomplete` BOOLEAN NULL,
@@ -39,6 +39,9 @@ CREATE TABLE `Entry` (
     `hierarchyPath` VARCHAR(191) NULL,
 
     INDEX `Entry_immediate_superior_id_deleteTimestamp_subentry_idx`(`immediate_superior_id`, `deleteTimestamp`, `subentry`),
+    INDEX `Entry_hierarchyTop_id_hierarchyLevel_idx`(`hierarchyTop_id`, `hierarchyLevel`),
+    INDEX `Entry_hierarchyParent_id_idx`(`hierarchyParent_id`),
+    INDEX `Entry_hierarchyPath_idx`(`hierarchyPath`),
     UNIQUE INDEX `Entry_dseUUID_key`(`dseUUID`),
     UNIQUE INDEX `Entry_entryUUID_key`(`entryUUID`),
     PRIMARY KEY (`id`)
@@ -58,7 +61,7 @@ CREATE TABLE `Password` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `encrypted` LONGBLOB NOT NULL,
-    `algorithm_oid` VARCHAR(191) NOT NULL,
+    `algorithm_oid` VARCHAR(128) NOT NULL,
     `algorithm_parameters_der` LONGBLOB NULL,
     `pwdStartTime` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `pwdExpiryTime` DATETIME(3) NULL,
@@ -75,7 +78,7 @@ CREATE TABLE `Password` (
 CREATE TABLE `PwdAttribute` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `pwd_attribute` VARCHAR(191) NOT NULL,
+    `pwd_attribute` VARCHAR(128) NOT NULL,
 
     UNIQUE INDEX `PwdAttribute_entry_id_key`(`entry_id`),
     PRIMARY KEY (`id`)
@@ -106,7 +109,7 @@ CREATE TABLE `PasswordRecentlyExpired` (
 CREATE TABLE `PasswordEncryptionAlgorithm` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `oid` VARCHAR(191) NOT NULL,
+    `oid` VARCHAR(128) NOT NULL,
     `parameters` LONGBLOB NULL,
 
     UNIQUE INDEX `PasswordEncryptionAlgorithm_entry_id_key`(`entry_id`),
@@ -197,7 +200,7 @@ CREATE TABLE `NoGeographicalNames` (
 CREATE TABLE `PwdDictionaries` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `value` MEDIUMTEXT NOT NULL,
+    `value` TEXT NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -296,13 +299,13 @@ CREATE TABLE `PwdRecentlyExpiredDuration` (
 CREATE TABLE `AttributeValue` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `type` VARCHAR(191) NOT NULL,
+    `type` VARCHAR(128) NOT NULL,
     `tag_class` SMALLINT NOT NULL,
     `constructed` BOOLEAN NOT NULL,
     `tag_number` INTEGER NOT NULL,
     `ber` LONGBLOB NOT NULL,
     `jer` JSON NULL,
-    `sort_key` BIGINT UNSIGNED NULL,
+    `sort_key` BIGINT NULL,
     `security_label` LONGBLOB NULL,
     `security_policy_identifier` VARCHAR(191) NULL,
     `security_classification` SMALLINT NULL,
@@ -317,7 +320,7 @@ CREATE TABLE `AttributeValue` (
 CREATE TABLE `ContextValue` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `value_id` INTEGER NOT NULL,
-    `type` VARCHAR(191) NOT NULL,
+    `type` VARCHAR(128) NOT NULL,
     `tag_class` SMALLINT NOT NULL,
     `constructed` BOOLEAN NOT NULL,
     `tag_number` INTEGER NOT NULL,
@@ -349,7 +352,7 @@ CREATE TABLE `ACIItem` (
 CREATE TABLE `Clearance` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `policy_id` VARCHAR(191) NOT NULL,
+    `policy_id` VARCHAR(128) NOT NULL,
     `unmarked` BOOLEAN NOT NULL DEFAULT false,
     `unclassified` BOOLEAN NOT NULL DEFAULT false,
     `restricted` BOOLEAN NOT NULL DEFAULT false,
@@ -365,7 +368,7 @@ CREATE TABLE `Clearance` (
 CREATE TABLE `ClearanceSecurityCategory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `clearance_id` INTEGER NOT NULL,
-    `type` VARCHAR(191) NOT NULL,
+    `type` VARCHAR(128) NOT NULL,
     `value` LONGBLOB NOT NULL,
 
     INDEX `ClearanceSecurityCategory_clearance_id_idx`(`clearance_id`),
@@ -435,12 +438,12 @@ CREATE TABLE `DitBridgeKnowledge` (
 -- CreateTable
 CREATE TABLE `NameForm` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `namedObjectClass` VARCHAR(191) NOT NULL,
-    `mandatoryAttributes` VARCHAR(191) NOT NULL,
-    `optionalAttributes` VARCHAR(191) NULL,
-    `ldapName` VARCHAR(191) NULL,
-    `ldapDesc` VARCHAR(191) NULL,
-    `identifier` VARCHAR(191) NOT NULL,
+    `namedObjectClass` VARCHAR(128) NOT NULL,
+    `mandatoryAttributes` TEXT NOT NULL,
+    `optionalAttributes` TEXT NULL,
+    `ldapName` TEXT NULL,
+    `ldapDesc` TEXT NULL,
+    `identifier` VARCHAR(128) NOT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
@@ -454,8 +457,8 @@ CREATE TABLE `NameForm` (
 CREATE TABLE `DITStructureRule` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `ruleIdentifier` INTEGER NOT NULL,
-    `nameForm` VARCHAR(191) NOT NULL,
-    `superiorStructureRules` VARCHAR(191) NULL,
+    `nameForm` VARCHAR(128) NOT NULL,
+    `superiorStructureRules` TEXT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
@@ -469,11 +472,11 @@ CREATE TABLE `DITStructureRule` (
 -- CreateTable
 CREATE TABLE `ContentRule` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `structural_class` VARCHAR(191) NOT NULL,
-    `auxiliary_classes` VARCHAR(191) NULL,
-    `mandatory_attributes` VARCHAR(191) NULL,
-    `optional_attributes` VARCHAR(191) NULL,
-    `precluded_attributes` VARCHAR(191) NULL,
+    `structural_class` VARCHAR(128) NOT NULL,
+    `auxiliary_classes` TEXT NULL,
+    `mandatory_attributes` TEXT NULL,
+    `optional_attributes` TEXT NULL,
+    `precluded_attributes` TEXT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
@@ -486,9 +489,9 @@ CREATE TABLE `ContentRule` (
 -- CreateTable
 CREATE TABLE `ContextUseRule` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `attributeType` VARCHAR(191) NOT NULL,
-    `mandatory` VARCHAR(191) NULL,
-    `optional` VARCHAR(191) NULL,
+    `attributeType` VARCHAR(128) NOT NULL,
+    `mandatory` TEXT NULL,
+    `optional` TEXT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
@@ -501,8 +504,8 @@ CREATE TABLE `ContextUseRule` (
 -- CreateTable
 CREATE TABLE `Friendship` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `anchor` VARCHAR(191) NOT NULL,
-    `friends` VARCHAR(191) NOT NULL,
+    `anchor` VARCHAR(128) NOT NULL,
+    `friends` TEXT NOT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
@@ -515,11 +518,11 @@ CREATE TABLE `Friendship` (
 -- CreateTable
 CREATE TABLE `MatchingRuleUse` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `identifier` VARCHAR(191) NOT NULL,
+    `identifier` VARCHAR(128) NOT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
-    `information` VARCHAR(191) NOT NULL,
+    `information` TEXT NOT NULL,
     `entry_id` INTEGER NOT NULL,
 
     UNIQUE INDEX `MatchingRuleUse_entry_id_identifier_key`(`entry_id`, `identifier`),
@@ -529,20 +532,20 @@ CREATE TABLE `MatchingRuleUse` (
 -- CreateTable
 CREATE TABLE `AttributeTypeDescription` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `identifier` VARCHAR(191) NOT NULL,
+    `identifier` VARCHAR(128) NOT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
-    `derivation` VARCHAR(191) NULL,
-    `equalityMatch` VARCHAR(191) NULL,
-    `orderingMatch` VARCHAR(191) NULL,
-    `substringsMatch` VARCHAR(191) NULL,
+    `derivation` VARCHAR(128) NULL,
+    `equalityMatch` VARCHAR(128) NULL,
+    `orderingMatch` VARCHAR(128) NULL,
+    `substringsMatch` VARCHAR(128) NULL,
     `attributeSyntax` VARCHAR(191) NULL,
     `multiValued` BOOLEAN NOT NULL DEFAULT true,
     `collective` BOOLEAN NOT NULL DEFAULT false,
     `userModifiable` BOOLEAN NOT NULL DEFAULT true,
     `application` ENUM('USER_APPLICATIONS', 'DSA_OPERATION', 'DISTRIBUTED_OPERATION', 'DIRECTORY_OPERATION') NOT NULL DEFAULT 'USER_APPLICATIONS',
-    `ldapSyntax` VARCHAR(191) NULL,
+    `ldapSyntax` VARCHAR(128) NULL,
     `ldapNames` VARCHAR(191) NULL,
     `ldapDescription` VARCHAR(191) NULL,
     `dummy` BOOLEAN NOT NULL DEFAULT false,
@@ -554,14 +557,14 @@ CREATE TABLE `AttributeTypeDescription` (
 -- CreateTable
 CREATE TABLE `ObjectClassDescription` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `identifier` VARCHAR(191) NOT NULL,
+    `identifier` VARCHAR(128) NOT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
-    `subclassOf` VARCHAR(191) NULL,
+    `subclassOf` TEXT NULL,
     `kind` ENUM('ABSTRACT', 'STRUCTURAL', 'AUXILIARY') NOT NULL DEFAULT 'STRUCTURAL',
-    `mandatories` VARCHAR(191) NULL,
-    `optionals` VARCHAR(191) NULL,
+    `mandatories` TEXT NULL,
+    `optionals` TEXT NULL,
     `ldapNames` VARCHAR(191) NULL,
     `ldapDescription` VARCHAR(191) NULL,
 
@@ -572,7 +575,7 @@ CREATE TABLE `ObjectClassDescription` (
 -- CreateTable
 CREATE TABLE `ContextDescription` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `identifier` VARCHAR(191) NOT NULL,
+    `identifier` VARCHAR(128) NOT NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
@@ -587,14 +590,14 @@ CREATE TABLE `ContextDescription` (
 CREATE TABLE `SearchRule` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `rule_id` INTEGER NOT NULL,
-    `dmd_id` VARCHAR(191) NOT NULL,
-    `service_type` VARCHAR(191) NULL,
+    `dmd_id` VARCHAR(128) NOT NULL,
+    `service_type` VARCHAR(128) NULL,
     `user_class` INTEGER NULL,
     `family_grouping` INTEGER NULL,
     `family_return_member_select` INTEGER NULL,
     `relaxation_minimum` INTEGER NOT NULL DEFAULT 1,
     `relaxation_maximum` INTEGER NULL,
-    `additionalControl` VARCHAR(191) NULL,
+    `additionalControl` TEXT NULL,
     `base_object_allowed` BOOLEAN NOT NULL DEFAULT true,
     `one_level_allowed` BOOLEAN NOT NULL DEFAULT true,
     `whole_subtree_allowed` BOOLEAN NOT NULL DEFAULT true,
@@ -620,7 +623,7 @@ CREATE TABLE `OperationalBinding` (
     `previous_id` INTEGER NULL,
     `outbound` BOOLEAN NOT NULL,
     `uuid` VARCHAR(191) NOT NULL,
-    `binding_type` VARCHAR(191) NOT NULL,
+    `binding_type` VARCHAR(128) NOT NULL,
     `binding_identifier` INTEGER NOT NULL,
     `binding_version` INTEGER NOT NULL,
     `agreement_ber` LONGBLOB NOT NULL,
@@ -642,7 +645,7 @@ CREATE TABLE `OperationalBinding` (
     `shadowed_context_prefix` JSON NULL,
     `knowledge_type` ENUM('MASTER', 'SHADOW', 'BOTH') NULL,
     `subordinates` BOOLEAN NULL,
-    `supply_contexts` VARCHAR(191) NULL,
+    `supply_contexts` TEXT NULL,
     `supplier_initiated` BOOLEAN NULL,
     `periodic_beginTime` DATETIME(3) NULL,
     `periodic_windowSize` INTEGER NULL,
@@ -676,7 +679,7 @@ CREATE TABLE `OperationalBinding` (
 -- CreateTable
 CREATE TABLE `NamedObjectIdentifier` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `oid` VARCHAR(191) NOT NULL,
+    `oid` VARCHAR(128) NOT NULL,
     `name` VARCHAR(128) NOT NULL,
 
     INDEX `NamedObjectIdentifier_name_idx`(`name`),
@@ -688,7 +691,7 @@ CREATE TABLE `NamedObjectIdentifier` (
 CREATE TABLE `DistinguishedValue` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `type` VARCHAR(191) NOT NULL,
+    `type` VARCHAR(128) NOT NULL,
     `value` LONGBLOB NOT NULL,
     `str` VARCHAR(191) NULL,
 
@@ -700,7 +703,7 @@ CREATE TABLE `DistinguishedValue` (
 CREATE TABLE `EntryObjectClass` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `object_class` VARCHAR(191) NOT NULL,
+    `object_class` VARCHAR(128) NOT NULL,
 
     UNIQUE INDEX `EntryObjectClass_entry_id_object_class_key`(`entry_id`, `object_class`),
     PRIMARY KEY (`id`)
@@ -723,7 +726,7 @@ CREATE TABLE `Alias` (
 CREATE TABLE `EntryAdministrativeRole` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `administrativeRole` VARCHAR(191) NOT NULL,
+    `administrativeRole` VARCHAR(128) NOT NULL,
 
     UNIQUE INDEX `EntryAdministrativeRole_entry_id_administrativeRole_key`(`entry_id`, `administrativeRole`),
     PRIMARY KEY (`id`)
@@ -733,7 +736,7 @@ CREATE TABLE `EntryAdministrativeRole` (
 CREATE TABLE `EntryCollectiveExclusion` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `collectiveExclusion` VARCHAR(191) NOT NULL,
+    `collectiveExclusion` VARCHAR(128) NOT NULL,
 
     UNIQUE INDEX `EntryCollectiveExclusion_entry_id_collectiveExclusion_key`(`entry_id`, `collectiveExclusion`),
     PRIMARY KEY (`id`)
@@ -743,7 +746,7 @@ CREATE TABLE `EntryCollectiveExclusion` (
 CREATE TABLE `EntryAccessControlScheme` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `accessControlScheme` VARCHAR(191) NOT NULL,
+    `accessControlScheme` VARCHAR(128) NOT NULL,
 
     UNIQUE INDEX `EntryAccessControlScheme_entry_id_key`(`entry_id`),
     PRIMARY KEY (`id`)
@@ -754,6 +757,30 @@ CREATE TABLE `AltServer` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `uri` VARCHAR(191) NOT NULL,
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `InstalledVersions` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `installedTimestamp` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `version` VARCHAR(191) NOT NULL,
+    `migration_problems` TEXT NULL,
+
+    INDEX `InstalledVersions_version_idx`(`version`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `EnqueuedSearchResult` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `connection_uuid` VARCHAR(40) NOT NULL,
+    `query_uuid` VARCHAR(40) NOT NULL,
+    `result_index` INTEGER NOT NULL,
+    `entry_id` INTEGER NOT NULL,
+    `entry_info` LONGBLOB NOT NULL,
+
+    UNIQUE INDEX `EnqueuedSearchResult_connection_uuid_query_uuid_result_index_key`(`connection_uuid`, `query_uuid`, `result_index`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -921,3 +948,6 @@ ALTER TABLE `EntryCollectiveExclusion` ADD CONSTRAINT `EntryCollectiveExclusion_
 
 -- AddForeignKey
 ALTER TABLE `EntryAccessControlScheme` ADD CONSTRAINT `EntryAccessControlScheme_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `EnqueuedSearchResult` ADD CONSTRAINT `EnqueuedSearchResult_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
