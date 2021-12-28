@@ -199,7 +199,7 @@ async function addValues (
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
                     ber: Buffer.from(attr.value.toBytes()),
-                    sort_key: calculateSortKey(attr.value),
+                    sort_key: calculateSortKey(ctx, attr.type, attr.value),
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {

@@ -7,9 +7,12 @@ import {
     RELATIVE_OID,
     TIME_OF_DAY,
     packBits,
+    OBJECT_IDENTIFIER,
 } from "asn1-ts";
-
-type SortKey = bigint | null;
+import {
+    Context,
+    SortKey,
+} from "@wildboar/meerkat-types";
 
 /**
  * @description
@@ -70,7 +73,7 @@ function calculateSortKeyForReal (el: ASN1Element): SortKey {
 
 function calculateSortKeyForString (str: string): SortKey {
     const buf = createBlankBigIntBuffer();
-    buf.set(Buffer.from(str.toLowerCase(), "utf-8").slice(0, 7), 1);
+    buf.set(Buffer.from(str.toUpperCase(), "utf-8").slice(0, 7), 1);
     return buf.readBigUInt64BE();
 }
 
@@ -90,7 +93,19 @@ function calculateSortKeyForTimeOfDay (tod: TIME_OF_DAY): SortKey {
 }
 
 export
-function calculateSortKey (element: ASN1Element): SortKey {
+function calculateSortKey (
+    ctx: Context,
+    type_: OBJECT_IDENTIFIER,
+    element: ASN1Element,
+): SortKey {
+    const spec = ctx.attributeTypes.get(type_.toString());
+    const omrOID = spec?.orderingMatchingRule;
+    const omr = omrOID
+        ? ctx.orderingMatchingRules.get(omrOID.toString())
+        : undefined;
+    if (omr?.sortKeyGetter) {
+        return omr.sortKeyGetter(element);
+    }
     if (element.tagClass !== ASN1TagClass.universal) {
         return null;
     }

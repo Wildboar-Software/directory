@@ -987,6 +987,12 @@ interface OperationReturn {
 }
 
 export
+type SortKey = bigint | null;
+
+export
+type SortKeyGetter = (value: ASN1Element) => SortKey;
+
+export
 interface MatchingRuleInfo <Matcher> {
     id: OBJECT_IDENTIFIER;
     name?: string[];
@@ -995,6 +1001,7 @@ interface MatchingRuleInfo <Matcher> {
     syntax?: string;
     ldapAssertionSyntax?: OBJECT_IDENTIFIER;
     matcher: Matcher;
+    sortKeyGetter?: SortKeyGetter;
 }
 
 export
