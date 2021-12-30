@@ -209,13 +209,13 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.UnknownError) {
             await dsp.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
         } else if (e instanceof errors.UnboundRequestError) {
-            await dsp.idm.writeAbort(Abort_unboundRequest).then(() => dsp.idm.close());
+            await dsp.idm.writeAbort(Abort_unboundRequest).then(() => dsp.idm.events.emit("unbind", null));
         } else if (e instanceof errors.InvalidProtocolError) {
-            await dsp.idm.writeAbort(Abort_invalidProtocol).then(() => dsp.idm.close());
+            await dsp.idm.writeAbort(Abort_invalidProtocol).then(() => dsp.idm.events.emit("unbind", null));
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
-            await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.close());
+            await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.events.emit("unbind", null));
         } else {
-            await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.close());
+            await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.events.emit("unbind", null));
         }
     } finally {
         dsp.invocations.delete(Number(request.invokeID));
@@ -234,6 +234,11 @@ class DSPConnection extends ClientConnection {
     }
 
     private async handleUnbind (): Promise<void> {
+        await this.ctx.db.enqueuedSearchResult.deleteMany({
+            where: {
+                connection_uuid: this.id,
+            },
+        });
         try {
             this.idm.close();
         } catch (e) {

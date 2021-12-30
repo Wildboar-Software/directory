@@ -239,13 +239,13 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.UnknownError) {
             await dop.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
         } else if (e instanceof errors.UnboundRequestError) {
-            await dop.idm.writeAbort(Abort_unboundRequest).then(() => dop.idm.close());
+            await dop.idm.writeAbort(Abort_unboundRequest).then(() => dop.idm.events.emit("unbind", null));
         } else if (e instanceof errors.InvalidProtocolError) {
-            await dop.idm.writeAbort(Abort_invalidProtocol).then(() => dop.idm.close());
+            await dop.idm.writeAbort(Abort_invalidProtocol).then(() => dop.idm.events.emit("unbind", null));
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
-            await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.close());
+            await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.events.emit("unbind", null));
         } else {
-            await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.close());
+            await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.events.emit("unbind", null));
         }
     }
 }

@@ -98,13 +98,6 @@ async function searchAliases (
         chaining.authenticationLevel,
         undefined,
         chaining.excludeShadows,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
     );
     const outcome = await OperationDispatcher.dispatchLocalSearchDSPRequest(
         ctx,
@@ -145,12 +138,6 @@ async function searchAliases (
                 ret.poq = new PartialOutcomeQualifier(
                     undefined,
                     [ errorData.candidate ],
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                 );
             }
         } else if (compareCode(outcome.errcode, serviceError["&errorCode"]!)) {
@@ -203,12 +190,6 @@ async function searchAliases (
                     ret.poq = new PartialOutcomeQualifier(
                         undefined,
                         [ cr ],
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
                     );
                 }
             }

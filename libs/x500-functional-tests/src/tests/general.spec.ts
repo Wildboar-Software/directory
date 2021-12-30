@@ -3568,7 +3568,11 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         const qr1 = await nextPage({
             newRequest: new PagedResultsRequest_newRequest(
                 pageSize,
-                undefined,
+                [ // pageNumber is ignored if there is no sorting.
+                    new SortKey(
+                        commonName["&id"],
+                    ),
+                ],
                 undefined,
                 undefined,
                 3,
@@ -3655,8 +3659,82 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(encountered.size).toBe(pageSize * 4);
     });
 
-    it.skip("Search pagination reverse works", async () => {
-
+    it("Search pagination reverse works", async () => {
+        const testId = `Search.pagination.reverse-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const pageSize: number = 5;
+        const subordinatesLevel1: string[] = Array(pageSize * 2).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array((pageSize * 2) - 1).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id)));
+        const subordinateWithSubordinates: string = subordinatesLevel1[subordinatesLevel1.length - 1];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id)));
+        const encountered: Set<string> = new Set();
+        let lastResult: string | undefined;
+        const nextPage = async (prr: PagedResultsRequest) => {
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_wholeSubtree,
+                undefined,
+                undefined,
+                undefined,
+                prr,
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            assert("result" in result);
+            assert(result.result);
+            const decoded = _decode_SearchResult(result.result);
+            const resData = getOptionallyProtectedValue(decoded);
+            assert("searchInfo" in resData);
+            expect(resData.searchInfo.entries).toHaveLength(pageSize);
+            for (const entry of resData.searchInfo.entries) {
+                const rdn = entry.name.rdnSequence[entry.name.rdnSequence.length - 1];
+                const foundId: string = rdn[0].value.utf8String;
+                if (lastResult) {
+                    expect([ lastResult, foundId ].sort()).toEqual([ foundId, lastResult ]);
+                }
+                expect(encountered.has(foundId)).toBeFalsy();
+                encountered.add(foundId);
+            }
+            return resData.searchInfo.partialOutcomeQualifier?.queryReference;
+        };
+        const qr1 = await nextPage({
+            newRequest: new PagedResultsRequest_newRequest(
+                pageSize,
+                [
+                    new SortKey(
+                        commonName["&id"],
+                    ),
+                ],
+                TRUE,
+            ),
+        });
+        assert(qr1);
+        const qr2 = await nextPage({
+            queryReference: qr1,
+        });
+        assert(qr2);
+        const qr3 = await nextPage({
+            queryReference: qr2,
+        });
+        assert(qr3);
+        const qr4 = await nextPage({
+            queryReference: qr3,
+        });
+        expect(qr4).toBeUndefined();
+        expect(encountered.size).toBe(pageSize * 4);
     });
 
     it.todo("Search pagination unmerged works");
@@ -6344,8 +6422,71 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("ServiceControls.sizeLimit is respected by search operation", async () => {
-
+    it("ServiceControls.sizeLimit is respected by search operation", async () => {
+        const testId = `Search.sizeLimit-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const sizeLimit: number = 2;
+        const excludedResultId: string = "8DFCA253-EAE2-4C2D-AC6D-455340BF759E";
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+            excludedResultId,
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            { // Filter out one result.
+                not: {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            commonName["&id"],
+                            utf8(excludedResultId),
+                            undefined,
+                        ),
+                    },
+                },
+            },
+            true,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            new ServiceControls(
+                undefined,
+                undefined,
+                undefined,
+                sizeLimit,
+            ),
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries.length).toBe(sizeLimit);
     });
 
     it.skip("ServiceControls.attributeSizeLimit is respected", async () => {

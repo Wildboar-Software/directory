@@ -157,6 +157,7 @@ import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
 import {
+    LimitProblem_administrativeLimitExceeded,
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
@@ -232,7 +233,7 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 import type {
     SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
+import { MINIMUM_MAX_ATTR_SIZE, MAX_RESULTS } from "../constants";
 import getAttributeSizeFilter from "../x500/getAttributeSizeFilter";
 import getAttributeSubtypes from "../x500/getAttributeSubtypes";
 import {
@@ -259,7 +260,6 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     results: EntryInformation[];
     resultSets: SearchResult[];
     poq?: PartialOutcomeQualifier;
-    skipsRemaining?: number;
     depth: number;
     paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
     familyOnly?: boolean;
@@ -549,6 +549,12 @@ does not match, its subordinates still must be searched.
 //     }
 // }
 
+function emitResult (
+    entry: EntryInformation,
+): void {
+
+};
+
 export
 async function search_i (
     ctx: Context,
@@ -695,6 +701,7 @@ async function search_i (
                 pageIndex: pi,
                 request: data.pagedResults.newRequest,
                 alreadyReturnedById: new Set(),
+                nextResultsStack: [],
             };
             searchState.paging = [ queryReference, newPagingState ];
             if (conn.pagedResultsRequests.size >= 5) {
@@ -725,6 +732,7 @@ async function search_i (
             searchState.paging = [ queryReference, paging ];
             cursorId = searchState.paging[1].cursorIds[searchState.depth];
             processingEntriesWithSortKey = searchState.paging[1].processingEntriesWithSortKey[searchState.depth] ?? true;
+            return;
         } else if ("abandonQuery" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             conn.pagedResultsRequests.delete(queryReference);
@@ -763,14 +771,9 @@ async function search_i (
             );
         }
     }
-    const pageNumber: number = (searchState.paging?.[1].request.pageNumber !== undefined)
-        ? Number(searchState.paging[1].request.pageNumber)
-        : 0;
-    const pageSize: number = Number(
-        searchState.paging?.[1].request.pageSize
-            ?? data.serviceControls?.sizeLimit
-            ?? Infinity
-    );
+    const sizeLimit: number = searchState.paging?.[1]
+        ? Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS)
+        : MAX_RESULTS;
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         searchState.poq = new PartialOutcomeQualifier(
             LimitProblem_timeLimitExceeded,
@@ -787,25 +790,19 @@ async function search_i (
         return;
     }
     const currentNumberOfResults: number = getCurrentNumberOfResults(searchState);
-    if (currentNumberOfResults >= pageSize) {
+    if (currentNumberOfResults >= sizeLimit) {
         searchState.poq = new PartialOutcomeQualifier(
-            LimitProblem_sizeLimitExceeded,
+            (currentNumberOfResults >= MAX_RESULTS)
+                ? LimitProblem_administrativeLimitExceeded
+                : LimitProblem_sizeLimitExceeded,
             undefined,
             undefined,
             undefined,
             searchState.paging?.[0]
                 ? Buffer.from(searchState.paging[0], "base64")
                 : undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         return;
-    }
-    if (searchState.skipsRemaining === undefined) {
-        searchState.skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
-            ? (pageNumber * pageSize)
-            : 0;
     }
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
@@ -1498,15 +1495,6 @@ async function search_i (
                                     searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
                                     return had;
                                 })()
-                                && ((): boolean => {
-                                    if (searchState.skipsRemaining === undefined) {
-                                        return true;
-                                    }
-                                    if (searchState.skipsRemaining > 0) {
-                                        searchState.skipsRemaining--;
-                                    }
-                                    return (searchState.skipsRemaining <= 0);
-                                })()
                                 && ( // Is this part of the familyReturn member selection?
                                     !familyMembersToBeReturned
                                     || familyMembersToBeReturned.has(vertex.dse.id)
@@ -1553,10 +1541,7 @@ async function search_i (
                             attribute: familyInfoAttr,
                         });
                     }
-                    if (
-                        (searchState.skipsRemaining <= 0)
-                        && !searchState.paging?.[1].alreadyReturnedById.has(familySubset[0].dse.id)
-                    ) {
+                    if (!searchState.paging?.[1].alreadyReturnedById.has(familySubset[0].dse.id)) {
                         searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
                         searchState.results.push(
                             new EntryInformation(
@@ -1572,9 +1557,6 @@ async function search_i (
                                 undefined,
                             ),
                         );
-                    } else if ((searchState.skipsRemaining ?? 0) > 0) {
-                        searchState.skipsRemaining--;
-                        searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
                     }
                     if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                         hierarchySelectionProcedure(
@@ -1747,15 +1729,6 @@ async function search_i (
                                     searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
                                     return had;
                                 })()
-                                && ((): boolean => {
-                                    if (searchState.skipsRemaining === undefined) {
-                                        return true;
-                                    }
-                                    if (searchState.skipsRemaining > 0) {
-                                        searchState.skipsRemaining--;
-                                    }
-                                    return (searchState.skipsRemaining <= 0);
-                                })()
                                 && ( // Is this part of the familyReturn member selection?
                                     !familyMembersToBeReturned
                                     || familyMembersToBeReturned.has(vertex.dse.id)
@@ -1802,10 +1775,7 @@ async function search_i (
                                 attribute: familyInfoAttr,
                             });
                         }
-                        if (
-                            (searchState.skipsRemaining <= 0)
-                            && !searchState.paging?.[1].alreadyReturnedById.has(familySubset[0].dse.id)
-                        ) {
+                        if (!searchState.paging?.[1].alreadyReturnedById.has(familySubset[0].dse.id)) {
                             searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
                             searchState.results.push(
                                 new EntryInformation(
@@ -1821,9 +1791,6 @@ async function search_i (
                                     undefined,
                                 ),
                             );
-                        } else if ((searchState.skipsRemaining ?? 0) > 0) {
-                            searchState.skipsRemaining--;
-                            searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
                         }
                     }
                     if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
@@ -2129,7 +2096,7 @@ async function search_i (
              * Otherwise, you will not continue to return results from
              * incompletely-searched subordinates.
              */
-            if (searchState.poq) {
+            if (searchState.poq && (searchState.poq.limitProblem !== undefined)) {
                 return;
             }
             /**
@@ -2159,7 +2126,7 @@ async function search_i (
     }
     // subordinatesInBatch.length === 0 beyond this point.
     if ((searchState.depth === 0) && searchState.paging) {
-        conn.pagedResultsRequests.delete(searchState.paging[0]);
+        // conn.pagedResultsRequests.delete(searchState.paging[0]);
         searchState.paging[1].cursorIds.pop();
     }
 }

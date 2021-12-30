@@ -125,6 +125,8 @@ async function main (): Promise<void> {
         }));
     }
 
+    await ctx.db.enqueuedSearchResult.deleteMany();
+
     if (
         process.env.MEERKAT_SIGNING_CERT_CHAIN
         && process.env.MEERKAT_SIGNING_KEY
@@ -231,7 +233,7 @@ async function main (): Promise<void> {
                         source,
                         protocol: idmBind.protocolID.toString(),
                     }))
-                    idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.close());
+                    idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.events.emit("unbind", null)).catch();
                     associations.delete(c);
                     return;
                 }
@@ -345,6 +347,11 @@ async function main (): Promise<void> {
                 associations.set(c, conn);
             }
             c.on("end", () => {
+                ctx.db.enqueuedSearchResult.deleteMany({
+                    where: {
+                        connection_uuid: conn.id,
+                    },
+                }).then().catch();
                 associations.delete(c);
             });
         });
@@ -364,9 +371,9 @@ async function main (): Promise<void> {
         // I tried making AppModule a dynamic module that would take `ctx` as an argument, but that did not work. See:
         // See: https://github.com/nestjs/nest/issues/671
         const app = await NestFactory.create<NestExpressApplication>(AppModule);
-        app.useStaticAssets(path.join(__dirname, 'assets', 'static'));
-        app.setBaseViewsDir(path.join(__dirname, 'assets', 'views'));
-        app.setViewEngine('hbs');
+        app.useStaticAssets(path.join(__dirname, "assets", "static"));
+        app.setBaseViewsDir(path.join(__dirname, "assets", "views"));
+        app.setViewEngine("hbs");
         app.useGlobalPipes(new ValidationPipe({
             transform: true,
             skipMissingProperties: false,

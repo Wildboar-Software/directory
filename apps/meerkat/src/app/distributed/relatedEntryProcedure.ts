@@ -6,15 +6,9 @@ import {
 import {
     SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import type {
-    SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import {
-    ChainingResults,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import {
     ContinuationReference,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
@@ -49,13 +43,9 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import type { SearchState } from "./search_i";
-
-export
-interface RelatedEntryReturn {
-    chaining: ChainingResults;
-    response: SearchResult[];
-    unexplored: ContinuationReference[];
-}
+import {
+    PartialOutcomeQualifier,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 
 function createNewChainingArgument (index: number, originator?: ChainingArguments["originator"]): ChainingArguments {
     return new ChainingArguments(
@@ -91,7 +81,6 @@ async function relatedEntryProcedure (
     conn: ClientConnection,
     state: OperationDispatcherState,
     search: SearchState,
-    ret: RelatedEntryReturn,
     argument: SearchArgument,
     chaining?: ChainingArguments,
 ): Promise<void> {
@@ -167,19 +156,6 @@ async function relatedEntryProcedure (
                     undefined,
                     undefined,
                     data.joinType,
-                    [],
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                 ),
             };
         try {
@@ -197,7 +173,7 @@ async function relatedEntryProcedure (
                     // This implementation does not actually check for duplicates.
                     search.results.push(...response.result.unsigned.searchInfo.entries);
                 } else {
-                    ret.response.push(response.result);
+                    search.resultSets.push(response.result);
                 }
             } else {
                 continue;
@@ -240,7 +216,25 @@ async function relatedEntryProcedure (
                         undefined,
                         undefined,
                     );
-                ret.unexplored.push(cr);
+                if (!search.poq) {
+                    search.poq = new PartialOutcomeQualifier(
+                        undefined,
+                        [ cr ],
+                    );
+                } else if (!search.poq.unexplored) {
+                    search.poq = new PartialOutcomeQualifier(
+                        search.poq.limitProblem,
+                        [ cr ],
+                        search.poq.unavailableCriticalExtensions,
+                        search.poq.unknownErrors,
+                        search.poq.queryReference,
+                        search.poq.overspecFilter,
+                        search.poq.notification,
+                        search.poq.entryCount,
+                    );
+                } else {
+                    search.poq.unexplored.push(cr);
+                }
             } else {
                 continue;
             }

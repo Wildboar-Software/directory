@@ -444,6 +444,7 @@ async function list_ii (
                 : [],
             processingEntriesWithSortKey: [ true ],
             alreadyReturnedById: new Set(),
+            nextResultsStack: [],
         });
     }
 

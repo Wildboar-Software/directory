@@ -220,13 +220,13 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.UnknownError) {
             await dap.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
         } else if (e instanceof errors.UnboundRequestError) {
-            await dap.idm.writeAbort(Abort_unboundRequest).then(() => dap.idm.close());
+            await dap.idm.writeAbort(Abort_unboundRequest).then(() => dap.idm.events.emit("unbind", null));
         } else if (e instanceof errors.InvalidProtocolError) {
-            await dap.idm.writeAbort(Abort_invalidProtocol).then(() => dap.idm.close());
+            await dap.idm.writeAbort(Abort_invalidProtocol).then(() => dap.idm.events.emit("unbind", null));
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
-            await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.close());
+            await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.events.emit("unbind", null));
         } else {
-            await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.close());
+            await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.events.emit("unbind", null));
         }
     } finally {
         dap.invocations.delete(Number(request.invokeID));
@@ -259,6 +259,11 @@ class DAPConnection extends ClientConnection {
     }
 
     private async handleUnbind (): Promise<void> {
+        await this.ctx.db.enqueuedSearchResult.deleteMany({
+            where: {
+                connection_uuid: this.id,
+            },
+        });
         try {
             this.idm.close();
         } catch (e) {

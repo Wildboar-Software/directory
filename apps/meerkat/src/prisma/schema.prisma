@@ -1005,11 +1005,11 @@ model InstalledVersions {
 model EnqueuedSearchResult {
   id              Int    @id @default(autoincrement())
   connection_uuid String @db.VarChar(40) // UUID of the connection.
-  query_uuid      String @db.VarChar(40) // Could be a pagination UUID or something else.
+  query_ref       String @db.VarChar(40) // Could be a pagination UUID or something else.
   result_index    Int // The 0-based index in which this entry appears in the results.
-  entry_id        Int
-  entry           Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  entry_id        Int?
+  entry           Entry?  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   entry_info      Bytes // BER-encoded EntryInformation
 
-  @@unique([connection_uuid, query_uuid, result_index])
+  @@unique([connection_uuid, query_ref, result_index])
 }

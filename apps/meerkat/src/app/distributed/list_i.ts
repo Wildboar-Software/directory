@@ -606,6 +606,7 @@ async function list_i (
                 : [],
             processingEntriesWithSortKey: [ processingEntriesWithSortKey ],
             alreadyReturnedById: new Set(),
+            nextResultsStack: [],
         });
     }
 

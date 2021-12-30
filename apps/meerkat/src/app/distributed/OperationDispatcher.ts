@@ -10,9 +10,6 @@ import {
     _encode_SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import {
-    SearchResultData_searchInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
-import {
     SearchResult,
     _decode_SearchResult,
     _encode_SearchResult,
@@ -72,20 +69,13 @@ import {
     _decode_ListResult,
     _encode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
-import {
-    PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { SearchState } from "./search_i";
 import { ChainingResults } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import type { Error_ } from "@wildboar/x500/src/lib/types/Error_";
 import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import {
-    relatedEntryProcedure,
-    RelatedEntryReturn,
-} from "./relatedEntryProcedure";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import relatedEntryProcedure from "./relatedEntryProcedure";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import type { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
 import type {
@@ -111,6 +101,7 @@ import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
 import { BER } from "asn1-ts/dist/node/functional";
 import failover from "../utils/failover";
 import emptyChainingResults from "../x500/emptyChainingResults";
+import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
 
 export
 type SearchResultOrError = {
@@ -166,7 +157,6 @@ class OperationDispatcher {
     ): Promise<OperationDispatcherReturn> {
         assert(req.opCode);
         assert(req.argument);
-        const foundDN = getDistinguishedName(state.foundDSE);
         if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
             const outcome = await doAddEntry(ctx, conn, state);
             return {
@@ -436,23 +426,17 @@ class OperationDispatcher {
                 ),
                 undefined,
             );
-            const relatedEntryReturn: RelatedEntryReturn = {
-                chaining: chainingResults,
-                response: [],
-                unexplored: [],
-            };
             const searchResponse: SearchState = {
                 results: [],
                 resultSets: [],
-                chaining: relatedEntryReturn.chaining,
+                chaining: chainingResults,
                 depth: 0,
             };
-            await relatedEntryProcedure(
+            await relatedEntryProcedure( // REVIEW: Is there any reason for REP to return chaining results?
                 ctx,
                 conn,
                 state,
                 searchResponse,
-                relatedEntryReturn,
                 argument,
                 reqData.chainedArgument,
             );
@@ -466,86 +450,6 @@ class OperationDispatcher {
                     argument,
                     searchResponse,
                 );
-                const localResult: SearchResult = {
-                    unsigned: {
-                        searchInfo: new SearchResultData_searchInfo(
-                            {
-                                rdnSequence: foundDN,
-                            },
-                            searchResponse.results,
-                            (searchResponse.poq || relatedEntryReturn.unexplored.length)
-                                ? new PartialOutcomeQualifier(
-                                    searchResponse.poq?.limitProblem,
-                                    relatedEntryReturn.unexplored,
-                                    searchResponse.poq?.unavailableCriticalExtensions,
-                                    searchResponse.poq?.unknownErrors,
-                                    searchResponse.paging
-                                        ? Buffer.from(searchResponse.paging[0], "base64")
-                                        : searchResponse.poq?.queryReference,
-                                    searchResponse.poq?.overspecFilter,
-                                    searchResponse.poq?.notification,
-                                    searchResponse.poq?.entryCount,
-                                )
-                                : undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                conn.boundNameAndUID?.dn,
-                                search["&operationCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
-                        ),
-                    },
-                };
-                const unmergedResult: SearchResult = (
-                    searchResponse.resultSets.length
-                    + relatedEntryReturn.response.length
-                )
-                    ? {
-                        unsigned: {
-                            uncorrelatedSearchInfo: [
-                                ...searchResponse.resultSets,
-                                ...relatedEntryReturn.response,
-                                localResult,
-                            ],
-                        },
-                    }
-                    : localResult;
-                const result = await resultsMergingProcedureForSearch(
-                    ctx,
-                    unmergedResult,
-                    state.NRcontinuationList,
-                    state.SRcontinuationList,
-                );
-                const unprotectedResult = getOptionallyProtectedValue(result);
-                return {
-                    invokeId: {
-                        present: 1,
-                    },
-                    opCode: search["&operationCode"]!,
-                    result: {
-                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            emptyChainingResults(),
-                            _encode_SearchResult(result, DER),
-                        ),
-                    },
-                    request: requestStats,
-                    outcome: {
-                        result: failover(() => ({
-                            search: getSearchResultStatistics(result),
-                            poq: (
-                                ("searchInfo" in unprotectedResult)
-                                && unprotectedResult.searchInfo.partialOutcomeQualifier
-                            )
-                                ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
-                                : undefined,
-                        }), undefined),
-                    },
-                    foundDSE: state.foundDSE,
-                };
             } else { // Search (I)
                 // Only Search (I) results in results merging.
                 await search_i(
@@ -555,87 +459,40 @@ class OperationDispatcher {
                     argument,
                     searchResponse,
                 );
-                const localResult: SearchResult = {
-                    unsigned: {
-                        searchInfo: new SearchResultData_searchInfo(
-                            {
-                                rdnSequence: foundDN,
-                            },
-                            searchResponse.results,
-                            (searchResponse.poq || relatedEntryReturn.unexplored.length)
-                                ? new PartialOutcomeQualifier(
-                                    searchResponse.poq?.limitProblem,
-                                    relatedEntryReturn.unexplored,
-                                    searchResponse.poq?.unavailableCriticalExtensions,
-                                    searchResponse.poq?.unknownErrors,
-                                    searchResponse.paging
-                                        ? Buffer.from(searchResponse.paging[0], "base64")
-                                        : searchResponse.poq?.queryReference,
-                                    searchResponse.poq?.overspecFilter,
-                                    searchResponse.poq?.notification,
-                                    searchResponse.poq?.entryCount,
-                                )
-                                : undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                conn.boundNameAndUID?.dn,
-                                search["&operationCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
-                        ),
-                    },
-                };
-                const unmergedResult: SearchResult = (
-                    searchResponse.resultSets.length
-                    + relatedEntryReturn.response.length
-                )
-                    ? {
-                        unsigned: {
-                            uncorrelatedSearchInfo: [
-                                ...searchResponse.resultSets,
-                                ...relatedEntryReturn.response,
-                                localResult,
-                            ],
-                        },
-                    }
-                    : localResult;
-                const result = await resultsMergingProcedureForSearch(
-                    ctx,
-                    unmergedResult,
-                    state.NRcontinuationList,
-                    state.SRcontinuationList,
-                );
-                const unprotectedResult = getOptionallyProtectedValue(result);
-                return {
-                    invokeId: {
-                        present: 1,
-                    },
-                    opCode: search["&operationCode"]!,
-                    result: {
-                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            emptyChainingResults(),
-                            _encode_SearchResult(result, DER),
-                        ),
-                    },
-                    request: requestStats,
-                    outcome: {
-                        result: failover(() => ({
-                            search: getSearchResultStatistics(result),
-                            poq: (
-                                ("searchInfo" in unprotectedResult)
-                                && unprotectedResult.searchInfo.partialOutcomeQualifier
-                            )
-                                ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
-                                : undefined,
-                        }), undefined),
-                    },
-                    foundDSE: state.foundDSE,
-                };
             }
+            const postMergeState = await resultsMergingProcedureForSearch(
+                ctx,
+                searchResponse,
+                state.NRcontinuationList,
+                state.SRcontinuationList,
+            );
+            const result = await mergeSortAndPageSearch(ctx, conn, state, postMergeState, data);
+            const unprotectedResult = getOptionallyProtectedValue(result);
+            return {
+                invokeId: {
+                    present: 1,
+                },
+                opCode: search["&operationCode"]!,
+                result: {
+                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                        emptyChainingResults(),
+                        _encode_SearchResult(result, DER),
+                    ),
+                },
+                request: requestStats,
+                outcome: {
+                    result: failover(() => ({
+                        search: getSearchResultStatistics(result),
+                        poq: (
+                            ("searchInfo" in unprotectedResult)
+                            && unprotectedResult.searchInfo.partialOutcomeQualifier
+                        )
+                            ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
+                            : undefined,
+                    }), undefined),
+                },
+                foundDSE: state.foundDSE,
+            };
         }
         throw new errors.UnknownOperationError();
     }
@@ -818,16 +675,11 @@ class OperationDispatcher {
         argument: SearchArgument,
         chaining: ChainingArguments,
     ): Promise<SearchResultOrError> {
-        const foundDN = getDistinguishedName(state.foundDSE);
-        const relatedEntryReturn: RelatedEntryReturn = {
-            chaining: state.chainingResults,
-            response: [],
-            unexplored: [],
-        };
+        const data = getOptionallyProtectedValue(argument);
         const searchResponse: SearchState = {
             results: [],
             resultSets: [],
-            chaining: relatedEntryReturn.chaining,
+            chaining: state.chainingResults,
             depth: 0,
         };
         await relatedEntryProcedure(
@@ -835,7 +687,6 @@ class OperationDispatcher {
             conn,
             state,
             searchResponse,
-            relatedEntryReturn,
             argument,
             chaining,
         );
@@ -843,134 +694,26 @@ class OperationDispatcher {
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         if (nameResolutionPhase === completed) { // Search (II)
             await search_ii(ctx, conn, state, argument, searchResponse);
-            const localResult: SearchResult = {
-                unsigned: {
-                    searchInfo: new SearchResultData_searchInfo(
-                        {
-                            rdnSequence: foundDN,
-                        },
-                        searchResponse.results,
-                        (searchResponse.poq || relatedEntryReturn.unexplored.length)
-                            ? new PartialOutcomeQualifier(
-                                searchResponse.poq?.limitProblem,
-                                relatedEntryReturn.unexplored,
-                                searchResponse.poq?.unavailableCriticalExtensions,
-                                searchResponse.poq?.unknownErrors,
-                                searchResponse.paging
-                                    ? Buffer.from(searchResponse.paging[0], "base64")
-                                    : searchResponse.poq?.queryReference,
-                                searchResponse.poq?.overspecFilter,
-                                searchResponse.poq?.notification,
-                                searchResponse.poq?.entryCount,
-                            )
-                            : undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            search["&operationCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        state.chainingArguments.aliasDereferenced,
-                        undefined,
-                    ),
-                },
-            };
-            const unmergedResult: SearchResult = (
-                searchResponse.resultSets.length
-                + relatedEntryReturn.response.length
-            )
-                ? {
-                    unsigned: {
-                        uncorrelatedSearchInfo: [
-                            ...searchResponse.resultSets,
-                            ...relatedEntryReturn.response,
-                            localResult,
-                        ],
-                    },
-                }
-                : localResult;
-            const result = await resultsMergingProcedureForSearch(
-                ctx,
-                unmergedResult,
-                state.NRcontinuationList,
-                state.SRcontinuationList,
-            );
-            return {
-                invokeId: {
-                    present: 1,
-                },
-                opCode: search["&operationCode"]!,
-                chaining: searchResponse.chaining,
-                result,
-            };
         } else { // Search (I)
             // Only Search (I) results in results merging.
             await search_i(ctx, conn, state, argument, searchResponse);
-            const localResult: SearchResult = {
-                unsigned: {
-                    searchInfo: new SearchResultData_searchInfo(
-                        {
-                            rdnSequence: foundDN,
-                        },
-                        searchResponse.results,
-                        (searchResponse.poq || relatedEntryReturn.unexplored.length)
-                            ? new PartialOutcomeQualifier(
-                                searchResponse.poq?.limitProblem,
-                                relatedEntryReturn.unexplored,
-                                searchResponse.poq?.unavailableCriticalExtensions,
-                                searchResponse.poq?.unknownErrors,
-                                searchResponse.paging
-                                    ? Buffer.from(searchResponse.paging[0], "base64")
-                                    : searchResponse.poq?.queryReference,
-                                searchResponse.poq?.overspecFilter,
-                                searchResponse.poq?.notification,
-                                searchResponse.poq?.entryCount,
-                            )
-                            : undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            conn.boundNameAndUID?.dn,
-                            search["&operationCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
-                    ),
-                },
-            };
-            const unmergedResult: SearchResult = (
-                searchResponse.resultSets.length
-                + relatedEntryReturn.response.length
-            )
-                ? {
-                    unsigned: {
-                        uncorrelatedSearchInfo: [
-                            ...searchResponse.resultSets,
-                            ...relatedEntryReturn.response,
-                            localResult,
-                        ],
-                    },
-                }
-                : localResult;
-            const result = await resultsMergingProcedureForSearch(
-                ctx,
-                unmergedResult,
-                state.NRcontinuationList,
-                state.SRcontinuationList,
-            );
-            return {
-                invokeId: {
-                    present: 1,
-                },
-                opCode: search["&operationCode"]!,
-                chaining: searchResponse.chaining,
-                result,
-            };
         }
+        // REVIEW: Is this right? Just above, you say "Only Search (I) results in results merging."
+        const postMergeState = await resultsMergingProcedureForSearch(
+            ctx,
+            searchResponse,
+            state.NRcontinuationList,
+            state.SRcontinuationList,
+        );
+        const result = await mergeSortAndPageSearch(ctx, conn, state, postMergeState, data);
+        return {
+            invokeId: {
+                present: 1,
+            },
+            opCode: search["&operationCode"]!,
+            chaining: searchResponse.chaining,
+            result,
+        };
     }
 
     public static async dispatchLocalSearchDSPRequest (

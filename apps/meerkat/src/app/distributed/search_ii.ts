@@ -178,6 +178,7 @@ async function search_ii (
                     : 1) - 1),
                 request: data.pagedResults.newRequest,
                 alreadyReturnedById: new Set(),
+                nextResultsStack: [],
             };
             searchState.paging = [ queryReference, newPagingState ];
             if (conn.pagedResultsRequests.size >= 5) {

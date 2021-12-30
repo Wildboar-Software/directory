@@ -107,6 +107,9 @@ import {
 import type {
     Clearance,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
+import type {
+    EntryInformation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -1121,6 +1124,11 @@ interface PagedResultsRequestState {
      * The entries already returned by the search or list operation.
      */
     alreadyReturnedById: Set<Entry["id"]>;
+
+    nextResultsStack: EntryInformation[];
+
+    cursorId?: number;
+    totalResults?: number;
 }
 
 export

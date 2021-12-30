@@ -1,33 +1,26 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type {
-    SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import type {
-    SearchResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData.ta";
 import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import { strict as assert } from "assert";
 import scrProcedure from "./scrProcedure";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import type { SearchState } from "./search_i";
 
 export
 async function resultsMergingProcedureForSearch (
     ctx: Context,
-    res: SearchResult,
+    res: SearchState,
     NRcontinuationList: ContinuationReference[],
     SRcontinuationList: ContinuationReference[],
-): Promise<SearchResult> {
-    const data: SearchResultData = getOptionallyProtectedValue(res);
+): Promise<SearchState> {
+    // const data: SearchResultData = getOptionallyProtectedValue(res);
     // We skip removing duplicates for now.
-    if (("searchInfo" in data) && data.searchInfo.partialOutcomeQualifier) {
-        if (data.searchInfo.partialOutcomeQualifier.limitProblem !== undefined) {
+    if (res.poq) {
+        if (res.poq.limitProblem !== undefined) {
             return res;
         }
-        const poq = data.searchInfo.partialOutcomeQualifier;
-        for (const cr of (poq.unexplored ?? [])) {
+        for (const cr of (res.poq.unexplored ?? [])) {
             // None shall be ignored for now.
             if (cr.operationProgress.nameResolutionPhase === completed) {
                 SRcontinuationList.push(cr);
