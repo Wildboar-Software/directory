@@ -413,6 +413,9 @@ import {
 import {
     hierarchyBelow,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyBelow.oa";
+import {
+    caseIgnoreOrderingMatch,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreOrderingMatch.oa";
 
 jest.setTimeout(30000);
 
@@ -2250,6 +2253,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 [
                     new SortKey(
                         commonName["&id"],
+                        caseIgnoreOrderingMatch["&id"], // commonName has no specified ordering rule.
                     ),
                 ],
             ),
@@ -2319,6 +2323,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 [
                     new SortKey(
                         commonName["&id"],
+                        caseIgnoreOrderingMatch["&id"], // commonName has no specified ordering rule.
                     ),
                 ],
                 TRUE,
@@ -2381,7 +2386,11 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         const qr1 = await nextPage({
             newRequest: new PagedResultsRequest_newRequest(
                 pageSize,
-                undefined,
+                [ // pageNumber is ignored if there is no sorting.
+                    new SortKey(
+                        commonName["&id"],
+                    ),
+                ],
                 undefined,
                 undefined,
                 3, // Skip three pages
@@ -3583,7 +3592,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
     });
 
     it("Search pagination sorting works", async () => {
-        const testId = `Search.pagination-${(new Date()).toISOString()}`;
+        const testId = `Search.pagination.sorting-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
         }
@@ -3624,12 +3633,13 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             expect(resData.searchInfo.entries).toHaveLength(pageSize);
             for (const entry of resData.searchInfo.entries) {
                 const rdn = entry.name.rdnSequence[entry.name.rdnSequence.length - 1];
-                const foundId: string = rdn[0].value.utf8String;
+                const foundId: string = rdn[0].value.utf8String.toLowerCase();
                 if (lastResult) {
                     expect([ lastResult, foundId ].sort()).toEqual([ lastResult, foundId ]);
                 }
                 expect(encountered.has(foundId)).toBeFalsy();
                 encountered.add(foundId);
+                lastResult = foundId;
             }
             return resData.searchInfo.partialOutcomeQualifier?.queryReference;
         };
@@ -3639,6 +3649,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 [
                     new SortKey(
                         commonName["&id"],
+                        caseIgnoreOrderingMatch["&id"], // commonName has no specified ordering rule.
                     ),
                 ],
             ),
@@ -3701,12 +3712,13 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             expect(resData.searchInfo.entries).toHaveLength(pageSize);
             for (const entry of resData.searchInfo.entries) {
                 const rdn = entry.name.rdnSequence[entry.name.rdnSequence.length - 1];
-                const foundId: string = rdn[0].value.utf8String;
+                const foundId: string = rdn[0].value.utf8String.toLowerCase();
                 if (lastResult) {
                     expect([ lastResult, foundId ].sort()).toEqual([ foundId, lastResult ]);
                 }
                 expect(encountered.has(foundId)).toBeFalsy();
                 encountered.add(foundId);
+                lastResult = foundId;
             }
             return resData.searchInfo.partialOutcomeQualifier?.queryReference;
         };
@@ -3716,6 +3728,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 [
                     new SortKey(
                         commonName["&id"],
+                        caseIgnoreOrderingMatch["&id"], // commonName has no specified ordering rule.
                     ),
                 ],
                 TRUE,

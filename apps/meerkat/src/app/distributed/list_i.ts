@@ -1,4 +1,11 @@
-import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import {
+    Context,
+    Vertex,
+    ClientConnection,
+    WithRequestStatistics,
+    WithOutcomeStatistics,
+    PagedResultsRequestState,
+} from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
@@ -10,9 +17,7 @@ import {
     ServiceControlOptions_subentries as subentriesBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
 import readSubordinates from "../dit/readSubordinates";
-import readSubordinatesSorted from "../dit/readSubordinatesSorted";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { AccessPointInformation, ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -29,17 +34,10 @@ import {
 import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
 import {
     ListResult,
-    _encode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
-import {
-    ListResultData_listInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
 import {
     ListResultData_listInfo_subordinates_Item as ListItem,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
-import {
-    Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
@@ -49,8 +47,6 @@ import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtend
 import bacACDF, {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
-    PERMISSION_CATEGORY_COMPARE,
-    PERMISSION_CATEGORY_READ,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
@@ -76,7 +72,6 @@ import {
 import {
     ServiceProblem_invalidQueryReference,
     ServiceProblem_unavailable,
-    ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     PartialOutcomeQualifier,
@@ -97,13 +92,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
-import getListResultStatistics from "../telemetry/getListResultStatistics";
-import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
-import failover from "../utils/failover";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import {
@@ -113,17 +102,27 @@ import {
     parent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
 import type { Prisma } from "@prisma/client";
+import { MAX_RESULTS } from "../constants";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
 const CHILD: string = child["&id"].toString();
 
 export
+interface ListState extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
+    chaining: ChainingResults;
+    results: ListItem[];
+    resultSets: ListResult[];
+    poq?: PartialOutcomeQualifier;
+    queryReference?: string;
+}
+
+export
 async function list_i (
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-): Promise<OperationReturn> {
+): Promise<ListState> {
     const target = state.foundDSE;
     const arg: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(arg);
@@ -202,10 +201,23 @@ async function list_i (
     }
 
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
-    let page: number = 0;
     let queryReference: string | undefined;
     let cursorId: number | undefined;
-    let processingEntriesWithSortKey: boolean = true;
+    const chainingResults = new ChainingResults(
+        undefined,
+        undefined,
+        createSecurityParameters(
+            ctx,
+            conn.boundNameAndUID?.dn,
+            id_opcode_list,
+        ),
+        undefined,
+    );
+    const ret: ListState = {
+        chaining: chainingResults,
+        results: [],
+        resultSets: [],
+    };
     if (data.pagedResults) {
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
@@ -255,9 +267,19 @@ async function list_i (
             }
             queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             pagingRequest = data.pagedResults.newRequest;
-            page = (((data.pagedResults.newRequest.pageNumber !== undefined)
-                ? Number(data.pagedResults.newRequest.pageNumber)
-                : 1) - 1);
+            const newPagingState: PagedResultsRequestState = {
+                cursorIds: [],
+                request: data.pagedResults.newRequest,
+                alreadyReturnedById: new Set(),
+                nextEntriesStack: [],
+                nextSubordinatesStack: [],
+            };
+            // listState.paging = [ queryReference, newPagingState ];
+            if (conn.pagedResultsRequests.size >= 5) {
+                conn.pagedResultsRequests.clear();
+            }
+            conn.pagedResultsRequests.set(queryReference, newPagingState);
+            ret.queryReference = queryReference;
         } else if ("queryReference" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
             const paging = conn.pagedResultsRequests.get(queryReference);
@@ -280,9 +302,8 @@ async function list_i (
                 );
             }
             pagingRequest = paging.request;
-            page = paging.pageIndex;
             cursorId = paging.cursorIds[0];
-            processingEntriesWithSortKey = paging.processingEntriesWithSortKey[0] ?? true;
+            return ret;
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
             conn.pagedResultsRequests.delete(queryReference);
@@ -321,73 +342,10 @@ async function list_i (
             );
         }
     }
-    if (pagingRequest?.sortKeys && (pagingRequest.sortKeys.length > 1)) {
-        throw new errors.ServiceError(
-            ctx.i18n.t("err:only_one_sort_key"),
-            new ServiceErrorData(
-                ServiceProblem_unwillingToPerform,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    serviceError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
     const SRcontinuationList: ContinuationReference[] = [];
-    const listItems: ListItem[] = [];
-    const pageNumber: number = (pagingRequest?.pageNumber !== undefined)
-        ? Number(pagingRequest.pageNumber)
-        : 0;
-    const pageSize: number = Number(
-        pagingRequest?.pageSize
-            ?? data.serviceControls?.sizeLimit
-            ?? Infinity
-    );
-    const sortKey = pagingRequest?.sortKeys?.[0].type_;
-    /** DEVIATION: 9F763AD8-1A94-4053-93CE-4F0D445B7D2D
-     * This is not explicitly required by the directory specifications, but
-     * Meerkat DSA checks for whether the user has the permission to read and
-     * compare attribute types of the sort key before honoring the sort. This is
-     * done to prevent information disclosure vulnerabilities. Otherwise, a
-     * nefarious user could sort entries by a sort key to discover,
-     * illegitimately, what their values are by comparison.
-     *
-     * Note that this implementation just uses the current ACDF tuples for
-     * evaluating this permission, not the relevant ACDF tuples for each
-     * subordinate. This is technically incorrect, since different permissions
-     * could apply to the subordinates, but this check itself is "extra credit"
-     * anyway: as I stated before, the X.500 specifications don't require this.
-     * Also note that the permission is only checked for the attribute type as a
-     * whole, not the individual values. Both of the above slackenings are in
-     * interest of laziness, performance, and simplicity.
-     */
-    const permittedToSort: boolean = (() => {
-        if (!sortKey) {
-            return false;
-        }
-        if (!accessControlScheme || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())) {
-            return true;
-        }
-        const { authorized: authorizedToSortKey } = bacACDF(
-            relevantTuples,
-            conn.authLevel,
-            {
-                attributeType: sortKey,
-            },
-            [
-                PERMISSION_CATEGORY_COMPARE,
-                PERMISSION_CATEGORY_READ,
-            ],
-            EQUALITY_MATCHER,
-        );
-        return authorizedToSortKey;
-    })();
+    const sizeLimit: number = pagingRequest
+        ? MAX_RESULTS
+        : Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
     const whereArgs: Partial<Prisma.EntryWhereInput> = {
         subentry: subentries,
         EntryObjectClass: (data.listFamily && target.dse.objectClass.has(PARENT))
@@ -398,36 +356,11 @@ async function list_i (
             }
             : undefined,
     };
-    const getNextBatchOfSubordinates = async (): Promise<[ number, Vertex, boolean ][]> => {
-        return permittedToSort
-            ? await readSubordinatesSorted(
-                    ctx,
-                    target,
-                    pagingRequest!.sortKeys![0].type_,
-                    processingEntriesWithSortKey,
-                    pagingRequest?.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
-                    pageSize,
-                    undefined,
-                    cursorId,
-                    whereArgs,
-            )
-            : (await readSubordinates(
-                ctx,
-                target,
-                pageSize,
-                undefined,
-                cursorId,
-                whereArgs,
-            )).map((dse) => [ dse.dse.id, dse, false ]);
-    };
-    let skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
-        ? (pageNumber * pageSize)
-        : 0;
-
+    const getNextBatchOfSubordinates = () => readSubordinates(ctx, target, sizeLimit, undefined, cursorId, whereArgs);
     let limitExceeded: LimitProblem | undefined;
     let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
-        for (const [ newCursorId, subordinate, hasValue ] of subordinatesInBatch) {
+        for (const subordinate of subordinatesInBatch) {
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
@@ -451,7 +384,7 @@ async function list_i (
                 limitExceeded = LimitProblem_timeLimitExceeded;
                 break;
             }
-            if (listItems.length >= pageSize) {
+            if (ret.results.length >= sizeLimit) {
                 limitExceeded = LimitProblem_sizeLimitExceeded;
                 break;
             }
@@ -460,8 +393,7 @@ async function list_i (
              * has not really been "processed" if we bailed out of this loop
              * because of limits.
              */
-            cursorId = newCursorId;
-            processingEntriesWithSortKey = hasValue;
+            cursorId = subordinate.dse.id;
             if (subentries && !subordinate.dse.subentry) {
                 continue;
             }
@@ -505,16 +437,12 @@ async function list_i (
                 }
             }
             if (subentries && subordinate.dse.subentry) {
-                if (skipsRemaining <= 0) {
-                    listItems.push(new ListItem(
-                        subordinate.dse.rdn,
-                        undefined,
-                        undefined,
-                    ));
-                    continue;
-                } else {
-                    skipsRemaining--;
-                }
+                ret.results.push(new ListItem(
+                    subordinate.dse.rdn,
+                    Boolean(subordinate.dse.alias),
+                    Boolean(!subordinate.dse.shadow),
+                ));
+                continue;
             }
             if (subordinate.dse.subr) {
                 SRcontinuationList.push(new ContinuationReference(
@@ -560,32 +488,20 @@ async function list_i (
                             ),
                         ];
                     })(),
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                 ));
             }
             if (subordinate.dse.entry || subordinate.dse.glue) {
-                if (skipsRemaining <= 0) {
-                    listItems.push(new ListItem(
-                        subordinate.dse.rdn,
-                        false,
-                        Boolean(subordinate.dse.shadow),
-                    ));
-                } else {
-                    skipsRemaining--;
-                }
+                ret.results.push(new ListItem(
+                    subordinate.dse.rdn,
+                    false,
+                    Boolean(subordinate.dse.shadow),
+                ));
             } else if (subordinate.dse.alias) {
-                if (skipsRemaining <= 0) {
-                    listItems.push(new ListItem(
-                        subordinate.dse.rdn,
-                        true,
-                        Boolean(subordinate.dse.shadow),
-                    ));
-                } else {
-                    skipsRemaining--;
-                }
+                ret.results.push(new ListItem(
+                    subordinate.dse.rdn,
+                    true,
+                    Boolean(subordinate.dse.shadow),
+                ));
             }
         }
         if (limitExceeded !== undefined) {
@@ -595,19 +511,6 @@ async function list_i (
     }
     if (op) {
         op.pointOfNoReturnTime = new Date();
-    }
-
-    if (queryReference && pagingRequest) {
-        conn.pagedResultsRequests.set(queryReference, {
-            request: pagingRequest,
-            pageIndex: page + 1,
-            cursorIds: cursorId
-                ? [ cursorId ]
-                : [],
-            processingEntriesWithSortKey: [ processingEntriesWithSortKey ],
-            alreadyReturnedById: new Set(),
-            nextResultsStack: [],
-        });
     }
 
     if (target.dse.nssr) {
@@ -641,84 +544,16 @@ async function list_i (
                     );
                 })
                 .filter((api): api is AccessPointInformation => !!api),
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         ));
     }
 
-    const result: ListResult = {
-        unsigned: {
-            listInfo: new ListResultData_listInfo(
-                undefined,
-                listItems,
-                // The POQ shall only be present if the results are incomplete.
-                (queryReference && (limitExceeded !== undefined))
-                    ? new PartialOutcomeQualifier(
-                        limitExceeded,
-                        undefined,
-                        undefined,
-                        undefined,
-                        Buffer.from(queryReference, "base64"),
-                        undefined,
-                        undefined,
-                        {
-                            bestEstimate: await ctx.db.entry.count({
-                                where: {
-                                    immediate_superior_id: target.dse.id,
-                                },
-                            }),
-                        },
-                    )
-                    : undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    id_opcode_list,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
-                undefined,
-            ),
-        },
-    };
     return {
-        result: {
-            unsigned: new ChainedResult(
-                new ChainingResults(
-                    undefined,
-                    undefined,
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        id_opcode_list,
-                    ),
-                    undefined,
-                ),
-                _encode_ListResult(result, DER),
-            ),
-        },
-        stats: {
-            request: failover(() => ({
-                operationCode: codeToString(id_opcode_list),
-                ...getStatisticsFromCommonArguments(data),
-                targetNameLength: targetDN.length,
-                listFamily: data.listFamily,
-                prr: data.pagedResults
-                    ? getStatisticsFromPagedResultsRequest(data.pagedResults)
-                    : undefined,
-            }), undefined),
-            outcome: failover(() => ({
-                result: {
-                    list: getListResultStatistics(result),
-                    poq: (("listInfo" in result.unsigned) && result.unsigned.listInfo.partialOutcomeQualifier)
-                        ? getPartialOutcomeQualifierStatistics(result.unsigned.listInfo.partialOutcomeQualifier)
-                        : undefined,
-                },
-            }), undefined),
-        },
+        ...ret,
+        poq: (limitExceeded !== undefined)
+            ? new PartialOutcomeQualifier(
+                limitExceeded,
+            )
+            : undefined,
     };
 }
 

@@ -8,7 +8,6 @@ import {
 import { ASN1Construction } from "asn1-ts";
 import type { PrismaPromise, Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import calculateSortKey from "../calculateSortKey";
 import rdnToJson from "../../x500/rdnToJson";
 import {
     AttributeProblem_attributeOrValueAlreadyExists,
@@ -199,7 +198,6 @@ async function addValues (
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
                     ber: Buffer.from(attr.value.toBytes()),
-                    sort_key: calculateSortKey(ctx, attr.type, attr.value),
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {

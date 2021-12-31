@@ -124,6 +124,7 @@ async function main (): Promise<void> {
             version: versionSlug,
         }));
     }
+    process.title = "Meerkat DSA";
 
     await ctx.db.enqueuedSearchResult.deleteMany();
 

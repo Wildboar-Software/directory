@@ -256,7 +256,6 @@ async function list_ii (
                 );
             }
             pagingRequest = paging.request;
-            page = paging.pageIndex;
             cursorId = paging.cursorIds[0];
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
@@ -438,13 +437,12 @@ async function list_ii (
     if (queryReference && pagingRequest) {
         conn.pagedResultsRequests.set(queryReference, {
             request: pagingRequest,
-            pageIndex: page + 1,
             cursorIds: cursorId
                 ? [ cursorId ]
                 : [],
-            processingEntriesWithSortKey: [ true ],
             alreadyReturnedById: new Set(),
-            nextResultsStack: [],
+            nextEntriesStack: [],
+            nextSubordinatesStack: [],
         });
     }
 

@@ -26,7 +26,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
 import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier } from "asn1-ts";
 import readSubordinates from "../dit/readSubordinates";
-import readSubordinatesSorted from "../dit/readSubordinatesSorted";
 import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -147,9 +146,6 @@ import {
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
-import {
-    PagedResultsRequest_newRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import {
     AbandonedData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
@@ -549,12 +545,6 @@ does not match, its subordinates still must be searched.
 //     }
 // }
 
-function emitResult (
-    entry: EntryInformation,
-): void {
-
-};
-
 export
 async function search_i (
     ctx: Context,
@@ -648,7 +638,6 @@ async function search_i (
         : undefined;
     const targetDN = getDistinguishedName(target);
     let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
-    let processingEntriesWithSortKey: boolean = searchState.paging?.[1].processingEntriesWithSortKey[searchState.depth] ?? true;
     if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
@@ -697,11 +686,10 @@ async function search_i (
             const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             const newPagingState: PagedResultsRequestState = {
                 cursorIds: [],
-                processingEntriesWithSortKey: [],
-                pageIndex: pi,
                 request: data.pagedResults.newRequest,
                 alreadyReturnedById: new Set(),
-                nextResultsStack: [],
+                nextEntriesStack: [],
+                nextSubordinatesStack: [],
             };
             searchState.paging = [ queryReference, newPagingState ];
             if (conn.pagedResultsRequests.size >= 5) {
@@ -731,7 +719,6 @@ async function search_i (
             }
             searchState.paging = [ queryReference, paging ];
             cursorId = searchState.paging[1].cursorIds[searchState.depth];
-            processingEntriesWithSortKey = searchState.paging[1].processingEntriesWithSortKey[searchState.depth] ?? true;
             return;
         } else if ("abandonQuery" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
@@ -772,8 +759,8 @@ async function search_i (
         }
     }
     const sizeLimit: number = searchState.paging?.[1]
-        ? Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS)
-        : MAX_RESULTS;
+        ? MAX_RESULTS
+        : Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         searchState.poq = new PartialOutcomeQualifier(
             LimitProblem_timeLimitExceeded,
@@ -1846,65 +1833,7 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
-    if (searchState.paging?.[1].request.sortKeys && (searchState.paging[1].request.sortKeys.length > 1)) {
-        throw new errors.ServiceError(
-            ctx.i18n.t("err:only_one_sort_key"),
-            new ServiceErrorData(
-                ServiceProblem_unwillingToPerform,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    id_errcode_serviceError,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
-    const sortKey = searchState.paging?.[1].request.sortKeys?.[0].type_;
-    /** DEVIATION: 9F763AD8-1A94-4053-93CE-4F0D445B7D2D
-     * This is not explicitly required by the directory specifications, but
-     * Meerkat DSA checks for whether the user has the permission to read and
-     * compare attribute types of the sort key before honoring the sort. This is
-     * done to prevent information disclosure vulnerabilities. Otherwise, a
-     * nefarious user could sort entries by a sort key to discover,
-     * illegitimately, what their values are by comparison.
-     *
-     * Note that this implementation just uses the current ACDF tuples for
-     * evaluating this permission, not the relevant ACDF tuples for each
-     * subordinate. This is technically incorrect, since different permissions
-     * could apply to the subordinates, but this check itself is "extra credit"
-     * anyway: as I stated before, the X.500 specifications don't require this.
-     * Also note that the permission is only checked for the attribute type as a
-     * whole, not the individual values. Both of the above slackenings are in
-     * interest of laziness, performance, and simplicity.
-     */
-    const permittedToSort: boolean = (() => {
-        if (!sortKey) {
-            return false;
-        }
-        if (!accessControlScheme || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())) {
-            return true;
-        }
-        const { authorized: authorizedToSortKey } = bacACDF(
-            relevantTuples,
-            conn.authLevel,
-            {
-                attributeType: sortKey,
-            },
-            [
-                PERMISSION_CATEGORY_COMPARE,
-                PERMISSION_CATEGORY_READ,
-            ],
-            EQUALITY_MATCHER,
-        );
-        return authorizedToSortKey;
-    })();
-
-    const getNextBatchOfSubordinates = async (): Promise<[ number, Vertex, boolean ][]> => {
+    const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
         /**
          * We return no subordinates, because the family members will all be
          * returned because of the current target entry, even if the
@@ -1913,64 +1842,43 @@ async function search_i (
         if (searchFamilyInEffect) {
             return [];
         }
-        return permittedToSort
-            ? await readSubordinatesSorted(
-                    ctx,
-                    target,
-                    searchState.paging![1].request!.sortKeys![0].type_,
-                    processingEntriesWithSortKey,
-                    searchState.paging![1].request.reverse ?? PagedResultsRequest_newRequest._default_value_for_reverse,
-                    /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
-                     * "Why don't you just fetch `pageSize` number of entries?"
-                     *
-                     * Pagination fetches `pageSize` number of entries at _each level_ of search
-                     * recursion. In other words, if you request a page size of 100, and, in the
-                     * process, you recurse into the DIT ten layers deep, there will actually be
-                     * 1000 entries loaded into memory at the deepest part. This means that a
-                     * request could consume considerably higher memory than expected. To prevent
-                     * this, a fixed page size is used. In the future, this may be configurable.
+        return readSubordinates(
+            ctx,
+            target,
+            /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
+             * "Why don't you just fetch `pageSize` number of entries?"
+             *
+             * Pagination fetches `pageSize` number of entries at _each level_ of search
+             * recursion. In other words, if you request a page size of 100, and, in the
+             * process, you recurse into the DIT ten layers deep, there will actually be
+             * 1000 entries loaded into memory at the deepest part. This means that a
+             * request could consume considerably higher memory than expected. To prevent
+             * this, a fixed page size is used. In the future, this may be configurable.
+             */
+            ctx.config.entriesPerSubordinatesPage,
+            undefined,
+            cursorId,
+            {
+                // ...(data.filter
+                //     ? convertFilterToPrismaSelect(ctx, data.filter)
+                //     : {}),
+                subentry: subentries,
+                EntryObjectClass: { // FIXME: This should be kept, but it hide child entries.
+                    /**
+                     * We do not iterate over child entries, because
+                     * those will be returned--or not--with the
+                     * ancestor entry.
                      */
-                    ctx.config.entriesPerSubordinatesPage,
-                    undefined,
-                    cursorId,
-                )
-            : (await readSubordinates(
-                ctx,
-                target,
-                /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
-                 * "Why don't you just fetch `pageSize` number of entries?"
-                 *
-                 * Pagination fetches `pageSize` number of entries at _each level_ of search
-                 * recursion. In other words, if you request a page size of 100, and, in the
-                 * process, you recurse into the DIT ten layers deep, there will actually be
-                 * 1000 entries loaded into memory at the deepest part. This means that a
-                 * request could consume considerably higher memory than expected. To prevent
-                 * this, a fixed page size is used. In the future, this may be configurable.
-                 */
-                ctx.config.entriesPerSubordinatesPage,
-                undefined,
-                cursorId,
-                {
-                    // ...(data.filter
-                    //     ? convertFilterToPrismaSelect(ctx, data.filter)
-                    //     : {}),
-                    subentry: subentries,
-                    EntryObjectClass: { // FIXME: This should be kept, but it hide child entries.
-                        /**
-                         * We do not iterate over child entries, because
-                         * those will be returned--or not--with the
-                         * ancestor entry.
-                         */
-                        none: {
-                            object_class: CHILD,
-                        },
+                    none: {
+                        object_class: CHILD,
                     },
                 },
-            )).map((dse) => [ dse.dse.id, dse, false ]);
+            },
+        );
     };
     let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
-        for (const [ newCursorId, subordinate, hasValue ] of subordinatesInBatch) {
+        for (const subordinate of subordinatesInBatch) {
             if (op?.abandonTime) {
                 op.events.emit("abandon");
                 throw new errors.AbandonError(
@@ -2006,10 +1914,9 @@ async function search_i (
                 return;
             }
             if (subentries && !subordinate.dse.subentry) {
-                cursorId = newCursorId;
-                processingEntriesWithSortKey = hasValue;
+                cursorId = subordinate.dse.id;
                 if (searchState.paging?.[1].cursorIds) {
-                    searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
+                    searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
                 }
                 continue;
             }
@@ -2019,10 +1926,9 @@ async function search_i (
              * ancestor entry.
              */
             if (subordinate.dse.objectClass.has(CHILD)) { // FIXME: This should be kept, but it hide child entries.
-                cursorId = newCursorId;
-                processingEntriesWithSortKey = hasValue;
+                cursorId = subordinate.dse.id;
                 if (searchState.paging?.[1].cursorIds) {
-                    searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
+                    searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
                 }
                 continue;
             }
@@ -2115,10 +2021,9 @@ async function search_i (
              * this procedure before we get to this part.
              */
             {
-                cursorId = newCursorId;
-                processingEntriesWithSortKey = hasValue;
+                cursorId = subordinate.dse.id;
                 if (searchState.paging?.[1].cursorIds) {
-                    searchState.paging[1].cursorIds[searchState.depth] = newCursorId;
+                    searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
                 }
             }
         }

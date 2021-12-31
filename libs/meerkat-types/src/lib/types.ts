@@ -110,6 +110,9 @@ import type {
 import type {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+import type {
+    ListResultData_listInfo_subordinates_Item as ListItem,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -1079,17 +1082,6 @@ interface PagedResultsRequestState {
     request: PagedResultsRequest_newRequest;
 
     /**
-     * Note that, even though there is a `pageNumber` field in
-     * `PagedResultsRequest.newRequest`, this field only indicates the page on
-     * which to start; X.500 directory services don't give users the ability to
-     * page backwards or randomly (and thankfully so).
-     *
-     * Hence, this `pageIndex` field exists so the current page number of the
-     * query can be tracked.
-     */
-    pageIndex: number;
-
-    /**
      * This is for implementing cursor-based pagination in Prisma.
      * See this: https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination
      *
@@ -1102,31 +1094,12 @@ interface PagedResultsRequestState {
     cursorIds: number[];
 
     /**
-     * This property is an array of booleans that indicate whether, at a given
-     * depth of a search or list operation, the operation will continue upon
-     * entries that have values of the attribute type specified by the sort key.
-     * An index of this property corresponds to the cursor given by the same
-     * index in the `cursorIds` property.
-     *
-     * On a more technical level, this means that the cursor identified by the
-     * corresponding index of `cursorIds` corresponds to an ID of the
-     * `AttributeValue` table, rather than an ID of the `Entry` table. This is
-     * significant to how paged, sorted results work in Meerkat: cursor-based
-     * pagination over sorted attribute values, which are then used to look up
-     * their corresponding entries; once such attribute values are exhausted,
-     * the entry table is used directly for cursor-based pagination.
-     *
-     * If sorting is not used, this property has no meaning.
-     */
-    processingEntriesWithSortKey: boolean[];
-
-    /**
      * The entries already returned by the search or list operation.
      */
     alreadyReturnedById: Set<Entry["id"]>;
 
-    nextResultsStack: EntryInformation[];
-
+    nextEntriesStack: EntryInformation[];
+    nextSubordinatesStack: ListItem[];
     cursorId?: number;
     totalResults?: number;
 }

@@ -1,23 +1,21 @@
 import type { Context, ClientConnection } from "@wildboar/meerkat-types";
-import {
-    ListResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
 import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import { strict as assert } from "assert";
 import lcrProcedure from "./lcrProcedure";
+import type { ListState } from "./list_i";
 
 export
 async function resultsMergingProcedureForList (
     ctx: Context,
     conn: ClientConnection,
-    data: ListResultData,
+    res: ListState,
     local: boolean,
     NRcontinuationList: ContinuationReference[],
     SRcontinuationList: ContinuationReference[],
-): Promise<ListResultData> {
+): Promise<ListState> {
     // We skip deduplicating listInfo for now.
     if (local) {
         /** REVIEW:
@@ -33,11 +31,13 @@ async function resultsMergingProcedureForList (
         //     ("listInfo" in data)
         //     && (data.listInfo.subordinates.length === 0)
         // );
-        return data;
+        return res;
     }
-    if (("listInfo" in data) && data.listInfo.partialOutcomeQualifier) {
-        const poq = data.listInfo.partialOutcomeQualifier;
-        for (const cr of (poq.unexplored ?? [])) {
+    if (res.poq) {
+        if (res.poq.limitProblem !== undefined) {
+            return res;
+        }
+        for (const cr of (res.poq.unexplored ?? [])) {
             // None shall be ignored for now.
             if (cr.operationProgress.nameResolutionPhase === completed) {
                 SRcontinuationList.push(cr);
@@ -65,7 +65,7 @@ async function resultsMergingProcedureForList (
      * would need to resolve a name after resolving the target object for the
      * list operation.
      */
-    return data;
+    return res;
 }
 
 export default resultsMergingProcedureForList;

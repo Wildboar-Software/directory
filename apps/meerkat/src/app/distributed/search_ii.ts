@@ -172,13 +172,10 @@ async function search_ii (
             const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             const newPagingState: PagedResultsRequestState = {
                 cursorIds: [],
-                processingEntriesWithSortKey: [ true ],
-                pageIndex: (((data.pagedResults.newRequest.pageNumber !== undefined)
-                    ? Number(data.pagedResults.newRequest.pageNumber)
-                    : 1) - 1),
                 request: data.pagedResults.newRequest,
                 alreadyReturnedById: new Set(),
-                nextResultsStack: [],
+                nextEntriesStack: [],
+                nextSubordinatesStack: [],
             };
             searchState.paging = [ queryReference, newPagingState ];
             if (conn.pagedResultsRequests.size >= 5) {

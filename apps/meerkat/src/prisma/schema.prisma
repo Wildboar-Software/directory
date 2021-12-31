@@ -150,14 +150,14 @@ model Entry {
   PasswordRecentlyExpired     PasswordRecentlyExpired[]
   Entry                       Entry[]                       @relation("top")
   PasswordEncryptionAlgorithm PasswordEncryptionAlgorithm[]
-
+  EnqueuedSearchResult        EnqueuedSearchResult[]
+  EnqueuedListResult          EnqueuedListResult[]
   @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
   @@index([hierarchyTop_id, hierarchyLevel])
   @@index([hierarchyParent_id])
   @@index([hierarchyPath])
-  EnqueuedSearchResult EnqueuedSearchResult[]
 }
 
 // Technically a userApplications attribute, but still has operational uses.
@@ -420,7 +420,6 @@ model AttributeValue {
   tag_number                 Int
   ber                        Bytes
   jer                        Json?
-  sort_key                   BigInt?
   // A number that sorts the values according to the default ordering rule.
   // attributeValueSecurityLabelContext
   // At most one security label context can be assigned to an attribute value
@@ -429,10 +428,9 @@ model AttributeValue {
   security_classification    Int?    @db.SmallInt
   privacy_mark               String?
 
-  // Not part of a specification, but still usable
   ContextValue ContextValue[]
+
   @@index([entry_id])
-  @@index([type, sort_key])
 }
 
 model ContextValue {
@@ -982,14 +980,6 @@ model AltServer {
   uri String
 }
 
-// Just an idea for right now:
-// model PagedResultsRequest {
-//   id            BigInt     @id @default(autoincrement())
-//   connection    String      @default(uuid())
-//   request       BER
-//   pageIndex     Int       @default(0)
-// }
-
 // To help with future migrations. This is so Meerkat DSA can do migrations
 // without Prisma (such as by refreshing sort keys, materialized paths, etc.)
 model InstalledVersions {
@@ -1008,8 +998,21 @@ model EnqueuedSearchResult {
   query_ref       String @db.VarChar(40) // Could be a pagination UUID or something else.
   result_index    Int // The 0-based index in which this entry appears in the results.
   entry_id        Int?
-  entry           Entry?  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  entry           Entry? @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   entry_info      Bytes // BER-encoded EntryInformation
+
+  @@unique([connection_uuid, query_ref, result_index])
+}
+
+// To save, sort, and paginate over a large number of list results.
+model EnqueuedListResult {
+  id               Int    @id @default(autoincrement())
+  connection_uuid  String @db.VarChar(40) // UUID of the connection.
+  query_ref        String @db.VarChar(40) // Could be a pagination UUID or something else.
+  result_index     Int // The 0-based index in which this entry appears in the results.
+  entry_id         Int?
+  entry            Entry? @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  subordinate_info Bytes // BER-encoded ListResultData.listInfo.subordinates[#]
 
   @@unique([connection_uuid, query_ref, result_index])
 }

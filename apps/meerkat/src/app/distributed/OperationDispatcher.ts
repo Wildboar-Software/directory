@@ -5,6 +5,11 @@ import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import {
+    ListArgument,
+    _decode_ListArgument,
+    _encode_ListArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+import {
     SearchArgument,
     _decode_SearchArgument,
     _encode_SearchArgument,
@@ -95,6 +100,7 @@ import getEntryInformationSelectionStatistics from "../telemetry/getEntryInforma
 import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
 import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
 import getSearchResultStatistics from "../telemetry/getSearchResultStatistics";
+import getListResultStatistics from "../telemetry/getListResultStatistics";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
@@ -102,6 +108,7 @@ import { BER } from "asn1-ts/dist/node/functional";
 import failover from "../utils/failover";
 import emptyChainingResults from "../x500/emptyChainingResults";
 import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
+import mergeSortAndPageList from "./mergeSortAndPageList";
 
 export
 type SearchResultOrError = {
@@ -290,6 +297,8 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, list["&operationCode"]!)) {
+            const argument = _decode_ListArgument(reqData.argument);
+            const data = getOptionallyProtectedValue(argument);
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // List (II)
@@ -310,36 +319,42 @@ class OperationDispatcher {
             } else { // List (I)
                 // Only List (I) results in results merging.
                 const response = await list_i(ctx, conn, state);
-                const responseData = getOptionallyProtectedValue(response.result);
-                const result = _decode_ListResult(responseData.result);
-                const data = getOptionallyProtectedValue(result);
-                const newData = await resultsMergingProcedureForList(
+                const postMergeState = await resultsMergingProcedureForList(
                     ctx,
                     conn,
-                    data,
+                    response,
                     local,
                     state.NRcontinuationList,
                     state.SRcontinuationList,
                 );
-                const newResult: ListResult = {
-                    unsigned: newData,
-                };
+                const result = await mergeSortAndPageList(ctx, conn, state, data, postMergeState);
+                const unprotectedResult = getOptionallyProtectedValue(result);
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
                     result: {
                         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
                             emptyChainingResults(),
-                            _encode_ListResult(newResult, DER),
+                            _encode_ListResult(result, DER),
                         ),
                     },
-                    request: {
-                        ...response.stats.request,
-                        operationCode: codeToString(req.opCode),
-                    },
-                    outcome: {
-                        ...response.stats.outcome,
-                    },
+                    request: failover(() => ({
+                        operationCode: codeToString(req.opCode!),
+                        ...getStatisticsFromCommonArguments(data),
+                        targetNameLength: data.object.rdnSequence.length,
+                        listFamily: data.listFamily,
+                        prr: data.pagedResults
+                            ? getStatisticsFromPagedResultsRequest(data.pagedResults)
+                            : undefined,
+                    }), undefined),
+                    outcome: failover(() => ({
+                        result: {
+                            list: getListResultStatistics(result),
+                            poq: (("listInfo" in unprotectedResult) && unprotectedResult.listInfo.partialOutcomeQualifier)
+                                ? getPartialOutcomeQualifierStatistics(unprotectedResult.listInfo.partialOutcomeQualifier)
+                                : undefined,
+                        },
+                    }), undefined),
                     foundDSE: state.foundDSE,
                 };
             }

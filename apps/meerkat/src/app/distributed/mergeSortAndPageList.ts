@@ -1,51 +1,46 @@
 import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import { LDAPConnection } from "../ldap/LDAPConnection";
-import { ASN1Element, DERElement, TRUE } from "asn1-ts";
+import { ASN1Element, DERElement } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import type {
-    SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import {
-    SearchResultData_searchInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { strict as assert } from "assert";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import type { SearchState } from "./search_i";
 import {
-    SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+    ListArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
+import type {
+    ListResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
 import createSecurityParameters from "../x500/createSecurityParameters";
-import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import {
-    EntryInformation,
-    _decode_EntryInformation,
-    _encode_EntryInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import type {
     SortKey,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
-import type {
-    EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import { MAX_RESULTS } from "../constants";
 import {
     LimitProblem_sizeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+import type { ListState } from "./list_i";
+import {
+    ListResultData_listInfo_subordinates_Item as ListItem,
+    _decode_ListResultData_listInfo_subordinates_Item,
+    _encode_ListResultData_listInfo_subordinates_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
+import { ListResultData_listInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
 
-type ISearchInfo = { -readonly [K in keyof SearchResultData_searchInfo]: SearchResultData_searchInfo[K] };
+type IListInfo = { -readonly [K in keyof ListResultData_listInfo]: ListResultData_listInfo[K] };
 
-function getEntryCount (sr: SearchResult): number {
+function getEntryCount (sr: ListResult): number {
     const data = getOptionallyProtectedValue(sr);
-    if ("searchInfo" in data) {
-        return data.searchInfo.entries.length;
-    } else if ("uncorrelatedSearchInfo" in data) {
-        return data.uncorrelatedSearchInfo
+    if ("listInfo" in data) {
+        return data.listInfo.subordinates.length;
+    } else if ("uncorrelatedListInfo" in data) {
+        return data.uncorrelatedListInfo
             .map(getEntryCount)
             .reduce((a, c) => (a + c), 0);
     } else {
@@ -85,23 +80,20 @@ function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): Part
 }
 
 function mergeResultSet (
-    acc: ISearchInfo,
-    resultSet: SearchResult,
+    acc: IListInfo,
+    resultSet: ListResult,
 ): void {
     const data = getOptionallyProtectedValue(resultSet);
-    if ("searchInfo" in data) {
-        acc.entries.push(...data.searchInfo.entries);
+    if ("listInfo" in data) {
+        acc.subordinates.push(...data.listInfo.subordinates);
         acc.partialOutcomeQualifier = (
             acc.partialOutcomeQualifier
-            && data.searchInfo.partialOutcomeQualifier
+            && data.listInfo.partialOutcomeQualifier
         )
-            ? mergePOQ(acc.partialOutcomeQualifier, data.searchInfo.partialOutcomeQualifier)
-            : (acc.partialOutcomeQualifier ?? data.searchInfo.partialOutcomeQualifier);
-        if (acc.altMatching) {
-            acc.altMatching = TRUE;
-        }
-    } else if ("uncorrelatedSearchInfo" in data) {
-        data.uncorrelatedSearchInfo
+            ? mergePOQ(acc.partialOutcomeQualifier, data.listInfo.partialOutcomeQualifier)
+            : (acc.partialOutcomeQualifier ?? data.listInfo.partialOutcomeQualifier);
+    } else if ("uncorrelatedListInfo" in data) {
+        data.uncorrelatedListInfo
             .forEach((usi) => mergeResultSet(acc, usi));
     }
 }
@@ -110,26 +102,17 @@ const A_COMES_FIRST: number = -1;
 const B_COMES_FIRST: number = 1;
 const A_AND_B_EQUAL: number = 0;
 
-function compareEntries (
+function compareSubordinates (
     ctx: Context,
-    a: EntryInformation,
-    b: EntryInformation,
+    a: ListItem,
+    b: ListItem,
     sortKeys: SortKey[],
     reverse: boolean = false,
-    isLDAP: boolean = false,
 ): number {
     const sortKey: SortKey | undefined = sortKeys[0];
     if (!sortKey) {
         return A_AND_B_EQUAL;
     }
-    const getApplicableValues = (info: EntryInformation_information_Item): ASN1Element[] => {
-        return (("attribute" in info) && info.attribute.type_.isEqualTo(sortKey.type_))
-            ? [
-                ...info.attribute.values,
-                ...(info.attribute.valuesWithContext?.map((vwc) => vwc.value) ?? []),
-            ]
-            : [];
-    };
     const matcher = sortKey.orderingRule
         ? ctx.orderingMatchingRules.get(sortKey.orderingRule.toString())?.matcher
         : getOrderingMatcherGetter(ctx)(sortKey.type_);
@@ -138,15 +121,8 @@ function compareEntries (
         // But if I forget to do this, this is still a fine outcome.
         return A_AND_B_EQUAL;
     }
-    const sortValues = (a: ASN1Element, b: ASN1Element): number => {
-        return matcher(a, b) * (reverse ? -1 : 1);
-    };
-    const aValue: ASN1Element | undefined = a.information
-        ?.flatMap(getApplicableValues)
-        .sort(sortValues)?.[0];
-    const bValue: ASN1Element | undefined = b.information
-        ?.flatMap(getApplicableValues)
-        .sort(sortValues)?.[0];
+    const aValue: ASN1Element | undefined = a.rdn.find((atav) => atav.type_.isEqualTo(sortKey.type_))?.value;
+    const bValue: ASN1Element | undefined = b.rdn.find((atav) => atav.type_.isEqualTo(sortKey.type_))?.value;
     if (!aValue && !bValue) {
         return A_AND_B_EQUAL;
     }
@@ -155,37 +131,46 @@ function compareEntries (
         if (result !== 0) {
             return result;
         }
-        return compareEntries(ctx, a, b, sortKeys.slice(1), reverse, isLDAP);
+        return compareSubordinates(ctx, a, b, sortKeys.slice(1), reverse);
     }
     if (aValue) {
-        return A_COMES_FIRST * ((reverse && isLDAP) ? -1 : 1);
+        return A_COMES_FIRST * (reverse ? -1 : 1);
     }
     assert(bValue);
-    return B_COMES_FIRST * ((reverse && isLDAP) ? -1 : 1);
+    return B_COMES_FIRST * (reverse ? -1 : 1);
 }
 
 export
-async function mergeSortAndPageSearch(
+async function mergeSortAndPageList(
     ctx: Context,
     conn: ClientConnection,
     state: OperationDispatcherState,
-    searchState: SearchState,
-    searchArgument: SearchArgumentData,
-): Promise<SearchResult> {
-    const resultSetsToReturn: SearchResult[] = [];
-    let resultsToReturn: EntryInformation[] = [];
+    listArgument: ListArgumentData,
+    listState: ListState,
+): Promise<ListResult> {
+    const resultSetsToReturn: ListResult[] = [];
+    let resultsToReturn: ListItem[] = [];
     const foundDN = getDistinguishedName(state.foundDSE);
+    const queryReference: string | undefined = (
+        listArgument.pagedResults
+        && ("queryReference" in listArgument.pagedResults)
+    )
+        ? Buffer.from(listArgument.pagedResults.queryReference).toString("base64")
+        : listState.queryReference;
+    const paging = queryReference
+        ? conn.pagedResultsRequests.get(queryReference)
+        : undefined;
     // If there is no paging, we just return an arbitrary selection of the results that is less than the sizeLimit.
-    if(!searchState.paging?.[1]) {
-        const sizeLimit: number = searchArgument.serviceControls?.sizeLimit
-            ? Math.max(Number(searchArgument.serviceControls.sizeLimit), 1)
+    if(!paging) {
+        const sizeLimit: number = listArgument.serviceControls?.sizeLimit
+            ? Math.max(Number(listArgument.serviceControls.sizeLimit), 1)
             : MAX_RESULTS;
-        resultsToReturn = [ ...searchState.results.slice(0, sizeLimit) ];
-        let sizeLimitRemaining: number = (sizeLimit - searchState.results.length);
+        resultsToReturn = [ ...listState.results.slice(0, sizeLimit) ];
+        let sizeLimitRemaining: number = (sizeLimit - listState.results.length);
         let i = 0;
-        while ((sizeLimitRemaining > 0) && (i < searchState.resultSets.length)) {
+        while ((sizeLimitRemaining > 0) && (i < listState.resultSets.length)) {
             i++;
-            const resultSet: SearchResult = searchState.resultSets[i];
+            const resultSet: ListResult = listState.resultSets[i];
             const entriesInResultSet: number = getEntryCount(resultSet);
             if (entriesInResultSet > sizeLimitRemaining) {
                 continue;
@@ -193,20 +178,19 @@ async function mergeSortAndPageSearch(
             resultSetsToReturn.push(resultSet);
             sizeLimitRemaining -= entriesInResultSet;
         }
-        const localResult: SearchResult = {
+        const localResult: ListResult = {
             unsigned: {
-                searchInfo: new SearchResultData_searchInfo(
+                listInfo: new ListResultData_listInfo(
                     {
                         rdnSequence: foundDN,
                     },
                     resultsToReturn,
-                    searchState.poq,
-                    undefined,
+                    listState.poq,
                     [],
                     createSecurityParameters(
                         ctx,
                         conn.boundNameAndUID?.dn,
-                        search["&operationCode"],
+                        list["&operationCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     state.chainingArguments.aliasDereferenced,
@@ -214,10 +198,10 @@ async function mergeSortAndPageSearch(
                 ),
             },
         };
-        const totalResult: SearchResult = resultSetsToReturn.length
+        const totalResult: ListResult = resultSetsToReturn.length
             ? {
                 unsigned: {
-                    uncorrelatedSearchInfo: [
+                    uncorrelatedListInfo: [
                         ...resultSetsToReturn,
                         localResult,
                     ],
@@ -226,86 +210,82 @@ async function mergeSortAndPageSearch(
             : localResult;
         return totalResult;
     }
-    assert(searchState.paging);
-    // FIXME: Meerkat could still chain via relatedEntryProcedure and searchAliases!
+    assert(paging);
     // Otherwise, assume every result from here on came from within this DSA.
     // Therefore, signatures may be stripped. All result sets may be joined.
     // Then you can sort, store, and paginate.
 
-    const prr = searchState.paging[1].request;
-    const localSearchInfo = new SearchResultData_searchInfo(
+    const prr = paging.request;
+    const localListInfo = new ListResultData_listInfo(
         {
             rdnSequence: foundDN,
         },
         [
-            ...searchState.results,
-            ...(searchState.paging?.[1].nextEntriesStack.reverse() ?? []),
+            ...listState.results,
+            ...paging.nextSubordinatesStack.reverse(),
         ],
-        searchState.poq,
-        undefined, // TODO:
+        listState.poq,
         [],
         createSecurityParameters(
             ctx,
             conn.boundNameAndUID?.dn,
-            search["&operationCode"],
+            list["&operationCode"],
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
         undefined,
     );
-    let mergedResult: ISearchInfo = { ...localSearchInfo };
+    let mergedResult: IListInfo = { ...localListInfo };
     let pageNumberSkips: number = 0;
     // These steps are only necessary for the first page.
-    if (searchArgument.pagedResults && "newRequest" in searchArgument.pagedResults) {
+    if (listArgument.pagedResults && "newRequest" in listArgument.pagedResults) {
         const pageNumber: number = (
-            Number.isSafeInteger(searchArgument.pagedResults.newRequest.pageNumber)
-            && searchArgument.pagedResults.newRequest.sortKeys?.length // pageNumber is only observed if sorting is used.
+            Number.isSafeInteger(listArgument.pagedResults.newRequest.pageNumber)
+            && listArgument.pagedResults.newRequest.sortKeys?.length // pageNumber is only observed if sorting is used.
         )
-            ? Number(searchArgument.pagedResults.newRequest.pageNumber ?? 0)
+            ? Number(listArgument.pagedResults.newRequest.pageNumber ?? 0)
             : 0;
-        pageNumberSkips = Math.max(0, pageNumber * Number(searchArgument.pagedResults.newRequest.pageSize));
-        mergedResult = searchState.resultSets.reduce((acc, rs) => {
+        pageNumberSkips = Math.max(0, pageNumber * Number(listArgument.pagedResults.newRequest.pageSize));
+        mergedResult = listState.resultSets.reduce((acc, rs) => {
             mergeResultSet(acc, rs);
             return acc;
         }, mergedResult);
-
         if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
-            mergedResult.entries.sort((a, b) => compareEntries(
+            mergedResult.subordinates.sort((a, b) => compareSubordinates(
                 ctx,
                 a,
                 b,
                 prr.sortKeys!,
                 prr.reverse,
-                (conn instanceof LDAPConnection),
             ));
         }
-        const nonSkippedResults = mergedResult.entries.slice(pageNumberSkips);
-        await ctx.db.enqueuedSearchResult.createMany({
-            data: nonSkippedResults.map((entry, i) => ({
+        const nonSkippedResults = mergedResult.subordinates.slice(pageNumberSkips);
+        await ctx.db.enqueuedListResult.createMany({
+            data: nonSkippedResults.map((sub, i) => ({
                 connection_uuid: conn.id,
-                query_ref: searchState.paging![0],
+                query_ref: queryReference!,
                 result_index: i,
-                entry_info: Buffer.from(_encode_EntryInformation(entry, DER).toBytes()),
+                subordinate_info: Buffer.from(_encode_ListResultData_listInfo_subordinates_Item(sub, DER).toBytes()),
                 // TODO: Supply entry ID too.
             })),
         });
-        searchState.paging[1].totalResults = nonSkippedResults.length;
-        mergedResult.entries.length = 0;
+        paging.totalResults = nonSkippedResults.length;
+        mergedResult.subordinates.length = 0;
     }
 
     // We are done with these, so we can relinquish these references.
-    searchState.paging[1].nextEntriesStack.length = 0;
-    searchState.results.length = 0;
-    const results = await ctx.db.enqueuedSearchResult.findMany({
+    paging.nextEntriesStack.length = 0;
+    listState.results.length = 0;
+    const results = await ctx.db.enqueuedListResult.findMany({
         take: Math.max(Number(prr.pageSize), 1),
-        skip: (searchState.paging[1].cursorId === undefined) ? 0 : 1,
+        skip: (paging.cursorId === undefined) ? 0 : 1,
         where: {
             connection_uuid: conn.id,
-            query_ref: searchState.paging![0],
+            query_ref: queryReference!,
         },
         select: {
             // id: true,
-            entry_info: true,
+            subordinate_info: true,
             result_index: true,
         },
         orderBy: {
@@ -314,54 +294,54 @@ async function mergeSortAndPageSearch(
         cursor: {
             connection_uuid_query_ref_result_index: {
                 connection_uuid: conn.id,
-                query_ref: searchState.paging![0],
-                result_index: searchState.paging[1].cursorId ?? 0,
+                query_ref: queryReference!,
+                result_index: paging.cursorId ?? 0,
             },
         },
     });
     // REVIEW: Will this get stuck in a loop if there are NO results?
     const cursorId: number = results[results.length - 1]?.result_index ?? 0;
-    searchState.paging[1].cursorId = cursorId;
+    paging.cursorId = cursorId;
     const done: boolean = (
         (results.length === 0) // There are no more results, or
-        || ((cursorId + 1) >= (searchState.paging[1].totalResults ?? -1)) // The cursor is greater than count
+        || ((cursorId + 1) >= (paging.totalResults ?? -1)) // The cursor is greater than count
     );
     if (cursorId) {
         // We dispose of results as soon as have returned them.
-        await ctx.db.enqueuedSearchResult.deleteMany({
+        await ctx.db.enqueuedListResult.deleteMany({
             where: {
                 connection_uuid: conn.id,
-                query_ref: searchState.paging![0],
+                query_ref: queryReference,
                 result_index: {
                     lt: cursorId,
                 },
             },
         });
     }
-    if (done) {
-        conn.pagedResultsRequests.delete(searchState.paging[0]);
+    if (done && queryReference) {
+        conn.pagedResultsRequests.delete(queryReference);
         // These should already be gone, but this is just to make sure.
-        await ctx.db.enqueuedSearchResult.deleteMany({
+        await ctx.db.enqueuedListResult.deleteMany({
             where: {
                 connection_uuid: conn.id,
-                query_ref: searchState.paging![0],
+                query_ref: queryReference,
             },
         });
     }
-    /* TODO: Because this could potentially decode thousands of entries just to
+    /* TODO: Because this could potentially decode thousands of results just to
      * eventually re-encode this result, you should manually encode a
-     * searchInfo and just concatenate all BER-encoded EntryInformation's as
-     * the `entries` field. This could potentially save a lot of computing
+     * listInfo and just concatenate all BER-encoded ListItem's as
+     * the `subordinates` field. This could potentially save a lot of computing
      * power.
      */
     return {
         unsigned: {
-            searchInfo: new SearchResultData_searchInfo(
+            listInfo: new ListResultData_listInfo(
                 mergedResult.name,
                 results.map((result) => {
                     const el = new DERElement();
-                    el.fromBytes(result.entry_info);
-                    return _decode_EntryInformation(el);
+                    el.fromBytes(result.subordinate_info);
+                    return _decode_ListResultData_listInfo_subordinates_Item(el);
                 }),
                 done
                     ? mergedResult.partialOutcomeQualifier
@@ -370,17 +350,16 @@ async function mergeSortAndPageSearch(
                         mergedResult.partialOutcomeQualifier?.unexplored,
                         mergedResult.partialOutcomeQualifier?.unavailableCriticalExtensions,
                         mergedResult.partialOutcomeQualifier?.unknownErrors,
-                        Buffer.from(searchState.paging[0], "base64"),
+                        Buffer.from(queryReference!, "base64"),
                         mergedResult.partialOutcomeQualifier?.overspecFilter,
                         mergedResult.partialOutcomeQualifier?.notification,
                         mergedResult.partialOutcomeQualifier?.entryCount,
                     ),
-                mergedResult.altMatching,
                 [],
                 createSecurityParameters(
                     ctx,
                     conn.boundNameAndUID?.dn,
-                    search["&operationCode"],
+                    list["&operationCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 state.chainingArguments.aliasDereferenced,
@@ -390,4 +369,4 @@ async function mergeSortAndPageSearch(
     };
 }
 
-export default mergeSortAndPageSearch;
+export default mergeSortAndPageList;
