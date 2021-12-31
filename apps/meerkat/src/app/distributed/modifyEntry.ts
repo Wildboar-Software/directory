@@ -20,9 +20,6 @@ import type {
     EntryModification,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
 import {
-    EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
@@ -84,7 +81,6 @@ import type { PrismaPromise } from "@prisma/client";
 import addValues from "../database/entry/addValues";
 import removeValues from "../database/entry/removeValues";
 import removeAttribute from "../database/entry/removeAttribute";
-import readValues from "../database/entry/readValues";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
 import { strict as assert } from "assert";
 import type {
@@ -318,6 +314,54 @@ function getValueAlterer (
             ),
         };
     };
+}
+
+function checkAttributeArity (
+    ctx: Context,
+    conn: ClientConnection,
+    target: Vertex,
+    attr: Attribute,
+    aliasDereferenced?: boolean,
+): void {
+    const numberOfValues: number = (attr.values.length + (attr.valuesWithContext?.length ?? 0));
+    if (numberOfValues <= 1) {
+        return;
+    }
+    const TYPE_OID: string = attr.type_.toString();
+    const spec = ctx.attributeTypes.get(TYPE_OID);
+    if (!spec) {
+        return; // This should be covered elsewhere.
+    }
+    if (spec.singleValued) {
+        const targetDN = getDistinguishedName(target);
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:single_valued", {
+                oids: TYPE_OID,
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: targetDN,
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_invalidAttributeSyntax,
+                        attr.type_,
+                        undefined,
+                    ),
+                ],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
 }
 
 function checkPermissionToAddValues (
@@ -638,6 +682,7 @@ async function executeAddAttribute (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
+    checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
     checkPermissionToAddValues(
         mod,
         ctx,
@@ -732,6 +777,7 @@ async function executeAddValues (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
+    checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
     checkPermissionToAddValues(
         mod,
         ctx,
@@ -1047,6 +1093,7 @@ async function executeReplaceValues (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
+    checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
     const where = {

@@ -35,6 +35,7 @@ import {
     AttributeProblem_contextViolation,
     AttributeProblem_undefinedAttributeType,
     AttributeProblem_constraintViolation,
+    AttributeProblem_invalidAttributeSyntax,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
     ServiceControlOptions_manageDSAIT,
@@ -726,6 +727,7 @@ async function addEntry (
         const dummyAttributes: AttributeType[] = [];
         const collectiveAttributes: AttributeType[] = [];
         const obsoleteAttributes: AttributeType[] = [];
+        const incorrectlyMultiValuedAttributes: AttributeType[] = [];
         for (const attr of data.entry) {
             const spec = ctx.attributeTypes.get(attr.type_.toString());
             if (!spec) {
@@ -747,6 +749,10 @@ async function addEntry (
             }
             if (spec.obsolete) {
                 obsoleteAttributes.push(attr.type_);
+            }
+            const numberOfValues: number = (attr.values.length + (attr.valuesWithContext?.length ?? 0));
+            if (spec.singleValued && (numberOfValues > 1)) {
+                incorrectlyMultiValuedAttributes.push(spec.id);
             }
             if (attr.type_.isEqualTo(hierarchyParent["&id"]) && isChild) {
                 throw new errors.UpdateError(
@@ -781,118 +787,96 @@ async function addEntry (
                 );
             }
         }
-        if (unrecognizedAttributes.length > 0) {
-            throw new errors.AttributeError(
-                ctx.i18n.t("err:unrecognized_attribute_type", {
+        if (
+            (unrecognizedAttributes.length > 0)
+            || (noUserModAttributes.length > 0)
+            || (dummyAttributes.length > 0)
+            || (!isSubentry && (collectiveAttributes.length > 0))
+            || (obsoleteAttributes.length > 0)
+            || (incorrectlyMultiValuedAttributes.length > 0)
+        ) {
+            if (unrecognizedAttributes.length > 0) {
+                ctx.log.debug(ctx.i18n.t("err:unrecognized_attribute_type", {
                     oids: unrecognizedAttributes.map((at) => at.toString()).join(", "),
-                }),
-                new AttributeErrorData(
-                    data.object,
-                    unrecognizedAttributes.map((at) => new AttributeErrorData_problems_Item(
-                        AttributeProblem_undefinedAttributeType,
-                        at,
-                        undefined,
-                    )),
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        attributeError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
-        }
-        if (noUserModAttributes.length > 0) {
-            throw new errors.AttributeError(
-                ctx.i18n.t("err:no_user_modification", {
+                }));
+            }
+            if (noUserModAttributes.length > 0) {
+                ctx.log.debug(ctx.i18n.t("err:no_user_modification", {
                     oids: noUserModAttributes.map((at) => at.toString()).join(", "),
-                }),
-                new AttributeErrorData(
-                    data.object,
-                    noUserModAttributes.map((at) => new AttributeErrorData_problems_Item(
-                        AttributeProblem_constraintViolation,
-                        at,
-                        undefined,
-                    )),
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        attributeError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
-        }
-        if (dummyAttributes.length > 0) {
-            throw new errors.AttributeError(
-                ctx.i18n.t("err:cannot_add_dummy_attr", {
+                }));
+            }
+            if (dummyAttributes.length > 0) {
+                ctx.log.debug(ctx.i18n.t("err:cannot_add_dummy_attr", {
                     oids: dummyAttributes.map((at) => at.toString()).join(", "),
-                }),
-                new AttributeErrorData(
-                    data.object,
-                    dummyAttributes.map((at) => new AttributeErrorData_problems_Item(
-                        AttributeProblem_constraintViolation,
-                        at,
-                        undefined,
-                    )),
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        attributeError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
-        }
-        if (!isSubentry && (collectiveAttributes.length > 0)) {
-            throw new errors.AttributeError(
-                ctx.i18n.t("err:cannot_add_collective_attr", {
+                }));
+            }
+            if (!isSubentry && (collectiveAttributes.length > 0)) {
+                ctx.log.debug(ctx.i18n.t("err:cannot_add_collective_attr", {
                     oids: collectiveAttributes.map((at) => at.toString()).join(", "),
-                }),
-                new AttributeErrorData(
-                    data.object,
-                    collectiveAttributes.map((at) => new AttributeErrorData_problems_Item(
-                        AttributeProblem_constraintViolation,
-                        at,
-                        undefined,
-                    )),
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        attributeError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
-        }
-        if (obsoleteAttributes.length > 0) {
-            throw new errors.AttributeError(
-                ctx.i18n.t("err:cannot_add_obsolete_attr", {
+                }));
+            }
+            if (obsoleteAttributes.length > 0) {
+                ctx.log.debug(ctx.i18n.t("err:cannot_add_obsolete_attr", {
                     oids: obsoleteAttributes.map((at) => at.toString()).join(", "),
+                }));
+            }
+            if (incorrectlyMultiValuedAttributes.length > 0) {
+                ctx.log.debug(ctx.i18n.t("err:single_valued", {
+                    oids: incorrectlyMultiValuedAttributes.map((at) => at.toString()).join(", "),
+                }));
+            }
+            const oids: OBJECT_IDENTIFIER[] = [
+                ...unrecognizedAttributes,
+                ...noUserModAttributes,
+                ...dummyAttributes,
+                ...collectiveAttributes,
+                ...obsoleteAttributes,
+                ...incorrectlyMultiValuedAttributes,
+            ];
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:attribute_error_types", {
+                    oids: oids.map((oid) => oid.toString()).join(", "),
                 }),
                 new AttributeErrorData(
                     data.object,
-                    obsoleteAttributes.map((at) => new AttributeErrorData_problems_Item(
-                        AttributeProblem_constraintViolation,
-                        at,
-                        undefined,
-                    )),
+                    [
+                        ...unrecognizedAttributes
+                            .map((at) => new AttributeErrorData_problems_Item(
+                                AttributeProblem_undefinedAttributeType,
+                                at,
+                                undefined,
+                            )),
+                        ...noUserModAttributes
+                            .map((at) => new AttributeErrorData_problems_Item(
+                                AttributeProblem_constraintViolation,
+                                at,
+                                undefined,
+                            )),
+                        ...dummyAttributes
+                            .map((at) => new AttributeErrorData_problems_Item(
+                                AttributeProblem_constraintViolation,
+                                at,
+                                undefined,
+                            )),
+                        ...collectiveAttributes
+                            .map((at) => new AttributeErrorData_problems_Item(
+                                AttributeProblem_constraintViolation,
+                                at,
+                                undefined,
+                            )),
+                        ...obsoleteAttributes
+                            .map((at) => new AttributeErrorData_problems_Item(
+                                AttributeProblem_constraintViolation,
+                                at,
+                                undefined,
+                            )),
+                        ...incorrectlyMultiValuedAttributes
+                            .map((at) => new AttributeErrorData_problems_Item(
+                                AttributeProblem_invalidAttributeSyntax,
+                                at,
+                                undefined,
+                            )),
+                    ],
                     [],
                     createSecurityParameters(
                         ctx,

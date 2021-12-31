@@ -137,5 +137,7 @@
     "cert_chain_no_certificates": "Certificate chain file '{{envvar}}' indicated by environment variable SIGNING_CERT_CHAIN had no PEM-encoded certificates.",
     "invalid_type_for_alter_values": "Attribute type {{oid}} is not permitted in alterValues modification.",
     "could_not_connect": "Remote DSA is currently unavailable. Could not connect.",
-    "could_not_match_exactly": "Could not match exactly."
+    "could_not_match_exactly": "Could not match exactly.",
+    "single_valued": "User supplied multiple values for single-valued attribute type {{oid}}.",
+    "attribute_error_types": "Attribute error involving these attribute types: {{oids}}."
 }
