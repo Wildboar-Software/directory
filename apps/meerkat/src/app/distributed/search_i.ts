@@ -1309,12 +1309,12 @@ async function search_i (
     })();
     const familyReturn: FamilyReturn = data.selection?.familyReturn
         ?? EntryInformationSelection._default_value_for_familyReturn;
-    if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) {
+    if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) { // Step 3
         // Nothing needs to be done here. Proceed to step 6.
         // This no-op section is basically so that a one-level search does not
         // include the target entry.
-    } else if ((subset === SearchArgumentData_subset_baseObject) || entryOnly) {
-        if (
+    } else if ((subset === SearchArgumentData_subset_baseObject) || entryOnly) { // Step 4
+        if (!( // Notice the inversion.
             (target.dse.subentry && subentries)
             || (!target.dse.subentry && !subentries)
             || (
@@ -1332,178 +1332,413 @@ async function search_i (
                 (conn instanceof LDAPConnection)
                 && (subset === SearchArgumentData_subset_baseObject)
             )
-        ) {
-            /**
-             * See IETF RFC 4512, Section 5.1: This is how an LDAP client can
-             * read the Root DSE.
-             */
-            const searchingForRootDSE: boolean = Boolean(
-                !target.immediateSuperior
-                && target.dse.root
-                && ("item" in filter)
-                && ("present" in filter.item)
-                && filter.item.present.isEqualTo(objectClass["&id"])
+        )) {
+            return;
+        }
+        /**
+         * See IETF RFC 4512, Section 5.1: This is how an LDAP client can
+         * read the Root DSE.
+         */
+        const searchingForRootDSE: boolean = Boolean(
+            !target.immediateSuperior
+            && target.dse.root
+            && ("item" in filter)
+            && ("present" in filter.item)
+            && filter.item.present.isEqualTo(objectClass["&id"])
+        );
+        // Entry ACI is checked above.
+        const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
+            ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+            : null;
+        const family = await readFamily(ctx, target);
+        const familySubsets = familySubsetGetter(family);
+        for (const familySubset of familySubsets) {
+            if (familySubset.length === 0) {
+                ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
+                continue; // This should never happen, but just handling it in case it does.
+            }
+            const familyInfos = await Promise.all(
+                familySubset.map((member) => readFamilyMemberInfo(member)),
             );
-            // Entry ACI is checked above.
-            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
-                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
-                : null;
-            const family = await readFamily(ctx, target);
-            const familySubsets = familySubsetGetter(family);
-            for (const familySubset of familySubsets) {
-                if (familySubset.length === 0) {
-                    ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
-                    continue; // This should never happen, but just handling it in case it does.
-                }
-                const familyInfos = await Promise.all(
-                    familySubset.map((member) => readFamilyMemberInfo(member)),
-                );
-                let matchedValues!: ReturnType<typeof evaluateFilter>;
-                try {
-                    matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
-                } catch (e) {
-                    if (e instanceof CannotPerformExactly) {
-                        throw new errors.ServiceError(
-                            ctx.i18n.t("err:could_not_match_exactly"),
-                            new ServiceErrorData(
-                                ServiceProblem_unsupportedMatchingUse,
-                                [],
-                                createSecurityParameters(
-                                    ctx,
-                                    conn.boundNameAndUID?.dn,
-                                    undefined,
-                                    id_errcode_serviceError,
-                                ),
-                                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                state.chainingArguments.aliasDereferenced,
+            let matchedValues!: ReturnType<typeof evaluateFilter>;
+            try {
+                matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+            } catch (e) {
+                if (e instanceof CannotPerformExactly) {
+                    throw new errors.ServiceError(
+                        ctx.i18n.t("err:could_not_match_exactly"),
+                        new ServiceErrorData(
+                            ServiceProblem_unsupportedMatchingUse,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
                                 undefined,
+                                id_errcode_serviceError,
                             ),
-                        );
-                    } else {
-                        continue;
-                    }
-                }
-                const matched: boolean = (
-                    (matchedValues === true)
-                    || (Array.isArray(matchedValues) && !!matchedValues.length)
-                );
-                if (matched || searchingForRootDSE) {
-                    const einfos = await Promise.all(
-                        familySubset.map((member) => readEntryInformation(
-                            ctx,
-                            member,
-                            {
-                                selection: data.selection,
-                                relevantSubentries,
-                                operationContexts: data.operationContexts,
-                                attributeSizeLimit,
-                                noSubtypeSelection,
-                                dontSelectFriends,
-                            },
-                        )),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
                     );
-                    if (
-                        matchedValuesOnly
-                        && (Array.isArray(matchedValues) && matchedValues.length)
-                        && !typesOnly // This option would make no sense with matchedValuesOnly.
-                    ) {
-                        for (let i = 0; i < einfos.length; i++) {
-                            const matchedValuesAttributes = attributesFromValues(
-                                matchedValues.filter((mv) => (mv.entryIndex === i)),
-                            );
-                            const matchedValuesTypes: Set<IndexableOID> = new Set(
-                                matchedValuesAttributes.map((mva) => mva.type_.toString()),
-                            );
-                            const einfo = einfos[i];
-                            /**
-                             * Remember: matchedValuesOnly only filters the
-                             * values of attributes that contributed to the
-                             * match. All other information is returned
-                             * unchanged. This was actually a point of
-                             * confusion to the IETF LDAP working group, which
-                             * is why LDAP's matchedValues extension does not
-                             * align with DAP's matchedValuesOnly boolean.
-                             *
-                             * See: https://www.rfc-editor.org/rfc/rfc3876.html#section-3
-                             *
-                             * This was later clarified in the X.500 standards.
-                             * There is a notable increase in detail in X.511's
-                             * description of matchedValuesOnly in the 2001
-                             * version of the specification.
-                             */
-                            einfos[i] = [
-                                ...einfo
-                                    .filter((e) => {
-                                        if ("attribute" in e) {
-                                            return !matchedValuesTypes.has(e.attribute.type_.toString());
-                                        } else if ("attributeType" in e) {
-                                            return !matchedValuesTypes.has(e.attributeType.toString());
-                                        } else {
-                                            return false;
-                                        }
-                                    }),
-                                ...matchedValuesAttributes.map((attribute) => ({ attribute })),
-                            ];
-                        }
-                    } // End of matchedValuesOnly handling.
-                    const familyMembersToBeReturned = ((): Set<number> | null => { // null means "all"
-                        switch (familyReturn.memberSelect) {
-                            case (FamilyReturn_memberSelect_contributingEntriesOnly as number): { // Bizarre TypeScript bug.
-                                if (Array.isArray(matchedValues)) {
-                                    return new Set(matchedValues.map((mv) => familySubset[mv.entryIndex].dse.id));
-                                } else {
-                                    // If we don't have a matchedValues array,
-                                    // we just fall back on returning the common
-                                    // ancestor. If that's not defined (should
-                                    // never happen), we fall back on `null`.
-                                    return familySubset[0] ? new Set([familySubset[0].dse.id]) : null;
-                                }
-                            }
-                            case (FamilyReturn_memberSelect_participatingEntriesOnly as number): { // Bizarre TypeScript bug.
-                                return new Set(familySubset.map((_, i) => familySubset[i].dse.id));
-                            }
-                            case (FamilyReturn_memberSelect_compoundEntry as number): {  // Bizarre TypeScript bug.
-                                return null;
-                            }
-                            default: {
-                                throw new errors.MistypedArgumentError();
-                            }
-                        }
-                    })();
-                    const filteredEinfos = einfos
-                        .map(filterUnauthorizedEntryInformation);
-                    if (separateFamilyMembers) {
-                        const familyMemberResults = filteredEinfos
-                            .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
-                            .filter(([ , vertex ]) => (
-                                (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
-                                && !((): boolean => {
-                                    const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
-                                    searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
-                                    return had;
-                                })()
-                                && ( // Is this part of the familyReturn member selection?
-                                    !familyMembersToBeReturned
-                                    || familyMembersToBeReturned.has(vertex.dse.id)
-                                )
-                            ))
-                            .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
-                                {
-                                    rdnSequence: getDistinguishedName(vertex),
-                                },
-                                !vertex.dse.shadow,
-                                attributeSizeLimit
-                                    ? permittedEinfo.filter(filterEntryInfoItemBySize)
-                                    : permittedEinfo,
-                                incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                // Only the ancestor can have partialName.
-                                ((index === 0) && state.partialName && (searchState.depth === 0)),
-                                undefined,
-                            ));
-                        searchState.results.push(...familyMemberResults);
-                        return;
+                } else {
+                    continue;
+                }
+            }
+            const matched: boolean = (
+                (matchedValues === true)
+                || (Array.isArray(matchedValues) && !!matchedValues.length)
+            );
+            if (matched || searchingForRootDSE) {
+                const einfos = await Promise.all(
+                    familySubset.map((member) => readEntryInformation(
+                        ctx,
+                        member,
+                        {
+                            selection: data.selection,
+                            relevantSubentries,
+                            operationContexts: data.operationContexts,
+                            attributeSizeLimit,
+                            noSubtypeSelection,
+                            dontSelectFriends,
+                        },
+                    )),
+                );
+                if (
+                    matchedValuesOnly
+                    && (Array.isArray(matchedValues) && matchedValues.length)
+                    && !typesOnly // This option would make no sense with matchedValuesOnly.
+                ) {
+                    for (let i = 0; i < einfos.length; i++) {
+                        const matchedValuesAttributes = attributesFromValues(
+                            matchedValues.filter((mv) => (mv.entryIndex === i)),
+                        );
+                        const matchedValuesTypes: Set<IndexableOID> = new Set(
+                            matchedValuesAttributes.map((mva) => mva.type_.toString()),
+                        );
+                        const einfo = einfos[i];
+                        /**
+                         * Remember: matchedValuesOnly only filters the
+                         * values of attributes that contributed to the
+                         * match. All other information is returned
+                         * unchanged. This was actually a point of
+                         * confusion to the IETF LDAP working group, which
+                         * is why LDAP's matchedValues extension does not
+                         * align with DAP's matchedValuesOnly boolean.
+                         *
+                         * See: https://www.rfc-editor.org/rfc/rfc3876.html#section-3
+                         *
+                         * This was later clarified in the X.500 standards.
+                         * There is a notable increase in detail in X.511's
+                         * description of matchedValuesOnly in the 2001
+                         * version of the specification.
+                         */
+                        einfos[i] = [
+                            ...einfo
+                                .filter((e) => {
+                                    if ("attribute" in e) {
+                                        return !matchedValuesTypes.has(e.attribute.type_.toString());
+                                    } else if ("attributeType" in e) {
+                                        return !matchedValuesTypes.has(e.attributeType.toString());
+                                    } else {
+                                        return false;
+                                    }
+                                }),
+                            ...matchedValuesAttributes.map((attribute) => ({ attribute })),
+                        ];
                     }
-                    if (familySubset.length > 1) {
+                } // End of matchedValuesOnly handling.
+                const familyMembersToBeReturned = ((): Set<number> | null => { // null means "all"
+                    switch (familyReturn.memberSelect) {
+                        case (FamilyReturn_memberSelect_contributingEntriesOnly as number): { // Bizarre TypeScript bug.
+                            if (Array.isArray(matchedValues)) {
+                                return new Set(matchedValues.map((mv) => familySubset[mv.entryIndex].dse.id));
+                            } else {
+                                // If we don't have a matchedValues array,
+                                // we just fall back on returning the common
+                                // ancestor. If that's not defined (should
+                                // never happen), we fall back on `null`.
+                                return familySubset[0] ? new Set([familySubset[0].dse.id]) : null;
+                            }
+                        }
+                        case (FamilyReturn_memberSelect_participatingEntriesOnly as number): { // Bizarre TypeScript bug.
+                            return new Set(familySubset.map((_, i) => familySubset[i].dse.id));
+                        }
+                        case (FamilyReturn_memberSelect_compoundEntry as number): {  // Bizarre TypeScript bug.
+                            return null;
+                        }
+                        default: {
+                            throw new errors.MistypedArgumentError();
+                        }
+                    }
+                })();
+                const filteredEinfos = einfos
+                    .map(filterUnauthorizedEntryInformation);
+                if (separateFamilyMembers) {
+                    const familyMemberResults = filteredEinfos
+                        .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
+                        .filter(([ , vertex ]) => (
+                            (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
+                            && !((): boolean => {
+                                const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
+                                searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
+                                return had;
+                            })()
+                            && ( // Is this part of the familyReturn member selection?
+                                !familyMembersToBeReturned
+                                || familyMembersToBeReturned.has(vertex.dse.id)
+                            )
+                        ))
+                        .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(vertex),
+                            },
+                            !vertex.dse.shadow,
+                            attributeSizeLimit
+                                ? permittedEinfo.filter(filterEntryInfoItemBySize)
+                                : permittedEinfo,
+                            incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            // Only the ancestor can have partialName.
+                            ((index === 0) && state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ));
+                    searchState.results.push(...familyMemberResults);
+                    return;
+                }
+                if (familySubset.length > 1) {
+                    const subset = keepSubsetOfDITById(
+                        family,
+                        new Set(familySubset
+                            .filter((vertex) => ( // Is this part of the familyReturn member selection?
+                                !familyMembersToBeReturned
+                                || familyMembersToBeReturned.has(vertex.dse.id)
+                            ))
+                            .map((member) => member.dse.id)),
+                    );
+                    const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
+                        subset,
+                        (vertex: Vertex) => filteredEinfos[
+                            familySubset.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
+                    )
+                        .filter((fe) => (!familySelect || familySelect.has(fe.family_class.toString())));
+                    const familyInfoAttr: Attribute = new Attribute(
+                        family_information["&id"],
+                        familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
+                        undefined,
+                    );
+                    filteredEinfos[0][1].push({
+                        attribute: familyInfoAttr,
+                    });
+                }
+                if (!searchState.paging?.[1].alreadyReturnedById.has(familySubset[0].dse.id)) {
+                    searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
+                    searchState.results.push(
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(familySubset[0]),
+                            },
+                            !familySubset[0].dse.shadow,
+                            attributeSizeLimit
+                                ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                                : filteredEinfos[0][1],
+                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    );
+                }
+                if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
+                    hierarchySelectionProcedure(
+                        ctx,
+                        data.hierarchySelections,
+                        data.serviceControls?.serviceType,
+                    );
+                }
+                return;
+            }
+        }
+        return;
+    } else if ( // Step 5
+        !entryOnly // It is implied that this is a subtree search at this point.
+        && (
+            (target.dse.subentry && subentries)
+            || (!target.dse.subentry && !subentries)
+        )
+        /**
+         * Per IETF RFC 4512:
+         *
+         * > The root DSE SHALL NOT be included if the client performs a
+         * > subtree search starting from the root.
+         *
+         * Unfortunately, I can't find any evidence of this being required
+         * by X.500 directories. However, this behavior makes sense: you
+         * should not include the root DSE in search results for searches
+         * that do not explicitly target it, because, in some sense, the
+         * root DSE is not a "real" entry in the DIT.
+         */
+        && !(!target.immediateSuperior && target.dse.root)
+    ) /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
+        // Entry ACI is checked above.
+        // NOTE: This section of code is copy-pasted. There might be a way to de-duplicate.
+        const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
+            ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+            : null;
+        const family = await readFamily(ctx, target);
+        const familySubsets = familySubsetGetter(family);
+        for (const familySubset of familySubsets) {
+            if (familySubset.length === 0) {
+                ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
+                continue; // This should never happen, but just handling it in case it does.
+            }
+            const familyInfos = await Promise.all(
+                familySubset.map((member) => readFamilyMemberInfo(member)),
+            );
+            let matchedValues!: ReturnType<typeof evaluateFilter>;
+            try {
+                matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+            } catch (e) {
+                if (e instanceof CannotPerformExactly) {
+                    throw new errors.ServiceError(
+                        ctx.i18n.t("err:could_not_match_exactly"),
+                        new ServiceErrorData(
+                            ServiceProblem_unsupportedMatchingUse,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                id_errcode_serviceError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                } else {
+                    continue;
+                }
+            }
+            const matched: boolean = (
+                (matchedValues === true)
+                || (Array.isArray(matchedValues) && !!matchedValues.length)
+            );
+            if (matched) { // TODO: Break and do this outside of the for loop
+                const einfos = await Promise.all(
+                    familySubset.map((member) => readEntryInformation(
+                        ctx,
+                        member,
+                        {
+                            selection: data.selection,
+                            relevantSubentries,
+                            operationContexts: data.operationContexts,
+                            attributeSizeLimit,
+                            noSubtypeSelection,
+                            dontSelectFriends,
+                        },
+                    )),
+                );
+                if (
+                    matchedValuesOnly
+                    && (Array.isArray(matchedValues) && matchedValues.length)
+                    && !typesOnly // This option would make no sense with matchedValuesOnly.
+                ) {
+                    for (let i = 0; i < einfos.length; i++) {
+                        const matchedValuesAttributes = attributesFromValues(
+                            matchedValues.filter((mv) => (mv.entryIndex === i)),
+                        );
+                        const matchedValuesTypes: Set<IndexableOID> = new Set(
+                            matchedValuesAttributes.map((mva) => mva.type_.toString()),
+                        );
+                        const einfo = einfos[i];
+                        /**
+                         * Remember: matchedValuesOnly only filters the
+                         * values of attributes that contributed to the
+                         * match. All other information is returned
+                         * unchanged. This was actually a point of
+                         * confusion to the IETF LDAP working group, which
+                         * is why LDAP's matchedValues extension does not
+                         * align with DAP's matchedValuesOnly boolean.
+                         *
+                         * See: https://www.rfc-editor.org/rfc/rfc3876.html#section-3
+                         *
+                         * This was later clarified in the X.500 standards.
+                         * There is a notable increase in detail in X.511's
+                         * description of matchedValuesOnly in the 2001
+                         * version of the specification.
+                         */
+                        einfos[i] = [
+                            ...einfo
+                                .filter((e) => {
+                                    if ("attribute" in e) {
+                                        return !matchedValuesTypes.has(e.attribute.type_.toString());
+                                    } else if ("attributeType" in e) {
+                                        return !matchedValuesTypes.has(e.attributeType.toString());
+                                    } else {
+                                        return false;
+                                    }
+                                }),
+                            ...matchedValuesAttributes.map((attribute) => ({ attribute })),
+                        ];
+                    }
+                } // End of matchedValuesOnly handling.
+                const familyMembersToBeReturned = ((): Set<number> | null => { // null means "all"
+                    switch (familyReturn.memberSelect) {
+                        case (FamilyReturn_memberSelect_contributingEntriesOnly as number): { // Bizarre TypeScript bug.
+                            if (Array.isArray(matchedValues)) {
+                                return new Set(matchedValues.map((mv) => familySubset[mv.entryIndex].dse.id));
+                            } else {
+                                // If we don't have a matchedValues array,
+                                // we just fall back on returning the common
+                                // ancestor. If that's not defined (should
+                                // never happen), we fall back on `null`.
+                                return familySubset[0] ? new Set([familySubset[0].dse.id]) : null;
+                            }
+                        }
+                        case (FamilyReturn_memberSelect_participatingEntriesOnly as number): { // Bizarre TypeScript bug.
+                            return new Set(familySubset.map((_, i) => familySubset[i].dse.id));
+                        }
+                        case (FamilyReturn_memberSelect_compoundEntry as number): {  // Bizarre TypeScript bug.
+                            return null;
+                        }
+                        default: {
+                            throw new errors.MistypedArgumentError();
+                        }
+                    }
+                })();
+                const filteredEinfos = einfos
+                    .map(filterUnauthorizedEntryInformation);
+                if (separateFamilyMembers) {
+                    const familyMemberResults = filteredEinfos
+                        .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
+                        .filter(([ , vertex ]) => (
+                            (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
+                            && !((): boolean => {
+                                const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
+                                searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
+                                return had;
+                            })()
+                            && ( // Is this part of the familyReturn member selection?
+                                !familyMembersToBeReturned
+                                || familyMembersToBeReturned.has(vertex.dse.id)
+                            )
+                        ))
+                        .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(vertex),
+                            },
+                            !vertex.dse.shadow,
+                            attributeSizeLimit
+                                ? permittedEinfo.filter(filterEntryInfoItemBySize)
+                                : permittedEinfo,
+                            incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            // Only the ancestor can have partialName.
+                            ((index === 0) && state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ));
+                    searchState.results.push(...familyMemberResults);
+                    return;
+                } else {
+                    if (familySubset.length > 1) { // If there actually are children.
                         const subset = keepSubsetOfDITById(
                             family,
                             new Set(familySubset
@@ -1545,248 +1780,13 @@ async function search_i (
                             ),
                         );
                     }
-                    if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
-                        hierarchySelectionProcedure(
-                            ctx,
-                            data.hierarchySelections,
-                            data.serviceControls?.serviceType,
-                        );
-                    }
-                    return;
                 }
-            }
-        }
-        return; // TODO: You can negate the if condition above and put this in the if block.
-    } else if (!entryOnly) /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
-        if ( // TODO: You can move this to the outer else if statement.
-            (
-                (target.dse.subentry && subentries)
-                || (!target.dse.subentry && !subentries)
-            )
-            /**
-             * Per IETF RFC 4512:
-             *
-             * > The root DSE SHALL NOT be included if the client performs a
-             * > subtree search starting from the root.
-             *
-             * Unfortunately, I can't find any evidence of this being required
-             * by X.500 directories. However, this behavior makes sense: you
-             * should not include the root DSE in search results for searches
-             * that do not explicitly target it, because, in some sense, the
-             * root DSE is not a "real" entry in the DIT.
-             */
-            && !(!target.immediateSuperior && target.dse.root)
-        ) {
-            // Entry ACI is checked above.
-            // NOTE: This section of code is copy-pasted. There might be a way to de-duplicate.
-            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
-                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
-                : null;
-            const family = await readFamily(ctx, target);
-            const familySubsets = familySubsetGetter(family);
-            for (const familySubset of familySubsets) {
-                if (familySubset.length === 0) {
-                    ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
-                    continue; // This should never happen, but just handling it in case it does.
-                }
-                const familyInfos = await Promise.all(
-                    familySubset.map((member) => readFamilyMemberInfo(member)),
-                );
-                let matchedValues!: ReturnType<typeof evaluateFilter>;
-                try {
-                    matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
-                } catch (e) {
-                    if (e instanceof CannotPerformExactly) {
-                        throw new errors.ServiceError(
-                            ctx.i18n.t("err:could_not_match_exactly"),
-                            new ServiceErrorData(
-                                ServiceProblem_unsupportedMatchingUse,
-                                [],
-                                createSecurityParameters(
-                                    ctx,
-                                    conn.boundNameAndUID?.dn,
-                                    undefined,
-                                    id_errcode_serviceError,
-                                ),
-                                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                state.chainingArguments.aliasDereferenced,
-                                undefined,
-                            ),
-                        );
-                    } else {
-                        continue;
-                    }
-                }
-                const matched: boolean = (
-                    (matchedValues === true)
-                    || (Array.isArray(matchedValues) && !!matchedValues.length)
-                );
-                if (matched) { // TODO: Break and do this outside of the for loop
-                    const einfos = await Promise.all(
-                        familySubset.map((member) => readEntryInformation(
-                            ctx,
-                            member,
-                            {
-                                selection: data.selection,
-                                relevantSubentries,
-                                operationContexts: data.operationContexts,
-                                attributeSizeLimit,
-                                noSubtypeSelection,
-                                dontSelectFriends,
-                            },
-                        )),
+                if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
+                    hierarchySelectionProcedure(
+                        ctx,
+                        data.hierarchySelections,
+                        data.serviceControls?.serviceType,
                     );
-                    if (
-                        matchedValuesOnly
-                        && (Array.isArray(matchedValues) && matchedValues.length)
-                        && !typesOnly // This option would make no sense with matchedValuesOnly.
-                    ) {
-                        for (let i = 0; i < einfos.length; i++) {
-                            const matchedValuesAttributes = attributesFromValues(
-                                matchedValues.filter((mv) => (mv.entryIndex === i)),
-                            );
-                            const matchedValuesTypes: Set<IndexableOID> = new Set(
-                                matchedValuesAttributes.map((mva) => mva.type_.toString()),
-                            );
-                            const einfo = einfos[i];
-                            /**
-                             * Remember: matchedValuesOnly only filters the
-                             * values of attributes that contributed to the
-                             * match. All other information is returned
-                             * unchanged. This was actually a point of
-                             * confusion to the IETF LDAP working group, which
-                             * is why LDAP's matchedValues extension does not
-                             * align with DAP's matchedValuesOnly boolean.
-                             *
-                             * See: https://www.rfc-editor.org/rfc/rfc3876.html#section-3
-                             *
-                             * This was later clarified in the X.500 standards.
-                             * There is a notable increase in detail in X.511's
-                             * description of matchedValuesOnly in the 2001
-                             * version of the specification.
-                             */
-                            einfos[i] = [
-                                ...einfo
-                                    .filter((e) => {
-                                        if ("attribute" in e) {
-                                            return !matchedValuesTypes.has(e.attribute.type_.toString());
-                                        } else if ("attributeType" in e) {
-                                            return !matchedValuesTypes.has(e.attributeType.toString());
-                                        } else {
-                                            return false;
-                                        }
-                                    }),
-                                ...matchedValuesAttributes.map((attribute) => ({ attribute })),
-                            ];
-                        }
-                    } // End of matchedValuesOnly handling.
-                    const familyMembersToBeReturned = ((): Set<number> | null => { // null means "all"
-                        switch (familyReturn.memberSelect) {
-                            case (FamilyReturn_memberSelect_contributingEntriesOnly as number): { // Bizarre TypeScript bug.
-                                if (Array.isArray(matchedValues)) {
-                                    return new Set(matchedValues.map((mv) => familySubset[mv.entryIndex].dse.id));
-                                } else {
-                                    // If we don't have a matchedValues array,
-                                    // we just fall back on returning the common
-                                    // ancestor. If that's not defined (should
-                                    // never happen), we fall back on `null`.
-                                    return familySubset[0] ? new Set([familySubset[0].dse.id]) : null;
-                                }
-                            }
-                            case (FamilyReturn_memberSelect_participatingEntriesOnly as number): { // Bizarre TypeScript bug.
-                                return new Set(familySubset.map((_, i) => familySubset[i].dse.id));
-                            }
-                            case (FamilyReturn_memberSelect_compoundEntry as number): {  // Bizarre TypeScript bug.
-                                return null;
-                            }
-                            default: {
-                                throw new errors.MistypedArgumentError();
-                            }
-                        }
-                    })();
-                    const filteredEinfos = einfos
-                        .map(filterUnauthorizedEntryInformation);
-                    if (separateFamilyMembers) {
-                        const familyMemberResults = filteredEinfos
-                            .map((einfo, i) => [ einfo, familySubset[i], i ] as const)
-                            .filter(([ , vertex ]) => (
-                                (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
-                                && !((): boolean => {
-                                    const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
-                                    searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
-                                    return had;
-                                })()
-                                && ( // Is this part of the familyReturn member selection?
-                                    !familyMembersToBeReturned
-                                    || familyMembersToBeReturned.has(vertex.dse.id)
-                                )
-                            ))
-                            .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
-                                {
-                                    rdnSequence: getDistinguishedName(vertex),
-                                },
-                                !vertex.dse.shadow,
-                                attributeSizeLimit
-                                    ? permittedEinfo.filter(filterEntryInfoItemBySize)
-                                    : permittedEinfo,
-                                incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                // Only the ancestor can have partialName.
-                                ((index === 0) && state.partialName && (searchState.depth === 0)),
-                                undefined,
-                            ));
-                        searchState.results.push(...familyMemberResults);
-                        return;
-                    } else {
-                        if (familySubset.length > 1) { // If there actually are children.
-                            const subset = keepSubsetOfDITById(
-                                family,
-                                new Set(familySubset
-                                    .filter((vertex) => ( // Is this part of the familyReturn member selection?
-                                        !familyMembersToBeReturned
-                                        || familyMembersToBeReturned.has(vertex.dse.id)
-                                    ))
-                                    .map((member) => member.dse.id)),
-                            );
-                            const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
-                                subset,
-                                (vertex: Vertex) => filteredEinfos[
-                                    familySubset.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
-                            )
-                                .filter((fe) => (!familySelect || familySelect.has(fe.family_class.toString())));
-                            const familyInfoAttr: Attribute = new Attribute(
-                                family_information["&id"],
-                                familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
-                                undefined,
-                            );
-                            filteredEinfos[0][1].push({
-                                attribute: familyInfoAttr,
-                            });
-                        }
-                        if (!searchState.paging?.[1].alreadyReturnedById.has(familySubset[0].dse.id)) {
-                            searchState.paging?.[1].alreadyReturnedById.add(familySubset[0].dse.id);
-                            searchState.results.push(
-                                new EntryInformation(
-                                    {
-                                        rdnSequence: getDistinguishedName(familySubset[0]),
-                                    },
-                                    !familySubset[0].dse.shadow,
-                                    attributeSizeLimit
-                                        ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-                                        : filteredEinfos[0][1],
-                                    filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                                    (state.partialName && (searchState.depth === 0)),
-                                    undefined,
-                                ),
-                            );
-                        }
-                    }
-                    if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
-                        hierarchySelectionProcedure(
-                            ctx,
-                            data.hierarchySelections,
-                            data.serviceControls?.serviceType,
-                        );
-                    }
                 }
             }
         }
