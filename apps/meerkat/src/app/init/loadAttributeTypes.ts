@@ -137,15 +137,6 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
 
     ctx.attributeTypes.set(entryUUID.id.toString(), entryUUID);
     ctx.attributeTypes.set("entryUUID", entryUUID);
-
-    Object.entries(x500at).forEach(([ name, attr ]) => {
-        ctx.nameToObjectIdentifier.set(name, attr["&id"]);
-        attr["&ldapName"]?.map((ldapName) => {
-            ctx.nameToObjectIdentifier.set(ldapName, attr["&id"]);
-        });
-        ctx.objectIdentifierToName.set(attr["&id"].toString(), name);
-    });
-
     ctx.matchingRulesSuitableForNaming.add(x500mr.bitStringMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.booleanMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.caseExactIA5Match["&id"].toString());

@@ -55,7 +55,6 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         .forEach((oc) => {
             ctx.objectClasses.set(oc.id.toString(), oc);
         });
-
     const ocs = await ctx.db.objectClassDescription.findMany();
     for (const oc of ocs) {
         ctx.objectClasses.set(oc.identifier, {
@@ -69,26 +68,6 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
             ldapDescription: oc.ldapDescription ?? undefined,
         });
     }
-    // ctx.structuralObjectClassHierarchy.children.push({
-    //     ...personOC,
-    //     parent: ctx.structuralObjectClassHierarchy,
-    //     children: [],
-    // });
-
-    Object.entries({
-        ...x500oc,
-        ...additionalObjectClasses,
-    }).forEach(([ name, oc ]) => {
-        const norm = name.toLowerCase();
-        ctx.nameToObjectIdentifier.set(name, oc["&id"]);
-        ctx.objectIdentifierToName.set(oc["&id"].toString(), name);
-        ctx.nameToObjectIdentifier.set(norm, oc["&id"]);
-        ctx.objectIdentifierToName.set(oc["&id"].toString(), norm);
-        oc["&ldapName"]?.map((ldapName) => {
-            ctx.nameToObjectIdentifier.set(ldapName, oc["&id"]);
-            ctx.nameToObjectIdentifier.set(ldapName.toLowerCase(), oc["&id"]);
-        });
-    });
 }
 
 export default loadObjectClasses;

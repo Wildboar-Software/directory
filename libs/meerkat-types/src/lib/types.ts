@@ -1066,6 +1066,7 @@ interface Context {
     collectiveAttributes: Set<IndexableOID>;
     nameForms: Map<IndexableOID, NameFormInfo>;
     usedInvokeIDs: Set<number>;
+    duplicatedLDAPNames: Set<IndexableOID>;
 }
 
 export

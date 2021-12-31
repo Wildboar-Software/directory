@@ -40,10 +40,12 @@ function getPartialAttributesFromEntryInformation (
             if (!attrSpec) {
                 return undefined;
             }
+            const nonDupedName = attrSpec.ldapNames?.find((name) => !ctx.duplicatedLDAPNames.has(name));
+            const descriptor: Uint8Array = nonDupedName
+                ? Buffer.from(nonDupedName, "utf-8")
+                : encodeLDAPOID(attrType);
             return new PartialAttribute(
-                (attrSpec.ldapNames && attrSpec.ldapNames.length > 0)
-                    ? Buffer.from(attrSpec.ldapNames[0], "utf-8")
-                    : encodeLDAPOID(attrType),
+                descriptor,
                 [],
             );
         } else if ("attribute" in einfo) {
@@ -115,8 +117,9 @@ function getPartialAttributesFromEntryInformation (
                     }
                 });
 
-            const descriptor: Uint8Array = (attrSpec.ldapNames && attrSpec.ldapNames.length > 0)
-                ? Buffer.from(attrSpec.ldapNames[0], "utf-8")
+            const nonDupedName = attrSpec.ldapNames?.find((name) => !ctx.duplicatedLDAPNames.has(name));
+            const descriptor: Uint8Array = nonDupedName
+                ? Buffer.from(nonDupedName, "utf-8")
                 : encodeLDAPOID(attrType);
             return [
                 new PartialAttribute(

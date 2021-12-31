@@ -533,7 +533,7 @@ function loadMatchingRules (ctx: Context): void {
             id: entryUUID.orderingMatchingRule!,
             matcher: uuidOrderingMatch,
             obsolete: false,
-            name: ["uuidMatch"],
+            name: ["uuidOrderingMatch"],
         },
     );
 

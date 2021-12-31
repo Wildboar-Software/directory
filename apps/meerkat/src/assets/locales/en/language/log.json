@@ -56,5 +56,6 @@
     "no_dsa_keypair": "Because the MEERKAT_SIGNING_CERT_CHAIN and MEERKAT_SIGNING_KEY environment variables were not set, Meerkat DSA will not digitally sign server responses, and its Application Entity (AE) Title will not be set.",
     "starting_meerkat_version": "Starting up Meerkat DSA, version {{version}}.",
     "aliased_does_not_exist": "Alias {{id}} does not point to a known entry.",
-    "admin_role_not_present_first_level_dse": "The administrativeRole attribute was not present in an added first-level DSE. Meerkat DSA automatically added this, making this new entry an autonomous administrative point (AAP)."
+    "admin_role_not_present_first_level_dse": "The administrativeRole attribute was not present in an added first-level DSE. Meerkat DSA automatically added this, making this new entry an autonomous administrative point (AAP).",
+    "duplicate_name": "Duplicate name '{{name}}'. The object represented by this OID will still be usable, but not its name when using LDAP."
 }

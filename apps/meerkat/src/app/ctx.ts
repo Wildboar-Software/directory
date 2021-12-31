@@ -247,6 +247,7 @@ const ctx: Context = {
         operations: [],
     },
     usedInvokeIDs: new Set(),
+    duplicatedLDAPNames: new Set(),
 };
 
 export default ctx;

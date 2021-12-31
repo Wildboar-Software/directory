@@ -163,12 +163,12 @@ async function main (): Promise<void> {
     ctx.log.debug(ctx.i18n.t("log:loaded_ldap_syntaxes"));
     await loadAttributeTypes(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_attribute_types"));
-    await loadObjectIdentifierNames(ctx);
-    ctx.log.debug(ctx.i18n.t("log:loaded_oid_names"));
     loadMatchingRules(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_matching_rules"));
     loadContextTypes(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_context_types"));
+    await loadObjectIdentifierNames(ctx);
+    ctx.log.debug(ctx.i18n.t("log:loaded_oid_names"));
 
     const nameForms = await ctx.db.nameForm.findMany();
     for (const nameForm of nameForms) {
