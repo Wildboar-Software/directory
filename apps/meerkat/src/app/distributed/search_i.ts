@@ -1672,49 +1672,50 @@ async function search_i (
                         undefined,
                     ));
                 searchState.results.push(...familyMemberResults);
-                return;
-            }
-            if (matchedFamilySubset.length > 1) {
-                const subset = keepSubsetOfDITById(
-                    family,
-                    new Set(matchedFamilySubset
-                        .filter((vertex) => ( // Is this part of the familyReturn member selection?
-                            !familyMembersToBeReturned
-                            || familyMembersToBeReturned.has(vertex.dse.id)
-                        ))
-                        .map((member) => member.dse.id)),
-                );
-                const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
-                    subset,
-                    (vertex: Vertex) => filteredEinfos[
-                        matchedFamilySubset!.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
-                )
-                    .filter((fe) => (!familySelect || familySelect.has(fe.family_class.toString())));
-                const familyInfoAttr: Attribute = new Attribute(
-                    family_information["&id"],
-                    familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
-                    undefined,
-                );
-                filteredEinfos[0][1].push({
-                    attribute: familyInfoAttr,
-                });
-            }
-            if (!searchState.paging?.[1].alreadyReturnedById.has(matchedFamilySubset[0].dse.id)) {
-                searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
-                searchState.results.push(
-                    new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
-                        },
-                        !matchedFamilySubset[0].dse.shadow,
-                        attributeSizeLimit
-                            ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-                            : filteredEinfos[0][1],
-                        filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                        (state.partialName && (searchState.depth === 0)),
+            } else {
+                // family-information is not understood by LDAP.
+                if ((matchedFamilySubset.length > 1) && !(conn instanceof LDAPConnection)) {
+                    const subset = keepSubsetOfDITById(
+                        family,
+                        new Set(matchedFamilySubset
+                            .filter((vertex) => ( // Is this part of the familyReturn member selection?
+                                !familyMembersToBeReturned
+                                || familyMembersToBeReturned.has(vertex.dse.id)
+                            ))
+                            .map((member) => member.dse.id)),
+                    );
+                    const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
+                        subset,
+                        (vertex: Vertex) => filteredEinfos[
+                            matchedFamilySubset!.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
+                    )
+                        .filter((fe) => (!familySelect || familySelect.has(fe.family_class.toString())));
+                    const familyInfoAttr: Attribute = new Attribute(
+                        family_information["&id"],
+                        familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
                         undefined,
-                    ),
-                );
+                    );
+                    filteredEinfos[0][1].push({
+                        attribute: familyInfoAttr,
+                    });
+                }
+                if (!searchState.paging?.[1].alreadyReturnedById.has(matchedFamilySubset[0].dse.id)) {
+                    searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
+                    searchState.results.push(
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
+                            },
+                            !matchedFamilySubset[0].dse.shadow,
+                            attributeSizeLimit
+                                ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                                : filteredEinfos[0][1],
+                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    );
+                }
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(
@@ -1886,9 +1887,8 @@ async function search_i (
                         undefined,
                     ));
                 searchState.results.push(...familyMemberResults);
-                return;
             } else {
-                if (matchedFamilySubset.length > 1) { // If there actually are children.
+                if ((matchedFamilySubset.length > 1) && !(conn instanceof LDAPConnection)) { // If there actually are children.
                     const subset = keepSubsetOfDITById(
                         family,
                         new Set(matchedFamilySubset
@@ -2012,16 +2012,18 @@ async function search_i (
                 //     ? convertFilterToPrismaSelect(ctx, data.filter)
                 //     : {}),
                 subentry: subentries,
-                EntryObjectClass: { // FIXME: This should be kept, but it hide child entries.
-                    /**
-                     * We do not iterate over child entries, because
-                     * those will be returned--or not--with the
-                     * ancestor entry.
-                     */
-                    none: {
-                        object_class: CHILD,
+                EntryObjectClass: (conn instanceof LDAPConnection)
+                    ? undefined
+                    : {
+                        /**
+                         * We do not iterate over child entries, because
+                         * those will be returned--or not--with the
+                         * ancestor entry.
+                         */
+                        none: {
+                            object_class: CHILD,
+                        },
                     },
-                },
             },
         );
     };
@@ -2074,7 +2076,7 @@ async function search_i (
              * those will be returned--or not--with the
              * ancestor entry.
              */
-            if (subordinate.dse.objectClass.has(CHILD)) { // FIXME: This should be kept, but it hide child entries.
+            if (subordinate.dse.objectClass.has(CHILD) && !(conn instanceof LDAPConnection)) {
                 cursorId = subordinate.dse.id;
                 if (searchState.paging?.[1].cursorIds) {
                     searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
