@@ -217,9 +217,16 @@ import { addValue } from "../database/drivers/administrativeRole";
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
+import readValuesOfType from "../utils/readValuesOfType";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
+interface Patch {
+    addedValues: ValuesIndex;
+    removedValues: ValuesIndex;
+    removedAttributes: Set<IndexableOID>;
+}
 
 const notPermittedData =  (
     ctx: Context,
@@ -550,12 +557,81 @@ function checkAbilityToModifyAttributeType (
     }
 }
 
+function addValuesToPatch (
+    patch: Patch,
+    type_: AttributeType,
+    toAdd: Value[],
+    equalityMatcher?: EqualityMatcher,
+): void {
+    const TYPE_OID: IndexableOID = type_.toString();
+    const addedValues = patch.addedValues.get(TYPE_OID);
+    if (addedValues) {
+        addedValues.push(...toAdd);
+    } else {
+        patch.addedValues.set(TYPE_OID, toAdd);
+    }
+    const removedValues = patch.removedValues.get(TYPE_OID);
+    if (removedValues) {
+        patch.removedValues.set(TYPE_OID, removedValues
+            .filter((rv) => {
+                return toAdd.some((addedValue) => {
+                    if (compareElements(addedValue.value, rv.value)) {
+                        return false; // We have "un-removed" the removed value by "re-adding" it.
+                    }
+                    try {
+                        if (equalityMatcher && equalityMatcher(addedValue.value, rv.value)) {
+                            return false; // We have "un-removed" the removed value by "re-adding" it.
+                        }
+                    } catch {
+                        return true; // If the equality matcher fails, we just assume they are not a match.
+                    }
+                    return true;
+                })
+            }));
+    }
+    patch.removedAttributes.delete(TYPE_OID);
+}
+
+function removeValuesFromPatch (
+    patch: Patch,
+    type_: AttributeType,
+    toRemove: Value[],
+    equalityMatcher?: EqualityMatcher,
+): void {
+    const TYPE_OID: IndexableOID = type_.toString();
+    const removedValues = patch.removedValues.get(TYPE_OID);
+    if (removedValues) {
+        removedValues.push(...toRemove);
+    } else {
+        patch.removedValues.set(TYPE_OID, toRemove);
+    }
+    const addedValues = patch.addedValues.get(TYPE_OID);
+    if (addedValues) {
+        patch.addedValues.set(TYPE_OID, addedValues
+            .filter((av) => {
+                return toRemove.some((removedValue) => {
+                    if (compareElements(removedValue.value, av.value)) {
+                        return false; // We have "un-added" the value by removing it.
+                    }
+                    try {
+                        if (equalityMatcher && equalityMatcher(removedValue.value, av.value)) {
+                            return false; // We have "un-added" the value by removing it.
+                        }
+                    } catch {
+                        return true; // If the equality matcher fails, we just assume they are not a match.
+                    }
+                    return true;
+                })
+            }));
+    }
+}
+
 async function executeAddAttribute (
     mod: Attribute,
     ctx: Context,
     conn: ClientConnection,
     entry: Vertex,
-    delta: ValuesIndex,
+    patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -573,13 +649,7 @@ async function executeAddAttribute (
         aliasDereferenced,
     );
     const values = valuesFromAttribute(mod);
-    const TYPE_OID: IndexableOID = mod.type_.toString();
-    const deltaValues = delta.get(TYPE_OID);
-    if (deltaValues) {
-        deltaValues.push(...values);
-    } else {
-        delta.set(TYPE_OID, values);
-    }
+    addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
     return addValues(ctx, entry, values, []);
 }
 
@@ -588,7 +658,7 @@ async function executeRemoveAttribute (
     ctx: Context,
     conn: ClientConnection,
     entry: Vertex,
-    delta: ValuesIndex,
+    patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -618,7 +688,6 @@ async function executeRemoveAttribute (
             ),
         )
     }
-    delta.delete(mod.toString());
     if (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
@@ -643,6 +712,10 @@ async function executeRemoveAttribute (
             );
         }
     }
+    const TYPE_OID: string = mod.toString();
+    patch.addedValues.delete(TYPE_OID);
+    patch.removedValues.delete(TYPE_OID); // Delete because we removed the whole attribute anyway.
+    patch.removedAttributes.add(TYPE_OID);
     return removeAttribute(ctx, entry, mod, []);
     // REVIEW: Do you want to also fail if per-value remove is not granted?
 }
@@ -652,7 +725,7 @@ async function executeAddValues (
     ctx: Context,
     conn: ClientConnection,
     entry: Vertex,
-    delta: ValuesIndex,
+    patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -670,13 +743,7 @@ async function executeAddValues (
         aliasDereferenced,
     );
     const values = valuesFromAttribute(mod);
-    const TYPE_OID: IndexableOID = mod.type_.toString();
-    const deltaValues = delta.get(TYPE_OID);
-    if (deltaValues) {
-        deltaValues.push(...values);
-    } else {
-        delta.set(TYPE_OID, values);
-    }
+    addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
     return addValues(ctx, entry, values, []);
 }
 
@@ -685,7 +752,7 @@ async function executeRemoveValues (
     ctx: Context,
     conn: ClientConnection,
     entry: Vertex,
-    delta: ValuesIndex,
+    patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -774,16 +841,7 @@ async function executeRemoveValues (
             }
         }
     }
-    const valuesToBeDeleted: Set<string> = new Set(
-        values?.map((v) => Buffer.from(v.value.toBytes()).toString("base64")),
-    );
-    const TYPE_OID: IndexableOID = mod.type_.toString();
-    const deltaValues = delta.get(TYPE_OID);
-    if (deltaValues) {
-        const newValues = deltaValues
-            .filter((dv) => !valuesToBeDeleted.has(Buffer.from(dv.value.toBytes()).toString("base64")));
-        delta.set(TYPE_OID, newValues);
-    }
+    removeValuesFromPatch(patch, mod.type_, values, EQUALITY_MATCHER);
     return removeValues(ctx, entry, values, []);
 }
 
@@ -792,7 +850,7 @@ async function executeAlterValues (
     ctx: Context,
     conn: ClientConnection,
     entry: Vertex,
-    delta: ValuesIndex,
+    patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -850,37 +908,8 @@ async function executeAlterValues (
             );
         }
     }
-    const TYPE_OID: IndexableOID = mod.type_.toString();
     const alterer = getValueAlterer(ctx, entry, mod.type_, mod.value, aliasDereferenced);
-    { // Modify the delta values.
-        const deltaValues = delta.get(TYPE_OID);
-        if (deltaValues) {
-            const newValues = deltaValues.map(alterer);
-            delta.set(TYPE_OID, newValues);
-        }
-    }
-    const eis = new EntryInformationSelection(
-        {
-            select: [ mod.type_ ],
-        },
-        undefined,
-        {
-            select: [ mod.type_ ],
-        },
-        undefined,
-        undefined,
-        undefined,
-    );
-    const {
-        userValues: userAttributes,
-        operationalValues: operationalAttributes,
-    } = await readValues(ctx, entry, {
-        selection: eis,
-    });
-    const values = [
-        ...userAttributes,
-        ...operationalAttributes,
-    ];
+    const values = await readValuesOfType(ctx, entry, mod.type_);
     if (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
@@ -911,7 +940,12 @@ async function executeAlterValues (
             }
         }
     }
+    const TYPE_OID: IndexableOID = mod.type_.toString();
     const newValues = values.map(alterer);
+    { // Modify the delta values.
+        patch.addedValues.set(TYPE_OID, newValues);
+        patch.removedValues.set(TYPE_OID, values);
+    }
     return [
         ctx.db.attributeValue.deleteMany({
             where: {
@@ -928,7 +962,7 @@ async function executeResetValue (
     ctx: Context,
     conn: ClientConnection,
     entry: Vertex,
-    delta: ValuesIndex,
+    patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -981,18 +1015,18 @@ async function executeResetValue (
             }
         }
     }
+    const oldValues = await readValuesOfType(ctx, entry, mod);
     // This will not update operational attributes, but that does not
     // matter, because it only remove values having some context, and per X.501,
     // operational attributes are forbidden from having contexts.
     const TYPE_OID: IndexableOID = mod.toString();
-    { // Updating the delta values
-        const deltaValues = delta.get(TYPE_OID);
-        if (deltaValues) {
-            const newDeltaValues = deltaValues
-                .filter((dv) => !Array.from(dv.contexts?.values() ?? [])
-                    .some((context) => (context.fallback === false)));
-            delta.set(TYPE_OID, newDeltaValues);
-        }
+    if (oldValues.length) {
+        const keep = (value: Value) => !Array.from(value.contexts?.values() ?? [])
+            .some((context) => (context.fallback === false));
+        const keptValues = oldValues.filter(keep);
+        const discardedValues = oldValues.filter((v) => !keep(v));
+        patch.addedValues.set(TYPE_OID, keptValues);
+        patch.removedValues.set(TYPE_OID, discardedValues);
     }
     return [
         ctx.db.attributeValue.deleteMany({
@@ -1006,7 +1040,7 @@ async function executeReplaceValues (
     ctx: Context,
     conn: ClientConnection,
     entry: Vertex,
-    delta: ValuesIndex,
+    patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -1075,7 +1109,9 @@ async function executeReplaceValues (
             }
         }
     }
-    delta.set(TYPE_OID, values);
+    const oldValues = await readValuesOfType(ctx, entry, mod.type_);
+    patch.removedValues.set(TYPE_OID, oldValues);
+    addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
     return [
         ctx.db.attributeValue.deleteMany({
             where,
@@ -1302,7 +1338,7 @@ async function executeEntryModification (
     entry: Vertex,
     targetDN: DistinguishedName,
     mod: EntryModification,
-    delta: ValuesIndex,
+    patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     authLevel: AuthenticationLevel,
@@ -1318,7 +1354,7 @@ async function executeEntryModification (
         ctx,
         conn,
         entry,
-        delta,
+        patch,
         accessControlScheme,
         relevantACDFTuples,
         authLevel,
@@ -1601,7 +1637,11 @@ async function modifyEntry (
     }
 
     const pendingUpdates: PrismaPromise<any>[] = [];
-    const delta: ValuesIndex = new Map();
+    const patch: Patch = {
+        addedValues: new Map(),
+        removedValues: new Map(),
+        removedAttributes: new Set(),
+    };
     for (const mod of data.changes) {
         if (op?.abandonTime) {
             op.events.emit("abandon");
@@ -1630,7 +1670,7 @@ async function modifyEntry (
                 target,
                 targetDN,
                 mod,
-                delta,
+                patch,
                 accessControlScheme,
                 relevantTuples,
                 conn.authLevel,
@@ -1644,6 +1684,41 @@ async function modifyEntry (
         );
     }
 
+    const attributesThatWillBeRemoved: Set<IndexableOID> = new Set(patch.removedAttributes.values());
+    for (const [ type_, removedValues ] of patch.removedValues.entries()) {
+        const spec = ctx.attributeTypes.get(type_);
+        const alreadyPresentValues: number = spec?.driver?.countValues
+            ? await spec.driver.countValues(ctx, target, relevantSubentries)
+            : await ctx.db.attributeValue.count({
+                where: {
+                    entry_id: target.dse.id,
+                    type: type_,
+                },
+            });
+        if (removedValues.length < alreadyPresentValues) {
+            continue;
+        }
+        if (spec?.driver?.hasValue) {
+            const everyValueDeleted: boolean = (await Promise.all(
+                removedValues.map((rv) => spec.driver!.hasValue!(ctx, target, rv)))).every((d) => d);
+            if (everyValueDeleted) {
+                attributesThatWillBeRemoved.add(type_);
+            }
+        } else {
+            const typeOID = ObjectIdentifier.fromString(type_);
+            const matcher = EQUALITY_MATCHER(typeOID);
+            const existingValues = await readValuesOfType(ctx, target, typeOID);
+            const everyValueDeleted: boolean = existingValues
+                .every((v) => removedValues
+                    .some((rv) => matcher
+                        ? matcher(v.value, rv.value)
+                        : compareElements(v.value, rv.value)));
+            if (everyValueDeleted) {
+                attributesThatWillBeRemoved.add(type_);
+            }
+        }
+    }
+
     const optionalAttributes: Set<IndexableOID> = new Set(
         attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
     );
@@ -1651,7 +1726,7 @@ async function modifyEntry (
         optionalAttributes.add(id_oa_collectiveExclusions.toString());
         optionalAttributes.add(administrativeRole["&id"].toString());
     }
-    const addedObjectClasses = delta.get(objectClass["&id"].toString())
+    const addedObjectClasses = patch.addedValues.get(objectClass["&id"].toString())
         ?.map((value) => value.value.objectIdentifier) ?? [];
     for (const ocid of addedObjectClasses) {
         if (ctx.config.bulkInsertMode) {
@@ -1765,8 +1840,8 @@ async function modifyEntry (
                 ),
             );
         }
-        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr)); // TODO: Can you just make a Set from another Set?
-        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr)); // TODO: Can you just make a Set from another Set?
+        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
+        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
     }
     const alreadyPresentObjectClasses = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
     for (const ocid of alreadyPresentObjectClasses) {
@@ -1780,18 +1855,24 @@ async function modifyEntry (
             }));
             continue;
         }
-        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr)); // TODO: Can you just make a Set from another Set?
-        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr)); // TODO: Can you just make a Set from another Set?
+        Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
+        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
     }
 
     if (!ctx.config.bulkInsertMode) { // Check required attributes
         const missingRequiredAttributeTypes: Set<IndexableOID> = new Set();
         for (const ra of Array.from(requiredAttributes)) {
-            const deltaValues = delta.get(ra);
-            if (!deltaValues?.length) {
+            // Check that no required attributes are removed.
+            if (attributesThatWillBeRemoved.has(ra)) {
+                missingRequiredAttributeTypes.add(ra);
+                continue;
+            }
+            // Check that all newly-required attributes are...
+            const deltaValues = patch.addedValues.get(ra);
+            if (!deltaValues?.length) { // added if not already present.
                 const spec = ctx.attributeTypes.get(ra);
-                const alreadyPresentValues = spec?.driver?.countValues
-                    ? spec.driver.countValues(ctx, target, relevantSubentries)
+                const alreadyPresentValues: number = spec?.driver?.countValues
+                    ? await spec.driver.countValues(ctx, target, relevantSubentries)
                     : await ctx.db.attributeValue.count({
                         where: {
                             entry_id: target.dse.id,
@@ -1830,7 +1911,7 @@ async function modifyEntry (
         .some((oc) => oc.isEqualTo(extensibleObject["&id"]));
     if (!ctx.config.bulkInsertMode && !isExtensible && !addsExtensibleObjectClass) { // Check optional attributes
         const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
-        for (const type_ of Array.from(delta.keys())) {
+        for (const type_ of Array.from(patch.addedValues.keys())) {
             if (!optionalAttributes.has(type_.toString())) {
                 if (target.dse.subentry && ctx.attributeTypes.get(type_.toString())?.collective) {
                     continue; // You can write any collective attribute to a subentry.
@@ -2037,7 +2118,7 @@ async function modifyEntry (
             .get(hierarchyParent["&id"].toString())!.driver!.isPresent!(ctx, target);
         if (
             hasChildObjectClass
-            && (delta.has(hierarchyParent["&id"].toString()) || inHierarchy)
+            && (patch.addedValues.has(hierarchyParent["&id"].toString()) || inHierarchy)
         ) {
             throw new errors.UpdateError(
                 ctx.i18n.t("err:child_cannot_be_in_hierarchy"),
