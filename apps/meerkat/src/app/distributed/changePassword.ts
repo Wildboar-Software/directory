@@ -21,8 +21,8 @@ import setEntryPassword from "../database/setEntryPassword";
 import attemptPassword from "../authn/attemptPassword";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
-    SecurityProblem_noInformation,
     SecurityProblem_invalidCredentials,
+    SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -53,6 +53,9 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+
+const USER_PASSWORD_OID: string = userPassword["&id"].toString();
+const USER_PWD_OID: string = userPwd["&id"].toString();
 
 // changePassword OPERATION ::= {
 //   ARGUMENT  ChangePasswordArgument
@@ -86,6 +89,39 @@ async function changePassword (
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
+    const passwordIsPermittedOnThisEntry: boolean = Array.from(target.dse.objectClass.values())
+        .some((oid) => {
+            const spec = ctx.objectClasses.get(oid);
+            if (!spec) {
+                return false;
+            }
+            return (
+                spec.mandatoryAttributes.has(USER_PASSWORD_OID)
+                || spec.mandatoryAttributes.has(USER_PWD_OID)
+                || spec.optionalAttributes.has(USER_PASSWORD_OID)
+                || spec.optionalAttributes.has(USER_PWD_OID)
+            );
+        });
+    if (!passwordIsPermittedOnThisEntry) {
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:not_authz_cpw"),
+            new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
@@ -141,6 +177,7 @@ async function changePassword (
             [
                 PERMISSION_CATEGORY_ADD,
                 PERMISSION_CATEGORY_REMOVE,
+                PERMISSION_CATEGORY_MODIFY,
             ],
             EQUALITY_MATCHER,
         );
@@ -155,6 +192,7 @@ async function changePassword (
             [
                 PERMISSION_CATEGORY_ADD,
                 PERMISSION_CATEGORY_REMOVE,
+                PERMISSION_CATEGORY_MODIFY,
             ],
             EQUALITY_MATCHER,
         );
@@ -166,7 +204,7 @@ async function changePassword (
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_cpw"),
                 new SecurityErrorData(
-                    SecurityProblem_noInformation,
+                    SecurityProblem_insufficientAccessRights,
                     undefined,
                     undefined,
                     [],

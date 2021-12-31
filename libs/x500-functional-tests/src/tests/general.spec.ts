@@ -416,6 +416,9 @@ import {
 import {
     caseIgnoreOrderingMatch,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreOrderingMatch.oa";
+import {
+    userPwdClass,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
 
 jest.setTimeout(30000);
 
@@ -583,6 +586,7 @@ async function createTestRootNode(
                 objectClass["&id"],
                 [
                     _encodeObjectIdentifier(applicationProcess["&id"], DER),
+                    _encodeObjectIdentifier(userPwdClass["&id"], DER), // So passwords can be set.
                 ],
                 undefined,
             ),

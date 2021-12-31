@@ -20,7 +20,7 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import setEntryPassword from "../database/setEntryPassword";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
-    SecurityProblem_invalidCredentials,
+    SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -45,12 +45,15 @@ import {
     id_opcode_administerPassword,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-administerPassword.va";
 import {
-    serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+
+const USER_PASSWORD_OID: string = userPassword["&id"].toString();
+const USER_PWD_OID: string = userPwd["&id"].toString();
 
 // administerPassword OPERATION ::= {
 //   ARGUMENT  AdministerPasswordArgument
@@ -84,6 +87,39 @@ async function administerPassword (
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
+    const passwordIsPermittedOnThisEntry: boolean = Array.from(target.dse.objectClass.values())
+        .some((oid) => {
+            const spec = ctx.objectClasses.get(oid);
+            if (!spec) {
+                return false;
+            }
+            return (
+                spec.mandatoryAttributes.has(USER_PASSWORD_OID)
+                || spec.mandatoryAttributes.has(USER_PWD_OID)
+                || spec.optionalAttributes.has(USER_PASSWORD_OID)
+                || spec.optionalAttributes.has(USER_PWD_OID)
+            );
+        });
+    if (!passwordIsPermittedOnThisEntry) {
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:not_authz_apw"),
+            new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const argument: AdministerPasswordArgument = _decode_AdministerPasswordArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
@@ -139,6 +175,7 @@ async function administerPassword (
             [
                 PERMISSION_CATEGORY_ADD,
                 PERMISSION_CATEGORY_REMOVE,
+                PERMISSION_CATEGORY_MODIFY,
             ],
             EQUALITY_MATCHER,
         );
@@ -153,6 +190,7 @@ async function administerPassword (
             [
                 PERMISSION_CATEGORY_ADD,
                 PERMISSION_CATEGORY_REMOVE,
+                PERMISSION_CATEGORY_MODIFY,
             ],
             EQUALITY_MATCHER,
         );
@@ -164,7 +202,7 @@ async function administerPassword (
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_apw"),
                 new SecurityErrorData(
-                    SecurityProblem_invalidCredentials,
+                    SecurityProblem_insufficientAccessRights,
                     undefined,
                     undefined,
                     [],
@@ -172,7 +210,7 @@ async function administerPassword (
                         ctx,
                         conn.boundNameAndUID?.dn,
                         undefined,
-                        serviceError["&errorCode"],
+                        securityError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     state.chainingArguments.aliasDereferenced,
