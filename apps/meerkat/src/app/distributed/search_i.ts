@@ -956,9 +956,6 @@ async function search_i (
             searchState.paging?.[0]
                 ? Buffer.from(searchState.paging[0], "base64")
                 : undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         return;
     }
@@ -1141,9 +1138,6 @@ async function search_i (
                         return (spec.usage !== AttributeUsage_userApplications);
                     }),
             },
-            undefined,
-            undefined,
-            undefined,
         )
         : undefined;
 
@@ -1179,9 +1173,6 @@ async function search_i (
             },
             undefined,
             infoItems,
-            undefined,
-            undefined,
-            undefined,
         );
     };
     const subschemaSubentry = relevantSubentries
@@ -1308,10 +1299,6 @@ async function search_i (
                                 undefined,
                                 undefined,
                             )),
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                 );
                 state.SRcontinuationList.push(cr);
             }
@@ -1974,10 +1961,6 @@ async function search_i (
                     );
                 })
                 .filter((api): api is AccessPointInformation => !!api),
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
         state.SRcontinuationList.push(cr);
     }
@@ -2058,9 +2041,6 @@ async function search_i (
                     searchState.paging?.[0]
                         ? Buffer.from(searchState.paging[0], "base64")
                         : undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                 );
                 return;
             }
@@ -2119,10 +2099,6 @@ async function search_i (
                             ),
                         ];
                     })(),
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                 );
                 state.SRcontinuationList.push(cr);
             }

@@ -357,7 +357,9 @@ async function mergeSortAndPageSearch(
     return {
         unsigned: {
             searchInfo: new SearchResultData_searchInfo(
-                mergedResult.name,
+                state.chainingArguments.aliasDereferenced
+                    ? mergedResult.name
+                    : undefined,
                 results.map((result) => {
                     const el = new DERElement();
                     el.fromBytes(result.entry_info);

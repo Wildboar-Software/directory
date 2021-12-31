@@ -337,7 +337,9 @@ async function mergeSortAndPageList(
     return {
         unsigned: {
             listInfo: new ListResultData_listInfo(
-                mergedResult.name,
+                state.chainingArguments.aliasDereferenced
+                    ? mergedResult.name
+                    : undefined,
                 results.map((result) => {
                     const el = new DERElement();
                     el.fromBytes(result.subordinate_info);

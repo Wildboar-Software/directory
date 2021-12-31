@@ -91,8 +91,18 @@ import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import failover from "../utils/failover";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import { MAX_RESULTS } from "../constants";
+import type { Prisma } from "@prisma/client";
+import {
+    child,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
+import {
+    parent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
 
 const BYTES_IN_A_UUID: number = 16;
+const PARENT: string = parent["&id"].toString();
+const CHILD: string = child["&id"].toString();
 
 export
 async function list_ii (
@@ -179,7 +189,6 @@ async function list_ii (
     }
 
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
-    let page: number = 0;
     let queryReference: string | undefined;
     let cursorId: number | undefined;
     if (data.pagedResults) {
@@ -231,9 +240,6 @@ async function list_ii (
             }
             queryReference = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             pagingRequest = data.pagedResults.newRequest;
-            page = (((data.pagedResults.newRequest.pageNumber !== undefined)
-                ? Number(data.pagedResults.newRequest.pageNumber)
-                : 1) - 1);
         } else if ("queryReference" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
             const paging = conn.pagedResultsRequests.get(queryReference);
@@ -299,28 +305,22 @@ async function list_ii (
     const excludeShadows: boolean = state.chainingArguments.excludeShadows
         ?? ChainingArguments._default_value_for_excludeShadows;
     const listItems: ListItem[] = [];
-    const pageNumber: number = (pagingRequest?.pageNumber !== undefined)
-        ? Number(pagingRequest.pageNumber)
-        : 0;
-    const pageSize: number = Number(
-        pagingRequest?.pageSize
-            ?? data.serviceControls?.sizeLimit
-            ?? Infinity
-    );
-    let subordinatesInBatch = await readSubordinates(
-        ctx,
-        target,
-        pageSize,
-        undefined,
-        cursorId,
-        {
-            subentry: subentries,
-        },
-    );
-    let skipsRemaining = (data.pagedResults && ("newRequest" in data.pagedResults))
-        ? (pageNumber * pageSize)
-        : 0;
+    const sizeLimit: number = pagingRequest
+        ? MAX_RESULTS
+        : Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
     let limitExceeded: LimitProblem | undefined;
+    const whereArgs: Partial<Prisma.EntryWhereInput> = {
+        subentry: subentries,
+        EntryObjectClass: (data.listFamily && target.dse.objectClass.has(PARENT))
+            ? {
+                some: {
+                    object_class: CHILD,
+                },
+            }
+            : undefined,
+    };
+    const getNextBatchOfSubordinates = () => readSubordinates(ctx, target, sizeLimit, undefined, cursorId, whereArgs);
+    let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             if (op?.abandonTime) {
@@ -346,7 +346,7 @@ async function list_ii (
                 limitExceeded = LimitProblem_timeLimitExceeded;
                 break;
             }
-            if (listItems.length >= pageSize) {
+            if (listItems.length >= sizeLimit) {
                 limitExceeded = LimitProblem_sizeLimitExceeded;
                 break;
             }
@@ -406,44 +406,19 @@ async function list_ii (
                     continue;
                 }
             }
-            if (skipsRemaining <= 0) {
-                listItems.push(new ListItem(
-                    subordinate.dse.rdn,
-                    Boolean(subordinate.dse.alias),
-                    Boolean(subordinate.dse.shadow),
-                ));
-            } else {
-                skipsRemaining--;
-            }
+            listItems.push(new ListItem(
+                subordinate.dse.rdn,
+                Boolean(subordinate.dse.alias),
+                Boolean(subordinate.dse.shadow),
+            ));
         }
         if (limitExceeded !== undefined) {
             break;
         }
-        subordinatesInBatch = await readSubordinates(
-            ctx,
-            target,
-            pageSize,
-            undefined,
-            cursorId,
-            {
-                subentry: subentries,
-            },
-        );
+        subordinatesInBatch = await getNextBatchOfSubordinates();
     }
     if (op) {
         op.pointOfNoReturnTime = new Date();
-    }
-
-    if (queryReference && pagingRequest) {
-        conn.pagedResultsRequests.set(queryReference, {
-            request: pagingRequest,
-            cursorIds: cursorId
-                ? [ cursorId ]
-                : [],
-            alreadyReturnedById: new Set(),
-            nextEntriesStack: [],
-            nextSubordinatesStack: [],
-        });
     }
 
     if (fromDAP && (listItems.length === 0)) {
@@ -467,10 +442,11 @@ async function list_ii (
     const result: ListResult = {
         unsigned: {
             listInfo: new ListResultData_listInfo(
-                // {
-                //     rdnSequence: targetDN,
-                // },
-                undefined,
+                state.chainingArguments.aliasDereferenced
+                    ? {
+                        rdnSequence: targetDN,
+                    }
+                    : undefined,
                 listItems,
                 // The POQ shall only be present if the results are incomplete.
                 (queryReference && (limitExceeded !== undefined))
@@ -480,9 +456,6 @@ async function list_ii (
                         undefined,
                         undefined,
                         Buffer.from(queryReference, "base64"),
-                        undefined,
-                        undefined,
-                        undefined,
                     )
                     : undefined,
                 [],
