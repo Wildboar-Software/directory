@@ -152,7 +152,7 @@ const driver: AttributeTypeDatabaseDriver = {
     removeAttribute,
     countValues,
     isPresent,
-    // hasValue,
+    hasValue,
 };
 
 export default driver;

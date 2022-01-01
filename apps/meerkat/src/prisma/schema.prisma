@@ -111,7 +111,6 @@ model Entry {
   AttributeValue              AttributeValue[]
   AccessPoint                 AccessPoint[]
   SubtreeSpecification        SubtreeSpecification[]
-  NonSpecificKnowledge        NonSpecificKnowledge[]
   PwdModifyEntryAllowed       PwdModifyEntryAllowed[]
   PwdChangeAllowed            PwdChangeAllowed[]
   PwdMaxAge                   PwdMaxAge[]
@@ -506,7 +505,8 @@ enum Knowledge {
   NON_SPECIFIC
   SUPPLIER
   CONSUMER
-  SECONDARY_SHADOW
+  SECONDARY_SUPPLIER
+  SECONDARY_CONSUMER
   // DIT_BRIDGE
   OTHER
   OB_REQUEST
@@ -518,7 +518,7 @@ enum Knowledge {
 // Satisfies AccessPoint, MasterOrShadowAccessPoint, SupplierOrConsumer, ConsumerInformation, and SupplierInformation
 model AccessPoint {
   id                       Int                         @id @default(autoincrement())
-  ber                      Bytes
+  ber                      Bytes // This will depend on the knowledge type. If SpecK or NSK => MOSAP.
   knowledge_type           Knowledge
   ae_title                 Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
   category                 Int?
@@ -535,23 +535,23 @@ model AccessPoint {
   operational_bindings     OperationalBinding[]        @relation("ob_access_point")
   is_master_for            OperationalBinding[]        @relation("ob_master")
   NSAP                     NetworkServiceAccessPoint[]
+
+  // Note that nonSpecificKnowledge is both multi-valued and the individual
+  // values are of type MasterAndShadowAccessPoints. This is an arbitrary
+  // integer that uniquely identifies the nonSpecificKnowledge value within the
+  // entry to which this access point belongs.
+  nsk_group                BigInt?
 }
 
 model NetworkServiceAccessPoint {
   id              Int         @id @default(autoincrement())
   ipv4            String? // @db.Inet
+  hostname        String? @db.VarChar(255)
   tcp_port        Int? // @db.SmallUnsignedInt
   url             String?
   bytes           Bytes
   access_point_id Int
   access_point    AccessPoint @relation(fields: [access_point_id], references: [id], onDelete: Cascade)
-}
-
-model NonSpecificKnowledge {
-  id       Int   @id @default(autoincrement())
-  ber      Bytes
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
 }
 
 model SubtreeSpecification {

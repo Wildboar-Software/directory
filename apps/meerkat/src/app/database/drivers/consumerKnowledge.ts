@@ -22,6 +22,9 @@ import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
+import saveAccessPoint from "../saveAccessPoint";
+import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -52,51 +55,13 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             vertex.dse.cp.consumerKnowledge = [ decoded ];
         }
     }
-    pendingUpdates.otherWrites.push(ctx.db.accessPoint.create({
+    const cid = await saveAccessPoint(ctx, decoded, Knowledge.CONSUMER);
+    pendingUpdates.otherWrites.push(ctx.db.accessPoint.update({
+        where: {
+            id: cid,
+        },
         data: {
-            ae_title: decoded.ae_title.rdnSequence.map(rdnToJson),
             entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
-            knowledge_type: Knowledge.CONSUMER,
-            NSAP: {
-                createMany: {
-                    data: decoded.address.nAddresses.map((nsap) => {
-                        const url: string | undefined = ((): string | undefined => {
-                            if (nsap[0] !== 0xFF) { // It is not a URL.
-                                return undefined;
-                            }
-                            try {
-                                const [ , uri ] = uriFromNSAP(nsap);
-                                return uri;
-                            } catch {
-                                return undefined;
-                            }
-                        })();
-                        const ip_and_port = ((): [ string, number | undefined ] | undefined => {
-                            if (nsap[0] !== 0xFF) { // It is not a URL.
-                                return undefined;
-                            }
-                            for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
-                                if (nsap[i] !== IPV4_AFI_IDI[i]) {
-                                    return undefined;
-                                }
-                            }
-                            const [ , ip, port ] = ipv4FromNSAP(nsap);
-                            return [ Array.from(ip).join("."), port ];
-                        })();
-                        return {
-                            ipv4: ip_and_port
-                                ? ip_and_port[0]
-                                : undefined,
-                            tcp_port: ip_and_port
-                                ? ip_and_port[1]
-                                : undefined,
-                            url,
-                            bytes: Buffer.from(nsap),
-                        };
-                    }),
-                },
-            },
         },
     }));
 };
@@ -109,22 +74,20 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = consumerKnowledge.decoderFor["&Type"]!(value.value);
-    if (vertex.dse.cp?.consumerKnowledge) {
-        vertex.dse.cp.consumerKnowledge = vertex.dse.cp.consumerKnowledge
-            .filter((k) => !(
-                (k.agreementID === decoded.agreementID)
-                && compareDistinguishedName(
-                    k.ae_title.rdnSequence,
-                    decoded.ae_title.rdnSequence,
-                    getEqualityMatcherGetter(ctx),
-                )
-            ));
-    }
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
             knowledge_type: Knowledge.CONSUMER,
-            ber: Buffer.from(value.value.toBytes()),
+            OR: [
+                {
+                    ber: Buffer.from(value.value.toBytes()),
+                },
+                {
+                    ae_title: {
+                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                    },
+                },
+            ],
         },
     }));
 };
@@ -136,7 +99,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     if (vertex.dse.cp?.consumerKnowledge) {
-        vertex.dse.cp.consumerKnowledge = undefined;
+        delete vertex.dse.cp.consumerKnowledge;
     }
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {

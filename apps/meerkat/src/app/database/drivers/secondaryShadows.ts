@@ -17,11 +17,7 @@ import {
     secondaryShadows,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/secondaryShadows.oa";
 import rdnToJson from "../../x500/rdnToJson";
-import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
-import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
-import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
+import saveAccessPoint from "../saveAccessPoint";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -52,51 +48,16 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             vertex.dse.cp.secondaryShadows = [ decoded ];
         }
     }
-    pendingUpdates.otherWrites.push(ctx.db.accessPoint.create({
-        data: {
-            ae_title: decoded.ae_title.rdnSequence.map(rdnToJson),
-            entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
-            knowledge_type: Knowledge.SECONDARY_SHADOW,
-            NSAP: {
-                createMany: {
-                    data: decoded.address.nAddresses.map((nsap) => {
-                        const url: string | undefined = ((): string | undefined => {
-                            if (nsap[0] !== 0xFF) { // It is not a URL.
-                                return undefined;
-                            }
-                            try {
-                                const [ , uri ] = uriFromNSAP(nsap);
-                                return uri;
-                            } catch {
-                                return undefined;
-                            }
-                        })();
-                        const ip_and_port = ((): [ string, number | undefined ] | undefined => {
-                            if (nsap[0] !== 0xFF) { // It is not a URL.
-                                return undefined;
-                            }
-                            for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
-                                if (nsap[i] !== IPV4_AFI_IDI[i]) {
-                                    return undefined;
-                                }
-                            }
-                            const [ , ip, port ] = ipv4FromNSAP(nsap);
-                            return [ Array.from(ip).join("."), port ];
-                        })();
-                        return {
-                            ipv4: ip_and_port
-                                ? ip_and_port[0]
-                                : undefined,
-                            tcp_port: ip_and_port
-                                ? ip_and_port[1]
-                                : undefined,
-                            url,
-                            bytes: Buffer.from(nsap),
-                        };
-                    }),
-                },
+    const ssid = await saveAccessPoint(ctx, decoded, Knowledge.SECONDARY_SUPPLIER);
+    const cids = await Promise.all(decoded.consumers.map((c) => saveAccessPoint(ctx, c, Knowledge.SECONDARY_CONSUMER)));
+    pendingUpdates.otherWrites.push(ctx.db.accessPoint.updateMany({
+        where: {
+            id: {
+                in: [ ssid, ...cids ],
             },
+        },
+        data: {
+            entry_id: vertex.dse.id,
         },
     }));
 };
@@ -109,19 +70,20 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = secondaryShadows.decoderFor["&Type"]!(value.value);
-    if (vertex.dse.cp?.secondaryShadows) {
-        vertex.dse.cp.secondaryShadows = vertex.dse.cp.secondaryShadows
-            .filter((k) => !compareDistinguishedName(
-                k.ae_title.rdnSequence,
-                decoded.ae_title.rdnSequence,
-                getEqualityMatcherGetter(ctx),
-            ));
-    }
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SECONDARY_SHADOW,
-            ber: Buffer.from(value.value.toBytes()),
+            knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+            OR: [
+                {
+                    ber: Buffer.from(value.value.toBytes()),
+                },
+                {
+                    ae_title: {
+                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                    },
+                },
+            ],
         },
     }));
 };
@@ -133,12 +95,19 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     if (vertex.dse.cp?.secondaryShadows) {
-        vertex.dse.cp.secondaryShadows = undefined;
+        delete vertex.dse.cp.secondaryShadows;
     }
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SECONDARY_SHADOW,
+            OR: [
+                {
+                    knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+                },
+                {
+                    knowledge_type: Knowledge.SECONDARY_CONSUMER,
+                },
+            ],
         },
     }));
 };
@@ -168,11 +137,21 @@ const hasValue: SpecialAttributeValueDetector = async (
     if (!vertex.dse.cp) {
         return false;
     }
+    const decoded = secondaryShadows.decoderFor["&Type"]!(value.value);
     return !!(await ctx.db.accessPoint.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SECONDARY_SHADOW,
-            ber: Buffer.from(value.value.toBytes()),
+            knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+            OR: [
+                {
+                    ber: Buffer.from(value.value.toBytes()),
+                },
+                {
+                    ae_title: {
+                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                    },
+                },
+            ],
         },
     }));
 };

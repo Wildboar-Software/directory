@@ -25,6 +25,7 @@ import { Knowledge } from "@prisma/client";
 import rdnToJson from "../x500/rdnToJson";
 import { DER } from "asn1-ts/dist/node/functional";
 import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
+import { URL } from "url";
 
 export
 async function saveAccessPoint (
@@ -33,6 +34,7 @@ async function saveAccessPoint (
     knowledge_type: Knowledge,
     entry_id?: number,
     is_consumer_of_id?: number,
+    nsk_group?: bigint,
 ): Promise<number> {
     const ber: Buffer = ((): Buffer => {
         if (ap instanceof AccessPoint) {
@@ -67,6 +69,7 @@ async function saveAccessPoint (
             non_supplying_master_id,
             is_consumer_of_id,
             ber,
+            nsk_group,
             NSAP: {
                 createMany: {
                     data: ap.address.nAddresses.map((nsap) => {
@@ -81,6 +84,9 @@ async function saveAccessPoint (
                                 return undefined;
                             }
                         })();
+                        const parsedUrl = url
+                            ? new URL(url)
+                            : undefined;
                         const ip_and_port = ((): [ string, number | undefined ] | undefined => {
                             if (nsap[0] !== 0xFF) { // It is not a URL.
                                 return undefined;
@@ -102,6 +108,7 @@ async function saveAccessPoint (
                                 : undefined,
                             url,
                             bytes: Buffer.from(nsap),
+                            hostname: parsedUrl?.hostname,
                         };
                     }),
                 },

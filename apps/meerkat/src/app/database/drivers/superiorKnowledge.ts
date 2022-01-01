@@ -17,12 +17,11 @@ import {
     superiorKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
 import rdnToJson from "../../x500/rdnToJson";
-import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
-import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
-import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
+import saveAccessPoint from "../saveAccessPoint";
+import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -56,51 +55,15 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             vertex.dse.supr.superiorKnowledge = [ decoded ];
         }
     }
-    pendingUpdates.otherWrites.push(ctx.db.accessPoint.create({
+    // We create the access point now...
+    const apid = await saveAccessPoint(ctx, decoded, Knowledge.SUPERIOR);
+    // But within the transaction, we associate them with this DSE.
+    pendingUpdates.otherWrites.push(ctx.db.accessPoint.updateMany({
+        where: {
+            id: apid,
+        },
         data: {
-            ae_title: decoded.ae_title.rdnSequence.map(rdnToJson),
             entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
-            knowledge_type: Knowledge.SUPERIOR,
-            NSAP: {
-                createMany: {
-                    data: decoded.address.nAddresses.map((nsap) => {
-                        const url: string | undefined = ((): string | undefined => {
-                            if (nsap[0] !== 0xFF) { // It is not a URL.
-                                return undefined;
-                            }
-                            try {
-                                const [ , uri ] = uriFromNSAP(nsap);
-                                return uri;
-                            } catch {
-                                return undefined;
-                            }
-                        })();
-                        const ip_and_port = ((): [ string, number | undefined ] | undefined => {
-                            if (nsap[0] !== 0xFF) { // It is not a URL.
-                                return undefined;
-                            }
-                            for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
-                                if (nsap[i] !== IPV4_AFI_IDI[i]) {
-                                    return undefined;
-                                }
-                            }
-                            const [ , ip, port ] = ipv4FromNSAP(nsap);
-                            return [ Array.from(ip).join("."), port ];
-                        })();
-                        return {
-                            ipv4: ip_and_port
-                                ? ip_and_port[0]
-                                : undefined,
-                            tcp_port: ip_and_port
-                                ? ip_and_port[1]
-                                : undefined,
-                            url,
-                            bytes: Buffer.from(nsap),
-                        };
-                    }),
-                },
-            },
         },
     }));
 };
@@ -126,7 +89,16 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         where: {
             entry_id: vertex.dse.id,
             knowledge_type: Knowledge.SUPERIOR,
-            ber: Buffer.from(value.value.toBytes()),
+            OR: [
+                {
+                    ber: Buffer.from(value.value.toBytes()),
+                },
+                {
+                    ae_title: {
+                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                    },
+                },
+            ],
         },
     }));
 };
@@ -137,9 +109,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    if (vertex.dse.supr?.superiorKnowledge) {
-        vertex.dse.supr.superiorKnowledge = [];
-    }
+    delete vertex.dse.supr;
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
@@ -170,16 +140,15 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    if (vertex.immediateSuperior || !vertex.dse.root) {
+    if (vertex.immediateSuperior || !vertex.dse.root || !vertex.dse.supr?.superiorKnowledge?.length) {
         return false;
     }
-    return !!(await ctx.db.accessPoint.findFirst({
-        where: {
-            entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SUPERIOR,
-            ber: Buffer.from(value.value.toBytes()),
-        },
-    }));
+    const decoded = superiorKnowledge.decoderFor["&Type"]!(value.value);
+    return vertex.dse.supr.superiorKnowledge.some((sk) => compareRDNSequence(
+        decoded.ae_title.rdnSequence,
+        sk.ae_title.rdnSequence,
+        getEqualityMatcherGetter(ctx),
+    ));
 };
 
 export

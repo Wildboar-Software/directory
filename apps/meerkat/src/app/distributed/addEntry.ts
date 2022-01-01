@@ -624,6 +624,7 @@ async function addEntry (
         }
     }
 
+    const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const missingMandatoryAttributes: Set<IndexableOID> = new Set();
     const optionalAttributes: Set<IndexableOID> = new Set(
         attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
@@ -789,7 +790,7 @@ async function addEntry (
         }
         if (
             (unrecognizedAttributes.length > 0)
-            || (noUserModAttributes.length > 0)
+            || ((noUserModAttributes.length > 0) && !manageDSAIT)
             || (dummyAttributes.length > 0)
             || (!isSubentry && (collectiveAttributes.length > 0))
             || (obsoleteAttributes.length > 0)
@@ -1463,33 +1464,6 @@ async function addEntry (
             }
         }
     }
-
-    /**
-     * throw parentNotAncestor if the parent is a part of a compound entry, but
-     * it is not the ancestor of that compound entry. From what I can tell, this
-     * means checking that the parent is not of object class `child`. (X.501, Section 8.11.)
-     *
-     * 7.1.2 ancestor: The entry at the root of the hierarchy of family members that comprise a compound entry.
-     *
-     * 7.1.3
-     *  compound entry: A representation of an object in terms of family members that are hierarchically organized
-     *  into one or more families of entries.
-     *
-     *  X.501, Section 14.10:
-     *  If the immediately hierarchical parent is a compound entry, the value shall be the distinguished name
-     *  of the ancestor. Otherwise, the Directory shall return an Update Error with problem parentNotAncestor .
-     */
-    // How do you insert DSEs of any non-entry type if dseType is an operational attribute?
-    // X.511, Section 7.12 specifies this exactly:
-    // – the manageDSAIT extension bit shall be set;
-    // – the manageDSAIT option shall be set;
-    // – the manageDSAITPlaneRef option shall be included if a specific replication plane is to be managed.
-    const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
-    // Only necessary if a specific DSA IT is to be managed.
-    // const manageDSAITPlaneRef = data.serviceControls?.manageDSAITPlaneRef;
-    // aliases are not allowed to point to other aliases
-    // NOTE: "aliased entry exists" X.511 specifically says this does not have to be checked.
-
     if (!manageDSAIT && (nonUserApplicationAttributes.length > 0)) {
         throw new errors.SecurityError(
             ctx.i18n.t("err:missing_managedsait_flag", {

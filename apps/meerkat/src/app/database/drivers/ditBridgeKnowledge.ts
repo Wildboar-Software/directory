@@ -14,7 +14,6 @@ import type {
 import {
     BERElement,
 } from "asn1-ts";
-// import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import {
     ditBridgeKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ditBridgeKnowledge.oa";

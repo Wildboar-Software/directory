@@ -528,7 +528,7 @@ function checkAbilityToModifyAttributeType (
             ),
         );
     }
-    if (spec.noUserModification) {
+    if (spec.noUserModification && !manageDSAIT) {
         throw new errors.SecurityError(
             ctx.i18n.t("err:no_user_modification", {
                 oids: TYPE_OID,

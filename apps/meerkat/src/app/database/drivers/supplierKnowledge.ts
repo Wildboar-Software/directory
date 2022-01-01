@@ -17,12 +17,9 @@ import {
     supplierKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/supplierKnowledge.oa";
 import rdnToJson from "../../x500/rdnToJson";
-import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
-import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
-import {
-    _encode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
+import saveAccessPoint from "../saveAccessPoint";
+import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -52,106 +49,24 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     }
     let nsmId: number | null = null;
     if (decoded.non_supplying_master) {
-        // For some reason, Prisma is not letting me passing in the NSM directly.
-        const nsm = await ctx.db.accessPoint.create({
+        nsmId = await saveAccessPoint(ctx, decoded.non_supplying_master, Knowledge.NON_SUPPLYING_MASTER);
+        pendingUpdates.otherWrites.push(ctx.db.accessPoint.update({
+            where: {
+                id: nsmId,
+            },
             data: {
                 entry_id: vertex.dse.id,
-                ae_title: decoded.non_supplying_master.ae_title.rdnSequence.map(rdnToJson),
-                knowledge_type: Knowledge.NON_SUPPLYING_MASTER,
-                ber: Buffer.from(_encode_AccessPoint(decoded.non_supplying_master, DER).toBytes()),
-                NSAP: {
-                    createMany: {
-                        data: decoded.non_supplying_master.address.nAddresses.map((nsap) => {
-                            const url: string | undefined = ((): string | undefined => {
-                                if (nsap[0] !== 0xFF) { // It is not a URL.
-                                    return undefined;
-                                }
-                                try {
-                                    const [ , uri ] = uriFromNSAP(nsap);
-                                    return uri;
-                                } catch {
-                                    return undefined;
-                                }
-                            })();
-                            const ip_and_port = ((): [ string, number | undefined ] | undefined => {
-                                if (nsap[0] !== 0xFF) { // It is not an IP.
-                                    return undefined;
-                                }
-                                for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
-                                    if (nsap[i] !== IPV4_AFI_IDI[i]) {
-                                        return undefined;
-                                    }
-                                }
-                                const [ , ip, port ] = ipv4FromNSAP(nsap);
-                                return [ Array.from(ip).join("."), port ];
-                            })();
-                            return {
-                                ipv4: ip_and_port
-                                    ? ip_and_port[0]
-                                    : undefined,
-                                tcp_port: ip_and_port
-                                    ? ip_and_port[1]
-                                    : undefined,
-                                url,
-                                bytes: Buffer.from(nsap),
-                            };
-                        }),
-                    },
-                },
             },
-            select: {
-                id: true,
-            },
-        });
-        nsmId = nsm.id;
+        }));
     }
-    pendingUpdates.otherWrites.push(ctx.db.accessPoint.create({
+    const supplierId = await saveAccessPoint(ctx, decoded, Knowledge.SUPPLIER);
+    pendingUpdates.otherWrites.push(ctx.db.accessPoint.update({
+        where: {
+            id: supplierId,
+        },
         data: {
-            ae_title: decoded.ae_title.rdnSequence.map(rdnToJson),
             entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
-            knowledge_type: Knowledge.SUPPLIER,
-            supplier_is_master: decoded.supplier_is_master,
             non_supplying_master_id: nsmId,
-            NSAP: {
-                createMany: {
-                    data: decoded.address.nAddresses.map((nsap) => {
-                        const url: string | undefined = ((): string | undefined => {
-                            if (nsap[0] !== 0xFF) { // It is not a URL.
-                                return undefined;
-                            }
-                            try {
-                                const [ , uri ] = uriFromNSAP(nsap);
-                                return uri;
-                            } catch {
-                                return undefined;
-                            }
-                        })();
-                        const ip_and_port = ((): [ string, number | undefined ] | undefined => {
-                            if (nsap[0] !== 0xFF) { // It is not a URL.
-                                return undefined;
-                            }
-                            for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
-                                if (nsap[i] !== IPV4_AFI_IDI[i]) {
-                                    return undefined;
-                                }
-                            }
-                            const [ , ip, port ] = ipv4FromNSAP(nsap);
-                            return [ Array.from(ip).join("."), port ];
-                        })();
-                        return {
-                            ipv4: ip_and_port
-                                ? ip_and_port[0]
-                                : undefined,
-                            tcp_port: ip_and_port
-                                ? ip_and_port[1]
-                                : undefined,
-                            url,
-                            bytes: Buffer.from(nsap),
-                        };
-                    }),
-                },
-            },
         },
     }));
 };
@@ -163,14 +78,24 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    if (vertex.dse.subr?.specificKnowledge?.length) {
-        vertex.dse.subr.specificKnowledge = [];
+    const decoded = supplierKnowledge.decoderFor["&Type"]!(value.value);
+    if (vertex.dse.cp?.supplierKnowledge?.length) {
+        vertex.dse.cp.supplierKnowledge = [];
     }
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
-            ber: Buffer.from(value.value.toBytes()),
+            knowledge_type: Knowledge.SUPPLIER,
+            OR: [
+                {
+                    ber: Buffer.from(value.value.toBytes()),
+                },
+                {
+                    ae_title: {
+                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                    },
+                },
+            ],
         },
     }));
 };
@@ -181,13 +106,13 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    if (vertex.dse.subr?.specificKnowledge?.length) {
-        vertex.dse.subr.specificKnowledge = [];
+    if (vertex.dse.cp?.supplierKnowledge?.length) {
+        vertex.dse.cp.supplierKnowledge = [];
     }
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
+            knowledge_type: Knowledge.SUPPLIER,
         },
     }));
 };
@@ -214,16 +139,15 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    if (vertex.immediateSuperior || !vertex.dse.root) {
+    const decoded = supplierKnowledge.decoderFor["&Type"]!(value.value);
+    if (!vertex.dse.cp?.supplierKnowledge?.length) {
         return false;
     }
-    return !!(await ctx.db.accessPoint.findFirst({
-        where: {
-            entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SUPPLIER,
-            ber: Buffer.from(value.value.toBytes()),
-        },
-    }));
+    return vertex.dse.cp.supplierKnowledge.some((sk) => compareRDNSequence(
+        decoded.ae_title.rdnSequence,
+        sk.ae_title.rdnSequence,
+        getNamingMatcherGetter(ctx),
+    ));
 };
 
 export

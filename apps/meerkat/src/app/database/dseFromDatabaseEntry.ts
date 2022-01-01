@@ -53,6 +53,7 @@ import {
     _decode_TypeAndContextAssertion,
     _encode_TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+import _ from "lodash";
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
     const el = new BERElement();
@@ -305,20 +306,23 @@ async function dseFromDatabaseEntry (
     }
 
     if (dbe.nssr) {
-        const nssrs = await ctx.db.nonSpecificKnowledge.findMany({
+        const nssrs = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
+                knowledge_type: Knowledge.NON_SPECIFIC,
             },
             select: {
+                nsk_group: true,
                 ber: true,
             },
         });
-        const nonSpecificKnowledge = nssrs
-            .map((n) => {
+        const nsk_groups = _.groupBy(nssrs, (n) => n.nsk_group);
+        const nonSpecificKnowledge = Object.values(nsk_groups)
+            .map((masaps) => masaps.map((mosap) => {
                 const el = new BERElement();
-                el.fromBytes(n.ber);
-                return _decode_MasterAndShadowAccessPoints(el);
-            });
+                el.fromBytes(mosap.ber);
+                return _decode_MasterOrShadowAccessPoint(el);
+            }));
         ret.nssr = {
             nonSpecificKnowledge,
         };

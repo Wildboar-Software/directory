@@ -239,11 +239,6 @@ async function mergeSortAndPageSearch(
         return totalResult;
     }
     assert(searchState.paging);
-    // FIXME: Meerkat could still chain via relatedEntryProcedure and searchAliases!
-    // Otherwise, assume every result from here on came from within this DSA.
-    // Therefore, signatures may be stripped. All result sets may be joined.
-    // Then you can sort, store, and paginate.
-
     const prr = searchState.paging[1].request;
     const localSearchInfo = new SearchResultData_searchInfo(
         {

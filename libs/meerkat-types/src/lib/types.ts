@@ -1231,8 +1231,8 @@ interface AttributeTypeDatabaseDriver {
     readonly addValue: SpecialAttributeDatabaseEditor;
     readonly removeValue: SpecialAttributeDatabaseEditor;
     readonly removeAttribute: SpecialAttributeDatabaseRemover;
-    readonly countValues?: SpecialAttributeCounter;
-    readonly isPresent?: SpecialAttributeDetector;
-    readonly hasValue?: SpecialAttributeValueDetector; // So you don't have to read all values into memory just to determine if one exists.
+    readonly countValues: SpecialAttributeCounter;
+    readonly isPresent: SpecialAttributeDetector;
+    readonly hasValue: SpecialAttributeValueDetector; // So you don't have to read all values into memory just to determine if one exists.
     readonly getEntry?: SpecialAttributeEntryGetter;
 }
