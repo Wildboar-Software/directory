@@ -648,6 +648,7 @@ class OperationDispatcher {
     ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(
             ctx,
+            conn,
             req,
             false,
             conn.authLevel,
@@ -669,6 +670,7 @@ class OperationDispatcher {
     ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(
             ctx,
+            conn,
             req,
             true,
             conn.authLevel,

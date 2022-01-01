@@ -60,5 +60,6 @@
     "admin_role_not_present_first_level_dse": "The administrativeRole attribute was not present in an added first-level DSE. Meerkat DSA automatically added this, making this new entry an autonomous administrative point (AAP).",
     "duplicate_name": "Duplicate name '{{name}}'. The object represented by this OID will still be usable, but not its name when using LDAP.",
     "checking_if_name_taken_in_nssr": "Checking if name is taken in NSSR via DSP operation {{opid}}.",
-    "continuing_name_resolution": "Continuing name resolution via DSP operation {{opid}}."
+    "continuing_name_resolution": "Continuing name resolution via DSP operation {{opid}}.",
+    "received_chained_operation": "Received chained operation with identifier {{opid}} from connection {{cid}}."
 }

@@ -33,7 +33,6 @@ import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 import { Knowledge } from "@prisma/client";
 import {
     _decode_DitBridgeKnowledge,
-    _decode_MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
 import getRDNFromEntryId from "./getRDNFromEntryId";
 import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
@@ -49,9 +48,7 @@ import {
     contextAssertionDefaults,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
 import {
-    TypeAndContextAssertion,
     _decode_TypeAndContextAssertion,
-    _encode_TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 import _ from "lodash";
 
@@ -233,7 +230,7 @@ async function dseFromDatabaseEntry (
         const secondaryRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.SECONDARY_SHADOW,
+                knowledge_type: Knowledge.SECONDARY_SUPPLIER,
             },
         });
         const supplierKnowledge = supplierRows
@@ -513,9 +510,6 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    if (dbe.keep_children_in_database) {
-        return ret; // FIXME: Uhh... what?
-    }
     return ret;
 }
 

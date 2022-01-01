@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { addSeconds } from "date-fns";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -425,6 +425,7 @@ function createChainingArgumentsFromDUA (
 export
 async function requestValidationProcedure (
     ctx: Context,
+    conn: ClientConnection,
     req: Request,
     alreadyChained: boolean,
     authenticationLevel: AuthenticationLevel,
@@ -524,6 +525,12 @@ async function requestValidationProcedure (
                 undefined,
             ),
         );
+    }
+    if (chainedArgument.operationIdentifier) {
+        ctx.log.debug(ctx.i18n.t("log:received_chained_operation", {
+            opid: chainedArgument.operationIdentifier,
+            cid: conn.id,
+        }));
     }
     return hydratedArgument;
 }
