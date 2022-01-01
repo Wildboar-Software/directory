@@ -105,6 +105,39 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    const oid = value.value.objectIdentifier;
+    const OC_OID: string = value.value.objectIdentifier.toString();
+    // If the last child is removed, remove "parent" from the superior.
+    if (oid.isEqualTo(child["&id"]) && vertex.immediateSuperior) {
+        const childrenCount: number = await ctx.db.entry.count({
+            where: {
+                deleteTimestamp: null,
+                immediate_superior_id: vertex.immediateSuperior.dse.id,
+                EntryObjectClass: {
+                    some: {
+                        object_class: OC_OID,
+                    },
+                },
+            },
+        });
+        if ((childrenCount <= 1)) {
+            pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.delete({
+                where: {
+                    entry_id_object_class: {
+                        entry_id: vertex.immediateSuperior.dse.id,
+                        object_class: PARENT,
+                    },
+                },
+            }));
+            if (vertex.immediateSuperior.dse.familyMember) {
+                if (vertex.immediateSuperior.dse.familyMember.child) {
+                    vertex.immediateSuperior.dse.familyMember.parent = false;
+                } else { // If it neither a child, and no longer a parent, remove familyMember.
+                    delete vertex.immediateSuperior.dse.familyMember;
+                }
+            }
+        }
+    }
     pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.deleteMany({
         where: {
             entry_id: vertex.dse.id,

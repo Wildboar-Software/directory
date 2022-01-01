@@ -48,6 +48,9 @@ import {
     AttributeProblem_undefinedAttributeType,
     AttributeProblem_constraintViolation,
     AttributeProblem_invalidAttributeSyntax,
+    AttributeProblem_attributeOrValueAlreadyExists,
+    AttributeProblem_noSuchAttributeOrValue,
+    AttributeProblem_inappropriateMatching,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
     SecurityProblem_insufficientAccessRights,
@@ -215,6 +218,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
 import readValuesOfType from "../utils/readValuesOfType";
+import rdnToJson from "../x500/rdnToJson";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -362,6 +366,40 @@ function checkAttributeArity (
             ),
         );
     }
+}
+
+async function checkAttributePresence (
+    ctx: Context,
+    target: Vertex,
+    type_: AttributeType,
+): Promise<boolean> {
+    const TYPE_OID: string = type_.toString();
+    const spec = ctx.attributeTypes.get(TYPE_OID);
+    if (!spec) {
+        return false;
+    }
+    if (spec.driver?.isPresent) {
+        return spec.driver.isPresent(ctx, target);
+    }
+    return !!(await ctx.db.attributeValue.findFirst({
+        where: {
+            entry_id: target.dse.id,
+            type: TYPE_OID,
+        },
+        select: {
+            id: true,
+        },
+    }));
+}
+
+function checkEqualityMatchingPermitted (
+    ctx: Context,
+    target: Vertex,
+    type_: AttributeType,
+): boolean {
+    const TYPE_OID: string = type_.toString();
+    const spec = ctx.attributeTypes.get(TYPE_OID);
+    return !!spec?.equalityMatchingRule;
 }
 
 function checkPermissionToAddValues (
@@ -683,6 +721,36 @@ async function executeAddAttribute (
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
+    const isPresent: boolean = await checkAttributePresence(ctx, entry, mod.type_);
+    if (isPresent) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:attribute_already_exists", {
+                type: mod.type_.toString(),
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: getDistinguishedName(entry),
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_attributeOrValueAlreadyExists,
+                        mod.type_,
+                        undefined,
+                    ),
+                ],
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     checkPermissionToAddValues(
         mod,
         ctx,
@@ -695,7 +763,7 @@ async function executeAddAttribute (
     );
     const values = valuesFromAttribute(mod);
     addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
-    return addValues(ctx, entry, values, []);
+    return addValues(ctx, entry, values);
 }
 
 async function executeRemoveAttribute (
@@ -733,6 +801,36 @@ async function executeRemoveAttribute (
             ),
         )
     }
+    const isPresent: boolean = await checkAttributePresence(ctx, entry, mod);
+    if (!isPresent) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:no_such_attribute_or_value", {
+                type: mod.toString(),
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: getDistinguishedName(entry),
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_noSuchAttributeOrValue,
+                        mod,
+                        undefined,
+                    ),
+                ],
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     if (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
@@ -761,7 +859,7 @@ async function executeRemoveAttribute (
     patch.addedValues.delete(TYPE_OID);
     patch.removedValues.delete(TYPE_OID); // Delete because we removed the whole attribute anyway.
     patch.removedAttributes.add(TYPE_OID);
-    return removeAttribute(ctx, entry, mod, []);
+    return removeAttribute(ctx, entry, mod);
     // REVIEW: Do you want to also fail if per-value remove is not granted?
 }
 
@@ -777,6 +875,36 @@ async function executeAddValues (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
+    const equalityMatcher: boolean = !!equalityMatcherGetter(mod.type_);
+    if (!equalityMatcher) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:no_equality_matching_rule_defined_for_type", {
+                oid: mod.type_.toString(),
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: getDistinguishedName(entry),
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_inappropriateMatching,
+                        mod.type_,
+                        undefined,
+                    ),
+                ],
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
     checkPermissionToAddValues(
         mod,
@@ -790,7 +918,7 @@ async function executeAddValues (
     );
     const values = valuesFromAttribute(mod);
     addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
-    return addValues(ctx, entry, values, []);
+    return addValues(ctx, entry, values);
 }
 
 async function executeRemoveValues (
@@ -805,6 +933,36 @@ async function executeRemoveValues (
     equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
+    const equalityMatcher: boolean = !!equalityMatcherGetter(mod.type_);
+    if (!equalityMatcher) {
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:no_equality_matching_rule_defined_for_type", {
+                oid: mod.type_.toString(),
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: getDistinguishedName(entry),
+                },
+                [
+                    new AttributeErrorData_problems_Item(
+                        AttributeProblem_inappropriateMatching,
+                        mod.type_,
+                        undefined,
+                    ),
+                ],
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const EQUALITY_MATCHER = equalityMatcherGetter(mod.type_);
     const values = valuesFromAttribute(mod);
     const rdnValueOfType = entry.dse.rdn.find((atav) => atav.type_.isEqualTo(mod.type_));
@@ -888,7 +1046,7 @@ async function executeRemoveValues (
         }
     }
     removeValuesFromPatch(patch, mod.type_, values, EQUALITY_MATCHER);
-    return removeValues(ctx, entry, values, []);
+    return removeValues(ctx, entry, values);
 }
 
 async function executeAlterValues (
@@ -999,7 +1157,7 @@ async function executeAlterValues (
                 type: mod.type_.toString(),
             },
         }),
-        ...(await addValues(ctx, entry, newValues, [])),
+        ...(await addValues(ctx, entry, newValues)),
     ];
 }
 
@@ -1163,7 +1321,7 @@ async function executeReplaceValues (
         ctx.db.attributeValue.deleteMany({
             where,
         }),
-        ...(await addValues(ctx, entry, values, [])),
+        ...(await addValues(ctx, entry, values)),
     ];
 }
 
@@ -1683,7 +1841,17 @@ async function modifyEntry (
         contextUseRules.forEach((rule) => contextRulesIndex.set(rule.identifier.toString(), rule));
     }
 
-    const pendingUpdates: PrismaPromise<any>[] = [];
+    const pendingUpdates: PrismaPromise<any>[] = [
+        ctx.db.entry.update({
+            where: {
+                id: target.dse.id,
+            },
+            data: {
+                modifiersName: conn.boundNameAndUID?.dn.map(rdnToJson),
+                modifyTimestamp: new Date(),
+            },
+        }),
+    ];
     const patch: Patch = {
         addedValues: new Map(),
         removedValues: new Map(),

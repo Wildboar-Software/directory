@@ -14,12 +14,12 @@ async function removeValues (
     ctx: Context,
     entry: Vertex,
     attributes: Value[],
-    modifier: DistinguishedName,
+    modifier?: DistinguishedName,
 ): Promise<PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
-            modifiersName: modifier.map(rdnToJson),
+            modifiersName: modifier?.map(rdnToJson),
         },
         otherWrites: [],
     };
