@@ -2,7 +2,7 @@ import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import type {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
-import { TRUE_BIT, BOOLEAN, INTEGER } from "asn1-ts";
+import { TRUE_BIT, BOOLEAN, INTEGER, FALSE } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -70,6 +70,7 @@ import type {
     InvokeId,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { addMilliseconds } from "date-fns";
+import { randomInt } from "crypto";
 
 export
 async function checkIfNameIsAlreadyTakenInNSSR (
@@ -162,18 +163,22 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     undefined,
                 ),
             };
+            const operationIdentifier: INTEGER = randomInt(2147483648);
+            ctx.log.debug(ctx.i18n.t("log:checking_if_name_taken_in_nssr", {
+                opid: operationIdentifier,
+            }));
             const chained: ChainedArgument = new ChainedArgument(
                 new ChainingArguments(
                     conn.boundNameAndUID?.dn,
-                    undefined,
+                    destinationDN,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_proceeding,
                         undefined,
                     ),
                     [],
+                    aliasDereferenced,
                     undefined,
-                    undefined,
-                    undefined,
+                    FALSE, // returnCrossRefs
                     ReferenceType_nonSpecificSubordinate,
                     undefined,
                     timeLimitInMilliseconds
@@ -187,17 +192,12 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         chainedRead["&operationCode"],
                     ),
                     undefined,
+                    conn.boundNameAndUID?.uid,
+                    conn.authLevel,
                     undefined,
                     undefined,
                     undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
+                    operationIdentifier,
                 ),
                 _encode_ReadArgument(readArg, DER),
             );

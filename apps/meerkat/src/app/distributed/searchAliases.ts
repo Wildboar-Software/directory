@@ -86,7 +86,7 @@ async function searchAliases (
         target.dse.alias.aliasedEntryName,
         undefined,
         [],
-        true,
+        TRUE,
         undefined,
         undefined,
         undefined,

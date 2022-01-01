@@ -46,34 +46,9 @@ import type { SearchState } from "./search_i";
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
-
-function createNewChainingArgument (index: number, originator?: ChainingArguments["originator"]): ChainingArguments {
-    return new ChainingArguments(
-        originator,
-        undefined,
-        undefined,
-        [],
-        undefined,
-        undefined,
-        undefined,
-        undefined, // unspecified
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        index,
-        undefined,
-        undefined,
-    );
-}
+import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa";
+import type { INTEGER } from "asn1-ts";
+import { randomInt } from "crypto";
 
 export
 async function relatedEntryProcedure (
@@ -136,7 +111,43 @@ async function relatedEntryProcedure (
         }
         checkTimeLimit();
         const jarg = data.joinArguments[i];
-        const newChaining = createNewChainingArgument(i, chaining?.originator);
+        const operationIdentifier: INTEGER = randomInt(2147483648);
+        ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
+            opid: operationIdentifier,
+        }));
+        const newChaining = new ChainingArguments(
+            chaining?.originator,
+            undefined,
+            undefined,
+            [],
+            state.chainingArguments.aliasDereferenced,
+            undefined,
+            undefined,
+            undefined, // unspecified
+            undefined,
+            timeLimitEndTime
+                ? {
+                    generalizedTime: timeLimitEndTime,
+                }
+                : undefined,
+            createSecurityParameters(
+                ctx,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                chainedSearch["&operationCode"],
+            ),
+            undefined,
+            conn.boundNameAndUID?.uid,
+            conn.authLevel,
+            undefined,
+            undefined,
+            undefined,
+            operationIdentifier,
+            undefined,
+            undefined,
+            i,
+            undefined,
+            undefined,
+        );
         const newArgument: SearchArgument = ("signed" in argument)
             ? argument
             : {

@@ -247,15 +247,7 @@ async function nrcrProcedure (
                         undefined,
                     ),
                 });
-                state.partialName = TRUE;
-                state.chainingArguments = cloneChainingArguments(state.chainingArguments, {
-                    operationProgress: new OperationProgress(
-                        OperationProgress_nameResolutionPhase_completed,
-                        undefined,
-                    ),
-                });
-                state.entrySuitable = TRUE;
-                // return null;
+                // FIXME: Go to operation evaluation.
             } else {
                 throw new errors.NameError(
                     ctx.i18n.t("err:entry_not_found_in_nssr"),
