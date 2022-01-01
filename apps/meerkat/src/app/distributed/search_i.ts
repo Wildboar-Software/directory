@@ -35,6 +35,9 @@ import {
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
     ServiceControlOptions_subentries as subentriesBit,
+    ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
+    ServiceControlOptions_manageDSAIT as manageDSAITBit,
+    ServiceControlOptions_preferChaining as preferChainingBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     _encode_DistinguishedName,
@@ -828,7 +831,16 @@ async function search_i (
     const targetDN = getDistinguishedName(target);
     let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
     if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
-        if (data.pagedResults && (data.securityParameters?.target === ProtectionRequest_signed)) {
+        const chainingProhibited = (
+            (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
+            || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
+        );
+        const preferChaining: boolean = (data.serviceControls?.options?.[preferChainingBit] === TRUE_BIT);
+        if (
+            data.pagedResults
+            && (data.securityParameters?.target === ProtectionRequest_signed)
+            && (!chainingProhibited || preferChaining)
+        ) {
             throw new errors.ServiceError(
                 ctx.i18n.t("err:cannot_use_pagination_and_signing"),
                 new ServiceErrorData(

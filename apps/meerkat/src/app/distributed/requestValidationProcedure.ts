@@ -153,6 +153,9 @@ function createChainingArgumentsFromDUA (
             entryOnly = FALSE;
             nameResolveOnMaster = FALSE;
             // DEVIATION: Not setting the chainingProhibited SCO.
+            // This is done to avoid modifying the original request. Instead,
+            // Meerkat DSA simply checks if the manageDSAIT option is also set
+            // anywhere it attempts to calculate whether chaining is allowed.
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,

@@ -10,6 +10,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
 import {
     ServiceControlOptions_subentries as subentriesBit,
+    ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
+    ServiceControlOptions_manageDSAIT as manageDSAITBit,
+    ServiceControlOptions_preferChaining as preferChainingBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -118,7 +121,16 @@ async function list_ii (
     const target = state.foundDSE;
     const arg: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(arg);
-    if (data.pagedResults && (data.securityParameters?.target === ProtectionRequest_signed)) {
+    const chainingProhibited = (
+        (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
+        || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
+    );
+    const preferChaining: boolean = (data.serviceControls?.options?.[preferChainingBit] === TRUE_BIT);
+    if (
+        data.pagedResults
+        && (data.securityParameters?.target === ProtectionRequest_signed)
+        && (!chainingProhibited || preferChaining)
+    ) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:cannot_use_pagination_and_signing"),
             new ServiceErrorData(

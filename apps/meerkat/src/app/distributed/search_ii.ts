@@ -14,6 +14,9 @@ import {
 import {
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
+    ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
+    ServiceControlOptions_manageDSAIT as manageDSAITBit,
+    ServiceControlOptions_preferChaining as preferChainingBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ChainingArguments,
@@ -74,7 +77,16 @@ async function search_ii (
 ): Promise<void> {
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
-    if (data.pagedResults && (data.securityParameters?.target === ProtectionRequest_signed)) {
+    const chainingProhibited = (
+        (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
+        || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
+    );
+    const preferChaining: boolean = (data.serviceControls?.options?.[preferChainingBit] === TRUE_BIT);
+    if (
+        data.pagedResults
+        && (data.securityParameters?.target === ProtectionRequest_signed)
+        && (!chainingProhibited || preferChaining)
+    ) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:cannot_use_pagination_and_signing"),
             new ServiceErrorData(

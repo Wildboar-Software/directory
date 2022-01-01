@@ -5,9 +5,7 @@ import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import {
-    ListArgument,
     _decode_ListArgument,
-    _encode_ListArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
 import {
     SearchArgument,
@@ -35,6 +33,7 @@ import { ASN1TagClass, TRUE_BIT, ASN1Element } from "asn1-ts";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
+    ServiceControlOptions_manageDSAIT as manageDSAITBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { compareCode } from "@wildboar/x500/src/lib/utils/compareCode";
 import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
@@ -70,8 +69,6 @@ import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import {
-    ListResult,
-    _decode_ListResult,
     _encode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -597,8 +594,12 @@ class OperationDispatcher {
                     (el.tagClass === ASN1TagClass.context)
                     && (el.tagNumber === 0)
                 ))?.inner;
-            const chainingProhibited = (serviceControlOptions?.bitString?.[chainingProhibitedBit] === TRUE_BIT);
-            const partialNameResolution = (serviceControlOptions?.bitString?.[partialNameResolutionBit] === TRUE_BIT);
+            const scoBitField = serviceControlOptions?.bitString;
+            const chainingProhibited = (
+                (scoBitField?.[chainingProhibitedBit] === TRUE_BIT)
+                || (scoBitField?.[manageDSAITBit] === TRUE_BIT)
+            );
+            const partialNameResolution = (scoBitField?.[partialNameResolutionBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
                 conn,
@@ -792,7 +793,10 @@ class OperationDispatcher {
         );
         if (!state.entrySuitable) {
             const serviceControlOptions = data.serviceControls?.options;
-            const chainingProhibited = (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT);
+            const chainingProhibited = (
+                (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT)
+                || (serviceControlOptions?.[manageDSAITBit] === TRUE_BIT)
+            );
             const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,

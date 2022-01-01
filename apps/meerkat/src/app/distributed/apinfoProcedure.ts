@@ -37,6 +37,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
+    ServiceControlOptions_manageDSAIT as manageDSAITBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
 import {
@@ -85,7 +86,11 @@ async function apinfoProcedure (
             (el.tagClass === ASN1TagClass.context)
             && (el.tagNumber === 0)
         ))?.inner;
-    const chainingProhibited = (serviceControlOptions?.bitString?.[chainingProhibitedBit] === TRUE_BIT);
+    const scoBitField = serviceControlOptions?.bitString;
+    const chainingProhibited = (
+        (scoBitField?.[chainingProhibitedBit] === TRUE_BIT)
+        || (scoBitField?.[manageDSAITBit] === TRUE_BIT)
+    );
     if (chainingProhibited) {
         return null;
     }
