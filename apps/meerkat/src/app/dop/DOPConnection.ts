@@ -102,6 +102,7 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 async function handleRequest (
     ctx: Context,
@@ -319,16 +320,33 @@ class DOPConnection extends ClientConnection {
                         .then(() => {
                             this.handleUnbind()
                                 .then(() => {
+                                    ctx.log.info(ctx.i18n.t("log:disconnected_auth_failure", {
+                                        ctype: DOPConnection.name,
+                                        cid: this.id,
+                                        source: remoteHostIdentifier,
+                                    }));
                                     ctx.log.info(`${DOPConnection.name} ${this.id}: Disconnected ${remoteHostIdentifier} due to authentication failure.`);
                                 })
                                 .catch((e) => {
-                                    ctx.log.error(`${DOPConnection.name} ${this.id}: Error disconnecting from ${remoteHostIdentifier}: `, e);
+                                    ctx.log.info(ctx.i18n.t("log:error_unbinding", {
+                                        ctype: DOPConnection.name,
+                                        cid: this.id,
+                                        e: e.message,
+                                    }));
                                 });
                         })
                         .catch((e) => {
-                            ctx.log.error(`${DOPConnection.name} ${this.id}: Error writing bind error: ${remoteHostIdentifier}: `, e);
+                            ctx.log.info(ctx.i18n.t("log:error_writing_bind_error", {
+                                ctype: DOPConnection.name,
+                                cid: this.id,
+                                e: e.message,
+                            }));
                         });
-                    ctx.log.info(`${DOPConnection.name} ${this.id}: Invalid credentials from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:auth_failure", {
+                        ctype: DOPConnection.name,
+                        cid: this.id,
+                        source: remoteHostIdentifier,
+                    }));
                     return;
                 }
                 const bindResult = new DSABindArgument( // DSABindResult === DSABindArgument
@@ -340,13 +358,27 @@ class DOPConnection extends ClientConnection {
                     ("basicLevels" in outcome.authLevel)
                     && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
                 ) {
-                    ctx.log.info(`${DOPConnection.name} ${this.id}: Anonymous DSP connection bound from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
+                        source: remoteHostIdentifier,
+                        protocol: "DOP",
+                    }));
                 } else {
-                    ctx.log.info(`${DOPConnection.name} ${this.id}: Authenticated DSP connection bound from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
+                        source: remoteHostIdentifier,
+                        protocol: "DOP",
+                        dn: this.boundNameAndUID?.dn
+                            ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                            : "",
+                    }));
                 }
             })
             .catch((e) => {
-                ctx.log.error(`${DOPConnection.name} ${this.id}: Error during DSP bind operation from ${remoteHostIdentifier}: `, e);
+                ctx.log.error(ctx.i18n.t("log:bind_error", {
+                    ctype: DOPConnection.name,
+                    cid: this.id,
+                    source: remoteHostIdentifier,
+                    e: e.message,
+                }));
             });
 
         idm.events.on("request", this.handleRequest.bind(this));

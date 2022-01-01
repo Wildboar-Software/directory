@@ -70,6 +70,7 @@ import { EventEmitter } from "events";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 async function handleRequest (
     ctx: Context,
@@ -242,9 +243,18 @@ class DSPConnection extends ClientConnection {
         try {
             this.idm.close();
         } catch (e) {
-            this.ctx.log.warn(`${DSPConnection.name} ${this.id}: Error in closing IDM connection: ${e}`);
+            this.ctx.log.warn(this.ctx.i18n.t("log:error_closing_connection", {
+                ctype: DSPConnection.name,
+                cid: this.id,
+                e: e.message,
+                transport: "IDM",
+            }));
         } finally {
-            this.ctx.log.info(`${DSPConnection.name} ${this.id}: Unbound.`);
+            this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
+                ctype: DSPConnection.name,
+                cid: this.id,
+                protocol: "DAP",
+            }));
         }
     }
 
@@ -284,16 +294,32 @@ class DSPConnection extends ClientConnection {
                         .then(() => {
                             this.handleUnbind()
                                 .then(() => {
-                                    ctx.log.info(`${DSPConnection.name} ${this.id}: Disconnected ${remoteHostIdentifier} due to authentication failure.`);
+                                    ctx.log.info(ctx.i18n.t("log:disconnected_auth_failure", {
+                                        ctype: DSPConnection.name,
+                                        cid: this.id,
+                                        source: remoteHostIdentifier,
+                                    }));
                                 })
                                 .catch((e) => {
-                                    ctx.log.error(`${DSPConnection.name} ${this.id}: Error disconnecting from ${remoteHostIdentifier}: `, e);
+                                    ctx.log.info(ctx.i18n.t("log:error_unbinding", {
+                                        ctype: DSPConnection.name,
+                                        cid: this.id,
+                                        e: e.message,
+                                    }));
                                 });
                         })
                         .catch((e) => {
-                            ctx.log.error(`${DSPConnection.name} ${this.id}: Error writing bind error: ${remoteHostIdentifier}: `, e);
+                            ctx.log.info(ctx.i18n.t("log:error_writing_bind_error", {
+                                ctype: DSPConnection.name,
+                                cid: this.id,
+                                e: e.message,
+                            }));
                         });
-                    ctx.log.info(`${DSPConnection.name} ${this.id}: Invalid credentials from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:auth_failure", {
+                        ctype: DSPConnection.name,
+                        cid: this.id,
+                        source: remoteHostIdentifier,
+                    }));
                     return;
                 }
                 const bindResult = new DSABindArgument( // DSABindResult === DSABindArgument
@@ -305,13 +331,27 @@ class DSPConnection extends ClientConnection {
                     ("basicLevels" in outcome.authLevel)
                     && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
                 ) {
-                    ctx.log.info(`${DSPConnection.name} ${this.id}: Anonymous DSP connection bound from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
+                        source: remoteHostIdentifier,
+                        protocol: "DSP",
+                    }));
                 } else {
-                    ctx.log.info(`${DSPConnection.name} ${this.id}: Authenticated DSP connection bound from ${remoteHostIdentifier}.`);
+                    ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
+                        source: remoteHostIdentifier,
+                        protocol: "DSP",
+                        dn: this.boundNameAndUID?.dn
+                            ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                            : "",
+                    }));
                 }
             })
             .catch((e) => {
-                ctx.log.error(`${DSPConnection.name} ${this.id}: Error during DSP bind operation from ${remoteHostIdentifier}: `, e);
+                ctx.log.error(ctx.i18n.t("log:bind_error", {
+                    ctype: DSPConnection.name,
+                    cid: this.id,
+                    source: remoteHostIdentifier,
+                    e: e.message,
+                }));
             });
 
         idm.events.on("request", this.handleRequest.bind(this));
