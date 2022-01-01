@@ -1,5 +1,4 @@
 import type { Context, ClientConnection } from "@wildboar/meerkat-types";
-import { LDAPConnection } from "../ldap/LDAPConnection";
 import { ASN1Element, DERElement } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { OperationDispatcherState } from "./OperationDispatcher";
@@ -117,8 +116,12 @@ function compareSubordinates (
         ? ctx.orderingMatchingRules.get(sortKey.orderingRule.toString())?.matcher
         : getOrderingMatcherGetter(ctx)(sortKey.type_);
     if (!matcher) {
-        // TODO: Whether all of the sort keys will be supported should be checked earlier on.
-        // But if I forget to do this, this is still a fine outcome.
+        /**
+         * In X.500 directories, supporting sorting is entirely optional. There
+         * is not even an error / problem defined to indicate that the ordering
+         * did not work. So for now, we will just silently return the unsorted
+         * results.
+         */
         return A_AND_B_EQUAL;
     }
     const aValue: ASN1Element | undefined = a.rdn.find((atav) => atav.type_.isEqualTo(sortKey.type_))?.value;
@@ -127,9 +130,13 @@ function compareSubordinates (
         return A_AND_B_EQUAL;
     }
     if (aValue && bValue) {
-        const result: number = matcher(aValue, bValue) * (reverse ? -1 : 1);
-        if (result !== 0) {
-            return result;
+        try {
+            const result: number = matcher(aValue, bValue) * (reverse ? -1 : 1);
+            if (result !== 0) {
+                return result;
+            }
+        } catch {
+            return A_AND_B_EQUAL;
         }
         return compareSubordinates(ctx, a, b, sortKeys.slice(1), reverse);
     }

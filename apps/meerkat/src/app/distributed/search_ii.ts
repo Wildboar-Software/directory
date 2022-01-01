@@ -46,6 +46,9 @@ import {
 import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -71,6 +74,24 @@ async function search_ii (
 ): Promise<void> {
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
+    if (data.pagedResults && (data.securityParameters?.target === ProtectionRequest_signed)) {
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:cannot_use_pagination_and_signing"),
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_serviceError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const op = ("present" in state.invokeId)
         ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;

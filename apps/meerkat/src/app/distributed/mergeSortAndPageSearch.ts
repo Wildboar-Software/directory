@@ -134,12 +134,20 @@ function compareEntries (
         ? ctx.orderingMatchingRules.get(sortKey.orderingRule.toString())?.matcher
         : getOrderingMatcherGetter(ctx)(sortKey.type_);
     if (!matcher) {
-        // TODO: Whether all of the sort keys will be supported should be checked earlier on.
-        // But if I forget to do this, this is still a fine outcome.
+        /**
+         * In X.500 directories, supporting sorting is entirely optional. There
+         * is not even an error / problem defined to indicate that the ordering
+         * did not work. So for now, we will just silently return the unsorted
+         * results.
+         */
         return A_AND_B_EQUAL;
     }
     const sortValues = (a: ASN1Element, b: ASN1Element): number => {
-        return matcher(a, b) * (reverse ? -1 : 1);
+        try {
+            return matcher(a, b) * (reverse ? -1 : 1);
+        } catch {
+            return A_AND_B_EQUAL;
+        }
     };
     const aValue: ASN1Element | undefined = a.information
         ?.flatMap(getApplicableValues)
@@ -151,9 +159,13 @@ function compareEntries (
         return A_AND_B_EQUAL;
     }
     if (aValue && bValue) {
-        const result: number = matcher(aValue, bValue) * (reverse ? -1 : 1);
-        if (result !== 0) {
-            return result;
+        try {
+            const result: number = matcher(aValue, bValue) * (reverse ? -1 : 1);
+            if (result !== 0) {
+                return result;
+            }
+        } catch {
+            return A_AND_B_EQUAL;
         }
         return compareEntries(ctx, a, b, sortKeys.slice(1), reverse, isLDAP);
     }

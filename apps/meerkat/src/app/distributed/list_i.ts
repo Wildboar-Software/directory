@@ -72,6 +72,7 @@ import {
 import {
     ServiceProblem_invalidQueryReference,
     ServiceProblem_unavailable,
+    ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     PartialOutcomeQualifier,
@@ -103,6 +104,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
 import type { Prisma } from "@prisma/client";
 import { MAX_RESULTS } from "../constants";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -126,6 +130,24 @@ async function list_i (
     const target = state.foundDSE;
     const arg: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(arg);
+    if (data.pagedResults && (data.securityParameters?.target === ProtectionRequest_signed)) {
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:cannot_use_pagination_and_signing"),
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    conn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
     const op = ("present" in state.invokeId)
         ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;

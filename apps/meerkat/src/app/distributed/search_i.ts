@@ -243,6 +243,9 @@ import {
     FamilyReturn_memberSelect_participatingEntriesOnly,
     FamilyReturn_memberSelect_compoundEntry,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -825,6 +828,24 @@ async function search_i (
     const targetDN = getDistinguishedName(target);
     let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
     if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
+        if (data.pagedResults && (data.securityParameters?.target === ProtectionRequest_signed)) {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:cannot_use_pagination_and_signing"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_serviceError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
             const pi = (((nr.pageNumber !== undefined) ? Number(nr.pageNumber) : 1) - 1); // The spec is unclear if this is zero-indexed.
