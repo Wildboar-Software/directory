@@ -112,6 +112,8 @@ async function checkForUpdates (ctx: Context, currentVersionString: string): Pro
     }
 }
 
+const PROCESS_NAME: string = "Meerkat DSA";
+
 export default
 async function main (): Promise<void> {
     const packageJSON = await import("package.json").catch(() => {});
@@ -120,11 +122,17 @@ async function main (): Promise<void> {
         : packageJSON?.version;
 
     if (versionSlug) {
-        ctx.log.debug(ctx.i18n.t("log:starting_meerkat_version", {
+        ctx.log.info(ctx.i18n.t("log:starting_meerkat_version", {
             version: versionSlug,
         }));
     }
-    process.title = "Meerkat DSA";
+    process.title = PROCESS_NAME;
+    ctx.log.info(ctx.i18n.t("log:process_info", {
+        name: PROCESS_NAME,
+        pid: process.pid,
+        ppid: process.ppid,
+        cwd: process.cwd(),
+    }));
 
     await ctx.db.enqueuedSearchResult.deleteMany();
 
