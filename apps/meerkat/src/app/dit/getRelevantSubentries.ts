@@ -19,7 +19,9 @@ async function getRelevantSubentries (
     admPoint: Vertex,
 ): Promise<Vertex[]> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
-    const children = await readSubordinates(ctx, admPoint); // FIXME: Make this select only subentries.
+    const children = await readSubordinates(ctx, admPoint, undefined, undefined, undefined, {
+        subentry: true,
+    });
     return children
         .filter((child) => (
             child.dse.subentry

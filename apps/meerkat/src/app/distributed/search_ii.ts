@@ -52,6 +52,7 @@ import {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -66,6 +67,7 @@ const BYTES_IN_A_UUID: number = 16;
  * this, a fixed page size is used. In the future, this may be configurable.
  */
 const ENTRIES_PER_BATCH: number = 1000;
+const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 
 export
 async function search_ii (
@@ -366,7 +368,14 @@ async function search_ii (
             await search_i(
                 ctx,
                 conn,
-                state,
+                {
+                    ...state,
+                    admPoints: subordinate.dse.admPoint
+                        ? (subordinate.dse.admPoint.administrativeRole.has(AUTONOMOUS)
+                            ? [ subordinate ]
+                            : [ ...state.admPoints, subordinate ])
+                        : [ ...state.admPoints ],
+                },
                 newArgument,
                 searchState,
             );

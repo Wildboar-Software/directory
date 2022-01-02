@@ -250,12 +250,14 @@ import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
+const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 
 export
 interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
@@ -2149,8 +2151,10 @@ async function search_i (
                 conn,
                 {
                     ...state,
-                    admPoints: target.dse.admPoint
-                        ? [ ...state.admPoints, target ] // FIXME: Reset if autonomous
+                    admPoints: subordinate.dse.admPoint
+                        ? (subordinate.dse.admPoint.administrativeRole.has(AUTONOMOUS)
+                            ? [ subordinate ]
+                            : [ ...state.admPoints, subordinate ])
                         : [ ...state.admPoints ],
                     chainingArguments: newChainingArguments,
                     foundDSE: subordinate,

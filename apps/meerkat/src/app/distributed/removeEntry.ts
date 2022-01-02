@@ -340,8 +340,6 @@ async function removeEntry (
     } else if (target.dse.entry || target.dse.alias) { // Go to step 4.
         // 1. Remove the entry or alias entry.
         // 2. Continue at step 7.
-    } else { // See Section 6.
-        // TODO: It is not clear what "Section 6" refers to.
     }
     // TODO: Step 7: Update shadows.
 

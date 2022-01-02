@@ -273,12 +273,10 @@ async function dapReplyToLDAPResult (
         await getSearchResultEntries(ctx, result, onEntry);
         const responseControls: Control[] = [];
         if (sortRequestControl) {
-            responseControls.push(                    new Control(
+            responseControls.push(new Control(
                 encodeLDAPOID(sortResponseOID),
                 false,
                 DERElement.fromSequence([
-                    // We ALWAYS report a success in sorting because Meerkat DSA
-                    // will throw an error if more than one sort key is used.
                     new DERElement(
                         ASN1TagClass.universal,
                         ASN1Construction.primitive,
