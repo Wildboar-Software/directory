@@ -3,6 +3,7 @@ import type { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/User
 import encryptPassword from "../x500/encryptPassword";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 import { PrismaPromise } from "@prisma/client";
+import anyPasswordsExist from "../authz/anyPasswordsExist";
 
 export
 async function setEntryPassword (
@@ -11,6 +12,15 @@ async function setEntryPassword (
     vertex: Vertex,
     pwd: UserPwd,
 ): Promise<PrismaPromise<any>[]> {
+    const entriesWithPasswordsExist: boolean = await anyPasswordsExist(ctx);
+    const makeTopLevelAdmin = ctx.db.entry.update({
+        where: {
+            id: vertex.dse.id,
+        },
+        data: {
+            may_add_top_level_dse: true,
+        },
+    });
     if ("clear" in pwd) {
         const algid = getScryptAlgorithmIdentifier();
         const clear = Buffer.from(pwd.clear, "utf-8");
@@ -23,6 +33,14 @@ async function setEntryPassword (
             uuid: vertex.dse.uuid,
         }));
         return [
+            /**
+             * The first entry with a password added will have permission to add
+             * top-level DSEs. Outside of this, this flag must be set using the
+             * database.
+             */
+            ...(entriesWithPasswordsExist
+                ? [ makeTopLevelAdmin ]
+                : []),
             ctx.db.password.upsert({
                 where: {
                     entry_id: vertex.dse.id,
@@ -51,6 +69,14 @@ async function setEntryPassword (
             uuid: vertex.dse.uuid,
         }));
         return [
+            /**
+             * The first entry with a password added will have permission to add
+             * top-level DSEs. Outside of this, this flag must be set using the
+             * database.
+             */
+            ...(entriesWithPasswordsExist
+                ? [ makeTopLevelAdmin ]
+                : []),
             ctx.db.password.upsert({
                 where: {
                     entry_id: vertex.dse.id,

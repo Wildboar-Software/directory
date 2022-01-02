@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Context, DIT, Vertex, ClientConnection } from "@wildboar/meerkat-types";
+import { Context, DIT, Vertex, ClientConnection, MistypedArgumentError } from "@wildboar/meerkat-types";
 import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
@@ -221,8 +221,6 @@ async function findDSE (
     let i: number = 0;
     let dse_i: Vertex = haystackVertex;
     let nssrEncountered: boolean = false;
-    // let nameResolutionPhase: OperationProgress_nameResolutionPhase = state.chainingArguments
-    //     .operationProgress?.nameResolutionPhase ?? OperationProgress_nameResolutionPhase_notStarted;
     const m: number = needleDN.length;
     let lastEntryFound: number = 0; // The last RDN whose DSE was of type entry.
     let dse_lastEntryFound: Vertex | undefined = undefined;
@@ -518,7 +516,8 @@ async function findDSE (
     };
 
     const targetNotFoundSubprocedure = async (): Promise<void> => {
-        const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
+        const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase
+            ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         switch (nameResolutionPhase) {
             case (OperationProgress_nameResolutionPhase_notStarted): {
                 await targetNotFoundSubprocedure_notStarted_branch();
@@ -570,6 +569,19 @@ async function findDSE (
                 }
             }
             case (OperationProgress_nameResolutionPhase_completed): {
+                /**
+                 * Hello, this Dr. Steve Brule, president and CEO of Pfizer, and
+                 * founder of "Brules Rules," the #1 media syndicate for life
+                 * advice, leaving a comment in your code to help you develop
+                 * and use Meerkat DSA.
+                 *
+                 * If you're wondering why you're seeing this error, it
+                 * might be because you've set the manageDSAIT flag in your
+                 * request. Doing so sets the name resolution phase to
+                 * completed, which effectively makes it looks like your
+                 * request came from another DSA. Sorry for the deceptive error,
+                 * but this is required by the X.500 specifications.
+                 */
                 throw new errors.ServiceError(
                     // REVIEW: I am not really sure about this error message.
                     ctx.i18n.t("err:invalid_reference_no_reason_to_search_here"),
@@ -589,7 +601,11 @@ async function findDSE (
                 );
             }
             default: {
-                assert(false);
+                ctx.log.error(ctx.i18n.t("log:operation_progress_not_understood", {
+                    value: nameResolutionPhase,
+                    cid: conn.id,
+                }));
+                throw new MistypedArgumentError();
             }
         }
     };
@@ -1075,7 +1091,8 @@ async function findDSE (
         }
         if (dse_i.dse.entry) {
             if (i === m) {
-                const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
+                const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase
+                    ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
                 if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
                     await targetFoundSubprocedure();
                     return;

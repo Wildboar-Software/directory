@@ -174,6 +174,7 @@ const ctx: Context = {
             !process.env.MEERKAT_TRANSCODE_DISTINGUISHED_VALUES_TO_DER
             || (process.env.MEERKAT_TRANSCODE_DISTINGUISHED_VALUES_TO_DER === "1")
         ),
+        openTopLevel: (process.env.MEERKAT_OPEN_TOP_LEVEL === "1"),
     },
     dsa: {
         accessPoint: new AccessPoint(

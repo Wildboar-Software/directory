@@ -58,6 +58,7 @@ import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
 import getRootSubschema from "./getRootSubschema";
+import anyPasswordsExist from "../authz/anyPasswordsExist";
 
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
@@ -111,16 +112,7 @@ async function handleRequest (
          * conditions are not met, the user will only see a small selection of
          * schema.
          */
-        const permittedToSeeSchema: boolean = Boolean(conn.boundEntry || !(await ctx.db.password.findFirst({
-            where: {
-                entry: {
-                    deleteTimestamp: null,
-                },
-            },
-            select: {
-                id: true,
-            },
-        })));
+        const permittedToSeeSchema: boolean = Boolean(conn.boundEntry || !(await anyPasswordsExist(ctx)));
         const entry = new SearchResultEntry(
             Buffer.from("cn=subschema", "utf-8"),
             getRootSubschema(ctx, permittedToSeeSchema),

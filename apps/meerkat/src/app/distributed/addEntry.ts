@@ -167,6 +167,7 @@ import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs"
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import mayAddTopLeveDSE from "../authz/mayAddTopLevelDSE";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -272,6 +273,30 @@ async function addEntry (
     const isChild: boolean = objectClassesIndex.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
     const isFirstLevel: boolean = !!immediateSuperior.dse.root;
+
+    if (isFirstLevel) {
+        if (!await mayAddTopLeveDSE(ctx, conn)) {
+            ctx.log.debug(ctx.i18n.t("log:not_authz_to_add_top_level", { context: "hint" }));
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:not_authz_to_add_top_level"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+    }
 
     if (isFirstLevel && !data.entry.some((info) => info.type_.isEqualTo(administrativeRole["&id"]))) {
         ctx.log.warn(ctx.i18n.t("log:admin_role_not_present_first_level_dse"));

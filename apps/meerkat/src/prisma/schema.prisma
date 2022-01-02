@@ -90,6 +90,9 @@ model Entry {
   // Storage parameters
   keep_children_in_database Boolean @default(false)
 
+  // Permissions
+  may_add_top_level_dse Boolean @default(false)
+
   // Hierarchy Attributes
   // According to ITU X.501, Section 10.2:
   // "A hierarchical group shall be confined to a single DSA."

@@ -472,6 +472,7 @@ interface Configuration {
     entriesPerSubordinatesPage: number;
     transcodeValuesToDER: boolean;
     transcodeDistinguishedValuesToDER: boolean;
+    openTopLevel: boolean;
 }
 
 export
