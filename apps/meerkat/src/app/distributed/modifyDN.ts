@@ -327,7 +327,7 @@ async function modifyDN (
     const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
         acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
             ...tuple,
@@ -335,7 +335,7 @@ async function modifyDN (
                 tuple[0],
                 conn.boundNameAndUID!,
                 targetDN,
-                EQUALITY_MATCHER,
+                NAMING_MATCHER,
                 isMemberOfGroup,
             ),
         ]),
@@ -490,7 +490,7 @@ async function modifyDN (
                         tuple[0],
                         conn.boundNameAndUID!,
                         targetDN,
-                        EQUALITY_MATCHER,
+                        NAMING_MATCHER,
                         isMemberOfGroup,
                     ),
                 ]),

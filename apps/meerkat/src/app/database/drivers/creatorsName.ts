@@ -20,7 +20,7 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import rdnToJson from "../../x500/rdnToJson";
 import { Prisma } from "@prisma/client";
 
@@ -101,7 +101,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return compareDistinguishedName(
         dn,
         vertex.dse.creatorsName.rdnSequence,
-        getEqualityMatcherGetter(ctx),
+        getNamingMatcherGetter(ctx),
     );
 };
 

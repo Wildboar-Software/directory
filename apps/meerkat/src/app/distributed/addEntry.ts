@@ -443,7 +443,7 @@ async function addEntry (
     const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
         ? []
         : (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
-    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = ctx.config.bulkInsertMode
         ? []
         : (await Promise.all(
@@ -453,7 +453,7 @@ async function addEntry (
                     tuple[0],
                     conn.boundNameAndUID!, // This request is not allowed if the connection is not bound.
                     targetDN,
-                    EQUALITY_MATCHER,
+                    NAMING_MATCHER,
                     isMemberOfGroup,
                 ),
             ]),

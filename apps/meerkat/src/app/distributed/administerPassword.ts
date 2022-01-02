@@ -51,6 +51,7 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -137,7 +138,8 @@ async function administerPassword (
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
         const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
-        const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+        const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+        const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
         const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
             acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
                 ...tuple,
@@ -145,7 +147,7 @@ async function administerPassword (
                     tuple[0],
                     conn.boundNameAndUID!,
                     targetDN,
-                    EQUALITY_MATCHER,
+                    NAMING_MATCHER,
                     isMemberOfGroup,
                 ),
             ]),

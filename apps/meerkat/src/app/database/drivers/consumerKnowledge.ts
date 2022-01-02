@@ -17,13 +17,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/consumerKnowledge.oa";
 import { Knowledge } from "@prisma/client";
 import rdnToJson from "../../x500/rdnToJson";
-import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
-import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
-import IPV4_AFI_IDI from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
 import saveAccessPoint from "../saveAccessPoint";
-import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 export
@@ -141,7 +136,7 @@ const hasValue: SpecialAttributeValueDetector = async (
             && compareDistinguishedName(
                 k.ae_title.rdnSequence,
                 decoded.ae_title.rdnSequence,
-                getEqualityMatcherGetter(ctx),
+                getNamingMatcherGetter(ctx),
             )
         ));
 };

@@ -24,7 +24,7 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 const SUBENTRY_CLASS: string = id_sc_contextAssertionSubentry.toString();
 
@@ -88,7 +88,7 @@ const hasValue: SpecialAttributeValueDetector = async (
         .some((dn) => compareDistinguishedName(
             dn,
             sought,
-            getEqualityMatcherGetter(ctx),
+            getNamingMatcherGetter(ctx),
         )) ?? false;
 };
 

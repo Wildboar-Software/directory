@@ -100,6 +100,7 @@ import {
     ServiceControlOptions_noSubtypeSelection,
     ServiceControlOptions_dontSelectFriends,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 export
 async function read (
@@ -114,6 +115,7 @@ async function read (
         ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = isSubentry
@@ -127,7 +129,7 @@ async function read (
     const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
         acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
             ...tuple,
@@ -135,7 +137,7 @@ async function read (
                 tuple[0],
                 conn.boundNameAndUID!,
                 targetDN,
-                EQUALITY_MATCHER,
+                NAMING_MATCHER,
                 isMemberOfGroup,
             ),
         ]),

@@ -21,7 +21,7 @@ import findEntry from "../../x500/findEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import { Prisma } from "@prisma/client";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import getRDNFromEntryId from "../getRDNFromEntryId";
 import sleep from "../../utils/sleep";
 import { randomInt } from "crypto";
@@ -195,7 +195,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     const matches: boolean = compareDistinguishedName(
         vertex.dse.hierarchy.parent,
         hierarchyParent.decoderFor["&Type"]!(value.value),
-        getEqualityMatcherGetter(ctx),
+        getNamingMatcherGetter(ctx),
     );
     if (!matches) {
         return;
@@ -334,7 +334,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return compareDistinguishedName(
         vertex.dse.hierarchy.parent,
         hierarchyParent.decoderFor["&Type"]!(value.value),
-        getEqualityMatcherGetter(ctx),
+        getNamingMatcherGetter(ctx),
     );
 };
 

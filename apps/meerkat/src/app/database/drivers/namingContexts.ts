@@ -23,7 +23,7 @@ import {
     _decode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -191,7 +191,7 @@ const hasValue: SpecialAttributeValueDetector = async (
         argreementElement.fromBytes(ob.agreement_ber);
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
         const existingDN = [ ...agreement.immediateSuperior, agreement.rdn ];
-        return compareDistinguishedName(existingDN, assertedDN, getEqualityMatcherGetter(ctx));
+        return compareDistinguishedName(existingDN, assertedDN, getNamingMatcherGetter(ctx));
     });
 };
 

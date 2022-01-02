@@ -18,7 +18,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
 import rdnToJson from "../../x500/rdnToJson";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 import saveAccessPoint from "../saveAccessPoint";
 import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
@@ -83,7 +83,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         .filter((k) => !compareDistinguishedName(
             k.ae_title.rdnSequence,
             decoded.ae_title.rdnSequence,
-            getEqualityMatcherGetter(ctx),
+            getNamingMatcherGetter(ctx),
         ));
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
@@ -147,7 +147,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return vertex.dse.supr.superiorKnowledge.some((sk) => compareRDNSequence(
         decoded.ae_title.rdnSequence,
         sk.ae_title.rdnSequence,
-        getEqualityMatcherGetter(ctx),
+        getNamingMatcherGetter(ctx),
     ));
 };
 

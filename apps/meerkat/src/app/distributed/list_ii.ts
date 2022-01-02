@@ -106,6 +106,7 @@ import {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -156,6 +157,7 @@ async function list_ii (
         : undefined;
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
@@ -166,7 +168,7 @@ async function list_ii (
     const targetACI = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
         acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
             ...tuple,
@@ -174,7 +176,7 @@ async function list_ii (
                 tuple[0],
                 conn.boundNameAndUID!,
                 targetDN,
-                EQUALITY_MATCHER,
+                NAMING_MATCHER,
                 isMemberOfGroup,
             ),
         ]),
@@ -416,7 +418,7 @@ async function list_ii (
                             tuple[0],
                             conn.boundNameAndUID!,
                             subordinateDN,
-                            EQUALITY_MATCHER,
+                            NAMING_MATCHER,
                             isMemberOfGroup,
                         ),
                     ]),

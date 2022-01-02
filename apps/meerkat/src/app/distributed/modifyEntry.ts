@@ -219,6 +219,7 @@ import {
 import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
 import readValuesOfType from "../utils/readValuesOfType";
 import rdnToJson from "../x500/rdnToJson";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1748,6 +1749,7 @@ async function modifyEntry (
         ? Number(data.serviceControls!.attributeSizeLimit)
         : undefined;
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
         ? []
@@ -1761,7 +1763,7 @@ async function modifyEntry (
     const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
         ? []
         : (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
-    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = ctx.config.bulkInsertMode
         ? []
         : (await Promise.all(
@@ -1771,7 +1773,7 @@ async function modifyEntry (
                     tuple[0],
                     conn.boundNameAndUID!,
                     targetDN,
-                    EQUALITY_MATCHER,
+                    NAMING_MATCHER,
                     isMemberOfGroup,
                 ),
             ]),

@@ -249,6 +249,7 @@ import {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -1008,6 +1009,7 @@ async function search_i (
         return;
     }
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -1017,7 +1019,7 @@ async function search_i (
     const targetACI = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
         acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
             ...tuple,
@@ -1025,7 +1027,7 @@ async function search_i (
                 tuple[0],
                 conn.boundNameAndUID!,
                 targetDN,
-                EQUALITY_MATCHER,
+                NAMING_MATCHER,
                 isMemberOfGroup,
             ),
         ]),

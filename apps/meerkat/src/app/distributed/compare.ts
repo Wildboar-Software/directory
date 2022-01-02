@@ -84,6 +84,7 @@ import getAttributeSubtypes from "../x500/getAttributeSubtypes";
 import {
     ServiceControlOptions_noSubtypeMatch,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -124,6 +125,7 @@ async function compare (
         ];
     const targetDN = getDistinguishedName(target);
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -133,7 +135,7 @@ async function compare (
     const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
         acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
             ...tuple,
@@ -141,7 +143,7 @@ async function compare (
                 tuple[0],
                 conn.boundNameAndUID!,
                 targetDN,
-                EQUALITY_MATCHER,
+                NAMING_MATCHER,
                 isMemberOfGroup,
             ),
         ]),

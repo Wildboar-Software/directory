@@ -7,7 +7,7 @@ import getDistinguishedName from "../x500/getDistinguishedName";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import readSubordinates from "./readSubordinates";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 const SUBENTRY: string = id_sc_subentry.toString();
 
@@ -18,7 +18,7 @@ async function getRelevantSubentries (
     entryDN: DistinguishedName,
     admPoint: Vertex,
 ): Promise<Vertex[]> {
-    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const children = await readSubordinates(ctx, admPoint); // FIXME: Make this select only subentries.
     return children
         .filter((child) => (
@@ -31,7 +31,7 @@ async function getRelevantSubentries (
                     : Array.from(entry.dse.objectClass.values()).map(ObjectIdentifier.fromString),
                 subtree,
                 getDistinguishedName(admPoint),
-                EQUALITY_MATCHER,
+                NAMING_MATCHER,
             ))
         ));
 }

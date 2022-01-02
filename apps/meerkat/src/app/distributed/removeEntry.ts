@@ -157,7 +157,8 @@ async function removeEntry (
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
         const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
-        const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+        const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+        const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
         const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
             acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
                 ...tuple,
@@ -165,7 +166,7 @@ async function removeEntry (
                     tuple[0],
                     conn.boundNameAndUID!,
                     targetDN,
-                    EQUALITY_MATCHER,
+                    NAMING_MATCHER,
                     isMemberOfGroup,
                 ),
             ]),

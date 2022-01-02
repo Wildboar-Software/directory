@@ -267,7 +267,8 @@ async function findDSE (
         serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
-    const isMemberOfGroup = getIsGroupMember(ctx, EQUALITY_MATCHER);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
 
     const node_candidateRefs_empty_2 = async (): Promise<void> => {
         if (candidateRefs.length) {
@@ -754,7 +755,7 @@ async function findDSE (
                                 tuple[0],
                                 conn.boundNameAndUID!,
                                 childDN,
-                                EQUALITY_MATCHER,
+                                NAMING_MATCHER,
                                 isMemberOfGroup,
                             ),
                         ]),
@@ -857,7 +858,7 @@ async function findDSE (
                                     tuple[0],
                                     conn.boundNameAndUID!,
                                     childDN,
-                                    EQUALITY_MATCHER,
+                                    NAMING_MATCHER,
                                     isMemberOfGroup,
                                 ),
                             ]),
@@ -941,7 +942,7 @@ async function findDSE (
                         tuple[0],
                         conn.boundNameAndUID!,
                         currentDN,
-                        EQUALITY_MATCHER,
+                        NAMING_MATCHER,
                         isMemberOfGroup,
                     ),
                 ]),

@@ -16,7 +16,7 @@ import {
 import NOOP from "./NOOP";
 import { DER } from "asn1-ts/dist/node/functional";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 
 export
@@ -82,7 +82,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return compareDistinguishedName(
         vertex.dse.hierarchy.top,
         hierarchyTop.decoderFor["&Type"]!(value.value),
-        getEqualityMatcherGetter(ctx),
+        getNamingMatcherGetter(ctx),
     );
 };
 
