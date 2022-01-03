@@ -80,7 +80,7 @@ import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecific
 import relatedEntryProcedure from "./relatedEntryProcedure";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import type { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
-import type {
+import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
@@ -151,7 +151,7 @@ extends
 export
 class OperationDispatcher {
 
-    private static async operationEvaluation (
+    public static async operationEvaluation (
         ctx: Context,
         state: OperationDispatcherState,
         conn: ClientConnection,
@@ -603,6 +603,7 @@ class OperationDispatcher {
             const nrcrResult = await nrcrProcedure(
                 ctx,
                 conn,
+                reqData,
                 state,
                 chainingProhibited,
                 partialNameResolution,
@@ -803,6 +804,10 @@ class OperationDispatcher {
             const nrcrResult = await nrcrProcedure(
                 ctx,
                 conn,
+                new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                    state.chainingArguments,
+                    encodedArgument,
+                ),
                 state,
                 chainingProhibited,
                 partialNameResolution,

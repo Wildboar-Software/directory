@@ -39,7 +39,7 @@ import {
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import { OperationDispatcher, OperationDispatcherState } from "./OperationDispatcher";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import {
@@ -52,11 +52,17 @@ import getDistinguishedName from "../x500/getDistinguishedName";
 import type {
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+import type {
+    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 
+// TODO: Really, this should have the same return type as the OperationDispatcher.
+// This also returns a value, but also mutates the OD state, which is sketchy.
 export
 async function nrcrProcedure (
     ctx: Context,
     conn: ClientConnection,
+    reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     state: OperationDispatcherState,
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
@@ -247,7 +253,15 @@ async function nrcrProcedure (
                         undefined,
                     ),
                 });
-                // FIXME: Go to operation evaluation.
+                const localResult = await OperationDispatcher.operationEvaluation(
+                    ctx,
+                    state,
+                    conn,
+                    req,
+                    reqData,
+                    false,
+                );
+                return localResult.result;
             } else {
                 throw new errors.NameError(
                     ctx.i18n.t("err:entry_not_found_in_nssr"),
