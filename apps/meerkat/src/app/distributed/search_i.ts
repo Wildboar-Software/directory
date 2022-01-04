@@ -180,7 +180,6 @@ import {
     FamilyGrouping_entryOnly,
     FamilyGrouping_compoundEntry,
     FamilyGrouping_strands,
-    compoundEntry,
     // FamilyGrouping_multiStrand,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 import {
@@ -252,6 +251,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import { strict as assert } from "assert";
+import _ from "lodash";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -294,11 +295,11 @@ function getCurrentNumberOfResults (state: SearchState): number {
 }
 
 // Note that this does not scrutinize the root DSE for membership. It is assumed.
-function keepSubsetOfDITById (dit: DIT, idsToKeep: Set<number>): DIT {
+function keepSubsetOfDITById (dit: DIT, idsToKeep: Set<number> | null): DIT {
     return {
         ...dit,
         subordinates: dit.subordinates
-            ?.filter((sub) => idsToKeep.has(sub.dse.id))
+            ?.filter((sub) => !idsToKeep || idsToKeep.has(sub.dse.id))
             .map((sub) => keepSubsetOfDITById(sub, idsToKeep))
             ?? [],
     };
@@ -555,25 +556,17 @@ does not match, its subordinates still must be searched.
 //     }
 // }
 
-function familyMembersToReturnById (
+function getFamilyMembersToReturnById (
     familyReturn: FamilyReturn,
-    matchedFamilySubset: Vertex[],
-    matchedValues: ReturnType<typeof evaluateFilter>,
+    participatingEntries: Vertex[],
+    contributingEntryIds: Set<number>,
 ): Set<number> | null { // `null` means "all"
     switch (familyReturn.memberSelect) {
         case (FamilyReturn_memberSelect_contributingEntriesOnly as number): { // Bizarre TypeScript bug.
-            if (Array.isArray(matchedValues)) {
-                return new Set(matchedValues.map((mv) => matchedFamilySubset![mv.entryIndex].dse.id));
-            } else {
-                // If we don't have a matchedValues array,
-                // we just fall back on returning the common
-                // ancestor. If that's not defined (should
-                // never happen), we fall back on `null`.
-                return matchedFamilySubset[0] ? new Set([matchedFamilySubset[0].dse.id]) : null;
-            }
+            return contributingEntryIds;
         }
         case (FamilyReturn_memberSelect_participatingEntriesOnly as number): { // Bizarre TypeScript bug.
-            return new Set(matchedFamilySubset.map((v) => v.dse.id));
+            return new Set(participatingEntries.map((v) => v.dse.id));
         }
         case (FamilyReturn_memberSelect_compoundEntry as number): {  // Bizarre TypeScript bug.
             return null;
@@ -1607,8 +1600,37 @@ async function search_i (
             }
         }
         if (matchedFamilySubset) {
+            const allFamilyMembers: Vertex[] = readCompoundEntry(family).next().value;
+            const contributingEntriesByIndex: Set<number> = Array.isArray(matchedValues)
+                ? new Set(matchedValues.map((mv) => mv.entryIndex))
+                : new Set([ 0 ]);
+            const contributingEntryIds: Set<number> = new Set(
+                matchedFamilySubset
+                    .filter((_, i) => contributingEntriesByIndex.has(i))
+                    .map((member) => member.dse.id),
+            );
+            const familyMembersToReturnById = getFamilyMembersToReturnById(
+                familyReturn,
+                matchedFamilySubset,
+                contributingEntryIds,
+            );
+            const familyMembersToReturn: Vertex[] = allFamilyMembers
+                .filter((member: Vertex) => (
+                    (
+                        !familyMembersToReturnById
+                        || familyMembersToReturnById.has(member.dse.id)
+                    )
+                    && (
+                        // Deduplication only matters if we're actually returning members separately.
+                        !(separateFamilyMembers || searchFamilyInEffect)
+                        || !searchState.paging?.[1].alreadyReturnedById.has(member.dse.id)
+                    )
+                ));
+            const matchedValuesByEntryId = Array.isArray(matchedValues)
+                ? _.groupBy(matchedValues, (mv) => matchedFamilySubset![mv.entryIndex].dse.id)
+                : {};
             const einfos = await Promise.all(
-                matchedFamilySubset.map((member) => readEntryInformation(
+                familyMembersToReturn.map((member) => readEntryInformation(
                     ctx,
                     member,
                     {
@@ -1626,10 +1648,15 @@ async function search_i (
                 && (Array.isArray(matchedValues) && matchedValues.length)
                 && !typesOnly // This option would make no sense with matchedValuesOnly.
             ) {
-                for (let i = 0; i < einfos.length; i++) {
-                    const matchedValuesAttributes = attributesFromValues(
-                        matchedValues.filter((mv) => (mv.entryIndex === i)),
-                    );
+                assert(einfos.length === familyMembersToReturn.length);
+                for (let i = 0; i < familyMembersToReturn.length; i++) {
+                    const member = familyMembersToReturn[i];
+                    // We create new attributes from the matched values for the member...
+                    const matchedValuesAttributes = attributesFromValues(matchedValuesByEntryId[member.dse.id] ?? []);
+                    if (!matchedValuesAttributes.length) {
+                        continue;
+                    }
+                    // Then we index these attributes by their type OIDs.
                     const matchedValuesTypes: Set<IndexableOID> = new Set(
                         matchedValuesAttributes.map((mva) => mva.type_.toString()),
                     );
@@ -1665,49 +1692,35 @@ async function search_i (
                     ];
                 }
             } // End of matchedValuesOnly handling.
-            const familyMembersToBeReturned = familyMembersToReturnById(familyReturn, matchedFamilySubset, matchedValues);
             const filteredEinfos = einfos
                 .map(filterUnauthorizedEntryInformation);
             if (separateFamilyMembers) {
                 const familyMemberResults = filteredEinfos
-                    .map((einfo, i) => [ einfo, matchedFamilySubset![i], i ] as const)
-                    .filter(([ , vertex ]) => (
-                        (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
-                        && !((): boolean => {
-                            const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
-                            searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
-                            return had;
-                        })()
-                        && ( // Is this part of the familyReturn member selection?
-                            !familyMembersToBeReturned
-                            || familyMembersToBeReturned.has(vertex.dse.id)
-                        )
-                    ))
-                    .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(vertex),
-                        },
-                        !vertex.dse.shadow,
-                        attributeSizeLimit
-                            ? permittedEinfo.filter(filterEntryInfoItemBySize)
-                            : permittedEinfo,
-                        incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                        // Only the ancestor can have partialName.
-                        ((index === 0) && state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ));
+                    .map((einfo, index) => {
+                        const [ incompleteEntry, permittedEinfo ] = einfo;
+                        const vertex = familyMembersToReturn![index];
+                        searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
+                        return new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(vertex),
+                            },
+                            !vertex.dse.shadow,
+                            attributeSizeLimit
+                                ? permittedEinfo.filter(filterEntryInfoItemBySize)
+                                : permittedEinfo,
+                            incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            // Only the ancestor can have partialName.
+                            ((index === 0) && state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        );
+                    });
                 searchState.results.push(...familyMemberResults);
             } else {
                 // family-information is not understood by LDAP.
                 if ((matchedFamilySubset.length > 1) && !(conn instanceof LDAPConnection)) {
                     const subset = keepSubsetOfDITById(
                         family,
-                        new Set(matchedFamilySubset
-                            .filter((vertex) => ( // Is this part of the familyReturn member selection?
-                                !familyMembersToBeReturned
-                                || familyMembersToBeReturned.has(vertex.dse.id)
-                            ))
-                            .map((member) => member.dse.id)),
+                        familyMembersToReturnById,
                     );
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                         subset,
@@ -1724,23 +1737,21 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                if (!searchState.paging?.[1].alreadyReturnedById.has(matchedFamilySubset[0].dse.id)) {
-                    searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
-                    searchState.results.push(
-                        new EntryInformation(
-                            {
-                                rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
-                            },
-                            !matchedFamilySubset[0].dse.shadow,
-                            attributeSizeLimit
-                                ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-                                : filteredEinfos[0][1],
-                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                            (state.partialName && (searchState.depth === 0)),
-                            undefined,
-                        ),
-                    );
-                }
+                searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
+                searchState.results.push(
+                    new EntryInformation(
+                        {
+                            rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
+                        },
+                        !matchedFamilySubset[0].dse.shadow,
+                        attributeSizeLimit
+                            ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                            : filteredEinfos[0][1],
+                        filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                        (state.partialName && (searchState.depth === 0)),
+                        undefined,
+                    ),
+                );
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(
@@ -1822,8 +1833,37 @@ async function search_i (
             }
         }
         if (matchedFamilySubset) {
+            const allFamilyMembers: Vertex[] = readCompoundEntry(family).next().value;
+            const contributingEntriesByIndex: Set<number> = Array.isArray(matchedValues)
+                ? new Set(matchedValues.map((mv) => mv.entryIndex))
+                : new Set([ 0 ]);
+            const contributingEntryIds: Set<number> = new Set(
+                matchedFamilySubset
+                    .filter((_, i) => contributingEntriesByIndex.has(i))
+                    .map((member) => member.dse.id),
+            );
+            const familyMembersToReturnById = getFamilyMembersToReturnById(
+                familyReturn,
+                matchedFamilySubset,
+                contributingEntryIds,
+            );
+            const familyMembersToReturn: Vertex[] = allFamilyMembers
+                .filter((member: Vertex) => (
+                    (
+                        !familyMembersToReturnById
+                        || familyMembersToReturnById.has(member.dse.id)
+                    )
+                    && (
+                        // Deduplication only matters if we're actually returning members separately.
+                        !(separateFamilyMembers || searchFamilyInEffect)
+                        || !searchState.paging?.[1].alreadyReturnedById.has(member.dse.id)
+                    )
+                ));
+            const matchedValuesByEntryId = Array.isArray(matchedValues)
+                ? _.groupBy(matchedValues, (mv) => matchedFamilySubset![mv.entryIndex].dse.id)
+                : {};
             const einfos = await Promise.all(
-                matchedFamilySubset.map((member) => readEntryInformation(
+                familyMembersToReturn.map((member) => readEntryInformation(
                     ctx,
                     member,
                     {
@@ -1841,10 +1881,15 @@ async function search_i (
                 && (Array.isArray(matchedValues) && matchedValues.length)
                 && !typesOnly // This option would make no sense with matchedValuesOnly.
             ) {
-                for (let i = 0; i < einfos.length; i++) {
-                    const matchedValuesAttributes = attributesFromValues(
-                        matchedValues.filter((mv) => (mv.entryIndex === i)),
-                    );
+                assert(einfos.length === familyMembersToReturn.length);
+                for (let i = 0; i < familyMembersToReturn.length; i++) {
+                    const member = familyMembersToReturn[i];
+                    // We create new attributes from the matched values for the member...
+                    const matchedValuesAttributes = attributesFromValues(matchedValuesByEntryId[member.dse.id] ?? []);
+                    if (!matchedValuesAttributes.length) {
+                        continue;
+                    }
+                    // Then we index these attributes by their type OIDs.
                     const matchedValuesTypes: Set<IndexableOID> = new Set(
                         matchedValuesAttributes.map((mva) => mva.type_.toString()),
                     );
@@ -1880,48 +1925,34 @@ async function search_i (
                     ];
                 }
             } // End of matchedValuesOnly handling.
-            const familyMembersToBeReturned = familyMembersToReturnById(familyReturn, matchedFamilySubset, matchedValues);
             const filteredEinfos = einfos
                 .map(filterUnauthorizedEntryInformation);
             if (separateFamilyMembers) {
                 const familyMemberResults = filteredEinfos
-                    .map((einfo, i) => [ einfo, matchedFamilySubset![i], i ] as const)
-                    .filter(([ , vertex ]) => (
-                        (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
-                        && !((): boolean => {
-                            const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
-                            searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
-                            return had;
-                        })()
-                        && ( // Is this part of the familyReturn member selection?
-                            !familyMembersToBeReturned
-                            || familyMembersToBeReturned.has(vertex.dse.id)
-                        )
-                    ))
-                    .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(vertex),
-                        },
-                        !vertex.dse.shadow,
-                        attributeSizeLimit
-                            ? permittedEinfo.filter(filterEntryInfoItemBySize)
-                            : permittedEinfo,
-                        incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                        // Only the ancestor can have partialName.
-                        ((index === 0) && state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ));
+                    .map((einfo, index) => {
+                        const [ incompleteEntry, permittedEinfo ] = einfo;
+                        const vertex = familyMembersToReturn![index];
+                        searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
+                        return new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(vertex),
+                            },
+                            !vertex.dse.shadow,
+                            attributeSizeLimit
+                                ? permittedEinfo.filter(filterEntryInfoItemBySize)
+                                : permittedEinfo,
+                            incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            // Only the ancestor can have partialName.
+                            ((index === 0) && state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        );
+                    });
                 searchState.results.push(...familyMemberResults);
             } else {
                 if ((matchedFamilySubset.length > 1) && !(conn instanceof LDAPConnection)) { // If there actually are children.
                     const subset = keepSubsetOfDITById(
                         family,
-                        new Set(matchedFamilySubset
-                            .filter((vertex) => ( // Is this part of the familyReturn member selection?
-                                !familyMembersToBeReturned
-                                || familyMembersToBeReturned.has(vertex.dse.id)
-                            ))
-                            .map((member) => member.dse.id)),
+                        familyMembersToReturnById,
                     );
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                         subset,
@@ -1938,23 +1969,21 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                if (!searchState.paging?.[1].alreadyReturnedById.has(matchedFamilySubset[0].dse.id)) {
-                    searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
-                    searchState.results.push(
-                        new EntryInformation(
-                            {
-                                rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
-                            },
-                            !matchedFamilySubset[0].dse.shadow,
-                            attributeSizeLimit
-                                ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-                                : filteredEinfos[0][1],
-                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                            (state.partialName && (searchState.depth === 0)),
-                            undefined,
-                        ),
-                    );
-                }
+                searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
+                searchState.results.push(
+                    new EntryInformation(
+                        {
+                            rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
+                        },
+                        !matchedFamilySubset[0].dse.shadow,
+                        attributeSizeLimit
+                            ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                            : filteredEinfos[0][1],
+                        filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                        (state.partialName && (searchState.depth === 0)),
+                        undefined,
+                    ),
+                );
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(

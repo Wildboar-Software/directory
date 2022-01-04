@@ -2959,7 +2959,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.only("Search.searchControlOptions.separateFamilyMembers", async () => {
+    it("Search.searchControlOptions.separateFamilyMembers", async () => {
         const testId = `searchControlOptions.separateFamilyMembers-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
