@@ -9,8 +9,8 @@ import {
     id_soc_subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
 import readSubordinates from "./readSubordinates";
+import { MAX_TRAVERSAL } from "../constants";
 
-const MAX_TRAVERSAL: number = 100000;
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
 const SUBSCHEMA_OC: string = id_soc_subschema.toString();

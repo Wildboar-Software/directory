@@ -317,7 +317,7 @@ export class DitController {
                     if (spec?.equalityMatchingRule?.isEqualTo(distinguishedNameMatch["&id"])) {
                         const dn_ = _decode_DistinguishedName(attr.value);
                         // Reverse the DN so that it is an X.500-style DN, not an LDAP DN.
-                        return Buffer.from(encodeLDAPDN(this.ctx, dn_.reverse())).toString("utf-8");
+                        return Buffer.from(encodeLDAPDN(this.ctx, [ ...dn_ ].reverse())).toString("utf-8");
                     }
                     if (!spec?.ldapSyntax) {
                         return defaultEncoder(attr.value);

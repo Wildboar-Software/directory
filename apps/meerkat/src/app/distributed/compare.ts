@@ -129,7 +129,7 @@ async function compare (
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = state.admPoints
+    const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);

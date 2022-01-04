@@ -698,7 +698,7 @@ async function findDSE (
         }
         const needleRDN = needleDN[i];
         let rdnMatched: boolean = false;
-        accessControlScheme = state.admPoints
+        accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
             .reverse()
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         let cursorId: number | undefined;

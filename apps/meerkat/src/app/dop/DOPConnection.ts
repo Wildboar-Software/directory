@@ -1,6 +1,7 @@
 import {
     Context,
     ClientConnection,
+    OperationStatistics,
     AbandonError,
     AbandonFailedError,
     AttributeError,
@@ -103,6 +104,10 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import getServerStatistics from "../telemetry/getServerStatistics";
+import getConnectionStatistics from "../telemetry/getConnectionStatistics";
+import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
+import isDebugging from "is-debugging";
 
 async function handleRequest (
     ctx: Context,
@@ -190,7 +195,11 @@ async function handleRequestAndErrors (
         }
         await handleRequest(ctx, dop, request);
     } catch (e) {
-        ctx.log.error(e);
+        if (isDebugging) {
+            console.error(e);
+        } else {
+            ctx.log.error(e.message);
+        }
         if (e instanceof AbandonError) {
             const code = _encode_Code(AbandonError.errcode, DER);
             const data = _encode_AbandonedData(e.data, DER);
@@ -246,6 +255,22 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
             await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.events.emit("unbind", null));
         } else {
+            const stats: OperationStatistics = {
+                type: "op",
+                inbound: true,
+                server: getServerStatistics(),
+                connection: getConnectionStatistics(dop),
+                bind: {
+                    protocol: dop_ip["&id"]!.toString(),
+                },
+                request: {
+                    operationCode: codeToString(request.opcode),
+                },
+            };
+            ctx.telemetry.sendEvent({
+                ...stats,
+                unusualError: e,
+            });
             await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.events.emit("unbind", null));
         }
     }

@@ -1015,7 +1015,7 @@ async function search_i (
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = state.admPoints
+    const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const targetACI = getACIItems(accessControlScheme, target, relevantSubentries);
@@ -2151,6 +2151,12 @@ async function search_i (
                 conn,
                 {
                     ...state,
+                    // admPoints: target.dse.admPoint
+                    //     ? [ ...state.admPoints, target ]
+                    //     : [ ...state.admPoints ],
+                    // admPoints: subordinate.dse.admPoint
+                    //     ? [ ...state.admPoints, subordinate ]
+                    //     : [ ...state.admPoints ],
                     admPoints: subordinate.dse.admPoint
                         ? (subordinate.dse.admPoint.administrativeRole.has(AUTONOMOUS)
                             ? [ subordinate ]

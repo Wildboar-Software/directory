@@ -176,6 +176,9 @@ async function dseFromDatabaseEntry (
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SUPERIOR,
             },
+            select: {
+                ber:true,
+            },
         });
         const superiorKnowledge = superiorKnowledgeRows
             .map((sk) => {

@@ -2,8 +2,8 @@ import type { Vertex } from "@wildboar/meerkat-types";
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import { MAX_TRAVERSAL } from "../constants";
 
-const MAX_TRAVERSAL: number = 100000;
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 
 export

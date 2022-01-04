@@ -204,7 +204,7 @@ const ctx: Context = {
     db: new PrismaClient(),
     telemetry: {
         sendEvent: (body: Record<string, any>) => {
-            if (bulkInsertMode) {
+            if (bulkInsertMode || isDebugging) {
                 return;
             }
             // if (process.env.NODE_ENV === "development") {

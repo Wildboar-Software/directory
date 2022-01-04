@@ -18,7 +18,7 @@ import {
     id_ar_collectiveAttributeInnerArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeInnerArea.va";
 
-const AC_SUBENTRY: string = collectiveAttributeSubentry["&id"].toString();
+const CA_SUBENTRY: string = collectiveAttributeSubentry["&id"].toString();
 const ID_CASA: string = id_ar_collectiveAttributeSpecificArea.toString();
 const ID_CAIA: string = id_ar_collectiveAttributeInnerArea.toString();
 const EXCLUDE_ALL: string = id_oa_excludeAllCollectiveAttributes.toString();
@@ -34,7 +34,7 @@ function readCollectiveAttributes (
         return [];
     }
     const collectiveAttributeSubentries = relevantSubentries
-        .filter((sub) => sub.dse.objectClass.has(AC_SUBENTRY))
+        .filter((sub) => sub.dse.objectClass.has(CA_SUBENTRY))
         .reverse();
     const indexOfFirstCASA: number = collectiveAttributeSubentries
         .findIndex((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_CASA));

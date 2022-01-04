@@ -134,7 +134,8 @@ async function main (): Promise<void> {
         cwd: process.cwd(),
     }));
 
-    await ctx.db.enqueuedSearchResult.deleteMany();
+    ctx.db.enqueuedListResult.deleteMany().then().catch();
+    ctx.db.enqueuedSearchResult.deleteMany().then().catch();
 
     if (
         process.env.MEERKAT_SIGNING_CERT_CHAIN

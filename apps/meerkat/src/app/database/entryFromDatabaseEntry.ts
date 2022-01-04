@@ -1,6 +1,7 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import dseFromDatabaseEntry from "./dseFromDatabaseEntry";
+import { MAX_RESULTS } from "../constants";
 
 export
 async function vertexFromDatabaseEntry (
@@ -23,7 +24,7 @@ async function vertexFromDatabaseEntry (
             ? null
             : await Promise.all(
                 (await ctx.db.entry.findMany({
-                    take: 10_000_000,
+                    take: MAX_RESULTS,
                     where: {
                         deleteTimestamp: null,
                         immediate_superior_id: dbe.id,

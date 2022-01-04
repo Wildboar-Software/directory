@@ -8,9 +8,9 @@ import {
     id_op_binding_shadow,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import { OperationalBindingInitiator } from "@prisma/client";
+import { MAX_TRAVERSAL } from "../constants";
 
 const SHADOW: string = id_op_binding_shadow.toString();
-const MAX_TRAVERSAL: number = 100000;
 
 export
 async function getShadowingAgreementInfo (

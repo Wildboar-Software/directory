@@ -25,10 +25,10 @@ const readValues: SpecialAttributeDatabaseReader = async (
         where: {
             entry_id: vertex.dse.id,
         },
+        select: {
+            value: true,
+        },
     });
-    if (!values.length) {
-        return [];
-    }
     return values.map((value) => ({
         type: pwdDictionaries["&id"],
         value: _encodeUTF8String(value.value, DER),

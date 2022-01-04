@@ -1,6 +1,7 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
 import type { Prisma } from "@prisma/client";
+import { MAX_RESULTS } from "../constants";
 
 export
 async function readSubordinates (
@@ -17,7 +18,7 @@ async function readSubordinates (
     if (!entry.subordinates) {
         return Promise.all(
             (await ctx.db.entry.findMany({
-                take: take ?? 1000000, // You MUST specify a "take" number when using a cursor.
+                take: take ?? MAX_RESULTS, // You MUST specify a "take" number when using a cursor.
                 skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
                 cursor: (cursorId !== undefined)
                     ? {

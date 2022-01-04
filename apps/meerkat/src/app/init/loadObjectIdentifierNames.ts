@@ -1,8 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
-import {
-    id_oc_alias,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-alias.va";
 
 export
 async function loadObjectIdentifierNames (ctx: Context): Promise<void> {

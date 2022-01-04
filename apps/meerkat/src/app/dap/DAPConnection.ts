@@ -78,7 +78,7 @@ import {
 import {
     changePassword,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
-
+import isDebugging from "is-debugging";
 
 async function handleRequest (
     ctx: Context,
@@ -139,8 +139,11 @@ async function handleRequestAndErrors (
     try {
         await handleRequest(ctx, dap, request, stats);
     } catch (e) {
-        console.error(e);
-        ctx.log.error(e.message);
+        if (isDebugging) {
+            console.error(e);
+        } else {
+            ctx.log.error(e.message);
+        }
         if (!stats.outcome) {
             stats.outcome = {};
         }
@@ -226,6 +229,10 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
             await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.events.emit("unbind", null));
         } else {
+            ctx.telemetry.sendEvent({
+                ...stats,
+                unusualError: e,
+            });
             await dap.idm.writeAbort(Abort_reasonNotSpecified).then(() => dap.idm.events.emit("unbind", null));
         }
     } finally {

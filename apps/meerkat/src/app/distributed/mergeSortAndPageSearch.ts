@@ -1,6 +1,6 @@
 import type { Context, ClientConnection } from "@wildboar/meerkat-types";
 import { LDAPConnection } from "../ldap/LDAPConnection";
-import { ASN1Element, DERElement, TRUE } from "asn1-ts";
+import { ASN1Element, DERElement, TRUE, FALSE, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type {
     SearchResult,
@@ -37,6 +37,9 @@ import { MAX_RESULTS } from "../constants";
 import {
     LimitProblem_sizeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+import {
+    SearchControlOptions_entryCount as entryCountBit,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 
 type ISearchInfo = { -readonly [K in keyof SearchResultData_searchInfo]: SearchResultData_searchInfo[K] };
 
@@ -239,6 +242,7 @@ async function mergeSortAndPageSearch(
         return totalResult;
     }
     assert(searchState.paging);
+    const entryCount: boolean = (searchArgument.searchControlOptions?.[entryCountBit] === TRUE_BIT);
     const prr = searchState.paging[1].request;
     const localSearchInfo = new SearchResultData_searchInfo(
         {
@@ -246,10 +250,10 @@ async function mergeSortAndPageSearch(
         },
         [
             ...searchState.results,
-            ...(searchState.paging?.[1].nextEntriesStack.reverse() ?? []),
+            ...[ ...(searchState.paging?.[1].nextEntriesStack ?? []) ].reverse(),
         ],
         searchState.poq,
-        undefined, // TODO:
+        FALSE, // altMatching will always be FALSE from local results, becase we don't do alternative matching 'round here.
         [],
         createSecurityParameters(
             ctx,
@@ -275,7 +279,6 @@ async function mergeSortAndPageSearch(
             mergeResultSet(acc, rs);
             return acc;
         }, mergedResult);
-
         if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
             mergedResult.entries.sort((a, b) => compareEntries(
                 ctx,
@@ -333,18 +336,20 @@ async function mergeSortAndPageSearch(
         (results.length === 0) // There are no more results, or
         || ((cursorId + 1) >= (searchState.paging[1].totalResults ?? -1)) // The cursor is greater than count
     );
-    if (cursorId) {
-        // We dispose of results as soon as have returned them.
-        await ctx.db.enqueuedSearchResult.deleteMany({
-            where: {
-                connection_uuid: conn.id,
-                query_ref: searchState.paging![0],
-                result_index: {
-                    lt: cursorId,
-                },
-            },
-        });
-    }
+    // This cannot be done, because entryCount must be remain between
+    // pages.
+    // if (cursorId) {
+    //     // We dispose of results as soon as have returned them.
+    //     await ctx.db.enqueuedSearchResult.deleteMany({
+    //         where: {
+    //             connection_uuid: conn.id,
+    //             query_ref: searchState.paging![0],
+    //             result_index: {
+    //                 lt: cursorId,
+    //             },
+    //         },
+    //     });
+    // }
     if (done) {
         conn.pagedResultsRequests.delete(searchState.paging[0]);
         // These should already be gone, but this is just to make sure.
@@ -382,7 +387,16 @@ async function mergeSortAndPageSearch(
                         Buffer.from(searchState.paging[0], "base64"),
                         mergedResult.partialOutcomeQualifier?.overspecFilter,
                         mergedResult.partialOutcomeQualifier?.notification,
-                        mergedResult.partialOutcomeQualifier?.entryCount,
+                        entryCount
+                            ? {
+                                exact: await ctx.db.enqueuedSearchResult.count({
+                                    where: {
+                                        connection_uuid: conn.id,
+                                        query_ref: searchState.paging![0],
+                                    },
+                                }),
+                            }
+                            : undefined,
                     ),
                 mergedResult.altMatching,
                 [],

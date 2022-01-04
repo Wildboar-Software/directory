@@ -6,7 +6,7 @@ import type { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFram
 export
 function encodeLDAPDN (ctx: Context, dn: RDNSequence): Uint8Array {
     return Buffer.from(stringifyRDNSequence(
-        dn
+        [ ...dn ]
             .reverse()
             .map((rdn) => rdn
                 .map((atav) => [ atav.type_, atav.value ])),

@@ -229,7 +229,8 @@ async function mergeSortAndPageList(
         },
         [
             ...listState.results,
-            ...paging.nextSubordinatesStack.reverse(),
+            // Array.reverse() works in-place, so we create a new array.
+            ...[ ...paging.nextSubordinatesStack ].reverse(),
         ],
         listState.poq,
         [],

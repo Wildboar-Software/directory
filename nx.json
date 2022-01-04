@@ -1,35 +1,31 @@
 {
-  "implicitDependencies": {
-    "workspace.json": "*",
-    "package.json": {
-      "dependencies": "*",
-      "devDependencies": "*"
+    "implicitDependencies": {
+        "workspace.json": "*",
+        "package.json": {
+            "dependencies": "*",
+            "devDependencies": "*"
+        },
+        "tsconfig.base.json": "*",
+        "tslint.json": "*",
+        ".eslintrc.json": "*",
+        "nx.json": "*"
     },
-    "tsconfig.base.json": "*",
-    "tslint.json": "*",
-    ".eslintrc.json": "*",
-    "nx.json": "*"
-  },
-  "affected": {
-    "defaultBase": "master"
-  },
-  "npmScope": "directory",
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nrwl/nx-cloud",
-      "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "test",
-          "e2e"
-        ],
-        "accessToken": "Y2Y4NGI2OTctODY3OS00ZmU3LWI0MTctMmYwZTY4ZDhmYjNhfHJlYWQtd3JpdGU="
-      }
-    }
-  },
-  "cli": {
-    "defaultCollection": "@nrwl/node"
-  },
-  "defaultProject": "meerkat"
+    "affected": {
+        "defaultBase": "master"
+    },
+    "npmScope": "directory",
+    "tasksRunnerOptions": {
+        "default": {
+            "runner": "@nrwl/nx-cloud",
+            "options": {
+                "cacheableOperations": ["build", "lint", "test", "e2e"],
+                "accessToken": "Y2Y4NGI2OTctODY3OS00ZmU3LWI0MTctMmYwZTY4ZDhmYjNhfHJlYWQtd3JpdGU=",
+                "parallel": 1
+            }
+        }
+    },
+    "cli": {
+        "defaultCollection": "@nrwl/node"
+    },
+    "defaultProject": "meerkat"
 }

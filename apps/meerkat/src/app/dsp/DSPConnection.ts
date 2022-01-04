@@ -71,6 +71,7 @@ import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import isDebugging from "is-debugging";
 
 async function handleRequest (
     ctx: Context,
@@ -131,6 +132,11 @@ async function handleRequestAndErrors (
     try {
         await handleRequest(ctx, dsp, request, stats);
     } catch (e) {
+        if (isDebugging) {
+            console.error(e);
+        } else {
+            ctx.log.error(e.message);
+        }
         if (!stats.outcome) {
             stats.outcome = {};
         }
@@ -216,6 +222,10 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
             await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.events.emit("unbind", null));
         } else {
+            ctx.telemetry.sendEvent({
+                ...stats,
+                unusualError: e,
+            });
             await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.events.emit("unbind", null));
         }
     } finally {

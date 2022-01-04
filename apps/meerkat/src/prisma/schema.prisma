@@ -157,6 +157,7 @@ model Entry {
   @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
+  @@index([materialized_path])
   @@index([hierarchyTop_id, hierarchyLevel])
   @@index([hierarchyParent_id])
   @@index([hierarchyPath])
@@ -169,6 +170,8 @@ model UniqueIdentifier {
   entry_id         Int
   entry            Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   uniqueIdentifier Bytes // DER-encoded bitstring value (not tag and length bytes)
+
+  @@index([entry_id])
 }
 
 // model UtmCoordinate {
@@ -322,6 +325,8 @@ model PwdDictionaries {
   entry_id Int
   entry    Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   value    String @db.Text
+
+  @@index([entry_id])
 }
 
 model PwdExpiryWarning {
@@ -422,7 +427,6 @@ model AttributeValue {
   tag_number                 Int
   ber                        Bytes
   jer                        Json?
-  // A number that sorts the values according to the default ordering rule.
   // attributeValueSecurityLabelContext
   // At most one security label context can be assigned to an attribute value
   security_label             Bytes?
@@ -447,6 +451,8 @@ model ContextValue {
   hint        BigInt?
   jer         Json?
   fallback    Boolean
+
+  @@index([value_id])
 }
 
 // Should there be a separate Attribute Types table? No, because these have a functional aspect.
@@ -473,6 +479,8 @@ model ACIItem {
 
   // For disabling ACI items in the database for debugging purposes.
   active Boolean @default(true)
+
+  @@index([entry_id])
 }
 
 model Clearance {
@@ -489,6 +497,8 @@ model Clearance {
   topSecret                 Boolean                     @default(false)
   ber                       Bytes
   ClearanceSecurityCategory ClearanceSecurityCategory[]
+
+  @@index([entry_id])
 }
 
 model ClearanceSecurityCategory {
@@ -544,6 +554,8 @@ model AccessPoint {
   // integer that uniquely identifies the nonSpecificKnowledge value within the
   // entry to which this access point belongs.
   nsk_group                BigInt?
+
+  @@index([entry_id])
 }
 
 model NetworkServiceAccessPoint {
@@ -555,6 +567,8 @@ model NetworkServiceAccessPoint {
   bytes           Bytes
   access_point_id Int
   access_point    AccessPoint @relation(fields: [access_point_id], references: [id], onDelete: Cascade)
+
+  @@index([access_point_id])
 }
 
 model SubtreeSpecification {
@@ -567,6 +581,8 @@ model SubtreeSpecification {
   ber                  Bytes
   entry_id             Int
   entry                Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+
+  @@index([entry_id])
 }
 
 model DitBridgeKnowledge {
@@ -821,6 +837,7 @@ model SearchRule {
   @@unique([dmd_id, rule_id])
   @@index([rule_id])
   @@index([user_class])
+  @@index([entry_id])
 }
 
 enum OperationalBindingInitiator {
@@ -908,6 +925,7 @@ model OperationalBinding {
   @@unique([uuid])
   @@unique([binding_type, binding_identifier, binding_version, terminated_time])
   @@index([validity_end, validity_start])
+  @@index([entry_id])
 }
 
 model NamedObjectIdentifier {

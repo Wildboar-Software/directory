@@ -2893,8 +2893,66 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(resData.searchInfo.entries).toHaveLength(1);
     });
 
-    it.skip("Search.searchControlOptions.entryCount", async () => {
-
+    it("Search.searchControlOptions.entryCount", async () => {
+        const testId = `Search.searchControlOptions.entryCount-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const pageSize: number = 5;
+        const subordinatesLevel1: string[] = Array(pageSize * 2).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array((pageSize * 2) - 1).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id)));
+        const subordinateWithSubordinates: string = subordinatesLevel1[subordinatesLevel1.length - 1];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id)));
+        const encountered: Set<string> = new Set();
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        searchControlOptions[SearchControlOptions_entryCount] = TRUE_BIT;
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            undefined,
+            undefined,
+            {
+                newRequest: new PagedResultsRequest_newRequest(
+                    pageSize,
+                ),
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_SearchResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(pageSize);
+        for (const entry of resData.searchInfo.entries) {
+            const rdn = entry.name.rdnSequence[entry.name.rdnSequence.length - 1];
+            const foundId: string = rdn[0].value.utf8String;
+            expect(encountered.has(foundId)).toBeFalsy();
+            encountered.add(foundId);
+        }
+        assert(resData.searchInfo.partialOutcomeQualifier?.entryCount);
+        assert("exact" in resData.searchInfo.partialOutcomeQualifier.entryCount);
+        expect(resData.searchInfo.partialOutcomeQualifier.entryCount.exact).toBe(20);
     });
 
     it.skip("Search.searchControlOptions.useSubset", async () => {
@@ -2954,7 +3012,65 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
     });
 
     it.skip("Search.searchControlOptions.searchFamily", async () => {
-
+        const testId = `Search.searchControlOptions.entryCount-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const pageSize: number = 5;
+        const subordinatesLevel1: string[] = Array(pageSize * 2).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array((pageSize * 2) - 1).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id)));
+        const subordinateWithSubordinates: string = subordinatesLevel1[subordinatesLevel1.length - 1];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id)));
+        const encountered: Set<string> = new Set();
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        searchControlOptions[SearchControlOptions_searchFamily] = TRUE_BIT;
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            undefined,
+            undefined,
+            {
+                newRequest: new PagedResultsRequest_newRequest(
+                    pageSize,
+                ),
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_SearchResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(pageSize);
+        for (const entry of resData.searchInfo.entries) {
+            const rdn = entry.name.rdnSequence[entry.name.rdnSequence.length - 1];
+            const foundId: string = rdn[0].value.utf8String;
+            expect(encountered.has(foundId)).toBeFalsy();
+            encountered.add(foundId);
+        }
+        assert(resData.searchInfo.partialOutcomeQualifier?.entryCount);
+        assert("exact" in resData.searchInfo.partialOutcomeQualifier.entryCount);
+        expect(resData.searchInfo.partialOutcomeQualifier.entryCount.exact).toBe(20);
     });
 
     it("Search.selection", async () => {
@@ -7201,15 +7317,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
     it("Subordinate subschema administrative points override a superior subschema administrative point", async () => {
         const testId = `subschema-overrides-${(new Date()).toISOString()}`;
         { // Setup
-            await createTestRootNode(connection!, testId, [
-                new Attribute(
-                    administrativeRole["&id"],
-                    [
-                        oid(id_ar_subschemaAdminSpecificArea),
-                    ],
-                    undefined,
-                ),
-            ]);
+            await createTestRootNode(connection!, testId);
         }
         const dn = createTestRootDN(testId);
         const subentryRDN: RelativeDistinguishedName = [
@@ -7224,9 +7332,11 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 utf8("world"),
             ),
         ];
-        const subordinatesLevel1: string[] = Array(1).fill("").map(() => crypto.randomUUID());
-        const subordinatesLevel2: string[] = Array(3).fill("").map(() => crypto.randomUUID());
-        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id, [
+        const level1: string = crypto.randomUUID();
+        const level2: string = crypto.randomUUID();
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(level1) ];
+        const level3DN: DistinguishedName = [ ...level2DN, createTestRDN(level2) ];
+        await createTestNode(connection!, dn, level1, [
             new Attribute(
                 administrativeRole["&id"],
                 [
@@ -7236,23 +7346,28 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             ),
             new Attribute(
                 description["&id"],
-                [utf8(`description-${id}`)],
+                [utf8(`description-${level1}`)],
                 undefined,
             ),
-        ])));
-        const subordinateWithSubordinates: string = subordinatesLevel1[0];
-        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
-        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id, [
+        ]);
+        await createTestNode(connection!, level2DN, level2, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_subschemaAdminSpecificArea),
+                ],
+                undefined,
+            ),
             new Attribute(
                 description["&id"],
-                [utf8(`description-${id}`)],
+                [utf8(`description-${level2}`)],
                 undefined,
             ),
-        ])));
+        ]);
         const anchorType: OBJECT_IDENTIFIER = commonName["&id"];
         await createEntry(
             connection!,
-            dn,
+            level2DN,
             subentryRDN,
             [
                 new Attribute(
@@ -7303,7 +7418,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         );
         await createEntry(
             connection!,
-            level2DN,
+            level3DN,
             subentry2RDN,
             [
                 new Attribute(
@@ -7397,17 +7512,6 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     it("Subordinate CAD administrative points override a superior CAD administrative point", async () => {
         const testId = `context-assertion-default-overrides-${(new Date()).toISOString()}`;
-        { // Setup
-            await createTestRootNode(connection!, testId, [
-                new Attribute(
-                    administrativeRole["&id"],
-                    [
-                        oid(id_ar_contextDefaultSpecificArea),
-                    ],
-                    undefined,
-                ),
-            ]);
-        }
         const firstLocale: ASN1Element = _encode_LocaleContextSyntax({
             localeID1: new ObjectIdentifier([1, 2, 3, 4, 5]),
         }, DER);
@@ -7417,6 +7521,9 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         const thirdLocale: ASN1Element = _encode_LocaleContextSyntax({
             localeID1: new ObjectIdentifier([1, 2, 3, 4, 7]),
         }, DER);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
         const dn = createTestRootDN(testId);
         const subentryRDN: RelativeDistinguishedName = [
             new AttributeTypeAndValue(
@@ -7468,8 +7575,17 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             ),
         ])));
         const subordinateWithSubordinates: string = subordinatesLevel1[0];
+        const lastAdminPoint: string = subordinatesLevel2[0];
         const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
+        const level3DN: DistinguishedName = [ ...level2DN, createTestRDN(lastAdminPoint) ];
         await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_contextDefaultSpecificArea),
+                ],
+                undefined,
+            ),
             new Attribute(
                 description["&id"],
                 [],
@@ -7499,7 +7615,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         ])));
         await createEntry(
             connection!,
-            dn,
+            level2DN,
             subentryRDN,
             [
                 new Attribute(
@@ -7533,7 +7649,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                                 all: [
                                     new ContextAssertion(
                                         localeContext["&id"],
-                                        [firstLocale],
+                                        [secondLocale],
                                     ),
                                 ],
                             },
@@ -7545,7 +7661,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         );
         await createEntry(
             connection!,
-            level2DN,
+            level3DN,
             subentry2RDN,
             [
                 new Attribute(
@@ -7589,12 +7705,12 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 ),
             ],
         );
-        const search_ = (base: DistinguishedName) => {
+        const search_ = (base: DistinguishedName, scope: number) => {
             const reqData: SearchArgumentData = new SearchArgumentData(
                 {
                     rdnSequence: base,
                 },
-                SearchArgumentData_subset_oneLevel,
+                scope,
                 undefined,
                 undefined,
                 new EntryInformationSelection(
@@ -7613,7 +7729,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             );
         }
         {
-            const response = await search_(dn);
+            const response = await search_(dn, SearchArgumentData_subset_oneLevel as number);
             assert("result" in response);
             assert(response.result);
             const decoded = _decode_SearchResult(response.result);
@@ -7629,11 +7745,11 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
                 assert(desc.attribute.values);
                 expect(desc.attribute.values).toHaveLength(1);
                 const value = desc.attribute.values[0];
-                expect(value.utf8String.startsWith("der description-")).toBeTruthy();
+                expect(value.utf8String.startsWith("el description-")).toBeTruthy();
             }
         }
         {
-            const response = await search_(level2DN);
+            const response = await search_(level3DN, SearchArgumentData_subset_baseObject as number);
             assert("result" in response);
             assert(response.result);
             const decoded = _decode_SearchResult(response.result);

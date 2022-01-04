@@ -146,6 +146,11 @@ async function allSubordinatesWithinThisDSA (
 ): Promise<boolean> {
     const externalDSEs = await ctx.db.entry.findMany({
         where: {
+            materialized_path: {
+                startsWith: vertex.materializedPath.length
+                    ? `${vertex.materializedPath}.${vertex.dse.id}`
+                    : vertex.dse.id.toString(),
+            },
             OR: [
                 {
                     subr: true,
@@ -173,43 +178,8 @@ async function allSubordinatesWithinThisDSA (
                 },
             ],
         },
-        select: {
-            immediate_superior_id: true,
-        },
     });
-    for (const xdse of externalDSEs) {
-        if (xdse.immediate_superior_id === vertex.dse.id) {
-            return false;
-        }
-    }
-    let superiorsToQuery: Set<number> = new Set(
-        externalDSEs
-            .map((row) => row.immediate_superior_id)
-            .filter((id): id is number => (typeof id === "number")),
-    );
-    while (superiorsToQuery.size) {
-        const superiorRows = await ctx.db.entry.findMany({
-            where: {
-                id: {
-                    in: Array.from(superiorsToQuery),
-                },
-            },
-            select: {
-                immediate_superior_id: true,
-            },
-        });
-        for (const row of superiorRows) {
-            if (row.immediate_superior_id === vertex.dse.id) {
-                return false;
-            }
-        }
-        superiorsToQuery = new Set(
-            superiorRows
-                .map((row) => row.immediate_superior_id)
-                .filter((id): id is number => (typeof id === "number")),
-        );
-    }
-    return true;
+    return (externalDSEs.length > 0);
 }
 
 export
@@ -321,7 +291,7 @@ async function modifyDN (
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = state.admPoints
+    const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
     const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
@@ -473,7 +443,7 @@ async function modifyDN (
         const relevantSubentries: Vertex[] = (await Promise.all(
             newAdmPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, destinationDN, ap)),
         )).flat();
-        const newAccessControlScheme = newAdmPoints
+        const newAccessControlScheme = [ ...newAdmPoints ] // Array.reverse() works in-place, so we create a new array.
             .reverse()
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         if (

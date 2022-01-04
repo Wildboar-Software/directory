@@ -41,6 +41,14 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
 import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults";
+import {
+    contextAssertionSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
+import {
+    id_ar_contextDefaultSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
+
+const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 
 // TODO: Explore making this a temporalContext
 const DEFAULT_CAD: ContextSelection = {
@@ -231,12 +239,12 @@ async function readValues (
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
         ? getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
-    // const cadSubentries: Vertex[] = options?.relevantSubentries
+    // const cads: Vertex[] = (options?.relevantSubentries
     //     ?.filter((subentry) => (
     //         subentry.dse.subentry
     //         && subentry.dse.objectClass.has(CAD_SUBENTRY)
     //         && subentry.dse.subentry?.contextAssertionDefaults?.length
-    //     )) ?? [];
+    //     )) ?? []).flatMap(s => s.dse.subentry?.contextAssertionDefaults []);
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
      * Per ITU X.501 (2016), Section 8.9.2.2.

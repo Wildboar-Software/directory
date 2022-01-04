@@ -25,18 +25,9 @@ function getContextAssertionDefaults (
     const cadSubentries = relevantSubentries
         .filter((sub) => sub.dse.objectClass.has(CAD_SUBENTRY))
         .reverse();
-    const firstAdmPointIndex = cadSubentries
-        .findIndex((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_CDSA));
-    if (firstAdmPointIndex === -1) {
-        return [];
-    }
-    const subentriesWithinScope = cadSubentries
-        .slice(0, firstAdmPointIndex + 1)
-        .filter((sub) => (
-            sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_CDSA)
-        ));
-    return subentriesWithinScope
-        .flatMap((subentry) => subentry.dse.subentry?.contextAssertionDefaults ?? []);
+    return cadSubentries
+        .find((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_CDSA))
+        ?.dse.subentry?.contextAssertionDefaults ?? [];
 }
 
 export default getContextAssertionDefaults;
