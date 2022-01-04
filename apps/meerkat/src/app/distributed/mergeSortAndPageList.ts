@@ -230,7 +230,6 @@ async function mergeSortAndPageList(
         [
             ...listState.results,
             // Array.reverse() works in-place, so we create a new array.
-            ...[ ...paging.nextSubordinatesStack ].reverse(),
         ],
         listState.poq,
         [],
@@ -282,7 +281,6 @@ async function mergeSortAndPageList(
     }
 
     // We are done with these, so we can relinquish these references.
-    paging.nextEntriesStack.length = 0;
     listState.results.length = 0;
     const results = await ctx.db.enqueuedListResult.findMany({
         take: Math.max(Number(prr.pageSize), 1),

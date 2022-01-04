@@ -1099,9 +1099,6 @@ interface PagedResultsRequestState {
      * The entries already returned by the search or list operation.
      */
     alreadyReturnedById: Set<Entry["id"]>;
-
-    nextEntriesStack: EntryInformation[];
-    nextSubordinatesStack: ListItem[];
     cursorId?: number;
     totalResults?: number;
 }

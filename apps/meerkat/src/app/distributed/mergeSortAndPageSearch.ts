@@ -250,7 +250,6 @@ async function mergeSortAndPageSearch(
         },
         [
             ...searchState.results,
-            ...[ ...(searchState.paging?.[1].nextEntriesStack ?? []) ].reverse(),
         ],
         searchState.poq,
         FALSE, // altMatching will always be FALSE from local results, becase we don't do alternative matching 'round here.
@@ -304,7 +303,6 @@ async function mergeSortAndPageSearch(
     }
 
     // We are done with these, so we can relinquish these references.
-    searchState.paging[1].nextEntriesStack.length = 0;
     searchState.results.length = 0;
     const results = await ctx.db.enqueuedSearchResult.findMany({
         take: Math.max(Number(prr.pageSize), 1),
