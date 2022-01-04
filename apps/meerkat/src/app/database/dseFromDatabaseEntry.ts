@@ -501,9 +501,12 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    if (typeof dbe.hierarchyLevel === "number") {
+    if (typeof dbe.hierarchyPath === "string") {
         ret.hierarchy = {
-            level: dbe.hierarchyLevel,
+            // Subtract two from the following, because:
+            // -1 for there being a trailing period (necessary).
+            // -1 for hierarchyLevel being zero-indexed.
+            level: dbe.hierarchyPath?.split(".").slice(0, -1).length ?? 0,
             parent: Array.isArray(dbe.hierarchyParentDN)
                 ? dbe.hierarchyParentDN.map(rdnFromJson)
                 : undefined,

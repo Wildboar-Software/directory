@@ -150,22 +150,15 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         },
     });
     pendingUpdates.entryUpdate.hierarchyParentDN = dn.map(rdnToJson);
-    pendingUpdates.entryUpdate.hierarchyLevel = (parent.dse.hierarchy.level + 1);
     pendingUpdates.entryUpdate.hierarchyTopDN = top.map(rdnToJson);
-    pendingUpdates.entryUpdate.hierarchyPath = parentRow?.hierarchyPath
-        ? parentRow.hierarchyPath + `.${vertex.dse.id}`
-        : vertex.dse.id.toString();
+    pendingUpdates.entryUpdate.hierarchyPath = ((parentRow?.hierarchyPath ?? "") + parent.dse.id.toString() + ".");
     pendingUpdates.otherWrites.push(ctx.db.entry.update({
         where: {
             id: parent.dse.id,
         },
         data: {
-            hierarchyLevel: parent.dse.hierarchy.level ?? 0,
-            hierarchyPath: parentRow?.hierarchyPath ?? parent.dse.id.toString(),
+            hierarchyPath: parentRow?.hierarchyPath ?? "",
             hierarchyTopDN: top.map(rdnToJson),
-            // hierarchyParentDN: Array.isArray(parent.dse.hierarchy.parent)
-            //     ? parent.dse.hierarchy.parent.map(rdnToJson)
-            //     : undefined,
         },
     }));
     parent.dse.hierarchy = {
@@ -213,7 +206,6 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
         disconnect: true,
     };
     pendingUpdates.entryUpdate.hierarchyParentDN = Prisma.DbNull;
-    pendingUpdates.entryUpdate.hierarchyLevel = null;
     pendingUpdates.entryUpdate.hierarchyTopDN = Prisma.DbNull;
     pendingUpdates.entryUpdate.hierarchyPath = null;
     // REVIEW: Set the subordinates as tops or delete?
@@ -237,7 +229,6 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
             data: {
                 hierarchyTopDN: Prisma.DbNull,
                 hierarchyParentDN: Prisma.DbNull,
-                hierarchyLevel: 0,
                 hierarchyParent_id: null,
                 hierarchyPath: child.id.toString(),
             },
@@ -253,7 +244,6 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
             select: {
                 id: true,
                 hierarchyPath: true,
-                hierarchyLevel: true,
             },
         });
         // REVIEW: Should this be done outside of the transaction, just so
@@ -268,11 +258,6 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                     hierarchyTopDN: [ rdnToJson(childRDN) ],
                     hierarchyPath: descendant.hierarchyPath
                         ?.replace(`${child.hierarchyPath}.`, `${child.id}.`),
-                    hierarchyLevel: (
-                        1 // The child ID itself is removed from the path in the subtraction.
-                        + (descendant.hierarchyPath?.split(".").length ?? 0)
-                        - (child.hierarchyPath?.split(".").length ?? 0)
-                    ),
                 },
             })),
         );
