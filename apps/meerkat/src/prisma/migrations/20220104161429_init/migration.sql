@@ -24,6 +24,7 @@ CREATE TABLE `Entry` (
     `deleteTimestamp` DATETIME(3) NULL,
     `creatorsName` JSON NULL,
     `modifiersName` JSON NULL,
+    `expiresTimestamp` DATETIME(3) NULL,
     `governingStructureRule` INTEGER NULL,
     `structuralObjectClass` VARCHAR(128) NULL,
     `subordinate_completeness` BOOLEAN NULL,
@@ -31,15 +32,16 @@ CREATE TABLE `Entry` (
     `attribute_values_incomplete` BOOLEAN NULL,
     `lastShadowUpdate` DATETIME(3) NULL,
     `keep_children_in_database` BOOLEAN NOT NULL DEFAULT false,
+    `may_add_top_level_dse` BOOLEAN NOT NULL DEFAULT false,
     `hierarchyParent_id` INTEGER NULL,
     `hierarchyParentDN` JSON NULL,
-    `hierarchyLevel` INTEGER NULL,
     `hierarchyTop_id` INTEGER NULL,
     `hierarchyTopDN` JSON NULL,
     `hierarchyPath` VARCHAR(191) NULL,
 
     INDEX `Entry_immediate_superior_id_deleteTimestamp_subentry_idx`(`immediate_superior_id`, `deleteTimestamp`, `subentry`),
-    INDEX `Entry_hierarchyTop_id_hierarchyLevel_idx`(`hierarchyTop_id`, `hierarchyLevel`),
+    INDEX `Entry_materialized_path_idx`(`materialized_path`),
+    INDEX `Entry_hierarchyTop_id_idx`(`hierarchyTop_id`),
     INDEX `Entry_hierarchyParent_id_idx`(`hierarchyParent_id`),
     INDEX `Entry_hierarchyPath_idx`(`hierarchyPath`),
     UNIQUE INDEX `Entry_dseUUID_key`(`dseUUID`),
@@ -53,6 +55,7 @@ CREATE TABLE `UniqueIdentifier` (
     `entry_id` INTEGER NOT NULL,
     `uniqueIdentifier` LONGBLOB NOT NULL,
 
+    INDEX `UniqueIdentifier_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -202,6 +205,7 @@ CREATE TABLE `PwdDictionaries` (
     `entry_id` INTEGER NOT NULL,
     `value` TEXT NOT NULL,
 
+    INDEX `PwdDictionaries_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -305,14 +309,12 @@ CREATE TABLE `AttributeValue` (
     `tag_number` INTEGER NOT NULL,
     `ber` LONGBLOB NOT NULL,
     `jer` JSON NULL,
-    `sort_key` BIGINT NULL,
     `security_label` LONGBLOB NULL,
     `security_policy_identifier` VARCHAR(191) NULL,
     `security_classification` SMALLINT NULL,
     `privacy_mark` VARCHAR(191) NULL,
 
     INDEX `AttributeValue_entry_id_idx`(`entry_id`),
-    INDEX `AttributeValue_type_sort_key_idx`(`type`, `sort_key`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -329,6 +331,7 @@ CREATE TABLE `ContextValue` (
     `jer` JSON NULL,
     `fallback` BOOLEAN NOT NULL,
 
+    INDEX `ContextValue_value_id_idx`(`value_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -345,6 +348,7 @@ CREATE TABLE `ACIItem` (
     `scope` ENUM('PRESCRIPTIVE', 'ENTRY', 'SUBENTRY') NOT NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
 
+    INDEX `ACIItem_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -361,6 +365,7 @@ CREATE TABLE `Clearance` (
     `topSecret` BOOLEAN NOT NULL DEFAULT false,
     `ber` LONGBLOB NOT NULL,
 
+    INDEX `Clearance_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -379,7 +384,7 @@ CREATE TABLE `ClearanceSecurityCategory` (
 CREATE TABLE `AccessPoint` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `ber` LONGBLOB NOT NULL,
-    `knowledge_type` ENUM('MY_ACCESS_POINT', 'SUPERIOR', 'SPECIFIC', 'NON_SPECIFIC', 'SUPPLIER', 'CONSUMER', 'SECONDARY_SHADOW', 'OTHER', 'OB_REQUEST', 'OB_SHADOW_MASTER', 'NON_SUPPLYING_MASTER') NOT NULL,
+    `knowledge_type` ENUM('MY_ACCESS_POINT', 'SUPERIOR', 'SPECIFIC', 'NON_SPECIFIC', 'SUPPLIER', 'CONSUMER', 'SECONDARY_SUPPLIER', 'SECONDARY_CONSUMER', 'OTHER', 'OB_REQUEST', 'OB_SHADOW_MASTER', 'NON_SUPPLYING_MASTER') NOT NULL,
     `ae_title` JSON NOT NULL,
     `category` INTEGER NULL,
     `chainingRequired` BOOLEAN NULL,
@@ -387,7 +392,9 @@ CREATE TABLE `AccessPoint` (
     `non_supplying_master_id` INTEGER NULL,
     `is_consumer_of_id` INTEGER NULL,
     `entry_id` INTEGER NULL,
+    `nsk_group` BIGINT NULL,
 
+    INDEX `AccessPoint_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -395,20 +402,13 @@ CREATE TABLE `AccessPoint` (
 CREATE TABLE `NetworkServiceAccessPoint` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `ipv4` VARCHAR(191) NULL,
+    `hostname` VARCHAR(255) NULL,
     `tcp_port` INTEGER NULL,
     `url` VARCHAR(191) NULL,
     `bytes` LONGBLOB NOT NULL,
     `access_point_id` INTEGER NOT NULL,
 
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `NonSpecificKnowledge` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `ber` LONGBLOB NOT NULL,
-    `entry_id` INTEGER NOT NULL,
-
+    INDEX `NetworkServiceAccessPoint_access_point_id_idx`(`access_point_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -423,6 +423,7 @@ CREATE TABLE `SubtreeSpecification` (
     `ber` LONGBLOB NOT NULL,
     `entry_id` INTEGER NOT NULL,
 
+    INDEX `SubtreeSpecification_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -612,6 +613,7 @@ CREATE TABLE `SearchRule` (
     UNIQUE INDEX `SearchRule_rule_id_key`(`rule_id`),
     INDEX `SearchRule_rule_id_idx`(`rule_id`),
     INDEX `SearchRule_user_class_idx`(`user_class`),
+    INDEX `SearchRule_entry_id_idx`(`entry_id`),
     UNIQUE INDEX `SearchRule_dmd_id_rule_id_key`(`dmd_id`, `rule_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -671,6 +673,7 @@ CREATE TABLE `OperationalBinding` (
 
     UNIQUE INDEX `OperationalBinding_previous_id_key`(`previous_id`),
     INDEX `OperationalBinding_validity_end_validity_start_idx`(`validity_end`, `validity_start`),
+    INDEX `OperationalBinding_entry_id_idx`(`entry_id`),
     UNIQUE INDEX `OperationalBinding_uuid_key`(`uuid`),
     UNIQUE INDEX `OperationalBinding_binding_type_binding_identifier_binding_v_key`(`binding_type`, `binding_identifier`, `binding_version`, `terminated_time`),
     PRIMARY KEY (`id`)
@@ -775,12 +778,25 @@ CREATE TABLE `InstalledVersions` (
 CREATE TABLE `EnqueuedSearchResult` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `connection_uuid` VARCHAR(40) NOT NULL,
-    `query_uuid` VARCHAR(40) NOT NULL,
+    `query_ref` VARCHAR(40) NOT NULL,
     `result_index` INTEGER NOT NULL,
-    `entry_id` INTEGER NOT NULL,
+    `entry_id` INTEGER NULL,
     `entry_info` LONGBLOB NOT NULL,
 
-    UNIQUE INDEX `EnqueuedSearchResult_connection_uuid_query_uuid_result_index_key`(`connection_uuid`, `query_uuid`, `result_index`),
+    UNIQUE INDEX `EnqueuedSearchResult_connection_uuid_query_ref_result_index_key`(`connection_uuid`, `query_ref`, `result_index`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `EnqueuedListResult` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `connection_uuid` VARCHAR(40) NOT NULL,
+    `query_ref` VARCHAR(40) NOT NULL,
+    `result_index` INTEGER NOT NULL,
+    `entry_id` INTEGER NULL,
+    `subordinate_info` LONGBLOB NOT NULL,
+
+    UNIQUE INDEX `EnqueuedListResult_connection_uuid_query_ref_result_index_key`(`connection_uuid`, `query_ref`, `result_index`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -893,9 +909,6 @@ ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_entry_id_fkey` FOREIGN KEY
 ALTER TABLE `NetworkServiceAccessPoint` ADD CONSTRAINT `NetworkServiceAccessPoint_access_point_id_fkey` FOREIGN KEY (`access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `NonSpecificKnowledge` ADD CONSTRAINT `NonSpecificKnowledge_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `SubtreeSpecification` ADD CONSTRAINT `SubtreeSpecification_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -951,3 +964,6 @@ ALTER TABLE `EntryAccessControlScheme` ADD CONSTRAINT `EntryAccessControlScheme_
 
 -- AddForeignKey
 ALTER TABLE `EnqueuedSearchResult` ADD CONSTRAINT `EnqueuedSearchResult_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `EnqueuedListResult` ADD CONSTRAINT `EnqueuedListResult_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

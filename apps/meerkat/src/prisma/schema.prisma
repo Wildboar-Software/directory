@@ -158,7 +158,7 @@ model Entry {
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
   @@index([materialized_path])
-  @@index([hierarchyTop_id, hierarchyLevel])
+  @@index([hierarchyTop_id])
   @@index([hierarchyParent_id])
   @@index([hierarchyPath])
 }
