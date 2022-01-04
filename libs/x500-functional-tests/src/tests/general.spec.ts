@@ -2959,7 +2959,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("Search.searchControlOptions.separateFamilyMembers", async () => {
+    it.only("Search.searchControlOptions.separateFamilyMembers", async () => {
         const testId = `searchControlOptions.separateFamilyMembers-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
@@ -3011,35 +3011,28 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("Search.searchControlOptions.searchFamily", async () => {
+    it("Search.searchControlOptions.searchFamily", async () => {
         const testId = `Search.searchControlOptions.entryCount-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
         { // Setup
             await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
         }
-        const dn = createTestRootDN(testId);
-        const pageSize: number = 5;
-        const subordinatesLevel1: string[] = Array(pageSize * 2).fill("").map(() => crypto.randomUUID());
-        const subordinatesLevel2: string[] = Array((pageSize * 2) - 1).fill("").map(() => crypto.randomUUID());
-        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id)));
-        const subordinateWithSubordinates: string = subordinatesLevel1[subordinatesLevel1.length - 1];
-        const level2DN: DistinguishedName = [ ...dn, createTestRDN(subordinateWithSubordinates) ];
-        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id)));
-        const encountered: Set<string> = new Set();
+        const compoundDN = [...dn, parentRDN];
+        const subordinatesLevel1: string[] = Array(2).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, compoundDN, id)));
+        const encounteredOrNonFamily: Set<string> = new Set(subordinatesLevel1);
         const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
         searchControlOptions[SearchControlOptions_searchFamily] = TRUE_BIT;
         const reqData: SearchArgumentData = new SearchArgumentData(
             {
-                rdnSequence: dn,
+                rdnSequence: compoundDN,
             },
             SearchArgumentData_subset_wholeSubtree,
             undefined,
             undefined,
             undefined,
-            {
-                newRequest: new PagedResultsRequest_newRequest(
-                    pageSize,
-                ),
-            },
+            undefined,
             undefined,
             undefined,
             undefined,
@@ -3061,16 +3054,13 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         const decoded = _decode_SearchResult(result.result);
         const resData = getOptionallyProtectedValue(decoded);
         assert("searchInfo" in resData);
-        expect(resData.searchInfo.entries).toHaveLength(pageSize);
+        expect(resData.searchInfo.entries.length).toBeGreaterThan(1);
         for (const entry of resData.searchInfo.entries) {
             const rdn = entry.name.rdnSequence[entry.name.rdnSequence.length - 1];
             const foundId: string = rdn[0].value.utf8String;
-            expect(encountered.has(foundId)).toBeFalsy();
-            encountered.add(foundId);
+            expect(encounteredOrNonFamily.has(foundId)).toBeFalsy();
+            encounteredOrNonFamily.add(foundId);
         }
-        assert(resData.searchInfo.partialOutcomeQualifier?.entryCount);
-        assert("exact" in resData.searchInfo.partialOutcomeQualifier.entryCount);
-        expect(resData.searchInfo.partialOutcomeQualifier.entryCount.exact).toBe(20);
     });
 
     it("Search.selection", async () => {
@@ -4733,7 +4723,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         );
         const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
             {
-                rdnSequence: dn,
+                rdnSequence: [...dn, parentRDN],
             },
             [
                 {
@@ -7987,17 +7977,8 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    it.skip("The hierarchyLevel attribute is always correct", async () => {
-
-    });
-
-    it.skip("An entry's structural object class is calculated correctly", async () => {
-        // This is better tested via unit tests.
-    });
-
-    it.todo("Hierarchy attributes update correctly when the hierarchy changes");
+    it.todo("An entry's structural object class is calculated correctly"); // Do via unit testing instead.
     it.todo("Alias attributes update correctly when aliases change."); // This might actually not be required.
-
     // Can't really be tested right now, because there's no way to remotely create a shadow entry.
     it.todo("An entry modification is not allowed to happen to a DSE of type shadow");
 

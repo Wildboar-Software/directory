@@ -180,6 +180,7 @@ import {
     FamilyGrouping_entryOnly,
     FamilyGrouping_compoundEntry,
     FamilyGrouping_strands,
+    compoundEntry,
     // FamilyGrouping_multiStrand,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 import {
@@ -2002,51 +2003,42 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
-    const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
-        /**
-         * We return no subordinates, because the family members will all be
-         * returned because of the current target entry, even if the
-         * `separateFamilyMembers` option is used.
+    const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => readSubordinates(
+        ctx,
+        target,
+        /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
+         * "Why don't you just fetch `pageSize` number of entries?"
+         *
+         * Pagination fetches `pageSize` number of entries at _each level_ of search
+         * recursion. In other words, if you request a page size of 100, and, in the
+         * process, you recurse into the DIT ten layers deep, there will actually be
+         * 1000 entries loaded into memory at the deepest part. This means that a
+         * request could consume considerably higher memory than expected. To prevent
+         * this, a fixed page size is used. In the future, this may be configurable.
          */
-        if (searchFamilyInEffect) {
-            return [];
-        }
-        return readSubordinates(
-            ctx,
-            target,
-            /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
-             * "Why don't you just fetch `pageSize` number of entries?"
-             *
-             * Pagination fetches `pageSize` number of entries at _each level_ of search
-             * recursion. In other words, if you request a page size of 100, and, in the
-             * process, you recurse into the DIT ten layers deep, there will actually be
-             * 1000 entries loaded into memory at the deepest part. This means that a
-             * request could consume considerably higher memory than expected. To prevent
-             * this, a fixed page size is used. In the future, this may be configurable.
-             */
-            ctx.config.entriesPerSubordinatesPage,
-            undefined,
-            cursorId,
-            {
-                // ...(data.filter
-                //     ? convertFilterToPrismaSelect(ctx, data.filter)
-                //     : {}),
-                subentry: subentries,
-                EntryObjectClass: (conn instanceof LDAPConnection)
+        ctx.config.entriesPerSubordinatesPage,
+        undefined,
+        cursorId,
+        {
+            // ...(data.filter
+            //     ? convertFilterToPrismaSelect(ctx, data.filter)
+            //     : {}),
+            subentry: subentries,
+            EntryObjectClass: (searchFamilyInEffect
+                ? {
+                    some: {
+                        object_class: CHILD,
+                    },
+                }
+                : (conn instanceof LDAPConnection)
                     ? undefined
                     : {
-                        /**
-                         * We do not iterate over child entries, because
-                         * those will be returned--or not--with the
-                         * ancestor entry.
-                         */
                         none: {
                             object_class: CHILD,
                         },
-                    },
-            },
-        );
-    };
+                    }),
+        },
+    );
     let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
@@ -2093,7 +2085,11 @@ async function search_i (
              * those will be returned--or not--with the
              * ancestor entry.
              */
-            if (subordinate.dse.objectClass.has(CHILD) && !(conn instanceof LDAPConnection)) {
+            if (
+                searchFamilyInEffect
+                    ? !subordinate.dse.objectClass.has(CHILD)
+                    : (subordinate.dse.objectClass.has(CHILD) && !(conn instanceof LDAPConnection))
+            ) {
                 cursorId = subordinate.dse.id;
                 if (searchState.paging?.[1].cursorIds) {
                     searchState.paging[1].cursorIds[searchState.depth] = subordinate.dse.id;
@@ -2151,12 +2147,6 @@ async function search_i (
                 conn,
                 {
                     ...state,
-                    // admPoints: target.dse.admPoint
-                    //     ? [ ...state.admPoints, target ]
-                    //     : [ ...state.admPoints ],
-                    // admPoints: subordinate.dse.admPoint
-                    //     ? [ ...state.admPoints, subordinate ]
-                    //     : [ ...state.admPoints ],
                     admPoints: subordinate.dse.admPoint
                         ? (subordinate.dse.admPoint.administrativeRole.has(AUTONOMOUS)
                             ? [ subordinate ]
