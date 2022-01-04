@@ -27,7 +27,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    if (!vertex.dse.subentry) {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(ID_PWD_SUBENTRY)) {
         return [];
     }
     if (vertex.dse.shadow) {
