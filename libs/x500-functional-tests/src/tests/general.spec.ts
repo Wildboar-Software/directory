@@ -419,6 +419,7 @@ import {
 import {
     userPwdClass,
 } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
+import { FamilyGrouping_compoundEntry, FamilyGrouping_strands } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 
 jest.setTimeout(30000);
 
@@ -3553,16 +3554,255 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    it.skip("Search.selection.familyReturn.memberSelect.contributingEntriesOnly", async () => {
-
+    it("Search.selection.familyReturn.memberSelect.contributingEntriesOnly", async () => {
+        const testId = `Search.contributingEntriesOnly-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        // We separate family members just to make it easier to count.
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_contributingEntriesOnly,
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                and: [
+                    {
+                        item: {
+                            present: organizationName["&id"],
+                        },
+                    },
+                    {
+                        item: {
+                            present: organizationalUnitName["&id"],
+                        },
+                    },
+                ],
+            },
+            undefined,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_compoundEntry,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(3);
     });
 
-    it.skip("Search.selection.familyReturn.memberSelect.participatingEntriesOnly", async () => {
-
+    it("Search.selection.familyReturn.memberSelect.participatingEntriesOnly", async () => {
+        const testId = `Search.participatingEntriesOnly-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        // We separate family members just to make it easier to count.
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_participatingEntriesOnly,
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                and: [
+                    {
+                        item: {
+                            present: organizationName["&id"],
+                        },
+                    },
+                    {
+                        item: {
+                            equality: new AttributeValueAssertion(
+                                objectClass["&id"],
+                                oid(device["&id"]),
+                                undefined,
+                            ),
+                        },
+                    },
+                ],
+            },
+            undefined,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_strands,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(3);
     });
 
-    it.skip("Search.selection.familyReturn.memberSelect.compoundEntry", async () => {
-
+    it("Search.selection.familyReturn.memberSelect.compoundEntry", async () => {
+        const testId = `Search.compoundEntry-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        // We separate family members just to make it easier to count.
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_compoundEntry,
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                and: [
+                    {
+                        item: {
+                            present: organizationName["&id"],
+                        },
+                    },
+                    {
+                        item: {
+                            equality: new AttributeValueAssertion(
+                                objectClass["&id"],
+                                oid(device["&id"]),
+                                undefined,
+                            ),
+                        },
+                    },
+                ],
+            },
+            undefined,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_strands,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(7);
     });
 
     it.skip("Search.selection.familyReturn.familySelect", async () => {
@@ -4069,7 +4309,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyEntry.changes.resetValue", async () => {
+    it("ModifyEntry.changes.resetValue", async () => {
         const testId = `ModifyEntry.changes.resetValue-${(new Date()).toISOString()}`;
         const desc1 = _encode_UnboundedDirectoryString({
             uTF8String: "Mod 1",
@@ -4137,7 +4377,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("ModifyEntry.changes.replaceValues", async () => {
+    it("ModifyEntry.changes.replaceValues", async () => {
         const testId = `ModifyEntry.changes.replaceValues-${(new Date()).toISOString()}`;
         const desc = _encode_UnboundedDirectoryString({
             uTF8String: "Entry successfully modified",
@@ -5012,26 +5252,6 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
             _encode_ModifyDNArgument(arg, DER),
         );
         expect(("result" in result) && result.result).toBeTruthy();
-    });
-
-    it.skip("Name resolution continues in subordinate DSAs in a HOB", async () => {
-
-    });
-
-    it.skip("Name resolution continues in cross-DSAs in a HOB", async () => {
-
-    });
-
-    it.skip("Name resolution continues in subordinate DSAs in a NHOB", async () => {
-
-    });
-
-    it.skip("Name resolution continues in cross-DSAs in a NHOB", async () => {
-
-    });
-
-    it.skip("ServiceControlOptions.chainingProhibited stops chaining", async () => {
-
     });
 
     it.skip("ServiceControlOptions.dontUseCopy stops a shadow DSE from being used", async () => {

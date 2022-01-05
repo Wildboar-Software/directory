@@ -1319,10 +1319,11 @@ async function executeReplaceValues (
     patch.removedValues.set(TYPE_OID, oldValues);
     addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
     return [
-        ctx.db.attributeValue.deleteMany({
-            where,
-        }),
-        ...(await addValues(ctx, entry, values)),
+        ...(await removeAttribute(ctx, entry, mod.type_)),
+        // Last argument to addValues() is false, because we don't want to check
+        // if the potentially added values already exist, because we are just
+        // going to wipe out all that exist and replace them.
+        ...(await addValues(ctx, entry, values, undefined, false)),
     ];
 }
 

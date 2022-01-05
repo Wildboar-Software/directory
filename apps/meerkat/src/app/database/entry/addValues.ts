@@ -30,6 +30,7 @@ async function validateValues (
     ctx: Context,
     entry: Vertex,
     values: Value[],
+    checkForExisting: boolean = true,
 ): Promise<void> {
     for (const value of values) {
         const TYPE_OID: string = value.type.toString();
@@ -67,53 +68,55 @@ async function validateValues (
                 );
             }
         }
-        /**
-         * As I interpret it, the duplicate values checking does not have to
-         * consider contexts. This is a fortuitous conclusion to come to, since
-         * it avoids a conflict between DAP and LDAP operation. LDAP has no
-         * concept of contexts, so preventing duplicate values regardless of
-         * their contexts is valuable here.
-         */
-        const valueExists: boolean = attrSpec?.driver?.hasValue
-            ? await attrSpec.driver.hasValue(ctx, entry, value)
-            : !!(await ctx.db.attributeValue.findFirst({
-                where: {
-                    entry_id: entry.dse.id,
-                    type: TYPE_OID,
-                    ber: Buffer.from(value.value.toBytes()),
-                },
-                select: {
-                    id: true,
-                },
-            }));
-        if (valueExists) {
-            throw new AttributeError(
-                ctx.i18n.t("err:value_already_exists", {
-                    type: TYPE_OID,
-                }),
-                new AttributeErrorData(
-                    {
-                        rdnSequence: getDistinguishedName(entry),
+        if (checkForExisting) {
+            /**
+             * As I interpret it, the duplicate values checking does not have to
+             * consider contexts. This is a fortuitous conclusion to come to, since
+             * it avoids a conflict between DAP and LDAP operation. LDAP has no
+             * concept of contexts, so preventing duplicate values regardless of
+             * their contexts is valuable here.
+             */
+            const valueExists: boolean = attrSpec?.driver?.hasValue
+                ? await attrSpec.driver.hasValue(ctx, entry, value)
+                : !!(await ctx.db.attributeValue.findFirst({
+                    where: {
+                        entry_id: entry.dse.id,
+                        type: TYPE_OID,
+                        ber: Buffer.from(value.value.toBytes()),
                     },
-                    [
-                        new AttributeErrorData_problems_Item(
-                            AttributeProblem_attributeOrValueAlreadyExists,
-                            value.type,
-                            value.value,
+                    select: {
+                        id: true,
+                    },
+                }));
+            if (valueExists) {
+                throw new AttributeError(
+                    ctx.i18n.t("err:value_already_exists", {
+                        type: TYPE_OID,
+                    }),
+                    new AttributeErrorData(
+                        {
+                            rdnSequence: getDistinguishedName(entry),
+                        },
+                        [
+                            new AttributeErrorData_problems_Item(
+                                AttributeProblem_attributeOrValueAlreadyExists,
+                                value.type,
+                                value.value,
+                            ),
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            undefined,
+                            undefined,
+                            attributeError["&errorCode"],
                         ),
-                    ],
-                    [],
-                    createSecurityParameters(
-                        ctx,
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
                         undefined,
-                        attributeError["&errorCode"],
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            );
+                );
+            }
         }
         for (const context of value.contexts ?? []) {
             const CONTEXT_TYPE: string = context.contextType.toString();
@@ -163,9 +166,10 @@ async function addValues (
     entry: Vertex,
     values: Value[],
     modifier?: DistinguishedName,
+    checkForExisting: boolean = true,
 ): Promise<PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
-        await validateValues(ctx, entry, values);
+        await validateValues(ctx, entry, values, checkForExisting);
     }
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {

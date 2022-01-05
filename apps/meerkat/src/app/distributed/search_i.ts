@@ -1143,7 +1143,6 @@ async function search_i (
     const filteredAttributes = filter
         ? getAttributeTypesFromFilter(filter)
         : undefined;
-    const infoItems: EntryInformation_information_Item[] = [];
     const eis: EntryInformationSelection | undefined = filteredAttributes
         ? new EntryInformationSelection(
             {
@@ -1171,6 +1170,7 @@ async function search_i (
         : undefined;
 
     const readFamilyMemberInfo = async (vertex: Vertex): Promise<EntryInformation> => {
+        const infoItems: EntryInformation_information_Item[] = [];
         const vertexDN = getDistinguishedName(vertex);
         const {
             userAttributes,
@@ -1554,7 +1554,10 @@ async function search_i (
             : null;
         const family = await readFamily(ctx, target);
         const familySubsets = familySubsetGetter(family);
-        let matchedValues: ReturnType<typeof evaluateFilter>;
+        let filterResult: ReturnType<typeof evaluateFilter> = {
+            matched: false,
+            contributingEntries: new Set(),
+        };
         let matchedFamilySubset: Vertex[] | undefined;
         for (const familySubset of familySubsets) {
             if (familySubset.length === 0) {
@@ -1565,7 +1568,7 @@ async function search_i (
                 familySubset.map((member) => readFamilyMemberInfo(member)),
             );
             try {
-                matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                filterResult = evaluateFilter(filter, familyInfos, filterOptions);
             } catch (e) {
                 if (e instanceof CannotPerformExactly) {
                     throw new errors.ServiceError(
@@ -1588,20 +1591,20 @@ async function search_i (
                     continue;
                 }
             }
-            const matched: boolean = (
-                (matchedValues === true)
-                || (Array.isArray(matchedValues) && !!matchedValues.length)
-            );
-            if (matched || searchingForRootDSE) {
+            if (filterResult.matched || searchingForRootDSE) {
                 matchedFamilySubset = familySubset;
                 break;
             }
         }
         if (matchedFamilySubset) {
             const allFamilyMembers: Vertex[] = readCompoundEntry(family).next().value;
-            const contributingEntriesByIndex: Set<number> = Array.isArray(matchedValues)
-                ? new Set(matchedValues.map((mv) => mv.entryIndex))
-                : new Set([ 0 ]);
+            const contributingEntriesByIndex: Set<number> = filterResult.contributingEntries;
+            /**
+             * If the whole filter is negated or and:{}, there will be no
+             * contributing members, even if it matches. Regardless, the
+             * ancestor will always count as a "contributing member."
+             */
+            contributingEntriesByIndex.add(0);
             const contributingEntryIds: Set<number> = new Set(
                 matchedFamilySubset
                     .filter((_, i) => contributingEntriesByIndex.has(i))
@@ -1624,8 +1627,8 @@ async function search_i (
                         || !searchState.paging?.[1].alreadyReturnedById.has(member.dse.id)
                     )
                 ));
-            const matchedValuesByEntryId = Array.isArray(matchedValues)
-                ? _.groupBy(matchedValues, (mv) => matchedFamilySubset![mv.entryIndex].dse.id)
+            const matchedValuesByEntryId = filterResult.matchedValues?.length
+                ? _.groupBy(filterResult.matchedValues, (mv) => matchedFamilySubset![mv.entryIndex].dse.id)
                 : {};
             const einfos = await Promise.all(
                 familyMembersToReturn.map((member) => readEntryInformation(
@@ -1643,7 +1646,7 @@ async function search_i (
             );
             if (
                 matchedValuesOnly
-                && (Array.isArray(matchedValues) && matchedValues.length)
+                && filterResult.matchedValues?.length
                 && !typesOnly // This option would make no sense with matchedValuesOnly.
             ) {
                 assert(einfos.length === familyMembersToReturn.length);
@@ -1735,21 +1738,23 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
-                searchState.results.push(
-                    new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
-                        },
-                        !matchedFamilySubset[0].dse.shadow,
-                        attributeSizeLimit
-                            ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-                            : filteredEinfos[0][1],
-                        filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                        (state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ),
-                );
+                if (filteredEinfos.length > 0) {
+                    searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
+                    searchState.results.push(
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
+                            },
+                            !matchedFamilySubset[0].dse.shadow,
+                            attributeSizeLimit
+                                ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                                : filteredEinfos[0][1],
+                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    );
+                }
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(
@@ -1787,7 +1792,10 @@ async function search_i (
             : null;
         const family = await readFamily(ctx, target);
         const familySubsets = familySubsetGetter(family);
-        let matchedValues: ReturnType<typeof evaluateFilter>;
+        let filterResult: ReturnType<typeof evaluateFilter> = {
+            matched: false,
+            contributingEntries: new Set(),
+        };
         let matchedFamilySubset: Vertex[] | undefined;
         for (const familySubset of familySubsets) {
             if (familySubset.length === 0) {
@@ -1798,7 +1806,7 @@ async function search_i (
                 familySubset.map((member) => readFamilyMemberInfo(member)),
             );
             try {
-                matchedValues = evaluateFilter(filter, familyInfos, filterOptions);
+                filterResult = evaluateFilter(filter, familyInfos, filterOptions);
             } catch (e) {
                 if (e instanceof CannotPerformExactly) {
                     throw new errors.ServiceError(
@@ -1821,20 +1829,20 @@ async function search_i (
                     continue;
                 }
             }
-            const matched: boolean = (
-                (matchedValues === true)
-                || (Array.isArray(matchedValues) && !!matchedValues.length)
-            );
-            if (matched) {
+            if (filterResult.matched) {
                 matchedFamilySubset = familySubset;
                 break;
             }
         }
         if (matchedFamilySubset) {
             const allFamilyMembers: Vertex[] = readCompoundEntry(family).next().value;
-            const contributingEntriesByIndex: Set<number> = Array.isArray(matchedValues)
-                ? new Set(matchedValues.map((mv) => mv.entryIndex))
-                : new Set([ 0 ]);
+            const contributingEntriesByIndex: Set<number> = filterResult.contributingEntries;
+            /**
+             * If the whole filter is negated or and:{}, there will be no
+             * contributing members, even if it matches. Regardless, the
+             * ancestor will always count as a "contributing member."
+             */
+            contributingEntriesByIndex.add(0);
             const contributingEntryIds: Set<number> = new Set(
                 matchedFamilySubset
                     .filter((_, i) => contributingEntriesByIndex.has(i))
@@ -1857,8 +1865,8 @@ async function search_i (
                         || !searchState.paging?.[1].alreadyReturnedById.has(member.dse.id)
                     )
                 ));
-            const matchedValuesByEntryId = Array.isArray(matchedValues)
-                ? _.groupBy(matchedValues, (mv) => matchedFamilySubset![mv.entryIndex].dse.id)
+            const matchedValuesByEntryId = filterResult.matchedValues?.length
+                ? _.groupBy(filterResult.matchedValues, (mv) => matchedFamilySubset![mv.entryIndex].dse.id)
                 : {};
             const einfos = await Promise.all(
                 familyMembersToReturn.map((member) => readEntryInformation(
@@ -1876,7 +1884,7 @@ async function search_i (
             );
             if (
                 matchedValuesOnly
-                && (Array.isArray(matchedValues) && matchedValues.length)
+                && filterResult.matchedValues?.length
                 && !typesOnly // This option would make no sense with matchedValuesOnly.
             ) {
                 assert(einfos.length === familyMembersToReturn.length);
@@ -1967,21 +1975,23 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
-                searchState.results.push(
-                    new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
-                        },
-                        !matchedFamilySubset[0].dse.shadow,
-                        attributeSizeLimit
-                            ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-                            : filteredEinfos[0][1],
-                        filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-                        (state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ),
-                );
+                if (filteredEinfos.length > 0) {
+                    searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
+                    searchState.results.push(
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
+                            },
+                            !matchedFamilySubset[0].dse.shadow,
+                            attributeSizeLimit
+                                ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
+                                : filteredEinfos[0][1],
+                            filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    );
+                }
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(

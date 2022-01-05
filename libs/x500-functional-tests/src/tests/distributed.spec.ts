@@ -147,4 +147,24 @@ describe.skip("Meerkat DSA", () => {
 
     });
 
+    it.skip("Name resolution continues in subordinate DSAs in a HOB", async () => {
+
+    });
+
+    it.skip("Name resolution continues in cross-DSAs in a HOB", async () => {
+
+    });
+
+    it.skip("Name resolution continues in subordinate DSAs in a NHOB", async () => {
+
+    });
+
+    it.skip("Name resolution continues in cross-DSAs in a NHOB", async () => {
+
+    });
+
+    it.skip("ServiceControlOptions.chainingProhibited stops chaining", async () => {
+
+    });
+
 });
