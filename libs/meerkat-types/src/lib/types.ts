@@ -379,6 +379,7 @@ interface DSE {
     modifyTimestamp?: Date;
     entryACI?: ACIItem[];
     clearances?: Clearance[];
+    cachedAttributes?: Attribute[];
 
     // DSE type-specific data
     root?: RootDSE;

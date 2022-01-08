@@ -419,7 +419,7 @@ import {
 import {
     userPwdClass,
 } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
-import { FamilyGrouping_compoundEntry, FamilyGrouping_strands } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import { FamilyGrouping_compoundEntry, FamilyGrouping_entryOnly, FamilyGrouping_strands } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 
 jest.setTimeout(30000);
 
@@ -3805,8 +3805,86 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(resData.searchInfo.entries).toHaveLength(7);
     });
 
-    it.skip("Search.selection.familyReturn.familySelect", async () => {
-
+    it("Search.selection.familyReturn.familySelect", async () => {
+        const testId = `Search.selection.familyReturn.familySelect-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        // We separate family members just to make it easier to count.
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_contributingEntriesOnly,
+                [device["&id"]],
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                and: [
+                    {
+                        item: {
+                            present: organizationName["&id"],
+                        },
+                    },
+                ],
+            },
+            undefined,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_entryOnly,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        /**
+         * There should be four results: the ancestor node, which matches, the
+         * two entries of class `device`, and the entry that lies between the
+         * ancestor and one of the devices.
+         */
+        expect(resData.searchInfo.entries).toHaveLength(4);
     });
 
     it("Search pagination works", async () => {
@@ -6709,52 +6787,371 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
 
     });
 
-    it.skip("Search with FamilyGrouping.entryOnly", async () => {
-
+    it("Search with FamilyGrouping.entryOnly", async () => {
+        const testId = `Search.familyGrouping.entryOnly-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        // We separate family members just to make it easier to count.
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_contributingEntriesOnly,
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                and: [
+                    {
+                        item: {
+                            present: organizationalUnitName["&id"],
+                        },
+                    },
+                ],
+            },
+            undefined,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_entryOnly,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(1);
     });
 
     it.skip("Compare with FamilyGrouping.entryOnly", async () => {
-
+        // Already covered, because this is default.
     });
 
     it.skip("RemoveEntry with FamilyGrouping.entryOnly", async () => {
-
+        // Already covered, because this is default.
     });
 
-    it.skip("Search with FamilyGrouping.compoundEntry", async () => {
-
+    it("Search with FamilyGrouping.compoundEntry", async () => {
+        const testId = `Search.familyGrouping.compoundEntry-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        // We separate family members just to make it easier to count.
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_contributingEntriesOnly,
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                and: [
+                    {
+                        item: {
+                            present: organizationName["&id"],
+                        },
+                    },
+                    {
+                        item: {
+                            present: organizationalUnitName["&id"],
+                        },
+                    },
+                ],
+            },
+            undefined,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_compoundEntry,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        // There will be 3 results, because there are two OUs in the compound entry.
+        expect(resData.searchInfo.entries).toHaveLength(3);
     });
 
-    it.skip("Compare with FamilyGrouping.compoundEntry", async () => {
-
+    it.only("Compare with FamilyGrouping.compoundEntry", async () => {
+        const testId = `Compare.familyGrouping.strands-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const do_compare = async (purported: AttributeValueAssertion) => {
+            const reqData: CompareArgumentData = new CompareArgumentData(
+                {
+                    rdnSequence: [ ...dn, parentRDN ],
+                },
+                purported,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                FamilyGrouping_compoundEntry,
+            );
+            const arg: CompareArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                compare["&operationCode"]!,
+                _encode_CompareArgument(arg, DER),
+            );
+        };
+        const shouldBeTrue: AttributeValueAssertion = new AttributeValueAssertion(
+            objectClass["&id"],
+            oid(device["&id"]),
+            undefined,
+            undefined,
+        );
+        const response = await do_compare(shouldBeTrue);
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_CompareResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        expect(resData.matched).toBe(true);
     });
 
     it.skip("RemoveEntry with FamilyGrouping.compoundEntry", async () => {
 
     });
 
-    it.skip("Search with FamilyGrouping.strands", async () => {
-
+    it("Search with FamilyGrouping.strands", async () => {
+        const testId = `Search.familyGrouping.strands-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        // We separate family members just to make it easier to count.
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_contributingEntriesOnly,
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            {
+                and: [
+                    {
+                        item: {
+                            present: organizationName["&id"],
+                        },
+                    },
+                    {
+                        item: {
+                            present: surname["&id"],
+                        },
+                    },
+                ],
+            },
+            undefined,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_strands,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(3);
     });
 
-    it.skip("Compare with FamilyGrouping.strands", async () => {
-
+    it.only("Compare with FamilyGrouping.strands", async () => {
+        const testId = `Compare.familyGrouping.strands-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const do_compare = async (purported: AttributeValueAssertion) => {
+            const reqData: CompareArgumentData = new CompareArgumentData(
+                {
+                    rdnSequence: [ ...dn, parentRDN ],
+                },
+                purported,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                FamilyGrouping_strands,
+            );
+            const arg: CompareArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                compare["&operationCode"]!,
+                _encode_CompareArgument(arg, DER),
+            );
+        };
+        const shouldBeTrue: AttributeValueAssertion = new AttributeValueAssertion(
+            objectClass["&id"],
+            oid(device["&id"]),
+            undefined,
+            undefined,
+        );
+        const response = await do_compare(shouldBeTrue);
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_CompareResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        expect(resData.matched).toBe(true);
     });
 
     it.skip("RemoveEntry with FamilyGrouping.strands", async () => {
-
+        // Check that this yields an error.
     });
 
     it.skip("Search with FamilyGrouping.multiStrand", async () => {
-
+        // Not supported.
     });
 
     it.skip("Compare with FamilyGrouping.multiStrand", async () => {
-
+        // Check that this yields an error.
     });
 
     it.skip("RemoveEntry with FamilyGrouping.multiStrand", async () => {
-
+        // Check that this yields an error.
     });
 
     it.skip("ServiceControls.timeLimit is respected", async () => {

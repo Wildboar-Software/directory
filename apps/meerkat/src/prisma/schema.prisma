@@ -63,12 +63,12 @@ model Entry {
   //   writeableCopy Boolean @default(false) // Not used.
 
   // Single-valued attributes
-  createTimestamp DateTime // Can be non-null: even SDSEs are required to transmit createTimestamp.
-  modifyTimestamp DateTime // Can be non-null: even SDSEs are required to transmit modifyTimestamp.
-  deleteTimestamp DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
-  creatorsName    Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-  modifiersName   Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-  expiresTimestamp  DateTime? // This is used for entryTTL.
+  createTimestamp  DateTime // Can be non-null: even SDSEs are required to transmit createTimestamp.
+  modifyTimestamp  DateTime // Can be non-null: even SDSEs are required to transmit modifyTimestamp.
+  deleteTimestamp  DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
+  creatorsName     Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  modifiersName    Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  expiresTimestamp DateTime? // This is used for entryTTL.
 
   // This should be stored, rather than calculated. The reason for this is that
   // the permitted superior structure rules refers to the governingStructureRule
@@ -86,7 +86,7 @@ model Entry {
   attribute_completeness      Boolean?
   attribute_values_incomplete Boolean?
 
-  lastShadowUpdate DateTime?
+  lastShadowUpdate DateTime? // Could be used to populate the syncTimestamp attribute.
 
   // Storage parameters
   keep_children_in_database Boolean @default(false)
@@ -105,6 +105,9 @@ model Entry {
   hierarchyTop       Entry?  @relation(name: "top", fields: [hierarchyTop_id], references: [id])
   hierarchyTopDN     Json?
   hierarchyPath      String? // Period-delimited database IDs
+
+  // For storing other arbitrary data in the entry.
+  otherData Json?
 
   subordinates                Entry[]                       @relation("superior")
   hierarchicalChildren        Entry[]                       @relation("parent")
@@ -553,7 +556,7 @@ model AccessPoint {
   // values are of type MasterAndShadowAccessPoints. This is an arbitrary
   // integer that uniquely identifies the nonSpecificKnowledge value within the
   // entry to which this access point belongs.
-  nsk_group                BigInt?
+  nsk_group BigInt?
 
   @@index([entry_id])
 }
@@ -561,7 +564,7 @@ model AccessPoint {
 model NetworkServiceAccessPoint {
   id              Int         @id @default(autoincrement())
   ipv4            String? // @db.Inet
-  hostname        String? @db.VarChar(255)
+  hostname        String?     @db.VarChar(255)
   tcp_port        Int? // @db.SmallUnsignedInt
   url             String?
   bytes           Bytes
