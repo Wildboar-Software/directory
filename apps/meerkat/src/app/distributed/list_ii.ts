@@ -224,6 +224,10 @@ async function list_ii (
         }
     }
 
+    const isParent: boolean = target.dse.objectClass.has(PARENT);
+    const isChild: boolean = target.dse.objectClass.has(CHILD);
+    const isAncestor: boolean = (isParent && !isChild);
+
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
     let queryReference: string | undefined;
     let cursorId: number | undefined;
@@ -392,6 +396,9 @@ async function list_ii (
              * because of limits.
              */
             cursorId = subordinate.dse.id;
+            if (isAncestor && data.listFamily && !subordinate.dse.objectClass.has(CHILD)) {
+                continue;
+            }
             if (!(subordinate.dse.entry) && !(subordinate.dse.alias)) {
                 continue;
             }

@@ -2109,43 +2109,41 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    it.skip("List.listFamily", async () => {
+    it("List.listFamily", async () => {
         const testId = `List.listFamily-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const compoundEntryDN = [ ...dn, parentRDN ];
         { // Setup
             await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
         }
-        const dn = createTestRootDN(testId);
+        // We create subordinates that are not a part of the family.
         await Promise.all([
             "E338ECE9-0100-4499-BEEE-2F3F766B669C",
             "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
             "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
-        ].map((id) => createTestNode(connection!, dn, id)));
+        ].map((id) => createTestNode(connection!, compoundEntryDN, id)));
         const reqData: ListArgumentData = new ListArgumentData(
             {
-                rdnSequence: dn,
+                rdnSequence: compoundEntryDN,
             },
             undefined,
-            undefined,
+            TRUE,
         );
         const arg: ListArgument = {
             unsigned: reqData,
         };
-        const result = await writeOperation(
+        const response = await writeOperation(
             connection!,
             list["&operationCode"]!,
             _encode_ListArgument(arg, DER),
         );
-        if ("result" in result && result.result) {
-            const decoded = _decode_ListResult(result.result);
-            const resData = getOptionallyProtectedValue(decoded);
-            if ("listInfo" in resData) {
-                expect(resData.listInfo.subordinates.length).toBe(3);
-            } else {
-                expect(false).toBeFalsy();
-            }
-        } else {
-            expect(false).toBeTruthy();
-        }
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ListResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("listInfo" in resData);
+        expect(resData.listInfo.subordinates.length).toBe(4);
     });
 
     it("List pagination works", async () => {
