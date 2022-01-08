@@ -31,7 +31,7 @@ function getAttributeSize (attr: Attribute): number {
 export
 function getAttrbuteSizeFilter (attributeSizeLimit: number): (attr: Attribute) => boolean {
     return function (attr: Attribute): boolean {
-        return (getAttributeSize(attr) > attributeSizeLimit);
+        return (getAttributeSize(attr) <= attributeSizeLimit);
     };
 }
 

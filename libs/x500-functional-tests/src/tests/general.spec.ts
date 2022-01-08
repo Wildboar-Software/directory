@@ -419,7 +419,7 @@ import {
 import {
     userPwdClass,
 } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
-import { FamilyGrouping_compoundEntry, FamilyGrouping_entryOnly, FamilyGrouping_strands } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import { FamilyGrouping_compoundEntry, FamilyGrouping_entryOnly, FamilyGrouping_multiStrand, FamilyGrouping_strands } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 
 jest.setTimeout(30000);
 
@@ -6953,7 +6953,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(resData.searchInfo.entries).toHaveLength(3);
     });
 
-    it.only("Compare with FamilyGrouping.compoundEntry", async () => {
+    it("Compare with FamilyGrouping.compoundEntry", async () => {
         const testId = `Compare.familyGrouping.strands-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
@@ -7003,8 +7003,41 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(resData.matched).toBe(true);
     });
 
-    it.skip("RemoveEntry with FamilyGrouping.compoundEntry", async () => {
-
+    it("RemoveEntry with FamilyGrouping.compoundEntry", async () => {
+        const testId = `RemoveEntry.familyGrouping.compoundEntry-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const reqData: RemoveEntryArgumentData = new RemoveEntryArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_compoundEntry,
+        );
+        const arg: RemoveEntryArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            removeEntry["&operationCode"]!,
+            _encode_RemoveEntryArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
     });
 
     it("Search with FamilyGrouping.strands", async () => {
@@ -7088,7 +7121,7 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(resData.searchInfo.entries).toHaveLength(3);
     });
 
-    it.only("Compare with FamilyGrouping.strands", async () => {
+    it("Compare with FamilyGrouping.strands", async () => {
         const testId = `Compare.familyGrouping.strands-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
@@ -7139,27 +7172,167 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
     });
 
     it.skip("RemoveEntry with FamilyGrouping.strands", async () => {
-        // Check that this yields an error.
+        // This silently behaves like entryOnly.
     });
 
-    it.skip("Search with FamilyGrouping.multiStrand", async () => {
-        // Not supported.
+    it("Search with FamilyGrouping.multiStrand", async () => {
+        const testId = `Search.familyGrouping.multiStrand-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const searchControlOptions: SearchControlOptions = new Uint8ClampedArray(Array(12).fill(FALSE_BIT));
+        // We separate family members just to make it easier to count.
+        searchControlOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+        const selection = new EntryInformationSelection(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_contributingEntriesOnly,
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [ ...dn, parentRDN ],
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            undefined,
+            selection,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            searchControlOptions,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            FamilyGrouping_multiStrand,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("error" in response);
+        assert(response.error);
     });
 
-    it.skip("Compare with FamilyGrouping.multiStrand", async () => {
-        // Check that this yields an error.
+    it("Compare with FamilyGrouping.multiStrand", async () => {
+        const testId = `Compare.familyGrouping.multiStrand-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const do_compare = async (purported: AttributeValueAssertion) => {
+            const reqData: CompareArgumentData = new CompareArgumentData(
+                {
+                    rdnSequence: [ ...dn, parentRDN ],
+                },
+                purported,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                FamilyGrouping_multiStrand,
+            );
+            const arg: CompareArgument = {
+                unsigned: reqData,
+            };
+            return writeOperation(
+                connection!,
+                compare["&operationCode"]!,
+                _encode_CompareArgument(arg, DER),
+            );
+        };
+        const shouldBeTrue: AttributeValueAssertion = new AttributeValueAssertion(
+            objectClass["&id"],
+            oid(device["&id"]),
+            undefined,
+            undefined,
+        );
+        const response = await do_compare(shouldBeTrue);
+        assert("error" in response);
+        assert(response.error);
     });
 
     it.skip("RemoveEntry with FamilyGrouping.multiStrand", async () => {
-        // Check that this yields an error.
+        // This silently behaves like entryOnly.
     });
 
     it.skip("ServiceControls.timeLimit is respected", async () => {
-
+        // Difficult to test. Let's skip this for now.
     });
 
-    it.skip("ServiceControls.sizeLimit is respected by list operation", async () => {
-
+    it("ServiceControls.sizeLimit is respected by list operation", async () => {
+        const testId = `List-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        await Promise.all([
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+        ].map((id) => createTestNode(connection!, dn, id)));
+        const reqData: ListArgumentData = new ListArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            undefined,
+            undefined,
+            undefined,
+            new ServiceControls(
+                undefined,
+                undefined,
+                undefined,
+                2,
+            ),
+        );
+        const arg: ListArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            list["&operationCode"]!,
+            _encode_ListArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ListResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("listInfo" in resData);
+        expect(resData.listInfo.subordinates.length).toBe(2);
     });
 
     it("ServiceControls.sizeLimit is respected by search operation", async () => {
@@ -7229,10 +7402,209 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         expect(resData.searchInfo.entries.length).toBe(sizeLimit);
     });
 
-    it.skip("ServiceControls.attributeSizeLimit is respected", async () => {
-
+    it("ServiceControls.attributeSizeLimit is respected for search", async () => {
+        const testId = `Search.attributeSizeLimit-${(new Date()).toISOString()}`;
+        const attributeSizeLimit: number = 10;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [utf8("a".repeat(attributeSizeLimit * 2))],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            new ServiceControls(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                attributeSizeLimit,
+            ),
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(1);
+        const entry = resData.searchInfo.entries[0];
+        assert(entry.information);
+        for (const info of entry.information) {
+            assert("attribute" in info);
+            for (const value of info.attribute.values) {
+                expect(value.length).toBeLessThanOrEqual(attributeSizeLimit);
+            }
+            for (const vwc of info.attribute.valuesWithContext ?? []) {
+                expect(vwc.value.length).toBeLessThanOrEqual(attributeSizeLimit);
+            }
+            if (info.attribute.type_.isEqualTo(description["&id"])) {
+                expect(info.attribute.values).toHaveLength(1);
+            }
+        }
     });
 
+    it("ServiceControls.attributeSizeLimit is respected for read", async () => {
+        const testId = `Read.attributeSizeLimit-${(new Date()).toISOString()}`;
+        const attributeSizeLimit: number = 10;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [utf8("a".repeat(attributeSizeLimit * 2))],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            undefined,
+            undefined,
+            undefined,
+            new ServiceControls(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                attributeSizeLimit,
+            ),
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ReadResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        const entry = resData.entry;
+        assert(entry.information);
+        for (const info of entry.information) {
+            assert("attribute" in info);
+            for (const value of info.attribute.values) {
+                expect(value.length).toBeLessThanOrEqual(attributeSizeLimit);
+            }
+            for (const vwc of info.attribute.valuesWithContext ?? []) {
+                expect(vwc.value.length).toBeLessThanOrEqual(attributeSizeLimit);
+            }
+            if (info.attribute.type_.isEqualTo(description["&id"])) {
+                expect(info.attribute.values).toHaveLength(1);
+            }
+        }
+    });
+
+    it("ServiceControls.attributeSizeLimit is respected for modifyEntry", async () => {
+        const testId = `ModifyEntry.attributeSizeLimit-${(new Date()).toISOString()}`;
+        const attributeSizeLimit: number = 10;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    description["&id"],
+                    [utf8("a".repeat(attributeSizeLimit * 2))],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        description["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            new EntryInformationSelection(
+                {
+                    select: [ description["&id"] ],
+                },
+            ),
+            undefined,
+            new ServiceControls(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                attributeSizeLimit,
+            ),
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ModifyEntryResult(response.result);
+        assert("information" in decoded);
+        const resData = getOptionallyProtectedValue(decoded.information);
+        const entry = resData.entry;
+        assert(entry);
+        assert(entry.information);
+        for (const info of entry.information) {
+            assert("attribute" in info);
+            for (const value of info.attribute.values) {
+                expect(value.length).toBeLessThanOrEqual(attributeSizeLimit);
+            }
+            for (const vwc of info.attribute.valuesWithContext ?? []) {
+                expect(vwc.value.length).toBeLessThanOrEqual(attributeSizeLimit);
+            }
+            if (info.attribute.type_.isEqualTo(description["&id"])) {
+                expect(info.attribute.values).toHaveLength(1);
+            }
+        }
+    });
+
+    // TODO: Do this for search, read, and modifyEntry.
     it.skip("EntryInformationSelection.infoTypes recurses into family information", async () => {
 
     });

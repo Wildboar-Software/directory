@@ -1,9 +1,12 @@
-import { Context, StoredContext, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import { Context, StoredContext, Vertex, ClientConnection, OperationReturn, Value } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_CompareArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
+import {
+    CompareArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
 import {
     CompareResult,
     _encode_CompareResult,
@@ -22,6 +25,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     ServiceProblem_unsupportedMatchingUse,
+    ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
@@ -85,6 +89,16 @@ import {
     ServiceControlOptions_noSubtypeMatch,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import {
+    FamilyGrouping_entryOnly,
+    FamilyGrouping_compoundEntry,
+    FamilyGrouping_strands,
+    FamilyGrouping_multiStrand,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import readFamily from "../database/family/readFamily";
+import readEntryOnly from "../database/family/readEntryOnly";
+import readCompoundEntry from "../database/family/readCompoundEntry";
+import readStrands from "../database/family/readStrands";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -266,6 +280,32 @@ async function compare (
         );
     }
 
+    const familyGrouping = data.familyGrouping ?? CompareArgumentData._default_value_for_familyGrouping;
+    const familySubsetGetter: (vertex: Vertex) => IterableIterator<Vertex[]> = (() => {
+        switch (familyGrouping) {
+        case (FamilyGrouping_entryOnly): return readEntryOnly;
+        case (FamilyGrouping_compoundEntry): return readCompoundEntry;
+        case (FamilyGrouping_strands): return readStrands;
+        default: {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:unsupported_familygrouping"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        }
+    })();
     const eis = new EntryInformationSelection(
         {
             select: [ data.purported.type_ ],
@@ -278,148 +318,170 @@ async function compare (
         true, // We need the contexts for evaluation.
         undefined,
     );
-    const {
-        userValues: userAttributes,
-        operationalValues: operationalAttributes,
-        collectiveValues,
-    } = await readValues(ctx, target, {
-        selection: eis,
-        relevantSubentries,
-        operationContexts: data.operationContexts,
-        noSubtypeSelection: noSubtypeMatch,
-    });
-    const values = [
-        ...userAttributes,
-        ...operationalAttributes,
-        ...collectiveValues,
-    ];
+    const family = await readFamily(ctx, target);
+    const familySubsets = familySubsetGetter(family);
+    const readMemberValues = async (member: Vertex): Promise<Value[]> => {
+        const {
+            userValues,
+            operationalValues,
+            collectiveValues,
+        } = await readValues(ctx, member, {
+            selection: eis,
+            relevantSubentries,
+            operationContexts: data.operationContexts,
+            noSubtypeSelection: noSubtypeMatch,
+        });
+        return [
+            ...userValues,
+            ...operationalValues,
+            ...collectiveValues,
+        ];
+    }
     const acs = data.purported.assertedContexts;
     let matchedType: AttributeType | undefined;
     let matched: boolean = false;
-    for (const value of values) {
-        if (op?.abandonTime) {
-            op.events.emit("abandon");
-            throw new errors.AbandonError(
-                ctx.i18n.t("err:abandoned"),
-                new AbandonedData(
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
+    for (const familySubset of familySubsets) {
+        const familySubsetValues: Value[] = (await Promise.all(
+            familySubset.map(readMemberValues),
+        )).flat();
+        for (const value of familySubsetValues) {
+            if (op?.abandonTime) {
+                op.events.emit("abandon");
+                throw new errors.AbandonError(
+                    ctx.i18n.t("err:abandoned"),
+                    new AbandonedData(
                         undefined,
-                        abandoned["&errorCode"],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            abandoned["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
-        }
-        if (!matcher(data.purported.assertion, value.value)) {
-            continue;
-        }
-        if (
-            accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
-            const {
-                authorized,
-            } = bacACDF(
-                relevantTuples,
-                conn.authLevel,
-                {
-                    value: new AttributeTypeAndValue(
-                        value.type,
-                        value.value,
-                    ),
-                },
-                [
-                    PERMISSION_CATEGORY_COMPARE,
-                    PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
-                ],
-                EQUALITY_MATCHER,
-            );
-            if (!authorized) {
+                );
+            }
+            try {
+                if (!matcher(data.purported.assertion, value.value)) {
+                    continue;
+                }
+            } catch {
                 continue;
             }
-        }
-        if (acs) { // If ACS is present, operationContexts are ignored.
-            if ("allContexts" in acs) {
-                matched = true;
-                break;
+
+            if (
+                accessControlScheme
+                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+            ) {
+                const {
+                    authorized,
+                } = bacACDF(
+                    relevantTuples,
+                    conn.authLevel,
+                    {
+                        value: new AttributeTypeAndValue(
+                            value.type,
+                            value.value,
+                        ),
+                    },
+                    [
+                        PERMISSION_CATEGORY_COMPARE,
+                        PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
+                    ],
+                    EQUALITY_MATCHER,
+                );
+                if (!authorized) {
+                    continue;
+                }
             }
-            if (!value.contexts || (value.contexts.length === 0)) {
-                matched = true;
-                break;
-            }
-            // The comments below quote from ITU Recommendation X.501, Section 8.9.
-            // assertedContexts is true if:
-            // each ContextAssertion in selectedContexts is true...
-            matched = acs.selectedContexts
-                .every((sc): boolean => evaluateContextAssertion(
-                    sc,
-                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
-                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
-                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
-                ));
-            if (matched) {
-                break;
-            } else {
-                continue;
-            }
-        // operationContexts is used if assertedContexts is not used.
-        }
-        else if (data.operationContexts) {
-            if ("allContexts" in data.operationContexts) {
-                matched = true;
-                break;
-            } else if ("selectedContexts" in data.operationContexts) {
-                /**
-                 * Note that (I think) some generic
-                 * `evaluateTypeAndContextAssertion()` function could not be
-                 * used in this case, because `preference` merely needs to check
-                 * that any context is matched.
-                 */
+            if (acs) { // If ACS is present, operationContexts are ignored.
+                if ("allContexts" in acs) {
+                    matchedType = value.type;
+                    matched = true;
+                    break;
+                }
+                if (!value.contexts || (value.contexts.length === 0)) {
+                    matchedType = value.type;
+                    matched = true;
+                    break;
+                }
+                // The comments below quote from ITU Recommendation X.501, Section 8.9.
                 // assertedContexts is true if:
                 // each ContextAssertion in selectedContexts is true...
-                matched = data
-                    .operationContexts
-                    .selectedContexts
-                    .filter((sc): boolean => (sc.type_.isEqualTo(data.purported.type_)))
-                    .every((sc): boolean => {
-                        if ("all" in sc.contextAssertions) {
-                            return sc.contextAssertions.all
-                                .every((ca): boolean => evaluateContextAssertion(
-                                    ca,
-                                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
-                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
-                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
-                                ));
-                        } else if ("preference" in sc.contextAssertions) {
-                            // REVIEW: I _think_ this is fine. See X.511, Section 7.6.3.
-                            return sc.contextAssertions.preference
-                                .some((ca): boolean => evaluateContextAssertion(
-                                    ca,
-                                    Object.values(value.contexts ?? {}).map(contextFromStoredContext),
-                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
-                                    (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
-                                ));
-                        } else {
-                            return false;
-                        }
-                    });
+                matched = acs.selectedContexts
+                    .every((sc): boolean => evaluateContextAssertion(
+                        sc,
+                        Object.values(value.contexts ?? {}).map(contextFromStoredContext),
+                        (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                        (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
+                    ));
                 if (matched) {
+                    matchedType = value.type;
                     break;
                 } else {
                     continue;
                 }
-            } else {
-                continue;
+            // operationContexts is used if assertedContexts is not used.
             }
+            else if (data.operationContexts) {
+                if ("allContexts" in data.operationContexts) {
+                    matchedType = value.type;
+                    matched = true;
+                    break;
+                } else if ("selectedContexts" in data.operationContexts) {
+                    /**
+                     * Note that (I think) some generic
+                     * `evaluateTypeAndContextAssertion()` function could not be
+                     * used in this case, because `preference` merely needs to check
+                     * that any context is matched.
+                     */
+                    // assertedContexts is true if:
+                    // each ContextAssertion in selectedContexts is true...
+                    matched = data
+                        .operationContexts
+                        .selectedContexts
+                        .filter((sc): boolean => (sc.type_.isEqualTo(data.purported.type_)))
+                        .every((sc): boolean => {
+                            if ("all" in sc.contextAssertions) {
+                                return sc.contextAssertions.all
+                                    .every((ca): boolean => evaluateContextAssertion(
+                                        ca,
+                                        Object.values(value.contexts ?? {}).map(contextFromStoredContext),
+                                        (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                                        (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
+                                    ));
+                            } else if ("preference" in sc.contextAssertions) {
+                                // REVIEW: I _think_ this is fine. See X.511, Section 7.6.3.
+                                return sc.contextAssertions.preference
+                                    .some((ca): boolean => evaluateContextAssertion(
+                                        ca,
+                                        Object.values(value.contexts ?? {}).map(contextFromStoredContext),
+                                        (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
+                                        (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
+                                    ));
+                            } else {
+                                return false;
+                            }
+                        });
+                    if (matched) {
+                        matchedType = value.type;
+                        break;
+                    } else {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+            }
+            matched = true;
+            break;
         }
-        matched = true;
-        break;
+        if (matched) {
+            break;
+        }
     }
     if (op) {
         op.pointOfNoReturnTime = new Date();
@@ -440,7 +502,7 @@ async function compare (
                 id_opcode_compare,
             ),
             ctx.dsa.accessPoint.ae_title.rdnSequence,
-            undefined,
+            state.chainingArguments.aliasDereferenced,
             undefined,
         ),
     };
