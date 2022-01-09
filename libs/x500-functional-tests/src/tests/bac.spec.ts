@@ -48,6 +48,7 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import {
     name,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
@@ -323,6 +324,12 @@ import {
 import {
     prescriptiveACI,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
+import {
+    subentryACI,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
+import {
+    entryACI,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
 import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import {
     SecurityProblem_insufficientAccessRights,
@@ -839,7 +846,7 @@ async function createCompoundEntry(
     );
 }
 
-const makeAdmPoint = (connection: IDMConnection, dn: DistinguishedName, ...roles: OBJECT_IDENTIFIER[]): Promise<any> => {
+const activateAccessControl = (connection: IDMConnection, dn: DistinguishedName, scheme: OBJECT_IDENTIFIER): Promise<any> => {
     const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
         {
             rdnSequence: dn,
@@ -847,8 +854,8 @@ const makeAdmPoint = (connection: IDMConnection, dn: DistinguishedName, ...roles
         [
             {
                 addValues: new Attribute(
-                    administrativeRole["&id"],
-                    roles.map(oid),
+                    accessControlScheme["&id"],
+                    [oid(scheme)],
                     undefined,
                 ),
             },
@@ -867,6 +874,101 @@ const makeAdmPoint = (connection: IDMConnection, dn: DistinguishedName, ...roles
 };
 
 const AC_SUBENTRY_NAME: string = "access control";
+// This covers all attribute types used in the test root node and subentry.
+const TEST_RELATED_ATTRIBUTES: AttributeType[] = [
+    administrativeRole["&id"],
+    accessControlScheme["&id"],
+    entryACI["&id"],
+    subentryACI["&id"],
+    prescriptiveACI["&id"],
+    commonName["&id"],
+    description["&id"],
+    subtreeSpecification["&id"],
+    objectClass["&id"],
+];
+
+/**
+ * ACIItems that will be needed for each test to modify administrative points,
+ * create subentries, change the access control scheme, etc.
+ */
+const aciForTesting: ACIItem[] = [
+    new ACIItem(
+        {
+            uTF8String: "Grant Access to Administrative Attributes and Subentries",
+        },
+        128,
+        {
+            basicLevels: new AuthenticationLevel_basicLevels(
+                AuthenticationLevel_basicLevels_level_none,
+                undefined,
+                undefined,
+            ),
+        },
+        {
+            itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                new ProtectedItems(
+                    undefined,
+                    undefined,
+                    TEST_RELATED_ATTRIBUTES,
+                    TEST_RELATED_ATTRIBUTES,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    {
+                        or: [
+                            {
+                                item: subentry["&id"],
+                            },
+                            {
+                                item: accessControlSubentry["&id"],
+                            },
+                            {
+                                item: applicationProcess["&id"],
+                            },
+                            {
+                                item: userPwdClass["&id"],
+                            },
+                        ],
+                    },
+                ),
+                [
+                    new ItemPermission(
+                        1,
+                        new UserClasses(
+                            null,
+                        ),
+                        new Uint8ClampedArray([
+                            TRUE_BIT,
+                            FALSE_BIT, // denyAdd.
+                            TRUE_BIT, // disclose on error
+                            FALSE_BIT,
+                            TRUE_BIT, // grantRead
+                            FALSE_BIT,
+                            FALSE_BIT,
+                            FALSE_BIT,
+                            TRUE_BIT, // grantBrowse
+                            FALSE_BIT,
+                            FALSE_BIT, // grantExport
+                            FALSE_BIT,
+                            FALSE_BIT, // grantImport
+                            FALSE_BIT,
+                            TRUE_BIT, // grantModify
+                            FALSE_BIT,
+                            FALSE_BIT, // grantRename
+                            FALSE_BIT,
+                            TRUE_BIT, // grantReturnDN
+                        ]),
+                    ),
+                ],
+            ),
+        },
+    ),
+];
 
 describe("Meerkat DSA Basic Access Control", () => {
 
@@ -882,18 +984,19 @@ describe("Meerkat DSA Basic Access Control", () => {
 
     });
 
-    it.only("AddEntry correctly applies access control for a(n) Entry", async () => {
+    it("AddEntry correctly applies access control for a(n) Entry", async () => {
         const testId = `bac.addentry.entry-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
             await createTestRootNode(connection!, testId, [
                 new Attribute(
-                    accessControlScheme["&id"],
-                    [oid(basicAccessControlScheme)],
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
                     undefined,
                 ),
             ]);
             const acis: ACIItem[] = [
+                ...aciForTesting,
                 new ACIItem(
                     {
                         uTF8String: "asdf",
@@ -910,6 +1013,201 @@ describe("Meerkat DSA Basic Access Control", () => {
                         itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
                             new ProtectedItems(
                                 null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+            {
+                rdnSequence: [ ...dn, createTestRDN("F601D2D2-9B45-4068-9A4F-55FF18E3215D") ],
+            },
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        _encodeObjectIdentifier(person["&id"], DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("F601D2D2-9B45-4068-9A4F-55FF18E3215D")],
+                    undefined,
+                ),
+                new Attribute(
+                    surname["&id"],
+                    [utf8("F601D2D2-9B45-4068-9A4F-55FF18E3215D")],
+                    undefined,
+                ),
+            ],
+        );
+        const arg: AddEntryArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            addEntry["&operationCode"]!,
+            _encode_AddEntryArgument(arg, DER),
+        );
+        assert("error" in response);
+        assert(response.errcode);
+        assert(response.error);
+        assert(compareCode(response.errcode, securityError["&errorCode"]!));
+        const decoded = securityError.decoderFor["&ParameterType"]!(response.error);
+        const data = getOptionallyProtectedValue(decoded);
+        expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
+    });
+
+    it("AddEntry correctly applies access control for a(n) Attribute", async () => {
+        const testId = `bac.addentry.attribute-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+            ]);
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                new ACIItem(
+                    {
+                        uTF8String: "Allow user to create entry",
+                    },
+                    1,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        TRUE_BIT,
+                                        FALSE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+                new ACIItem(
+                    {
+                        uTF8String: "Prohibit addition of localityName attribute.",
+                    },
+                    2,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                undefined,
+                                undefined,
+                                [localityName["&id"]],
                             ),
                             [
                                 new ItemPermission(
@@ -982,7 +1280,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                     ),
                 ],
             );
-            await makeAdmPoint(connection!, dn, id_ar_accessControlSpecificArea);
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
         }
         const reqData: AddEntryArgumentData = new AddEntryArgumentData(
             {
@@ -999,6 +1297,11 @@ describe("Meerkat DSA Basic Access Control", () => {
                 new Attribute(
                     commonName["&id"],
                     [utf8("F601D2D2-9B45-4068-9A4F-55FF18E3215D")],
+                    undefined,
+                ),
+                new Attribute(
+                    localityName["&id"],
+                    [utf8("Should not be allowed to create this value.")],
                     undefined,
                 ),
             ],
@@ -1018,10 +1321,6 @@ describe("Meerkat DSA Basic Access Control", () => {
         const decoded = securityError.decoderFor["&ParameterType"]!(response.error);
         const data = getOptionallyProtectedValue(decoded);
         expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
-    });
-
-    it.skip("AddEntry correctly applies access control for a(n) Attribute", async () => {
-
     });
 
     it.skip("AddEntry correctly applies access control for a(n) Value", async () => {

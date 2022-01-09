@@ -1788,7 +1788,7 @@ async function modifyEntry (
         const authorizedToModifyEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_MODIFY ]);
         if (!authorizedToModifyEntry) {
             throw new errors.SecurityError(
-                "Not permitted to modify entry.",
+                "Not permitted to modify entry.", // FIXME: Internationalize
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,

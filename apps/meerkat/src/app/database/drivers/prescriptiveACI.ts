@@ -33,7 +33,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
 };
 
 export
-const addValue: SpecialAttributeDatabaseEditor = writeSomeACI(ACIScope.ENTRY);
+const addValue: SpecialAttributeDatabaseEditor = writeSomeACI(ACIScope.PRESCRIPTIVE);
 
 export
 const removeValue: SpecialAttributeDatabaseEditor = async (
