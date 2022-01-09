@@ -33,7 +33,6 @@
     "no_contexts_permitted": "No contexts are permitted for attribute type {{oid}} due to an absence of DIT context use rules.",
     "context_type_prohibited_by_context_use_rule": "Context type {{ct}} prohibited by DIT context use rule for attribute type {{at}}.",
     "missing_required_context_types": "Missing the following context types that are required by context use rule for attribute type {{attr}}: {{oids}}.",
-    "missing_managedsait_flag": "The following operational attributes may not be managed without setting the manageDSAIT flag: {{oids}}.",
     "abandoned": "Abandoned.",
     "not_authz_apw": "Not authorized to administer the password of this entry.",
     "not_authz_cpw": "Not authorized to change the password of this entry.",

@@ -152,6 +152,9 @@ import attributeTypesPermittedForEveryEntry from "../x500/attributeTypesPermitte
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
+import { id_aca_entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
+import { id_aca_subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-subentryACI.va";
+import { id_aca_prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-prescriptiveACI.va";
 import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
@@ -168,6 +171,9 @@ import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/Informati
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import mayAddTopLeveDSE from "../authz/mayAddTopLevelDSE";
+import {
+    id_aca_accessControlScheme,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-accessControlScheme.va";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -657,6 +663,12 @@ async function addEntry (
     if (isEntry) {
         optionalAttributes.add(id_oa_collectiveExclusions.toString());
         optionalAttributes.add(administrativeRole["&id"].toString());
+        optionalAttributes.add(id_aca_accessControlScheme.toString());
+    }
+    if (isSubentry) {
+        optionalAttributes.add(id_aca_entryACI.toString());
+        optionalAttributes.add(id_aca_subentryACI.toString());
+        optionalAttributes.add(id_aca_prescriptiveACI.toString());
     }
     const nonUserApplicationAttributes: AttributeType[] = [];
     if (!ctx.config.bulkInsertMode) {
@@ -826,7 +838,7 @@ async function addEntry (
                     oids: unrecognizedAttributes.map((at) => at.toString()).join(", "),
                 }));
             }
-            if (noUserModAttributes.length > 0) {
+            if ((noUserModAttributes.length > 0) && !manageDSAIT) {
                 ctx.log.debug(ctx.i18n.t("err:no_user_modification", {
                     oids: noUserModAttributes.map((at) => at.toString()).join(", "),
                 }));
@@ -1488,28 +1500,6 @@ async function addEntry (
                 }
             }
         }
-    }
-    if (!manageDSAIT && (nonUserApplicationAttributes.length > 0)) {
-        throw new errors.SecurityError(
-            ctx.i18n.t("err:missing_managedsait_flag", {
-                oids: nonUserApplicationAttributes.map((oid) => oid.toString()).join(", "),
-            }),
-            new SecurityErrorData(
-                SecurityProblem_insufficientAccessRights,
-                undefined,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    securityError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
     }
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         throw new errors.ServiceError(

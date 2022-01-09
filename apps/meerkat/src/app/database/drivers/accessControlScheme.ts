@@ -40,11 +40,15 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.otherWrites.push(ctx.db.entryAccessControlScheme.update({
+    pendingUpdates.otherWrites.push(ctx.db.entryAccessControlScheme.upsert ({
         where: {
             entry_id: vertex.dse.id,
         },
-        data: {
+        create: {
+            entry_id: vertex.dse.id,
+            accessControlScheme: value.value.objectIdentifier.toString(),
+        },
+        update: {
             accessControlScheme: value.value.objectIdentifier.toString(),
         },
     }));

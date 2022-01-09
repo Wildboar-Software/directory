@@ -220,6 +220,12 @@ import compareElements from "@wildboar/x500/src/lib/comparators/compareElements"
 import readValuesOfType from "../utils/readValuesOfType";
 import rdnToJson from "../x500/rdnToJson";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import { id_aca_entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
+import { id_aca_subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-subentryACI.va";
+import { id_aca_prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-prescriptiveACI.va";
+import {
+    id_aca_accessControlScheme,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-accessControlScheme.va";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -500,28 +506,6 @@ function checkAbilityToModifyAttributeType (
                     conn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                aliasDereferenced,
-                undefined,
-            ),
-        );
-    }
-    if ((spec.usage !== AttributeUsage_userApplications) && !manageDSAIT) {
-        throw new errors.SecurityError(
-            ctx.i18n.t("err:missing_managedsait_flag", {
-                oids: spec.id.toString(),
-            }),
-            new SecurityErrorData(
-                SecurityProblem_insufficientAccessRights,
-                undefined,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
-                    undefined,
-                    securityError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
@@ -1943,6 +1927,12 @@ async function modifyEntry (
     if (isEntry) {
         optionalAttributes.add(id_oa_collectiveExclusions.toString());
         optionalAttributes.add(administrativeRole["&id"].toString());
+        optionalAttributes.add(id_aca_accessControlScheme.toString());
+    }
+    if (isSubentry) {
+        optionalAttributes.add(id_aca_entryACI.toString());
+        optionalAttributes.add(id_aca_subentryACI.toString());
+        optionalAttributes.add(id_aca_prescriptiveACI.toString());
     }
     const addedObjectClasses = patch.addedValues.get(objectClass["&id"].toString())
         ?.map((value) => value.value.objectIdentifier) ?? [];
