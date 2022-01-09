@@ -94,13 +94,13 @@ import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
-    ServiceControlOptions_preferChaining,
-    ServiceControlOptions_chainingProhibited,
-    ServiceControlOptions_localScope,
-    ServiceControlOptions_dontUseCopy,
+    // ServiceControlOptions_preferChaining,
+    // ServiceControlOptions_chainingProhibited,
+    // ServiceControlOptions_localScope,
+    // ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_dontDereferenceAliases,
     ServiceControlOptions_subentries,
-    ServiceControlOptions_copyShallDo,
+    // ServiceControlOptions_copyShallDo,
     ServiceControlOptions_partialNameResolution,
     ServiceControlOptions_manageDSAIT,
     ServiceControlOptions_noSubtypeMatch,
@@ -108,7 +108,7 @@ import {
     ServiceControlOptions_countFamily,
     ServiceControlOptions_dontSelectFriends,
     ServiceControlOptions_dontMatchFriends,
-    ServiceControlOptions_allowWriteableCopy,
+    // ServiceControlOptions_allowWriteableCopy,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ServiceControls,
@@ -124,7 +124,6 @@ import {
     ReadArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
 import {
-    ReadResult,
     _decode_ReadResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
 import {
@@ -148,7 +147,6 @@ import {
     CompareArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
 import {
-    CompareResult,
     _decode_CompareResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
 import {
@@ -165,7 +163,6 @@ import {
     ListArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
 import {
-    ListResult,
     _decode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import {
@@ -179,10 +176,6 @@ import {
     RemoveEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
 import {
-    RemoveEntryResult,
-    _decode_RemoveEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
-import {
     modifyEntry,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
 import {
@@ -193,13 +186,8 @@ import {
     ModifyEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
 import {
-    ModifyEntryResult,
     _decode_ModifyEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
-import {
-    ModifyEntryResultData,
-    _decode_ModifyEntryResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResultData.ta";
 import {
     modifyDN,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
@@ -244,13 +232,11 @@ import {
     SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import {
-    SearchArgumentData_subset,
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import {
-    SearchResult,
     _decode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import {
@@ -267,13 +253,9 @@ import {
     _encode_TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 import {
-    TypeAndContextAssertion_contextAssertions,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion-contextAssertions.ta";
-import {
     localeContext,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
 import {
-    LocaleContextSyntax,
     _encode_LocaleContextSyntax,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/LocaleContextSyntax.ta";
 import { strict as assert } from "assert";
@@ -339,10 +321,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
-import { serviceError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import { updateError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
-import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 import {
     NameProblem_aliasDereferencingProblem,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
@@ -353,16 +331,6 @@ import {
 import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
-import {
-    nameForms,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
-import {
-    NameFormDescription,
-    _encode_NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
-import {
-    NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
 import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
 import {
     FriendsDescription,
@@ -370,17 +338,17 @@ import {
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
 import {
     SearchControlOptions,
-    SearchControlOptions_checkOverspecified,
+    // SearchControlOptions_checkOverspecified,
     SearchControlOptions_dnAttribute,
     SearchControlOptions_entryCount,
-    SearchControlOptions_includeAllAreas,
+    // SearchControlOptions_includeAllAreas,
     SearchControlOptions_matchOnResidualName,
-    SearchControlOptions_noSystemRelaxation,
-    SearchControlOptions_performExactly,
-    SearchControlOptions_searchAliases,
+    // SearchControlOptions_noSystemRelaxation,
+    // SearchControlOptions_performExactly,
+    // SearchControlOptions_searchAliases,
     SearchControlOptions_searchFamily,
     SearchControlOptions_separateFamilyMembers,
-    SearchControlOptions_useSubset,
+    // SearchControlOptions_useSubset,
     SearchControlOptions_matchedValuesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import {
@@ -419,7 +387,12 @@ import {
 import {
     userPwdClass,
 } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
-import { FamilyGrouping_compoundEntry, FamilyGrouping_entryOnly, FamilyGrouping_multiStrand, FamilyGrouping_strands } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import {
+    FamilyGrouping_compoundEntry,
+    FamilyGrouping_entryOnly,
+    FamilyGrouping_multiStrand,
+    FamilyGrouping_strands,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 
 jest.setTimeout(30000);
 
@@ -925,7 +898,7 @@ async function createCompoundEntry(
     );
 }
 
-describe("Meerkat DSA", () => { // TODO: Bookmark
+describe("Meerkat DSA", () => {
 
     let connection: IDMConnection | undefined;
 
@@ -6777,12 +6750,106 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         assert(response.result);
     });
 
-    it.skip("An autonomous administrative point resets all applicable administrative points", async () => {
-
-    });
-
-    it.skip("Context Assertion Defaults are applied from the applicable administrative points", async () => {
-
+    it("An autonomous administrative point resets all applicable administrative points", async () => {
+        const testId = `aap-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_collectiveAttributeSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+        }
+        const dn = createTestRootDN(testId);
+        const subentryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("foo"),
+            ),
+        ];
+        const collectiveOrgName = "Illuminati";
+        const subordinatesLevel1: string[] = Array(1).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel2: string[] = Array(1).fill("").map(() => crypto.randomUUID());
+        const subordinatesLevel3: string[] = Array(3).fill("").map(() => crypto.randomUUID());
+        await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, dn, id)));
+        const leve1Id: string = subordinatesLevel1[0];
+        const leve2Id: string = subordinatesLevel2[0];
+        const level2DN: DistinguishedName = [ ...dn, createTestRDN(leve1Id) ];
+        const level3DN: DistinguishedName = [ ...level2DN, createTestRDN(leve2Id) ];
+        await Promise.all(subordinatesLevel2.map((id) => createTestNode(connection!, level2DN, id, [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    oid(id_ar_autonomousArea),
+                ],
+                undefined,
+            ),
+        ])));
+        await Promise.all(subordinatesLevel3.map((id) => createTestNode(connection!, level3DN, id)));
+        await createEntry(
+            connection!,
+            dn,
+            subentryRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(collectiveAttributeSubentry["&id"]),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8("foo"),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [
+                        _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    collectiveOrganizationName["&id"],
+                    [utf8(collectiveOrgName)],
+                    undefined,
+                ),
+            ],
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: level3DN,
+            },
+            SearchArgumentData_subset_oneLevel,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        for (const entry of resData.searchInfo.entries) {
+            const isTheInheritedCollectiveAttribute = (info: EntryInformation_information_Item): boolean => (
+                ("attribute" in info)
+                && info.attribute.type_.isEqualTo(collectiveOrganizationName["&id"])
+                && info.attribute.values.some((v) => v.utf8String === collectiveOrgName)
+            );
+            expect(entry.information?.some(isTheInheritedCollectiveAttribute)).toBeFalsy();
+        }
     });
 
     it("Search with FamilyGrouping.entryOnly", async () => {
@@ -7602,9 +7669,173 @@ describe("Meerkat DSA", () => { // TODO: Bookmark
         }
     });
 
-    // TODO: Do this for search, read, and modifyEntry.
-    it.skip("EntryInformationSelection.infoTypes recurses into family information", async () => {
+    it("EntryInformationSelection.infoTypes recurses into family information for read", async () => {
+        const testId = `Read.infoTypes.family-information-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const selection = new EntryInformationSelection(
+            undefined,
+            typesOnly,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_compoundEntry,
+            ),
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [...dn, parentRDN],
+            },
+            selection,
+            undefined,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ReadResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        const familyAttribute: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        assert(familyAttribute);
+        assert("attribute" in familyAttribute);
+        for (const familyValue of familyAttribute.attribute.values) {
+            const family = family_information.decoderFor["&Type"]!(familyValue);
+            for (const entry of family.familyEntries) {
+                for (const info of entry.information ?? []) {
+                    assert("attributeType" in info);
+                }
+            }
+        }
+    });
 
+    it("EntryInformationSelection.infoTypes recurses into family information for search", async () => {
+        const testId = `Search.infoTypes.family-information-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const selection = new EntryInformationSelection(
+            undefined,
+            typesOnly,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_compoundEntry,
+            ),
+        );
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: [...dn, parentRDN],
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            undefined,
+            selection,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_SearchResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(1);
+        const entry = resData.searchInfo.entries[0];
+        const familyAttribute: EntryInformation_information_Item | undefined = entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        assert(familyAttribute);
+        assert("attribute" in familyAttribute);
+        for (const familyValue of familyAttribute.attribute.values) {
+            const family = family_information.decoderFor["&Type"]!(familyValue);
+            for (const entry of family.familyEntries) {
+                for (const info of entry.information ?? []) {
+                    assert("attributeType" in info);
+                }
+            }
+        }
+    });
+
+    it("EntryInformationSelection.infoTypes recurses into family information for modifyEntry", async () => {
+        const testId = `ModifyEntry.infoTypes.family-information-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId);
+            await createCompoundEntry(connection!, dn);
+        }
+        const desc = _encode_UnboundedDirectoryString({
+            uTF8String: "Entry successfully modified",
+        }, DER);
+        const selection = new EntryInformationSelection(
+            undefined,
+            typesOnly,
+            undefined,
+            undefined,
+            undefined,
+            new FamilyReturn(
+                FamilyReturn_memberSelect_compoundEntry,
+            ),
+        );
+        const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+            {
+                rdnSequence: [...dn, parentRDN],
+            },
+            [
+                {
+                    addValues: new Attribute(
+                        description["&id"],
+                        [desc],
+                        undefined,
+                    ),
+                },
+            ],
+            selection,
+        );
+        const arg: ModifyEntryArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            modifyEntry["&operationCode"]!,
+            _encode_ModifyEntryArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ModifyEntryResult(response.result);
+        assert("information" in decoded);
+        const resData = getOptionallyProtectedValue(decoded.information);
+        const entry = resData.entry;
+        assert(entry);
+        const familyAttribute: EntryInformation_information_Item | undefined = entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(family_information["&id"]));
+        assert(familyAttribute);
+        assert("attribute" in familyAttribute);
+        for (const familyValue of familyAttribute.attribute.values) {
+            const family = family_information.decoderFor["&Type"]!(familyValue);
+            for (const entry of family.familyEntries) {
+                for (const info of entry.information ?? []) {
+                    assert("attributeType" in info);
+                }
+            }
+        }
     });
 
     it("Collective attributes appear in entries within a collective attribute specific area", async () => {

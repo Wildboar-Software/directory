@@ -1543,9 +1543,6 @@ async function search_i (
             && filter.item.present.isEqualTo(objectClass["&id"])
         );
         // Entry ACI is checked above.
-        const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
-            ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
-            : null;
         const family = await readFamily(ctx, target);
         const familySubsets = familySubsetGetter(family);
         let filterResult: ReturnType<typeof evaluateFilter> = {
