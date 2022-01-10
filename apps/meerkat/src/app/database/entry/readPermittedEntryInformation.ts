@@ -75,9 +75,7 @@ async function readPermittedEntryInformation (
             }
             const permittedValues = valuesFromAttribute(info.attribute)
                 .filter((value) => {
-                    const {
-                        authorized: authorizedToAddAttributeValue,
-                    } = bacACDF(
+                    const acdfResult = bacACDF(
                         relevantTuples,
                         authLevel,
                         {
@@ -91,10 +89,10 @@ async function readPermittedEntryInformation (
                         ],
                         EQUALITY_MATCHER,
                     );
-                    if (!authorizedToAddAttributeValue) {
+                    if (!acdfResult.authorized) {
                         incompleteEntry = true;
                     }
-                    return authorizedToAddAttributeValue;
+                    return acdfResult.authorized;
                 });
             const attribute = attributesFromValues(permittedValues)[0];
             if (attribute) {

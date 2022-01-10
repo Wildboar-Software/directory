@@ -220,9 +220,7 @@ async function compare (
                     ),
                 );
             }
-            const {
-                authorized,
-            } = bacACDF(
+            const typeResult = bacACDF(
                 relevantTuples,
                 conn.authLevel,
                 {
@@ -234,7 +232,7 @@ async function compare (
                 ],
                 EQUALITY_MATCHER,
             );
-            if (!authorized) {
+            if (!typeResult.authorized) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_read_or_compare_attr", {
                         oid: type_.toString(),

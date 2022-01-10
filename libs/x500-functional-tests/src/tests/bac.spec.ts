@@ -1323,146 +1323,1378 @@ describe("Meerkat DSA Basic Access Control", () => {
         expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
     });
 
-    it.skip("AddEntry correctly applies access control for a(n) Value", async () => {
-
+    it("AddEntry correctly applies access control for a(n) Value", async () => {
+        const testId = `bac.addentry.value-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const THE_FORBIDDEN_VALUE: string = "Should not be allowed to create this value.";
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+            ]);
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                new ACIItem(
+                    {
+                        uTF8String: "Allow user to create entry with localityName",
+                    },
+                    1,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                null,
+                                null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        TRUE_BIT,
+                                        FALSE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+                new ACIItem(
+                    {
+                        uTF8String: "Prohibit addition of the forbidden localityName value.",
+                    },
+                    2,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                [
+                                    new AttributeTypeAndValue(
+                                        localityName["&id"],
+                                        utf8(THE_FORBIDDEN_VALUE),
+                                    ),
+                                ],
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+            {
+                rdnSequence: [ ...dn, createTestRDN("F601D2D2-9B45-4068-9A4F-55FF18E3215D") ],
+            },
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        _encodeObjectIdentifier(applicationProcess["&id"], DER),
+                    ],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("F601D2D2-9B45-4068-9A4F-55FF18E3215D")],
+                    undefined,
+                ),
+                new Attribute(
+                    localityName["&id"],
+                    [utf8(THE_FORBIDDEN_VALUE)],
+                    undefined,
+                ),
+            ],
+        );
+        const arg: AddEntryArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            addEntry["&operationCode"]!,
+            _encode_AddEntryArgument(arg, DER),
+        );
+        assert("error" in response);
+        assert(response.errcode);
+        assert(response.error);
+        assert(compareCode(response.errcode, securityError["&errorCode"]!));
+        const decoded = securityError.decoderFor["&ParameterType"]!(response.error);
+        const data = getOptionallyProtectedValue(decoded);
+        expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
     });
 
-    it.skip("Read correctly applies access control for a(n) Entry", async () => {
-
+    it("Read correctly applies access control for a(n) Entry", async () => {
+        const testId = `bac.read.entry-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+            ]);
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                new ACIItem(
+                    {
+                        uTF8String: "Prohibit reading entry",
+                    },
+                    1,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRead
+                                        TRUE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("error" in response);
+        assert(response.errcode);
+        assert(response.error);
+        assert(compareCode(response.errcode, securityError["&errorCode"]!));
+        const decoded = securityError.decoderFor["&ParameterType"]!(response.error);
+        const data = getOptionallyProtectedValue(decoded);
+        expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
     });
 
-    it.skip("Read correctly applies access control for a(n) Attribute", async () => {
-
+    it("Read correctly applies access control for a(n) Attribute", async () => {
+        const testId = `bac.read.attribute-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+            ]);
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                new ACIItem(
+                    {
+                        uTF8String: "Permit reading the entry",
+                    },
+                    1,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                null,
+                                null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+                new ACIItem(
+                    {
+                        uTF8String: "Prohibit reading description",
+                    },
+                    2,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                undefined,
+                                undefined,
+                                undefined,
+                                [description["&id"]],
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRead
+                                        TRUE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ReadResult(response.result);
+        const data = getOptionallyProtectedValue(decoded);
+        const desc = data.entry.information
+            ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(description["&id"]));
+        expect(desc).toBeUndefined();
     });
 
-    it.skip("Read correctly applies access control for a(n) Value", async () => {
-
+    it("Read correctly applies access control for a(n) Value", async () => {
+        const testId = `bac.read.value-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const FORBIDDEN_VALUE: string = "EXODIA";
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+                new Attribute(
+                    localityName["&id"],
+                    [
+                        utf8(FORBIDDEN_VALUE),
+                        utf8("Not forbidden value"),
+                    ],
+                    undefined,
+                ),
+            ]);
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                new ACIItem(
+                    {
+                        uTF8String: "Permit reading the entry and all values",
+                    },
+                    1,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                null,
+                                null,
+                                [localityName["&id"]],
+                                [localityName["&id"]],
+                                null,
+                                // undefined,
+                                // undefined,
+                                // null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+                new ACIItem(
+                    {
+                        uTF8String: "Prohibit reading forbidden localityName",
+                    },
+                    2,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                [
+                                    new AttributeTypeAndValue(
+                                        localityName["&id"],
+                                        utf8(FORBIDDEN_VALUE),
+                                    ),
+                                ],
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRead
+                                        TRUE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ReadResult(response.result);
+        const data = getOptionallyProtectedValue(decoded);
+        const loc = data.entry.information
+            ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(localityName["&id"]));
+        assert(loc);
+        assert("attribute" in loc);
+        expect(loc.attribute.values.some((d) => d.utf8String === FORBIDDEN_VALUE)).toBeFalsy();
     });
 
-    it.skip("Compare correctly applies access control for a(n) Entry", async () => {
-
+    it("Compare correctly applies access control for a(n) Entry", async () => {
+        const testId = `bac.compare.entry-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+            ]);
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                new ACIItem(
+                    {
+                        uTF8String: "Prohibit reading entry",
+                    },
+                    1,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRead
+                                        TRUE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData = new CompareArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            new AttributeValueAssertion(
+                commonName["&id"],
+                utf8(testId),
+            ),
+        );
+        const arg: CompareArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            compare["&operationCode"]!,
+            _encode_CompareArgument(arg, DER),
+        );
+        assert("error" in response);
+        assert(response.errcode);
+        assert(response.error);
+        assert(compareCode(response.errcode, securityError["&errorCode"]!));
+        const decoded = securityError.decoderFor["&ParameterType"]!(response.error);
+        const data = getOptionallyProtectedValue(decoded);
+        expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
     });
 
-    it.skip("Compare correctly applies access control for a(n) Attribute", async () => {
-
+    it("Compare correctly applies access control for a(n) Attribute", async () => {
+        const testId = `bac.compare.attribute-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const COMPARED_VALUE: string = "asdf";
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+                new Attribute(
+                    description["&id"],
+                    [utf8(COMPARED_VALUE)],
+                    undefined,
+                ),
+            ]);
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                new ACIItem(
+                    {
+                        uTF8String: "Permit reading the entry",
+                    },
+                    1,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                null,
+                                null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+                new ACIItem(
+                    {
+                        uTF8String: "Prohibit comparing description",
+                    },
+                    2,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                undefined,
+                                undefined,
+                                undefined,
+                                [description["&id"]],
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantCompare
+                                        TRUE_BIT, // denyCompare
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData = new CompareArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            new AttributeValueAssertion(
+                description["&id"],
+                utf8(COMPARED_VALUE),
+            ),
+        );
+        const arg: CompareArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            compare["&operationCode"]!,
+            _encode_CompareArgument(arg, DER),
+        );
+        assert("error" in response);
+        assert(response.errcode);
+        assert(response.error);
+        assert(compareCode(response.errcode, securityError["&errorCode"]!));
+        const decoded = securityError.decoderFor["&ParameterType"]!(response.error);
+        const data = getOptionallyProtectedValue(decoded);
+        expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
     });
 
-    it.skip("Compare correctly applies access control for a(n) Value", async () => {
-
+    it.only("Compare correctly applies access control for a(n) Value", async () => {
+        const testId = `bac.compare.value-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const COMPARED_VALUE: string = "asdf";
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+                new Attribute(
+                    localityName["&id"],
+                    [utf8(COMPARED_VALUE)],
+                    undefined,
+                ),
+            ]);
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                new ACIItem(
+                    {
+                        uTF8String: "Permit reading the entry and all values",
+                    },
+                    1,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                null,
+                                null,
+                                [localityName["&id"]], // FIXME: This seems to be necessary.
+                                undefined,
+                                null,
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantCompare
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+                new ACIItem(
+                    {
+                        uTF8String: "Prohibit comparing the localityName value",
+                    },
+                    2,
+                    {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                    {
+                        itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                            new ProtectedItems(
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                [
+                                    new AttributeTypeAndValue(
+                                        localityName["&id"],
+                                        utf8(COMPARED_VALUE),
+                                    ),
+                                ],
+                            ),
+                            [
+                                new ItemPermission(
+                                    1,
+                                    new UserClasses(
+                                        null,
+                                    ),
+                                    new Uint8ClampedArray([
+                                        FALSE_BIT,
+                                        TRUE_BIT, // denyAdd.
+                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantRead
+                                        FALSE_BIT, // denyRead
+                                        FALSE_BIT,
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantBrowse
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantExport
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantImport
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantModify
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantRename
+                                        FALSE_BIT,
+                                        TRUE_BIT, // grantReturnDN
+                                        FALSE_BIT,
+                                        FALSE_BIT, // grantCompare
+                                        TRUE_BIT, // denyCompare
+                                    ]),
+                                ),
+                            ],
+                        ),
+                    },
+                ),
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData = new CompareArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            new AttributeValueAssertion(
+                localityName["&id"],
+                utf8(COMPARED_VALUE),
+            ),
+        );
+        const arg: CompareArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            compare["&operationCode"]!,
+            _encode_CompareArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_CompareResult(response.result);
+        const data = getOptionallyProtectedValue(decoded);
+        expect(data.matched).toBe(FALSE);
     });
 
+    // TODO:
     it.skip("List correctly applies access control for a(n) Entry", async () => {
 
     });
 
+    // TODO:
     it.skip("Search correctly applies access control for a(n) Entry", async () => {
 
     });
 
+    // TODO:
     it.skip("Search correctly applies access control for a(n) Filtered Attribute", async () => {
 
     });
 
+    // TODO:
     it.skip("Search correctly applies access control for a(n) Filtered Value", async () => {
 
     });
 
+    // TODO:
     it.skip("Search correctly applies access control for a(n) Selected Attribute", async () => {
 
     });
 
+    // TODO:
     it.skip("Search correctly applies access control for a(n) Selected Value", async () => {
 
     });
 
+    // TODO:
     it.skip("RemoveEntry correctly applies access control for a(n) Entry", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) Entry", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) addAttribute Attribute", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) addAttribute Value", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) addValues Attribute", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) addValues Value", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) removeAttribute Attribute", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) removeAttribute Value", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) removeValues Attribute", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) removeValues Value", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) alterValues Attribute", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) alterValues Value", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) resetValues Attribute", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) resetValues Value", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) replaceValues Attribute that is removed", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) replaceValues Value that is removed", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) replaceValues Attribute that is removed", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyEntry correctly applies access control for a(n) replaceValues Value that is removed", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyDN correctly applies access control for a(n) Rename", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyDN correctly applies access control for a(n) Export", async () => {
 
     });
 
+    // TODO:
     it.skip("ModifyDN correctly applies access control for a(n) Import", async () => {
 
     });
 
+    // TODO:
     it.skip("Find DSE correctly applies access control for a(n) Find DSE", async () => {
 
     });
 
+    // TODO:
     it.skip("Subordinate access control specific administrative points override a superior access control specific administrative point", async () => {
 
     });
