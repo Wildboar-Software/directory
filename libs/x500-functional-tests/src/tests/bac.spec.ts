@@ -938,30 +938,30 @@ const aciForTesting: ACIItem[] = [
                 ),
                 [
                     new ItemPermission(
-                        1,
+                        undefined,
                         new UserClasses(
                             null,
                         ),
                         new Uint8ClampedArray([
                             TRUE_BIT,
                             FALSE_BIT, // denyAdd.
-                            TRUE_BIT, // disclose on error
-                            FALSE_BIT,
-                            TRUE_BIT, // grantRead
-                            FALSE_BIT,
-                            FALSE_BIT,
-                            FALSE_BIT,
-                            TRUE_BIT, // grantBrowse
-                            FALSE_BIT,
-                            FALSE_BIT, // grantExport
-                            FALSE_BIT,
-                            FALSE_BIT, // grantImport
-                            FALSE_BIT,
-                            TRUE_BIT, // grantModify
-                            FALSE_BIT,
-                            FALSE_BIT, // grantRename
-                            FALSE_BIT,
-                            TRUE_BIT, // grantReturnDN
+                            // TRUE_BIT, // disclose on error
+                            // FALSE_BIT,
+                            // TRUE_BIT, // grantRead
+                            // FALSE_BIT,
+                            // FALSE_BIT,
+                            // FALSE_BIT,
+                            // TRUE_BIT, // grantBrowse
+                            // FALSE_BIT,
+                            // FALSE_BIT, // grantExport
+                            // FALSE_BIT,
+                            // FALSE_BIT, // grantImport
+                            // FALSE_BIT,
+                            // TRUE_BIT, // grantModify
+                            // FALSE_BIT,
+                            // FALSE_BIT, // grantRename
+                            // FALSE_BIT,
+                            // TRUE_BIT, // grantReturnDN
                         ]),
                     ),
                 ],
@@ -1016,7 +1016,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1160,7 +1160,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1211,7 +1211,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1357,7 +1357,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1416,7 +1416,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1560,7 +1560,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1686,7 +1686,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1738,7 +1738,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1870,16 +1870,13 @@ describe("Meerkat DSA Basic Access Control", () => {
                             new ProtectedItems(
                                 null,
                                 null,
-                                [localityName["&id"]],
-                                [localityName["&id"]],
+                                undefined,
+                                undefined,
                                 null,
-                                // undefined,
-                                // undefined,
-                                // null,
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -1938,30 +1935,17 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
                                     new Uint8ClampedArray([
                                         FALSE_BIT,
-                                        TRUE_BIT, // denyAdd.
-                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT,
+                                        FALSE_BIT,
                                         FALSE_BIT,
                                         FALSE_BIT, // grantRead
                                         TRUE_BIT, // denyRead
-                                        FALSE_BIT,
-                                        FALSE_BIT,
-                                        TRUE_BIT, // grantBrowse
-                                        FALSE_BIT,
-                                        FALSE_BIT, // grantExport
-                                        FALSE_BIT,
-                                        FALSE_BIT, // grantImport
-                                        FALSE_BIT,
-                                        TRUE_BIT, // grantModify
-                                        FALSE_BIT,
-                                        FALSE_BIT, // grantRename
-                                        FALSE_BIT,
-                                        TRUE_BIT, // grantReturnDN
                                     ]),
                                 ),
                             ],
@@ -2013,6 +1997,11 @@ describe("Meerkat DSA Basic Access Control", () => {
             {
                 rdnSequence: dn,
             },
+            new EntryInformationSelection(
+                {
+                    select: [ localityName["&id"] ],
+                },
+            ),
         );
         const arg: ReadArgument = {
             unsigned: reqData,
@@ -2065,7 +2054,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -2201,7 +2190,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -2253,7 +2242,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -2353,7 +2342,7 @@ describe("Meerkat DSA Basic Access Control", () => {
         expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
     });
 
-    it.only("Compare correctly applies access control for a(n) Value", async () => {
+    it("Compare correctly applies access control for a(n) Value", async () => {
         const testId = `bac.compare.value-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         const COMPARED_VALUE: string = "asdf";
@@ -2389,13 +2378,14 @@ describe("Meerkat DSA Basic Access Control", () => {
                             new ProtectedItems(
                                 null,
                                 null,
-                                [localityName["&id"]], // FIXME: This seems to be necessary.
+                                undefined,
+                                // [localityName["&id"]], // FIXME: This seems to be necessary.
                                 undefined,
                                 null,
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
@@ -2456,7 +2446,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                             ),
                             [
                                 new ItemPermission(
-                                    1,
+                                    undefined,
                                     new UserClasses(
                                         null,
                                     ),
