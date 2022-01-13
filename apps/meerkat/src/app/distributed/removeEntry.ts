@@ -47,7 +47,6 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_opcode_removeEntry,
@@ -69,7 +68,6 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import { DER } from "asn1-ts/dist/node/functional";
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import failover from "../utils/failover";
 import {
@@ -102,6 +100,11 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -143,6 +146,12 @@ async function removeEntry (
         }
     };
     const targetDN = getDistinguishedName(target);
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -156,34 +165,30 @@ async function removeEntry (
         const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
         const NAMING_MATCHER = getNamingMatcherGetter(ctx);
         const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                ...tuple,
-                await userWithinACIUserClass(
-                    tuple[0],
-                    conn.boundNameAndUID!,
-                    targetDN,
-                    NAMING_MATCHER,
-                    isMemberOfGroup,
-                ),
-            ]),
-        ))
-            .filter((tuple) => (tuple[5] > 0));
+        const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+            accessControlScheme,
+            acdfTuples,
+            user,
+            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            targetDN,
+            isMemberOfGroup,
+            NAMING_MATCHER,
+        );
         const {
             authorized: authorizedToRemoveEntry,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
                 PERMISSION_CATEGORY_REMOVE,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         if (!authorizedToRemoveEntry) {
             throw new errors.SecurityError(

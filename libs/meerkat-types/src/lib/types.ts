@@ -1135,6 +1135,7 @@ export
 abstract class ClientConnection {
     public socket!: Socket;
     public readonly id = randomUUID();
+    public claimedNameAndUID: NameAndOptionalUID;
     public boundEntry: Vertex | undefined;
     /**
      * Even though this can be calculated from the `boundEntry` field, this
@@ -1168,6 +1169,7 @@ abstract class ClientConnection {
 
 export
 interface BindReturn {
+    claimedNameAndUID?: NameAndOptionalUID;
     boundVertex?: Vertex;
     boundNameAndUID?: NameAndOptionalUID;
     authLevel: AuthenticationLevel;

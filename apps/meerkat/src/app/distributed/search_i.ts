@@ -120,7 +120,6 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     nameError,
@@ -254,6 +253,11 @@ import { strict as assert } from "assert";
 import _ from "lodash";
 import keepSubsetOfDITById from "../dit/keepSubsetOfDITById";
 import walkMemory from "../dit/walkMemory";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -992,7 +996,6 @@ async function search_i (
         );
         return;
     }
-    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
@@ -1004,31 +1007,34 @@ async function search_i (
     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-            ...tuple,
-            await userWithinACIUserClass(
-                tuple[0],
-                conn.boundNameAndUID!,
-                targetDN,
-                NAMING_MATCHER,
-                isMemberOfGroup,
-            ),
-        ]),
-    ))
-        .filter((tuple) => (tuple[5] > 0));
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
+    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+        accessControlScheme,
+        acdfTuples,
+        user,
+        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        targetDN,
+        isMemberOfGroup,
+        NAMING_MATCHER,
+    );
     const onBaseObjectIteration: boolean = (targetDN.length === data.baseObject.rdnSequence.length);
     const authorized = (permissions: number[]) => {
         const {
             authorized,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             permissions,
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         return authorized;
     };
@@ -1244,7 +1250,7 @@ async function search_i (
                 authorized: authorizedToMatch,
             } = bacACDF(
                 relevantTuples,
-                conn.authLevel,
+                user,
                 value
                     ? {
                         value: new AttributeTypeAndValue(
@@ -1260,7 +1266,8 @@ async function search_i (
                     PERMISSION_CATEGORY_COMPARE, // Not required by specification.
                     PERMISSION_CATEGORY_READ, // Not required by specification.
                 ],
-                EQUALITY_MATCHER,
+                bacSettings,
+                true,
             );
             return authorizedToMatch;
         },
@@ -1347,14 +1354,15 @@ async function search_i (
                     authorized: authorizedToAddAttributeType,
                 } = bacACDF(
                     relevantTuples,
-                    conn.authLevel,
+                    user,
                     {
                         attributeType: info.attribute.type_,
                     },
                     [
                         PERMISSION_CATEGORY_READ,
                     ],
-                    EQUALITY_MATCHER,
+                    bacSettings,
+                    true,
                 );
                 if (!authorizedToAddAttributeType) {
                     incompleteEntry = true;
@@ -1366,7 +1374,7 @@ async function search_i (
                             authorized: authorizedToAddAttributeValue,
                         } = bacACDF(
                             relevantTuples,
-                            conn.authLevel,
+                            user,
                             {
                                 value: new AttributeTypeAndValue(
                                     value.type,
@@ -1376,7 +1384,8 @@ async function search_i (
                             [
                                 PERMISSION_CATEGORY_READ,
                             ],
-                            EQUALITY_MATCHER,
+                            bacSettings,
+                            true,
                         );
                         if (!authorizedToAddAttributeValue) {
                             incompleteEntry = true;
@@ -1396,14 +1405,15 @@ async function search_i (
                     authorized: authorizedToAddAttributeType,
                 } = bacACDF(
                     relevantTuples,
-                    conn.authLevel,
+                    user,
                     {
                         attributeType: info.attributeType,
                     },
                     [
                         PERMISSION_CATEGORY_READ,
                     ],
-                    EQUALITY_MATCHER,
+                    bacSettings,
+                    true,
                 );
                 if (authorizedToAddAttributeType) {
                     permittedEinfo.push(info);
@@ -1427,20 +1437,21 @@ async function search_i (
                 authorized: authorizedToReadAliasedEntryName,
             } = bacACDF(
                 relevantTuples,
-                conn.authLevel,
+                user,
                 {
                     attributeType: id_at_aliasedEntryName,
                 },
                 [
                     PERMISSION_CATEGORY_READ,
                 ],
-                EQUALITY_MATCHER,
+                bacSettings,
+                true,
             );
             const {
                 authorized: authorizedToReadAliasedEntryNameValue,
             } = bacACDF(
                 relevantTuples,
-                conn.authLevel,
+                user,
                 {
                     value: new AttributeTypeAndValue(
                         id_at_aliasedEntryName,
@@ -1450,7 +1461,8 @@ async function search_i (
                 [
                     PERMISSION_CATEGORY_READ,
                 ],
-                EQUALITY_MATCHER,
+                bacSettings,
+                true,
             );
             if (
                 !authorizedToReadEntry

@@ -2,11 +2,8 @@ import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
-import type {
-    AuthenticationLevel,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import readEntryInformation from "./readEntryInformation";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_READ,
@@ -16,9 +13,12 @@ import attributesFromValues from "../../x500/attributesFromValues";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 import accessControlSchemesThatUseACIItems from "../../authz/accessControlSchemesThatUseACIItems";
 import type { ReadAttributesOptions } from "./readAttributes";
+import type {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import bacSettings from "../../authz/bacSettings";
 
 export
 interface ReadPermittedEntryInformationReturn {
@@ -30,12 +30,11 @@ export
 async function readPermittedEntryInformation (
     ctx: Context,
     target: Vertex,
-    authLevel: AuthenticationLevel,
+    user: NameAndOptionalUID | undefined | null,
     relevantTuples: ACDFTupleExtended[],
     accessControlScheme?: OBJECT_IDENTIFIER,
     options?: ReadAttributesOptions,
 ): Promise<ReadPermittedEntryInformationReturn> {
-    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const einfo: EntryInformation_information_Item[] = await readEntryInformation(
         ctx,
         target,
@@ -60,14 +59,15 @@ async function readPermittedEntryInformation (
                 authorized: authorizedToAddAttributeType,
             } = bacACDF(
                 relevantTuples,
-                authLevel,
+                user,
                 {
                     attributeType: info.attribute.type_,
                 },
                 [
                     PERMISSION_CATEGORY_READ,
                 ],
-                EQUALITY_MATCHER,
+                bacSettings,
+                true,
             );
             if (!authorizedToAddAttributeType) {
                 incompleteEntry = true;
@@ -77,7 +77,7 @@ async function readPermittedEntryInformation (
                 .filter((value) => {
                     const acdfResult = bacACDF(
                         relevantTuples,
-                        authLevel,
+                        user,
                         {
                             value: new AttributeTypeAndValue(
                                 value.type,
@@ -87,7 +87,8 @@ async function readPermittedEntryInformation (
                         [
                             PERMISSION_CATEGORY_READ,
                         ],
-                        EQUALITY_MATCHER,
+                        bacSettings,
+                        true,
                     );
                     if (!acdfResult.authorized) {
                         incompleteEntry = true;
@@ -107,14 +108,15 @@ async function readPermittedEntryInformation (
                 authorized: authorizedToAddAttributeType,
             } = bacACDF(
                 relevantTuples,
-                authLevel,
+                user,
                 {
                     attributeType: info.attributeType,
                 },
                 [
                     PERMISSION_CATEGORY_READ,
                 ],
-                EQUALITY_MATCHER,
+                bacSettings,
+                true,
             );
             if (authorizedToAddAttributeType) {
                 permittedEinfo.push(info);

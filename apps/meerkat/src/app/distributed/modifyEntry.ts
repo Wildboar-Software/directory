@@ -105,7 +105,6 @@ import bacACDF, {
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
@@ -157,9 +156,6 @@ import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import {
     ObjectClassKind_auxiliary,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import {
-    AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import {
     DITContextUseDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
@@ -226,6 +222,11 @@ import { id_aca_prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAcce
 import {
     id_aca_accessControlScheme,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-accessControlScheme.va";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -399,6 +400,7 @@ async function checkAttributePresence (
     }));
 }
 
+// FIXME: Why is this here?
 function checkEqualityMatchingPermitted (
     ctx: Context,
     target: Vertex,
@@ -412,11 +414,10 @@ function checkEqualityMatchingPermitted (
 function checkPermissionToAddValues (
     attribute: Attribute,
     ctx: Context,
+    user: NameAndOptionalUID | undefined | null,
     conn: ClientConnection,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): void {
     if (
@@ -430,14 +431,15 @@ function checkPermissionToAddValues (
         authorized: authorizedForAttributeType,
     } = bacACDF(
         relevantACDFTuples,
-        authLevel,
+        user,
         {
             attributeType: attribute.type_,
         },
         [
             PERMISSION_CATEGORY_ADD,
         ],
-        equalityMatcherGetter,
+        bacSettings,
+        true,
     );
     if (!authorizedForAttributeType) {
         throw new errors.SecurityError(
@@ -450,7 +452,7 @@ function checkPermissionToAddValues (
             authorized: authorizedForValue,
         } = bacACDF(
             relevantACDFTuples,
-            authLevel,
+            user,
             {
                 value: new AttributeTypeAndValue(
                     value.type,
@@ -460,7 +462,8 @@ function checkPermissionToAddValues (
             [
                 PERMISSION_CATEGORY_ADD,
             ],
-            equalityMatcherGetter,
+            bacSettings,
+            true,
         );
         if (!authorizedForValue) {
             throw new errors.SecurityError(
@@ -697,12 +700,11 @@ async function executeAddAttribute (
     mod: Attribute,
     ctx: Context,
     conn: ClientConnection,
+    user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
@@ -739,15 +741,14 @@ async function executeAddAttribute (
     checkPermissionToAddValues(
         mod,
         ctx,
+        user,
         conn,
         accessControlScheme,
         relevantACDFTuples,
-        authLevel,
-        equalityMatcherGetter,
         aliasDereferenced,
     );
     const values = valuesFromAttribute(mod);
-    addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
+    addValuesToPatch(patch, mod.type_, values, bacSettings.getEqualityMatcher(mod.type_));
     return addValues(ctx, entry, values);
 }
 
@@ -755,12 +756,11 @@ async function executeRemoveAttribute (
     mod: AttributeType,
     ctx: Context,
     conn: ClientConnection,
+    user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     if (entry.dse.rdn.some((atav) => atav.type_.isEqualTo(mod))) {
@@ -824,14 +824,15 @@ async function executeRemoveAttribute (
             authorized: authorizedForAttributeType,
         } = bacACDF(
             relevantACDFTuples,
-            authLevel,
+            user,
             {
                 attributeType: mod,
             },
             [
                 PERMISSION_CATEGORY_REMOVE,
             ],
-            equalityMatcherGetter,
+            bacSettings,
+            true,
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
@@ -852,15 +853,14 @@ async function executeAddValues (
     mod: Attribute,
     ctx: Context,
     conn: ClientConnection,
+    user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
-    const equalityMatcher: boolean = !!equalityMatcherGetter(mod.type_);
+    const equalityMatcher: boolean = !!bacSettings.getEqualityMatcher(mod.type_);
     if (!equalityMatcher) {
         throw new errors.AttributeError(
             ctx.i18n.t("err:no_equality_matching_rule_defined_for_type", {
@@ -894,15 +894,14 @@ async function executeAddValues (
     checkPermissionToAddValues(
         mod,
         ctx,
+        user,
         conn,
         accessControlScheme,
         relevantACDFTuples,
-        authLevel,
-        equalityMatcherGetter,
         aliasDereferenced,
     );
     const values = valuesFromAttribute(mod);
-    addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
+    addValuesToPatch(patch, mod.type_, values, bacSettings.getEqualityMatcher(mod.type_));
     return addValues(ctx, entry, values);
 }
 
@@ -910,15 +909,14 @@ async function executeRemoveValues (
     mod: Attribute,
     ctx: Context,
     conn: ClientConnection,
+    user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
-    const equalityMatcher: boolean = !!equalityMatcherGetter(mod.type_);
+    const equalityMatcher: boolean = !!bacSettings.getEqualityMatcher(mod.type_);
     if (!equalityMatcher) {
         throw new errors.AttributeError(
             ctx.i18n.t("err:no_equality_matching_rule_defined_for_type", {
@@ -948,7 +946,7 @@ async function executeRemoveValues (
             ),
         );
     }
-    const EQUALITY_MATCHER = equalityMatcherGetter(mod.type_);
+    const EQUALITY_MATCHER = bacSettings.getEqualityMatcher(mod.type_);
     const values = valuesFromAttribute(mod);
     const rdnValueOfType = entry.dse.rdn.find((atav) => atav.type_.isEqualTo(mod.type_));
     if (
@@ -990,14 +988,15 @@ async function executeRemoveValues (
             authorized: authorizedForAttributeType,
         } = bacACDF(
             relevantACDFTuples,
-            authLevel,
+            user,
             {
                 attributeType: mod.type_,
             },
             [
                 PERMISSION_CATEGORY_REMOVE,
             ],
-            equalityMatcherGetter,
+            bacSettings,
+            true,
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
@@ -1010,7 +1009,7 @@ async function executeRemoveValues (
                 authorized: authorizedForValue,
             } = bacACDF(
                 relevantACDFTuples,
-                authLevel,
+                user,
                 {
                     value: new AttributeTypeAndValue(
                         value.type,
@@ -1020,7 +1019,8 @@ async function executeRemoveValues (
                 [
                     PERMISSION_CATEGORY_REMOVE,
                 ],
-                equalityMatcherGetter,
+                bacSettings,
+                true,
             );
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
@@ -1038,12 +1038,11 @@ async function executeAlterValues (
     mod: AttributeTypeAndValue,
     ctx: Context,
     conn: ClientConnection,
+    user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     if (!isAcceptableTypeForAlterValues(mod.value)) {
@@ -1081,14 +1080,15 @@ async function executeAlterValues (
             authorized: authorizedForAttributeType,
         } = bacACDF(
             relevantACDFTuples,
-            authLevel,
+            user,
             {
                 attributeType: mod.type_,
             },
             [
                 PERMISSION_CATEGORY_REMOVE,
             ],
-            equalityMatcherGetter,
+            bacSettings,
+            true,
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
@@ -1108,7 +1108,7 @@ async function executeAlterValues (
                 authorized: authorizedForValue,
             } = bacACDF(
                 relevantACDFTuples,
-                authLevel,
+                user,
                 {
                     value: new AttributeTypeAndValue(
                         value.type,
@@ -1119,7 +1119,8 @@ async function executeAlterValues (
                     PERMISSION_CATEGORY_ADD,
                     PERMISSION_CATEGORY_REMOVE,
                 ],
-                equalityMatcherGetter,
+                bacSettings,
+                true,
             );
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
@@ -1150,12 +1151,11 @@ async function executeResetValue (
     mod: AttributeType,
     ctx: Context,
     conn: ClientConnection,
+    user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     const where = {
@@ -1184,7 +1184,7 @@ async function executeResetValue (
                 authorized: authorizedForAttributeType,
             } = bacACDF(
                 relevantACDFTuples,
-                authLevel,
+                user,
                 {
                     value: new AttributeTypeAndValue(
                         mod,
@@ -1194,7 +1194,8 @@ async function executeResetValue (
                 [
                     PERMISSION_CATEGORY_REMOVE,
                 ],
-                equalityMatcherGetter,
+                bacSettings,
+                true,
             );
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
@@ -1228,12 +1229,11 @@ async function executeReplaceValues (
     mod: Attribute,
     ctx: Context,
     conn: ClientConnection,
+    user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
@@ -1251,14 +1251,15 @@ async function executeReplaceValues (
             authorized: authorizedForValue,
         } = bacACDF(
             relevantACDFTuples,
-            authLevel,
+            user,
             {
                 attributeType: mod.type_,
             },
             [
                 PERMISSION_CATEGORY_ADD,
             ],
-            equalityMatcherGetter,
+            bacSettings,
+            true,
         );
         if (!authorizedForValue) {
             throw new errors.SecurityError(
@@ -1279,7 +1280,7 @@ async function executeReplaceValues (
                 authorized: authorizedForAttributeType,
             } = bacACDF(
                 relevantACDFTuples,
-                authLevel,
+                user,
                 {
                     value: new AttributeTypeAndValue(
                         mod.type_,
@@ -1289,7 +1290,8 @@ async function executeReplaceValues (
                 [
                     PERMISSION_CATEGORY_REMOVE,
                 ],
-                equalityMatcherGetter,
+                bacSettings,
+                true,
             );
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
@@ -1301,7 +1303,7 @@ async function executeReplaceValues (
     }
     const oldValues = await readValuesOfType(ctx, entry, mod.type_);
     patch.removedValues.set(TYPE_OID, oldValues);
-    addValuesToPatch(patch, mod.type_, values, equalityMatcherGetter(mod.type_));
+    addValuesToPatch(patch, mod.type_, values, bacSettings.getEqualityMatcher(mod.type_));
     return [
         ...(await removeAttribute(ctx, entry, mod.type_)),
         // Last argument to addValues() is false, because we don't want to check
@@ -1526,14 +1528,13 @@ function handleContextRule (
 async function executeEntryModification (
     ctx: Context,
     conn: ClientConnection,
+    user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     targetDN: DistinguishedName,
     mod: EntryModification,
     patch: Patch,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
-    authLevel: AuthenticationLevel,
-    equalityMatcherGetter: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
     precludedAttributes: Set<IndexableOID>,
     contextRuleIndex: ContextRulesIndex,
     isSubentry: boolean,
@@ -1544,12 +1545,11 @@ async function executeEntryModification (
     const commonArguments = [
         ctx,
         conn,
+        user,
         entry,
         patch,
         accessControlScheme,
         relevantACDFTuples,
-        authLevel,
-        equalityMatcherGetter,
         aliasDereferenced,
     ] as const;
 
@@ -1736,6 +1736,12 @@ async function modifyEntry (
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
         ? []
         : (await Promise.all(
@@ -1751,31 +1757,28 @@ async function modifyEntry (
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = ctx.config.bulkInsertMode
         ? []
-        : (await Promise.all(
-            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                ...tuple,
-                await userWithinACIUserClass(
-                    tuple[0],
-                    conn.boundNameAndUID!,
-                    targetDN,
-                    NAMING_MATCHER,
-                    isMemberOfGroup,
-                ),
-            ]),
-        ))
-            .filter((tuple) => (tuple[5] > 0));
+        : await preprocessTuples(
+            accessControlScheme,
+            acdfTuples,
+            user,
+            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            targetDN,
+            isMemberOfGroup,
+            NAMING_MATCHER,
+        );
 
     const authorizedToEntry = (permissions: number[]): boolean => {
         const {
             authorized,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             permissions,
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         return authorized;
     };
@@ -1869,14 +1872,13 @@ async function modifyEntry (
             ...(await executeEntryModification(
                 ctx,
                 conn,
+                user,
                 target,
                 targetDN,
                 mod,
                 patch,
                 accessControlScheme,
                 relevantTuples,
-                conn.authLevel,
-                EQUALITY_MATCHER,
                 precludedAttributes,
                 contextRulesIndex,
                 Boolean(target.dse.subentry),
@@ -2497,7 +2499,7 @@ async function modifyEntry (
         const permittedEntryInfo = await readPermittedEntryInformation(
             ctx,
             target,
-            conn.authLevel,
+            user,
             relevantTuples,
             accessControlScheme,
             {
@@ -2526,7 +2528,7 @@ async function modifyEntry (
                     .map((member) => readPermittedEntryInformation(
                         ctx,
                         member,
-                        conn.authLevel,
+                        user,
                         relevantTuples,
                         accessControlScheme,
                         {

@@ -55,7 +55,6 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
@@ -93,12 +92,16 @@ import {
     FamilyGrouping_entryOnly,
     FamilyGrouping_compoundEntry,
     FamilyGrouping_strands,
-    FamilyGrouping_multiStrand,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 import readFamily from "../database/family/readFamily";
 import readEntryOnly from "../database/family/readEntryOnly";
 import readCompoundEntry from "../database/family/readCompoundEntry";
 import readStrands from "../database/family/readStrands";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -138,6 +141,12 @@ async function compare (
             ...getAttributeSubtypes(ctx, data.purported.type_),
         ];
     const targetDN = getDistinguishedName(target);
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
     const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
@@ -150,19 +159,15 @@ async function compare (
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-            ...tuple,
-            await userWithinACIUserClass(
-                tuple[0],
-                conn.boundNameAndUID!,
-                targetDN,
-                NAMING_MATCHER,
-                isMemberOfGroup,
-            ),
-        ]),
-    ))
-        .filter((tuple) => (tuple[5] > 0));
+    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+        accessControlScheme,
+        acdfTuples,
+        user,
+        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        targetDN,
+        isMemberOfGroup,
+        NAMING_MATCHER,
+    );
     if (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
@@ -171,14 +176,15 @@ async function compare (
             authorized: authorizedToEntry,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
                 PERMISSION_CATEGORY_READ,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         if (!authorizedToEntry) {
             throw new errors.SecurityError(
@@ -222,7 +228,7 @@ async function compare (
             }
             const typeResult = bacACDF(
                 relevantTuples,
-                conn.authLevel,
+                user,
                 {
                     attributeType: type_,
                 },
@@ -230,7 +236,8 @@ async function compare (
                     PERMISSION_CATEGORY_COMPARE,
                     PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
                 ],
-                EQUALITY_MATCHER,
+                bacSettings,
+                true,
             );
             if (!typeResult.authorized) {
                 throw new errors.SecurityError(
@@ -378,7 +385,7 @@ async function compare (
                     authorized,
                 } = bacACDF(
                     relevantTuples,
-                    conn.authLevel,
+                    user,
                     {
                         value: new AttributeTypeAndValue(
                             value.type,
@@ -389,7 +396,8 @@ async function compare (
                         PERMISSION_CATEGORY_COMPARE,
                         PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
                     ],
-                    EQUALITY_MATCHER,
+                    bacSettings,
+                    true,
                 );
                 if (!authorized) {
                     continue;

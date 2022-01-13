@@ -53,7 +53,6 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import { NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 import createSecurityParameters from "../x500/createSecurityParameters";
@@ -96,7 +95,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import {
@@ -111,6 +109,11 @@ import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -168,7 +171,12 @@ async function list_i (
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
-    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const relevantSubentries: Vertex[] = (await Promise.all(
@@ -181,19 +189,15 @@ async function list_i (
     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-            ...tuple,
-            await userWithinACIUserClass(
-                tuple[0],
-                conn.boundNameAndUID!,
-                targetDN,
-                NAMING_MATCHER,
-                isMemberOfGroup,
-            ),
-        ]),
-    ))
-        .filter((tuple) => (tuple[5] > 0));
+    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+        accessControlScheme,
+        acdfTuples,
+        user,
+        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        targetDN,
+        isMemberOfGroup,
+        NAMING_MATCHER,
+    );
     if (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
@@ -202,7 +206,7 @@ async function list_i (
             authorized,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
@@ -210,7 +214,8 @@ async function list_i (
                 PERMISSION_CATEGORY_BROWSE,
                 PERMISSION_CATEGORY_RETURN_DN,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         if (!authorized) {
             // Non-disclosure of the target object is at least addressed in X.501 RBAC!
@@ -446,24 +451,20 @@ async function list_i (
                 const subordinateACI = getACIItems(accessControlScheme, subordinate, relevantSubentries);
                 const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
                     .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-                const relevantSubordinateTuples: ACDFTupleExtended[] = (await Promise.all(
-                    subordinateACDFTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                        ...tuple,
-                        await userWithinACIUserClass(
-                            tuple[0],
-                            conn.boundNameAndUID!,
-                            subordinateDN,
-                            NAMING_MATCHER,
-                            isMemberOfGroup,
-                        ),
-                    ]),
-                ))
-                    .filter((tuple) => (tuple[5] > 0));
+                const relevantSubordinateTuples: ACDFTupleExtended[] = await preprocessTuples(
+                    accessControlScheme,
+                    subordinateACDFTuples,
+                    user,
+                    state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                    subordinateDN,
+                    isMemberOfGroup,
+                    NAMING_MATCHER,
+                );
                 const {
                     authorized: authorizedToList,
                 } = bacACDF(
                     relevantSubordinateTuples,
-                    conn.authLevel,
+                    user,
                     {
                         entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
                     },
@@ -471,7 +472,8 @@ async function list_i (
                         PERMISSION_CATEGORY_BROWSE,
                         PERMISSION_CATEGORY_RETURN_DN,
                     ],
-                    EQUALITY_MATCHER,
+                    bacSettings,
+                    true,
                 );
                 if (!authorizedToList) {
                     continue;

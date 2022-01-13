@@ -33,7 +33,6 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import {
     userPassword,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
@@ -48,10 +47,14 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -124,6 +127,12 @@ async function administerPassword (
     const argument: AdministerPasswordArgument = _decode_AdministerPasswordArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -137,40 +146,36 @@ async function administerPassword (
         const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
         const NAMING_MATCHER = getNamingMatcherGetter(ctx);
         const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                ...tuple,
-                await userWithinACIUserClass(
-                    tuple[0],
-                    conn.boundNameAndUID!,
-                    targetDN,
-                    NAMING_MATCHER,
-                    isMemberOfGroup,
-                ),
-            ]),
-        ))
-            .filter((tuple) => (tuple[5] > 0));
+        const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+            accessControlScheme,
+            acdfTuples,
+            user,
+            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            targetDN,
+            isMemberOfGroup,
+            NAMING_MATCHER,
+        );
         const {
             authorized: authorizedToModifyEntry,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
                 PERMISSION_CATEGORY_MODIFY,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         const {
             authorized: authorizedToModifyUserPassword,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 attributeType: userPassword["&id"],
             },
@@ -179,13 +184,14 @@ async function administerPassword (
                 PERMISSION_CATEGORY_REMOVE,
                 PERMISSION_CATEGORY_MODIFY,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         const {
             authorized: authorizedToModifyUserPwd,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 attributeType: userPwd["&id"],
             },
@@ -194,7 +200,8 @@ async function administerPassword (
                 PERMISSION_CATEGORY_REMOVE,
                 PERMISSION_CATEGORY_MODIFY,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         if (
             !authorizedToModifyEntry

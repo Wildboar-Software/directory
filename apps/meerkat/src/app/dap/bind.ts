@@ -85,6 +85,10 @@ async function bind (
         if (!arg.credentials.simple.password) {
             return {
                 boundVertex: foundEntry,
+                boundNameAndUID: new NameAndOptionalUID(
+                    arg.credentials.simple.name,
+                    foundEntry?.dse.uniqueIdentifier?.[0],
+                ),
                 authLevel: {
                     basicLevels: new AuthenticationLevel_basicLevels(
                         AuthenticationLevel_basicLevels_level_none,

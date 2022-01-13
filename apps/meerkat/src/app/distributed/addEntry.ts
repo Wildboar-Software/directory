@@ -84,7 +84,6 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
@@ -117,7 +116,6 @@ import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
 import validateObjectClasses from "../x500/validateObjectClasses";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import {
     subschema,
@@ -174,6 +172,11 @@ import mayAddTopLeveDSE from "../authz/mayAddTopLevelDSE";
 import {
     id_aca_accessControlScheme,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-accessControlScheme.va";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -209,6 +212,12 @@ async function addEntry (
 ): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
     const op = ("present" in state.invokeId)
         ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -216,7 +225,6 @@ async function addEntry (
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const immediateSuperior = state.foundDSE;
-    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const values: Value[] = data.entry.flatMap(valuesFromAttribute);
     const objectClassValues = values.filter((attr) => attr.type.isEqualTo(id_at_objectClass));
@@ -452,19 +460,15 @@ async function addEntry (
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const relevantTuples: ACDFTupleExtended[] = ctx.config.bulkInsertMode
         ? []
-        : (await Promise.all(
-            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                ...tuple,
-                await userWithinACIUserClass(
-                    tuple[0],
-                    conn.boundNameAndUID!, // This request is not allowed if the connection is not bound.
-                    targetDN,
-                    NAMING_MATCHER,
-                    isMemberOfGroup,
-                ),
-            ]),
-        ))
-            .filter((tuple) => (tuple[5] > 0));
+        : await preprocessTuples(
+            accessControlScheme,
+            acdfTuples,
+            user,
+            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            targetDN,
+            isMemberOfGroup,
+            NAMING_MATCHER,
+        );
     if (
         !ctx.config.bulkInsertMode
         && accessControlScheme
@@ -474,14 +478,15 @@ async function addEntry (
             authorized,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: objectClasses,
             },
             [
                 PERMISSION_CATEGORY_ADD,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         if (!authorized) {
             throw new errors.SecurityError(
@@ -681,14 +686,15 @@ async function addEntry (
                     authorized: authorizedToAddAttributeType,
                 } = bacACDF(
                     relevantTuples,
-                    conn.authLevel,
+                    user,
                     {
                         attributeType: attr.type_,
                     },
                     [
                         PERMISSION_CATEGORY_ADD,
                     ],
-                    EQUALITY_MATCHER,
+                    bacSettings,
+                    true,
                 );
                 if (!authorizedToAddAttributeType) {
                     throw new errors.SecurityError(
@@ -723,7 +729,7 @@ async function addEntry (
                     authorized: authorizedToAddAttributeValue,
                 } = bacACDF(
                     relevantTuples,
-                    conn.authLevel,
+                    user,
                     {
                         value: new AttributeTypeAndValue(
                             value.type,
@@ -733,7 +739,8 @@ async function addEntry (
                     [
                         PERMISSION_CATEGORY_ADD,
                     ],
-                    EQUALITY_MATCHER,
+                    bacSettings,
+                    true,
                 );
                 if (!authorizedToAddAttributeValue) {
                     throw new errors.SecurityError(

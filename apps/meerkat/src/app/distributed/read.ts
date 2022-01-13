@@ -41,7 +41,6 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import type { ModifyRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights.ta";
 import { ModifyRights_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights-Item.ta";
 import createSecurityParameters from "../x500/createSecurityParameters";
@@ -57,7 +56,6 @@ import readPermittedEntryInformation from "../database/entry/readPermittedEntryI
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import failover from "../utils/failover";
 import {
     AbandonedData,
@@ -101,6 +99,11 @@ import {
     ServiceControlOptions_dontSelectFriends,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 export
 async function read (
@@ -114,7 +117,6 @@ async function read (
     const op = ("present" in state.invokeId)
         ? conn.invocations.get(Number(state.invokeId.present))
         : undefined;
-    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
     const targetDN = getDistinguishedName(target);
@@ -130,19 +132,21 @@ async function read (
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-            ...tuple,
-            await userWithinACIUserClass(
-                tuple[0],
-                conn.boundNameAndUID!,
-                targetDN,
-                NAMING_MATCHER,
-                isMemberOfGroup,
-            ),
-        ]),
-    ))
-        .filter((tuple) => (tuple[5] > 0));
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
+    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+        accessControlScheme,
+        acdfTuples,
+        user,
+        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        targetDN,
+        isMemberOfGroup,
+        NAMING_MATCHER,
+    );
     if (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
@@ -151,14 +155,15 @@ async function read (
             authorized,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
                 PERMISSION_CATEGORY_READ,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         if (!authorized) {
             throw new errors.SecurityError(
@@ -219,7 +224,7 @@ async function read (
     const permittedEntryInfo = await readPermittedEntryInformation(
         ctx,
         target,
-        conn.authLevel,
+        user,
         relevantTuples,
         accessControlScheme,
         {
@@ -249,7 +254,7 @@ async function read (
                 .map((member) => readPermittedEntryInformation(
                     ctx,
                     member,
-                    conn.authLevel,
+                    user,
                     relevantTuples,
                     accessControlScheme,
                     {
@@ -323,53 +328,57 @@ async function read (
             authorized: authorizedToAddEntry,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
                 PERMISSION_CATEGORY_ADD,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         const {
             authorized: authorizedToRemoveEntry,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
                 PERMISSION_CATEGORY_REMOVE,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         const {
             authorized: authorizedToRenameEntry,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
                 PERMISSION_CATEGORY_RENAME,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         const {
             authorized: authorizedToMoveEntry,
         } = bacACDF(
             relevantTuples,
-            conn.authLevel,
+            user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
             [
                 PERMISSION_CATEGORY_EXPORT,
             ],
-            EQUALITY_MATCHER,
+            bacSettings,
+            true,
         );
         modifyRights.push(new ModifyRights_Item(
             {

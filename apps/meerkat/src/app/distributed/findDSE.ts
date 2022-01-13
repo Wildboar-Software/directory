@@ -25,7 +25,7 @@ import {
     ServiceControlOptions_partialNameResolution,
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
-    ServiceControlOptions_subentries,
+    // ServiceControlOptions_subentries,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     ReferenceType,
@@ -78,7 +78,6 @@ import bacACDF, {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
@@ -89,7 +88,6 @@ import {
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import {
     AbandonedData,
@@ -102,6 +100,11 @@ import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import emptyChainingResults from "../x500/emptyChainingResults";
+import bacSettings from "../authz/bacSettings";
+import {
+    NameAndOptionalUID,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import preprocessTuples from "../authz/preprocessTuples";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -263,12 +266,17 @@ async function findDSE (
         serviceControlOptions?.bitString?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
         serviceControlOptions?.bitString?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
-    const subentries: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
+    // const subentries: boolean = (
+    //     serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
-    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
 
     const node_candidateRefs_empty_2 = async (): Promise<void> => {
         if (candidateRefs.length) {
@@ -748,24 +756,20 @@ async function findDSE (
                     const targetACI = getACIItems(accessControlScheme, matchedVertex, relevantSubentries);
                     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-                    const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-                        acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                            ...tuple,
-                            await userWithinACIUserClass(
-                                tuple[0],
-                                conn.boundNameAndUID!,
-                                childDN,
-                                NAMING_MATCHER,
-                                isMemberOfGroup,
-                            ),
-                        ]),
-                    ))
-                        .filter((tuple) => (tuple[5] > 0));
+                    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+                        accessControlScheme,
+                        acdfTuples,
+                        user,
+                        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                        childDN,
+                        isMemberOfGroup,
+                        NAMING_MATCHER,
+                    );
                     const {
                         authorized,
                     } = bacACDF(
                         relevantTuples,
-                        conn.authLevel,
+                        user,
                         {
                             entry: Array
                                 .from(matchedVertex.dse.objectClass)
@@ -775,7 +779,8 @@ async function findDSE (
                             PERMISSION_CATEGORY_BROWSE,
                             PERMISSION_CATEGORY_RETURN_DN,
                         ],
-                        EQUALITY_MATCHER,
+                        bacSettings,
+                        true,
                     );
                     if (!authorized) {
                         await targetNotFoundSubprocedure();
@@ -851,19 +856,15 @@ async function findDSE (
                         const targetACI = getACIItems(accessControlScheme, child, relevantSubentries);
                         const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-                        const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-                            acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                                ...tuple,
-                                await userWithinACIUserClass(
-                                    tuple[0],
-                                    conn.boundNameAndUID!,
-                                    childDN,
-                                    NAMING_MATCHER,
-                                    isMemberOfGroup,
-                                ),
-                            ]),
-                        ))
-                            .filter((tuple) => (tuple[5] > 0));
+                        const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+                            accessControlScheme,
+                            acdfTuples,
+                            user,
+                            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                            childDN,
+                            isMemberOfGroup,
+                            NAMING_MATCHER,
+                        );
                         /**
                          * We ignore entries for which browse and returnDN permissions
                          * are not granted. This is not specified in the Find DSE
@@ -874,7 +875,7 @@ async function findDSE (
                             authorized,
                         } = bacACDF(
                             relevantTuples,
-                            conn.authLevel,
+                            user,
                             {
                                 entry: Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString),
                             },
@@ -882,7 +883,8 @@ async function findDSE (
                                 PERMISSION_CATEGORY_BROWSE,
                                 PERMISSION_CATEGORY_RETURN_DN,
                             ],
-                            EQUALITY_MATCHER,
+                            bacSettings,
+                            true,
                         );
                         if (!authorized) {
                             throw new errors.NameError(
@@ -935,22 +937,18 @@ async function findDSE (
             const targetACI = getACIItems(accessControlScheme, dse_i, relevantSubentries);
             const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                 .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-            const relevantTuples: ACDFTupleExtended[] = (await Promise.all(
-                acdfTuples.map(async (tuple): Promise<ACDFTupleExtended> => [
-                    ...tuple,
-                    await userWithinACIUserClass(
-                        tuple[0],
-                        conn.boundNameAndUID!,
-                        currentDN,
-                        NAMING_MATCHER,
-                        isMemberOfGroup,
-                    ),
-                ]),
-            ))
-                .filter((tuple) => (tuple[5] > 0));
+            const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+                accessControlScheme,
+                acdfTuples,
+                user,
+                state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                currentDN,
+                isMemberOfGroup,
+                NAMING_MATCHER,
+            );
             const { authorized: authorizedToDiscloseOnError } = bacACDF(
                 relevantTuples,
-                conn.authLevel,
+                user,
                 {
                     entry: Array
                         .from(dse_i.dse.objectClass)
@@ -959,7 +957,8 @@ async function findDSE (
                 [
                     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
                 ],
-                EQUALITY_MATCHER,
+                bacSettings,
+                true,
             );
             discloseOnError = authorizedToDiscloseOnError;
         }

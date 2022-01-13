@@ -93,12 +93,13 @@ type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Para
 
 function createChainingArgumentsFromDUA (
     ctx: Context,
+    conn: ClientConnection,
     operationCode: Code,
     operationArgument: ASN1Element,
     authenticationLevel: AuthenticationLevel,
     uniqueIdentifier?: UniqueIdentifier,
 ): ChainingArguments {
-    let originator: OPTIONAL<DistinguishedName>;
+    let originator: OPTIONAL<DistinguishedName> = conn.boundNameAndUID?.dn;
     let targetObject: OPTIONAL<DistinguishedName>;
     let operationProgress: OPTIONAL<OperationProgress>;
     const traceInformation: TraceInformation = [];
@@ -132,7 +133,7 @@ function createChainingArgumentsFromDUA (
     if (compareCode(operationCode, addEntry["&operationCode"]!)) {
         const arg = addEntry.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
-        originator = data.requestor;
+        originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
@@ -168,7 +169,7 @@ function createChainingArgumentsFromDUA (
     else if (compareCode(operationCode, compare["&operationCode"]!)) {
         const arg = compare.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
-        originator = data.requestor;
+        originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
@@ -199,7 +200,7 @@ function createChainingArgumentsFromDUA (
     else if (compareCode(operationCode, modifyDN["&operationCode"]!)) {
         const arg = modifyDN.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
-        originator = data.requestor;
+        originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
@@ -230,7 +231,7 @@ function createChainingArgumentsFromDUA (
     else if (compareCode(operationCode, modifyEntry["&operationCode"]!)) {
         const arg = modifyEntry.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
-        originator = data.requestor;
+        originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
@@ -261,7 +262,7 @@ function createChainingArgumentsFromDUA (
     else if (compareCode(operationCode, list["&operationCode"]!)) {
         const arg = list.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
-        originator = data.requestor;
+        originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
@@ -292,7 +293,7 @@ function createChainingArgumentsFromDUA (
     else if (compareCode(operationCode, read["&operationCode"]!)) {
         const arg = read.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
-        originator = data.requestor;
+        originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
@@ -323,7 +324,7 @@ function createChainingArgumentsFromDUA (
     else if (compareCode(operationCode, removeEntry["&operationCode"]!)) {
         const arg = removeEntry.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
-        originator = data.requestor;
+        originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
@@ -354,7 +355,7 @@ function createChainingArgumentsFromDUA (
     else if (compareCode(operationCode, search["&operationCode"]!)) {
         const arg = search.decoderFor["&ArgumentType"]!(operationArgument);
         const data = getOptionallyProtectedValue(arg);
-        originator = data.requestor;
+        originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
         timeLimit = data.serviceControls?.timeLimit
             ? {
@@ -451,6 +452,7 @@ async function requestValidationProcedure (
         : ((): Chain => {
             const chainingArguments = createChainingArgumentsFromDUA(
                 ctx,
+                conn,
                 req.opCode!,
                 req.argument!,
                 authenticationLevel,
