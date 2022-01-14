@@ -708,6 +708,20 @@ async function executeAddAttribute (
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
     checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
+    /**
+     * This is done before checking if the attribute is already present to avoid
+     * disclosing its presence. Once you've added the attribute, its presence is
+     * already known, so this is not a problem beyond this point.
+     */
+    checkPermissionToAddValues(
+        mod,
+        ctx,
+        user,
+        conn,
+        accessControlScheme,
+        relevantACDFTuples,
+        aliasDereferenced,
+    );
     const isPresent: boolean = await checkAttributePresence(ctx, entry, mod.type_);
     if (isPresent) {
         throw new errors.AttributeError(
@@ -738,15 +752,6 @@ async function executeAddAttribute (
             ),
         );
     }
-    checkPermissionToAddValues(
-        mod,
-        ctx,
-        user,
-        conn,
-        accessControlScheme,
-        relevantACDFTuples,
-        aliasDereferenced,
-    );
     const values = valuesFromAttribute(mod);
     addValuesToPatch(patch, mod.type_, values, bacSettings.getEqualityMatcher(mod.type_));
     return addValues(ctx, entry, values);
@@ -786,6 +791,35 @@ async function executeRemoveAttribute (
             ),
         )
     }
+    /**
+     * This is intentionally checked before even checking if the attribute is
+     * present so that we avoid revealing whether it exists already or not.
+     */
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
+        const {
+            authorized: authorizedForAttributeType,
+        } = bacACDF(
+            relevantACDFTuples,
+            user,
+            {
+                attributeType: mod,
+            },
+            [
+                PERMISSION_CATEGORY_REMOVE,
+            ],
+            bacSettings,
+            true,
+        );
+        if (!authorizedForAttributeType) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:not_authz_mod"),
+                notPermittedData(ctx, conn, aliasDereferenced),
+            );
+        }
+    }
     const isPresent: boolean = await checkAttributePresence(ctx, entry, mod);
     if (!isPresent) {
         throw new errors.AttributeError(
@@ -815,31 +849,6 @@ async function executeRemoveAttribute (
                 undefined,
             ),
         );
-    }
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
-        const {
-            authorized: authorizedForAttributeType,
-        } = bacACDF(
-            relevantACDFTuples,
-            user,
-            {
-                attributeType: mod,
-            },
-            [
-                PERMISSION_CATEGORY_REMOVE,
-            ],
-            bacSettings,
-            true,
-        );
-        if (!authorizedForAttributeType) {
-            throw new errors.SecurityError(
-                ctx.i18n.t("err:not_authz_mod"),
-                notPermittedData(ctx, conn, aliasDereferenced),
-            );
-        }
     }
     const TYPE_OID: string = mod.toString();
     patch.addedValues.delete(TYPE_OID);
@@ -2051,7 +2060,10 @@ async function modifyEntry (
             );
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
-        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
+        Array.from([
+            ...spec.mandatoryAttributes.values(),
+            ...spec.optionalAttributes.values(),
+        ]).forEach((attr) => optionalAttributes.add(attr));
     }
     const alreadyPresentObjectClasses = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
     for (const ocid of alreadyPresentObjectClasses) {
@@ -2066,7 +2078,10 @@ async function modifyEntry (
             continue;
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
-        Array.from(spec.optionalAttributes).forEach((attr) => optionalAttributes.add(attr));
+        Array.from([
+            ...spec.mandatoryAttributes.values(),
+            ...spec.optionalAttributes.values(),
+        ]).forEach((attr) => optionalAttributes.add(attr));
     }
 
     if (!ctx.config.bulkInsertMode) { // Check required attributes

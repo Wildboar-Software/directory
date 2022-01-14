@@ -222,7 +222,7 @@ async function findDSE (
         return;
     }
     let i: number = 0;
-    let dse_i: Vertex = haystackVertex;
+    let dse_i: Vertex = haystackVertex; // FIXME: These should only be in state.
     let nssrEncountered: boolean = false;
     const m: number = needleDN.length;
     let lastEntryFound: number = 0; // The last RDN whose DSE was of type entry.
@@ -706,9 +706,11 @@ async function findDSE (
         }
         const needleRDN = needleDN[i];
         let rdnMatched: boolean = false;
-        accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
-            .reverse()
-            .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+        accessControlScheme = (dse_i.dse.admPoint
+            ? [ ...state.admPoints, dse_i ]
+            : [ ...state.admPoints ])
+                .reverse()
+                .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         let cursorId: number | undefined;
         /**
          * What follows in this if statement is a byte-for-byte check for an
@@ -724,6 +726,7 @@ async function findDSE (
          * 1000 immediate subordinates.)
          */
         if (!dse_i.subordinates || (dse_i.subordinates.length > ctx.config.useDatabaseWhenThereAreXSubordinates)) {
+            // FIXME: This could find SN=Wilbur when you are searching for SN=Wilbur+GN=Jonathan
             const match = await ctx.db.entry.findFirst({
                 where: {
                     AND: [
@@ -744,14 +747,21 @@ async function findDSE (
             });
             if (match) {
                 const matchedVertex = await vertexFromDatabaseEntry(ctx, dse_i, match, true);
+                if (matchedVertex.dse.admPoint?.accessControlScheme) {
+                    accessControlScheme = matchedVertex.dse.admPoint.accessControlScheme;
+                }
                 if (
                     !ctx.config.bulkInsertMode
                     && accessControlScheme
                     && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
                 ) {
                     const childDN = getDistinguishedName(matchedVertex);
+                    // Without this, all first-level DSEs are discoverable.
+                    const relevantAdmPoints: Vertex[] = matchedVertex.dse.admPoint
+                        ? [ ...state.admPoints, matchedVertex ]
+                        : [ ...state.admPoints ];
                     const relevantSubentries: Vertex[] = (await Promise.all(
-                        state.admPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
+                        relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
                     )).flat();
                     const targetACI = getACIItems(accessControlScheme, matchedVertex, relevantSubentries);
                     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
@@ -844,14 +854,21 @@ async function findDSE (
                     getNamingMatcherGetter(ctx),
                 );
                 if (rdnMatched) {
+                    if (child.dse.admPoint?.accessControlScheme) {
+                        accessControlScheme = child.dse.admPoint.accessControlScheme;
+                    }
                     if ( // Check if the user can actually access it.
                         !ctx.config.bulkInsertMode
                         && accessControlScheme
                         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
                     ) {
                         const childDN = getDistinguishedName(child);
+                        // Without this, all first-level DSEs are discoverable.
+                        const relevantAdmPoints: Vertex[] = child.dse.admPoint
+                            ? [ ...state.admPoints, child ]
+                            : [ ...state.admPoints ];
                         const relevantSubentries: Vertex[] = (await Promise.all(
-                            state.admPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+                            relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
                         )).flat();
                         const targetACI = getACIItems(accessControlScheme, child, relevantSubentries);
                         const acdfTuples: ACDFTuple[] = (targetACI ?? [])

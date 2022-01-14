@@ -6,7 +6,6 @@ import {
     OBJECT_IDENTIFIER,
     INTEGER,
     FALSE,
-    TRUE,
 } from "asn1-ts";
 import {
     BER,
@@ -42,16 +41,13 @@ import {
     AddEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
 import {
-    DistinguishedName, _decode_DistinguishedName, _encode_DistinguishedName,
+    DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import {
-    name,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
 import {
     commonName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
@@ -68,9 +64,6 @@ import {
     localityName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
 import {
-    createTimestamp,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
-import {
     administrativeRole,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
 import {
@@ -82,9 +75,6 @@ import {
 import {
     id_ar_accessControlSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
-import {
-    id_ar_accessControlInnerArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
@@ -114,9 +104,6 @@ import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import type {
-    EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import {
     compare,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
@@ -167,9 +154,6 @@ import {
     ModifyEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
 import {
-    _decode_ModifyEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
-import {
     modifyDN,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import {
@@ -179,9 +163,6 @@ import {
 import {
     ModifyDNArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
-import {
-    EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
 import {
     administerPassword,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
@@ -213,8 +194,6 @@ import {
     SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import {
-    SearchArgumentData_subset_baseObject,
-    SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import {
@@ -226,13 +205,6 @@ import {
 import {
     Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
-import {
-    ContextAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
-import {
-    TypeAndContextAssertion,
-    _encode_TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 import {
     localeContext,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
@@ -264,12 +236,6 @@ import {
 import {
     surname,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
-import {
-    oidC,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC.oa";
-import {
-    oidCobj,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/oidCobj.oa";
 import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
 import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
 import {
@@ -282,21 +248,6 @@ import {
 import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
-import {
-    SearchControlOptions,
-    // SearchControlOptions_checkOverspecified,
-    SearchControlOptions_dnAttribute,
-    SearchControlOptions_entryCount,
-    // SearchControlOptions_includeAllAreas,
-    SearchControlOptions_matchOnResidualName,
-    // SearchControlOptions_noSystemRelaxation,
-    // SearchControlOptions_performExactly,
-    // SearchControlOptions_searchAliases,
-    SearchControlOptions_searchFamily,
-    SearchControlOptions_separateFamilyMembers,
-    // SearchControlOptions_useSubset,
-    SearchControlOptions_matchedValuesOnly,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import {
     userPwdClass,
 } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
@@ -4145,7 +4096,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                 ...aciForTesting,
                 new ACIItem(
                     {
-                        uTF8String: "Permit finding and reading the entry, but not modifying it",
+                        uTF8String: "Permit finding, reading, and modifying the entry",
                     },
                     1,
                     {
@@ -4211,9 +4162,9 @@ describe("Meerkat DSA Basic Access Control", () => {
                     {
                         itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
                             new ProtectedItems(
-                                null,
                                 undefined,
-                                [commonName["&id"]],
+                                undefined,
+                                [localityName["&id"]],
                             ),
                             [
                                 new ItemPermission(
@@ -4278,7 +4229,7 @@ describe("Meerkat DSA Basic Access Control", () => {
             [
                 {
                     addAttribute: new Attribute(
-                        commonName["&id"],
+                        localityName["&id"],
                         [utf8("Not to be added")],
                         undefined,
                     ),
@@ -4392,7 +4343,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                                 undefined,
                                 [
                                     new AttributeTypeAndValue(
-                                        commonName["&id"],
+                                        localityName["&id"],
                                         utf8(notToBeAddedValue),
                                     ),
                                 ],
@@ -4460,7 +4411,7 @@ describe("Meerkat DSA Basic Access Control", () => {
             [
                 {
                     addAttribute: new Attribute(
-                        commonName["&id"],
+                        localityName["&id"],
                         [utf8(notToBeAddedValue)],
                         undefined,
                     ),
@@ -4566,9 +4517,9 @@ describe("Meerkat DSA Basic Access Control", () => {
                     {
                         itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
                             new ProtectedItems(
-                                null,
                                 undefined,
-                                [commonName["&id"]],
+                                undefined,
+                                [localityName["&id"]],
                             ),
                             [
                                 new ItemPermission(
@@ -4633,7 +4584,7 @@ describe("Meerkat DSA Basic Access Control", () => {
             [
                 {
                     addValues: new Attribute(
-                        commonName["&id"],
+                        localityName["&id"],
                         [utf8("Not to be added")],
                         undefined,
                     ),
@@ -4740,14 +4691,14 @@ describe("Meerkat DSA Basic Access Control", () => {
                     {
                         itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
                             new ProtectedItems(
-                                null,
+                                undefined,
                                 undefined,
                                 undefined,
                                 undefined,
                                 undefined,
                                 [
                                     new AttributeTypeAndValue(
-                                        commonName["&id"],
+                                        localityName["&id"],
                                         utf8(notToBeAddedValue),
                                     ),
                                 ],
@@ -4815,7 +4766,7 @@ describe("Meerkat DSA Basic Access Control", () => {
             [
                 {
                     addValues: new Attribute(
-                        commonName["&id"],
+                        localityName["&id"],
                         [utf8(notToBeAddedValue)],
                         undefined,
                     ),
@@ -6752,7 +6703,7 @@ describe("Meerkat DSA Basic Access Control", () => {
         expect(data.problem).toBe(SecurityProblem_insufficientAccessRights);
     });
 
-    it.skip("Find DSE correctly applies access control for a(n) Find DSE", async () => {
+    it.only("Find DSE correctly applies access control for a(n) Find DSE", async () => {
         const testId = `bac.findDSE-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup
