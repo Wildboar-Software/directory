@@ -1,5 +1,5 @@
 import { Context, Vertex, ClientConnection, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, TRUE_BIT, FALSE_BIT } from "asn1-ts";
+import { ObjectIdentifier, TRUE_BIT, FALSE_BIT, OBJECT_IDENTIFIER } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_ReadArgument,
@@ -32,12 +32,14 @@ import {
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import type ProtectedItem from "@wildboar/x500/src/lib/types/ProtectedItem";
 import bacACDF, {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_RENAME,
     PERMISSION_CATEGORY_EXPORT,
+    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
@@ -147,25 +149,18 @@ async function read (
         isMemberOfGroup,
         NAMING_MATCHER,
     );
+    const objectClasses: OBJECT_IDENTIFIER[] = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
+    const getPermittedToDoXToY = (y: ProtectedItem): (permissions: number[]) => boolean =>
+        (permissions: number[]) =>
+            bacACDF(relevantTuples, user, y, permissions, bacSettings, true).authorized;
+    const permittedToDoXToThisEntry = getPermittedToDoXToY({
+        entry: objectClasses,
+    });
     if (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const {
-            authorized,
-        } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
-            },
-            [
-                PERMISSION_CATEGORY_READ,
-            ],
-            bacSettings,
-            true,
-        );
-        if (!authorized) {
+        if (!permittedToDoXToThisEntry([ PERMISSION_CATEGORY_READ ])) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_read"),
                 new SecurityErrorData(
@@ -284,7 +279,59 @@ async function read (
         });
     }
 
+    const selectedAttributes = [
+        ...(data.selection?.attributes && ("select" in data.selection.attributes))
+            ? data.selection.attributes.select
+            : [],
+        ...(data.selection?.extraAttributes && ("select" in data.selection.extraAttributes))
+            ? data.selection.extraAttributes.select
+            : [],
+    ];
     if (permittedEntryInfo.information.length === 0) {
+        const discloseOnErrorOnAnyOfTheSelectedAttributes: boolean = selectedAttributes
+            .some((attr) => {
+                const {
+                    authorized: authorizedToKnowAboutExcludedAttribute,
+                } = bacACDF(
+                    relevantTuples,
+                    user,
+                    {
+                        attributeType: attr,
+                    },
+                    [
+                        PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+                    ],
+                    bacSettings,
+                    true,
+                );
+                return authorizedToKnowAboutExcludedAttribute;
+            });
+        // See ITU Recommendation X.511 (2016), Section 10.1.5.1.b for this part:
+        if (
+            permittedEntryInfo.incompleteEntry // An attribute value was not permitted to be read...
+            && selectedAttributes?.length // ...and the user selected specific attributes
+            && discloseOnErrorOnAnyOfTheSelectedAttributes // ...and one such attribute has DiscloseOnError permission
+        ) { // We can disclose the attribute's existence via an insufficientAccessRights error.
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:not_authz_read_selection"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        // Otherwise, we must pretend that the selected attributes simply do not exist.
         throw new errors.AttributeError(
             ctx.i18n.t("err:no_such_attribute_or_value"),
             new AttributeErrorData(
@@ -321,65 +368,16 @@ async function read (
     const modifyRights: ModifyRights = [];
     if (
         data.modifyRightsRequest
+        // We only return these rights to the user if they are authenticated.
+        // TODO: Make this behavior configurable.
+        && (("basicLevels" in conn.authLevel) && (conn.authLevel.basicLevels.level > 0))
         && accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const {
-            authorized: authorizedToAddEntry,
-        } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
-            },
-            [
-                PERMISSION_CATEGORY_ADD,
-            ],
-            bacSettings,
-            true,
-        );
-        const {
-            authorized: authorizedToRemoveEntry,
-        } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
-            },
-            [
-                PERMISSION_CATEGORY_REMOVE,
-            ],
-            bacSettings,
-            true,
-        );
-        const {
-            authorized: authorizedToRenameEntry,
-        } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
-            },
-            [
-                PERMISSION_CATEGORY_RENAME,
-            ],
-            bacSettings,
-            true,
-        );
-        const {
-            authorized: authorizedToMoveEntry,
-        } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
-            },
-            [
-                PERMISSION_CATEGORY_EXPORT,
-            ],
-            bacSettings,
-            true,
-        );
+        const authorizedToAddEntry: boolean = permittedToDoXToThisEntry([ PERMISSION_CATEGORY_ADD ]);
+        const authorizedToRemoveEntry: boolean = permittedToDoXToThisEntry([ PERMISSION_CATEGORY_REMOVE ]);
+        const authorizedToRenameEntry: boolean = permittedToDoXToThisEntry([ PERMISSION_CATEGORY_RENAME ]);
+        const authorizedToMoveEntry: boolean = permittedToDoXToThisEntry([ PERMISSION_CATEGORY_EXPORT ]);
         modifyRights.push(new ModifyRights_Item(
             {
                 entry: null,
@@ -391,6 +389,27 @@ async function read (
                 authorizedToMoveEntry ? TRUE_BIT : FALSE_BIT,
             ]),
         ));
+        // Return permissions for the selected attribute types, since they seem to be of interest.
+        for (const attr of selectedAttributes) {
+            const permittedToDoXToAttributeType = getPermittedToDoXToY({
+                attributeType: attr,
+            });
+            const authorizedToAdd: boolean = permittedToDoXToAttributeType([ PERMISSION_CATEGORY_ADD ]);
+            const authorizedToRemove: boolean = permittedToDoXToAttributeType([ PERMISSION_CATEGORY_REMOVE ]);
+            const authorizedToRename: boolean = permittedToDoXToAttributeType([ PERMISSION_CATEGORY_RENAME ]);
+            const authorizedToMove: boolean = permittedToDoXToAttributeType([ PERMISSION_CATEGORY_EXPORT ]);
+            modifyRights.push(new ModifyRights_Item(
+                {
+                    attribute: attr,
+                },
+                new Uint8ClampedArray([
+                    authorizedToAdd ? TRUE_BIT : FALSE_BIT,
+                    authorizedToRemove ? TRUE_BIT : FALSE_BIT,
+                    authorizedToRename ? TRUE_BIT : FALSE_BIT,
+                    authorizedToMove ? TRUE_BIT : FALSE_BIT,
+                ]),
+            ));
+        }
     }
 
     const result: ReadResult = {
@@ -401,7 +420,9 @@ async function read (
                 },
                 !target.dse.shadow,
                 permittedEntryInfo.information,
-                permittedEntryInfo.incompleteEntry,
+                permittedEntryInfo.discloseIncompleteEntry
+                    ? permittedEntryInfo.incompleteEntry
+                    : false,
                 state.partialName,
                 false,
             ),

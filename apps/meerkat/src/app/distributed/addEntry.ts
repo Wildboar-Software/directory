@@ -81,6 +81,7 @@ import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
@@ -177,6 +178,7 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import findEntry from "../x500/findEntry";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -563,27 +565,70 @@ async function addEntry (
         );
     }
     if (!ctx.config.bulkInsertMode) {
-        const existingSiblings = await readSubordinates(ctx, immediateSuperior);
-        const entryAlreadyExists: boolean = existingSiblings
-            .some((xs) => compareRDN(xs.dse.rdn, rdn, NAMING_MATCHER));
-        if (entryAlreadyExists) {
-            throw new errors.UpdateError(
-                ctx.i18n.t("err:entry_already_exists"),
-                new UpdateErrorData(
-                    UpdateProblem_entryAlreadyExists,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        updateError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
+        const existingEntry = await findEntry(ctx, ctx.dit.root, targetDN);
+        if (existingEntry) {
+            const {
+                authorized: authorizedToKnowAboutExistingEntry,
+            } = bacACDF(
+                relevantTuples,
+                user,
+                {
+                    entry: objectClasses,
+                },
+                [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
+                bacSettings,
+                true,
             );
+            if (authorizedToKnowAboutExistingEntry) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:entry_already_exists"),
+                    new UpdateErrorData(
+                        UpdateProblem_entryAlreadyExists,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            } else {
+                /**
+                 * If the user is not authorized to know about the existing
+                 * entry, we just report a more generic unauthorized error.
+                 *
+                 * If a user has permission to add an entry beneath the the
+                 * target's immediate superior, they could still try adding
+                 * similar entries with only variation in name to determine if
+                 * they were denied because the entry already exists. Still,
+                 * this is a somewhat unlikely scenario, and if they already
+                 * have access to add entries, this outcome is kind of
+                 * unavoidable anyway.
+                 */
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_add_entry"),
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            conn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
         }
     }
     const timeRemainingInMilliseconds = timeLimitEndTime

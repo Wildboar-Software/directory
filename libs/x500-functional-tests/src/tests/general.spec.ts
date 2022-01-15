@@ -898,7 +898,7 @@ async function createCompoundEntry(
     );
 }
 
-describe.skip("Meerkat DSA", () => {
+describe("Meerkat DSA", () => {
 
     let connection: IDMConnection | undefined;
 

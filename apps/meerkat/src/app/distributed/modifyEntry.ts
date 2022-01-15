@@ -93,9 +93,6 @@ import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstr
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import type {
-    AuthenticationLevel,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import bacACDF, {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
@@ -227,6 +224,8 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import readValues from "../database/entry/readValues";
+import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1227,6 +1226,7 @@ async function executeResetValue (
         patch.addedValues.set(TYPE_OID, keptValues);
         patch.removedValues.set(TYPE_OID, discardedValues);
     }
+    // FIXME:
     return [
         ctx.db.attributeValue.deleteMany({
             where,
@@ -1248,6 +1248,7 @@ async function executeReplaceValues (
     checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
+    // FIXME: Check permission to add these values.
     const where = {
         entry_id: entry.dse.id,
         type: TYPE_OID,
@@ -1257,52 +1258,61 @@ async function executeReplaceValues (
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
         const {
-            authorized: authorizedForValue,
+            authorized: authorizedForAttributeType,
         } = bacACDF(
             relevantACDFTuples,
             user,
             {
                 attributeType: mod.type_,
             },
-            [
-                PERMISSION_CATEGORY_ADD,
-            ],
+            [ PERMISSION_CATEGORY_ADD ],
             bacSettings,
             true,
         );
-        if (!authorizedForValue) {
+        if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_mod"),
                 notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
-        const rows = await ctx.db.attributeValue.findMany({
-            where,
-            select: {
-                ber: true,
-            },
+        const {
+            userValues,
+            operationalValues,
+        } = await readValues(ctx, entry, {
+            selection: new EntryInformationSelection(
+                {
+                    select: [ mod.type_ ],
+                },
+                undefined,
+                {
+                    select: [ mod.type_ ],
+                },
+                {
+                    allContexts: null,
+                },
+            ),
         });
-        for (const row of rows) {
-            const el = new BERElement();
-            el.fromBytes(row.ber);
+        const existingValues = [
+            ...userValues,
+            ...operationalValues,
+        ];
+        for (const xv of existingValues) {
             const {
-                authorized: authorizedForAttributeType,
+                authorized: authorizedForValue,
             } = bacACDF(
                 relevantACDFTuples,
                 user,
                 {
                     value: new AttributeTypeAndValue(
                         mod.type_,
-                        el,
+                        xv.value,
                     ),
                 },
-                [
-                    PERMISSION_CATEGORY_REMOVE,
-                ],
+                [ PERMISSION_CATEGORY_REMOVE ],
                 bacSettings,
                 true,
             );
-            if (!authorizedForAttributeType) {
+            if (!authorizedForValue) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_mod"),
                     notPermittedData(ctx, conn, aliasDereferenced),
@@ -2579,7 +2589,9 @@ async function modifyEntry (
                         },
                         !target.dse.shadow,
                         permittedEntryInfo.information,
-                        permittedEntryInfo.incompleteEntry,
+                        permittedEntryInfo.discloseIncompleteEntry
+                            ? permittedEntryInfo.incompleteEntry
+                            : false,
                         undefined,
                         undefined,
                     ),

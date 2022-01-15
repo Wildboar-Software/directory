@@ -202,6 +202,8 @@ async function list_i (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
+        // FIXME: I think this check is totally unnecessary. It is already covered
+        // by FindDSE().
         const {
             authorized,
         } = bacACDF(
@@ -589,6 +591,12 @@ async function list_i (
                 .filter((api): api is AccessPointInformation => !!api),
         ));
     }
+
+    // DEVIATION: No error at all is returned if there are no subordinates.
+    // I think this is unnecessary, because Meerkat DSA already checks that you
+    // have Browse and ReturnDN permissions to even discover the base object.
+    // Note that this is not a requirement of the X.500 standards, which is
+    // probably why they want you to check DiscloseOnError permissions here.
 
     return {
         ...ret,

@@ -129,6 +129,7 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import permittedToFindDSE from "../authz/permittedToFindDSE";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -549,24 +550,52 @@ async function modifyDN (
     }
 
     // This is, at least implicitly, a part of steps 5, 6, and 7.
-    if (await findEntry(ctx, superior, [ newRDN ])) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:entry_already_exists"),
-            new UpdateErrorData(
-                UpdateProblem_entryAlreadyExists,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    conn.boundNameAndUID?.dn,
+    const superiorDN = getDistinguishedName(superior);
+    const permittedToFindResult = await permittedToFindDSE(
+        ctx,
+        [ ...superiorDN, newRDN ],
+        user,
+        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+    );
+    if (permittedToFindResult.exists) {
+        if (permittedToFindResult.discloseOnError) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:entry_already_exists"),
+                new UpdateErrorData(
+                    UpdateProblem_entryAlreadyExists,
                     undefined,
-                    updateError["&errorCode"],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
                 ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        );
+            );
+        } else {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:not_authz_import"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
     }
 
     checkTimeLimit();

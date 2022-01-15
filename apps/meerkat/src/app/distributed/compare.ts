@@ -52,6 +52,7 @@ import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtend
 import bacACDF, {
     PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_COMPARE,
+    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
@@ -102,6 +103,15 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import {
+    AttributeErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+import {
+    AttributeErrorData_problems_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+import {
+    AttributeProblem_noSuchAttributeOrValue,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 
 // AttributeValueAssertion ::= SEQUENCE {
 //     type              ATTRIBUTE.&id({SupportedAttributes}),
@@ -226,12 +236,10 @@ async function compare (
                     ),
                 );
             }
-            const typeResult = bacACDF(
+            const { authorized: authorizedToCompareAttributeType } = bacACDF(
                 relevantTuples,
                 user,
-                {
-                    attributeType: type_,
-                },
+                { attributeType: type_ },
                 [
                     PERMISSION_CATEGORY_COMPARE,
                     PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
@@ -239,21 +247,57 @@ async function compare (
                 bacSettings,
                 true,
             );
-            if (!typeResult.authorized) {
-                throw new errors.SecurityError(
-                    ctx.i18n.t("err:not_authz_read_or_compare_attr", {
-                        oid: type_.toString(),
-                    }),
-                    new SecurityErrorData(
-                        SecurityProblem_insufficientAccessRights,
-                        undefined,
-                        undefined,
+            if (!authorizedToCompareAttributeType) {
+                const { authorized: authorizedToDiscloseAttribute } = bacACDF(
+                    relevantTuples,
+                    user,
+                    { attributeType: type_ },
+                    [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
+                    bacSettings,
+                    true,
+                );
+                if (authorizedToDiscloseAttribute) {
+                    throw new errors.SecurityError(
+                        ctx.i18n.t("err:not_authz_read_or_compare_attr", {
+                            oid: type_.toString(),
+                        }),
+                        new SecurityErrorData(
+                            SecurityProblem_insufficientAccessRights,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                conn.boundNameAndUID?.dn,
+                                undefined,
+                                securityError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+                // Otherwise, we must pretend that the compared attribute simply does not exist.
+                throw new errors.AttributeError(
+                    ctx.i18n.t("err:no_such_attribute_or_value"),
+                    new AttributeErrorData(
+                        {
+                            rdnSequence: targetDN,
+                        },
+                        [
+                            new AttributeErrorData_problems_Item(
+                                AttributeProblem_noSuchAttributeOrValue,
+                                data.purported.type_,
+                                undefined,
+                            ),
+                        ],
                         [],
                         createSecurityParameters(
                             ctx,
                             conn.boundNameAndUID?.dn,
                             undefined,
-                            securityError["&errorCode"],
+                            abandoned["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
                         state.chainingArguments.aliasDereferenced,

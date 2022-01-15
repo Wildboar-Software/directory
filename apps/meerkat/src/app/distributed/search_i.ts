@@ -258,6 +258,7 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -1336,95 +1337,6 @@ async function search_i (
         }
     }
 
-    // NOTE: This was copied from the read operation.
-    const filterUnauthorizedEntryInformation = (
-        einfo: EntryInformation_information_Item[],
-    ): [ boolean, EntryInformation_information_Item[] ] => {
-        let incompleteEntry: boolean = false;
-        if (
-            !accessControlScheme
-            || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
-            return [ incompleteEntry, einfo ];
-        }
-        const permittedEinfo: EntryInformation_information_Item[] = [];
-        for (const info of einfo) {
-            if ("attribute" in info) {
-                const {
-                    authorized: authorizedToAddAttributeType,
-                } = bacACDF(
-                    relevantTuples,
-                    user,
-                    {
-                        attributeType: info.attribute.type_,
-                    },
-                    [
-                        PERMISSION_CATEGORY_READ,
-                    ],
-                    bacSettings,
-                    true,
-                );
-                if (!authorizedToAddAttributeType) {
-                    incompleteEntry = true;
-                    continue;
-                }
-                const permittedValues = valuesFromAttribute(info.attribute)
-                    .filter((value) => {
-                        const {
-                            authorized: authorizedToAddAttributeValue,
-                        } = bacACDF(
-                            relevantTuples,
-                            user,
-                            {
-                                value: new AttributeTypeAndValue(
-                                    value.type,
-                                    value.value,
-                                ),
-                            },
-                            [
-                                PERMISSION_CATEGORY_READ,
-                            ],
-                            bacSettings,
-                            true,
-                        );
-                        if (!authorizedToAddAttributeValue) {
-                            incompleteEntry = true;
-                        }
-                        return authorizedToAddAttributeValue;
-                    });
-                const attribute = attributesFromValues(permittedValues)[0];
-                if (attribute) {
-                    permittedEinfo.push({ attribute });
-                } else {
-                    permittedEinfo.push({
-                        attributeType: info.attribute.type_,
-                    });
-                }
-            } else if ("attributeType" in info) {
-                const {
-                    authorized: authorizedToAddAttributeType,
-                } = bacACDF(
-                    relevantTuples,
-                    user,
-                    {
-                        attributeType: info.attributeType,
-                    },
-                    [
-                        PERMISSION_CATEGORY_READ,
-                    ],
-                    bacSettings,
-                    true,
-                );
-                if (authorizedToAddAttributeType) {
-                    permittedEinfo.push(info);
-                }
-            } else {
-                continue;
-            }
-        }
-        return [ incompleteEntry, permittedEinfo ];
-    };
-
     if (target.dse.alias && searchAliases) {
         if (
             accessControlScheme
@@ -1645,28 +1557,35 @@ async function search_i (
             const familySubsetToReturn = keepSubsetOfDITById(family, memberSelectIds, familySelect);
             assert(familySubsetToReturn);
             const verticesToReturn: Vertex[] = Array.from(walkMemory(familySubsetToReturn));
-            const resultsById: Map<number, [ Vertex, BOOLEAN, EntryInformation_information_Item[] ]> = new Map(
+            const resultsById: Map<number, [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ]> = new Map(
                 await Promise.all(
                     verticesToReturn
-                        .map(async (member) => [
-                            member.dse.id,
-                            [
+                        .map(async (member) => {
+                            const permittedEntryReturn = await readPermittedEntryInformation(
+                                ctx,
                                 member,
-                                FALSE,
-                                await readEntryInformation(
-                                    ctx,
+                                user,
+                                relevantTuples,
+                                accessControlScheme,
+                                {
+                                    selection: data.selection, // TODO: Future improvement: filter out non-permitted types.
+                                    relevantSubentries,
+                                    operationContexts: data.operationContexts,
+                                    attributeSizeLimit,
+                                    noSubtypeSelection,
+                                    dontSelectFriends,
+                                },
+                            );
+                            return [
+                                member.dse.id,
+                                [
                                     member,
-                                    {
-                                        selection: data.selection, // TODO: Future improvement: filter out non-permitted types.
-                                        relevantSubentries,
-                                        operationContexts: data.operationContexts,
-                                        attributeSizeLimit,
-                                        noSubtypeSelection,
-                                        dontSelectFriends,
-                                    },
-                                ),
-                            ] as [ Vertex, BOOLEAN, EntryInformation_information_Item[] ],
-                        ] as const),
+                                    permittedEntryReturn.incompleteEntry,
+                                    permittedEntryReturn.information,
+                                    permittedEntryReturn.discloseIncompleteEntry,
+                                ] as [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ]
+                            ] as const;
+                        }),
                 ),
             );
             if (
@@ -1719,14 +1638,9 @@ async function search_i (
                     ];
                 }
             } // End of matchedValuesOnly handling.
-            for (const result of resultsById.values()) {
-                const [ incomplete, permittedEinfo ] = filterUnauthorizedEntryInformation(result[2]);
-                result[1] = incomplete;
-                result[2] = permittedEinfo;
-            }
             if (separateFamilyMembers) {
                 const separateResults = Array.from(resultsById.values())
-                    .map(([ vertex, incompleteEntry, info ]) => new EntryInformation(
+                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]) => new EntryInformation(
                         {
                             rdnSequence: getDistinguishedName(vertex),
                         },
@@ -1734,7 +1648,9 @@ async function search_i (
                         attributeSizeLimit
                             ? info.filter(filterEntryInfoItemBySize)
                             : info,
-                        incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                        discloseIncompleteness
+                            ? incompleteEntry
+                            : false,
                         FALSE, // FIXME: partialName
                         undefined,
                     ));
@@ -1765,7 +1681,9 @@ async function search_i (
                         attributeSizeLimit
                             ? rootResult[2].filter(filterEntryInfoItemBySize)
                             : rootResult[2],
-                        rootResult[1], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                        rootResult[3] // discloseOnError?
+                            ? rootResult[1] // -> tell them the truth
+                            : false, // -> say the entry is complete even when it is not
                         (state.partialName && (searchState.depth === 0)),
                         undefined,
                     ),
@@ -1893,28 +1811,35 @@ async function search_i (
             const familySubsetToReturn = keepSubsetOfDITById(family, memberSelectIds, familySelect);
             assert(familySubsetToReturn);
             const verticesToReturn: Vertex[] = Array.from(walkMemory(familySubsetToReturn));
-            const resultsById: Map<number, [ Vertex, BOOLEAN, EntryInformation_information_Item[] ]> = new Map(
+            const resultsById: Map<number, [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ]> = new Map(
                 await Promise.all(
                     verticesToReturn
-                        .map(async (member) => [
-                            member.dse.id,
-                            [
+                        .map(async (member) => {
+                            const permittedEntryReturn = await readPermittedEntryInformation(
+                                ctx,
                                 member,
-                                FALSE,
-                                await readEntryInformation(
-                                    ctx,
+                                user,
+                                relevantTuples,
+                                accessControlScheme,
+                                {
+                                    selection: data.selection, // TODO: Future improvement: filter out non-permitted types.
+                                    relevantSubentries,
+                                    operationContexts: data.operationContexts,
+                                    attributeSizeLimit,
+                                    noSubtypeSelection,
+                                    dontSelectFriends,
+                                },
+                            );
+                            return [
+                                member.dse.id,
+                                [
                                     member,
-                                    {
-                                        selection: data.selection, // TODO: Future improvement: filter out non-permitted types.
-                                        relevantSubentries,
-                                        operationContexts: data.operationContexts,
-                                        attributeSizeLimit,
-                                        noSubtypeSelection,
-                                        dontSelectFriends,
-                                    },
-                                ),
-                            ] as [ Vertex, BOOLEAN, EntryInformation_information_Item[] ],
-                        ] as const),
+                                    permittedEntryReturn.incompleteEntry,
+                                    permittedEntryReturn.information,
+                                    permittedEntryReturn.discloseIncompleteEntry,
+                                ] as [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ]
+                            ] as const;
+                        }),
                 ),
             );
             if (
@@ -1967,14 +1892,9 @@ async function search_i (
                     ];
                 }
             } // End of matchedValuesOnly handling.
-            for (const result of resultsById.values()) {
-                const [ incomplete, permittedEinfo ] = filterUnauthorizedEntryInformation(result[2]);
-                result[1] = incomplete;
-                result[2] = permittedEinfo;
-            }
             if (separateFamilyMembers) {
                 const separateResults = Array.from(resultsById.values())
-                    .map(([ vertex, incompleteEntry, info ]) => new EntryInformation(
+                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]) => new EntryInformation(
                         {
                             rdnSequence: getDistinguishedName(vertex),
                         },
@@ -1982,7 +1902,9 @@ async function search_i (
                         attributeSizeLimit
                             ? info.filter(filterEntryInfoItemBySize)
                             : info,
-                        incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                        discloseIncompleteness
+                            ? incompleteEntry
+                            : false,
                         FALSE, // FIXME: partialName
                         undefined,
                     ));
@@ -2013,7 +1935,9 @@ async function search_i (
                         attributeSizeLimit
                             ? rootResult[2].filter(filterEntryInfoItemBySize)
                             : rootResult[2],
-                        rootResult[1], // Technically, you need DiscloseOnError permission to see this, but this is fine.
+                        rootResult[3] // discloseOnError?
+                            ? rootResult[1] // -> tell them the truth
+                            : false, // -> say the entry is complete even when it is not
                         (state.partialName && (searchState.depth === 0)),
                         undefined,
                     ),
