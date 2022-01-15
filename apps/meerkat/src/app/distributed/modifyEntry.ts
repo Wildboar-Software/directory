@@ -8,7 +8,6 @@ import {
     PendingUpdates,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
-import { TRUE_BIT } from "asn1-ts";
 import {
     _decode_ModifyEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
@@ -64,6 +63,7 @@ import {
     ASN1Construction,
     ObjectIdentifier,
     OBJECT_IDENTIFIER,
+    TRUE_BIT,
 } from "asn1-ts";
 import {
     DER,
@@ -798,17 +798,11 @@ async function executeRemoveAttribute (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const {
-            authorized: authorizedForAttributeType,
-        } = bacACDF(
+        const { authorized: authorizedForAttributeType } = bacACDF(
             relevantACDFTuples,
             user,
-            {
-                attributeType: mod,
-            },
-            [
-                PERMISSION_CATEGORY_REMOVE,
-            ],
+            { attributeType: mod },
+            [ PERMISSION_CATEGORY_REMOVE ],
             bacSettings,
             true,
         );
@@ -954,6 +948,7 @@ async function executeRemoveValues (
             ),
         );
     }
+    // FIXME: Use the naming matcher here.
     const EQUALITY_MATCHER = bacSettings.getEqualityMatcher(mod.type_);
     const values = valuesFromAttribute(mod);
     const rdnValueOfType = entry.dse.rdn.find((atav) => atav.type_.isEqualTo(mod.type_));
@@ -997,12 +992,8 @@ async function executeRemoveValues (
         } = bacACDF(
             relevantACDFTuples,
             user,
-            {
-                attributeType: mod.type_,
-            },
-            [
-                PERMISSION_CATEGORY_REMOVE,
-            ],
+            { attributeType: mod.type_ },
+            [ PERMISSION_CATEGORY_REMOVE ],
             bacSettings,
             true,
         );
@@ -1024,9 +1015,7 @@ async function executeRemoveValues (
                         value.value,
                     ),
                 },
-                [
-                    PERMISSION_CATEGORY_REMOVE,
-                ],
+                [ PERMISSION_CATEGORY_REMOVE ],
                 bacSettings,
                 true,
             );
@@ -1039,6 +1028,9 @@ async function executeRemoveValues (
         }
     }
     removeValuesFromPatch(patch, mod.type_, values, EQUALITY_MATCHER);
+    // DEVIATION: This does not check if the values exist.
+    // It also does not check if the attribute exists, but the specification is
+    // not clear as to whether that is required.
     return removeValues(ctx, entry, values);
 }
 
@@ -1084,15 +1076,12 @@ async function executeAlterValues (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const {
-            authorized: authorizedForAttributeType,
-        } = bacACDF(
+        const { authorized: authorizedForAttributeType } = bacACDF(
             relevantACDFTuples,
             user,
-            {
-                attributeType: mod.type_,
-            },
+            { attributeType: mod.type_ },
             [
+                PERMISSION_CATEGORY_MODIFY, // DEVIATION: More strict than spec.
                 PERMISSION_CATEGORY_REMOVE,
             ],
             bacSettings,
@@ -1112,9 +1101,7 @@ async function executeAlterValues (
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
         for (const value of values) {
-            const {
-                authorized: authorizedForValue,
-            } = bacACDF(
+            const { authorized: authorizedForValue } = bacACDF(
                 relevantACDFTuples,
                 user,
                 {
@@ -1123,8 +1110,12 @@ async function executeAlterValues (
                         value.value,
                     ),
                 },
+                // DEVIATON: X.511 requires Add permissions, but I think this is
+                // a mistake. Why would you need permission to add values that
+                // you are changing? Instead, Meerkat DSA checks for modify and
+                // remove permissions.
                 [
-                    PERMISSION_CATEGORY_ADD,
+                    PERMISSION_CATEGORY_MODIFY,
                     PERMISSION_CATEGORY_REMOVE,
                 ],
                 bacSettings,
@@ -1140,17 +1131,40 @@ async function executeAlterValues (
     }
     const TYPE_OID: IndexableOID = mod.type_.toString();
     const newValues = values.map(alterer);
+    if (
+        accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
+        for (const value of newValues) {
+            const { authorized: authorizedForValue } = bacACDF(
+                relevantACDFTuples,
+                user,
+                {
+                    value: new AttributeTypeAndValue(
+                        value.type,
+                        value.value,
+                    ),
+                },
+                // DEVIATON: X.511 does not explicitly require add permissions
+                // for the newly-produced values, but I think this is an error.
+                [ PERMISSION_CATEGORY_ADD ],
+                bacSettings,
+                true,
+            );
+            if (!authorizedForValue) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_mod"),
+                    notPermittedData(ctx, conn, aliasDereferenced),
+                );
+            }
+        }
+    }
     { // Modify the delta values.
         patch.addedValues.set(TYPE_OID, newValues);
         patch.removedValues.set(TYPE_OID, values);
     }
     return [
-        ctx.db.attributeValue.deleteMany({
-            where: {
-                entry_id: entry.dse.id,
-                type: mod.type_.toString(),
-            },
-        }),
+        ...(await removeValues(ctx, entry, values)),
         ...(await addValues(ctx, entry, newValues)),
     ];
 }
@@ -1179,6 +1193,8 @@ async function executeResetValue (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
+        // This is not incorrect. Contexts are only maintained for userApplications
+        // attribute types, so this mod can just read right from this table.
         const rows = await ctx.db.attributeValue.findMany({
             where,
             select: {
@@ -1226,8 +1242,9 @@ async function executeResetValue (
         patch.addedValues.set(TYPE_OID, keptValues);
         patch.removedValues.set(TYPE_OID, discardedValues);
     }
-    // FIXME:
     return [
+        // This is not incorrect. Contexts are only maintained for userApplications
+        // attribute types, so this mod can just delete right from this table.
         ctx.db.attributeValue.deleteMany({
             where,
         }),
@@ -1248,11 +1265,6 @@ async function executeReplaceValues (
     checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
-    // FIXME: Check permission to add these values.
-    const where = {
-        entry_id: entry.dse.id,
-        type: TYPE_OID,
-    };
     if (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
@@ -1275,27 +1287,7 @@ async function executeReplaceValues (
                 notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
-        const {
-            userValues,
-            operationalValues,
-        } = await readValues(ctx, entry, {
-            selection: new EntryInformationSelection(
-                {
-                    select: [ mod.type_ ],
-                },
-                undefined,
-                {
-                    select: [ mod.type_ ],
-                },
-                {
-                    allContexts: null,
-                },
-            ),
-        });
-        const existingValues = [
-            ...userValues,
-            ...operationalValues,
-        ];
+        const existingValues = await readValuesOfType(ctx, entry, mod.type_);
         for (const xv of existingValues) {
             const {
                 authorized: authorizedForValue,
