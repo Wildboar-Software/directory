@@ -32,6 +32,16 @@ function getACIItems (
         return [];
     }
     const AC_SCHEME: string = accessControlScheme.toString();
+    if (isSubentry || vertex?.dse.subentry) {
+        return [
+            ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
+                ? (vertex?.immediateSuperior?.dse.admPoint?.subentryACI ?? [])
+                : []),
+            ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
+                ? (vertex?.dse.entryACI ?? [])
+                : []),
+        ];
+    }
     const accessControlSubentries = relevantSubentries
         .filter((sub) => sub.dse.objectClass.has(AC_SUBENTRY))
         .reverse();
@@ -48,16 +58,6 @@ function getACIItems (
                 || sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_INNER)
             ))
         : [ accessControlSubentries[0] ];
-    if (isSubentry || vertex?.dse.subentry) {
-        return [
-            ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
-                ? (vertex?.immediateSuperior?.dse.admPoint?.subentryACI ?? [])
-                : []),
-            ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                ? (vertex?.dse.entryACI ?? [])
-                : []),
-        ];
-    }
     return [
         ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
             ? accessControlSubentriesWithinScope.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])

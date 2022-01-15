@@ -1941,10 +1941,10 @@ async function modifyEntry (
         optionalAttributes.add(id_oa_collectiveExclusions.toString());
         optionalAttributes.add(administrativeRole["&id"].toString());
         optionalAttributes.add(id_aca_accessControlScheme.toString());
+        optionalAttributes.add(id_aca_subentryACI.toString());
+        optionalAttributes.add(hierarchyParent["&id"].toString());
     }
     if (isSubentry) {
-        optionalAttributes.add(id_aca_entryACI.toString());
-        optionalAttributes.add(id_aca_subentryACI.toString());
         optionalAttributes.add(id_aca_prescriptiveACI.toString());
     }
     const addedObjectClasses = patch.addedValues.get(objectClass["&id"].toString())

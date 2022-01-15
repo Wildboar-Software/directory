@@ -1,4 +1,4 @@
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ASN1Element, packBits, EXTERNAL } from "asn1-ts";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import splitGrantsAndDenials from "@wildboar/x500/src/lib/bac/splitGrantsAndDenials";
@@ -17,6 +17,44 @@ import type {
     AuthenticationLevel,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import compareAuthenticationLevel from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
+import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
+
+function compareExternals (a: EXTERNAL, b: EXTERNAL): boolean {
+    if (
+        a.directReference
+        && b.directReference
+        && a.directReference.isEqualTo(b.directReference)
+    ) {
+        return false;
+    }
+    if (
+        a.indirectReference
+        && b.indirectReference
+        && (a.indirectReference === b.indirectReference)
+    ) {
+        return false;
+    }
+    return (
+        (
+            (a.encoding instanceof ASN1Element)
+            && (b.encoding instanceof ASN1Element)
+            && compareElements(a.encoding, b.encoding)
+        )
+        || (
+            (a.encoding instanceof Uint8Array)
+            && (b.encoding instanceof Uint8Array)
+            && (a.encoding.length === b.encoding.length)
+            && !Buffer.compare(a.encoding, b.encoding)
+        )
+        || (
+            (a.encoding instanceof Uint8ClampedArray)
+            && (b.encoding instanceof Uint8ClampedArray)
+            && (a.encoding.length === b.encoding.length)
+            && !Buffer.compare(packBits(a.encoding), packBits(b.encoding))
+        )
+    );
+}
 
 /**
  * @description
@@ -47,6 +85,16 @@ async function preprocessTuples (
         return [];
     }
     const tuplesSplitByGrantOrDenial: ACDFTuple[] = tuples
+        .filter((tuple) => {
+            const requiredAuthLevel = tuple[1];
+            if (("basicLevels" in requiredAuthLevel) && ("basicLevels" in authLevel)) {
+                return !compareAuthenticationLevel(requiredAuthLevel.basicLevels, authLevel.basicLevels);
+            } else if (("other" in requiredAuthLevel) && ("other" in authLevel)) {
+                return compareExternals(requiredAuthLevel.other, authLevel.other);
+            } else {
+                return false;
+            }
+        })
         .flatMap((tuple) => splitGrantsAndDenials(tuple[3])
             .map((gad): ACDFTuple => [ tuple[0], tuple[1], tuple[2], gad, tuple[4] ]));
     const tuplesThatApplyToUser: ACDFTupleExtended[] = (await Promise.all(

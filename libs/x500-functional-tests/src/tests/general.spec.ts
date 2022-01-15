@@ -1359,10 +1359,6 @@ describe("Meerkat DSA", () => {
         expect(("result" in result) && result.result).toBeTruthy();
     });
 
-    it.skip("Read.modifyRightsRequest", async () => {
-
-    });
-
     it("Read.selection", async () => {
         const testId = `Read.selection-${(new Date()).toISOString()}`;
         { // Setup

@@ -8,7 +8,7 @@ import anyPasswordsExist from "../authz/anyPasswordsExist";
 export
 async function setEntryPassword (
     ctx: Context,
-    conn: ClientConnection | undefined,
+    conn: ClientConnection | undefined, // FIXME: Make this required.
     vertex: Vertex,
     pwd: UserPwd,
 ): Promise<PrismaPromise<any>[]> {
