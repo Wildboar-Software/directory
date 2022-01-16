@@ -52,7 +52,6 @@ async function setEntryPassword (
                     algorithm_parameters_der: algid.parameters
                         ? Buffer.from(algid.parameters.toBytes())
                         : undefined,
-                    pwdStartTime: new Date(),
                 },
                 update: {
                     entry_id: vertex.dse.id,
@@ -61,7 +60,18 @@ async function setEntryPassword (
                     algorithm_parameters_der: algid.parameters
                         ? Buffer.from(algid.parameters.toBytes())
                         : undefined,
-                    pwdStartTime: new Date(),
+                },
+            }),
+            ctx.db.pwdStartTime.upsert({
+                where: {
+                    entry_id: vertex.dse.id,
+                },
+                create: {
+                    entry_id: vertex.dse.id,
+                    value: new Date(),
+                },
+                update: {
+                    value: new Date(),
                 },
             }),
         ];
@@ -90,7 +100,6 @@ async function setEntryPassword (
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
                         ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
                         : undefined,
-                    pwdStartTime: new Date(),
                 },
                 update: {
                     entry_id: vertex.dse.id,
@@ -99,7 +108,18 @@ async function setEntryPassword (
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
                         ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
                         : undefined,
-                    pwdStartTime: new Date(),
+                },
+            }),
+            ctx.db.pwdStartTime.upsert({
+                where: {
+                    entry_id: vertex.dse.id,
+                },
+                create: {
+                    entry_id: vertex.dse.id,
+                    value: new Date(),
+                },
+                update: {
+                    value: new Date(),
                 },
             }),
         ];

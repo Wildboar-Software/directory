@@ -109,6 +109,7 @@ model Entry {
   // For storing other arbitrary data in the entry.
   otherData Json?
 
+  // FIXME: Make some of these 1:1
   subordinates                Entry[]                       @relation("superior")
   hierarchicalChildren        Entry[]                       @relation("parent")
   ACIItem                     ACIItem[]
@@ -117,23 +118,21 @@ model Entry {
   AttributeValue              AttributeValue[]
   AccessPoint                 AccessPoint[]
   SubtreeSpecification        SubtreeSpecification[]
-  PwdModifyEntryAllowed       PwdModifyEntryAllowed[]
-  PwdChangeAllowed            PwdChangeAllowed[]
-  PwdMaxAge                   PwdMaxAge[]
-  PwdExpiryAge                PwdExpiryAge[]
-  PwdMinLength                PwdMinLength[]
-  NoDictionaryWords           NoDictionaryWords[]
-  NoPersonNames               NoPersonNames[]
-  NoGeographicalNames         NoGeographicalNames[]
+  PwdModifyEntryAllowed       PwdModifyEntryAllowed?
+  PwdChangeAllowed            PwdChangeAllowed?
+  PwdMaxAge                   PwdMaxAge?
+  PwdExpiryAge                PwdExpiryAge?
+  PwdMinLength                PwdMinLength?
+  PwdVocabulary               PwdVocabulary?
   PwdDictionaries             PwdDictionaries[]
-  PwdExpiryWarning            PwdExpiryWarning[]
-  PwdGraces                   PwdGraces[]
-  PwdFailureDuration          PwdFailureDuration[]
-  PwdLockoutDuration          PwdLockoutDuration[]
-  PwdMaxFailures              PwdMaxFailures[]
-  PwdMaxTimeInHistory         PwdMaxTimeInHistory[]
-  PwdMinTimeInHistory         PwdMinTimeInHistory[]
-  PwdHistorySlots             PwdHistorySlots[]
+  PwdExpiryWarning            PwdExpiryWarning?
+  PwdGraces                   PwdGraces?
+  PwdFailureDuration          PwdFailureDuration?
+  PwdLockoutDuration          PwdLockoutDuration?
+  PwdMaxFailures              PwdMaxFailures?
+  PwdMaxTimeInHistory         PwdMaxTimeInHistory?
+  PwdMinTimeInHistory         PwdMinTimeInHistory?
+  PwdHistorySlots             PwdHistorySlots?
   PwdRecentlyExpiredDuration  PwdRecentlyExpiredDuration[]
   Password                    Password[]
   RDN                         DistinguishedValue[]
@@ -157,6 +156,27 @@ model Entry {
   PasswordEncryptionAlgorithm PasswordEncryptionAlgorithm[]
   EnqueuedSearchResult        EnqueuedSearchResult[]
   EnqueuedListResult          EnqueuedListResult[]
+  PwdStartTime                PwdStartTime?
+  PwdExpiryTime               PwdExpiryTime?
+  PwdEndTime                  PwdEndTime?
+  PwdFailureTime              PwdFailureTime? // Note: single-valued in X.500; multi-valued in Behera Password Policy
+  PwdFails                    PwdFails?
+  PwdGracesUsed               PwdGracesUsed?
+  PwdChangedTime              PwdChangedTime?
+  PwdAccountLockedTime        PwdAccountLockedTime?
+  PwdGraceUseTime             PwdGraceUseTime?
+  PwdReset                    PwdReset?
+  PwdLastSuccess              PwdLastSuccess?
+  PwdGracyExpiry              PwdGracyExpiry?
+  PwdLockout                  PwdLockout?
+  PwdFailureCountInterval     PwdFailureCountInterval?
+  PwdMustChange               PwdMustChange?
+  PwdSafeModify               PwdSafeModify?
+  PwdMinDelay                 PwdMinDelay?
+  PwdMaxDelay                 PwdMaxDelay?
+  PwdMaxIdle                  PwdMaxIdle?
+  PwdMinAge                   PwdMinAge?
+
   @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
@@ -187,18 +207,190 @@ model UniqueIdentifier {
 
 // There may be only one password per entry
 model Password {
-  id                       Int       @id @default(autoincrement())
+  id                       Int    @id @default(autoincrement())
   entry_id                 Int
-  entry                    Entry     @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  entry                    Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   encrypted                Bytes
-  algorithm_oid            String    @db.VarChar(128) // OID
+  algorithm_oid            String @db.VarChar(128) // OID
   algorithm_parameters_der Bytes?
-  pwdStartTime             DateTime  @default(now())
-  pwdExpiryTime            DateTime?
-  pwdEndTime               DateTime?
-  pwdFails                 Int       @default(0)
-  pwdFailureTime           DateTime?
-  pwdGracesUsed            Int       @default(0)
+
+  @@unique([entry_id])
+}
+
+model PwdStartTime {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    DateTime
+
+  @@unique([entry_id])
+}
+
+model PwdExpiryTime {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    DateTime
+
+  @@unique([entry_id])
+}
+
+model PwdEndTime {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    DateTime
+
+  @@unique([entry_id])
+}
+
+model PwdFailureTime {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    DateTime
+
+  @@unique([entry_id])
+}
+
+model PwdFails {
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
+
+  @@unique([entry_id])
+}
+
+model PwdGracesUsed {
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
+
+  @@unique([entry_id])
+}
+
+// Per-entry attributes from https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
+
+model PwdChangedTime {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    DateTime
+
+  @@unique([entry_id])
+}
+
+model PwdAccountLockedTime {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    DateTime
+
+  @@unique([entry_id])
+}
+
+model PwdGraceUseTime {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    DateTime
+
+  @@unique([entry_id])
+}
+
+model PwdReset {
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
+
+  @@unique([entry_id])
+}
+
+model PwdLastSuccess {
+  id       Int      @id @default(autoincrement())
+  entry_id Int
+  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    DateTime
+
+  @@unique([entry_id])
+}
+
+// Policy attributes from https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
+
+model PwdGracyExpiry {
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
+
+  @@unique([entry_id])
+}
+
+// This can _almost_ be inferred from the existence of pwdMaxFailure, but it is technically different.
+model PwdLockout {
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
+
+  @@unique([entry_id])
+}
+
+model PwdFailureCountInterval {
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
+
+  @@unique([entry_id])
+}
+
+model PwdMustChange {
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
+
+  @@unique([entry_id])
+}
+
+// Not sure Meerkat DSA will ever actually use this. The semantics are not well-defined.
+// How do you send the old password with the new password in LDAP?
+model PwdSafeModify {
+  id       Int     @id @default(autoincrement())
+  entry_id Int
+  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Boolean
+
+  @@unique([entry_id])
+}
+
+model PwdMinDelay {
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
+
+  @@unique([entry_id])
+}
+
+model PwdMaxDelay {
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
+
+  @@unique([entry_id])
+}
+
+model PwdMaxIdle {
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
   @@unique([entry_id])
 }
@@ -253,11 +445,23 @@ model PwdModifyEntryAllowed {
   @@unique([entry_id])
 }
 
+// This corresponds to pwdAllowUserChange in https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
 model PwdChangeAllowed {
   id       Int     @id @default(autoincrement())
   entry_id Int
   entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   value    Boolean
+
+  @@unique([entry_id])
+}
+
+// Note, this is NOT defined in the X.500 standards.
+// This is defined in https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
+model PwdMinAge {
+  id       Int   @id @default(autoincrement())
+  entry_id Int
+  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  value    Int
 
   @@unique([entry_id])
 }
@@ -289,31 +493,15 @@ model PwdMinLength {
   @@unique([entry_id])
 }
 
-model NoDictionaryWords {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
+model PwdVocabulary {
+  id                  Int     @id @default(autoincrement())
+  entry_id            Int
+  entry               Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  noDictionaryWords   Boolean
+  noPersonNames       Boolean
+  noGeographicalNames Boolean
 
-  @@unique([entry_id])
-}
-
-model NoPersonNames {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
-
-  @@unique([entry_id])
-}
-
-model NoGeographicalNames {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
-
-  @@unique([entry_id])
+  @@index([entry_id])
 }
 
 // model PwdAlphabet {
@@ -332,6 +520,7 @@ model PwdDictionaries {
   @@index([entry_id])
 }
 
+// NOTE: This can also be used for pwdExpireWarning, per: https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
 model PwdExpiryWarning {
   id       Int   @id @default(autoincrement())
   entry_id Int
@@ -341,6 +530,7 @@ model PwdExpiryWarning {
   @@unique([entry_id])
 }
 
+// Corresponds to pwdGraceAuthNLimit in https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
 model PwdGraces {
   id       Int   @id @default(autoincrement())
   entry_id Int
@@ -395,6 +585,7 @@ model PwdMinTimeInHistory {
   @@unique([entry_id])
 }
 
+// From what I can tell, this is the same as pwdInHistory.
 model PwdHistorySlots {
   id       Int   @id @default(autoincrement())
   entry_id Int

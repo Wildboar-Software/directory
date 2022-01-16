@@ -22,18 +22,21 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    const value = await ctx.db.password.findUnique({
+    const value = await ctx.db.pwdGracesUsed.findUnique({
         where: {
             entry_id: vertex.dse.id,
         },
+        select: {
+            value: true,
+        },
     });
-    if (!value?.pwdGracesUsed) {
+    if (!value) {
         return [];
     }
     return [
         {
             type: pwdGracesUsed["&id"],
-            value: _encodeInteger(value.pwdGracesUsed, DER),
+            value: _encodeInteger(value.value, DER),
         },
     ];
 };
@@ -48,13 +51,10 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.otherWrites.push(ctx.db.password.updateMany({
+    pendingUpdates.otherWrites.push(ctx.db.pwdGracesUsed.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            pwdGracesUsed: Number(value.value.integer),
-        },
-        data: {
-            pwdGracesUsed: 0,
+            value: Number(value.value.integer),
         },
     }));
 };
@@ -65,12 +65,9 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.otherWrites.push(ctx.db.password.updateMany({
+    pendingUpdates.otherWrites.push(ctx.db.pwdGracesUsed.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-        },
-        data: {
-            pwdGracesUsed: 0,
         },
     }));
 };
@@ -80,7 +77,7 @@ const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<number> => {
-    return ctx.db.password.count({
+    return ctx.db.pwdGracesUsed.count({
         where: {
             entry_id: vertex.dse.id,
         },
@@ -92,7 +89,7 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return !!(await ctx.db.password.findFirst({
+    return !!(await ctx.db.pwdGracesUsed.findFirst({
         where: {
             entry_id: vertex.dse.id,
         },
@@ -108,10 +105,10 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    return !!(await ctx.db.password.findFirst({
+    return !!(await ctx.db.pwdGracesUsed.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            pwdGracesUsed: Number(value.value.integer),
+            value: Number(value.value.integer),
         },
         select: {
             id: true,

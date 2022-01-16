@@ -15,24 +15,28 @@ import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
 import {
     pwdExpiryTime,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
+import { addSeconds, subSeconds } from "date-fns";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    const value = await ctx.db.password.findUnique({
+    const value = await ctx.db.pwdExpiryTime.findUnique({
         where: {
             entry_id: vertex.dse.id,
         },
+        select: {
+            value: true,
+        },
     });
-    if (!value?.pwdExpiryTime) {
+    if (!value) {
         return [];
     }
     return [
         {
             type: pwdExpiryTime["&id"],
-            value: _encodeGeneralizedTime(value.pwdExpiryTime, DER),
+            value: _encodeGeneralizedTime(value.value, DER),
         },
     ];
 };
@@ -44,12 +48,17 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.otherWrites.push(ctx.db.password.update({
+    pendingUpdates.otherWrites.push(ctx.db.pwdExpiryTime.upsert({
         where: {
             entry_id: vertex.dse.id,
         },
-        data: {
-            pwdExpiryTime: value.value.generalizedTime,
+        create: {
+            entry_id: vertex.dse.id,
+            value: value.value.generalizedTime,
+        },
+        update: {
+            entry_id: vertex.dse.id,
+            value: value.value.generalizedTime,
         },
     }));
 };
@@ -61,27 +70,26 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    const password = await ctx.db.password.findUnique({
+    const sought = value.value.generalizedTime;
+    const start = subSeconds(sought, 1);
+    const end = addSeconds(sought, 1);
+    pendingUpdates.otherWrites.push(ctx.db.pwdExpiryTime.deleteMany({
         where: {
             entry_id: vertex.dse.id,
+            AND: [
+                {
+                    value: {
+                        gte: start,
+                    },
+                },
+                {
+                    value: {
+                        lte: end,
+                    },
+                },
+            ],
         },
-        select: {
-            pwdExpiryTime: true,
-        },
-    });
-    if (!password) {
-        return;
-    }
-    if (password.pwdExpiryTime?.valueOf() === value.value.generalizedTime.valueOf()) {
-        pendingUpdates.otherWrites.push(ctx.db.password.updateMany({
-            where: {
-                entry_id: vertex.dse.id,
-            },
-            data: {
-                pwdExpiryTime: null,
-            },
-        }));
-    }
+    }));
 };
 
 export
@@ -90,12 +98,9 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.otherWrites.push(ctx.db.password.update({
+    pendingUpdates.otherWrites.push(ctx.db.pwdExpiryTime.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-        },
-        data: {
-            pwdExpiryTime: null,
         },
     }));
 };
@@ -105,12 +110,9 @@ const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<number> => {
-    return ctx.db.password.count({
+    return ctx.db.pwdExpiryTime.count({
         where: {
             entry_id: vertex.dse.id,
-            pwdExpiryTime: {
-                not: null,
-            },
         },
     });
 };
@@ -120,12 +122,9 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return !!(await ctx.db.password.count({
+    return !!(await ctx.db.pwdExpiryTime.count({
         where: {
             entry_id: vertex.dse.id,
-            pwdExpiryTime: {
-                not: null,
-            },
         },
     }));
 };
@@ -136,10 +135,24 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    return !!(await ctx.db.password.count({
+    const sought = value.value.generalizedTime;
+    const start = subSeconds(sought, 1);
+    const end = addSeconds(sought, 1);
+    return !!(await ctx.db.pwdExpiryTime.count({
         where: {
             entry_id: vertex.dse.id,
-            pwdExpiryTime: value.value.generalizedTime,
+            AND: [
+                {
+                    value: {
+                        gte: start,
+                    },
+                },
+                {
+                    value: {
+                        lte: end,
+                    },
+                },
+            ],
         },
     }));
 };

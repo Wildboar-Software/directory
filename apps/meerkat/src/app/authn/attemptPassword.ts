@@ -26,6 +26,14 @@ async function attemptPassword (
     if (!password) {
         return undefined;
     }
+    const fails = await ctx.db.pwdFails.findUnique({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+        select: {
+            value: true,
+        },
+    });
     const userPwd: UserPwd = {
         encrypted: new UserPwd_encrypted(
             new AlgorithmIdentifier(
@@ -92,24 +100,48 @@ async function attemptPassword (
     }
 
     if (passwordIsCorrect) {
-        await ctx.db.password.update({
+        await ctx.db.pwdFails.upsert({
             where: {
                 entry_id: vertex.dse.id,
             },
-            data: {
-                pwdFails: 0,
+            create: {
+                entry_id: vertex.dse.id,
+                value: 0,
+            },
+            update: {
+                entry_id: vertex.dse.id,
+                value: 0,
             },
         });
     } else {
-        await ctx.db.password.update({
-            where: {
-                entry_id: vertex.dse.id,
-            },
-            data: {
-                pwdFailureTime: new Date(),
-                pwdFails: password.pwdFails + 1,
-            },
-        });
+        await ctx.db.$transaction([
+            ctx.db.pwdFailureTime.upsert({
+                where: {
+                    entry_id: vertex.dse.id,
+                },
+                create: {
+                    entry_id: vertex.dse.id,
+                    value: new Date(),
+                },
+                update: {
+                    entry_id: vertex.dse.id,
+                    value: new Date(),
+                },
+            }),
+            ctx.db.pwdFails.upsert({
+                where: {
+                    entry_id: vertex.dse.id,
+                },
+                create: {
+                    entry_id: vertex.dse.id,
+                    value: (fails?.value ?? 0) + 1,
+                },
+                update: {
+                    entry_id: vertex.dse.id,
+                    value: (fails?.value ?? 0) + 1,
+                },
+            }),
+        ]);
     }
 
     return passwordIsCorrect;

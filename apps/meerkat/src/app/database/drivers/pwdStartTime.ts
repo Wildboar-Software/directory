@@ -15,18 +15,19 @@ import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
 import {
     pwdStartTime,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
+import { addSeconds, subSeconds } from "date-fns";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    const value = await ctx.db.password.findUnique({
+    const value = await ctx.db.pwdStartTime.findUnique({
         where: {
             entry_id: vertex.dse.id,
         },
         select: {
-            pwdStartTime: true,
+            value: true,
         },
     });
     if (!value) {
@@ -35,7 +36,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
     return [
         {
             type: pwdStartTime["&id"],
-            value: _encodeGeneralizedTime(value.pwdStartTime, DER),
+            value: _encodeGeneralizedTime(value.value, DER),
         },
     ];
 };
@@ -54,7 +55,7 @@ const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<number> => {
-    return ctx.db.password.count({
+    return ctx.db.pwdStartTime.count({
         where: {
             entry_id: vertex.dse.id,
         },
@@ -66,7 +67,7 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return !!(await ctx.db.password.count({
+    return !!(await ctx.db.pwdStartTime.count({
         where: {
             entry_id: vertex.dse.id,
         },
@@ -79,10 +80,24 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    return !!(await ctx.db.password.count({
+    const sought = value.value.generalizedTime;
+    const start = subSeconds(sought, 1);
+    const end = addSeconds(sought, 1);
+    return !!(await ctx.db.pwdStartTime.count({
         where: {
             entry_id: vertex.dse.id,
-            pwdStartTime: value.value.generalizedTime,
+            AND: [
+                {
+                    value: {
+                        gte: start,
+                    },
+                },
+                {
+                    value: {
+                        lte: end,
+                    },
+                },
+            ],
         },
     }));
 };

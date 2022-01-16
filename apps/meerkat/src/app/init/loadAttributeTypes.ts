@@ -91,7 +91,7 @@ import uniqueIdentifierDriver from "../database/drivers/uniqueIdentifier";
 import userPasswordDriver from "../database/drivers/userPassword";
 import userPwdDriver from "../database/drivers/userPwd";
 import userPwdHistoryDriver from "../database/drivers/userPwdHistory";
-import userPwdRecentlyExpiredDriver from "../database/drivers/userPwdRecentlyExpired";
+// import userPwdRecentlyExpiredDriver from "../database/drivers/userPwdRecentlyExpired";
 import pwdAttributeDriver from "../database/drivers/pwdAttribute";
 
 export
@@ -243,7 +243,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.userPassword["&id"].toString())!.driver = userPasswordDriver;
     ctx.attributeTypes.get(x500at.userPwd["&id"].toString())!.driver = userPwdDriver;
     ctx.attributeTypes.get(userPwdHistory["&id"].toString())!.driver = userPwdHistoryDriver;
-    ctx.attributeTypes.get(userPwdRecentlyExpired["&id"].toString())!.driver = userPwdRecentlyExpiredDriver;
+    // ctx.attributeTypes.get(userPwdRecentlyExpired["&id"].toString())!.driver = userPwdRecentlyExpiredDriver;
 }
 
 export default loadAttributeTypes;

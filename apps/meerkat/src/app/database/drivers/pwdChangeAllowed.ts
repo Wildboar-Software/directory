@@ -44,11 +44,16 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.otherWrites.push(ctx.db.pwdChangeAllowed.update({
+    pendingUpdates.otherWrites.push(ctx.db.pwdChangeAllowed.upsert({
         where: {
             entry_id: vertex.dse.id,
         },
-        data: {
+        create: {
+            entry_id: vertex.dse.id,
+            value: value.value.boolean,
+        },
+        update: {
+            entry_id: vertex.dse.id,
             value: value.value.boolean,
         },
     }));

@@ -14,16 +14,17 @@ async function readEntryPassword (
     const password = await ctx.db.password.findFirst({
         where: {
             entry_id: entry.dse.id,
-            OR: [
-                {
-                    pwdExpiryTime: {
-                        gt: new Date(),
-                    },
-                },
-                {
-                    pwdExpiryTime: null,
-                },
-            ],
+            // TODO: This, and many more checks, should be re-introduced with password policy updates.
+            // OR: [
+            //     {
+            //         pwdExpiryTime: {
+            //             gt: new Date(),
+            //         },
+            //     },
+            //     {
+            //         pwdExpiryTime: null,
+            //     },
+            // ],
         },
     });
     if (!password) {
