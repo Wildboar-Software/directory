@@ -13,10 +13,17 @@ async function readEntryPassword (
 ): Promise<UserPwd | null> {
     const password = await ctx.db.password.findFirst({
         where: {
-            id: entry.dse.id,
-            pwdExpiryTime: {
-                gt: new Date(),
-            },
+            entry_id: entry.dse.id,
+            OR: [
+                {
+                    pwdExpiryTime: {
+                        gt: new Date(),
+                    },
+                },
+                {
+                    pwdExpiryTime: null,
+                },
+            ],
         },
     });
     if (!password) {

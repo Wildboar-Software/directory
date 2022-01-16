@@ -10,7 +10,8 @@ import type { Abort } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecificat
 import type { StartTLS } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/StartTLS.ta";
 import type { TLSResponse } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
 // import type { ASN1Element } from "asn1-ts";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError"
+import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { EventEmitter } from "events";
 
 interface EventMap {
     bind: IdmBind;
@@ -41,6 +42,6 @@ interface Emitter<T extends EventMap> {
     emit (eventName: string, params: ResultOrError): void;
 }
 
-type IDMEventEmitter = Emitter<EventMap>;
+type IDMEventEmitter = Emitter<EventMap> & EventEmitter;
 
 export default IDMEventEmitter;

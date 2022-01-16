@@ -25,6 +25,9 @@ const readValues: SpecialAttributeDatabaseReader = async (
         where: {
             entry_id: vertex.dse.id,
         },
+        select: {
+            pwdStartTime: true,
+        },
     });
     if (!value) {
         return [];

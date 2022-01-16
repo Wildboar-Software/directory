@@ -406,6 +406,7 @@ class DOPConnection extends ClientConnection {
                 }));
             });
 
+        idm.events.removeAllListeners("request");
         idm.events.on("request", this.handleRequest.bind(this));
         idm.events.on("unbind", this.handleUnbind.bind(this));
     }

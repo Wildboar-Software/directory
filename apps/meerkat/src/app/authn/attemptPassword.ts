@@ -80,7 +80,7 @@ async function attemptPassword (
             if (!result) {
                 return undefined; // Algorithm not understood.
             }
-            return (
+            passwordIsCorrect = (
                 (result.length === v.encrypted.encryptedString.length)
                 && crypto.timingSafeEqual(result, v.encrypted.encryptedString)
             );
@@ -97,7 +97,6 @@ async function attemptPassword (
                 entry_id: vertex.dse.id,
             },
             data: {
-                pwdFailureTime: null, // REVIEW: Is this actually necessary?
                 pwdFails: 0,
             },
         });

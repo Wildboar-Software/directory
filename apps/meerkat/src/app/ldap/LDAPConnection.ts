@@ -167,6 +167,12 @@ async function handleRequestAndErrors (
     conn: LDAPConnection,
     message: LDAPMessage,
 ): Promise<void> {
+    if (!conn.bound) {
+        const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
+        conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+        conn.socket.end();
+        return;
+    }
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
@@ -289,6 +295,7 @@ class LDAPConnection extends ClientConnection {
 
     private buffer: Buffer = Buffer.alloc(0);
     public boundEntry: Vertex | undefined;
+    public bound: boolean = false;
 
     // I _think_ this function MUST NOT be async, or this function could run
     // multiple times out-of-sync, mutating `this.buffer` indeterminately.
@@ -342,6 +349,7 @@ class LDAPConnection extends ClientConnection {
                         if (bindReturn.result.resultCode === LDAPResult_resultCode_success) {
                             this.boundEntry = bindReturn.boundVertex;
                             this.authLevel = bindReturn.authLevel;
+                            this.bound = true;
                         }
                         const res = new LDAPMessage(
                             message.messageID,
@@ -386,6 +394,7 @@ class LDAPConnection extends ClientConnection {
                 break;
             } else if ("unbindRequest" in message.protocolOp) {
                 this.boundEntry = undefined;
+                this.boundNameAndUID = undefined;
                 this.authLevel = {
                     basicLevels: new AuthenticationLevel_basicLevels(
                         AuthenticationLevel_basicLevels_level_none,
@@ -393,6 +402,7 @@ class LDAPConnection extends ClientConnection {
                         false,
                     ),
                 };
+                this.bound = false;
             } else if (
                 ("extendedReq" in message.protocolOp)
                 && !decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(modifyPassword)

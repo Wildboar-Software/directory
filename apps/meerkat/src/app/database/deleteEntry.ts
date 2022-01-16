@@ -55,7 +55,7 @@ async function deleteEntry (
                     entry_id: entry.dse.id,
                 },
             }),
-            ctx.db.entry.updateMany({
+            ctx.db.entry.update({
                 where: {
                     id: entry.dse.id,
                 },

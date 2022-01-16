@@ -12,6 +12,7 @@ import { ObjectIdentifier } from "asn1-ts";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
 import {
     Abort_reasonNotSpecified,
+    Abort_unboundRequest,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import { IDMConnection } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
@@ -236,6 +237,11 @@ async function main (): Promise<void> {
                 transport: "IDM",
             }));
             const idm = new IDMConnection(c);
+            const handleWrongSequence = () => {
+                idm.writeAbort(Abort_unboundRequest).then(() => idm.events.emit("unbind", null)).catch();
+                associations.delete(c);
+            };
+            idm.events.on("request", handleWrongSequence);
             idm.events.on("bind", (idmBind: IdmBind) => {
                 const existingAssociation = associations.get(c);
                 if (existingAssociation) {
