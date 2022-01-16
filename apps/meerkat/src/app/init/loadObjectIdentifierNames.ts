@@ -47,7 +47,6 @@ async function loadObjectIdentifierNames (ctx: Context): Promise<void> {
             ctx.nameToObjectIdentifier.set(name, attr.id);
             ctx.nameToObjectIdentifier.set(normalized, attr.id);
             ctx.objectIdentifierToName.set(attr.id.toString(), name);
-            ctx.objectIdentifierToName.set(attr.id.toString(), normalized);
         }
     }
 
@@ -73,7 +72,6 @@ async function loadObjectIdentifierNames (ctx: Context): Promise<void> {
             ctx.nameToObjectIdentifier.set(name, oc.id);
             ctx.nameToObjectIdentifier.set(normalized, oc.id);
             ctx.objectIdentifierToName.set(oc.id.toString(), name);
-            ctx.objectIdentifierToName.set(oc.id.toString(), normalized);
         }
     }
 
@@ -99,7 +97,6 @@ async function loadObjectIdentifierNames (ctx: Context): Promise<void> {
             ctx.nameToObjectIdentifier.set(name, ct.id);
             ctx.nameToObjectIdentifier.set(normalized, ct.id);
             ctx.objectIdentifierToName.set(ct.id.toString(), name);
-            ctx.objectIdentifierToName.set(ct.id.toString(), normalized);
         }
     }
 
@@ -130,7 +127,6 @@ async function loadObjectIdentifierNames (ctx: Context): Promise<void> {
             ctx.nameToObjectIdentifier.set(name, mr.id);
             ctx.nameToObjectIdentifier.set(normalized, mr.id);
             ctx.objectIdentifierToName.set(mr.id.toString(), name);
-            ctx.objectIdentifierToName.set(mr.id.toString(), normalized);
         }
     }
 }

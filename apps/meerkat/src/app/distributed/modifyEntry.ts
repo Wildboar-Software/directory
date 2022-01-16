@@ -411,6 +411,7 @@ function checkEqualityMatchingPermitted (
 }
 
 function checkPermissionToAddValues (
+    modificationType: "addAttribute" | "addValues",
     attribute: Attribute,
     ctx: Context,
     user: NameAndOptionalUID | undefined | null,
@@ -442,7 +443,10 @@ function checkPermissionToAddValues (
     );
     if (!authorizedForAttributeType) {
         throw new errors.SecurityError(
-            ctx.i18n.t("err:not_authz_mod"),
+            ctx.i18n.t("err:not_authz_mod", {
+                mod: modificationType,
+                type: attribute.type_.toString(),
+            }),
             notPermittedData(ctx, conn, aliasDereferenced),
         );
     }
@@ -466,7 +470,10 @@ function checkPermissionToAddValues (
         );
         if (!authorizedForValue) {
             throw new errors.SecurityError(
-                ctx.i18n.t("err:not_authz_mod"),
+                ctx.i18n.t("err:not_authz_mod", {
+                    mod: modificationType,
+                    type: attribute.type_.toString(),
+                }),
                 notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
@@ -713,6 +720,7 @@ async function executeAddAttribute (
      * already known, so this is not a problem beyond this point.
      */
     checkPermissionToAddValues(
+        "addAttribute",
         mod,
         ctx,
         user,
@@ -808,7 +816,10 @@ async function executeRemoveAttribute (
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
-                ctx.i18n.t("err:not_authz_mod"),
+                ctx.i18n.t("err:not_authz_mod", {
+                    mod: "removeAttribute",
+                    type: mod.toString(),
+                }),
                 notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
@@ -894,6 +905,7 @@ async function executeAddValues (
     }
     checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
     checkPermissionToAddValues(
+        "addValues",
         mod,
         ctx,
         user,
@@ -999,7 +1011,10 @@ async function executeRemoveValues (
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
-                ctx.i18n.t("err:not_authz_mod"),
+                ctx.i18n.t("err:not_authz_mod", {
+                    mod: "removeValues",
+                    type: mod.type_.toString(),
+                }),
                 notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
@@ -1021,7 +1036,10 @@ async function executeRemoveValues (
             );
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
-                    ctx.i18n.t("err:not_authz_mod"),
+                    ctx.i18n.t("err:not_authz_mod", {
+                        mod: "removeValues",
+                        type: mod.type_.toString(),
+                    }),
                     notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }
@@ -1089,7 +1107,10 @@ async function executeAlterValues (
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
-                ctx.i18n.t("err:not_authz_mod"),
+                ctx.i18n.t("err:not_authz_mod", {
+                    mod: "alterValues",
+                    type: mod.type_.toString(),
+                }),
                 notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
@@ -1123,7 +1144,10 @@ async function executeAlterValues (
             );
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
-                    ctx.i18n.t("err:not_authz_mod"),
+                    ctx.i18n.t("err:not_authz_mod", {
+                        mod: "alterValues",
+                        type: mod.type_.toString(),
+                    }),
                     notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }
@@ -1153,7 +1177,10 @@ async function executeAlterValues (
             );
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
-                    ctx.i18n.t("err:not_authz_mod"),
+                    ctx.i18n.t("err:not_authz_mod", {
+                        mod: "alterValues",
+                        type: mod.type_.toString(),
+                    }),
                     notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }
@@ -1223,7 +1250,10 @@ async function executeResetValue (
             );
             if (!authorizedForAttributeType) {
                 throw new errors.SecurityError(
-                    ctx.i18n.t("err:not_authz_mod"),
+                    ctx.i18n.t("err:not_authz_mod", {
+                        mod: "resetValue",
+                        type: mod.toString(),
+                    }),
                     notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }
@@ -1283,7 +1313,10 @@ async function executeReplaceValues (
         );
         if (!authorizedForAttributeType) {
             throw new errors.SecurityError(
-                ctx.i18n.t("err:not_authz_mod"),
+                ctx.i18n.t("err:not_authz_mod", {
+                    mod: "replaceValues",
+                    type: mod.type_.toString(),
+                }),
                 notPermittedData(ctx, conn, aliasDereferenced),
             );
         }
@@ -1306,7 +1339,10 @@ async function executeReplaceValues (
             );
             if (!authorizedForValue) {
                 throw new errors.SecurityError(
-                    ctx.i18n.t("err:not_authz_mod"),
+                    ctx.i18n.t("err:not_authz_mod", {
+                        mod: "replaceValues",
+                        type: mod.type_.toString(),
+                    }),
                     notPermittedData(ctx, conn, aliasDereferenced),
                 );
             }

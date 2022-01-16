@@ -63,7 +63,7 @@
     "rdn_attribute_type_requires_contexts": "Attribute type {{oid}} cannot be used in the target entry's new name, because the context use rules for that type mandate the existence of the following context types: {{oids}}.",
     "attribute_type_not_permitted_by_oc": "Attribute types {{oids}} not permitted by the entry's object classes.",
     "deleting_old_rdn_deletes_required_attribute": "Deleting the old RDN would delete a required attribute.",
-    "not_authz_mod": "Not authorized to perform modification {{mod}}.",
+    "not_authz_mod": "Not authorized to perform modification {{mod}} with type {{type}}.",
     "no_user_modification": "The following attribute types may never be modified, even by administrators: {{oids}}",
     "not_authz_modify_entry": "Not authorized to modify the target entry.",
     "cannot_change_soc": "Cannot change supplant target entry's structural object class with {{oid}}.",
