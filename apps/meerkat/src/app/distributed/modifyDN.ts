@@ -478,6 +478,12 @@ async function modifyDN (
                 user,
                 {
                     entry: objectClasses,
+                    siblingsCount: await ctx.db.entry.count({
+                        where: {
+                            immediate_superior_id: target.immediateSuperior.dse.id,
+                            deleteTimestamp: null,
+                        },
+                    }),
                 },
                 [
                     PERMISSION_CATEGORY_IMPORT,

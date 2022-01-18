@@ -483,6 +483,14 @@ async function addEntry (
             user,
             {
                 entry: objectClasses,
+                siblingsCount: !immediateSuperior.dse.immSupr
+                    ? await ctx.db.entry.count({
+                        where: {
+                            immediate_superior_id: immediateSuperior.dse.id,
+                            deleteTimestamp: null,
+                        },
+                    })
+                    : undefined,
             },
             [
                 PERMISSION_CATEGORY_ADD,
