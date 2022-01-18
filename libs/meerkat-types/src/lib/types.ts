@@ -451,6 +451,9 @@ interface Telemetry {
 
 export
 interface Configuration {
+    idm: {
+        bufferSize: number;
+    };
     localQualifierPointsFor: {
         usingStartTLS: number;
         usingTLS: number;

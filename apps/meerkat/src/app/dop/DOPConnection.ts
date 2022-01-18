@@ -411,5 +411,22 @@ class DOPConnection extends ClientConnection {
         idm.events.removeAllListeners("request");
         idm.events.on("request", this.handleRequest.bind(this));
         idm.events.on("unbind", this.handleUnbind.bind(this));
+        /**
+         * This is an extremely important operation for security.
+         * Without this, nefarious users could anonymously submit
+         * infinitely-large IDM packets and consume all of the
+         * memory of the system.
+         */
+        idm.events.on("fragment", (addedBytes: number) => {
+            const currentFragmentSize: number = (
+                idm.getNumberOfEnqueuedBytes()
+                + addedBytes
+            );
+            if (currentFragmentSize > ctx.config.idm.bufferSize) {
+                idm.writeAbort(Abort_unboundRequest)
+                    .then(() => idm.events.emit("unbind", null))
+                    .catch(() => {});
+            }
+        });
     }
 }

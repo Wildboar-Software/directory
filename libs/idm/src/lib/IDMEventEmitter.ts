@@ -26,6 +26,7 @@ interface EventMap {
     startTLS: StartTLS;
     tLSResponse: TLSResponse;
     socketError: Error;
+    fragment: number;
     [other: number]: ResultOrError; // The opcode is the event type.
 };
 

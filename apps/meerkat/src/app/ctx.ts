@@ -20,6 +20,7 @@ import {
 } from "@wildboar/x500/src/lib/distributed/uri";
 import * as path from "path";
 import { URL } from "url";
+import { DEFAULT_IDM_BUFFER_SIZE } from "./constants";
 
 const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
     ? process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
@@ -126,6 +127,11 @@ if (logToHTTP) {
 const ctx: Context = {
     i18n,
     config: {
+        idm: {
+            bufferSize: process.env.MEERKAT_IDM_BUFFER_SIZE
+                ? Number.parseInt(process.env.MEERKAT_IDM_BUFFER_SIZE, 10)
+                : DEFAULT_IDM_BUFFER_SIZE,
+        },
         localQualifierPointsFor: {
             usingStartTLS: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS
                 ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS, 10)

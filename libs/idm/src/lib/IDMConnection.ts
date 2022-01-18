@@ -1,5 +1,6 @@
 import * as net from "net";
 import * as tls from "tls";
+import { strict as assert } from "assert";
 import IDMVersion from "./IDMVersion";
 import IDMSegmentField from "./IDMSegmentField";
 import IDMSegment from "./IDMSegment";
@@ -52,11 +53,14 @@ class IDMConnection {
     public readonly events: IDMEventEmitter = new EventEmitter();
     private socket!: net.Socket;
 
+    public getNumberOfEnqueuedBytes (): number {
+        return this.buffer.length;
+    }
+
     constructor (
         readonly s: net.Socket,
     ) {
         this.socket = s;
-        // this.socket.on("end", () => {});
         this.socket.on("data", (data: Buffer) => {
             this.buffer = Buffer.concat([ this.buffer, data ]);
             while ((this.bufferIndex + this.awaitingBytes) <= this.buffer.length) {
@@ -104,12 +108,11 @@ class IDMConnection {
                     this.awaitingBytes = this.currentSegment.length;
                     this.bufferIndex += 4;
                     this.nextExpectedField = IDMSegmentField.data;
+                    this.events.emit("fragment", this.awaitingBytes);
                     break;
                 }
                 case (IDMSegmentField.data): {
-                    if (this.currentSegment.length === undefined) {
-                        throw new Error("Invalid parser state.");
-                    }
+                    assert(this.currentSegment.length !== undefined, "Invalid parser state.");
                     this.currentSegment.data = this.buffer.slice(
                         this.bufferIndex,
                         (this.bufferIndex + this.currentSegment.length),
