@@ -10,7 +10,20 @@ import type {
 import compareAlgorithmIdentifier from "@wildboar/x500/src/lib/comparators/compareAlgorithmIdentifier";
 import { UserPwd_encrypted } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd-encrypted.ta";
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
-import { DERElement, ObjectIdentifier } from "asn1-ts";
+import {
+    DERElement,
+    ObjectIdentifier,
+    ASN1TagClass,
+    ASN1UniversalType,
+    BERElement,
+} from "asn1-ts";
+import {
+    pwdFails,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
+import {
+    pwdFailureTime,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
+import { DER, _encodeInteger, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
 
 export
 async function attemptPassword (
@@ -26,14 +39,22 @@ async function attemptPassword (
     if (!password) {
         return undefined;
     }
-    const fails = await ctx.db.pwdFails.findUnique({
+    const failsRow = await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: vertex.dse.id,
+            type: pwdFails["&id"].toString(),
         },
         select: {
-            value: true,
+            ber: true,
         },
     });
+    const fails = failsRow
+        ? (() => {
+            const el = new BERElement();
+            el.fromBytes(failsRow.ber);
+            return Number(el.integer);
+        })()
+        : 0;
     const userPwd: UserPwd = {
         encrypted: new UserPwd_encrypted(
             new AlgorithmIdentifier(
@@ -100,45 +121,63 @@ async function attemptPassword (
     }
 
     if (passwordIsCorrect) {
-        await ctx.db.pwdFails.upsert({
-            where: {
-                entry_id: vertex.dse.id,
-            },
-            create: {
-                entry_id: vertex.dse.id,
-                value: 0,
-            },
-            update: {
-                entry_id: vertex.dse.id,
-                value: 0,
-            },
-        });
-    } else {
         await ctx.db.$transaction([
-            ctx.db.pwdFailureTime.upsert({
+            ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,
-                },
-                create: {
-                    entry_id: vertex.dse.id,
-                    value: new Date(),
-                },
-                update: {
-                    entry_id: vertex.dse.id,
-                    value: new Date(),
+                    type: pwdFails["&id"].toString(),
                 },
             }),
-            ctx.db.pwdFails.upsert({
+            ctx.db.attributeValue.create({
+                data: {
+                    entry_id: vertex.dse.id,
+                    type: pwdFails["&id"].toString(),
+                    operational: true,
+                    tag_class: ASN1TagClass.universal,
+                    constructed: false,
+                    tag_number: ASN1UniversalType.integer,
+                    ber: Buffer.from(_encodeInteger(0, DER).toBytes()),
+                    jer: 0,
+                },
+            }),
+        ]);
+    } else {
+        const now = new Date();
+        const nowElement = _encodeGeneralizedTime(new Date(), DER);
+        await ctx.db.$transaction([
+            ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,
+                    type: {
+                        in: [
+                            pwdFails["&id"].toString(),
+                            pwdFailureTime["&id"].toString(),
+                        ],
+                    },
                 },
-                create: {
+            }),
+            ctx.db.attributeValue.create({
+                data: {
                     entry_id: vertex.dse.id,
-                    value: (fails?.value ?? 0) + 1,
+                    type: pwdFails["&id"].toString(),
+                    operational: true,
+                    tag_class: ASN1TagClass.universal,
+                    constructed: false,
+                    tag_number: ASN1UniversalType.integer,
+                    ber: Buffer.from(_encodeInteger(fails + 1, DER).toBytes()),
+                    jer: 0,
                 },
-                update: {
+            }),
+            ctx.db.attributeValue.create({
+                data: {
                     entry_id: vertex.dse.id,
-                    value: (fails?.value ?? 0) + 1,
+                    type: pwdFailureTime["&id"].toString(),
+                    operational: true,
+                    tag_class: nowElement.tagClass,
+                    constructed: false,
+                    tag_number: nowElement.tagNumber,
+                    ber: Buffer.from(nowElement.toBytes()),
+                    jer: nowElement.toJSON() as string,
                 },
             }),
         ]);

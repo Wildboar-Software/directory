@@ -41,14 +41,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
 import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults";
-import {
-    contextAssertionSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
-import {
-    id_ar_contextDefaultSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
-
-const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 
 // TODO: Explore making this a temporalContext
 const DEFAULT_CAD: ContextSelection = {
@@ -239,12 +231,6 @@ async function readValues (
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
         ? getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
-    // const cads: Vertex[] = (options?.relevantSubentries
-    //     ?.filter((subentry) => (
-    //         subentry.dse.subentry
-    //         && subentry.dse.objectClass.has(CAD_SUBENTRY)
-    //         && subentry.dse.subentry?.contextAssertionDefaults?.length
-    //     )) ?? []).flatMap(s => s.dse.subentry?.contextAssertionDefaults []);
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
      * Per ITU X.501 (2016), Section 8.9.2.2.
@@ -278,7 +264,6 @@ async function readValues (
             addFriends(options.relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
         }
     }
-    let operationalAttributes: Value[] = [];
     let userAttributes: Value[] = await Promise.all(
         (await ctx.db.attributeValue.findMany({
             where: {
@@ -297,6 +282,7 @@ async function readValues (
                                 }),
                     }
                     : undefined,
+                operational: false,
             },
             select: {
                 type: true,
@@ -319,6 +305,39 @@ async function readValues (
                 : undefined,
         }))
             .map((a) => attributeFromDatabaseAttribute(ctx, a)),
+    );
+
+    let operationalAttributes: Value[] = (selectedOperationalAttributes === undefined)
+        ? []
+        : await Promise.all(
+            (await ctx.db.attributeValue.findMany({
+                where: {
+                    entry_id: entry.dse.id,
+                    type: selectedOperationalAttributes
+                        ? {
+                            in: options?.noSubtypeSelection
+                                ? Array.from(selectedOperationalAttributes)
+                                : Array.from(selectedOperationalAttributes)
+                                    .flatMap((type_) => {
+                                        const subtypes = getAttributeSubtypes(ctx, ObjectIdentifier.fromString(type_));
+                                        return [
+                                            type_,
+                                            ...subtypes.map((st) => st.toString()),
+                                        ];
+                                    }),
+                        }
+                        : undefined,
+                    operational: true,
+                },
+                select: {
+                    type: true,
+                    ber: true,
+                },
+                distinct: (options?.selection?.infoTypes === typesOnly)
+                    ? ["type"]
+                    : undefined,
+            }))
+                .map((a) => attributeFromDatabaseAttribute(ctx, a)),
     );
 
     const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));

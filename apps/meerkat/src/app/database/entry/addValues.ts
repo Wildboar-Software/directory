@@ -25,6 +25,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import createSecurityParameters from "../../x500/createSecurityParameters";
+import {
+    AttributeUsage_userApplications as userApplications,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 
 async function validateValues (
     ctx: Context,
@@ -184,6 +187,10 @@ async function addValues (
                 ?.driver
                 ?.addValue(ctx, entry, attr, pendingUpdates)),
     );
+    const unspecialValues = values
+        .filter((attr) => !ctx.attributeTypes.get(attr.type.toString())?.driver);
+    const unspecialValuesWithContexts = unspecialValues.filter((v) => v.contexts?.length);
+    const unspecialValuesWithNoContexts = unspecialValues.filter((v) => !(v.contexts?.length));
     return [
         ctx.db.entry.update({
             where: {
@@ -192,12 +199,24 @@ async function addValues (
             data: pendingUpdates.entryUpdate,
         }),
         ...pendingUpdates.otherWrites,
-        ...values
-            .filter((attr) => !ctx.attributeTypes.get(attr.type.toString())?.driver)
+        ctx.db.attributeValue.createMany({
+            data: unspecialValuesWithNoContexts.map((attr) => ({
+                entry_id: entry.dse.id,
+                type: attr.type.toString(),
+                operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),
+                tag_class: attr.value.tagClass,
+                constructed: (attr.value.construction === ASN1Construction.constructed),
+                tag_number: attr.value.tagNumber,
+                ber: Buffer.from(attr.value.toBytes()),
+                jer: attr.value.toJSON() as Prisma.InputJsonValue,
+            })),
+        }),
+        ...unspecialValuesWithContexts // The ContextValue relation is only available in .create(), not .createMany().
             .map((attr) => ctx.db.attributeValue.create({
                 data: {
                     entry_id: entry.dse.id,
                     type: attr.type.toString(),
+                    operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
@@ -205,7 +224,7 @@ async function addValues (
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {
-                            data: Array.from(attr.contexts ?? [])
+                            data: (attr.contexts ?? [])
                                 .flatMap((context) => context.contextValues.map((cv) => ({
                                     type: context.contextType.toString(),
                                     tag_class: cv.tagClass,

@@ -109,7 +109,6 @@ model Entry {
   // For storing other arbitrary data in the entry.
   otherData Json?
 
-  // FIXME: Make some of these 1:1
   subordinates                Entry[]                       @relation("superior")
   hierarchicalChildren        Entry[]                       @relation("parent")
   ACIItem                     ACIItem[]
@@ -118,22 +117,6 @@ model Entry {
   AttributeValue              AttributeValue[]
   AccessPoint                 AccessPoint[]
   SubtreeSpecification        SubtreeSpecification[]
-  PwdModifyEntryAllowed       PwdModifyEntryAllowed?
-  PwdChangeAllowed            PwdChangeAllowed?
-  PwdMaxAge                   PwdMaxAge?
-  PwdExpiryAge                PwdExpiryAge?
-  PwdMinLength                PwdMinLength?
-  PwdVocabulary               PwdVocabulary?
-  PwdDictionaries             PwdDictionaries[]
-  PwdExpiryWarning            PwdExpiryWarning?
-  PwdGraces                   PwdGraces?
-  PwdFailureDuration          PwdFailureDuration?
-  PwdLockoutDuration          PwdLockoutDuration?
-  PwdMaxFailures              PwdMaxFailures?
-  PwdMaxTimeInHistory         PwdMaxTimeInHistory?
-  PwdMinTimeInHistory         PwdMinTimeInHistory?
-  PwdHistorySlots             PwdHistorySlots?
-  PwdRecentlyExpiredDuration  PwdRecentlyExpiredDuration[]
   Password                    Password[]
   RDN                         DistinguishedValue[]
   EntryObjectClass            EntryObjectClass[]
@@ -149,33 +132,11 @@ model Entry {
   SearchRule                  SearchRule[]
   UniqueIdentifier            UniqueIdentifier[]
   OperationalBinding          OperationalBinding[]
-  PwdAttribute                PwdAttribute[]
   PasswordHistory             PasswordHistory[]
-  PasswordRecentlyExpired     PasswordRecentlyExpired[]
   Entry                       Entry[]                       @relation("top")
-  PasswordEncryptionAlgorithm PasswordEncryptionAlgorithm[]
+  PasswordEncryptionAlgorithm PasswordEncryptionAlgorithm?
   EnqueuedSearchResult        EnqueuedSearchResult[]
   EnqueuedListResult          EnqueuedListResult[]
-  PwdStartTime                PwdStartTime?
-  PwdExpiryTime               PwdExpiryTime?
-  PwdEndTime                  PwdEndTime?
-  PwdFailureTime              PwdFailureTime? // Note: single-valued in X.500; multi-valued in Behera Password Policy
-  PwdFails                    PwdFails?
-  PwdGracesUsed               PwdGracesUsed?
-  PwdChangedTime              PwdChangedTime?
-  PwdAccountLockedTime        PwdAccountLockedTime?
-  PwdGraceUseTime             PwdGraceUseTime?
-  PwdReset                    PwdReset?
-  PwdLastSuccess              PwdLastSuccess?
-  PwdGracyExpiry              PwdGracyExpiry?
-  PwdLockout                  PwdLockout?
-  PwdFailureCountInterval     PwdFailureCountInterval?
-  PwdMustChange               PwdMustChange?
-  PwdSafeModify               PwdSafeModify?
-  PwdMinDelay                 PwdMinDelay?
-  PwdMaxDelay                 PwdMaxDelay?
-  PwdMaxIdle                  PwdMaxIdle?
-  PwdMinAge                   PwdMinAge?
 
   @@unique([dseUUID])
   @@unique([entryUUID])
@@ -217,195 +178,6 @@ model Password {
   @@unique([entry_id])
 }
 
-model PwdStartTime {
-  id       Int      @id @default(autoincrement())
-  entry_id Int
-  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    DateTime
-
-  @@unique([entry_id])
-}
-
-model PwdExpiryTime {
-  id       Int      @id @default(autoincrement())
-  entry_id Int
-  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    DateTime
-
-  @@unique([entry_id])
-}
-
-model PwdEndTime {
-  id       Int      @id @default(autoincrement())
-  entry_id Int
-  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    DateTime
-
-  @@unique([entry_id])
-}
-
-model PwdFailureTime {
-  id       Int      @id @default(autoincrement())
-  entry_id Int
-  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    DateTime
-
-  @@unique([entry_id])
-}
-
-model PwdFails {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdGracesUsed {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-// Per-entry attributes from https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
-
-model PwdChangedTime {
-  id       Int      @id @default(autoincrement())
-  entry_id Int
-  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    DateTime
-
-  @@unique([entry_id])
-}
-
-model PwdAccountLockedTime {
-  id       Int      @id @default(autoincrement())
-  entry_id Int
-  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    DateTime
-
-  @@unique([entry_id])
-}
-
-model PwdGraceUseTime {
-  id       Int      @id @default(autoincrement())
-  entry_id Int
-  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    DateTime
-
-  @@unique([entry_id])
-}
-
-model PwdReset {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
-
-  @@unique([entry_id])
-}
-
-model PwdLastSuccess {
-  id       Int      @id @default(autoincrement())
-  entry_id Int
-  entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    DateTime
-
-  @@unique([entry_id])
-}
-
-// Policy attributes from https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
-
-model PwdGracyExpiry {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-// This can _almost_ be inferred from the existence of pwdMaxFailure, but it is technically different.
-model PwdLockout {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
-
-  @@unique([entry_id])
-}
-
-model PwdFailureCountInterval {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdMustChange {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
-
-  @@unique([entry_id])
-}
-
-// Not sure Meerkat DSA will ever actually use this. The semantics are not well-defined.
-// How do you send the old password with the new password in LDAP?
-model PwdSafeModify {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
-
-  @@unique([entry_id])
-}
-
-model PwdMinDelay {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdMaxDelay {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdMaxIdle {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-// This will always be userPwd for Meerkat DSA. This is really just here because
-// shadowed suppliers might not use the same pwdAttribute.
-model PwdAttribute {
-  id            BigInt @id @default(autoincrement())
-  entry_id      Int
-  entry         Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  pwd_attribute String @db.VarChar(128) // OID
-
-  @@unique([entry_id])
-}
-
 model PasswordHistory {
   id       Int      @id @default(autoincrement())
   entry_id Int
@@ -416,190 +188,14 @@ model PasswordHistory {
   @@unique([entry_id, time])
 }
 
-// You might think "isn't this already covered by Password.pwdExpiryTime?"
-// Generally, yes, but with shadowing, this attribute might be replicated
-// without the passwords themselves. (A strange setup, but possible.)
-model PasswordRecentlyExpired {
-  id       Int   @id @default(autoincrement())
-  entry_id Int   @unique
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  password Bytes // BER
-}
-
 // This only exists for shadowing. Otherwise, it's value is always Meerkat DSA's
 // hard-coded algorithm, which is currently scrypt.
 model PasswordEncryptionAlgorithm {
   id         Int    @id @default(autoincrement())
-  entry_id   Int    @unique
+  entry_id   Int
   entry      Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   oid        String @db.VarChar(128) // OID
   parameters Bytes? // BER
-}
-
-model PwdModifyEntryAllowed {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
-
-  @@unique([entry_id])
-}
-
-// This corresponds to pwdAllowUserChange in https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
-model PwdChangeAllowed {
-  id       Int     @id @default(autoincrement())
-  entry_id Int
-  entry    Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Boolean
-
-  @@unique([entry_id])
-}
-
-// Note, this is NOT defined in the X.500 standards.
-// This is defined in https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
-model PwdMinAge {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdMaxAge {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdExpiryAge {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdMinLength {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdVocabulary {
-  id                  Int     @id @default(autoincrement())
-  entry_id            Int
-  entry               Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  noDictionaryWords   Boolean
-  noPersonNames       Boolean
-  noGeographicalNames Boolean
-
-  @@index([entry_id])
-}
-
-// model PwdAlphabet {
-//     id  Int @id @default(autoincrement())
-//     entry_id    Int
-//     entry       Entry @relation(fields: [entry_id], references: [id])
-//     value
-// }
-
-model PwdDictionaries {
-  id       Int    @id @default(autoincrement())
-  entry_id Int
-  entry    Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    String @db.Text
-
-  @@index([entry_id])
-}
-
-// NOTE: This can also be used for pwdExpireWarning, per: https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
-model PwdExpiryWarning {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-// Corresponds to pwdGraceAuthNLimit in https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10
-model PwdGraces {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdFailureDuration {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdLockoutDuration {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdMaxFailures {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdMaxTimeInHistory {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdMinTimeInHistory {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-// From what I can tell, this is the same as pwdInHistory.
-model PwdHistorySlots {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
-
-  @@unique([entry_id])
-}
-
-model PwdRecentlyExpiredDuration {
-  id       Int   @id @default(autoincrement())
-  entry_id Int
-  entry    Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  value    Int
 
   @@unique([entry_id])
 }
@@ -616,6 +212,7 @@ model AttributeValue {
   entry_id                   Int
   entry                      Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   type                       String  @db.VarChar(128) // OID
+  operational                Boolean @default(false) // True if attribute type is not userApplications
   tag_class                  Int     @db.SmallInt
   constructed                Boolean
   tag_number                 Int
@@ -667,12 +264,18 @@ model ACIItem {
   auth_level_basic_level           Int?
   auth_level_basic_local_qualifier Int?
   auth_level_basic_signed          Boolean?
+  auth_level_other_dir_ref         String? // OID
+  auth_level_other_indir_ref       Int?
+  auth_level_other_descriptor      String?
+  auth_level_other_encoding_type   Int?
+  auth_level_other_encoding        Bytes?
   ber                              Bytes
   // The "other" alternative shall not be supported.
   scope                            ACIScope
 
   // For disabling ACI items in the database for debugging purposes.
   active Boolean @default(true)
+
 
   @@index([entry_id])
 }
@@ -1231,3 +834,69 @@ model EnqueuedListResult {
 
   @@unique([connection_uuid, query_ref, result_index])
 }
+
+// This was considered an alternative to storing ACI items. This was rejected
+// because it would have led to worse performance in reads and writes and would
+// have provided little benefit, since entries would have to be refreshed for
+// in-database changes to this information to load anyway.
+// model BasicAccessControlDecisionFunctionTuple {
+//   id               Int    @id @default(autoincrement())
+//   // userClasses
+//   allUsers      Boolean @default(false)
+//   thisEntry     Boolean @default(false)
+//   name          Bytes?
+//   userGroup     Bytes?
+//   subtree       Bytes?
+
+//   // authenticationLevel
+//   level  Int?
+//   local_qualifier Int?
+//   signed Boolean @default(false)
+//   // other Bytes
+
+//   // protectedItems
+//   entry Boolean @default(false)
+//   allUserAttributeTypes Boolean @default(false)
+//   attributeType String? // OIDs
+//   allAttributeValues String? // OIDs
+//   allUserAttributeTypesAndValues Boolean @default(false)
+//   attributeValue Bytes?
+//   selfValue String? // OIDs
+//   rangeOfValues Bytes?
+//   maxValueCount Bytes?
+//   maxImmSub Int?
+//   restrictedBy Bytes?
+//   contexts Bytes?
+//   classes Bytes?
+
+//   // grantsAndDenials
+//   grantAdd Boolean @default(false)
+//   denyAdd Boolean @default(false)
+//   grantDiscloseOnError Boolean @default(false)
+//   denyDiscloseOnError Boolean @default(false)
+//   grantRead Boolean @default(false)
+//   denyRead Boolean @default(false)
+//   grantRemove Boolean @default(false)
+//   denyRemove Boolean @default(false)
+//   grantBrowse Boolean @default(false)
+//   denyBrowse Boolean @default(false)
+//   grantExport Boolean @default(false)
+//   denyExport Boolean @default(false)
+//   grantImport Boolean @default(false)
+//   denyImport Boolean @default(false)
+//   grantModify Boolean @default(false)
+//   denyModify Boolean @default(false)
+//   grantRename Boolean @default(false)
+//   denyRename Boolean @default(false)
+//   grantReturnDN Boolean @default(false)
+//   denyReturnDN Boolean @default(false)
+//   grantCompare Boolean @default(false)
+//   denyCompare Boolean @default(false)
+//   grantFilterMatch Boolean @default(false)
+//   denyFilterMatch Boolean @default(false)
+//   grantInvoke Boolean @default(false)
+//   denyInvoke Boolean @default(false)
+
+//   // precedence
+//   precedence  Int
+// }

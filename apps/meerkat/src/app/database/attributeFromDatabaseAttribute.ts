@@ -6,7 +6,7 @@ import groupByOID from "../utils/groupByOID";
 export
 async function attributeFromDatabaseAttribute (
     ctx: Context,
-    attr: { type: string, ber: Buffer, ContextValue: ContextValue[] },
+    attr: { type: string, ber: Buffer, ContextValue?: ContextValue[] },
 ): Promise<Value> {
     const value = new BERElement();
     value.fromBytes(attr.ber);

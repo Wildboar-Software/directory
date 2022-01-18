@@ -4,6 +4,10 @@ import encryptPassword from "../x500/encryptPassword";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 import { PrismaPromise } from "@prisma/client";
 import anyPasswordsExist from "../authz/anyPasswordsExist";
+import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
+import {
+    pwdStartTime,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
 
 export
 async function setEntryPassword (
@@ -21,6 +25,8 @@ async function setEntryPassword (
             may_add_top_level_dse: true,
         },
     });
+    const now = new Date();
+    const nowElement = _encodeGeneralizedTime(now, DER);
     if ("clear" in pwd) {
         const algid = getScryptAlgorithmIdentifier();
         const clear = Buffer.from(pwd.clear, "utf-8");
@@ -62,16 +68,26 @@ async function setEntryPassword (
                         : undefined,
                 },
             }),
-            ctx.db.pwdStartTime.upsert({
+            ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,
+                    type: {
+                        in: [ // Using in, because we will add more attributes later.
+                            pwdStartTime["&id"].toString(),
+                        ],
+                    },
                 },
-                create: {
+            }),
+            ctx.db.attributeValue.create({
+                data: {
                     entry_id: vertex.dse.id,
-                    value: new Date(),
-                },
-                update: {
-                    value: new Date(),
+                    type: pwdStartTime["&id"].toString(),
+                    operational: true,
+                    tag_class: nowElement.tagClass,
+                    constructed: false,
+                    tag_number: nowElement.tagNumber,
+                    ber: Buffer.from(nowElement.toBytes()),
+                    jer: nowElement.toJSON() as string,
                 },
             }),
         ];
@@ -110,16 +126,26 @@ async function setEntryPassword (
                         : undefined,
                 },
             }),
-            ctx.db.pwdStartTime.upsert({
+            ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,
+                    type: {
+                        in: [ // Using in, because we will add more attributes later.
+                            pwdStartTime["&id"].toString(),
+                        ],
+                    },
                 },
-                create: {
+            }),
+            ctx.db.attributeValue.create({
+                data: {
                     entry_id: vertex.dse.id,
-                    value: new Date(),
-                },
-                update: {
-                    value: new Date(),
+                    type: pwdStartTime["&id"].toString(),
+                    operational: true,
+                    tag_class: nowElement.tagClass,
+                    constructed: false,
+                    tag_number: nowElement.tagNumber,
+                    ber: Buffer.from(nowElement.toBytes()),
+                    jer: nowElement.toJSON() as string,
                 },
             }),
         ];
