@@ -56,6 +56,9 @@ C=US
     O=Wildboar Software
 ```
 
++ Embassies
++ Universities
+
 - Each governmental body would have its own naming context
   - ...which would correspond to its own separate Meerkat server.
   - ...and which would implement HOBs with `subr`s

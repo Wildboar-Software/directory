@@ -29,7 +29,7 @@ import {
     AttributeUsage_userApplications as userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 
-async function validateValues (
+async function validateValues(
     ctx: Context,
     entry: Vertex,
     values: Value[],
@@ -165,12 +165,12 @@ async function validateValues (
 }
 
 export
-async function addValues (
-    ctx: Context,
-    entry: Vertex,
-    values: Value[],
-    modifier?: DistinguishedName,
-    checkForExisting: boolean = true,
+    async function addValues(
+        ctx: Context,
+        entry: Vertex,
+        values: Value[],
+        modifier?: DistinguishedName,
+        checkForExisting: boolean = true,
 ): Promise<PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
         await validateValues(ctx, entry, values, checkForExisting);

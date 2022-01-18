@@ -49,6 +49,7 @@ import objectClassesDriver from "../database/drivers/objectClasses";
 import prescriptiveACIDriver from "../database/drivers/prescriptiveACI";
 import pwdAdminSubentryListDriver from "../database/drivers/pwdAdminSubentryList";
 import pwdEncAlgDriver from "../database/drivers/pwdEncAlg";
+import pwdFailureDurationDriver from "../database/drivers/pwdFailureDuration";
 import searchRulesDriver from "../database/drivers/searchRules";
 import secondaryShadowsDriver from "../database/drivers/secondaryShadows";
 import serviceAdminSubentryListDriver from "../database/drivers/serviceAdminSubentryList";
@@ -175,6 +176,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.prescriptiveACI["&id"].toString())!.driver = prescriptiveACIDriver;
     ctx.attributeTypes.get(x500at.pwdAdminSubentryList["&id"].toString())!.driver = pwdAdminSubentryListDriver;
     ctx.attributeTypes.get(x500at.pwdEncAlg["&id"].toString())!.driver = pwdEncAlgDriver;
+    ctx.attributeTypes.get(x500at.pwdFailureDuration["&id"].toString())!.driver = pwdFailureDurationDriver;
     ctx.attributeTypes.get(x500at.searchRules["&id"].toString())!.driver = searchRulesDriver;
     ctx.attributeTypes.get(x500at.secondaryShadows["&id"].toString())!.driver = secondaryShadowsDriver;
     ctx.attributeTypes.get(x500at.serviceAdminSubentryList["&id"].toString())!.driver = serviceAdminSubentryListDriver;

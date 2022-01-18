@@ -36,7 +36,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    if (!vertex.dse.subentry || !vertex.immediateSuperior?.dse.objectClass.has(ID_PWD_SUBENTRY)) {
+    if (!vertex.dse.subentry || !vertex.dse.objectClass.has(ID_PWD_SUBENTRY)) {
         return [];
     }
     if (vertex.dse.shadow) {
@@ -103,7 +103,7 @@ const countValues: SpecialAttributeCounter = async (
             },
         });
     }
-    return (vertex.dse.subentry && vertex.immediateSuperior?.dse.objectClass.has(ID_PWD_SUBENTRY))
+    return (vertex.dse.subentry && vertex.dse.objectClass.has(ID_PWD_SUBENTRY))
         ? 1
         : 0;
 };
@@ -126,7 +126,7 @@ const isPresent: SpecialAttributeDetector = async (
             },
         }));
     }
-    return !!(vertex.dse.subentry && vertex.immediateSuperior?.dse.objectClass.has(ID_PWD_SUBENTRY));
+    return !!(vertex.dse.subentry && vertex.dse.objectClass.has(ID_PWD_SUBENTRY));
 };
 
 export
@@ -148,7 +148,7 @@ const hasValue: SpecialAttributeValueDetector = async (
             },
         }));
     }
-    if (!(vertex.dse.subentry && vertex.immediateSuperior?.dse.objectClass.has(ID_PWD_SUBENTRY))) {
+    if (!(vertex.dse.subentry && vertex.dse.objectClass.has(ID_PWD_SUBENTRY))) {
         return false;
     }
     const ALGORITHM_USED_BY_MEERKAT_DSA = getScryptAlgorithmIdentifier();
