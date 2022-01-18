@@ -1941,6 +1941,50 @@ async function modifyEntry (
         );
     }
 
+    const maxValueCountInUse: boolean = relevantTuples
+        .some((tuple) => (tuple[2].maxValueCount !== undefined));
+    if (maxValueCountInUse) {
+        /**
+         * Unfortunately, we have to check the BAC for all add types again, because
+         * we have to make sure that the maxValueCount will not be exceeded, if it
+         * is defined. This cannot be done within the individual modification
+         * executors, because:
+         *
+         * 1. Nefarious users may try to break up attributes into smaller
+         *    modifications so that each attribute individually does not exceed
+         *    the limit, even though they do collectively.
+         * 2. Some values that are added will be removed by subsequent
+         *    modifications.
+         */
+        for (const [ type_, values ] of patch.addedValues.entries()) {
+            const deletedValues = patch.removedValues.get(type_)?.length ?? 0;
+            const {
+                authorized: authorizedForAttributeType,
+            } = bacACDF(
+                relevantTuples,
+                user,
+                {
+                    attributeType: ObjectIdentifier.fromString(type_),
+                    valuesCount: (values.length - deletedValues),
+                },
+                [
+                    PERMISSION_CATEGORY_ADD,
+                ],
+                bacSettings,
+                true,
+            );
+            if (!authorizedForAttributeType) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_mod", {
+                        mod: "*",
+                        type: type_,
+                    }),
+                    notPermittedData(ctx, conn, state.chainingArguments.aliasDereferenced),
+                );
+            }
+        }
+    }
+
     const attributesThatWillBeRemoved: Set<IndexableOID> = new Set(patch.removedAttributes.values());
     for (const [ type_, removedValues ] of patch.removedValues.entries()) {
         const spec = ctx.attributeTypes.get(type_);

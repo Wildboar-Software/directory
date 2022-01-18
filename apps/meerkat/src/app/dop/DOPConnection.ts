@@ -320,12 +320,12 @@ class DOPConnection extends ClientConnection {
         const startBindTime = new Date();
         doBind(ctx, idm.s, bind)
             .then(async (outcome) => {
-                const endBindTime = new Date();
-                const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
-                const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
-                    + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
-                const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
                 if (outcome.failedAuthentication) {
+                    const endBindTime = new Date();
+                    const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
+                    const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
+                        + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
+                    const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
                     await sleep(sleepTime);
                 }
                 this.boundEntry = outcome.boundVertex;
