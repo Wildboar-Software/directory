@@ -34,10 +34,12 @@ async function setEntryPassword (
         if (!encrypted) {
             throw new Error();
         }
-        ctx.log.info(ctx.i18n.t("log:password_changed", {
-            cid: conn?.id,
-            uuid: vertex.dse.uuid,
-        }));
+        if (conn) {
+            ctx.log.info(ctx.i18n.t("log:password_changed", {
+                cid: conn.id,
+                uuid: vertex.dse.uuid,
+            }));
+        }
         return [
             /**
              * The first entry with a password added will have permission to add
@@ -92,10 +94,12 @@ async function setEntryPassword (
             }),
         ];
     } else if ("encrypted" in pwd) {
-        ctx.log.info(ctx.i18n.t("log:password_changed", {
-            cid: conn?.id,
-            uuid: vertex.dse.uuid,
-        }));
+        if (conn) {
+            ctx.log.info(ctx.i18n.t("log:password_changed", {
+                cid: conn.id,
+                uuid: vertex.dse.uuid,
+            }));
+        }
         return [
             /**
              * The first entry with a password added will have permission to add

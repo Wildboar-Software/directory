@@ -213,7 +213,6 @@ import compareElements from "@wildboar/x500/src/lib/comparators/compareElements"
 import readValuesOfType from "../utils/readValuesOfType";
 import rdnToJson from "../x500/rdnToJson";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { id_aca_entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
 import { id_aca_subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-subentryACI.va";
 import { id_aca_prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-prescriptiveACI.va";
 import {
@@ -224,8 +223,12 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
-import readValues from "../database/entry/readValues";
-import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+import {
+    userPassword,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import {
+    userPwd,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -234,6 +237,9 @@ interface Patch {
     removedValues: ValuesIndex;
     removedAttributes: Set<IndexableOID>;
 }
+
+const USER_PASSWORD: string = userPassword["&id"].toString();
+const USER_PWD: string = userPwd["&id"].toString();
 
 const notPermittedData =  (
     ctx: Context,
@@ -2450,6 +2456,16 @@ async function modifyEntry (
     } else {
         ctx.log.warn(ctx.i18n.t("log:entry_deleted_while_being_modified", {
             id: target.dse.uuid,
+        }));
+    }
+
+    if (
+        patch.addedValues.has(USER_PASSWORD)
+        || patch.addedValues.has(USER_PWD)
+    ) {
+        ctx.log.info(ctx.i18n.t("log:password_changed", {
+            cid: conn.id,
+            uuid: target.dse.uuid,
         }));
     }
 
