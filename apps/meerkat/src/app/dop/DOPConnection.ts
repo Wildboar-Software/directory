@@ -325,7 +325,9 @@ class DOPConnection extends ClientConnection {
                 const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
                     + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
                 const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
-                await sleep(sleepTime);
+                if (outcome.failedAuthentication) {
+                    await sleep(sleepTime);
+                }
                 this.boundEntry = outcome.boundVertex;
                 this.boundNameAndUID = outcome.boundNameAndUID;
                 this.authLevel = outcome.authLevel;
