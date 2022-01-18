@@ -72,6 +72,7 @@ async function validateValues (
             }
         }
         if (checkForExisting) {
+            // TODO: This should use the equality matcher to determine duplication.
             /**
              * As I interpret it, the duplicate values checking does not have to
              * consider contexts. This is a fortuitous conclusion to come to, since

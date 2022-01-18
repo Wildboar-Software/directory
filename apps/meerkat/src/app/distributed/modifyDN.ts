@@ -1221,10 +1221,11 @@ async function modifyDN (
             },
         }),
         ctx.db.distinguishedValue.createMany({
-            data: newRDN.map((atav) => ({
+            data: newRDN.map((atav, i) => ({
                 entry_id: target.dse.id,
                 type: atav.type_.toString(),
                 value: Buffer.from(atav.value.toBytes()),
+                order_index: i,
             })),
         }),
         ...materializedPathsToUpdate.map((mp) => ctx.db.entry.update({

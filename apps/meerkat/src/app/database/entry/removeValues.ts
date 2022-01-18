@@ -13,7 +13,7 @@ export
 async function removeValues (
     ctx: Context,
     entry: Vertex,
-    attributes: Value[],
+    values: Value[],
     modifier?: DistinguishedName,
 ): Promise<PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
@@ -24,7 +24,7 @@ async function removeValues (
         otherWrites: [],
     };
     await Promise.all(
-        attributes
+        values
             .map((attr) => ctx.attributeTypes.get(attr.type.toString())?.driver?.removeValue(ctx, entry, attr, pendingUpdates)),
     );
     return [
@@ -35,7 +35,7 @@ async function removeValues (
             data: pendingUpdates.entryUpdate,
         }),
         ...pendingUpdates.otherWrites,
-        ...attributes
+        ...values
             .filter((attr) => !ctx.attributeTypes.get(attr.type.toString())?.driver)
             .map((attr) => ctx.db.attributeValue.deleteMany({
                 where: {

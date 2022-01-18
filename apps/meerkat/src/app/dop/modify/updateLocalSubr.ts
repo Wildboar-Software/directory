@@ -154,10 +154,11 @@ async function updateLocalSubr (
                 },
             }),
             ctx.db.distinguishedValue.createMany({
-                data: newAgreement.rdn.map((atav) => ({
+                data: newAgreement.rdn.map((atav, i) => ({
                     entry_id: oldSubordinate.dse.id,
                     type: atav.type_.toString(),
                     value: Buffer.from(atav.value.toBytes()),
+                    order_index: i,
                 })),
             }),
         ]);

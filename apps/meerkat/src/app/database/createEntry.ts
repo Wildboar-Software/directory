@@ -71,11 +71,12 @@ async function createEntry (
     const vertex = await vertexFromDatabaseEntry(ctx, superior, createdEntry as DatabaseEntry, true);
     await ctx.db.$transaction([
         ctx.db.distinguishedValue.createMany({
-            data: rdn.map((atav) => ({
+            data: rdn.map((atav, i) => ({
                 entry_id: createdEntry.id,
                 type: atav.type_.toString(),
                 value: Buffer.from(atav.value.toBytes()),
                 str: atav.value.toString(),
+                order_index: i,
             })),
         }),
         ...await addValues(ctx, vertex, values, modifier),

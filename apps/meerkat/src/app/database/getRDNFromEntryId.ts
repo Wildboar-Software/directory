@@ -17,6 +17,11 @@ async function getRDNFromEntryId (ctx: Context, id: number): Promise<RDN> {
             type: true,
             value: true,
         },
+        orderBy: { // So the RDNs appear in the order in which they were entered.
+            // This prevents an undesirable scenario where some users might show
+            // up as GN=Jonathan+SN=Wilbur or SN=Wilbur+GN=Jonathan.
+            order_index: "asc",
+        },
     }))
         .map((atav) => new AttributeTypeAndValue(
             ObjectIdentifier.fromString(atav.type),
