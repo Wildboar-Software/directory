@@ -49,10 +49,6 @@ import semver from "semver";
 import { createPrivateKey } from "crypto";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 
-const DEFAULT_IDM_TCP_PORT: number = 4632;
-const DEFAULT_LDAP_TCP_PORT: number = 1389;
-const DEFAULT_LDAPS_TCP_PORT: number = 1636;
-
 async function checkForUpdates (ctx: Context, currentVersionString: string): Promise<void> {
     const currentVersion = semver.parse(currentVersionString);
     if (!currentVersion) {
@@ -114,6 +110,111 @@ async function checkForUpdates (ctx: Context, currentVersionString: string): Pro
 }
 
 const PROCESS_NAME: string = "Meerkat DSA";
+
+function handleIDM (
+    ctx: Context,
+    associations: Map<net.Socket, ClientConnection>,
+): (socket: net.Socket | tls.TLSSocket) => void {
+    return (c: net.Socket | tls.TLSSocket): void => {
+        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+        try {
+            ctx.log.info(ctx.i18n.t("log:transport_established", {
+                source,
+                transport: (c instanceof tls.TLSSocket) ? "IDMS" : "IDM",
+            }));
+            const idm = new IDMConnection(c);
+            const handleWrongSequence = () => {
+                idm.writeAbort(Abort_unboundRequest).then(() => idm.events.emit("unbind", null)).catch();
+                associations.delete(c);
+            };
+            idm.events.on("request", handleWrongSequence);
+            idm.events.on("bind", (idmBind: IdmBind) => {
+                const existingAssociation = associations.get(c);
+                if (existingAssociation) {
+                    ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
+                        source,
+                        protocol: idmBind.protocolID.toString(),
+                    }))
+                    idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.events.emit("unbind", null)).catch();
+                    associations.delete(c);
+                    return;
+                }
+                if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
+                    const dba = _decode_DirectoryBindArgument(idmBind.argument);
+                    const conn = new DAPConnection(ctx, idm, dba);
+                    if (conn.boundNameAndUID) {
+                        associations.set(c, conn);
+                    }
+                } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
+                    const dba = _decode_DSABindArgument(idmBind.argument);
+                    const conn = new DSPConnection(ctx, idm, dba);
+                    if (conn.boundNameAndUID) {
+                        associations.set(c, conn);
+                    }
+                } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
+                    const dba = _decode_DSABindArgument(idmBind.argument);
+                    const conn = new DOPConnection(ctx, idm, dba);
+                    if (conn.boundNameAndUID) {
+                        associations.set(c, conn);
+                    }
+                } else {
+                    ctx.log.error(ctx.i18n.t("log:unsupported_protocol", {
+                        protocol: idmBind.protocolID.toString(),
+                    }));
+                }
+            });
+            idm.events.on("unbind", () => {
+                // c.end(); You don't actually have to close the TCP connection. It could be recycled.
+                associations.delete(c);
+            });
+        } catch (e) {
+            ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
+                e: e.message,
+            }));
+        }
+
+        c.on("error", (e) => {
+            ctx.log.error(ctx.i18n.t("log:socket_error", {
+                source,
+                e: e.message,
+            }));
+            c.end();
+            associations.delete(c);
+        });
+
+        c.on("close", () => {
+            ctx.log.info(ctx.i18n.t("log:socket_closed", {
+                source,
+            }));
+            associations.delete(c);
+        });
+    };
+}
+
+function handleLDAP (
+    ctx: Context,
+    associations: Map<net.Socket, ClientConnection>,
+): (socket: net.Socket | tls.TLSSocket) => void {
+    return (c) => {
+        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+        ctx.log.info(ctx.i18n.t("log:transport_established", {
+            source,
+            transport: (c instanceof tls.TLSSocket) ? "LDAPS" : "LDAP",
+        }));
+        const conn = new LDAPConnection(ctx, c);
+        if (conn.boundNameAndUID) {
+            associations.set(c, conn);
+        }
+        c.on("end", () => {
+            ctx.db.enqueuedSearchResult.deleteMany({
+                where: {
+                    connection_uuid: conn.id,
+                },
+            }).then().catch();
+            associations.delete(c);
+        });
+    };
+}
 
 export default
 async function main (): Promise<void> {
@@ -229,161 +330,71 @@ async function main (): Promise<void> {
     }
 
     const associations: Map<net.Socket, ClientConnection> = new Map();
-    const idmServer = net.createServer((c) => {
-        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
-        try {
-            ctx.log.info(ctx.i18n.t("log:transport_established", {
-                source,
-                transport: "IDM",
+    if (ctx.config.idm.port) {
+        const idmServer = net.createServer(handleIDM(ctx, associations));
+        idmServer.on("error", (err) => {
+            ctx.log.error(ctx.i18n.t("log:server_error", {
+                protocol: "IDM",
+                e: err.message,
             }));
-            const idm = new IDMConnection(c);
-            const handleWrongSequence = () => {
-                idm.writeAbort(Abort_unboundRequest).then(() => idm.events.emit("unbind", null)).catch();
-                associations.delete(c);
-            };
-            idm.events.on("request", handleWrongSequence);
-            idm.events.on("bind", (idmBind: IdmBind) => {
-                const existingAssociation = associations.get(c);
-                if (existingAssociation) {
-                    ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
-                        source,
-                        protocol: idmBind.protocolID.toString(),
-                    }))
-                    idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.events.emit("unbind", null)).catch();
-                    associations.delete(c);
-                    return;
-                }
-                if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
-                    const dba = _decode_DirectoryBindArgument(idmBind.argument);
-                    const conn = new DAPConnection(ctx, idm, dba);
-                    if (conn.boundNameAndUID) {
-                        associations.set(c, conn);
-                    }
-                } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
-                    const dba = _decode_DSABindArgument(idmBind.argument);
-                    const conn = new DSPConnection(ctx, idm, dba);
-                    if (conn.boundNameAndUID) {
-                        associations.set(c, conn);
-                    }
-                } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
-                    const dba = _decode_DSABindArgument(idmBind.argument);
-                    const conn = new DOPConnection(ctx, idm, dba);
-                    if (conn.boundNameAndUID) {
-                        associations.set(c, conn);
-                    }
-                } else {
-                    ctx.log.error(ctx.i18n.t("log:unsupported_protocol", {
-                        protocol: idmBind.protocolID.toString(),
-                    }));
-                }
-            });
-            idm.events.on("unbind", () => {
-                // c.end(); You don't actually have to close the TCP connection. It could be recycled.
-                associations.delete(c);
-            });
-        } catch (e) {
-            ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
-                e: e.message,
-            }));
-        }
-
-        c.on("error", (e) => {
-            ctx.log.error(ctx.i18n.t("log:socket_error", {
-                source,
-                e: e.message,
-            }));
-            c.end();
-            associations.delete(c);
         });
-
-        c.on("close", () => {
-            ctx.log.info(ctx.i18n.t("log:socket_closed", {
-                source,
+        idmServer.listen(ctx.config.idm.port, () => {
+            ctx.log.info(ctx.i18n.t("log:listening", {
+                protocol: "IDM",
+                port: ctx.config.idm.port,
             }));
-            associations.delete(c);
         });
-
-    });
-    idmServer.on("error", (err) => {
-        ctx.log.error(ctx.i18n.t("log:server_error", {
-            protocol: "IDM",
-            e: err.message,
-        }));
-    });
-
-    const idmPort = process.env.MEERKAT_IDM_PORT
-        ? Number.parseInt(process.env.MEERKAT_IDM_PORT, 10)
-        : DEFAULT_IDM_TCP_PORT;
-
-    idmServer.listen(idmPort, () => {
-        ctx.log.info(ctx.i18n.t("log:listening", {
-            protocol: "IDM",
-            port: idmPort,
-        }));
-    });
-
-    const ldapServer = net.createServer((c) => {
-        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
-        ctx.log.info(ctx.i18n.t("log:transport_established", {
-            source,
-            transport: "LDAP",
-        }));
-        const conn = new LDAPConnection(ctx, c);
-        if (conn.boundNameAndUID) {
-            associations.set(c, conn);
-        }
-        c.on("end", () => {
-            associations.delete(c);
+    }
+    if (
+        ctx.config.idms.port
+        && process.env.MEERKAT_SERVER_TLS_CERT
+        && process.env.MEERKAT_SERVER_TLS_KEY
+    ) {
+        const idmsServer = tls.createServer({
+            cert: await fs.readFile(process.env.MEERKAT_SERVER_TLS_CERT),
+            key: await fs.readFile(process.env.MEERKAT_SERVER_TLS_KEY),
+        }, handleIDM(ctx, associations));
+        idmsServer.on("error", (err) => {
+            ctx.log.error(ctx.i18n.t("log:server_error", {
+                protocol: "IDMS", // TODO: i18n.
+                e: err.message,
+            }));
         });
-    });
-
-    const ldapPort = process.env.MEERKAT_LDAP_PORT
-        ? Number.parseInt(process.env.MEERKAT_LDAP_PORT, 10)
-        : DEFAULT_LDAP_TCP_PORT;
-
-    ldapServer.listen(ldapPort, async () => {
-        ctx.log.info(ctx.i18n.t("log:listening", {
-            protocol: "LDAP",
-            port: ldapPort,
-        }));
-    });
-
-    if (process.env.MEERKAT_SERVER_TLS_CERT && process.env.MEERKAT_SERVER_TLS_KEY) {
+        idmsServer.listen(ctx.config.idms.port, () => {
+            ctx.log.info(ctx.i18n.t("log:listening", {
+                protocol: "IDMS",
+                port: ctx.config.idms.port,
+            }));
+        });
+    }
+    if (ctx.config.ldap.port) {
+        const ldapServer = net.createServer(handleLDAP(ctx, associations));
+        ldapServer.listen(ctx.config.ldap.port, async () => {
+            ctx.log.info(ctx.i18n.t("log:listening", {
+                protocol: "LDAP",
+                port: ctx.config.ldap.port,
+            }));
+        });
+    }
+    if (
+        ctx.config.ldaps.port
+        && process.env.MEERKAT_SERVER_TLS_CERT
+        && process.env.MEERKAT_SERVER_TLS_KEY
+    ) {
         const ldapsServer = tls.createServer({
             cert: await fs.readFile(process.env.MEERKAT_SERVER_TLS_CERT),
             key: await fs.readFile(process.env.MEERKAT_SERVER_TLS_KEY),
-        }, (c) => {
-            const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
-            ctx.log.info(ctx.i18n.t("log:transport_established", {
-                source,
-                transport: "LDAPS",
-            }));
-            const conn = new LDAPConnection(ctx, c);
-            if (conn.boundNameAndUID) {
-                associations.set(c, conn);
-            }
-            c.on("end", () => {
-                ctx.db.enqueuedSearchResult.deleteMany({
-                    where: {
-                        connection_uuid: conn.id,
-                    },
-                }).then().catch();
-                associations.delete(c);
-            });
-        });
-        const ldapsPort = process.env.MEERKAT_LDAPS_PORT
-            ? Number.parseInt(process.env.MEERKAT_LDAPS_PORT, 10)
-            : DEFAULT_LDAPS_TCP_PORT;
-        ldapsServer.listen(ldapsPort, async () => {
+        }, handleLDAP(ctx, associations));
+        ldapsServer.listen(ctx.config.ldaps.port, async () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "LDAPS",
-                port: ldapsPort,
+                port: ctx.config.ldaps.port,
             }));
         });
     }
 
     // Web admin portal
-    if (process.env.MEERKAT_WEB_ADMIN_PORT) {
+    if (ctx.config.webAdmin.port) {
         // I tried making AppModule a dynamic module that would take `ctx` as an argument, but that did not work. See:
         // See: https://github.com/nestjs/nest/issues/671
         const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -395,11 +406,10 @@ async function main (): Promise<void> {
             skipMissingProperties: false,
             forbidNonWhitelisted: true,
         }));
-        const port = Number.parseInt(process.env.MEERKAT_WEB_ADMIN_PORT, 10);
-        await app.listen(port, () => {
+        await app.listen(ctx.config.webAdmin.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "HTTP",
-                port: port,
+                port: ctx.config.webAdmin.port,
             }));
         });
     }

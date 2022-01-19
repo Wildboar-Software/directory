@@ -450,10 +450,19 @@ interface Telemetry {
 }
 
 export
+interface NetworkService {
+    port?: number;
+}
+
+export
 interface Configuration {
-    idm: {
+    idm: NetworkService & {
         bufferSize: number;
     };
+    idms: NetworkService;
+    ldap: NetworkService;
+    ldaps: NetworkService;
+    webAdmin: NetworkService;
     localQualifierPointsFor: {
         usingStartTLS: number;
         usingTLS: number;

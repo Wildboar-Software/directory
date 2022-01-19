@@ -108,7 +108,12 @@ class IDMConnection {
                     this.awaitingBytes = this.currentSegment.length;
                     this.bufferIndex += 4;
                     this.nextExpectedField = IDMSegmentField.data;
-                    this.events.emit("fragment", this.awaitingBytes);
+                    /**
+                     * The significance of this event is that it can be used
+                     * to abort an IDM connection if an inbound segment is
+                     * going to have an unacceptable size.
+                     */
+                    this.events.emit("length", this.awaitingBytes);
                     break;
                 }
                 case (IDMSegmentField.data): {

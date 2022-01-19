@@ -128,9 +128,32 @@ const ctx: Context = {
     i18n,
     config: {
         idm: {
+            port: process.env.MEERKAT_IDM_PORT
+                ? Number.parseInt(process.env.MEERKAT_IDM_PORT, 10)
+                : undefined,
             bufferSize: process.env.MEERKAT_IDM_BUFFER_SIZE
                 ? Number.parseInt(process.env.MEERKAT_IDM_BUFFER_SIZE, 10)
                 : DEFAULT_IDM_BUFFER_SIZE,
+        },
+        idms: {
+            port: process.env.MEERKAT_IDMS_PORT
+                ? Number.parseInt(process.env.MEERKAT_IDMS_PORT, 10)
+                : undefined,
+        },
+        ldap: {
+            port: process.env.MEERKAT_LDAP_PORT
+                ? Number.parseInt(process.env.MEERKAT_LDAP_PORT, 10)
+                : undefined,
+        },
+        ldaps: {
+            port: process.env.MEERKAT_LDAPS_PORT
+                ? Number.parseInt(process.env.MEERKAT_LDAPS_PORT, 10)
+                : undefined,
+        },
+        webAdmin: {
+            port: process.env.MEERKAT_WEB_ADMIN_PORT
+                ? Number.parseInt(process.env.MEERKAT_WEB_ADMIN_PORT, 10)
+                : undefined,
         },
         localQualifierPointsFor: {
             usingStartTLS: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS

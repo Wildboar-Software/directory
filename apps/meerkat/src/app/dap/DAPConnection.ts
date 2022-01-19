@@ -397,7 +397,7 @@ class DAPConnection extends ClientConnection {
          * infinitely-large IDM packets and consume all of the
          * memory of the system.
          */
-        idm.events.on("fragment", (addedBytes: number) => {
+        idm.events.on("length", (addedBytes: number) => {
             const currentFragmentSize: number = (
                 idm.getNumberOfEnqueuedBytes()
                 + addedBytes
