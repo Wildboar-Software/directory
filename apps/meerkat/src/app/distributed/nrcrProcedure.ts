@@ -95,7 +95,34 @@ async function nrcrProcedure (
     };
     assert(state.chainingArguments.operationProgress?.nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed);
     assert(state.NRcontinuationList.length); // This procedure should not be called if there are no refs.
-    if (ctx.config.prohibitChaining || chainingProhibited) {
+    /**
+     * This exists to mitigate a vulnerability. Without requiring authentication
+     * of a user for chaining, a nefarious user could discover entries that have
+     * a `uniqueIdentifier` by binding anonymously as an entry whose existence
+     * is to be determined illegitimately and requesting an operation that would
+     * result in chaining to a DSA that the nefarious user controls and seeing
+     * if the `ChainingArguments` now has a `uniqueIdentifier`. If this is the
+     * case, the entry to which the user was anonymously bound can be confirmed
+     * to exist.
+     *
+     * The unique identifier MUST be sent along with chained requests. It is
+     * a security feature, so you can't just disable sending the unique
+     * identifier in chained requests. Specifically, the unique identifier
+     * exists to distinguish between different generations of an object having
+     * the same name.
+     */
+    const insufficientAuthForChaining = (
+        ("basicLevels" in conn.authLevel)
+        && (
+            (conn.authLevel.basicLevels.level < ctx.config.chaining.minAuthLevel)
+            || ((conn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.chaining.minAuthLocalQualifier)
+        )
+    )
+    if (
+        ctx.config.prohibitChaining
+        || chainingProhibited
+        || insufficientAuthForChaining
+    ) {
         throw new errors.ReferralError(
             ctx.i18n.t("err:referral"),
             new ReferralData(

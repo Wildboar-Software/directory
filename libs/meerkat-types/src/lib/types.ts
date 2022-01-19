@@ -107,12 +107,6 @@ import {
 import type {
     Clearance,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
-import type {
-    EntryInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
-import type {
-    ListResultData_listInfo_subordinates_Item as ListItem,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -471,6 +465,10 @@ interface Configuration {
         usingTLSv1_1: number;
         usingTLSv1_2: number;
         usingTLSv1_3: number;
+    };
+    chaining: {
+        minAuthLevel: number;
+        minAuthLocalQualifier: number;
     };
     sentinelDomain?: string;
     administratorEmail?: string;

@@ -21,6 +21,9 @@ import {
 import * as path from "path";
 import { URL } from "url";
 import { DEFAULT_IDM_BUFFER_SIZE } from "./constants";
+import {
+    AuthenticationLevel_basicLevels_level_simple,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 
 const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
     ? process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
@@ -176,6 +179,14 @@ const ctx: Context = {
                 : 0,
             usingTLSv1_3: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3
                 ? Number.parseInt(process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3, 10)
+                : 0,
+        },
+        chaining: {
+            minAuthLevel: process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING
+                ? Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING, 10)
+                : AuthenticationLevel_basicLevels_level_simple,
+            minAuthLocalQualifier: process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING
+                ? Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING, 10)
                 : 0,
         },
         sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,

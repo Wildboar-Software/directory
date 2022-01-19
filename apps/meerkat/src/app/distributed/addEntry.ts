@@ -179,6 +179,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
 import findEntry from "../x500/findEntry";
+import groupByOID from "../utils/groupByOID";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -734,18 +735,31 @@ async function addEntry (
             accessControlScheme
             && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
         ) {
+            const maxValueCountInUse: boolean = relevantTuples
+                .some((tuple) => (tuple[2].maxValueCount !== undefined));
+            const valueCountByAttribute: Map<IndexableOID, number> = maxValueCountInUse
+                ? new Map(
+                    Object.entries(groupByOID(data.entry, (d) => d.type_))
+                        .map(([ key, attributes ]) => [
+                            key,
+                            attributes
+                                .map((attr) => (
+                                    attr.values.length
+                                    + (attr.valuesWithContext?.length ?? 0)
+                                ))
+                                .reduce((acc, curr) => acc + curr, 0)
+                        ]),
+                )
+                : new Map();
             for (const attr of data.entry) {
-                const {
-                    authorized: authorizedToAddAttributeType,
-                } = bacACDF(
+                const { authorized: authorizedToAddAttributeType } = bacACDF(
                     relevantTuples,
                     user,
                     {
                         attributeType: attr.type_,
+                        valuesCount: valueCountByAttribute.get(attr.type_.toString()),
                     },
-                    [
-                        PERMISSION_CATEGORY_ADD,
-                    ],
+                    [ PERMISSION_CATEGORY_ADD ],
                     bacSettings,
                     true,
                 );
