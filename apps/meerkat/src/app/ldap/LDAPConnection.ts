@@ -300,6 +300,21 @@ class LDAPConnection extends ClientConnection {
     // I _think_ this function MUST NOT be async, or this function could run
     // multiple times out-of-sync, mutating `this.buffer` indeterminately.
     private handleData (ctx: Context, data: Buffer): void {
+        if ((this.buffer.length + data.length) > ctx.config.ldap.bufferSize) {
+            /**
+             * IETF RFC 4511, Section 4.1.1 states that:
+             *
+             * > In other cases where the client or server cannot parse an LDAP
+             * > PDU, it SHOULD abruptly terminate the LDAP session.
+             *
+             * An LDAP server is supposed to send a notice of disconnection, as
+             * detailed in IETF RFC 4511, Section 4.4.1.
+             */
+            const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
+            this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            this.socket.end();
+            return;
+        }
         this.buffer = Buffer.concat([
             this.buffer,
             data,

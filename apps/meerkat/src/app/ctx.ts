@@ -20,7 +20,7 @@ import {
 } from "@wildboar/x500/src/lib/distributed/uri";
 import * as path from "path";
 import { URL } from "url";
-import { DEFAULT_IDM_BUFFER_SIZE } from "./constants";
+import { DEFAULT_IDM_BUFFER_SIZE, DEFAULT_LDAP_BUFFER_SIZE } from "./constants";
 import {
     AuthenticationLevel_basicLevels_level_simple,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
@@ -147,6 +147,9 @@ const ctx: Context = {
             port: process.env.MEERKAT_LDAP_PORT
                 ? Number.parseInt(process.env.MEERKAT_LDAP_PORT, 10)
                 : undefined,
+            bufferSize: process.env.MEERKAT_LDAP_BUFFER_SIZE
+                ? Number.parseInt(process.env.MEERKAT_LDAP_BUFFER_SIZE, 10)
+                : DEFAULT_LDAP_BUFFER_SIZE,
         },
         ldaps: {
             port: process.env.MEERKAT_LDAPS_PORT

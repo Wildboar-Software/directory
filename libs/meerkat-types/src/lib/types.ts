@@ -454,7 +454,9 @@ interface Configuration {
         bufferSize: number;
     };
     idms: NetworkService;
-    ldap: NetworkService;
+    ldap: NetworkService & {
+        bufferSize: number;
+    };
     ldaps: NetworkService;
     webAdmin: NetworkService;
     localQualifierPointsFor: {
