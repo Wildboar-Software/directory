@@ -105,6 +105,15 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -775,16 +784,13 @@ async function findDSE (
                         isMemberOfGroup,
                         NAMING_MATCHER,
                     );
-                    const {
-                        authorized,
-                    } = bacACDF(
+                    const objectClasses = Array
+                        .from(matchedVertex.dse.objectClass)
+                        .map(ObjectIdentifier.fromString);
+                    const { authorized: authorizedToDiscover } = bacACDF(
                         relevantTuples,
                         user,
-                        {
-                            entry: Array
-                                .from(matchedVertex.dse.objectClass)
-                                .map(ObjectIdentifier.fromString),
-                        },
+                        { entry: objectClasses },
                         [
                             PERMISSION_CATEGORY_BROWSE,
                             PERMISSION_CATEGORY_RETURN_DN,
@@ -792,7 +798,35 @@ async function findDSE (
                         bacSettings,
                         true,
                     );
-                    if (!authorized) {
+                    if (!authorizedToDiscover) {
+                        const { authorized: authorizedToDiscoverOnError } = bacACDF(
+                            relevantTuples,
+                            user,
+                            { entry: objectClasses },
+                            [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
+                            bacSettings,
+                            true,
+                        );
+                        if (authorizedToDiscoverOnError) {
+                            throw new errors.SecurityError(
+                                ctx.i18n.t("err:not_authz_browse"),
+                                new SecurityErrorData(
+                                    SecurityProblem_insufficientAccessRights,
+                                    undefined,
+                                    undefined,
+                                    [],
+                                    createSecurityParameters(
+                                        ctx,
+                                        conn.boundNameAndUID?.dn,
+                                        undefined,
+                                        securityError["&errorCode"],
+                                    ),
+                                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                    state.chainingArguments.aliasDereferenced,
+                                    undefined,
+                                ),
+                            );
+                        }
                         await targetNotFoundSubprocedure();
                         return;
                     }
@@ -882,20 +916,17 @@ async function findDSE (
                             isMemberOfGroup,
                             NAMING_MATCHER,
                         );
+                        const objectClasses = Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString);
                         /**
                          * We ignore entries for which browse and returnDN permissions
                          * are not granted. This is not specified in the Find DSE
                          * procedure, but it is important for preventing information
                          * disclosure vulnerabilities.
                          */
-                        const {
-                            authorized,
-                        } = bacACDF(
+                        const { authorized: authorizedToDiscover } = bacACDF(
                             relevantTuples,
                             user,
-                            {
-                                entry: Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString),
-                            },
+                            { entry: objectClasses },
                             [
                                 PERMISSION_CATEGORY_BROWSE,
                                 PERMISSION_CATEGORY_RETURN_DN,
@@ -903,7 +934,36 @@ async function findDSE (
                             bacSettings,
                             true,
                         );
-                        if (!authorized) {
+
+                        if (!authorizedToDiscover) {
+                            const { authorized: authorizedToDiscoverOnError } = bacACDF(
+                                relevantTuples,
+                                user,
+                                { entry: objectClasses },
+                                [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
+                                bacSettings,
+                                true,
+                            );
+                            if (authorizedToDiscoverOnError) {
+                                throw new errors.SecurityError(
+                                    ctx.i18n.t("err:not_authz_browse"),
+                                    new SecurityErrorData(
+                                        SecurityProblem_insufficientAccessRights,
+                                        undefined,
+                                        undefined,
+                                        [],
+                                        createSecurityParameters(
+                                            ctx,
+                                            conn.boundNameAndUID?.dn,
+                                            undefined,
+                                            securityError["&errorCode"],
+                                        ),
+                                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                        state.chainingArguments.aliasDereferenced,
+                                        undefined,
+                                    ),
+                                );
+                            }
                             throw new errors.NameError(
                                 ctx.i18n.t("err:entry_not_found"),
                                 new NameErrorData(

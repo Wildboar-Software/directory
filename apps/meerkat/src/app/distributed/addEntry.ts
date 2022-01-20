@@ -60,7 +60,6 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import readSubordinates from "../dit/readSubordinates";
 import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
@@ -68,7 +67,6 @@ import {
 import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import createEntry from "../database/createEntry";
 import {
     ServiceProblem_unwillingToPerform,
@@ -151,7 +149,6 @@ import attributeTypesPermittedForEveryEntry from "../x500/attributeTypesPermitte
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
-import { id_aca_entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
 import { id_aca_subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-subentryACI.va";
 import { id_aca_prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-prescriptiveACI.va";
 import {
