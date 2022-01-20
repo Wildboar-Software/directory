@@ -108,6 +108,9 @@ import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import isDebugging from "is-debugging";
+import { dSA } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/dSA.oa";
+
+const DSA_OC_ID: string = dSA["&id"].toString();
 
 async function handleRequest (
     ctx: Context,
@@ -304,7 +307,7 @@ class DOPConnection extends ClientConnection {
             this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
                 ctype: DOPConnection.name,
                 cid: this.id,
-                protocol: "DAP",
+                protocol: "DOP",
             }));
         }
     }
@@ -315,12 +318,20 @@ class DOPConnection extends ClientConnection {
         readonly bind: DSABindArgument,
     ) {
         super();
+        if (!ctx.config.dop.enabled) {
+            idm.writeAbort(Abort_invalidProtocol).then(() => idm.events.emit("unbind", null));
+            return;
+        }
         this.socket = idm.s;
         const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
         const startBindTime = new Date();
         doBind(ctx, idm.s, bind)
             .then(async (outcome) => {
-                if (outcome.failedAuthentication) {
+                const inappropriateBoundEntry: boolean = (
+                    !ctx.config.dsaCanBindAsNonDSA
+                    && !outcome.boundVertex?.dse.objectClass.has(DSA_OC_ID)
+                );
+                if (outcome.failedAuthentication || inappropriateBoundEntry) {
                     const endBindTime = new Date();
                     const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                     const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
@@ -331,7 +342,7 @@ class DOPConnection extends ClientConnection {
                 this.boundEntry = outcome.boundVertex;
                 this.boundNameAndUID = outcome.boundNameAndUID;
                 this.authLevel = outcome.authLevel;
-                if (outcome.failedAuthentication) {
+                if (outcome.failedAuthentication || inappropriateBoundEntry) {
                     const err: typeof directoryBindError["&ParameterType"] = {
                         unsigned: new DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1(
                             versions,

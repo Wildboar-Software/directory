@@ -218,6 +218,13 @@ const ctx: Context = {
             || (process.env.MEERKAT_TRANSCODE_DISTINGUISHED_VALUES_TO_DER === "1")
         ),
         openTopLevel: (process.env.MEERKAT_OPEN_TOP_LEVEL === "1"),
+        dsaCanBindAsNonDSA: (process.env.MEERKAT_DSA_CAN_BIND_AS_NON_DSA === "1"),
+        dsp: {
+            enabled: (process.env.MEERKAT_DANGEROUSLY_ENABLE_DSP === "1"),
+        },
+        dop: {
+            enabled: (process.env.MEERKAT_DANGEROUSLY_ENABLE_DOP === "1"),
+        },
     },
     dsa: {
         accessPoint: new AccessPoint(

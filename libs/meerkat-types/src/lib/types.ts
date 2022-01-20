@@ -486,6 +486,13 @@ interface Configuration {
     transcodeValuesToDER: boolean;
     transcodeDistinguishedValuesToDER: boolean;
     openTopLevel: boolean;
+    dsaCanBindAsNonDSA: boolean;
+    dsp: {
+        enabled: boolean;
+    };
+    dop: {
+        enabled: boolean;
+    };
 }
 
 export
