@@ -29,13 +29,11 @@ import createEntry from "../../database/createEntry";
 import {
     _encode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
-import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
+import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import addAttributes from "../../database/entry/addAttributes";
 import removeAttribute from "../../database/entry/removeAttribute";
-import { IPV4_AFI_IDI } from "@wildboar/x500/src/lib/distributed/IPV4_AFI_IDI";
 import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
 import {
     InvokeId,
@@ -182,38 +180,17 @@ async function updateLocalSubr (
                         NSAP: {
                             createMany: {
                                 data: ap.address.nAddresses.map((nsap) => {
-                                    const url: string | undefined = ((): string | undefined => {
-                                        if (nsap[0] !== 0xFF) { // It is not a URL.
-                                            return undefined;
-                                        }
-                                        try {
-                                            const [ , uri ] = uriFromNSAP(nsap);
-                                            return uri;
-                                        } catch {
-                                            return undefined;
-                                        }
-                                    })();
-                                    const ip_and_port = ((): [ string, number | undefined ] | undefined => {
-                                        if (nsap[0] !== 0xFF) { // It is not a URL.
-                                            return undefined;
-                                        }
-                                        for (let i = 0; i < IPV4_AFI_IDI.length; i++) {
-                                            if (nsap[i] !== IPV4_AFI_IDI[i]) {
-                                                return undefined;
-                                            }
-                                        }
-                                        const [ , ip, port ] = ipv4FromNSAP(nsap);
-                                        return [ Array.from(ip).join("."), port ];
-                                    })();
+                                    const uri = naddrToURI(nsap);
+                                    if (!uri) {
+                                        return {
+                                            bytes: Buffer.from(nsap),
+                                        };
+                                    }
+                                    const url = new URL(uri);
                                     return {
-                                        ipv4: ip_and_port
-                                            ? ip_and_port[0]
-                                            : undefined,
-                                        tcp_port: ip_and_port
-                                            ? ip_and_port[1]
-                                            : undefined,
-                                        url,
+                                        url: url.toString(),
                                         bytes: Buffer.from(nsap),
+                                        hostname: url.hostname,
                                     };
                                 }),
                             },

@@ -144,8 +144,6 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
                     supplier_is_master: true,
                     NSAP: {
                         select: {
-                            ipv4: true,
-                            tcp_port: true,
                             url: true,
                         },
                     },

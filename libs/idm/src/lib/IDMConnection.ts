@@ -26,6 +26,9 @@ import {
 import {
     IdmBindError,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
+import {
+    TLSResponse,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -276,6 +279,20 @@ class IDMConnection {
     public async writeAbort (abort: Abort): Promise<void> {
         const idm: IDM_PDU = {
             abort,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeStartTLS (): Promise<void> {
+        const idm: IDM_PDU = {
+            startTLS: null,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeTLSResponse (tLSResponse: TLSResponse): Promise<void> {
+        const idm: IDM_PDU = {
+            tLSResponse,
         };
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }
