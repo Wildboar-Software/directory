@@ -61,6 +61,8 @@ import sleep from "../utils/sleep";
 import getRootSubschema from "./getRootSubschema";
 import anyPasswordsExist from "../authz/anyPasswordsExist";
 
+const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
+
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
     return [ // Different ways of representing the same DN.
@@ -306,6 +308,12 @@ class LDAPConnection extends ClientConnection {
     // multiple times out-of-sync, mutating `this.buffer` indeterminately.
     private handleData (ctx: Context, data: Buffer): void {
         if ((this.buffer.length + data.length) > ctx.config.ldap.bufferSize) {
+            const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
+            ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
+                protocol: "LDAP",
+                source,
+                size: ctx.config.ldap.bufferSize.toString(),
+            }));
             /**
              * IETF RFC 4511, Section 4.1.1 states that:
              *
@@ -326,6 +334,16 @@ class LDAPConnection extends ClientConnection {
         ]);
 
         while (this.buffer.length > 0) {
+            if (this.buffer[0] !== UNIVERSAL_SEQUENCE_TAG) {
+                const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
+                ctx.log.warn(ctx.i18n.t("log:non_ldap_data", {
+                    source,
+                    hexbyte: this.buffer[0].toString(16).padStart(2, "0"),
+                }));
+                // We don't send a disconnection notice, because the traffic did not appear to be LDAP at all.
+                this.socket.destroy();
+                return;
+            }
             const el = new BERElement();
             let bytesRead = 0;
             try {

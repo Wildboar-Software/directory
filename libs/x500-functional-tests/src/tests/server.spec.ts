@@ -5,7 +5,7 @@ import { strict as assert } from "assert";
 // jest.setTimeout(5000);
 
 // FIXME: It seemed like IDM v2 had some strange issue.
-function *generateGiantIDMPacket (size: number = 10_000_000): IterableIterator<Buffer> {
+function *generateGiantIDMv1Packet (size: number = 10_000_000): IterableIterator<Buffer> {
     yield Buffer.from([
         // 0x02, // Version 2
         0x01, // Version 1
@@ -20,7 +20,7 @@ function *generateGiantIDMPacket (size: number = 10_000_000): IterableIterator<B
     }
 }
 
-const giantIDMPacket = Readable.from(generateGiantIDMPacket());
+const giantIDMv1Packet = Readable.from(generateGiantIDMv1Packet());
 
 function *generateGiantLDAPMessage (size: number = 10_000_000): IterableIterator<Buffer> {
     yield Buffer.from([
@@ -76,11 +76,11 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.only("Avoids denial-of-service by large IDM packets", (done) => {
+    it("Avoids denial-of-service by large IDM packets", (done) => {
         const errorHandler = jest.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
-            giantIDMPacket.unpipe(client);
+            giantIDMv1Packet.unpipe(client);
             done();
         };
         const client = net.createConnection({
@@ -90,20 +90,23 @@ describe("Meerkat DSA", () => {
             client.on("error", errorHandler);
             client.on("close", closeHandler);
             client.on("end", () => {
-                giantIDMPacket.unpipe(client);
+                giantIDMv1Packet.unpipe(client);
                 done();
             });
-            giantIDMPacket.on("end", () => {
+            giantIDMv1Packet.on("end", () => {
                 assert(false);
             });
-            giantIDMPacket.on("close", () => {
+            giantIDMv1Packet.on("close", () => {
                 assert(false);
             });
-            giantIDMPacket.pipe(client);
+            giantIDMv1Packet.pipe(client);
         });
     });
 
-    it.skip("Avoids denial-of-service by large LDAP messages", (done) => {
+    // TODO: This was disabled because of a bug I found in asn1-ts where a
+    // thrown ASN1Truncation error is not instanceof ASN1TruncationError, but
+    // only an ASN1Error.
+    it("Avoids denial-of-service by large LDAP messages", (done) => {
         const errorHandler = jest.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
@@ -113,12 +116,10 @@ describe("Meerkat DSA", () => {
         const client = net.createConnection({
             host: HOST,
             port: LDAP_PORT,
-            allowHalfOpen: false,
         }, () => {
             client.on("error", errorHandler);
             client.on("close", closeHandler);
             client.on("end", () => {
-                console.log("ENDED");
                 giantLDAPMessage.unpipe(client);
                 done();
             });
@@ -128,7 +129,26 @@ describe("Meerkat DSA", () => {
             giantLDAPMessage.on("close", () => {
                 assert(false);
             });
-            giantLDAPMessage.pipe(client, { end: false });
+            giantLDAPMessage.pipe(client);
+        });
+    });
+
+    it.only("Rejects any LDAP data that does not start with 0x30 (UNIVERSAL SEQUENCE)", (done) => {
+        const errorHandler = jest.fn();
+        const closeHandler = () => {
+            expect(errorHandler).toHaveBeenCalled();
+            done();
+        };
+        const client = net.createConnection({
+            host: HOST,
+            port: LDAP_PORT,
+        }, () => {
+            client.on("error", errorHandler);
+            client.on("close", closeHandler);
+            client.on("end", () => {
+                done();
+            });
+            client.write(Buffer.from([ 0x88 ]));
         });
     });
 
@@ -139,5 +159,8 @@ describe("Meerkat DSA", () => {
     it.skip("Avoids denial of service by LDAP-based Slow Loris Attacks", async () => {
 
     });
+
+    it.todo("permits recycling of a TCP socket via IDM re-binding");
+    it.todo("permits recycling of a TCP socket via LDAP re-binding");
 
 });

@@ -14,7 +14,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
 import { Error as IDMError } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Error.ta";
 import { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject.ta";
-import { Abort, Abort_invalidPDU } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+import {
+    Abort,
+    Abort_invalidPDU,
+    Abort_reasonNotSpecified,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import type { IdmReject_reason } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import type { GeneralName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
 import { EventEmitter } from "events";
@@ -91,7 +95,8 @@ class IDMConnection {
                         this.version = IDMVersion.v2;
                         this.currentSegment.version = IDMVersion.v2;
                     } else {
-                        throw new Error(`Unrecognized IDM protocol version ${indicatedVersion}.`);
+                        this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
+                        return;
                     }
                     this.nextExpectedField = IDMSegmentField.final;
                     this.bufferIndex++;
@@ -100,7 +105,8 @@ class IDMConnection {
                 case (IDMSegmentField.final): {
                     this.currentSegment.final = Boolean(this.buffer.readUInt8(this.bufferIndex));
                     if (this.version === undefined) {
-                        throw new Error("Invalid parser state.");
+                        // Invalid parser state.
+                        this.writeAbort(Abort_reasonNotSpecified).then(() => this.socket.destroy());
                     } else if (this.version === IDMVersion.v1) {
                         this.nextExpectedField = IDMSegmentField.length;
                         this.awaitingBytes = 4;
@@ -108,7 +114,7 @@ class IDMConnection {
                         this.nextExpectedField = IDMSegmentField.encoding;
                         this.awaitingBytes = 2;
                     } else {
-                        throw new Error();
+                        this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
                     }
                     this.bufferIndex++;
                     break;
@@ -155,7 +161,8 @@ class IDMConnection {
                     break;
                 }
                 default: {
-                    throw new Error(`Unrecognized IDM segment field ${this.nextExpectedField}`);
+                    this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
+                    return;
                 }
                 }
             }

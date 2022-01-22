@@ -14,7 +14,7 @@ import {
     Abort_reasonNotSpecified,
     Abort_unboundRequest,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import { IDMConnection, EventMap as IDMEventMap } from "@wildboar/idm";
+import { IDMConnection } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
@@ -110,13 +110,17 @@ async function checkForUpdates (ctx: Context, currentVersionString: string): Pro
     }
 }
 
-const getIDMLengthGate = (ctx: Context, idm: IDMConnection) => (addedBytes: number) => {
+const getIDMLengthGate = (ctx: Context, idm: IDMConnection, source: string) => (addedBytes: number) => {
     const currentFragmentSize: number = (
         idm.getNumberOfEnqueuedBytes()
         + addedBytes
     );
     if (currentFragmentSize > ctx.config.idm.bufferSize) {
-        ctx.log.warn(ctx.i18n.t("log:"))
+        ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
+            protocol: "IDM",
+            source,
+            size: ctx.config.idm.bufferSize.toString(),
+        }));
         idm.writeAbort(Abort_unboundRequest)
             .then(() => idm.close())
             .catch();
@@ -142,7 +146,7 @@ function attachUnboundEventListenersToIDMConnection (
      * infinitely-large IDM packets and consume all of the
      * memory of the system.
      */
-    idm.events.on("length", getIDMLengthGate(ctx, idm));
+    idm.events.on("length", getIDMLengthGate(ctx, idm, source));
     const handleWrongSequence = () => {
         idm.writeAbort(Abort_unboundRequest).then(() => idm.events.emit("unbind", null)).catch();
         associations.delete(idm.s);
