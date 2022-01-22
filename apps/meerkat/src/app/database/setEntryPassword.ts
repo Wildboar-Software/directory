@@ -12,7 +12,7 @@ import {
 export
 async function setEntryPassword (
     ctx: Context,
-    conn: ClientConnection | undefined, // FIXME: Make this required.
+    conn: ClientConnection | undefined,
     vertex: Vertex,
     pwd: UserPwd,
 ): Promise<PrismaPromise<any>[]> {

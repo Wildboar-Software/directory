@@ -358,6 +358,7 @@ async function updateContextPrefix (
             where: {
                 ber,
                 knowledge_type: Knowledge.SUPERIOR,
+                active: true,
             },
             select: {
                 id: true,

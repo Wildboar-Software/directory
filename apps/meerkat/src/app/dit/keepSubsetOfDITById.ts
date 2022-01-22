@@ -5,7 +5,6 @@ import type {
 } from "@wildboar/meerkat-types";
 import { strict as assert } from "assert";
 
-// FIXME: Pass in familySelect. Remember, familySelect can only ADD results.
 export
 function keepSubsetOfDITById (
     dit: DIT,

@@ -87,6 +87,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         where: {
             entry_id: vertex.dse.id,
             knowledge_type: Knowledge.NON_SPECIFIC,
+            active: true,
             OR: decoded.map((mosap) => ({
                 ae_title: {
                     equals: mosap.ae_title.rdnSequence.map(rdnToJson),

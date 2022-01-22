@@ -167,6 +167,7 @@ async function modifyOperationalBinding (
     const permittedAPs = (await ctx.db.accessPoint.findMany({
         where: {
             knowledge_type: Knowledge.OB_REQUEST,
+            active: true,
         },
     }))
         .filter((ap) => {

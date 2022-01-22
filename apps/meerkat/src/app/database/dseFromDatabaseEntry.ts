@@ -175,6 +175,7 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SUPERIOR,
+                active: true,
             },
             select: {
                 ber:true,
@@ -216,6 +217,7 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SUPPLIER,
+                active: true,
             },
             select: {
                 ber: true,
@@ -225,6 +227,7 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.CONSUMER,
+                active: true,
             },
             select: {
                 ber: true,
@@ -234,6 +237,7 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+                active: true,
             },
         });
         const supplierKnowledge = supplierRows
@@ -289,6 +293,7 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SPECIFIC,
+                active: true,
             },
             select: {
                 ber: true,
@@ -310,6 +315,7 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.NON_SPECIFIC,
+                active: true,
             },
             select: {
                 nsk_group: true,
@@ -333,6 +339,7 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SPECIFIC,
+                active: true,
             },
             select: {
                 ber: true,
@@ -457,6 +464,7 @@ async function dseFromDatabaseEntry (
             where: {
                 entry_id: dbe.id,
                 knowledge_type: Knowledge.SPECIFIC,
+                active: true,
             },
             select: {
                 ber: true,

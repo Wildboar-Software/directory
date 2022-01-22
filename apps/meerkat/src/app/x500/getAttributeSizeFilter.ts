@@ -27,7 +27,6 @@ function getAttributeSize (attr: Attribute): number {
     );
 }
 
-// TODO: Add this to the X.500 library.
 export
 function getAttrbuteSizeFilter (attributeSizeLimit: number): (attr: Attribute) => boolean {
     return function (attr: Attribute): boolean {
