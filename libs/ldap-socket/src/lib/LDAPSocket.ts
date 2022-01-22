@@ -51,7 +51,7 @@ class LDAPSocket extends EventEmitter {
                     this.options?.asn1ErrorBudget
                     && (this.asn1Errors > this.options.asn1ErrorBudget)
                 ) {
-                    this.socket.end();
+                    this.socket.destroy();
                 }
                 return;
             }
@@ -103,7 +103,7 @@ class LDAPSocket extends EventEmitter {
     }
 
     public close (): void {
-        this.socket.end();
+        this.socket.destroy();
     }
 
     constructor (

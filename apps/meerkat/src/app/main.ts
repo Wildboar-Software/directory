@@ -14,7 +14,7 @@ import {
     Abort_reasonNotSpecified,
     Abort_unboundRequest,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import { IDMConnection } from "@wildboar/idm";
+import { IDMConnection, EventMap as IDMEventMap } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
@@ -110,77 +110,115 @@ async function checkForUpdates (ctx: Context, currentVersionString: string): Pro
     }
 }
 
+const getIDMLengthGate = (ctx: Context, idm: IDMConnection) => (addedBytes: number) => {
+    const currentFragmentSize: number = (
+        idm.getNumberOfEnqueuedBytes()
+        + addedBytes
+    );
+    if (currentFragmentSize > ctx.config.idm.bufferSize) {
+        ctx.log.warn(ctx.i18n.t("log:"))
+        idm.writeAbort(Abort_unboundRequest)
+            .then(() => idm.close())
+            .catch();
+    }
+};
+
 const PROCESS_NAME: string = "Meerkat DSA";
+
+// This function is necessary, because the TCP connection can be recycled
+// between multiple binds. An analog of this need not exist for LDAP, because
+// the LDAP connection alone monopolizes binds and unbinds, unlike IDM, which
+// can be used to transport multiple protocols.
+function attachUnboundEventListenersToIDMConnection (
+    ctx: Context,
+    originalSocket: net.Socket | tls.TLSSocket, // Even if STARTTLS is used, you must use the original socket for "bookkeeping" in the associations index.
+    source: string, // Just to avoid recalculating this.
+    idm: IDMConnection,
+    associations: Map<net.Socket, ClientConnection | null>,
+) {
+    /**
+     * This is an extremely important operation for security.
+     * Without this, nefarious users could anonymously submit
+     * infinitely-large IDM packets and consume all of the
+     * memory of the system.
+     */
+    idm.events.on("length", getIDMLengthGate(ctx, idm));
+    const handleWrongSequence = () => {
+        idm.writeAbort(Abort_unboundRequest).then(() => idm.events.emit("unbind", null)).catch();
+        associations.delete(idm.s);
+    };
+    idm.events.on("request", handleWrongSequence);
+    idm.events.on("bind", (idmBind: IdmBind) => {
+        const existingAssociation = associations.get(originalSocket);
+        if (existingAssociation) {
+            ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
+                source,
+                protocol: idmBind.protocolID.toString(),
+            }))
+            idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.events.emit("unbind", null)).catch();
+            associations.delete(originalSocket);
+            return;
+        }
+        if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
+            const dba = _decode_DirectoryBindArgument(idmBind.argument);
+            const conn = new DAPConnection(ctx, idm, dba);
+            if (conn.boundNameAndUID) {
+                associations.set(originalSocket, conn);
+            }
+        } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
+            const dba = _decode_DSABindArgument(idmBind.argument);
+            const conn = new DSPConnection(ctx, idm, dba);
+            if (conn.boundNameAndUID) {
+                associations.set(originalSocket, conn);
+            }
+        } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
+            const dba = _decode_DSABindArgument(idmBind.argument);
+            const conn = new DOPConnection(ctx, idm, dba);
+            if (conn.boundNameAndUID) {
+                associations.set(originalSocket, conn);
+            }
+        } else {
+            ctx.log.error(ctx.i18n.t("log:unsupported_protocol", {
+                protocol: idmBind.protocolID.toString(),
+            }));
+        }
+    });
+    idm.events.on("unbind", () => {
+        // c.destroy(); You don't actually have to close the TCP connection. It could be recycled.
+        associations.set(originalSocket, null);
+        idm.events.removeAllListeners();
+        attachUnboundEventListenersToIDMConnection(ctx, originalSocket, source, idm, associations); // Recursive, but not really.
+    });
+}
 
 function handleIDM (
     ctx: Context,
     associations: Map<net.Socket, ClientConnection | null>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c: net.Socket | tls.TLSSocket): void => {
+        c.pause();
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
         if (associations.size >= ctx.config.maxConnections) {
-            c.end();
+            c.destroy();
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
                 source,
                 max: ctx.config.maxConnections,
             }));
             return;
         }
-        associations.set(c, null);
+        associations.set(c, null); // Index this socket, noting that it has no established association.
         c.setNoDelay(ctx.config.tcp.noDelay);
         if (ctx.config.tcp.timeoutInSeconds) {
             c.setTimeout(ctx.config.tcp.timeoutInSeconds);
         }
+        ctx.log.info(ctx.i18n.t("log:transport_established", {
+            source,
+            transport: (c instanceof tls.TLSSocket) ? "IDMS" : "IDM",
+        }));
         try {
-            ctx.log.info(ctx.i18n.t("log:transport_established", {
-                source,
-                transport: (c instanceof tls.TLSSocket) ? "IDMS" : "IDM",
-            }));
             const idm = new IDMConnection(c);
-            const handleWrongSequence = () => {
-                idm.writeAbort(Abort_unboundRequest).then(() => idm.events.emit("unbind", null)).catch();
-                associations.delete(c);
-            };
-            idm.events.on("request", handleWrongSequence);
-            idm.events.on("bind", (idmBind: IdmBind) => {
-                const existingAssociation = associations.get(c);
-                if (existingAssociation) {
-                    ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
-                        source,
-                        protocol: idmBind.protocolID.toString(),
-                    }))
-                    idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.events.emit("unbind", null)).catch();
-                    associations.delete(c);
-                    return;
-                }
-                if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
-                    const dba = _decode_DirectoryBindArgument(idmBind.argument);
-                    const conn = new DAPConnection(ctx, idm, dba);
-                    if (conn.boundNameAndUID) {
-                        associations.set(c, conn);
-                    }
-                } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
-                    const dba = _decode_DSABindArgument(idmBind.argument);
-                    const conn = new DSPConnection(ctx, idm, dba);
-                    if (conn.boundNameAndUID) {
-                        associations.set(c, conn);
-                    }
-                } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
-                    const dba = _decode_DSABindArgument(idmBind.argument);
-                    const conn = new DOPConnection(ctx, idm, dba);
-                    if (conn.boundNameAndUID) {
-                        associations.set(c, conn);
-                    }
-                } else {
-                    ctx.log.error(ctx.i18n.t("log:unsupported_protocol", {
-                        protocol: idmBind.protocolID.toString(),
-                    }));
-                }
-            });
-            idm.events.on("unbind", () => {
-                // c.end(); You don't actually have to close the TCP connection. It could be recycled.
-                associations.set(c, null);
-            });
+            attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, associations);
+            c.resume();
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
@@ -192,7 +230,7 @@ function handleIDM (
                 source,
                 e: e.message,
             }));
-            c.end();
+            c.destroy();
             associations.delete(c);
         });
 
@@ -212,7 +250,7 @@ function handleLDAP (
     return (c) => {
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
         if (associations.size >= ctx.config.maxConnections) {
-            c.end();
+            c.destroy();
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
                 source,
                 max: ctx.config.maxConnections,
@@ -358,6 +396,7 @@ async function main (): Promise<void> {
 
     const tlsOptions: tls.TlsOptions = {
         ...ctx.config.tls,
+        enableTrace: isDebugging,
         ca: ctx.config.tls.ca
             ? await fs.readFile(ctx.config.tls.ca as string, { encoding: "utf-8" })
             : undefined,

@@ -175,7 +175,7 @@ async function handleRequestAndErrors (
     if (!conn.bound) {
         const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
         conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-        conn.socket.end();
+        conn.socket.destroy();
         return;
     }
     const stats: OperationStatistics = {
@@ -273,7 +273,7 @@ async function handleRequestAndErrors (
              */
             const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, errorMessage);
             conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-            conn.socket.end();
+            conn.socket.destroy();
             return;
         }
     } finally {
@@ -317,7 +317,7 @@ class LDAPConnection extends ClientConnection {
              */
             const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
             this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-            this.socket.end();
+            this.socket.destroy();
             return;
         }
         this.buffer = Buffer.concat([
@@ -339,7 +339,7 @@ class LDAPConnection extends ClientConnection {
                 }));
                 const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                 this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-                this.socket.end();
+                this.socket.destroy();
                 return;
             }
             let message!: LDAPMessage;
@@ -351,7 +351,7 @@ class LDAPConnection extends ClientConnection {
                 }));
                 const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                 this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-                this.socket.end();
+                this.socket.destroy();
                 return;
             }
 

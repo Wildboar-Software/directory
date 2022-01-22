@@ -9,10 +9,10 @@ import type { Unbind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecifica
 import type { Abort } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import type { StartTLS } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/StartTLS.ta";
 import type { TLSResponse } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
-// import type { ASN1Element } from "asn1-ts";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import type { EventEmitter } from "events";
 
+export
 interface EventMap {
     bind: IdmBind;
     bindResult: IdmBindResult;
@@ -26,13 +26,16 @@ interface EventMap {
     startTLS: StartTLS;
     tLSResponse: TLSResponse;
     socketError: Error;
+    // Emitted when the length indicator is encountered. Useful for rejecting
+    // excessively large packets BEFORE they are submitted.
     length: number;
     [other: number]: ResultOrError; // The opcode is the event type.
 };
 
-type EventKey<T extends EventMap> = string & keyof T;
-type EventReceiver<T> = (params: T) => void;
+export type EventKey<T extends EventMap> = string & keyof T;
+export type EventReceiver<T> = (params: T) => void;
 
+export
 interface Emitter<T extends EventMap> {
     on <K extends EventKey<T>> (eventName: K, fn: EventReceiver<T[K]>): void;
     on (eventName: string, fn: EventReceiver<ResultOrError>): void;
@@ -43,6 +46,7 @@ interface Emitter<T extends EventMap> {
     emit (eventName: string, params: ResultOrError): void;
 }
 
+export
 type IDMEventEmitter = Emitter<EventMap> & EventEmitter;
 
 export default IDMEventEmitter;
