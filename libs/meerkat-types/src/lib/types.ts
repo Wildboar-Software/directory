@@ -107,6 +107,7 @@ import {
 import type {
     Clearance,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
+import type { TlsOptions } from "tls";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -450,6 +451,12 @@ interface NetworkService {
 
 export
 interface Configuration {
+    maxConnections: number;
+    tcp: {
+        noDelay: boolean;
+        timeoutInSeconds: number;
+    };
+    tls: TlsOptions;
     idm: NetworkService & {
         bufferSize: number;
     };

@@ -266,7 +266,12 @@ class DAPConnection extends ClientConnection {
     }
 
     private async handleUnbind (): Promise<void> {
-        await this.ctx.db.enqueuedSearchResult.deleteMany({
+        this.ctx.db.enqueuedListResult.deleteMany({ // INTENTIONAL_NO_AWAIT
+            where: {
+                connection_uuid: this.id,
+            },
+        });
+        this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
             where: {
                 connection_uuid: this.id,
             },

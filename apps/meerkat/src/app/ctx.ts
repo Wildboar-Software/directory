@@ -24,6 +24,7 @@ import { DEFAULT_IDM_BUFFER_SIZE, DEFAULT_LDAP_BUFFER_SIZE } from "./constants";
 import {
     AuthenticationLevel_basicLevels_level_simple,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import type { SecureVersion } from "tls";
 
 const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
     ? process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
@@ -130,6 +131,43 @@ if (logToHTTP) {
 const ctx: Context = {
     i18n,
     config: {
+        maxConnections: process.env.MEERKAT_MAX_CONNECTIONS
+            ? Number.parseInt(process.env.MEERKAT_MAX_CONNECTIONS)
+            : 250,
+        tcp: {
+            noDelay: (process.env.MEERKAT_TCP_NO_DELAY === "1"),
+            timeoutInSeconds: process.env.MEERKAT_TCP_TIMEOUT_IN_SECONDS
+                ? Number.parseInt(process.env.MEERKAT_TCP_TIMEOUT_IN_SECONDS)
+                : 0, // 0 means do not timeout.
+        },
+        tls: {
+            handshakeTimeout: process.env.MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
+                ? Number.parseInt(process.env.MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS) * 1000
+                : 30000,
+            sessionTimeout: process.env.MEERKAT_TLS_SESSION_TIMEOUT_IN_SECONDS
+                ? Number.parseInt(process.env.MEERKAT_TLS_SESSION_TIMEOUT_IN_SECONDS) * 1000
+                : undefined,
+            rejectUnauthorized: (process.env.MEERKAT_TLS_CLIENT_CERT_AUTH === "1"),
+            requestCert: (process.env.MEERKAT_TLS_CLIENT_CERT_AUTH === "1"),
+            ca: process.env.MEERKAT_TLS_CA_FILE,
+            cert: process.env.MEERKAT_TLS_CERT_FILE,
+            key: process.env.MEERKAT_TLS_KEY_FILE,
+            crl: process.env.MEERKAT_TLS_CRL_FILE,
+            pfx: process.env.MEERKAT_TLS_PFX_FILE,
+            sigalgs: process.env.MEERKAT_TLS_SIG_ALGS,
+            ciphers: process.env.MEERKAT_TLS_CIPHERS,
+            // clientCertEngine: process.env.MEERKAT_CLIENT_CERT_ENGINE,
+            // dhparam: process.env.MEERKAT_TLS_DH_PARAM, // FIXME: This is important.
+            ecdhCurve: process.env.MEERKAT_ECDH_CURVES,
+            honorCipherOrder: (process.env.MEERKAT_HONOR_CIPHER_ORDER === "1"),
+            minVersion: process.env.MEERKAT_TLS_MIN_VERSION as SecureVersion | undefined,
+            maxVersion: process.env.MEERKAT_TLS_MAX_VERSION as SecureVersion | undefined,
+            passphrase: process.env.MEERKAT_TLS_KEY_PASSPHRASE,
+            // privateKeyEngine: process.env.MEERKAT_PRIVATE_KEY_ENGINE,
+            // ticketKeys?: Buffer | undefined;
+            // pskCallback?(socket: TLSSocket, identity: string): DataView | NodeJS.TypedArray | null;
+            // pskIdentityHint: process.env.MEERKAT_PSK_IDENTITY_HINT
+        },
         idm: {
             port: process.env.MEERKAT_IDM_PORT
                 ? Number.parseInt(process.env.MEERKAT_IDM_PORT, 10)

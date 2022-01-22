@@ -48,6 +48,7 @@ import createDatabaseReport from "./telemetry/createDatabaseReport";
 import semver from "semver";
 import { createPrivateKey } from "crypto";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
+import isDebugging from "is-debugging";
 
 async function checkForUpdates (ctx: Context, currentVersionString: string): Promise<void> {
     const currentVersion = semver.parse(currentVersionString);
@@ -113,10 +114,23 @@ const PROCESS_NAME: string = "Meerkat DSA";
 
 function handleIDM (
     ctx: Context,
-    associations: Map<net.Socket, ClientConnection>,
+    associations: Map<net.Socket, ClientConnection | null>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c: net.Socket | tls.TLSSocket): void => {
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+        if (associations.size >= ctx.config.maxConnections) {
+            c.end();
+            ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
+                source,
+                max: ctx.config.maxConnections,
+            }));
+            return;
+        }
+        associations.set(c, null);
+        c.setNoDelay(ctx.config.tcp.noDelay);
+        if (ctx.config.tcp.timeoutInSeconds) {
+            c.setTimeout(ctx.config.tcp.timeoutInSeconds);
+        }
         try {
             ctx.log.info(ctx.i18n.t("log:transport_established", {
                 source,
@@ -165,7 +179,7 @@ function handleIDM (
             });
             idm.events.on("unbind", () => {
                 // c.end(); You don't actually have to close the TCP connection. It could be recycled.
-                associations.delete(c);
+                associations.set(c, null);
             });
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
@@ -193,10 +207,23 @@ function handleIDM (
 
 function handleLDAP (
     ctx: Context,
-    associations: Map<net.Socket, ClientConnection>,
+    associations: Map<net.Socket, ClientConnection | null>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c) => {
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+        if (associations.size >= ctx.config.maxConnections) {
+            c.end();
+            ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
+                source,
+                max: ctx.config.maxConnections,
+            }));
+            return;
+        }
+        associations.set(c, null);
+        c.setNoDelay(ctx.config.tcp.noDelay);
+        if (ctx.config.tcp.timeoutInSeconds) {
+            c.setTimeout(ctx.config.tcp.timeoutInSeconds);
+        }
         ctx.log.info(ctx.i18n.t("log:transport_established", {
             source,
             transport: (c instanceof tls.TLSSocket) ? "LDAPS" : "LDAP",
@@ -329,7 +356,30 @@ async function main (): Promise<void> {
         }
     }
 
-    const associations: Map<net.Socket, ClientConnection> = new Map();
+    const tlsOptions: tls.TlsOptions = {
+        ...ctx.config.tls,
+        ca: ctx.config.tls.ca
+            ? await fs.readFile(ctx.config.tls.ca as string, { encoding: "utf-8" })
+            : undefined,
+        cert: ctx.config.tls.cert
+            ? await fs.readFile(ctx.config.tls.cert as string, { encoding: "utf-8" })
+            : undefined,
+        key: ctx.config.tls.key
+            ? await fs.readFile(ctx.config.tls.key as string)
+            : undefined,
+        crl: ctx.config.tls.crl
+            ? await fs.readFile(ctx.config.tls.crl as string)
+            : undefined,
+        pfx: ctx.config.tls.pfx
+            ? await fs.readFile(ctx.config.tls.ca as string)
+            : undefined,
+    };
+
+    /**
+     * `null` means that no association has been established, but there is an
+     * established TCP connection.
+     */
+    const associations: Map<net.Socket, ClientConnection | null> = new Map();
     if (ctx.config.idm.port) {
         const idmServer = net.createServer(handleIDM(ctx, associations));
         idmServer.on("error", (err) => {
@@ -347,16 +397,13 @@ async function main (): Promise<void> {
     }
     if (
         ctx.config.idms.port
-        && process.env.MEERKAT_SERVER_TLS_CERT
-        && process.env.MEERKAT_SERVER_TLS_KEY
+        && ctx.config.tls.cert
+        && ctx.config.tls.key
     ) {
-        const idmsServer = tls.createServer({
-            cert: await fs.readFile(process.env.MEERKAT_SERVER_TLS_CERT),
-            key: await fs.readFile(process.env.MEERKAT_SERVER_TLS_KEY),
-        }, handleIDM(ctx, associations));
+        const idmsServer = tls.createServer(tlsOptions, handleIDM(ctx, associations));
         idmsServer.on("error", (err) => {
             ctx.log.error(ctx.i18n.t("log:server_error", {
-                protocol: "IDMS", // TODO: i18n.
+                protocol: "IDMS",
                 e: err.message,
             }));
         });
@@ -378,13 +425,10 @@ async function main (): Promise<void> {
     }
     if (
         ctx.config.ldaps.port
-        && process.env.MEERKAT_SERVER_TLS_CERT
-        && process.env.MEERKAT_SERVER_TLS_KEY
+        && ctx.config.tls.cert
+        && ctx.config.tls.key
     ) {
-        const ldapsServer = tls.createServer({
-            cert: await fs.readFile(process.env.MEERKAT_SERVER_TLS_CERT),
-            key: await fs.readFile(process.env.MEERKAT_SERVER_TLS_KEY),
-        }, handleLDAP(ctx, associations));
+        const ldapsServer = tls.createServer(tlsOptions, handleLDAP(ctx, associations));
         ldapsServer.listen(ctx.config.ldaps.port, async () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "LDAPS",

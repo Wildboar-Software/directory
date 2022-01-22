@@ -72,11 +72,11 @@ spec:
                   key: webAdminPort
             {{- end }}
             {{- if .Values.tlsSecretName }}
-            - name: MEERKAT_SERVER_TLS_CERT
+            - name: MEERKAT_TLS_CERT_FILE
               value: /data/pki/tls/tls-cert.pem
             {{- end }}
             {{- if .Values.tlsSecretName }}
-            - name: MEERKAT_SERVER_TLS_KEY
+            - name: MEERKAT_TLS_KEY_FILE
               value: /data/pki/tls/tls-key.pem
             {{- end }}
             {{- if .Values.signingSecretName }}

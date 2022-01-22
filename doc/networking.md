@@ -61,13 +61,21 @@ knowledge attributes rather than altering the database directly.
 
 TLS can be configured via the following environment variables:
 
-- `MEERKAT_SERVER_TLS_CERT`
-- `MEERKAT_SERVER_TLS_KEY`
+- `MEERKAT_TLS_CERT_FILE`
+- `MEERKAT_TLS_KEY_FILE`
 
-`MEERKAT_SERVER_TLS_CERT` contains a file path to the X.509 certificate to be
-used for TLS. `MEERKAT_SERVER_TLS_KEY` shall contain the file path to the
+Or by including
+
+- `MEERKAT_TLS_PFX_FILE`
+
+`MEERKAT_TLS_CERT_FILE` contains a file path to the X.509 certificate to be
+used for TLS. `MEERKAT_TLS_KEY_FILE` shall contain the file path to the
 private key to be used for TLS. If both of these are present, TLS will be
 enabled. Otherwise, TLS will silently fail.
+
+If either the key file or PFX file are password-protected, these can be
+decrypted by supplying the passphrase in the `MEERKAT_TLS_KEY_PASSPHRASE`
+environment variable.
 
 ## Result Signing
 

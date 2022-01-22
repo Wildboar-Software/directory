@@ -10,8 +10,8 @@ services:
     environment:
       # What appears in this section overrides anything in .env.
       DATABASE_URL: mysql://root:example@db:3306/directory
-      MEERKAT_SERVER_TLS_CERT: /data/keypair/cert.pem
-      MEERKAT_SERVER_TLS_KEY: /data/keypair/key.pem
+      MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
+      MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
       MEERKAT_SIGNING_CERT_CHAIN: /data/keypair/cert.pem
       MEERKAT_SIGNING_KEY: /data/keypair/key.pem
       MEERKAT_INIT_JS: /data/init.mjs
