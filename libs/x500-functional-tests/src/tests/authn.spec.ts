@@ -2,16 +2,11 @@ import {
     ASN1Element,
     FALSE_BIT,
     TRUE_BIT,
-    ObjectIdentifier,
-    OBJECT_IDENTIFIER,
-    INTEGER,
-    FALSE,
 } from "asn1-ts";
 import {
     BER,
     DER,
     _encodeObjectIdentifier,
-    _encodeInteger,
 } from "asn1-ts/dist/node/functional";
 import * as net from "net";
 import {
@@ -47,7 +42,6 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import {
     commonName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
@@ -61,9 +55,6 @@ import {
     description,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa";
 import {
-    localityName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
-import {
     administrativeRole,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
 import {
@@ -72,12 +63,6 @@ import {
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
-import {
-    id_ar_accessControlSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
-import {
-    id_ar_accessControlInnerArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
@@ -107,199 +92,13 @@ import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import {
-    compare,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
-import {
-    CompareArgument,
-    _encode_CompareArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
-import {
-    CompareArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
-import {
-    _decode_CompareResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
-import {
-    AttributeValueAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import {
-    list,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
-import {
-    ListArgument,
-    _encode_ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
-import {
-    ListArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
-import {
-    _decode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
-import {
-    removeEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
-import {
-    RemoveEntryArgument,
-    _encode_RemoveEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
-import {
-    RemoveEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
-import {
-    modifyEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
-import {
-    ModifyEntryArgument,
-    _encode_ModifyEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
-import {
-    ModifyEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
-import {
-    modifyDN,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
-import {
-    ModifyDNArgument,
-    _encode_ModifyDNArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
-import {
-    ModifyDNArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
-import {
-    administerPassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
-import {
-    AdministerPasswordArgument,
-    _encode_AdministerPasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
-import {
-    AdministerPasswordArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta";
-import {
-    changePassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
-import {
-    ChangePasswordArgument,
-    _encode_ChangePasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta";
-import {
-    ChangePasswordArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgumentData.ta";
-import {
-    search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import {
-    SearchArgument,
-    _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-import {
-    SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import {
-    SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
-import {
-    _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import {
-    Attribute_valuesWithContext_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
-import {
-    Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
-import {
-    localeContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
-import {
-    _encode_LocaleContextSyntax,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/LocaleContextSyntax.ta";
 import { strict as assert } from "assert";
 import {
     RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import {
-    organization,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organization.oa";
-import {
-    organizationalUnit,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalUnit.oa";
-import {
-    person,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa";
-import {
-    device,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/device.oa";
-import {
-    organizationName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa";
-import {
-    organizationalUnitName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa";
-import {
-    surname,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
-import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
-import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
-import {
-    accessControlSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
-import {
-    SubtreeSpecification,
-    _encode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
-import {
-    subtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
-import {
     userPwdClass,
 } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
-import {
-    ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import {
-    ACIItem_itemOrUserFirst_itemFirst,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem-itemOrUserFirst-itemFirst.ta";
-import {
-    AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
-import {
-    AuthenticationLevel_basicLevels_level_none,
-    AuthenticationLevel_basicLevels_level_simple,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
-import {
-    ItemPermission,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ItemPermission.ta";
-import {
-    ProtectedItems,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ProtectedItems.ta";
-import {
-    UserClasses,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/UserClasses.ta";
-import {
-    prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
-import {
-    subentryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
-import {
-    entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
-import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import {
-    SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import {
-    NameProblem_noSuchObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import {
-    accessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
-import {
-    basicAccessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/basicAccessControlScheme.va";
 import {
     userPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
@@ -312,15 +111,6 @@ import type {
 import {
     SimpleCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
-import {
-    NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import {
-    ModifyRights_Item_permission_add,
-    ModifyRights_Item_permission_remove,
-    ModifyRights_Item_permission_rename,
-    ModifyRights_Item_permission_move,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights-Item-permission.ta";
 import {
     IdmBindError,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
@@ -336,9 +126,6 @@ import {
 import {
     pwdStartTime,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
-import {
-    _decode_DirectoryBindResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta";
 import {
     directoryBindError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
@@ -377,16 +164,6 @@ const PORT: number = 4632;
 const encodedDesc = _encode_UnboundedDirectoryString({
     uTF8String: "testeroo",
 }, DER);
-
-function utf8 (str: string): ASN1Element {
-    return _encode_UnboundedDirectoryString({
-        uTF8String: str,
-    }, DER);
-}
-
-function oid (o: OBJECT_IDENTIFIER): ASN1Element {
-    return _encodeObjectIdentifier(o, DER);
-}
 
 async function connect(credentials?: Credentials): Promise<IDMConnection> {
     const dba = new DirectoryBindArgument(
@@ -595,165 +372,6 @@ async function createTestRootNode(
             invokeID,
             addEntry["&operationCode"]!,
             _encode_AddEntryArgument(addTestRoot, DER),
-        );
-    });
-}
-
-async function createTestNode(
-    connection: IDMConnection,
-    superiorDN: DistinguishedName,
-    id: string,
-    extraAttributes?: Attribute[],
-): Promise<ResultOrError> {
-    const encodedCN = _encode_UnboundedDirectoryString({
-        uTF8String: id,
-    }, DER);
-    const addTestNode = createAddEntryArguments(
-        [
-            ...superiorDN,
-            [
-                new AttributeTypeAndValue(
-                    commonName["&id"]!,
-                    encodedCN,
-                ),
-            ],
-        ],
-        [
-            new Attribute(
-                objectClass["&id"],
-                [
-                    _encodeObjectIdentifier(applicationProcess["&id"], DER),
-                ],
-                undefined,
-            ),
-            new Attribute(
-                commonName["&id"],
-                [
-                    encodedCN,
-                ],
-                undefined,
-            ),
-            ...(extraAttributes ?? []),
-        ],
-    );
-    const invokeID = crypto.randomInt(1_000_000);
-    return new Promise((resolve) => {
-        connection.events.on(invokeID.toString(), (roe: ResultOrError) => {
-            if ("error" in roe) {
-                resolve(roe);
-            } else {
-                resolve({
-                    invokeId: {
-                        present: invokeID,
-                    },
-                    opCode: addEntry["&operationCode"]!,
-                    result: roe.result,
-                });
-            }
-        });
-        connection!.writeRequest(
-            invokeID,
-            addEntry["&operationCode"]!,
-            _encode_AddEntryArgument(addTestNode, DER),
-        );
-    });
-}
-
-async function createTestPerson(
-    connection: IDMConnection,
-    superiorDN: DistinguishedName,
-    id: string,
-    extraAttributes?: Attribute[],
-): Promise<ResultOrError> {
-    const encodedCN = _encode_UnboundedDirectoryString({
-        uTF8String: id,
-    }, DER);
-    const addTestNode = createAddEntryArguments(
-        [
-            ...superiorDN,
-            [
-                new AttributeTypeAndValue(
-                    commonName["&id"]!,
-                    encodedCN,
-                ),
-            ],
-        ],
-        [
-            new Attribute(
-                objectClass["&id"],
-                [
-                    _encodeObjectIdentifier(person["&id"], DER),
-                ],
-                undefined,
-            ),
-            new Attribute(
-                commonName["&id"],
-                [encodedCN],
-                undefined,
-            ),
-            new Attribute(
-                surname["&id"],
-                [encodedCN],
-                undefined,
-            ),
-            ...(extraAttributes ?? []),
-        ],
-    );
-    const invokeID = crypto.randomInt(1_000_000);
-    return new Promise((resolve) => {
-        connection.events.on(invokeID.toString(), (roe: ResultOrError) => {
-            if ("error" in roe) {
-                resolve(roe);
-            } else {
-                resolve({
-                    invokeId: {
-                        present: invokeID,
-                    },
-                    opCode: addEntry["&operationCode"]!,
-                    result: roe.result,
-                });
-            }
-        });
-        connection!.writeRequest(
-            invokeID,
-            addEntry["&operationCode"]!,
-            _encode_AddEntryArgument(addTestNode, DER),
-        );
-    });
-}
-
-async function createEntry(
-    connection: IDMConnection,
-    superiorDN: DistinguishedName,
-    rdn: RelativeDistinguishedName,
-    attributes: Attribute[],
-): Promise<ResultOrError> {
-    const addTestNode = createAddEntryArguments(
-        [
-            ...superiorDN,
-            rdn,
-        ],
-        attributes,
-    );
-    const invokeID = crypto.randomInt(1_000_000);
-    return new Promise((resolve) => {
-        connection.events.on(invokeID.toString(), (roe: ResultOrError) => {
-            if ("error" in roe) {
-                resolve(roe);
-            } else {
-                resolve({
-                    invokeId: {
-                        present: invokeID,
-                    },
-                    opCode: addEntry["&operationCode"]!,
-                    result: roe.result,
-                });
-            }
-        });
-        connection!.writeRequest(
-            invokeID,
-            addEntry["&operationCode"]!,
-            _encode_AddEntryArgument(addTestNode, DER),
         );
     });
 }

@@ -4,14 +4,12 @@ import {
     TRUE_BIT,
     ObjectIdentifier,
     OBJECT_IDENTIFIER,
-    INTEGER,
     FALSE,
 } from "asn1-ts";
 import {
     BER,
     DER,
     _encodeObjectIdentifier,
-    _encodeInteger,
 } from "asn1-ts/dist/node/functional";
 import * as net from "net";
 import {
@@ -219,27 +217,11 @@ import {
     RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import {
-    organization,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organization.oa";
-import {
-    organizationalUnit,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalUnit.oa";
-import {
     person,
 } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa";
 import {
-    device,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/device.oa";
-import {
-    organizationName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa";
-import {
-    organizationalUnitName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa";
-import {
     surname,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
-import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
 import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
 import {
     accessControlSubentry,
@@ -687,7 +669,11 @@ async function createEntry(
     });
 }
 
-const activateAccessControl = (connection: IDMConnection, dn: DistinguishedName, scheme: OBJECT_IDENTIFIER): Promise<any> => {
+const activateAccessControl = (
+    connection: IDMConnection,
+    dn: DistinguishedName,
+    scheme: OBJECT_IDENTIFIER,
+): Promise<ResultOrError> => {
     const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
         {
             rdnSequence: dn,
@@ -6848,7 +6834,7 @@ describe("Meerkat DSA Basic Access Control", () => {
                                     new Uint8ClampedArray([
                                         FALSE_BIT,
                                         FALSE_BIT, // denyAdd.
-                                        TRUE_BIT, // disclose on error
+                                        FALSE_BIT, // disclose on error
                                         FALSE_BIT,
                                         TRUE_BIT, // grantRead
                                         FALSE_BIT, // denyRead
