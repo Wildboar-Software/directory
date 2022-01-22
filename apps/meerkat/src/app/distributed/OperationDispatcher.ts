@@ -443,6 +443,7 @@ class OperationDispatcher {
                 resultSets: [],
                 chaining: chainingResults,
                 depth: 0,
+                alreadyReturnedById: new Set(),
             };
             await relatedEntryProcedure( // REVIEW: Is there any reason for REP to return chaining results?
                 ctx,
@@ -700,6 +701,7 @@ class OperationDispatcher {
             resultSets: [],
             chaining: state.chainingResults,
             depth: 0,
+            alreadyReturnedById: new Set(),
         };
         await relatedEntryProcedure(
             ctx,
