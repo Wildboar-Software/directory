@@ -14,7 +14,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
 import { Error as IDMError } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Error.ta";
 import { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject.ta";
-import type { Abort } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+import { Abort, Abort_invalidPDU } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import type { IdmReject_reason } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import type { GeneralName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
 import { EventEmitter } from "events";
@@ -28,6 +28,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
 import {
     TLSResponse,
+    TLSResponse_success,
+    TLSResponse_operationsError,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
 import type {
     Code,
@@ -55,6 +57,17 @@ class IDMConnection {
     // Event emitter
     public readonly events: IDMEventEmitter = new EventEmitter();
     private socket!: net.Socket;
+    private startTLSRequested: boolean = false;
+
+    private resetState (): void {
+        this.nextExpectedField = IDMSegmentField.version;
+        this.awaitingBytes = 1;
+        this.buffer = Buffer.allocUnsafe(0);
+        this.bufferIndex = 0;
+        this.version = IDMVersion.v1;
+        this.currentSegments = [];
+        this.currentSegment = {};
+    }
 
     public getNumberOfEnqueuedBytes (): number {
         return this.buffer.length;
@@ -62,6 +75,7 @@ class IDMConnection {
 
     constructor (
         readonly s: net.Socket,
+        readonly starttlsOptions?: tls.TLSSocketOptions,
     ) {
         this.socket = s;
         this.socket.on("data", (data: Buffer) => {
@@ -188,13 +202,31 @@ class IDMConnection {
             this.events.emit("abort", pdu.abort);
         } else if ("startTLS" in pdu) {
             this.events.emit("startTLS", pdu.startTLS);
+            if (this.socket instanceof tls.TLSSocket) {
+                // TLS is already in use.
+                this.writeTLSResponse(TLSResponse_operationsError);
+                return;
+            }
+            this.resetState();
+            this.writeTLSResponse(TLSResponse_success);
+            this.socket = new tls.TLSSocket(this.socket, {
+                ...(this.starttlsOptions ?? {}),
+                isServer: true,
+            });
         } else if ("tLSResponse" in pdu) {
             this.events.emit("tLSResponse", pdu.tLSResponse);
-            if (pdu.tLSResponse === 0) { // Success
-                this.socket = new tls.TLSSocket(this.socket);
+            if ((this.socket instanceof tls.TLSSocket) || !this.startTLSRequested) {
+                // TLS is already in use or was not requested.
+                return;
+            }
+            if (pdu.tLSResponse === TLSResponse_success) { // Success
+                this.socket = new tls.TLSSocket(this.socket, {
+                    ...(this.starttlsOptions ?? {}),
+                    isServer: false,
+                });
             }
         } else {
-            // console.log("Unrecognized IDM PDU.");
+            this.writeAbort(Abort_invalidPDU);
         }
     }
 
@@ -284,6 +316,7 @@ class IDMConnection {
     }
 
     public async writeStartTLS (): Promise<void> {
+        this.startTLSRequested = true;
         const idm: IDM_PDU = {
             startTLS: null,
         };

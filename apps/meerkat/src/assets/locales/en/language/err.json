@@ -143,5 +143,7 @@
     "attribute_error_types": "Attribute error involving these attribute types: {{oids}}.",
     "cannot_use_pagination_and_signing": "Pagination cannot be used if signed results are requested unless the chainingProhibited option is set and the preferChaining option is unset.",
     "not_authz_read_selection": "Not authorized to read some of the selected attributes.",
-    "not_authz_browse": "Not authorized to browse or return the distinguished name of this entry. Its existence was disclosed because of an error."
+    "not_authz_browse": "Not authorized to browse or return the distinguished name of this entry. Its existence was disclosed because of an error.",
+    "unrecognized_ext_op": "Unrecognized extended operation.",
+    "tls_already_in_use": "TLS is already in use."
 }

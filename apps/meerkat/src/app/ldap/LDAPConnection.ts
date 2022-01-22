@@ -24,6 +24,7 @@ import {
 import {
     LDAPResult_resultCode_success,
     LDAPResult_resultCode_protocolError,
+    LDAPResult_resultCode_operationsError,
     LDAPResult_resultCode_other,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
 import {
@@ -76,7 +77,11 @@ async function handleRequest (
     message: LDAPMessage,
     stats: OperationStatistics,
 ): Promise<void> {
-    ctx.log.debug(`Received LDAP request ${message.messageID} of type ${Object.keys(message.protocolOp)[0]}.`);
+    ctx.log.debug(ctx.i18n.t("log:received_ldap_request", {
+        mid: message.messageID,
+        type: Object.keys(message.protocolOp)[0],
+        cid: conn.id,
+    }));
     // let toWriteBuffer: Buffer = Buffer.alloc(0);
     // let resultsBuffered: number = 0;
     const onEntry = async (searchResEntry: SearchResultEntry): Promise<void> => {
@@ -426,32 +431,60 @@ class LDAPConnection extends ClientConnection {
                 const req = message.protocolOp.extendedReq;
                 const oid = decodeLDAPOID(req.requestName);
                 if (oid.isEqualTo(startTLS)) {
-                    this.socket.removeAllListeners("data");
-                    this.buffer = Buffer.alloc(0);
-                    this.socket = new tls.TLSSocket(this.socket);
-                    const res = new LDAPMessage(
-                        message.messageID,
-                        {
-                            extendedResp: new ExtendedResponse(
-                                LDAPResult_resultCode_success,
-                                Buffer.alloc(0),
-                                Buffer.from("STARTTLS initiated.", "utf-8"),
-                                undefined,
-                                encodeLDAPOID(startTLS),
-                                undefined,
-                            ),
-                        },
-                        undefined,
-                    );
-                    this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                    if (this.socket instanceof tls.TLSSocket) {
+                        // TODO: Log this, because this is sketchy.
+                        const errorMessage: string = ctx.i18n.t("err:tls_already_in_use");
+                        const res = new LDAPMessage(
+                            message.messageID,
+                            {
+                                extendedResp: new ExtendedResponse(
+                                    LDAPResult_resultCode_operationsError,
+                                    Buffer.alloc(0),
+                                    Buffer.from(errorMessage, "utf-8"), // FIXME: Internationalize
+                                    undefined,
+                                    encodeLDAPOID(startTLS),
+                                    undefined,
+                                ),
+                            },
+                            undefined,
+                        );
+                        this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                    } else {
+                        this.socket.removeAllListeners("data");
+                        this.buffer = Buffer.alloc(0);
+                        this.socket = new tls.TLSSocket(this.socket, {
+                            ...(this.starttlsOptions ?? {}),
+                            isServer: true,
+                        });
+                        ctx.log.debug(ctx.i18n.t("log:starttls_established", {
+                            cid: this.id,
+                        }));
+                        const successMessage = ctx.i18n.t("main:starttls_established");
+                        const res = new LDAPMessage(
+                            message.messageID,
+                            {
+                                extendedResp: new ExtendedResponse(
+                                    LDAPResult_resultCode_success,
+                                    Buffer.alloc(0),
+                                    Buffer.from(successMessage, "utf-8"),
+                                    undefined,
+                                    encodeLDAPOID(startTLS),
+                                    undefined,
+                                ),
+                            },
+                            undefined,
+                        );
+                        this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                    }
                 } else if (oid.isEqualTo(whoAmI)) {
+                    const successMessage = ctx.i18n.t("main:success");
                     const res = new LDAPMessage(
                         message.messageID,
                         {
                             extendedResp: new ExtendedResponse(
                                 LDAPResult_resultCode_success,
                                 Buffer.alloc(0),
-                                Buffer.from("Success.", "utf-8"),
+                                Buffer.from(successMessage, "utf-8"),
                                 undefined,
                                 undefined,
                                 this.boundNameAndUID
@@ -463,13 +496,14 @@ class LDAPConnection extends ClientConnection {
                     );
                     this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                 } else {
+                    const errorMessage = ctx.i18n.t("err:unrecognized_ext_op");
                     const res = new LDAPMessage(
                         message.messageID,
                         {
                             extendedResp: new ExtendedResponse(
                                 LDAPResult_resultCode_protocolError,
                                 Buffer.alloc(0),
-                                Buffer.from("Extended operation not understood.", "utf-8"),
+                                Buffer.from(errorMessage, "utf-8"),
                                 undefined,
                                 undefined,
                                 undefined,
@@ -492,12 +526,11 @@ class LDAPConnection extends ClientConnection {
     constructor (
         readonly ctx: Context,
         readonly tcp: net.Socket,
+        readonly starttlsOptions?: tls.TLSSocketOptions,
     ) {
         super();
         this.socket = tcp;
-        this.socket.on("data", (data: Buffer): void => {
-            this.handleData(ctx, data);
-        });
+        this.socket.on("data", (data: Buffer): void => this.handleData(ctx, data));
     }
 
 }

@@ -1,4 +1,5 @@
 {
     "ping": "pong",
-    "success": "Success"
+    "success": "Success.",
+    "starttls_established": "StartTLS protection established."
 }

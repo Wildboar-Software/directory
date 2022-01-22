@@ -71,5 +71,9 @@
     "attempting_starttls": "Attempting STARTTLS with network address {{uri}}.",
     "established_starttls": "Established STARTTLS with network address {{uri}}.",
     "starttls_error@tls_optional": "Could not establish STARTTLS with network address {{uri}}. The connection will still be used, since TLS is optional. This was the error: {{e}}",
-    "starttls_error@tls_required": "Could not establish STARTTLS with network address {{uri}}. The connection will be discarded, since TLS is required. This was the error: {{e}}"
+    "starttls_error@tls_required": "Could not establish STARTTLS with network address {{uri}}. The connection will be discarded, since TLS is required. This was the error: {{e}}",
+    "starttls_established": "StartTLS protection established for connection {{cid}}.",
+    "received_ldap_request": "Received LDAP request of {{mid}} of type {{type}} from connection {{cid}}.",
+    "abandon_ldap_op": "Abandoning LDAP operation from message {{mid}}.",
+    "abandoning_invocation_from_ldap": "Abandoning invocation {{iid}}, which corresponds to LDAP message {{mid}}."
 }
