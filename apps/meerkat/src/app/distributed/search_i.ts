@@ -96,9 +96,6 @@ import {
 import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import {
-    readEntryInformation,
-} from "../database/entry/readEntryInformation";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import {
@@ -128,7 +125,6 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
-import valuesFromAttribute from "../x500/valuesFromAttribute";
 import attributesFromValues from "../x500/attributesFromValues";
 import {
     id_at_aliasedEntryName,
@@ -276,6 +272,7 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     depth: number;
     paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
     familyOnly?: boolean;
+    alreadyReturnedById: Set<number>;
 }
 
 function getNumberOfResultsInSearch (result: SearchResult): number {
@@ -1640,6 +1637,7 @@ async function search_i (
             } // End of matchedValuesOnly handling.
             if (separateFamilyMembers) {
                 const separateResults = Array.from(resultsById.values())
+                    .filter(([ vertex ]) => !searchState.alreadyReturnedById.has(vertex.dse.id))
                     .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]) => new EntryInformation(
                         {
                             rdnSequence: getDistinguishedName(vertex),
@@ -1654,6 +1652,10 @@ async function search_i (
                         FALSE, // FIXME: partialName
                         undefined,
                     ));
+                for (const id of resultsById.keys()) {
+                    searchState.alreadyReturnedById.add(id);
+                    searchState.paging?.[1].alreadyReturnedById.add(id);
+                }
                 searchState.results.push(...separateResults);
             } else {
                 const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
@@ -1671,6 +1673,7 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
+                searchState.alreadyReturnedById.add(rootResult[0].dse.id);
                 searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 searchState.results.push(
                     new EntryInformation(
@@ -1894,6 +1897,7 @@ async function search_i (
             } // End of matchedValuesOnly handling.
             if (separateFamilyMembers) {
                 const separateResults = Array.from(resultsById.values())
+                    .filter(([ vertex ]) => !searchState.alreadyReturnedById.has(vertex.dse.id))
                     .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]) => new EntryInformation(
                         {
                             rdnSequence: getDistinguishedName(vertex),
@@ -1908,6 +1912,10 @@ async function search_i (
                         FALSE, // FIXME: partialName
                         undefined,
                     ));
+                for (const id of resultsById.keys()) {
+                    searchState.alreadyReturnedById.add(id);
+                    searchState.paging?.[1].alreadyReturnedById.add(id);
+                }
                 searchState.results.push(...separateResults);
             } else {
                 const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
@@ -1925,6 +1933,7 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
+                searchState.alreadyReturnedById.add(rootResult[0].dse.id);
                 searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 searchState.results.push(
                     new EntryInformation(
