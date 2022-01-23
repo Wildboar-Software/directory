@@ -276,7 +276,6 @@ function handleIDM (
         try {
             const idm = new IDMConnection(c);
             attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, associations);
-            c.resume();
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
@@ -284,7 +283,9 @@ function handleIDM (
             c.destroy();
             startTimes.delete(c);
             associations.delete(c);
+            return;
         }
+        c.resume();
     };
 }
 
@@ -300,6 +301,8 @@ function handleLDAP (
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
         if (associations.size >= ctx.config.maxConnections) {
             c.destroy();
+            startTimes.delete(c);
+            associations.delete(c);
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
                 source,
                 max: ctx.config.maxConnections,
@@ -344,16 +347,50 @@ function handleLDAP (
             source,
             transport: (c instanceof tls.TLSSocket) ? "LDAPS" : "LDAP",
         }));
-        c.on("end", () => {
-            ctx.db.enqueuedSearchResult.deleteMany({
-                where: {
-                    connection_uuid: conn.id,
-                },
-            }).then().catch();
+
+        c.on("error", (e) => {
+            ctx.log.error(ctx.i18n.t("log:socket_error", {
+                source,
+                e: e.message,
+            }));
+            c.destroy();
+            startTimes.delete(c);
             associations.delete(c);
         });
-        const conn = new LDAPConnection(ctx, c);
-        associations.set(c, conn);
+
+        c.on("close", () => {
+            ctx.log.info(ctx.i18n.t("log:socket_closed", {
+                source,
+            }));
+            startTimes.delete(c);
+            associations.delete(c);
+        });
+
+        try {
+            const conn = new LDAPConnection(ctx, c);
+            c.on("end", () => {
+                ctx.db.enqueuedSearchResult.deleteMany({
+                    where: {
+                        connection_uuid: conn.id,
+                    },
+                }).then().catch();
+                ctx.db.enqueuedListResult.deleteMany({
+                    where: {
+                        connection_uuid: conn.id,
+                    },
+                }).then().catch();
+                associations.delete(c);
+            });
+            associations.set(c, conn);
+        } catch (e) {
+            ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
+                e: e.message,
+            }));
+            c.destroy();
+            startTimes.delete(c);
+            associations.delete(c);
+            return;
+        }
         c.resume();
     };
 }

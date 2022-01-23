@@ -2,7 +2,7 @@ import { Readable } from "stream";
 import * as net from "net";
 import { strict as assert } from "assert";
 
-// jest.setTimeout(5000);
+jest.setTimeout(5000);
 
 function sleep (ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -25,6 +25,34 @@ function *generateGiantIDMv1Packet (size: number = 10_000_000): IterableIterator
 }
 
 const giantIDMv1Packet = Readable.from(generateGiantIDMv1Packet());
+
+function *readSlowLorisIDMv1Packet (size: number = 10_000): IterableIterator<Buffer> {
+    yield Buffer.from([
+        // 0x02, // Version 2
+        0x01, // Version 1
+        0x01, // Final
+        // 0x00, 0x00, // Supported encodings
+    ]);
+    const lengthBytes = (Buffer.allocUnsafe(4))
+    lengthBytes.writeUInt32BE(size);
+    yield lengthBytes;
+    for (let i = 0; i < size; i += 1) {
+        yield Buffer.alloc(1);
+    }
+}
+
+function *readSlowLorisLDAPMessage (size: number = 10_000): IterableIterator<Buffer> {
+    yield Buffer.from([
+        0x30, // UNIVERSAL SEQUENCE
+        0x84, // Definite long form: the length is encoded on the next four bytes.
+    ]);
+    const lengthBytes = (Buffer.allocUnsafe(4))
+    lengthBytes.writeUInt32BE(size);
+    yield lengthBytes;
+    for (let i = 0; i < size; i += 1) {
+        yield Buffer.alloc(1);
+    }
+}
 
 function *generateGiantLDAPMessage (size: number = 10_000_000): IterableIterator<Buffer> {
     yield Buffer.from([
@@ -101,10 +129,6 @@ describe("Meerkat DSA", () => {
         }, () => {
             client.on("error", errorHandler);
             client.on("close", closeHandler);
-            client.on("end", () => {
-                giantIDMv1Packet.unpipe(client);
-                done();
-            });
             giantIDMv1Packet.on("end", () => {
                 assert(false);
             });
@@ -131,10 +155,6 @@ describe("Meerkat DSA", () => {
         }, () => {
             client.on("error", errorHandler);
             client.on("close", closeHandler);
-            client.on("end", () => {
-                giantLDAPMessage.unpipe(client);
-                done();
-            });
             giantLDAPMessage.on("end", () => {
                 assert(false);
             });
@@ -164,13 +184,39 @@ describe("Meerkat DSA", () => {
         });
     });
 
-    it.skip("Avoids denial of service by IDM-based Slow Loris Attacks", async () => {
+    it("Avoids denial of service by IDM-based Slow Loris Attacks", (done) => {
+        const closeHandler = () => {
+            done();
+        };
+        const client = net.createConnection({
+            host: HOST,
+            port: PORT,
+        }, async () => {
+            client.on("close", closeHandler);
+            // Write one byte of the payload per second.
+            for (const tinyChunk of readSlowLorisIDMv1Packet()) {
+                client.write(tinyChunk);
+                await sleep(1000);
+            }
+        });
+    }, 90000); // Timeout greater than one minute so slow loris protection kicks in.
 
-    });
-
-    it.skip("Avoids denial of service by LDAP-based Slow Loris Attacks", async () => {
-
-    });
+    it("Avoids denial of service by LDAP-based Slow Loris Attacks", (done) => {
+        const closeHandler = () => {
+            done();
+        };
+        const client = net.createConnection({
+            host: HOST,
+            port: LDAP_PORT,
+        }, async () => {
+            client.on("close", closeHandler);
+            // Write one byte of the payload per second.
+            for (const tinyChunk of readSlowLorisLDAPMessage()) {
+                client.write(tinyChunk);
+                await sleep(1000);
+            }
+        });
+    }, 90000); // Timeout greater than one minute so slow loris protection kicks in.
 
     it.todo("permits recycling of a TCP socket via IDM re-binding");
     it.todo("permits recycling of a TCP socket via LDAP re-binding");
