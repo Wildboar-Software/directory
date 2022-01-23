@@ -248,7 +248,14 @@ function handleIDM (
         });
         c.setNoDelay(ctx.config.tcp.noDelay);
         if (ctx.config.tcp.timeoutInSeconds) {
-            c.setTimeout(ctx.config.tcp.timeoutInSeconds);
+            c.setTimeout(ctx.config.tcp.timeoutInSeconds * 1000);
+            c.on("timeout", () => {
+                ctx.log.warn(ctx.i18n.t("log:tcp_timeout", {
+                    source,
+                    seconds: ctx.config.tcp.timeoutInSeconds,
+                }));
+                c.destroy();
+            });
         }
         ctx.log.info(ctx.i18n.t("log:transport_established", {
             source,
@@ -341,7 +348,14 @@ function handleLDAP (
         });
         c.setNoDelay(ctx.config.tcp.noDelay);
         if (ctx.config.tcp.timeoutInSeconds) {
-            c.setTimeout(ctx.config.tcp.timeoutInSeconds);
+            c.setTimeout(ctx.config.tcp.timeoutInSeconds * 1000);
+            c.on("timeout", () => {
+                ctx.log.warn(ctx.i18n.t("log:tcp_timeout", {
+                    source,
+                    seconds: ctx.config.tcp.timeoutInSeconds,
+                }));
+                c.destroy();
+            });
         }
         ctx.log.info(ctx.i18n.t("log:transport_established", {
             source,

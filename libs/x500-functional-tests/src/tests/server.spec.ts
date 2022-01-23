@@ -75,26 +75,20 @@ const LDAP_PORT: number = 1389;
 
 describe("Meerkat DSA", () => {
 
-    it.todo("Server comes online");
-    it.todo("Server shuts down gracefully");
-    it.todo("Server checks for updates successfully");
-    it.todo("Server hibernates when the sentinel indicates a security issues");
+    it.todo("Memory leaks do not occur");
+    it.todo("Requests are rejected when the DSA is hibernating");
 
-    it.skip("Memory leaks do not occur", async () => {
-
-    });
-
-    it.skip("An idle IDM socket is eventually closed", async () => {
-
-    });
-
-    it.skip("An idle TCP socket is eventually closed", async () => {
-
-    });
-
-    it.skip("An idle LDAP connection is eventually closed", async () => {
-
-    });
+    it("An idle TCP socket is eventually closed", (done) => {
+        const client = net.createConnection({
+            host: HOST,
+            port: PORT,
+        }, () => {});
+        // We need to make sure that TCP keep alive cannot be used to circumvent this, too!
+        client.setKeepAlive(true);
+        client.on("close", () => {
+            done();
+        });
+    }, 60000); // Meerkat DSA's default TCP timeout is 30s.
 
     it.skip("StartTLS cannot be used to recursively encapsulate traffic", async () => {
 
@@ -110,10 +104,6 @@ describe("Meerkat DSA", () => {
             }, () => {});
             await sleep(100);
         }
-    });
-
-    it.skip("Requests are rejected when the DSA is hibernating", async () => {
-
     });
 
     it("Avoids denial-of-service by large IDM packets", (done) => {
