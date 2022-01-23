@@ -25,6 +25,7 @@ import {
     AuthenticationLevel_basicLevels_level_simple,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import type { SecureVersion } from "tls";
+import * as fs from "fs";
 
 const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
     ? process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
@@ -155,21 +156,33 @@ const ctx: Context = {
                 : undefined,
             rejectUnauthorized: (process.env.MEERKAT_TLS_CLIENT_CERT_AUTH === "1"),
             requestCert: (process.env.MEERKAT_TLS_CLIENT_CERT_AUTH === "1"),
-            ca: process.env.MEERKAT_TLS_CA_FILE,
-            cert: process.env.MEERKAT_TLS_CERT_FILE,
-            key: process.env.MEERKAT_TLS_KEY_FILE,
-            crl: process.env.MEERKAT_TLS_CRL_FILE,
-            pfx: process.env.MEERKAT_TLS_PFX_FILE,
+            cert: process.env.MEERKAT_TLS_CERT_FILE
+                ? fs.readFileSync(process.env.MEERKAT_TLS_CERT_FILE, { encoding: "utf-8" })
+                : undefined,
+            key: process.env.MEERKAT_TLS_KEY_FILE
+                ? fs.readFileSync(process.env.MEERKAT_TLS_KEY_FILE, { encoding: "utf-8" })
+                : undefined,
+            ca: process.env.MEERKAT_TLS_CA_FILE
+                ? fs.readFileSync(process.env.MEERKAT_TLS_CA_FILE, { encoding: "utf-8" })
+                : undefined,
+            crl: process.env.MEERKAT_TLS_CRL_FILE
+                ? fs.readFileSync(process.env.MEERKAT_TLS_CRL_FILE, { encoding: "utf-8" })
+                : undefined,
+            pfx: process.env.MEERKAT_TLS_PFX_FILE
+                ? fs.readFileSync(process.env.MEERKAT_TLS_PFX_FILE)
+                : undefined,
             sigalgs: process.env.MEERKAT_TLS_SIG_ALGS,
             ciphers: process.env.MEERKAT_TLS_CIPHERS,
-            // clientCertEngine: process.env.MEERKAT_CLIENT_CERT_ENGINE,
-            // dhparam: process.env.MEERKAT_TLS_DH_PARAM, // FIXME: This is important.
+            clientCertEngine: process.env.MEERKAT_CLIENT_CERT_ENGINE,
+            dhparam: process.env.MEERKAT_TLS_DH_PARAM_FILE
+                ? fs.readFileSync(process.env.MEERKAT_TLS_DH_PARAM_FILE)
+                : undefined,
             ecdhCurve: process.env.MEERKAT_ECDH_CURVES,
             honorCipherOrder: (process.env.MEERKAT_HONOR_CIPHER_ORDER === "1"),
             minVersion: process.env.MEERKAT_TLS_MIN_VERSION as SecureVersion | undefined,
             maxVersion: process.env.MEERKAT_TLS_MAX_VERSION as SecureVersion | undefined,
             passphrase: process.env.MEERKAT_TLS_KEY_PASSPHRASE,
-            // privateKeyEngine: process.env.MEERKAT_PRIVATE_KEY_ENGINE,
+            privateKeyEngine: process.env.MEERKAT_PRIVATE_KEY_ENGINE,
             // ticketKeys?: Buffer | undefined;
             // pskCallback?(socket: TLSSocket, identity: string): DataView | NodeJS.TypedArray | null;
             // pskIdentityHint: process.env.MEERKAT_PSK_IDENTITY_HINT

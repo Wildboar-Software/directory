@@ -475,6 +475,7 @@ class LDAPConnection extends ClientConnection {
                             isServer: true,
                         });
                         ctx.log.debug(ctx.i18n.t("log:starttls_established", {
+                            context: "association",
                             cid: this.id,
                         }));
                         const successMessage = ctx.i18n.t("main:starttls_established");

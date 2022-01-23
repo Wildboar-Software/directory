@@ -34,6 +34,8 @@ import {
     TLSResponse,
     TLSResponse_success,
     TLSResponse_operationsError,
+    TLSResponse_protocolError,
+    TLSResponse_unavailable,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
 import type {
     Code,
@@ -77,96 +79,102 @@ class IDMConnection {
         return this.buffer.length;
     }
 
+    public protectedByTLS (): boolean {
+        return (this.socket instanceof tls.TLSSocket);
+    }
+
+    private handleData (data: Buffer): void {
+        this.buffer = Buffer.concat([ this.buffer, data ]);
+        while ((this.bufferIndex + this.awaitingBytes) <= this.buffer.length) {
+            switch (this.nextExpectedField) {
+            case (IDMSegmentField.version): {
+                const indicatedVersion = this.buffer.readUInt8(this.bufferIndex);
+                if (indicatedVersion === 1) {
+                    this.version = IDMVersion.v1;
+                    this.currentSegment.version = IDMVersion.v1;
+                } else if (indicatedVersion === 2) {
+                    this.version = IDMVersion.v2;
+                    this.currentSegment.version = IDMVersion.v2;
+                } else {
+                    this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
+                    return;
+                }
+                this.nextExpectedField = IDMSegmentField.final;
+                this.bufferIndex++;
+                break;
+            }
+            case (IDMSegmentField.final): {
+                this.currentSegment.final = Boolean(this.buffer.readUInt8(this.bufferIndex));
+                if (this.version === undefined) {
+                    // Invalid parser state.
+                    this.writeAbort(Abort_reasonNotSpecified).then(() => this.socket.destroy());
+                } else if (this.version === IDMVersion.v1) {
+                    this.nextExpectedField = IDMSegmentField.length;
+                    this.awaitingBytes = 4;
+                } else if (this.version === IDMVersion.v2) {
+                    this.nextExpectedField = IDMSegmentField.encoding;
+                    this.awaitingBytes = 2;
+                } else {
+                    this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
+                }
+                this.bufferIndex++;
+                break;
+            }
+            case (IDMSegmentField.encoding): {
+                this.currentSegment.encoding = this.buffer.readUInt16BE(this.bufferIndex); // REVIEW:
+                this.bufferIndex += 2;
+                this.nextExpectedField = IDMSegmentField.length;
+                this.awaitingBytes = 4;
+                break;
+            }
+            case (IDMSegmentField.length): {
+                this.currentSegment.length = this.buffer.readUInt32BE(this.bufferIndex); // REVIEW:
+                this.awaitingBytes = this.currentSegment.length;
+                this.bufferIndex += 4;
+                this.nextExpectedField = IDMSegmentField.data;
+                /**
+                 * The significance of this event is that it can be used
+                 * to abort an IDM connection if an inbound segment is
+                 * going to have an unacceptable size.
+                 */
+                this.events.emit("length", this.awaitingBytes);
+                break;
+            }
+            case (IDMSegmentField.data): {
+                assert(this.currentSegment.length !== undefined, "Invalid parser state.");
+                this.currentSegment.data = this.buffer.slice(
+                    this.bufferIndex,
+                    (this.bufferIndex + this.currentSegment.length),
+                );
+                this.currentSegments.push(this.currentSegment as IDMSegment);
+                if (this.currentSegment.final) {
+                    const pduBytes = Buffer.concat(this.currentSegments.map((s) => s.data));
+                    const ber = new BERElement();
+                    ber.fromBytes(pduBytes);
+                    this.handlePDU(_decode_IDM_PDU(ber));
+                    this.currentSegments = [];
+                }
+                this.buffer = this.buffer.slice(this.bufferIndex + this.currentSegment.length);
+                this.bufferIndex = 0;
+                this.currentSegment = {};
+                this.nextExpectedField = IDMSegmentField.version;
+                this.awaitingBytes = 1;
+                break;
+            }
+            default: {
+                this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
+                return;
+            }
+            }
+        }
+    };
+
     constructor (
         readonly s: net.Socket,
         readonly starttlsOptions?: tls.TLSSocketOptions,
     ) {
         this.socket = s;
-        this.socket.on("data", (data: Buffer) => {
-            this.buffer = Buffer.concat([ this.buffer, data ]);
-            while ((this.bufferIndex + this.awaitingBytes) <= this.buffer.length) {
-                switch (this.nextExpectedField) {
-                case (IDMSegmentField.version): {
-                    const indicatedVersion = this.buffer.readUInt8(this.bufferIndex);
-                    if (indicatedVersion === 1) {
-                        this.version = IDMVersion.v1;
-                        this.currentSegment.version = IDMVersion.v1;
-                    } else if (indicatedVersion === 2) {
-                        this.version = IDMVersion.v2;
-                        this.currentSegment.version = IDMVersion.v2;
-                    } else {
-                        this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
-                        return;
-                    }
-                    this.nextExpectedField = IDMSegmentField.final;
-                    this.bufferIndex++;
-                    break;
-                }
-                case (IDMSegmentField.final): {
-                    this.currentSegment.final = Boolean(this.buffer.readUInt8(this.bufferIndex));
-                    if (this.version === undefined) {
-                        // Invalid parser state.
-                        this.writeAbort(Abort_reasonNotSpecified).then(() => this.socket.destroy());
-                    } else if (this.version === IDMVersion.v1) {
-                        this.nextExpectedField = IDMSegmentField.length;
-                        this.awaitingBytes = 4;
-                    } else if (this.version === IDMVersion.v2) {
-                        this.nextExpectedField = IDMSegmentField.encoding;
-                        this.awaitingBytes = 2;
-                    } else {
-                        this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
-                    }
-                    this.bufferIndex++;
-                    break;
-                }
-                case (IDMSegmentField.encoding): {
-                    this.currentSegment.encoding = this.buffer.readUInt16BE(this.bufferIndex); // REVIEW:
-                    this.bufferIndex += 2;
-                    this.nextExpectedField = IDMSegmentField.length;
-                    this.awaitingBytes = 4;
-                    break;
-                }
-                case (IDMSegmentField.length): {
-                    this.currentSegment.length = this.buffer.readUInt32BE(this.bufferIndex); // REVIEW:
-                    this.awaitingBytes = this.currentSegment.length;
-                    this.bufferIndex += 4;
-                    this.nextExpectedField = IDMSegmentField.data;
-                    /**
-                     * The significance of this event is that it can be used
-                     * to abort an IDM connection if an inbound segment is
-                     * going to have an unacceptable size.
-                     */
-                    this.events.emit("length", this.awaitingBytes);
-                    break;
-                }
-                case (IDMSegmentField.data): {
-                    assert(this.currentSegment.length !== undefined, "Invalid parser state.");
-                    this.currentSegment.data = this.buffer.slice(
-                        this.bufferIndex,
-                        (this.bufferIndex + this.currentSegment.length),
-                    );
-                    this.currentSegments.push(this.currentSegment as IDMSegment);
-                    if (this.currentSegment.final) {
-                        const pduBytes = Buffer.concat(this.currentSegments.map((s) => s.data));
-                        const ber = new BERElement();
-                        ber.fromBytes(pduBytes);
-                        this.handlePDU(_decode_IDM_PDU(ber));
-                        this.currentSegments = [];
-                    }
-                    this.buffer = this.buffer.slice(this.bufferIndex + this.currentSegment.length);
-                    this.bufferIndex = 0;
-                    this.currentSegment = {};
-                    this.nextExpectedField = IDMSegmentField.version;
-                    this.awaitingBytes = 1;
-                    break;
-                }
-                default: {
-                    this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
-                    return;
-                }
-                }
-            }
-        });
+        this.socket.on("data", (data: Buffer) => this.handleData(data));
     }
 
     public close (): void {
@@ -174,7 +182,7 @@ class IDMConnection {
         this.socket.destroy();
     }
 
-    private handlePDU (pdu: IDM_PDU): void {
+    private async handlePDU (pdu: IDM_PDU): Promise<void> {
         if ("bind" in pdu) {
             this.events.emit("bind", pdu.bind);
         } else if ("bindResult" in pdu) {
@@ -209,17 +217,35 @@ class IDMConnection {
             this.events.emit("abort", pdu.abort);
         } else if ("startTLS" in pdu) {
             this.events.emit("startTLS", pdu.startTLS);
+            if ((!this.starttlsOptions?.key || !this.starttlsOptions.cert) && !this.starttlsOptions?.pfx) {
+                // TLS is not configured.
+                this.writeTLSResponse(TLSResponse_protocolError)
+                    .catch((e) => this.events.emit("socketError", e));
+                return;
+            }
             if (this.socket instanceof tls.TLSSocket) {
                 // TLS is already in use.
-                this.writeTLSResponse(TLSResponse_operationsError);
+                this.writeTLSResponse(TLSResponse_operationsError)
+                    .catch((e) => this.events.emit("socketError", e));
                 return;
             }
             this.resetState();
-            this.writeTLSResponse(TLSResponse_success);
-            this.socket = new tls.TLSSocket(this.socket, {
-                ...(this.starttlsOptions ?? {}),
-                isServer: true,
-            });
+            const plainSocket = this.socket;
+            plainSocket.removeAllListeners("data");
+            try {
+                const encryptedSocket = new tls.TLSSocket(plainSocket, {
+                    ...(this.starttlsOptions ?? {}),
+                    isServer: true,
+                });
+                // NOTE: secureConnect is not emitted when the TLSSocket() constructor is used.
+                encryptedSocket.on("data", (data: Buffer) => this.handleData(data));
+                encryptedSocket.on("error", (e) => this.events.emit("socketError", e));
+                this.writeTLSResponse(TLSResponse_success);
+                this.socket = encryptedSocket;
+            } catch (e) {
+                this.writeTLSResponse(TLSResponse_unavailable)
+                    .catch((e) => this.events.emit("socketError", e));
+            }
         } else if ("tLSResponse" in pdu) {
             this.events.emit("tLSResponse", pdu.tLSResponse);
             if ((this.socket instanceof tls.TLSSocket) || !this.startTLSRequested) {
@@ -227,9 +253,16 @@ class IDMConnection {
                 return;
             }
             if (pdu.tLSResponse === TLSResponse_success) { // Success
-                this.socket = new tls.TLSSocket(this.socket, {
+                this.socket.removeAllListeners("data");
+                this.socket.removeAllListeners("error");
+                const encryptedSocket = tls.connect({
                     ...(this.starttlsOptions ?? {}),
-                    isServer: false,
+                    socket: this.socket,
+                });
+                encryptedSocket.on("secureConnect", () => {
+                    encryptedSocket.on("error", (e) => this.events.emit("socketError", e));
+                    encryptedSocket.on("data", (data: Buffer) => this.handleData(data));
+                    this.socket = encryptedSocket;
                 });
             }
         } else {

@@ -22,9 +22,7 @@ import {
 import {
     dap_ip,
 } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
-import {
-    IDMConnection,
-} from "@wildboar/idm";
+import { IDMConnection } from "@wildboar/idm";
 import {
     addEntry,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";

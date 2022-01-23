@@ -72,7 +72,8 @@
     "established_starttls": "Established STARTTLS with network address {{uri}}.",
     "starttls_error@tls_optional": "Could not establish STARTTLS with network address {{uri}}. The connection will still be used, since TLS is optional. This was the error: {{e}}",
     "starttls_error@tls_required": "Could not establish STARTTLS with network address {{uri}}. The connection will be discarded, since TLS is required. This was the error: {{e}}",
-    "starttls_established": "StartTLS protection established for connection {{cid}}.",
+    "starttls_established@association": "Connection {{cid}} used StartTLS to enable TLS.",
+    "starttls_established@transport": "TCP connection from {{source}} used StartTLS to enable TLS.",
     "received_ldap_request": "Received LDAP request of {{mid}} of type {{type}} from connection {{cid}}.",
     "abandon_ldap_op": "Abandoning LDAP operation from message {{mid}}.",
     "abandoning_invocation_from_ldap": "Abandoning invocation {{iid}}, which corresponds to LDAP message {{mid}}.",
@@ -81,5 +82,6 @@
     "buffer_limit": "TCP connection from {{source}} did or would have exceeded the configured {{protocol}} buffer size of {{size}} bytes. The socket will be closed.",
     "non_ldap_data": "TCP connection from {{source}} sent data that did not appear to be an LDAP message, judging by the first byte: 0x{{hexbyte}}.",
     "slow_loris": "TCP connection from {{source}} sent data slower than {{bps}} bytes per second and was disconnected to prevent a Slow Loris attack.",
-    "tcp_timeout": "TCP connection from {{source}} timed out after {{seconds}} of inactivity and was disconnected."
+    "tcp_timeout": "TCP connection from {{source}} timed out after {{seconds}} of inactivity and was disconnected.",
+    "double_starttls": "TCP connection from {{source}} attempted a double-StartTLS. This may have been attempted hacking."
 }

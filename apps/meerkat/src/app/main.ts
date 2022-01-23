@@ -140,7 +140,27 @@ function attachUnboundEventListenersToIDMConnection (
     source: string, // Just to avoid recalculating this.
     idm: IDMConnection,
     associations: Map<net.Socket, ClientConnection | null>,
+    startTimes: Map<net.Socket, Date>,
 ) {
+    idm.events.on("startTLS", () => {
+        if (idm.protectedByTLS()) {
+            ctx.log.warn(ctx.i18n.t("log:double_starttls", { source }));
+        } else {
+            ctx.log.debug(ctx.i18n.t("log:starttls_established", {
+                source,
+                context: "transport",
+            }));
+        }
+    });
+    idm.events.on("socketError", (e) => {
+        ctx.log.error(ctx.i18n.t("log:socket_error", {
+            source,
+            e,
+        }));
+        idm.s.destroy();
+        startTimes.delete(idm.s);
+        associations.delete(idm.s);
+    });
     /**
      * This is an extremely important operation for security.
      * Without this, nefarious users could anonymously submit
@@ -149,8 +169,15 @@ function attachUnboundEventListenersToIDMConnection (
      */
     idm.events.on("length", getIDMLengthGate(ctx, idm, source));
     const handleWrongSequence = () => {
-        idm.writeAbort(Abort_unboundRequest).then(() => idm.events.emit("unbind", null)).catch();
-        associations.delete(idm.s);
+        idm.writeAbort(Abort_unboundRequest)
+            .then(() => {
+                idm.s.destroy();
+            })
+            .catch()
+            .finally(() => {
+                startTimes.delete(idm.s);
+                associations.delete(idm.s);
+            });
     };
     idm.events.on("request", handleWrongSequence);
     idm.events.on("bind", (idmBind: IdmBind) => {
@@ -160,8 +187,15 @@ function attachUnboundEventListenersToIDMConnection (
                 source,
                 protocol: idmBind.protocolID.toString(),
             }))
-            idm.writeAbort(Abort_reasonNotSpecified).then(() => idm.events.emit("unbind", null)).catch();
-            associations.delete(originalSocket);
+            idm.writeAbort(Abort_reasonNotSpecified)
+                .then(() => {
+                    idm.s.destroy();
+                })
+                .catch()
+                .finally(() => {
+                    startTimes.delete(idm.s);
+                    associations.delete(idm.s);
+                });
             return;
         }
         if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
@@ -192,7 +226,8 @@ function attachUnboundEventListenersToIDMConnection (
         // c.destroy(); You don't actually have to close the TCP connection. It could be recycled.
         associations.set(originalSocket, null);
         idm.events.removeAllListeners();
-        attachUnboundEventListenersToIDMConnection(ctx, originalSocket, source, idm, associations); // Recursive, but not really.
+        // Recursive, but not really.
+        attachUnboundEventListenersToIDMConnection(ctx, originalSocket, source, idm, associations, startTimes);
     });
 }
 
@@ -281,8 +316,8 @@ function handleIDM (
         });
 
         try {
-            const idm = new IDMConnection(c);
-            attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, associations);
+            const idm = new IDMConnection(c, ctx.config.tls);
+            attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, associations, startTimes);
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
@@ -525,21 +560,6 @@ async function main (): Promise<void> {
     const tlsOptions: tls.TlsOptions = {
         ...ctx.config.tls,
         enableTrace: isDebugging,
-        ca: ctx.config.tls.ca
-            ? await fs.readFile(ctx.config.tls.ca as string, { encoding: "utf-8" })
-            : undefined,
-        cert: ctx.config.tls.cert
-            ? await fs.readFile(ctx.config.tls.cert as string, { encoding: "utf-8" })
-            : undefined,
-        key: ctx.config.tls.key
-            ? await fs.readFile(ctx.config.tls.key as string)
-            : undefined,
-        crl: ctx.config.tls.crl
-            ? await fs.readFile(ctx.config.tls.crl as string)
-            : undefined,
-        pfx: ctx.config.tls.pfx
-            ? await fs.readFile(ctx.config.tls.ca as string)
-            : undefined,
     };
 
     /**
@@ -566,8 +586,10 @@ async function main (): Promise<void> {
     }
     if (
         ctx.config.idms.port
-        && ctx.config.tls.cert
-        && ctx.config.tls.key
+        && (
+            (ctx.config.tls.cert && ctx.config.tls.key)
+            || ctx.config.tls.pfx
+        )
     ) {
         const idmsServer = tls.createServer(tlsOptions, handleIDM(ctx, associations, startTimes));
         idmsServer.on("error", (err) => {
@@ -594,8 +616,10 @@ async function main (): Promise<void> {
     }
     if (
         ctx.config.ldaps.port
-        && ctx.config.tls.cert
-        && ctx.config.tls.key
+        && (
+            (ctx.config.tls.cert && ctx.config.tls.key)
+            || ctx.config.tls.pfx
+        )
     ) {
         const ldapsServer = tls.createServer(tlsOptions, handleLDAP(ctx, associations, startTimes));
         ldapsServer.listen(ctx.config.ldaps.port, async () => {
