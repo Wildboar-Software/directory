@@ -452,9 +452,12 @@ interface NetworkService {
 export
 interface Configuration {
     maxConnections: number;
+    maxConnectionsPerAddress: number;
     tcp: {
         noDelay: boolean;
         timeoutInSeconds: number;
+        // This is primarily to protect against Slow Loris attacks.
+        minimumTransferSpeedInBytesPerMinute: number;
     };
     tls: TlsOptions;
     idm: NetworkService & {

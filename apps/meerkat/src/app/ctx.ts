@@ -134,11 +134,17 @@ const ctx: Context = {
         maxConnections: process.env.MEERKAT_MAX_CONNECTIONS
             ? Number.parseInt(process.env.MEERKAT_MAX_CONNECTIONS)
             : 250,
+        maxConnectionsPerAddress: process.env.MEERKAT_MAX_CONNECTIONS_PER_ADDRESS
+            ? Number.parseInt(process.env.MEERKAT_MAX_CONNECTIONS_PER_ADDRESS)
+            : Infinity,
         tcp: {
             noDelay: (process.env.MEERKAT_TCP_NO_DELAY === "1"),
             timeoutInSeconds: process.env.MEERKAT_TCP_TIMEOUT_IN_SECONDS
                 ? Number.parseInt(process.env.MEERKAT_TCP_TIMEOUT_IN_SECONDS)
                 : 0, // 0 means do not timeout.
+            minimumTransferSpeedInBytesPerMinute: process.env.MEERKAT_MIN_TRANSFER_SPEED_BYTES_PER_MINUTE
+                ? Number.parseInt(process.env.MEERKAT_MIN_TRANSFER_SPEED_BYTES_PER_MINUTE)
+                : 1000, // A sensible default, since AX.25 radio typically transmits 150 bytes/second.
         },
         tls: {
             handshakeTimeout: process.env.MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS

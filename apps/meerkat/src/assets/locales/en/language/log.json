@@ -77,6 +77,8 @@
     "abandon_ldap_op": "Abandoning LDAP operation from message {{mid}}.",
     "abandoning_invocation_from_ldap": "Abandoning invocation {{iid}}, which corresponds to LDAP message {{mid}}.",
     "tcp_max_conn": "TCP connection from {{source}} turned away because the maximum configured number of connections ({{max}}) has been reached.",
+    "tcp_max_conn_per_addr": "TCP connection from {{source}} turned away because the maximum configured number of connections ({{max}}) per address has been reached.",
     "buffer_limit": "TCP connection from {{source}} did or would have exceeded the configured {{protocol}} buffer size of {{size}} bytes. The socket will be closed.",
-    "non_ldap_data": "TCP connection from {{source}} sent data that did not appear to be an LDAP message, judging by the first byte: 0x{{hexbyte}}."
+    "non_ldap_data": "TCP connection from {{source}} sent data that did not appear to be an LDAP message, judging by the first byte: 0x{{hexbyte}}.",
+    "slow_loris": "TCP connection from {{source}} sent data slower than {{bps}} bytes per second and was disconnected to prevent a Slow Loris attack."
 }

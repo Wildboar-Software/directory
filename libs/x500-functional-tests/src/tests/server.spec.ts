@@ -4,6 +4,10 @@ import { strict as assert } from "assert";
 
 // jest.setTimeout(5000);
 
+function sleep (ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // FIXME: It seemed like IDM v2 had some strange issue.
 function *generateGiantIDMv1Packet (size: number = 10_000_000): IterableIterator<Buffer> {
     yield Buffer.from([
@@ -68,8 +72,16 @@ describe("Meerkat DSA", () => {
 
     });
 
+    // Manual-testing only.
     it.skip("The DSA refuses an excessive number of connections from the same remote address", async () => {
-
+        for (let i = 0; i < 100; i++) {
+            console.log(i);
+            net.createConnection({
+                host: HOST,
+                port: PORT,
+            }, () => {});
+            await sleep(100);
+        }
     });
 
     it.skip("Requests are rejected when the DSA is hibernating", async () => {
@@ -133,7 +145,7 @@ describe("Meerkat DSA", () => {
         });
     });
 
-    it.only("Rejects any LDAP data that does not start with 0x30 (UNIVERSAL SEQUENCE)", (done) => {
+    it("Rejects any LDAP data that does not start with 0x30 (UNIVERSAL SEQUENCE)", (done) => {
         const errorHandler = jest.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
