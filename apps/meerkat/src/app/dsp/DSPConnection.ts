@@ -253,22 +253,11 @@ class DSPConnection extends ClientConnection {
                 connection_uuid: this.id,
             },
         });
-        try {
-            this.idm.close();
-        } catch (e) {
-            this.ctx.log.warn(this.ctx.i18n.t("log:error_closing_connection", {
-                ctype: DSPConnection.name,
-                cid: this.id,
-                e: e.message,
-                transport: "IDM",
-            }));
-        } finally {
-            this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
-                ctype: DSPConnection.name,
-                cid: this.id,
-                protocol: "DSP",
-            }));
-        }
+        this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
+            ctype: DSPConnection.name,
+            cid: this.id,
+            protocol: "DSP",
+        }));
     }
 
     constructor (

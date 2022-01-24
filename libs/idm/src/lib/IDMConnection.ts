@@ -6,14 +6,15 @@ import IDMSegmentField from "./IDMSegmentField";
 import IDMSegment from "./IDMSegment";
 import { BERElement, ASN1Element, INTEGER, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
-    Request,
-    IdmResult,
     IDM_PDU,
     _decode_IDM_PDU,
     _encode_IDM_PDU,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
 import { Error as IDMError } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Error.ta";
 import { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject.ta";
+import { IdmResult } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmResult.ta";
+import { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
+import { Unbind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Unbind.ta";
 import {
     Abort,
     Abort_invalidPDU,
@@ -387,6 +388,14 @@ class IDMConnection {
         const result = new IdmResult(invokeID, opcode, resultValue);
         const idm: IDM_PDU = {
             result,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeUnbind (): Promise<void> {
+        const unbind: Unbind = null;
+        const idm: IDM_PDU = {
+            unbind,
         };
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }

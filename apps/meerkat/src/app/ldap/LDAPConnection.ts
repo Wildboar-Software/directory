@@ -458,7 +458,7 @@ class LDAPConnection extends ClientConnection {
                                 extendedResp: new ExtendedResponse(
                                     LDAPResult_resultCode_operationsError,
                                     Buffer.alloc(0),
-                                    Buffer.from(errorMessage, "utf-8"), // FIXME: Internationalize
+                                    Buffer.from(errorMessage, "utf-8"),
                                     undefined,
                                     encodeLDAPOID(startTLS),
                                     undefined,

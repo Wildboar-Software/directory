@@ -2,7 +2,7 @@ import { Readable } from "stream";
 import * as net from "net";
 import { strict as assert } from "assert";
 import { ASN1Element } from "asn1-ts";
-import { BER } from "asn1-ts/dist/node/functional";
+import { BER, DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import { IDMConnection } from "@wildboar/idm";
 import {
     DirectoryBindArgument,
@@ -21,6 +21,80 @@ import {
     TLSResponse_success,
     TLSResponse_operationsError,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import {
+    commonName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import {
+    _encode_UnboundedDirectoryString,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+import {
+    applicationProcess,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
+import {
+    administrativeRole,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+import {
+    objectClass,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import {
+    id_ar_autonomousArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import type {
+    Code,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+import * as crypto from "crypto";
+import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import {
+    addEntry,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+import {
+    AddEntryArgument,
+    _encode_AddEntryArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+import {
+    AddEntryArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+import {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    RelativeDistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import {
+    read,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
+import {
+    ReadArgument,
+    _encode_ReadArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+import {
+    ReadArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
+import { LDAPSocket } from "@wildboar/ldap-socket";
+import {
+    LDAPMessage,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
+import {
+    LDAPResult_resultCode_success,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
+import {
+    BindRequest,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindRequest.ta";
+import {
+    SearchRequest,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest.ta";
+import {
+    SearchRequest_scope_baseObject,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
+import {
+    SearchRequest_derefAliases_neverDerefAliases,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-derefAliases.ta";
 
 jest.setTimeout(5000);
 
@@ -136,6 +210,156 @@ async function connect (): Promise<IDMConnection> {
         });
     });
     return idm;
+}
+
+async function reconnect (socket: net.Socket): Promise<IDMConnection> {
+    const dba = new DirectoryBindArgument(
+        undefined,
+        undefined,
+    );
+    const dapBind = {
+        bind: new IdmBind(
+            dap_ip["&id"]!,
+            undefined,
+            undefined,
+            _encode_DirectoryBindArgument(dba, BER),
+        ),
+    };
+    socket.write(frame(_encode_IDM_PDU(dapBind, BER)));
+    const idm = new IDMConnection(socket, {
+        rejectUnauthorized: false, // Just to ignore cert issues for the moment.
+    });
+    await new Promise((resolve, reject) => {
+        idm.events.once("bindError", (err) => {
+            reject(err);
+        });
+        idm.events.once("bindResult", (result) => {
+            resolve(result);
+        });
+    });
+    return idm;
+}
+
+function writeOperation(
+    connection: IDMConnection,
+    opCode: Code,
+    argument: ASN1Element,
+): Promise<ResultOrError> {
+    const invokeID = crypto.randomInt(1_000_000);
+    return new Promise((resolve) => {
+        connection.events.on(invokeID.toString(), (roe: ResultOrError) => {
+            if ("error" in roe) {
+                resolve(roe);
+            } else {
+                resolve({
+                    invokeId: {
+                        present: invokeID,
+                    },
+                    opCode: opCode,
+                    result: roe.result,
+                });
+            }
+        });
+        connection.writeRequest(
+            invokeID,
+            opCode,
+            argument,
+        );
+    });
+}
+
+
+function createAddEntryArguments(
+    dn: DistinguishedName,
+    attributes: Attribute[],
+): AddEntryArgument {
+    const reqData = new AddEntryArgumentData(
+        {
+            rdnSequence: dn,
+        },
+        attributes,
+    );
+    const arg: AddEntryArgument = {
+        unsigned: reqData,
+    };
+    return arg;
+}
+
+function createTestRDN (str: string): RelativeDistinguishedName {
+    const encodedCN = _encode_UnboundedDirectoryString({
+        uTF8String: str,
+    }, DER);
+    return [
+        new AttributeTypeAndValue(
+            commonName["&id"]!,
+            encodedCN,
+        ),
+    ];
+}
+
+function createTestRootDN(
+    testId: string,
+): DistinguishedName {
+    return [
+        createTestRDN(testId),
+    ];
+}
+
+async function createTestRootNode(
+    connection: IDMConnection,
+    testId: string,
+): Promise<ResultOrError> {
+    const encodedCN = _encode_UnboundedDirectoryString({
+        uTF8String: testId,
+    }, DER);
+
+    const addTestRoot = createAddEntryArguments(
+        createTestRootDN(testId),
+        [
+            new Attribute(
+                administrativeRole["&id"],
+                [
+                    _encodeObjectIdentifier(id_ar_autonomousArea, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(applicationProcess["&id"], DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                commonName["&id"],
+                [
+                    encodedCN,
+                ],
+                undefined,
+            ),
+        ],
+    );
+    const invokeID = crypto.randomInt(1_000_000);
+    return new Promise((resolve) => {
+        connection.events.on(invokeID.toString(), (roe: ResultOrError) => {
+            if ("error" in roe) {
+                resolve(roe);
+            } else {
+                resolve({
+                    invokeId: {
+                        present: invokeID,
+                    },
+                    opCode: addEntry["&operationCode"]!,
+                    result: roe.result,
+                });
+            }
+        });
+        connection!.writeRequest(
+            invokeID,
+            addEntry["&operationCode"]!,
+            _encode_AddEntryArgument(addTestRoot, DER),
+        );
+    });
 }
 
 describe("Meerkat DSA", () => {
@@ -254,7 +478,7 @@ describe("Meerkat DSA", () => {
         });
     });
 
-    it("Avoids denial of service by IDM-based Slow Loris Attacks", (done) => {
+    it.only("Avoids denial of service by IDM-based Slow Loris Attacks", (done) => {
         const closeHandler = () => {
             done();
         };
@@ -288,7 +512,136 @@ describe("Meerkat DSA", () => {
         });
     }, 90000); // Timeout greater than one minute so slow loris protection kicks in.
 
-    it.todo("permits recycling of a TCP socket via IDM re-binding");
-    it.todo("permits recycling of a TCP socket via LDAP re-binding");
+    it("permits recycling of a TCP socket via IDM re-binding", async () => {
+        const idm = await connect();
+        idm.writeUnbind();
+        await sleep(1000);
+        const idm2 = await reconnect(idm.s);
+        const testId = `idm.rebinding-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(idm2!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            idm2!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+    });
+
+    it("permits recycling of a TCP socket via LDAP re-binding", async () => {
+        const socket = net.createConnection({
+            host: HOST,
+            port: LDAP_PORT,
+        });
+        const ldapSocket = new LDAPSocket(socket);
+        await new Promise<void>((resolve, reject) => {
+            ldapSocket.on("connect", () => {
+                ldapSocket.on("1", (message: LDAPMessage) => {
+                    if (
+                        ("bindResponse" in message.protocolOp)
+                        && (message.protocolOp.bindResponse.resultCode === LDAPResult_resultCode_success)
+                    ) {
+                        resolve();
+                    } else {
+                        reject();
+                    }
+                });
+                ldapSocket.writeMessage(new LDAPMessage(
+                    1,
+                    {
+                        bindRequest: new BindRequest(
+                            3,
+                            new Uint8Array(),
+                            {
+                                simple: new Uint8Array(),
+                            },
+                        ),
+                    },
+                    undefined,
+                ));
+            });
+        });
+
+        ldapSocket.writeMessage(new LDAPMessage(
+            2,
+            {
+                unbindRequest: null,
+            },
+            undefined,
+        ));
+
+        await sleep(1000); // There is no response for unbind.
+
+        await new Promise<void>((resolve, reject) => {
+            ldapSocket.on("3", (message: LDAPMessage) => {
+                if (
+                    ("bindResponse" in message.protocolOp)
+                    && (message.protocolOp.bindResponse.resultCode === LDAPResult_resultCode_success)
+                ) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            });
+            ldapSocket.writeMessage(new LDAPMessage(
+                3,
+                {
+                    bindRequest: new BindRequest(
+                        3,
+                        new Uint8Array(),
+                        {
+                            simple: new Uint8Array(),
+                        },
+                    ),
+                },
+                undefined,
+            ));
+        });
+
+        await new Promise<void>((resolve, reject) => {
+            ldapSocket.on("4", (message: LDAPMessage) => {
+                if (
+                    ("searchResDone" in message.protocolOp)
+                    || ("searchResEntry" in message.protocolOp)
+                    // && (message.protocolOp.searchResDone.resultCode === LDAPResult_resultCode_success)
+                ) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            });
+            ldapSocket.writeMessage(new LDAPMessage(
+                4,
+                {
+                    searchRequest: new SearchRequest(
+                        Buffer.from("cn=subschema", "utf-8"),
+                        SearchRequest_scope_baseObject,
+                        SearchRequest_derefAliases_neverDerefAliases,
+                        1,
+                        0,
+                        false,
+                        {
+                            and: [],
+                        },
+                        [Buffer.from("*", "utf-8")],
+                    ),
+                },
+                undefined,
+            ));
+        });
+
+        // If it made it this far, the test passed.
+    });
 
 });
