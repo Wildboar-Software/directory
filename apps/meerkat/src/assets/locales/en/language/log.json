@@ -83,5 +83,7 @@
     "non_ldap_data": "TCP connection from {{source}} sent data that did not appear to be an LDAP message, judging by the first byte: 0x{{hexbyte}}.",
     "slow_loris": "TCP connection from {{source}} sent data slower than {{bps}} bytes per second and was disconnected to prevent a Slow Loris attack.",
     "tcp_timeout": "TCP connection from {{source}} timed out after {{seconds}} of inactivity and was disconnected.",
-    "double_starttls": "TCP connection from {{source}} attempted a double-StartTLS. This may have been attempted hacking."
+    "double_starttls": "TCP connection from {{source}} attempted a double-StartTLS. This may have been attempted hacking.",
+    "unusual_message_id": "LDAP message from {{source}} had an unusually large or negative message ID.",
+    "unusual_invoke_id": "IDM operation from connection {{cid}} from had an unusually large or negative invoke ID."
 }

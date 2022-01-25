@@ -373,6 +373,15 @@ class LDAPConnection extends ClientConnection {
                 return;
             }
 
+            if ((message.messageID > 2147483647) || (message.messageID < 0)) {
+                const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
+                ctx.log.warn(ctx.i18n.t("log:unusual_message_id", {
+                    source,
+                }));
+                this.socket.destroy();
+                return;
+            }
+
             if ("bindRequest" in message.protocolOp) {
                 const req = message.protocolOp.bindRequest;
                 const startBindTime = new Date();

@@ -44,6 +44,7 @@ import {
     Abort_unboundRequest,
     Abort_invalidProtocol,
     Abort_reasonNotSpecified,
+    Abort_invalidPDU,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import { bind as doBind } from "../authn/dsaBind";
 import {
@@ -108,6 +109,17 @@ async function handleRequestAndErrors (
     dsp: DSPConnection, // eslint-disable-line
     request: Request,
 ): Promise<void> {
+    if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
+        ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
+            cid: dsp.id,
+        }));
+        dsp.idm.writeAbort(Abort_invalidPDU);
+        return;
+    }
+    if (dsp.invocations.has(Number(request.invokeID))) {
+        await dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        return;
+    }
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
@@ -127,10 +139,6 @@ async function handleRequestAndErrors (
         startTime: new Date(),
         events: new EventEmitter(),
     };
-    if (dsp.invocations.has(Number(request.invokeID))) {
-        await dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
-        return;
-    }
     dsp.invocations.set(Number(request.invokeID), info);
     try {
         await handleRequest(ctx, dsp, request, stats);

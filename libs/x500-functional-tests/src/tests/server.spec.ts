@@ -95,6 +95,15 @@ import {
 import {
     SearchRequest_derefAliases_neverDerefAliases,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-derefAliases.ta";
+import {
+    list,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
+import {
+    _encode_ListArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+import {
+    ListArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
 
 jest.setTimeout(5000);
 
@@ -478,7 +487,7 @@ describe("Meerkat DSA", () => {
         });
     });
 
-    it.only("Avoids denial of service by IDM-based Slow Loris Attacks", (done) => {
+    it("Avoids denial of service by IDM-based Slow Loris Attacks", (done) => {
         const closeHandler = () => {
             done();
         };
@@ -640,8 +649,121 @@ describe("Meerkat DSA", () => {
                 undefined,
             ));
         });
-
         // If it made it this far, the test passed.
+    });
+
+    it("Rejects LDAP messages having a negative messageID", (done) => {
+        const NAUGHTY_ID: number = -1;
+        const socket = net.createConnection({
+            host: HOST,
+            port: LDAP_PORT,
+        });
+        const ldapSocket = new LDAPSocket(socket);
+        ldapSocket.on("close", () => {
+            done();
+        });
+        ldapSocket.on(NAUGHTY_ID.toString(), () => {
+            assert(false, "");
+        });
+        ldapSocket.on("connect", () => {
+            ldapSocket.writeMessage(new LDAPMessage(
+                NAUGHTY_ID,
+                {
+                    bindRequest: new BindRequest(
+                        3,
+                        new Uint8Array(),
+                        {
+                            simple: new Uint8Array(),
+                        },
+                    ),
+                },
+                undefined,
+            ));
+        });
+    });
+
+    it("Rejects LDAP messages having an excessively large messageID", (done) => {
+        const NAUGHTY_ID: number = Number.MAX_SAFE_INTEGER - 5;
+        const socket = net.createConnection({
+            host: HOST,
+            port: LDAP_PORT,
+        });
+        const ldapSocket = new LDAPSocket(socket);
+        ldapSocket.on("close", () => {
+            done();
+        });
+        ldapSocket.on(NAUGHTY_ID.toString(), () => {
+            assert(false, "");
+        });
+        ldapSocket.on("connect", () => {
+            ldapSocket.writeMessage(new LDAPMessage(
+                NAUGHTY_ID,
+                {
+                    bindRequest: new BindRequest(
+                        3,
+                        new Uint8Array(),
+                        {
+                            simple: new Uint8Array(),
+                        },
+                    ),
+                },
+                undefined,
+            ));
+        });
+    });
+
+    it("Rejects IDM requests having a negative invokeID", (done) => {
+        const NAUGHTY_ID: number = -1;
+        connect()
+            .then((idm) => {
+                idm.events.on("result", () => {
+                    assert(false, "This should not have returned a result. It should have rejected, aborted, or disconnected.");
+                });
+                idm.events.on("reject", () => {
+                    done();
+                });
+                idm.events.on("abort", () => {
+                    done();
+                });
+                idm.writeRequest(
+                    NAUGHTY_ID,
+                    list["&operationCode"]!,
+                    _encode_ListArgument({
+                        unsigned: new ListArgumentData(
+                            {
+                                rdnSequence: [],
+                            },
+                        ),
+                    }, DER),
+                );
+            });
+    });
+
+    it("Rejects IDM requests having an excessively large invokeID", (done) => {
+        const NAUGHTY_ID: bigint = BigInt("3846092359682309568092358602835632562356029");
+        connect()
+            .then((idm) => {
+                idm.events.on("result", () => {
+                    assert(false, "This should not have returned a result. It should have rejected, aborted, or disconnected.");
+                });
+                idm.events.on("reject", () => {
+                    done();
+                });
+                idm.events.on("abort", () => {
+                    done();
+                });
+                idm.writeRequest(
+                    NAUGHTY_ID,
+                    list["&operationCode"]!,
+                    _encode_ListArgument({
+                        unsigned: new ListArgumentData(
+                            {
+                                rdnSequence: [],
+                            },
+                        ),
+                    }, DER),
+                );
+            });
     });
 
 });

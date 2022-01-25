@@ -163,6 +163,7 @@ class IDMConnection {
                 break;
             }
             default: {
+                this.events.emit("socketError", new Error());
                 this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
                 return;
             }
@@ -191,8 +192,16 @@ class IDMConnection {
         } else if ("bindError" in pdu) {
             this.events.emit("bindError", pdu.bindError);
         } else if ("request" in pdu) {
+            if (pdu.request.invokeID < 0) {
+                this.writeAbort(Abort_invalidPDU);
+                return;
+            }
             this.events.emit("request", pdu.request);
         } else if ("result" in pdu) {
+            if (pdu.result.invokeID < 0) {
+                this.writeAbort(Abort_invalidPDU);
+                return;
+            }
             this.events.emit(pdu.result.invokeID.toString(), {
                 invokeId: {
                     present: pdu.result.invokeID,

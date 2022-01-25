@@ -52,6 +52,7 @@ import {
     Abort_unboundRequest,
     Abort_invalidProtocol,
     Abort_reasonNotSpecified,
+    Abort_invalidPDU,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import {
     Versions_v1,
@@ -164,6 +165,17 @@ async function handleRequestAndErrors (
     dop: DOPConnection, // eslint-disable-line
     request: Request,
 ): Promise<void> {
+    if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
+        ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
+            cid: dop.id,
+        }));
+        dop.idm.writeAbort(Abort_invalidPDU);
+        return;
+    }
+    if (dop.invocations.has(Number(request.invokeID))) {
+        await dop.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        return;
+    }
     try {
         /**
          * We block DOP requests that do not meet some configured minimum of
