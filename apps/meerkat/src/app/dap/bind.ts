@@ -77,7 +77,7 @@ async function bind (
                     undefined,
                 ),
             },
-            failedAuthentication: false,
+            failedAuthentication: ctx.config.forbidAnonymousBind,
         };
     }
     if ("simple" in arg.credentials) {
@@ -96,7 +96,7 @@ async function bind (
                         undefined,
                     ),
                 },
-                failedAuthentication: false,
+                failedAuthentication: ctx.config.forbidAnonymousBind,
             };
         }
         const invalidCredentialsReturn: BindReturn = {

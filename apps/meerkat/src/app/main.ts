@@ -170,9 +170,7 @@ function attachUnboundEventListenersToIDMConnection (
     idm.events.on("length", getIDMLengthGate(ctx, idm, source));
     const handleWrongSequence = () => {
         idm.writeAbort(Abort_unboundRequest)
-            .then(() => {
-                idm.s.destroy();
-            })
+            .then(() => idm.s.destroy())
             .catch()
             .finally(() => {
                 startTimes.delete(idm.s);

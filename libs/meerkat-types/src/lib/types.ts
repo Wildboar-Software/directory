@@ -497,6 +497,7 @@ interface Configuration {
     transcodeDistinguishedValuesToDER: boolean;
     openTopLevel: boolean;
     dsaCanBindAsNonDSA: boolean;
+    forbidAnonymousBind: boolean;
     dsp: {
         enabled: boolean;
     };

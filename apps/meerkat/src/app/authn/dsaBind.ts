@@ -84,7 +84,7 @@ async function bind (
                     undefined,
                 ),
             },
-            failedAuthentication: false,
+            failedAuthentication: ctx.config.forbidAnonymousBind,
         };
     }
     if ("simple" in arg.credentials) {
@@ -92,6 +92,10 @@ async function bind (
         if (!arg.credentials.simple.password) {
             return {
                 boundVertex: foundEntry,
+                boundNameAndUID: new NameAndOptionalUID(
+                    arg.credentials.simple.name,
+                    foundEntry?.dse.uniqueIdentifier?.[0],
+                ),
                 authLevel: {
                     basicLevels: new AuthenticationLevel_basicLevels(
                         AuthenticationLevel_basicLevels_level_none,
@@ -99,7 +103,7 @@ async function bind (
                         undefined,
                     ),
                 },
-                failedAuthentication: false,
+                failedAuthentication: ctx.config.forbidAnonymousBind,
             };
         }
         const invalidCredentialsReturn: BindReturn = {
