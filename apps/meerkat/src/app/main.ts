@@ -49,6 +49,7 @@ import semver from "semver";
 import { createPrivateKey } from "crypto";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import isDebugging from "is-debugging";
+import { setTimeout as safeSetTimeout } from "safe-timers";
 
 
 async function checkForUpdates (ctx: Context, currentVersionString: string): Promise<void> {
@@ -760,7 +761,7 @@ async function main (): Promise<void> {
         if (!ob.terminated_time) {
             return;
         }
-        setTimeout(() => terminate(ctx, ob.id), Math.max(differenceInMilliseconds(ob.terminated_time, now), 1000));
+        safeSetTimeout(() => terminate(ctx, ob.id), Math.max(differenceInMilliseconds(ob.terminated_time, now), 1000));
         ctx.log.warn(ctx.i18n.t("log:terminating_ob", {
             obid: ob.id,
             time: ob.terminated_time.toISOString(),

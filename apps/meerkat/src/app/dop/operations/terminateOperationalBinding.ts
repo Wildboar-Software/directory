@@ -36,6 +36,7 @@ import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
+import { setTimeout as safeSetTimeout } from "safe-timers";
 
 function getDateFromOBTime (time: Time): Date {
     if ("utcTime" in time) {
@@ -174,7 +175,10 @@ async function terminateOperationalBinding (
     switch (data.bindingType.toString()) {
         case (id_op_binding_hierarchical.toString()): {
             for (const ob of opBindings) {
-                setTimeout(() => terminate(ctx, ob.id), Math.max(differenceInMilliseconds(terminationTime, now), 1000));
+                safeSetTimeout(
+                    () => terminate(ctx, ob.id),
+                    Math.max(differenceInMilliseconds(terminationTime, now), 1000),
+                );
             }
             await ctx.db.operationalBinding.updateMany({
                 where: opBindingWhere,
