@@ -90,5 +90,6 @@
     "unusual_message_id": "LDAP message from {{source}} had an unusually large or negative message ID.",
     "unusual_invoke_id": "IDM operation from connection {{cid}} from had an unusually large or negative invoke ID.",
     "dup_invoke_id": "Duplicated IDM invokeID {{iid}} from connection {{cid}}.",
-    "max_concurrent_op": "Connection {{cid}} maxed out the number of permitted concurrent operations. The operation with invoke ID {{iid}} was rejected."
+    "max_concurrent_op": "Connection {{cid}} maxed out the number of permitted concurrent operations. The operation with invoke ID {{iid}} was rejected.",
+    "address_blocked": "BAN_IP={{host}} # Remote host {{host}} was added to the blocklist."
 }

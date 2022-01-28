@@ -18,7 +18,6 @@ import { Unbind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/
 import {
     Abort,
     Abort_invalidPDU,
-    Abort_reasonNotSpecified,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import type { IdmReject_reason } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import type { GeneralName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
@@ -41,6 +40,10 @@ import {
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+import {
+    IDM_WARN_PADDING_AFTER_PDU,
+    IDM_WARN_DOUBLE_START_TLS,
+} from "./warnings";
 
 // NOTE: It does not seem to clearly state what the code for version 2 is.
 // TODO: Check for reused invoke IDs.
@@ -118,7 +121,7 @@ class IDMConnection {
                     const el = new BERElement();
                     const readBytes = el.fromBytes(pduBytes);
                     if (readBytes !== pduBytes.length) {
-                        // Suspicious.
+                        this.events.emit("warning", IDM_WARN_PADDING_AFTER_PDU);
                     }
                     const pdu = _decode_IDM_PDU(el);
                     this.handlePDU(pdu);
@@ -151,7 +154,7 @@ class IDMConnection {
                     const el = new BERElement();
                     const readBytes = el.fromBytes(pduBytes);
                     if (readBytes !== pduBytes.length) {
-                        // Suspicious.
+                        this.events.emit("warning", IDM_WARN_PADDING_AFTER_PDU);
                     }
                     const pdu = _decode_IDM_PDU(el);
                     this.handlePDU(pdu);
@@ -225,6 +228,7 @@ class IDMConnection {
             }
             if (this.socket instanceof tls.TLSSocket) {
                 // TLS is already in use.
+                this.events.emit("warning", IDM_WARN_DOUBLE_START_TLS);
                 this.writeTLSResponse(TLSResponse_operationsError)
                     .catch((e) => this.events.emit("socketError", e));
                 return;
@@ -250,6 +254,7 @@ class IDMConnection {
             this.events.emit("tLSResponse", pdu.tLSResponse);
             if ((this.socket instanceof tls.TLSSocket) || !this.startTLSRequested) {
                 // TLS is already in use or was not requested.
+                this.events.emit("warning", IDM_WARN_DOUBLE_START_TLS);
                 return;
             }
             if (pdu.tLSResponse === TLSResponse_success) { // Success

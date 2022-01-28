@@ -77,7 +77,7 @@ import type { KeyObject } from "crypto";
 import type { PkiPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import type { cpus, networkInterfaces } from "os";
-import type { Socket } from "net";
+import type { Socket, BlockList } from "net";
 import {
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
@@ -506,6 +506,9 @@ interface Configuration {
     };
     dop: {
         enabled: boolean;
+    };
+    ipBlocklist: {
+        reasons: Set<string>;
     };
 }
 
@@ -1058,6 +1061,7 @@ interface Context {
     dit: DITInfo;
     dsa: DSAInfo;
     associations: Map<Socket, ClientAssociation | null>, // null = the socket exists, but has not bound yet.
+    ipBlocklist: BlockList;
     config: Configuration;
     log: Logger;
     db: PrismaClient;

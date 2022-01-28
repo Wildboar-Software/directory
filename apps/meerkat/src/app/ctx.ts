@@ -26,6 +26,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
+import { BlockList } from "net";
 
 const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
     ? process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
@@ -292,6 +293,15 @@ const ctx: Context = {
         dop: {
             enabled: (process.env.MEERKAT_DANGEROUSLY_ENABLE_DOP === "1"),
         },
+        ipBlocklist: {
+            reasons: new Set(
+                process.env.MEERKAT_IP_BLOCKLIST_REASONS
+                    ?.split(",")
+                    .map((reason) => reason.trim())
+                    .filter((reason) => reason.length)
+                    .map((reason) => reason.toUpperCase()),
+            ),
+        },
     },
     dsa: {
         accessPoint: new AccessPoint(
@@ -309,6 +319,7 @@ const ctx: Context = {
         hibernatingSince: undefined,
     },
     associations: new Map(),
+    ipBlocklist: new BlockList(),
     dit: {
         root,
     },
