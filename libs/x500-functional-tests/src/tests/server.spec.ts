@@ -2,7 +2,7 @@ import { Readable } from "stream";
 import * as net from "net";
 import { strict as assert } from "assert";
 import { ASN1Element } from "asn1-ts";
-import { BER, DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { BER, DER, _encodeObjectIdentifier, _encodeOctetString } from "asn1-ts/dist/node/functional";
 import { IDMConnection } from "@wildboar/idm";
 import {
     DirectoryBindArgument,
@@ -159,7 +159,7 @@ function *readSlowLorisLDAPMessage (size: number = 10_000): IterableIterator<Buf
     }
 }
 
-function *generateGiantLDAPMessage (size: number = 10_000_000): IterableIterator<Buffer> {
+function *generateGiantDefiniteLengthLDAPMessage (size: number = 10_000_000): IterableIterator<Buffer> {
     yield Buffer.from([
         0x30, // UNIVERSAL SEQUENCE
         0x84, // Definite long form: the length is encoded on the next four bytes.
@@ -172,7 +172,24 @@ function *generateGiantLDAPMessage (size: number = 10_000_000): IterableIterator
     }
 }
 
-const giantLDAPMessage = Readable.from(generateGiantLDAPMessage());
+const giantDefiniteLengthLDAPMessage = Readable.from(generateGiantDefiniteLengthLDAPMessage());
+
+function *generateGiantIndefiniteLengthLDAPMessage (size: number = 10_000_000): IterableIterator<Buffer> {
+    yield Buffer.from([
+        0x30, // UNIVERSAL SEQUENCE
+        0x80, // Indefinite length
+    ]);
+    // const lengthBytes = Buffer.allocUnsafe(4);
+    // lengthBytes.writeUInt32BE(size);
+    // yield lengthBytes;
+    for (let i = 0; i < size; i += 1000) {
+        const el = _encodeOctetString(Buffer.allocUnsafe(1000), DER);
+        yield Buffer.from(el.toBytes());
+    }
+    yield Buffer.from([ 0x00, 0x00 ]); // End of content
+}
+
+const giantIndefiniteLengthLDAPMessage = Readable.from(generateGiantIndefiniteLengthLDAPMessage());
 
 function firehoseOfIdmRequests (size: number = 1000): Buffer {
     const arg = _encode_ListArgument({
@@ -477,14 +494,11 @@ describe("Meerkat DSA", () => {
         });
     });
 
-    // TODO: This was disabled because of a bug I found in asn1-ts where a
-    // thrown ASN1Truncation error is not instanceof ASN1TruncationError, but
-    // only an ASN1Error.
-    it("Avoids denial-of-service by large LDAP messages", (done) => {
+    it.only("Avoids denial-of-service by large LDAP messages", (done) => {
         const errorHandler = jest.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
-            giantLDAPMessage.unpipe(client);
+            giantDefiniteLengthLDAPMessage.unpipe(client);
             done();
         };
         const client = net.createConnection({
@@ -493,13 +507,36 @@ describe("Meerkat DSA", () => {
         }, () => {
             client.on("error", errorHandler);
             client.on("close", closeHandler);
-            giantLDAPMessage.on("end", () => {
+            giantDefiniteLengthLDAPMessage.on("end", () => {
                 assert(false);
             });
-            giantLDAPMessage.on("close", () => {
+            giantDefiniteLengthLDAPMessage.on("close", () => {
                 assert(false);
             });
-            giantLDAPMessage.pipe(client);
+            giantDefiniteLengthLDAPMessage.pipe(client);
+        });
+    });
+
+    it.only("Avoids denial-of-service by large indefinite-length LDAP messages", (done) => {
+        const errorHandler = jest.fn();
+        const closeHandler = () => {
+            expect(errorHandler).toHaveBeenCalled();
+            giantIndefiniteLengthLDAPMessage.unpipe(client);
+            done();
+        };
+        const client = net.createConnection({
+            host: HOST,
+            port: LDAP_PORT,
+        }, () => {
+            client.on("error", errorHandler);
+            client.on("close", closeHandler);
+            giantIndefiniteLengthLDAPMessage.on("end", () => {
+                assert(false);
+            });
+            giantIndefiniteLengthLDAPMessage.on("close", () => {
+                assert(false);
+            });
+            giantIndefiniteLengthLDAPMessage.pipe(client);
         });
     });
 

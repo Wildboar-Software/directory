@@ -437,6 +437,9 @@ class LDAPConnection extends ClientAssociation {
             try {
                 message = _decode_LDAPMessage(el);
             } catch (e) {
+                if (e instanceof ASN1TruncationError) { // This can happen here with indefinite-length messages.
+                    return;
+                }
                 ctx.log.error(ctx.i18n.t("log:malformed_ldapmessage", {
                     uuid: this.id,
                 }));
