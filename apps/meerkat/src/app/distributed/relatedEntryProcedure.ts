@@ -1,4 +1,4 @@
-import type { ClientConnection, Context } from "@wildboar/meerkat-types";
+import type { ClientAssociation, Context } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import {
     SearchArgument,
@@ -53,7 +53,7 @@ import { randomInt } from "crypto";
 export
 async function relatedEntryProcedure (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
     search: SearchState,
     argument: SearchArgument,

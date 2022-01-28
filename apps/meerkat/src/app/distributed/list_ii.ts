@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
 import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
@@ -118,7 +118,7 @@ const CHILD: string = child["&id"].toString();
 export
 async function list_ii (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
     fromDAP: boolean,
 ): Promise<OperationReturn> {

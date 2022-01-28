@@ -1,7 +1,7 @@
 import type {
     Context,
     Vertex,
-    ClientConnection,
+    ClientAssociation,
     WithRequestStatistics,
     WithOutcomeStatistics,
     PagedResultsRequestState,
@@ -729,7 +729,7 @@ function getFamilyMembersToReturnById (
 export
 async function search_i (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
     argument: SearchArgument,
     searchState: SearchState,

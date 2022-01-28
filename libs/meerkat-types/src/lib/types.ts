@@ -453,6 +453,7 @@ export
 interface Configuration {
     maxConnections: number;
     maxConnectionsPerAddress: number;
+    maxConcurrentOperationsPerConnection: number;
     tcp: {
         noDelay: boolean;
         timeoutInSeconds: number;
@@ -462,6 +463,8 @@ interface Configuration {
     tls: TlsOptions;
     idm: NetworkService & {
         bufferSize: number;
+        maxPDUSize: number;
+        maxSegments: number;
     };
     idms: NetworkService;
     ldap: NetworkService & {
@@ -1012,13 +1015,6 @@ interface OperationStatistics extends Partial<WithRequestStatistics>, Partial<Wi
 }
 
 export
-interface Statistics {
-    // stats for feature usage
-    // stats for connections
-    operations: OperationStatistics[];
-}
-
-export
 interface OperationReturn {
     result: OPTIONALLY_PROTECTED<ChainedResult>;
     stats: Partial<WithRequestStatistics> & Partial<WithOutcomeStatistics>;
@@ -1061,10 +1057,10 @@ interface Context {
     i18n: i18n,
     dit: DITInfo;
     dsa: DSAInfo;
+    associations: Map<Socket, ClientAssociation | null>, // null = the socket exists, but has not bound yet.
     config: Configuration;
     log: Logger;
     db: PrismaClient;
-    statistics: Statistics;
     telemetry: Telemetry;
     structuralObjectClassHierarchy: StructuralObjectClassInfo;
     /**
@@ -1162,7 +1158,7 @@ interface OperationInvocationInfo {
 }
 
 export
-abstract class ClientConnection {
+abstract class ClientAssociation {
     public socket!: Socket;
     public readonly id = randomUUID();
     public claimedNameAndUID: NameAndOptionalUID;
@@ -1181,6 +1177,20 @@ abstract class ClientConnection {
         ),
     };
     public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map();
+    /**
+     * TODO: Eventually change this to a proper FIFO queue so that enqueuing
+     * runs in O(1) time. This is not really a huge problem right now, because
+     * the size of the queue will be capped at a pretty low number.
+     *
+     * I tried [this queue library](https://www.npmjs.com/package/yocto-queue)
+     * but I got the loathesome `ERR_REQUIRE_ESM` error, because that package
+     * is written using exclusively ESM modules. There might be a workaround,
+     * but I think the pain-in-the-ass is not worth it. I want to wait until
+     * Nx monorepos have built-in support for ESM-only builds.
+     *
+     * See this: https://github.com/nrwl/nx/issues/7872
+     */
+    // public readonly enqueuedOperations: (() => Promise<any>)[] = [];
 
     /**
      * When an operation is started, it is added to this map. When the operation

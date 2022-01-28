@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import { ASN1Element, DERElement } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { OperationDispatcherState } from "./OperationDispatcher";
@@ -150,7 +150,7 @@ function compareSubordinates (
 export
 async function mergeSortAndPageList(
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
     listArgument: ListArgumentData,
     listState: ListState,

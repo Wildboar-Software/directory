@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { addSeconds } from "date-fns";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -93,7 +93,7 @@ type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Para
 
 function createChainingArgumentsFromDUA (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     operationCode: Code,
     operationArgument: ASN1Element,
     authenticationLevel: AuthenticationLevel,
@@ -426,7 +426,7 @@ function createChainingArgumentsFromDUA (
 export
 async function requestValidationProcedure (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     req: Request,
     alreadyChained: boolean,
     authenticationLevel: AuthenticationLevel,

@@ -44,140 +44,130 @@ import type {
 
 // NOTE: It does not seem to clearly state what the code for version 2 is.
 // TODO: Check for reused invoke IDs.
+// FIXME: Check for a maximum number of segments.
+// FIXME: Emit a separate event for segmentLength and dataLength
+
+const SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE: number = 6;
+const SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE: number = 8;
 
 export default
 class IDMConnection {
-    // Buffer
-    private nextExpectedField = IDMSegmentField.version;
-    private awaitingBytes: number = 1;
     private buffer: Buffer = Buffer.allocUnsafe(0);
-    private bufferIndex: number = 0;
-
-    // IDM Segments
     private version: IDMVersion | undefined = IDMVersion.v1;
     private currentSegments: IDMSegment[] = [];
-    private currentSegment: Partial<IDMSegment> = {};
-
-    // IDM Packet
-    // private bindInformation: IdmBind | undefined = undefined;
-
-    // Event emitter
     public readonly events: IDMEventEmitter = new EventEmitter();
     private socket!: net.Socket;
     private startTLSRequested: boolean = false;
 
     private resetState (): void {
-        this.nextExpectedField = IDMSegmentField.version;
-        this.awaitingBytes = 1;
         this.buffer = Buffer.allocUnsafe(0);
-        this.bufferIndex = 0;
         this.version = IDMVersion.v1;
         this.currentSegments = [];
-        this.currentSegment = {};
     }
 
-    public getNumberOfEnqueuedBytes (): number {
+    public getBufferSize (): number {
         return this.buffer.length;
+    }
+
+    public getAccumulatedPDUSize (): number {
+        // Yes, I know you can do this with .reduce(), but this is more performant.
+        let sum: number = 0;
+        for (const segment of this.currentSegments) {
+            sum += segment.length;
+        }
+        return sum;
+    }
+
+    public getNumberOfSegmentsInPDU (): number {
+        return this.currentSegments.length;
     }
 
     public protectedByTLS (): boolean {
         return (this.socket instanceof tls.TLSSocket);
     }
 
-    private handleData (data: Buffer): void {
-        this.buffer = Buffer.concat([ this.buffer, data ]);
-        while ((this.bufferIndex + this.awaitingBytes) <= this.buffer.length) {
-            switch (this.nextExpectedField) {
-            case (IDMSegmentField.version): {
-                const indicatedVersion = this.buffer.readUInt8(this.bufferIndex);
-                if (indicatedVersion === 1) {
-                    this.version = IDMVersion.v1;
-                    this.currentSegment.version = IDMVersion.v1;
-                } else if (indicatedVersion === 2) {
-                    this.version = IDMVersion.v2;
-                    this.currentSegment.version = IDMVersion.v2;
-                } else {
-                    this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
-                    return;
-                }
-                this.nextExpectedField = IDMSegmentField.final;
-                this.bufferIndex++;
-                break;
-            }
-            case (IDMSegmentField.final): {
-                this.currentSegment.final = Boolean(this.buffer.readUInt8(this.bufferIndex));
-                if (this.version === undefined) {
-                    // Invalid parser state.
-                    this.writeAbort(Abort_reasonNotSpecified).then(() => this.socket.destroy());
-                } else if (this.version === IDMVersion.v1) {
-                    this.nextExpectedField = IDMSegmentField.length;
-                    this.awaitingBytes = 4;
-                } else if (this.version === IDMVersion.v2) {
-                    this.nextExpectedField = IDMSegmentField.encoding;
-                    this.awaitingBytes = 2;
-                } else {
-                    this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
-                }
-                this.bufferIndex++;
-                break;
-            }
-            case (IDMSegmentField.encoding): {
-                this.currentSegment.encoding = this.buffer.readUInt16BE(this.bufferIndex); // REVIEW:
-                this.bufferIndex += 2;
-                this.nextExpectedField = IDMSegmentField.length;
-                this.awaitingBytes = 4;
-                break;
-            }
-            case (IDMSegmentField.length): {
-                this.currentSegment.length = this.buffer.readUInt32BE(this.bufferIndex); // REVIEW:
-                this.awaitingBytes = this.currentSegment.length;
-                this.bufferIndex += 4;
-                this.nextExpectedField = IDMSegmentField.data;
-                /**
-                 * The significance of this event is that it can be used
-                 * to abort an IDM connection if an inbound segment is
-                 * going to have an unacceptable size.
-                 */
-                this.events.emit("length", this.awaitingBytes);
-                break;
-            }
-            case (IDMSegmentField.data): {
-                assert(this.currentSegment.length !== undefined, "Invalid parser state.");
-                this.currentSegment.data = this.buffer.slice(
-                    this.bufferIndex,
-                    (this.bufferIndex + this.currentSegment.length),
-                );
-                this.currentSegments.push(this.currentSegment as IDMSegment);
-                if (this.currentSegment.final) {
+    private chompFrame (): void {
+        if (this.buffer.length === 0) {
+            return;
+        }
+        if (![ IDMVersion.v1, IDMVersion.v2 ].includes(this.buffer[0])) {
+            this.events.emit("socketError", new Error(`Unsupported IDM version ${this.buffer[0]}`));
+            this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
+            return;
+        }
+        if (
+            (this.buffer[0] === IDMVersion.v2)
+            && (this.buffer.length >= SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE)
+        ) {
+            const length = this.buffer.readUInt32BE(4);
+            this.events.emit("segmentDataLength", length);
+            if (this.buffer.length >= (SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE + length)) {
+                const currentSegment: IDMSegment = {
+                    version: IDMVersion.v2,
+                    encoding: this.buffer.readUInt16BE(2),
+                    final: (this.buffer[1] === 1),
+                    length,
+                    data: this.buffer.slice(
+                        SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE,
+                        (SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE + length),
+                    ),
+                };
+                this.currentSegments.push(currentSegment);
+                if (currentSegment.final) {
                     const pduBytes = Buffer.concat(this.currentSegments.map((s) => s.data));
-                    const ber = new BERElement();
-                    ber.fromBytes(pduBytes);
-                    this.handlePDU(_decode_IDM_PDU(ber));
+                    const el = new BERElement();
+                    const readBytes = el.fromBytes(pduBytes);
+                    if (readBytes !== pduBytes.length) {
+                        // Suspicious.
+                    }
+                    const pdu = _decode_IDM_PDU(el);
+                    this.handlePDU(pdu);
                     this.currentSegments = [];
                 }
-                this.buffer = this.buffer.slice(this.bufferIndex + this.currentSegment.length);
-                this.bufferIndex = 0;
-                this.currentSegment = {};
-                this.nextExpectedField = IDMSegmentField.version;
-                this.awaitingBytes = 1;
-                break;
-            }
-            default: {
-                this.events.emit("socketError", new Error());
-                this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
-                return;
-            }
+                this.buffer = this.buffer.slice(SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE + length);
+                setImmediate(this.chompFrame.bind(this));
             }
         }
-    };
-
-    constructor (
-        readonly s: net.Socket,
-        readonly starttlsOptions?: tls.TLSSocketOptions,
-    ) {
-        this.socket = s;
-        this.socket.on("data", (data: Buffer) => this.handleData(data));
+        else if (
+            (this.buffer[0] === IDMVersion.v1)
+            && (this.buffer.length >= SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE)
+        ) {
+            const length = this.buffer.readUInt32BE(2);
+            this.events.emit("segmentDataLength", length);
+            if (this.buffer.length >= (SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE + length)) {
+                const currentSegment: IDMSegment = {
+                    version: IDMVersion.v1,
+                    encoding: 0,
+                    final: (this.buffer[1] === 1),
+                    length,
+                    data: this.buffer.slice(
+                        SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE,
+                        (SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE + length),
+                    ),
+                };
+                this.currentSegments.push(currentSegment);
+                if (currentSegment.final) {
+                    const pduBytes = Buffer.concat(this.currentSegments.map((s) => s.data));
+                    const el = new BERElement();
+                    const readBytes = el.fromBytes(pduBytes);
+                    if (readBytes !== pduBytes.length) {
+                        // Suspicious.
+                    }
+                    const pdu = _decode_IDM_PDU(el);
+                    this.handlePDU(pdu);
+                    this.currentSegments = [];
+                }
+                this.buffer = this.buffer.slice(SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE + length);
+                setImmediate(this.chompFrame.bind(this));
+            }
+        }
     }
+
+    private handleData (data: Buffer): void {
+        this.events.emit("socketDataLength", data.length);
+        this.buffer = Buffer.concat([ this.buffer, data ]);
+        this.chompFrame();
+    };
 
     public close (): void {
         this.buffer = Buffer.alloc(0);
@@ -407,5 +397,13 @@ class IDMConnection {
             unbind,
         };
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    constructor (
+        readonly s: net.Socket,
+        readonly starttlsOptions?: tls.TLSSocketOptions,
+    ) {
+        this.socket = s;
+        this.socket.on("data", (data: Buffer) => this.handleData(data));
     }
 }

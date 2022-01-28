@@ -138,6 +138,9 @@ const ctx: Context = {
         maxConnectionsPerAddress: process.env.MEERKAT_MAX_CONNECTIONS_PER_ADDRESS
             ? Number.parseInt(process.env.MEERKAT_MAX_CONNECTIONS_PER_ADDRESS)
             : Infinity,
+        maxConcurrentOperationsPerConnection: process.env.MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION
+            ? Number.parseInt(process.env.MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION)
+            : Infinity,
         tcp: {
             noDelay: (process.env.MEERKAT_TCP_NO_DELAY === "1"),
             timeoutInSeconds: process.env.MEERKAT_TCP_TIMEOUT_IN_SECONDS
@@ -194,6 +197,12 @@ const ctx: Context = {
             bufferSize: process.env.MEERKAT_IDM_BUFFER_SIZE
                 ? Number.parseInt(process.env.MEERKAT_IDM_BUFFER_SIZE, 10)
                 : DEFAULT_IDM_BUFFER_SIZE,
+            maxPDUSize: process.env.MEERKAT_MAX_IDM_PDU_SIZE
+                ? Number.parseInt(process.env.MEERKAT_MAX_IDM_PDU_SIZE, 10)
+                : DEFAULT_IDM_BUFFER_SIZE,
+            maxSegments: process.env.MEERKAT_MAX_IDM_SEGMENTS
+                ? Number.parseInt(process.env.MEERKAT_MAX_IDM_SEGMENTS, 10)
+                : 10,
         },
         idms: {
             port: process.env.MEERKAT_IDMS_PORT
@@ -299,6 +308,7 @@ const ctx: Context = {
         ),
         hibernatingSince: undefined,
     },
+    associations: new Map(),
     dit: {
         root,
     },
@@ -352,9 +362,6 @@ const ctx: Context = {
     operationalBindingControlEvents: new EventEmitter(),
     collectiveAttributes: new Set(),
     nameForms: new Map(),
-    statistics: {
-        operations: [],
-    },
     usedInvokeIDs: new Set(),
     duplicatedLDAPNames: new Set(),
 };

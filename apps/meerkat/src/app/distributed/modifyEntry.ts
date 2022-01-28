@@ -3,7 +3,7 @@ import {
     IndexableOID,
     Vertex,
     Value,
-    ClientConnection,
+    ClientAssociation,
     OperationReturn,
     PendingUpdates,
 } from "@wildboar/meerkat-types";
@@ -243,7 +243,7 @@ const USER_PWD: string = userPwd["&id"].toString();
 
 const notPermittedData =  (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     aliasDereferenced?: boolean,
 ) => new SecurityErrorData(
     SecurityProblem_insufficientAccessRights,
@@ -335,7 +335,7 @@ function getValueAlterer (
 
 function checkAttributeArity (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     target: Vertex,
     attr: Attribute,
     aliasDereferenced?: boolean,
@@ -421,7 +421,7 @@ function checkPermissionToAddValues (
     attribute: Attribute,
     ctx: Context,
     user: NameAndOptionalUID | undefined | null,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
@@ -488,7 +488,7 @@ function checkPermissionToAddValues (
 
 function checkAbilityToModifyAttributeType (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     attributeType: AttributeType,
     entry: Vertex,
     targetDN: DistinguishedName,
@@ -711,7 +711,7 @@ function removeValuesFromPatch (
 async function executeAddAttribute (
     mod: Attribute,
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -773,7 +773,7 @@ async function executeAddAttribute (
 async function executeRemoveAttribute (
     mod: AttributeType,
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -871,7 +871,7 @@ async function executeRemoveAttribute (
 async function executeAddValues (
     mod: Attribute,
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -928,7 +928,7 @@ async function executeAddValues (
 async function executeRemoveValues (
     mod: Attribute,
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -1061,7 +1061,7 @@ async function executeRemoveValues (
 async function executeAlterValues (
     mod: AttributeTypeAndValue,
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -1205,7 +1205,7 @@ async function executeAlterValues (
 async function executeResetValue (
     mod: AttributeType,
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -1290,7 +1290,7 @@ async function executeResetValue (
 async function executeReplaceValues (
     mod: Attribute,
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -1379,7 +1379,7 @@ async function executeReplaceValues (
  */
 function handleContextRule (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     targetDN: DistinguishedName,
     attribute: Attribute,
     contextRuleIndex: ContextRulesIndex,
@@ -1580,7 +1580,7 @@ function handleContextRule (
  */
 async function executeEntryModification (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     targetDN: DistinguishedName,
@@ -1726,7 +1726,7 @@ async function executeEntryModification (
 export
 async function modifyEntry (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;

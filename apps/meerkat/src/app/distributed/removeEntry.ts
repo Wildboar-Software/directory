@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -112,7 +112,7 @@ const CHILD: string = id_oc_child.toString();
 export
 async function removeEntry (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);

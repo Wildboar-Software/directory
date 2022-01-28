@@ -1,4 +1,4 @@
-import type { ClientConnection, Context } from "@wildboar/meerkat-types";
+import type { ClientAssociation, Context } from "@wildboar/meerkat-types";
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -13,6 +13,7 @@ import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification
 import {
     Abort_reasonNotSpecified,
     Abort_unboundRequest,
+    Abort_resourceLimitation,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import { IDMConnection } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
@@ -111,18 +112,45 @@ async function checkForUpdates (ctx: Context, currentVersionString: string): Pro
     }
 }
 
-const getIDMLengthGate = (ctx: Context, idm: IDMConnection, source: string) => (addedBytes: number) => {
-    const currentFragmentSize: number = (
-        idm.getNumberOfEnqueuedBytes()
+const getIdmBufferLengthGate = (ctx: Context, idm: IDMConnection, source: string) => (addedBytes: number) => {
+    const currentBufferSize: number = (
+        idm.getBufferSize()
         + addedBytes
     );
-    if (currentFragmentSize > ctx.config.idm.bufferSize) {
+    if (currentBufferSize > ctx.config.idm.bufferSize) {
         ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
             protocol: "IDM",
             source,
             size: ctx.config.idm.bufferSize.toString(),
         }));
-        idm.writeAbort(Abort_unboundRequest)
+        idm.writeAbort(Abort_resourceLimitation)
+            .then(() => idm.close())
+            .catch();
+    }
+};
+
+const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) => (addedBytes: number) => {
+    const currentPduSize: number = (
+        idm.getAccumulatedPDUSize()
+        + addedBytes
+    );
+    if (currentPduSize > ctx.config.idm.maxPDUSize) {
+        ctx.log.warn(ctx.i18n.t("log:pdu_limit", {
+            protocol: "IDM",
+            source,
+            size: ctx.config.idm.maxPDUSize.toString(),
+        }));
+        idm.writeAbort(Abort_resourceLimitation)
+            .then(() => idm.close())
+            .catch();
+    }
+    const numberOfSegments: number = (idm.getNumberOfSegmentsInPDU() + 1);
+    if (numberOfSegments > ctx.config.idm.maxSegments) {
+        ctx.log.warn(ctx.i18n.t("log:idm_segment_limit", {
+            source,
+            limit: ctx.config.idm.maxSegments,
+        }));
+        idm.writeAbort(Abort_resourceLimitation)
             .then(() => idm.close())
             .catch();
     }
@@ -139,7 +167,6 @@ function attachUnboundEventListenersToIDMConnection (
     originalSocket: net.Socket | tls.TLSSocket, // Even if STARTTLS is used, you must use the original socket for "bookkeeping" in the associations index.
     source: string, // Just to avoid recalculating this.
     idm: IDMConnection,
-    associations: Map<net.Socket, ClientConnection | null>,
     startTimes: Map<net.Socket, Date>,
 ) {
     idm.events.on("startTLS", () => {
@@ -159,27 +186,30 @@ function attachUnboundEventListenersToIDMConnection (
         }));
         idm.s.destroy();
         startTimes.delete(idm.s);
-        associations.delete(idm.s);
+        ctx.associations.delete(idm.s);
     });
     /**
      * This is an extremely important operation for security.
-     * Without this, nefarious users could anonymously submit
-     * infinitely-large IDM packets and consume all of the
-     * memory of the system.
+     * Without this, nefarious users could anonymously submit:
+     *
+     * 1. A large IDM segment that exhausts all memory, or
+     * 2. Individual segments whose combined data bytes exhausts all memory, or
+     * 3. A large number of segments that exhausts all memory.
      */
-    idm.events.on("length", getIDMLengthGate(ctx, idm, source));
+    idm.events.on("socketDataLength", getIdmBufferLengthGate(ctx, idm, source));
+    idm.events.on("segmentDataLength", getIdmPduLengthGate(ctx, idm, source));
     const handleWrongSequence = () => {
         idm.writeAbort(Abort_unboundRequest)
             .then(() => idm.s.destroy())
             .catch()
             .finally(() => {
                 startTimes.delete(idm.s);
-                associations.delete(idm.s);
+                ctx.associations.delete(idm.s);
             });
     };
     idm.events.on("request", handleWrongSequence);
     idm.events.on("bind", (idmBind: IdmBind) => {
-        const existingAssociation = associations.get(originalSocket);
+        const existingAssociation = ctx.associations.get(originalSocket);
         if (existingAssociation) {
             ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
                 source,
@@ -192,28 +222,22 @@ function attachUnboundEventListenersToIDMConnection (
                 .catch()
                 .finally(() => {
                     startTimes.delete(idm.s);
-                    associations.delete(idm.s);
+                    ctx.associations.delete(idm.s);
                 });
             return;
         }
         if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
             const dba = _decode_DirectoryBindArgument(idmBind.argument);
             const conn = new DAPConnection(ctx, idm, dba);
-            if (conn.boundNameAndUID) {
-                associations.set(originalSocket, conn);
-            }
+            ctx.associations.set(originalSocket, conn);
         } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
             const dba = _decode_DSABindArgument(idmBind.argument);
             const conn = new DSPConnection(ctx, idm, dba);
-            if (conn.boundNameAndUID) {
-                associations.set(originalSocket, conn);
-            }
+            ctx.associations.set(originalSocket, conn);
         } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
             const dba = _decode_DSABindArgument(idmBind.argument);
             const conn = new DOPConnection(ctx, idm, dba);
-            if (conn.boundNameAndUID) {
-                associations.set(originalSocket, conn);
-            }
+            ctx.associations.set(originalSocket, conn);
         } else {
             ctx.log.error(ctx.i18n.t("log:unsupported_protocol", {
                 protocol: idmBind.protocolID.toString(),
@@ -222,27 +246,26 @@ function attachUnboundEventListenersToIDMConnection (
     });
     idm.events.on("unbind", () => {
         // c.destroy(); You don't actually have to close the TCP connection. It could be recycled.
-        associations.set(originalSocket, null);
+        ctx.associations.set(originalSocket, null);
         idm.events.removeAllListeners();
         // Recursive, but not really.
-        attachUnboundEventListenersToIDMConnection(ctx, originalSocket, source, idm, associations, startTimes);
+        attachUnboundEventListenersToIDMConnection(ctx, originalSocket, source, idm, startTimes);
     });
 }
 
 function handleIDM (
     ctx: Context,
-    associations: Map<net.Socket, ClientConnection | null>,
     startTimes: Map<net.Socket, Date>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c: net.Socket | tls.TLSSocket): void => {
         c.pause();
-        associations.set(c, null); // Index this socket, noting that it has no established association.
+        ctx.associations.set(c, null); // Index this socket, noting that it has no established association.
         startTimes.set(c, new Date());
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
-        if (associations.size >= ctx.config.maxConnections) {
+        if (ctx.associations.size >= ctx.config.maxConnections) {
             c.destroy();
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
                 source,
                 max: ctx.config.maxConnections,
@@ -251,13 +274,13 @@ function handleIDM (
         }
         if ( // Check connections-per-address, which helps prevent Slow Loris attacks.
             c.remoteAddress
-            && Array.from(associations.keys())
+            && Array.from(ctx.associations.keys())
                 .filter((s) => s.remoteAddress === c.remoteAddress)
                 .length > ctx.config.maxConnectionsPerAddress
         ) {
             c.destroy();
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn_per_addr", {
                 source,
                 max: ctx.config.maxConnectionsPerAddress,
@@ -276,7 +299,7 @@ function handleIDM (
                 }));
                 c.destroy();
                 startTimes.delete(c);
-                associations.delete(c);
+                ctx.associations.delete(c);
             }
         });
         c.setNoDelay(ctx.config.tcp.noDelay);
@@ -302,7 +325,7 @@ function handleIDM (
             }));
             c.destroy();
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
         });
 
         c.on("close", () => {
@@ -310,19 +333,19 @@ function handleIDM (
                 source,
             }));
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
         });
 
         try {
             const idm = new IDMConnection(c, ctx.config.tls);
-            attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, associations, startTimes);
+            attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, startTimes);
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
             }));
             c.destroy();
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
             return;
         }
         c.resume();
@@ -331,18 +354,17 @@ function handleIDM (
 
 function handleLDAP (
     ctx: Context,
-    associations: Map<net.Socket, ClientConnection | null>,
     startTimes: Map<net.Socket, Date>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c) => {
         c.pause();
-        associations.set(c, null);
+        ctx.associations.set(c, null);
         startTimes.set(c, new Date());
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
-        if (associations.size >= ctx.config.maxConnections) {
+        if (ctx.associations.size >= ctx.config.maxConnections) {
             c.destroy();
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
                 source,
                 max: ctx.config.maxConnections,
@@ -351,13 +373,13 @@ function handleLDAP (
         }
         if ( // Check connections-per-address, which helps prevent Slow Loris attacks.
             c.remoteAddress
-            && Array.from(associations.keys())
+            && Array.from(ctx.associations.keys())
                 .filter((s) => s.remoteAddress === c.remoteAddress)
                 .length > ctx.config.maxConnectionsPerAddress
         ) {
             c.destroy();
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn_per_addr", {
                 source,
                 max: ctx.config.maxConnectionsPerAddress,
@@ -376,7 +398,7 @@ function handleLDAP (
                 }));
                 c.destroy();
                 startTimes.delete(c);
-                associations.delete(c);
+                ctx.associations.delete(c);
             }
         });
         c.setNoDelay(ctx.config.tcp.noDelay);
@@ -402,7 +424,7 @@ function handleLDAP (
             }));
             c.destroy();
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
         });
 
         c.on("close", () => {
@@ -410,7 +432,7 @@ function handleLDAP (
                 source,
             }));
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
         });
 
         try {
@@ -426,16 +448,16 @@ function handleLDAP (
                         connection_uuid: conn.id,
                     },
                 }).then().catch();
-                associations.delete(c);
+                ctx.associations.delete(c);
             });
-            associations.set(c, conn);
+            ctx.associations.set(c, conn);
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
             }));
             c.destroy();
             startTimes.delete(c);
-            associations.delete(c);
+            ctx.associations.delete(c);
             return;
         }
         c.resume();
@@ -560,15 +582,10 @@ async function main (): Promise<void> {
         enableTrace: isDebugging,
     };
 
-    /**
-     * `null` means that no association has been established, but there is an
-     * established TCP connection.
-     */
-    const associations: Map<net.Socket, ClientConnection | null> = new Map();
     const startTimes: Map<net.Socket, Date> = new Map();
     // const blocklist: net.BlockList = new net.BlockList();
     if (ctx.config.idm.port) {
-        const idmServer = net.createServer(handleIDM(ctx, associations, startTimes));
+        const idmServer = net.createServer(handleIDM(ctx, startTimes));
         idmServer.on("error", (err) => {
             ctx.log.error(ctx.i18n.t("log:server_error", {
                 protocol: "IDM",
@@ -589,7 +606,7 @@ async function main (): Promise<void> {
             || ctx.config.tls.pfx
         )
     ) {
-        const idmsServer = tls.createServer(tlsOptions, handleIDM(ctx, associations, startTimes));
+        const idmsServer = tls.createServer(tlsOptions, handleIDM(ctx, startTimes));
         idmsServer.on("error", (err) => {
             ctx.log.error(ctx.i18n.t("log:server_error", {
                 protocol: "IDMS",
@@ -604,7 +621,7 @@ async function main (): Promise<void> {
         });
     }
     if (ctx.config.ldap.port) {
-        const ldapServer = net.createServer(handleLDAP(ctx, associations, startTimes));
+        const ldapServer = net.createServer(handleLDAP(ctx, startTimes));
         ldapServer.listen(ctx.config.ldap.port, async () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "LDAP",
@@ -619,7 +636,7 @@ async function main (): Promise<void> {
             || ctx.config.tls.pfx
         )
     ) {
-        const ldapsServer = tls.createServer(tlsOptions, handleLDAP(ctx, associations, startTimes));
+        const ldapsServer = tls.createServer(tlsOptions, handleLDAP(ctx, startTimes));
         ldapsServer.listen(ctx.config.ldaps.port, async () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "LDAPS",

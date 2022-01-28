@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import {
     DERElement,
@@ -696,7 +696,7 @@ function convertAttributeSelectiontoEIS (
 export
 function ldapRequestToDAPRequest (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     req: LDAPMessage,
 ): Request | null {
     const invokeId: InvokeId = {

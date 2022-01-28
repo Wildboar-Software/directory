@@ -1,4 +1,4 @@
-import type { Context, ClientConnection, OPCR } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation, OPCR } from "@wildboar/meerkat-types";
 import { BOOLEAN, TRUE } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -61,7 +61,7 @@ import type {
 export
 async function nrcrProcedure (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     state: OperationDispatcherState,
     chainingProhibited: BOOLEAN,

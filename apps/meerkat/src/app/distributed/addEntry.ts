@@ -1,4 +1,4 @@
-import { Context, IndexableOID, Value, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import { Context, IndexableOID, Value, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_AddEntryArgument,
@@ -182,7 +182,7 @@ const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
 function namingViolationErrorData (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     attributeTypes: AttributeType[],
     aliasDereferenced?: boolean,
 ): UpdateErrorData {
@@ -207,7 +207,7 @@ function namingViolationErrorData (
 export
 async function addEntry (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);

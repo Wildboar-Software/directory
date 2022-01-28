@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientConnection, OperationStatistics } from "@wildboar/meerkat-types";
+import { Context, Vertex, ClientAssociation, OperationStatistics } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import * as net from "net";
 import * as tls from "tls";
@@ -166,7 +166,6 @@ async function handleRequest (
     conn.socket.write(_encode_LDAPMessage(ldapResult, BER).toBytes());
     stats.request = result.request ?? stats.request;
     stats.outcome = result.outcome ?? stats.outcome;
-    ctx.statistics.operations.push(stats);
 }
 
 async function handleRequestAndErrors (
@@ -291,14 +290,12 @@ async function handleRequestAndErrors (
         //     startTime: now,
         //     resultTime: new Date(),
         // });
-        for (const opstat of ctx.statistics.operations) {
-            ctx.telemetry.sendEvent(opstat);
-        }
+        ctx.telemetry.sendEvent(stats);
     }
 }
 
 export
-class LDAPConnection extends ClientConnection {
+class LDAPConnection extends ClientAssociation {
 
     private buffer: Buffer = Buffer.alloc(0);
     public boundEntry: Vertex | undefined;

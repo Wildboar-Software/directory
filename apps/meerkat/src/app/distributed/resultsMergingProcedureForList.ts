@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
@@ -10,7 +10,7 @@ import type { ListState } from "./list_i";
 export
 async function resultsMergingProcedureForList (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     res: ListState,
     local: boolean,
     NRcontinuationList: ContinuationReference[],

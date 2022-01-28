@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { Context, DIT, Vertex, ClientConnection, MistypedArgumentError } from "@wildboar/meerkat-types";
+import { Context, DIT, Vertex, ClientAssociation, MistypedArgumentError } from "@wildboar/meerkat-types";
 import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
@@ -188,7 +188,7 @@ function makeContinuationRefFromSupplierKnowledge (
 export
 async function findDSE (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
     state: OperationDispatcherState,

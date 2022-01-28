@@ -1,4 +1,4 @@
-import { Context, Vertex, Value, ClientConnection, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
+import { Context, Vertex, Value, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
@@ -190,7 +190,7 @@ async function allSubordinatesWithinThisDSA (
 export
 async function modifyDN (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;

@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientConnection, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
+import { Context, Vertex, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
 import { ObjectIdentifier, TRUE_BIT, FALSE_BIT, OBJECT_IDENTIFIER } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -110,7 +110,7 @@ import preprocessTuples from "../authz/preprocessTuples";
 export
 async function read (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;

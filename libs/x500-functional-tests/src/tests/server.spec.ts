@@ -12,6 +12,7 @@ import {
     IdmBind,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
 import {
+    IDM_PDU,
     _encode_IDM_PDU,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
 import {
@@ -104,6 +105,7 @@ import {
 import {
     ListArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
+import { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
 
 jest.setTimeout(5000);
 
@@ -119,7 +121,7 @@ function *generateGiantIDMv1Packet (size: number = 10_000_000): IterableIterator
         0x01, // Final
         // 0x00, 0x00, // Supported encodings
     ]);
-    const lengthBytes = (Buffer.allocUnsafe(4))
+    const lengthBytes = Buffer.allocUnsafe(4);
     lengthBytes.writeUInt32BE(size);
     yield lengthBytes;
     for (let i = 0; i < size; i += 1000000) {
@@ -136,7 +138,7 @@ function *readSlowLorisIDMv1Packet (size: number = 10_000): IterableIterator<Buf
         0x01, // Final
         // 0x00, 0x00, // Supported encodings
     ]);
-    const lengthBytes = (Buffer.allocUnsafe(4))
+    const lengthBytes = Buffer.allocUnsafe(4);
     lengthBytes.writeUInt32BE(size);
     yield lengthBytes;
     for (let i = 0; i < size; i += 1) {
@@ -149,7 +151,7 @@ function *readSlowLorisLDAPMessage (size: number = 10_000): IterableIterator<Buf
         0x30, // UNIVERSAL SEQUENCE
         0x84, // Definite long form: the length is encoded on the next four bytes.
     ]);
-    const lengthBytes = (Buffer.allocUnsafe(4))
+    const lengthBytes = Buffer.allocUnsafe(4);
     lengthBytes.writeUInt32BE(size);
     yield lengthBytes;
     for (let i = 0; i < size; i += 1) {
@@ -162,7 +164,7 @@ function *generateGiantLDAPMessage (size: number = 10_000_000): IterableIterator
         0x30, // UNIVERSAL SEQUENCE
         0x84, // Definite long form: the length is encoded on the next four bytes.
     ]);
-    const lengthBytes = (Buffer.allocUnsafe(4))
+    const lengthBytes = Buffer.allocUnsafe(4);
     lengthBytes.writeUInt32BE(size);
     yield lengthBytes;
     for (let i = 0; i < size; i += 1000000) {
@@ -171,6 +173,39 @@ function *generateGiantLDAPMessage (size: number = 10_000_000): IterableIterator
 }
 
 const giantLDAPMessage = Readable.from(generateGiantLDAPMessage());
+
+function firehoseOfIdmRequests (size: number = 1000): Buffer {
+    const arg = _encode_ListArgument({
+        unsigned: new ListArgumentData(
+            {
+                rdnSequence: [],
+            },
+        ),
+    }, DER);
+    let i = 0;
+    const individualPackets: Buffer[] = [];
+    while (i < size) {
+        const request = new Request(crypto.randomInt(10_000_000), list["&operationCode"]!, arg);
+        const pdu: IDM_PDU = {
+            request,
+        };
+        const lengthBytes = Buffer.allocUnsafe(4);
+        const pduBytes = Buffer.from(_encode_IDM_PDU(pdu, DER).toBytes());
+        lengthBytes.writeUInt32BE(pduBytes.length);
+        individualPackets.push(Buffer.concat([
+            Buffer.from([
+                // 0x02, // Version 2
+                0x01, // Version 1
+                0x01, // Final
+                // 0x00, 0x00, // Supported encodings
+            ]),
+            lengthBytes,
+            pduBytes,
+        ]));
+        i++;
+    }
+    return Buffer.concat(individualPackets);
+}
 
 const HOST: string = "localhost";
 const PORT: number = 4632;
@@ -765,5 +800,35 @@ describe("Meerkat DSA", () => {
                 );
             });
     });
+
+    it.skip("permits requests from other sockets to be handled, even while one particular IDM socket is getting inundated", async () => {
+        const idm1 = await connect();
+        const idm2 = await connect();
+        (async () => { // I think write() is actually synchronous, so I want to ensure that this happens async.
+            idm1.s.write(firehoseOfIdmRequests());
+        })();
+
+        const response = await writeOperation(
+            idm2,
+            list["&operationCode"]!,
+            _encode_ListArgument({
+                unsigned: new ListArgumentData(
+                    {
+                        rdnSequence: [],
+                    },
+                ),
+            }, DER),
+        );
+        console.log(response.invokeId);
+        assert("result" in response);
+        assert(response.result);
+    }, 5000); // Just timeout after five seconds.
+
+    // This one might require some manual intervention: watching the task manager / ps.
+    it.skip("does not exhaust resources if hit with a large number of back-to-back requests", async () => {
+        const idm1 = await connect();
+        idm1.s.write(firehoseOfIdmRequests(5000));
+        await sleep(45000);
+    }, 60000); // Just timeout after five seconds.
 
 });

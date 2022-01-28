@@ -1,6 +1,6 @@
 import {
     Context,
-    ClientConnection,
+    ClientAssociation,
     PagedResultsRequestState,
     OperationStatistics,
     OperationInvocationInfo,
@@ -80,6 +80,7 @@ import {
     changePassword,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import isDebugging from "is-debugging";
+import printCode from "../utils/printCode";
 
 async function handleRequest (
     ctx: Context,
@@ -105,7 +106,6 @@ async function handleRequest (
     stats.outcome = result.outcome ?? stats.outcome;
     const unprotectedResult = getOptionallyProtectedValue(result.result);
     await dap.idm.writeResult(request.invokeID, result.opCode, unprotectedResult.result);
-    ctx.statistics.operations.push(stats);
 }
 
 async function handleRequestAndErrors (
@@ -121,9 +121,29 @@ async function handleRequestAndErrors (
         return;
     }
     if (dap.invocations.has(Number(request.invokeID))) {
-        await dap.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        // TODO: Log this.
+        ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
+            iid: request.invokeID.toString(),
+            cid: dap.id,
+        }));
+        dap.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
         return;
     }
+    if (dap.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
+        ctx.log.warn(ctx.i18n.t("log:max_concurrent_op", {
+            cid: dap.id,
+            iid: request.invokeID.toString(),
+        }));
+        dap.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
+        return;
+    }
+    // TODO: Check max concurrent operations.
+    ctx.log.debug(ctx.i18n.t("log:received_request", {
+        protocol: "DAP",
+        iid: request.invokeID.toString(),
+        op: printCode(request.opcode),
+        cid: dap.id,
+    }));
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
@@ -245,32 +265,25 @@ async function handleRequestAndErrors (
         }
     } finally {
         dap.invocations.delete(Number(request.invokeID));
-        if (
+        if (!(
             compareCode(request.opcode, administerPassword["&operationCode"]!)
             || compareCode(request.opcode, changePassword["&operationCode"]!)
             || (
                 compareCode(request.opcode, addEntry["&operationCode"]!)
                 && ctx.config.bulkInsertMode
             )
-        ) {
-            // We do not send telemetry data on administerPassword or
-            // changePassword operations, or when bulk insert mode is used and
-            // the operation is `addEntry`.
-            ctx.statistics.operations.length = 0;
-        } else {
-            for (const opstat of ctx.statistics.operations) {
-                ctx.telemetry.sendEvent(opstat);
-            }
+        )) {
+            ctx.telemetry.sendEvent(stats);
         }
     }
 }
 
 export default
-class DAPConnection extends ClientConnection {
+class DAPConnection extends ClientAssociation {
     public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
 
-    private async handleRequest (request: Request): Promise<void> {
-        await handleRequestAndErrors(this.ctx, this, request);
+    private handleRequest (request: Request): void {
+        handleRequestAndErrors(this.ctx, this, request).catch();
     }
 
     private async handleUnbind (): Promise<void> {

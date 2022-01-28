@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientConnection, ServiceError } from "@wildboar/meerkat-types";
+import { Context, Vertex, ClientAssociation, ServiceError } from "@wildboar/meerkat-types";
 import type { ASN1Element, BIT_STRING } from "asn1-ts";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { id_opcode_compare } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
@@ -64,7 +64,7 @@ async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promis
 export
 async function checkSuitabilityProcedure (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     vertex: Vertex,
     operationType: Code,
     aliasDereferenced: boolean,

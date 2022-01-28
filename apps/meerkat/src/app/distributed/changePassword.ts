@@ -1,4 +1,4 @@
-import type { Context, Vertex, ClientConnection, OperationReturn } from "@wildboar/meerkat-types";
+import type { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -89,7 +89,7 @@ const USER_PWD_OID: string = userPwd["&id"].toString();
 export
 async function changePassword (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;

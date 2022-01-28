@@ -1,6 +1,6 @@
 import {
     Context,
-    ClientConnection,
+    ClientAssociation,
     OperationStatistics,
     OperationInvocationInfo,
     MistypedPDUError,
@@ -101,7 +101,6 @@ async function handleRequest (
     stats.outcome = result.outcome ?? stats.outcome;
     const encodedResult = chainedRead.encoderFor["&ResultType"]!(result.result, DER);
     await dsp.idm.writeResult(request.invokeID, result.opCode, encodedResult);
-    ctx.statistics.operations.push(stats);
 }
 
 async function handleRequestAndErrors (
@@ -241,14 +240,12 @@ async function handleRequestAndErrors (
         }
     } finally {
         dsp.invocations.delete(Number(request.invokeID));
-        for (const opstat of ctx.statistics.operations) {
-            ctx.telemetry.sendEvent(opstat);
-        }
+        ctx.telemetry.sendEvent(stats);
     }
 }
 
 export default
-class DSPConnection extends ClientConnection {
+class DSPConnection extends ClientAssociation {
     public readonly socket!: Socket;
 
     private async handleRequest (request: Request): Promise<void> {

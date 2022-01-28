@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { BOOLEAN, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
@@ -69,7 +69,7 @@ async function apinfoProcedure (
     ctx: Context,
     api: AccessPointInformation,
     req: ChainedRequest,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<ResultOrError | null> {
     const op = ("present" in state.invokeId)

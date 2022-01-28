@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -60,7 +60,7 @@ import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlre
 export
 async function becomeSuperior (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     invokeId: INTEGER,
     agreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,

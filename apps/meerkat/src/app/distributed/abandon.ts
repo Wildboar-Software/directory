@@ -1,4 +1,4 @@
-import { Context, ClientConnection } from "@wildboar/meerkat-types";
+import { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_AbandonArgument,
@@ -35,7 +35,7 @@ import { DER } from "asn1-ts/dist/node/functional";
 export
 async function abandon (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     request: ChainedArgument,
 ): Promise<ChainedResult> {
     const argument = _decode_AbandonArgument(request.argument);

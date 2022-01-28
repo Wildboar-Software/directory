@@ -1,7 +1,7 @@
-import type { ClientConnection, ConnectionStatistics } from "@wildboar/meerkat-types";
+import type { ClientAssociation, ConnectionStatistics } from "@wildboar/meerkat-types";
 
 export
-function getConnectionStatistics (conn: ClientConnection): ConnectionStatistics {
+function getConnectionStatistics (conn: ClientAssociation): ConnectionStatistics {
     return {
         remoteFamily: conn.socket.remoteFamily,
         remoteAddress: conn.socket.remoteAddress,

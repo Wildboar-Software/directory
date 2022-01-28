@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import type {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
@@ -75,7 +75,7 @@ import { randomInt } from "crypto";
 export
 async function checkIfNameIsAlreadyTakenInNSSR (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     invokeId: InvokeId,
     aliasDereferenced: BOOLEAN,
     nonSpecificKnowledges: MasterAndShadowAccessPoints[],

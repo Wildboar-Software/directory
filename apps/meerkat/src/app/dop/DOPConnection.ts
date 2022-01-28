@@ -1,6 +1,6 @@
 import {
     Context,
-    ClientConnection,
+    ClientAssociation,
     OperationStatistics,
     AbandonError,
     AbandonFailedError,
@@ -293,7 +293,7 @@ async function handleRequestAndErrors (
 
 
 export default
-class DOPConnection extends ClientConnection {
+class DOPConnection extends ClientAssociation {
     public get v1 (): boolean {
         return (this.bind.versions?.[Versions_v1] === TRUE_BIT);
     }

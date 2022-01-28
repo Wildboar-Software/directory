@@ -1,4 +1,4 @@
-import { Context, StoredContext, Vertex, ClientConnection, OperationReturn, Value } from "@wildboar/meerkat-types";
+import { Context, StoredContext, Vertex, ClientAssociation, OperationReturn, Value } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -133,7 +133,7 @@ function contextFromStoredContext (sc: StoredContext): X500Context {
 export
 async function compare (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;

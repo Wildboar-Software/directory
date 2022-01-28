@@ -1,4 +1,4 @@
-import type { Context, ClientConnection, PagedResultsRequestState } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation, PagedResultsRequestState } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { TRUE_BIT, TRUE } from "asn1-ts";
 import * as crypto from "crypto";
@@ -72,7 +72,7 @@ const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 export
 async function search_ii (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
     argument: SearchArgument,
     searchState: SearchState,

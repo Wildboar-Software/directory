@@ -26,9 +26,8 @@ interface EventMap {
     startTLS: StartTLS;
     tLSResponse: TLSResponse;
     socketError: Error;
-    // Emitted when the length indicator is encountered. Useful for rejecting
-    // excessively large packets BEFORE they are submitted.
-    length: number;
+    socketDataLength: number;
+    segmentDataLength: number;
     [other: number]: ResultOrError; // The opcode is the event type.
 };
 

@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
@@ -7,7 +7,7 @@ import anyPasswordsExist from "./anyPasswordsExist";
 export
 async function mayAddTopLevelDSE (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
 ): Promise<boolean> {
     if (ctx.config.openTopLevel) {
         return true;

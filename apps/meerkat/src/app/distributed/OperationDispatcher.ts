@@ -1,4 +1,4 @@
-import type { ClientConnection, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "@wildboar/meerkat-types";
+import type { ClientAssociation, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "@wildboar/meerkat-types";
 import type DSPConnection from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import {
@@ -154,7 +154,7 @@ class OperationDispatcher {
     public static async operationEvaluation (
         ctx: Context,
         state: OperationDispatcherState,
-        conn: ClientConnection,
+        conn: ClientAssociation,
         req: Request,
         reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
         local: boolean = false,
@@ -512,7 +512,7 @@ class OperationDispatcher {
 
     private static async dispatchPreparedDSPRequest (
         ctx: Context,
-        conn: ClientConnection,
+        conn: ClientAssociation,
         req: Request,
         preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
         local: boolean,
@@ -645,7 +645,7 @@ class OperationDispatcher {
 
     public static async dispatchDAPRequest (
         ctx: Context,
-        conn: ClientConnection,
+        conn: ClientAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(
@@ -690,7 +690,7 @@ class OperationDispatcher {
     private static async localSearchOperationEvaluation (
         ctx: Context,
         state: OperationDispatcherState,
-        conn: ClientConnection,
+        conn: ClientAssociation,
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,
@@ -739,7 +739,7 @@ class OperationDispatcher {
 
     public static async dispatchLocalSearchDSPRequest (
         ctx: Context,
-        conn: ClientConnection,
+        conn: ClientAssociation,
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,

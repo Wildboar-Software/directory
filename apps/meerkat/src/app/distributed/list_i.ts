@@ -1,7 +1,7 @@
 import {
     Context,
     Vertex,
-    ClientConnection,
+    ClientAssociation,
     WithRequestStatistics,
     WithOutcomeStatistics,
     PagedResultsRequestState,
@@ -131,7 +131,7 @@ interface ListState extends Partial<WithRequestStatistics>, Partial<WithOutcomeS
 export
 async function list_i (
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<ListState> {
     const target = state.foundDSE;

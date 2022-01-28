@@ -1,4 +1,4 @@
-import type { Context, ClientConnection } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import { LDAPConnection } from "../ldap/LDAPConnection";
 import { ASN1Element, DERElement, TRUE, FALSE, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -182,7 +182,7 @@ function compareEntries (
 export
 async function mergeSortAndPageSearch(
     ctx: Context,
-    conn: ClientConnection,
+    conn: ClientAssociation,
     state: OperationDispatcherState,
     searchState: SearchState,
     searchArgument: SearchArgumentData,
