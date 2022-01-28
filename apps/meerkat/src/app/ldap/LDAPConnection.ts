@@ -63,6 +63,12 @@ import anyPasswordsExist from "../authz/anyPasswordsExist";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
+enum Status {
+    UNBOUND = 1,
+    BIND_IN_PROGRESS = 2,
+    BOUND = 3,
+}
+
 function isRootSubschemaDN (dn: Uint8Array): boolean {
     const dnstr = Buffer.from(dn).toString("utf-8").toLowerCase();
     return [ // Different ways of representing the same DN.
@@ -173,7 +179,7 @@ async function handleRequestAndErrors (
     conn: LDAPConnection,
     message: LDAPMessage,
 ): Promise<void> {
-    if (!conn.bound) {
+    if (conn.status !== Status.BOUND) {
         const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
         conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
         conn.socket.destroy();
@@ -297,9 +303,9 @@ async function handleRequestAndErrors (
 export
 class LDAPConnection extends ClientAssociation {
 
+    public status: Status = Status.UNBOUND;
     private buffer: Buffer = Buffer.alloc(0);
     public boundEntry: Vertex | undefined;
-    public bound: boolean = false;
 
     // Not used.
     public async attemptBind (): Promise<void> {
@@ -309,9 +315,9 @@ class LDAPConnection extends ClientAssociation {
     // I _think_ this function MUST NOT be async, or this function could run
     // multiple times out-of-sync, mutating `this.buffer` indeterminately.
     private handleData (ctx: Context, data: Buffer): void {
+        const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
         // #region Pre-flight check if the message will fit in the buffer, if possible.
         if ((this.buffer.length + data.length) > ctx.config.ldap.bufferSize) {
-            const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
             ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
                 protocol: "LDAP",
                 source,
@@ -450,6 +456,14 @@ class LDAPConnection extends ClientAssociation {
             }
 
             if ("bindRequest" in message.protocolOp) {
+                if (this.status !== Status.UNBOUND) {
+                    ctx.log.error(ctx.i18n.t("log:double_bind_attempted", { source }));
+                    const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
+                    this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                    this.socket.destroy();
+                    return;
+                }
+                this.status = Status.BIND_IN_PROGRESS;
                 const req = message.protocolOp.bindRequest;
                 const startBindTime = new Date();
                 bind(ctx, this.socket, req)
@@ -463,7 +477,9 @@ class LDAPConnection extends ClientAssociation {
                         if (bindReturn.result.resultCode === LDAPResult_resultCode_success) {
                             this.boundEntry = bindReturn.boundVertex;
                             this.authLevel = bindReturn.authLevel;
-                            this.bound = true;
+                            this.status = Status.BOUND;
+                        } else {
+                            this.status = Status.UNBOUND;
                         }
                         const res = new LDAPMessage(
                             message.messageID,
@@ -494,7 +510,12 @@ class LDAPConnection extends ClientAssociation {
                         );
                         this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     })
-                    .finally(() => this.handleData(ctx, Buffer.alloc(0)));
+                    .finally(() => {
+                        if (this.status === Status.BIND_IN_PROGRESS) {
+                            this.status = Status.UNBOUND;
+                        }
+                        this.handleData(ctx, Buffer.alloc(0));
+                    });
                 /**
                  * When we bind, we slice the buffer, which we would normally
                  * do at the end of an iteration of this `while` loop, and then
@@ -507,6 +528,7 @@ class LDAPConnection extends ClientAssociation {
                 this.buffer = this.buffer.slice(bytesRead);
                 break;
             } else if ("unbindRequest" in message.protocolOp) {
+                this.status = Status.UNBOUND;
                 this.boundEntry = undefined;
                 this.boundNameAndUID = undefined;
                 this.authLevel = {
@@ -516,7 +538,6 @@ class LDAPConnection extends ClientAssociation {
                         false,
                     ),
                 };
-                this.bound = false;
             } else if (
                 ("extendedReq" in message.protocolOp)
                 && !decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(modifyPassword)
