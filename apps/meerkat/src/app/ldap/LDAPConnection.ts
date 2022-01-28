@@ -2,7 +2,7 @@ import { Context, Vertex, ClientAssociation, OperationStatistics } from "@wildbo
 import * as errors from "@wildboar/meerkat-types";
 import * as net from "net";
 import * as tls from "tls";
-import { BERElement, ASN1TruncationError } from "asn1-ts";
+import { BERElement, ASN1TruncationError, ASN1Element } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
     LDAPMessage,
@@ -300,6 +300,10 @@ class LDAPConnection extends ClientAssociation {
     private buffer: Buffer = Buffer.alloc(0);
     public boundEntry: Vertex | undefined;
     public bound: boolean = false;
+
+    public async attemptBind (arg: ASN1Element): Promise<void> {
+        return;
+    }
 
     // I _think_ this function MUST NOT be async, or this function could run
     // multiple times out-of-sync, mutating `this.buffer` indeterminately.

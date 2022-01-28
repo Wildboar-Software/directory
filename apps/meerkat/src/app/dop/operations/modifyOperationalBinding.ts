@@ -389,6 +389,9 @@ async function modifyOperationalBinding (
             source_ip: conn.socket.remoteAddress,
             source_tcp_port: conn.socket.remotePort,
             source_credentials_type: ((): number | null => {
+                if (!conn.bind) {
+                    return null;
+                }
                 if (!conn.bind.credentials) {
                     return null;
                 }
@@ -407,27 +410,27 @@ async function modifyOperationalBinding (
                 return 4;
             })(),
             source_certificate_path: (
-                conn.bind.credentials
+                conn.bind?.credentials
                 && ("strong" in conn.bind.credentials)
                 && conn.bind.credentials.strong.certification_path
             )
                 ? Buffer.from(_encode_CertificationPath(conn.bind.credentials.strong.certification_path, DER).toBytes())
                 : undefined,
             source_attr_cert_path: (
-                conn.bind.credentials
+                conn.bind?.credentials
                 && ("strong" in conn.bind.credentials)
                 && conn.bind.credentials.strong.attributeCertificationPath
             )
                 ? Buffer.from(_encode_ACP(conn.bind.credentials.strong.attributeCertificationPath, DER).toBytes())
                 : undefined,
             source_bind_token: (
-                conn.bind.credentials
+                conn.bind?.credentials
                 && ("strong" in conn.bind.credentials)
             )
                 ? Buffer.from(_encode_Token(conn.bind.credentials.strong.bind_token, DER).toBytes())
                 : undefined,
             source_strong_name: (
-                conn.bind.credentials
+                conn.bind?.credentials
                 && ("strong" in conn.bind.credentials)
                 && conn.bind.credentials.strong.name
             )

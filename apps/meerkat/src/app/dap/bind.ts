@@ -1,7 +1,7 @@
 import {
     Context,
     BindReturn,
-    SecurityError,
+    DirectoryBindError,
 } from "@wildboar/meerkat-types";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
@@ -23,15 +23,14 @@ import {
 import attemptPassword from "../authn/attemptPassword";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
-    securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import {
-    SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import {
     SecurityProblem_unsupportedAuthenticationMethod,
+    SecurityProblem_inappropriateAuthentication,
+    SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import {
+    DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+import versions from "./versions";
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
@@ -68,7 +67,21 @@ async function bind (
         + ((tlsProtocol === "TLSv1.3") ? ctx.config.localQualifierPointsFor.usingTLSv1_3 : 0)
     );
 
+    const source: string = `${socket.remoteFamily}:${socket.remoteAddress}:${socket.remotePort}`;
+    const anonymousBindErrorData = new DirectoryBindErrorData(
+        versions,
+        {
+            securityError: SecurityProblem_inappropriateAuthentication,
+        },
+        // No security parameters will be provided for failed auth attempts.
+    );
     if (!arg.credentials) {
+        if (ctx.config.forbidAnonymousBind) {
+            throw new DirectoryBindError(
+                ctx.i18n.t("err:anon_bind_disabled", { host: source }),
+                anonymousBindErrorData,
+            );
+        }
         return {
             authLevel: {
                 basicLevels: new AuthenticationLevel_basicLevels(
@@ -77,12 +90,17 @@ async function bind (
                     undefined,
                 ),
             },
-            failedAuthentication: ctx.config.forbidAnonymousBind,
         };
     }
     if ("simple" in arg.credentials) {
         const foundEntry = await findEntry(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {
+            if (ctx.config.forbidAnonymousBind) {
+                throw new DirectoryBindError(
+                    ctx.i18n.t("err:anon_bind_disabled", { host: source }),
+                    anonymousBindErrorData,
+                );
+            }
             return {
                 boundVertex: foundEntry,
                 boundNameAndUID: new NameAndOptionalUID(
@@ -96,25 +114,20 @@ async function bind (
                         undefined,
                     ),
                 },
-                failedAuthentication: ctx.config.forbidAnonymousBind,
             };
         }
-        const invalidCredentialsReturn: BindReturn = {
-            boundNameAndUID: new NameAndOptionalUID(
-                arg.credentials.simple.name,
-                undefined,
-            ),
-            authLevel: {
-                basicLevels: new AuthenticationLevel_basicLevels(
-                    AuthenticationLevel_basicLevels_level_none,
-                    localQualifierPoints,
-                    undefined,
-                ),
+        const invalidCredentialsData = new DirectoryBindErrorData(
+            versions,
+            {
+                securityError: SecurityProblem_invalidCredentials,
             },
-            failedAuthentication: true,
-        };
+            // No security parameters will be provided for failed auth attempts.
+        );
         if (!foundEntry) {
-            return invalidCredentialsReturn;
+            throw new DirectoryBindError(
+                ctx.i18n.t("err:invalid_credentials", { host: source }),
+                invalidCredentialsData,
+            );
         }
         if (arg.credentials.simple.validity) {
             const now = new Date();
@@ -129,50 +142,49 @@ async function bind (
                     : arg.credentials.simple.validity.time2.gt
                 : undefined;
             if (minimumTime && (minimumTime.valueOf() > (now.valueOf() + 5000))) { // 5 seconds of tolerance.
-                return invalidCredentialsReturn;
+                throw new DirectoryBindError(
+                    ctx.i18n.t("err:invalid_credentials", { host: source }),
+                    invalidCredentialsData,
+                );
             }
             if (maximumTime && (maximumTime.valueOf() < (now.valueOf() - 5000))) { // 5 seconds of tolerance.
-                return invalidCredentialsReturn;
+                throw new DirectoryBindError(
+                    ctx.i18n.t("err:invalid_credentials", { host: source }),
+                    invalidCredentialsData,
+                );
             }
         }
         // NOTE: Validity has no well-established meaning.
         const passwordIsCorrect: boolean | undefined = await attemptPassword(ctx, foundEntry, arg.credentials.simple.password);
-        if (passwordIsCorrect) {
-            return {
-                boundVertex: foundEntry,
-                boundNameAndUID: new NameAndOptionalUID(
-                    getDistinguishedName(foundEntry),
-                    foundEntry.dse.uniqueIdentifier?.[0], // We just use the first unique identifier.
-                ),
-                authLevel: {
-                    basicLevels: new AuthenticationLevel_basicLevels(
-                        AuthenticationLevel_basicLevels_level_simple,
-                        localQualifierPoints,
-                        undefined,
-                    ),
-                },
-                failedAuthentication: false,
-            };
-        } else {
-            return invalidCredentialsReturn;
+        if (!passwordIsCorrect) {
+            throw new DirectoryBindError(
+                ctx.i18n.t("err:invalid_credentials", { host: source }),
+                invalidCredentialsData,
+            );
         }
-    } else {
-        throw new SecurityError(
-            ctx.i18n.t("err:unsupported_auth_method"),
-            new SecurityErrorData(
-                SecurityProblem_unsupportedAuthenticationMethod,
-                undefined,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
+        return {
+            boundVertex: foundEntry,
+            boundNameAndUID: new NameAndOptionalUID(
+                getDistinguishedName(foundEntry),
+                foundEntry.dse.uniqueIdentifier?.[0], // We just use the first unique identifier.
+            ),
+            authLevel: {
+                basicLevels: new AuthenticationLevel_basicLevels(
+                    AuthenticationLevel_basicLevels_level_simple,
+                    localQualifierPoints,
                     undefined,
-                    undefined,
-                    securityError["&errorCode"],
                 ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                false,
-                undefined,
+            },
+        };
+    } else {
+        throw new DirectoryBindError(
+            ctx.i18n.t("err:unsupported_auth_method"),
+            new DirectoryBindErrorData(
+                versions,
+                {
+                    securityError: SecurityProblem_unsupportedAuthenticationMethod,
+                },
+                // No security parameters will be provided for failed auth attempts.
             ),
         );
     }

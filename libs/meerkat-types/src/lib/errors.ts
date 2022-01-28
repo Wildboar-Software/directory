@@ -53,6 +53,17 @@ import {
     operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import { ASN1Element } from "asn1-ts";
+import {
+    DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+
+export
+abstract class BindError extends Error {
+    constructor (readonly message: string) {
+        super(message);
+        Object.setPrototypeOf(this, BindError.prototype);
+    }
+}
 
 /**
  * Error types that relate to operation errors in the X.500 directory protocols.
@@ -70,6 +81,22 @@ abstract class DirectoryError extends Error {
 export
 abstract class TransportError extends Error {
 
+}
+
+export
+class DirectoryBindError extends BindError {
+    constructor (readonly message: string, readonly data: DirectoryBindErrorData) {
+        super(message);
+        Object.setPrototypeOf(this, DirectoryBindError.prototype);
+    }
+}
+
+export
+class DSABindError extends BindError {
+    constructor (readonly message: string, readonly data: DirectoryBindErrorData) {
+        super(message);
+        Object.setPrototypeOf(this, DSABindError.prototype);
+    }
 }
 
 export

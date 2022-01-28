@@ -501,6 +501,9 @@ interface Configuration {
     openTopLevel: boolean;
     dsaCanBindAsNonDSA: boolean;
     forbidAnonymousBind: boolean;
+    dap: {
+        enabled: boolean;
+    };
     dsp: {
         enabled: boolean;
     };
@@ -1165,7 +1168,6 @@ export
 abstract class ClientAssociation {
     public socket!: Socket;
     public readonly id = randomUUID();
-    public claimedNameAndUID: NameAndOptionalUID;
     public boundEntry: Vertex | undefined;
     /**
      * Even though this can be calculated from the `boundEntry` field, this
@@ -1209,15 +1211,19 @@ abstract class ClientAssociation {
     // LDAP messages through the ldapTransport and linkedLDAP operations.
     public readonly messageIDToInvokeID: Map<number, number> = new Map();
     public readonly invokeIDToMessageID: Map<number, number> = new Map();
+    public abstract attemptBind (arg: ASN1Element): Promise<void>;
+    public isBound (): boolean {
+        return !!(this.boundEntry || this.boundNameAndUID);
+    }
 }
+
+
 
 export
 interface BindReturn {
-    claimedNameAndUID?: NameAndOptionalUID;
     boundVertex?: Vertex;
     boundNameAndUID?: NameAndOptionalUID;
     authLevel: AuthenticationLevel;
-    failedAuthentication: boolean;
 }
 
 export

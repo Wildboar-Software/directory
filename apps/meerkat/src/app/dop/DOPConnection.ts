@@ -12,12 +12,16 @@ import {
     UpdateError,
     UnknownOperationError,
     MistypedPDUError,
+    DSABindError,
+    BindReturn,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import { ASN1Element } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import { IDMConnection } from "@wildboar/idm";
 import {
     DSABindArgument,
+    _decode_DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import {
     _encode_DSABindResult,
@@ -27,7 +31,6 @@ import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { TRUE_BIT } from "asn1-ts";
 import { _encode_AbandonedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
 import { _encode_AbandonFailedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonFailedData.ta";
 import { _encode_AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
@@ -54,10 +57,6 @@ import {
     Abort_reasonNotSpecified,
     Abort_invalidPDU,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import {
-    Versions_v1,
-    Versions_v2,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 import establishOperationalBinding from "./operations/establishOperationalBinding";
 import modifyOperationalBinding from "./operations/modifyOperationalBinding";
 import terminateOperationalBinding from "./operations/terminateOperationalBinding";
@@ -82,16 +81,9 @@ import {
 import versions from "./versions";
 import { bind as doBind } from "../authn/dsaBind";
 import {
-    dSABind,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
-import {
     directoryBindError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
 import {
-    DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
-import {
-    SecurityProblem_noInformation,
     SecurityProblem_inappropriateAuthentication,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
@@ -109,9 +101,7 @@ import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import isDebugging from "is-debugging";
-import { dSA } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/dSA.oa";
-
-const DSA_OC_ID: string = dSA["&id"].toString();
+import { strict as assert } from "assert";
 
 async function handleRequest (
     ctx: Context,
@@ -294,11 +284,68 @@ async function handleRequestAndErrors (
 
 export default
 class DOPConnection extends ClientAssociation {
-    public get v1 (): boolean {
-        return (this.bind.versions?.[Versions_v1] === TRUE_BIT);
-    }
-    public get v2 (): boolean {
-        return (this.bind.versions?.[Versions_v2] === TRUE_BIT);
+
+    public bind: DSABindArgument | undefined;
+
+    public async attemptBind (arg: ASN1Element): Promise<void> {
+        const arg_ = _decode_DSABindArgument(arg);
+        const ctx = this.ctx;
+        const idm = this.idm;
+        const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
+        const startBindTime = new Date();
+        let outcome!: BindReturn;
+        try {
+            outcome = await doBind(ctx, this.idm.socket, arg_);
+        } catch (e) {
+            if (e instanceof DSABindError) {
+                ctx.log.warn(e.message);
+                const endBindTime = new Date();
+                const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
+                const totalTimeInMilliseconds: number = this.ctx.config.bindMinSleepInMilliseconds
+                    + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
+                const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
+                await sleep(sleepTime);
+                const err: typeof directoryBindError["&ParameterType"] = {
+                    unsigned: e.data,
+                };
+                const error = directoryBindError.encoderFor["&ParameterType"]!(err, DER);
+                await idm.writeBindError(dop_ip["&id"]!, error);
+                return;
+            } else {
+                ctx.log.warn(e?.message);
+                await idm.writeAbort(Abort_reasonNotSpecified);
+                return;
+            }
+        }
+        this.bind = arg_;
+        this.boundEntry = outcome.boundVertex;
+        this.boundNameAndUID = outcome.boundNameAndUID;
+        this.authLevel = outcome.authLevel;
+        if (
+            ("basicLevels" in outcome.authLevel)
+            && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
+        ) {
+            assert(!ctx.config.forbidAnonymousBind, "Somehow a DSA bound anonymously when anonymous binds are forbidden.");
+            ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
+                source: remoteHostIdentifier,
+                protocol: "DOP",
+            }));
+        } else {
+            ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
+                source: remoteHostIdentifier,
+                protocol: "DOP",
+                dn: this.boundNameAndUID?.dn
+                    ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                    : "",
+            }));
+        }
+        const bindResult = new DSABindArgument(
+            undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
+            versions,
+        );
+        await idm.writeBindResult(dop_ip["&id"]!, _encode_DSABindResult(bindResult, DER));
+        idm.events.removeAllListeners("request");
+        idm.events.on("request", this.handleRequest.bind(this));
     }
 
     private async handleRequest (request: Request): Promise<void> {
@@ -306,6 +353,9 @@ class DOPConnection extends ClientAssociation {
     }
 
     private async handleUnbind (): Promise<void> {
+        if (!this.isBound()) {
+            return; // We don't want users to be able to spam unbinds.
+        }
         this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
             ctype: DOPConnection.name,
             cid: this.id,
@@ -316,112 +366,10 @@ class DOPConnection extends ClientAssociation {
     constructor (
         readonly ctx: Context,
         readonly idm: IDMConnection,
-        readonly bind: DSABindArgument,
     ) {
         super();
-        if (!ctx.config.dop.enabled) {
-            idm.writeAbort(Abort_invalidProtocol).then(() => idm.events.emit("unbind", null));
-            return;
-        }
         this.socket = idm.s;
-        const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
-        const startBindTime = new Date();
-        doBind(ctx, idm.s, bind)
-            .then(async (outcome) => {
-                const inappropriateBoundEntry: boolean = (
-                    !ctx.config.dsaCanBindAsNonDSA
-                    && !outcome.boundVertex?.dse.objectClass.has(DSA_OC_ID)
-                );
-                if (outcome.failedAuthentication || inappropriateBoundEntry) {
-                    const endBindTime = new Date();
-                    const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
-                    const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
-                        + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
-                    const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
-                    await sleep(sleepTime);
-                }
-                this.boundEntry = outcome.boundVertex;
-                this.boundNameAndUID = outcome.boundNameAndUID;
-                this.authLevel = outcome.authLevel;
-                if (outcome.failedAuthentication || inappropriateBoundEntry) {
-                    const err: typeof directoryBindError["&ParameterType"] = {
-                        unsigned: new DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1(
-                            versions,
-                            {
-                                securityError: SecurityProblem_noInformation,
-                            },
-                            undefined, // Failed authentication will not yield any security parameters.
-                        ),
-                    };
-                    const error = dSABind.encoderFor["&ParameterType"]!(err, DER);
-                    idm
-                        .writeBindError(dop_ip["&id"]!, error)
-                        .then(() => {
-                            this.handleUnbind()
-                                .then(() => {
-                                    ctx.log.info(ctx.i18n.t("log:disconnected_auth_failure", {
-                                        ctype: DOPConnection.name,
-                                        cid: this.id,
-                                        source: remoteHostIdentifier,
-                                    }));
-                                    ctx.log.info(`${DOPConnection.name} ${this.id}: Disconnected ${remoteHostIdentifier} due to authentication failure.`);
-                                })
-                                .catch((e) => {
-                                    ctx.log.info(ctx.i18n.t("log:error_unbinding", {
-                                        ctype: DOPConnection.name,
-                                        cid: this.id,
-                                        e: e.message,
-                                    }));
-                                });
-                        })
-                        .catch((e) => {
-                            ctx.log.info(ctx.i18n.t("log:error_writing_bind_error", {
-                                ctype: DOPConnection.name,
-                                cid: this.id,
-                                e: e.message,
-                            }));
-                        });
-                    ctx.log.info(ctx.i18n.t("log:auth_failure", {
-                        ctype: DOPConnection.name,
-                        cid: this.id,
-                        source: remoteHostIdentifier,
-                    }));
-                    return;
-                }
-                const bindResult = new DSABindArgument( // DSABindResult === DSABindArgument
-                    undefined,
-                    versions,
-                );
-                idm.writeBindResult(dop_ip["&id"]!, _encode_DSABindResult(bindResult, DER));
-                if (
-                    ("basicLevels" in outcome.authLevel)
-                    && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
-                ) {
-                    ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
-                        source: remoteHostIdentifier,
-                        protocol: "DOP",
-                    }));
-                } else {
-                    ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
-                        source: remoteHostIdentifier,
-                        protocol: "DOP",
-                        dn: this.boundNameAndUID?.dn
-                            ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
-                            : "",
-                    }));
-                }
-            })
-            .catch((e) => {
-                ctx.log.error(ctx.i18n.t("log:bind_error", {
-                    ctype: DOPConnection.name,
-                    cid: this.id,
-                    source: remoteHostIdentifier,
-                    e: e.message,
-                }));
-            });
-
-        idm.events.removeAllListeners("request");
-        idm.events.on("request", this.handleRequest.bind(this));
+        assert(ctx.config.dop.enabled, "User somehow bound via DOP when it was disabled.");
         idm.events.on("unbind", this.handleUnbind.bind(this));
     }
 }

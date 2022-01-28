@@ -145,5 +145,7 @@
     "not_authz_read_selection": "Not authorized to read some of the selected attributes.",
     "not_authz_browse": "Not authorized to browse or return the distinguished name of this entry. Its existence was disclosed because of an error.",
     "unrecognized_ext_op": "Unrecognized extended operation.",
-    "tls_already_in_use": "TLS is already in use."
+    "tls_already_in_use": "TLS is already in use.",
+    "anon_bind_disabled": "COULD_BAN={{host}}; Client {{host}} attempted to bind anonymously, but anonymous binds are disabled.",
+    "invalid_credentials": "COULD_BAN={{host}}; Client {{host}} attempted to bind with invalid credentials."
 }

@@ -14,6 +14,7 @@ import {
     Abort_reasonNotSpecified,
     Abort_unboundRequest,
     Abort_resourceLimitation,
+    Abort_invalidProtocol,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import { IDMConnection } from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
@@ -209,17 +210,16 @@ function attachUnboundEventListenersToIDMConnection (
             });
     };
     idm.events.on("request", handleWrongSequence);
-    idm.events.on("bind", (idmBind: IdmBind) => {
+    idm.events.on("bind", async (idmBind: IdmBind) => {
         const existingAssociation = ctx.associations.get(originalSocket);
-        if (existingAssociation) {
+        if (existingAssociation) { // FIXME: This logic is broken, because now an association does not guarantee that we are bound.
+            // FIXME: Fortunately, I think all you need to do is check .bound.
             ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
                 source,
                 protocol: idmBind.protocolID.toString(),
-            }))
+            }));
             idm.writeAbort(Abort_reasonNotSpecified)
-                .then(() => {
-                    idm.s.destroy();
-                })
+                .then(() => idm.s.destroy())
                 .catch()
                 .finally(() => {
                     startTimes.delete(idm.s);
@@ -227,22 +227,39 @@ function attachUnboundEventListenersToIDMConnection (
                 });
             return;
         }
-        if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!)) {
-            const dba = _decode_DirectoryBindArgument(idmBind.argument);
-            const conn = new DAPConnection(ctx, idm, dba);
-            ctx.associations.set(originalSocket, conn);
-        } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!)) {
-            const dba = _decode_DSABindArgument(idmBind.argument);
-            const conn = new DSPConnection(ctx, idm, dba);
-            ctx.associations.set(originalSocket, conn);
-        } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!)) {
-            const dba = _decode_DSABindArgument(idmBind.argument);
-            const conn = new DOPConnection(ctx, idm, dba);
-            ctx.associations.set(originalSocket, conn);
+        let conn!: ClientAssociation;
+        if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!) && ctx.config.dap.enabled) {
+            conn = new DAPConnection(ctx, idm);
+        } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!) && ctx.config.dsp.enabled) {
+            conn = new DSPConnection(ctx, idm);
+        } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!) && ctx.config.dop.enabled) {
+            conn = new DOPConnection(ctx, idm);
         } else {
-            ctx.log.error(ctx.i18n.t("log:unsupported_protocol", {
+            // TODO: Log the source.
+            ctx.log.warn(ctx.i18n.t("log:unsupported_protocol", {
                 protocol: idmBind.protocolID.toString(),
             }));
+            idm.writeAbort(Abort_invalidProtocol)
+                .then(() => idm.s.destroy())
+                .catch()
+                .finally(() => {
+                    startTimes.delete(idm.s);
+                    ctx.associations.delete(idm.s);
+                });
+            return;
+        }
+        try {
+            await conn.attemptBind(idmBind.argument);
+            ctx.associations.set(originalSocket, conn);
+        } catch (e) {
+            idm.writeAbort(Abort_reasonNotSpecified)
+                .then(() => idm.s.destroy())
+                .catch()
+                .finally(() => {
+                    startTimes.delete(idm.s);
+                    ctx.associations.delete(idm.s);
+                });
+            // TODO: Log the error.
         }
     });
     idm.events.on("unbind", () => {

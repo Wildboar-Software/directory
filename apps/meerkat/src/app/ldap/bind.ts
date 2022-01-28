@@ -86,7 +86,6 @@ async function bind (
     const version = req.version;
     if (version !== 3) {
         return {
-            failedAuthentication: false,
             authLevel: notAuthed(),
             result: new BindResponse(
                 LDAPResult_resultCode_protocolError,
@@ -102,7 +101,6 @@ async function bind (
     const entry = await findEntry(ctx, ctx.dit.root, dn, true);
     if (!entry) {
         return {
-            failedAuthentication: true,
             authLevel: notAuthed(),
             result: invalidCredentialsError(req.name),
         };
@@ -130,7 +128,6 @@ async function bind (
     };
     const invalidCredentials: LDAPBindReturn = {
         ...ret,
-        failedAuthentication: true,
         authLevel: notAuthed(localQualifierPoints),
         result: invalidCredentialsError(req.name),
     };
@@ -139,7 +136,6 @@ async function bind (
         if (suppliedPassword.length === 0) {
             return {
                 ...ret,
-                failedAuthentication: false,
                 authLevel: {
                     basicLevels: new AuthenticationLevel_basicLevels(
                         AuthenticationLevel_basicLevels_level_none,
@@ -162,7 +158,6 @@ async function bind (
         if (authenticated) {
             return {
                 ...ret,
-                failedAuthentication: false,
                 authLevel: {
                     basicLevels: new AuthenticationLevel_basicLevels(
                         AuthenticationLevel_basicLevels_level_simple,
@@ -198,7 +193,6 @@ async function bind (
                 if (authenticated) {
                     return {
                         ...ret,
-                        failedAuthentication: false,
                         authLevel: {
                             basicLevels: new AuthenticationLevel_basicLevels(
                                 AuthenticationLevel_basicLevels_level_simple,
@@ -215,7 +209,6 @@ async function bind (
             default: {
                 return {
                     ...ret,
-                    failedAuthentication: false,
                     authLevel: {
                         basicLevels: new AuthenticationLevel_basicLevels(
                             AuthenticationLevel_basicLevels_level_none,
@@ -236,7 +229,6 @@ async function bind (
     } else {
         return {
             ...ret,
-            failedAuthentication: false,
             authLevel: {
                 basicLevels: new AuthenticationLevel_basicLevels(
                     AuthenticationLevel_basicLevels_level_none,

@@ -5,13 +5,12 @@ import {
     OperationStatistics,
     OperationInvocationInfo,
     MistypedPDUError,
+    BindReturn,
+    DirectoryBindError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { IDMConnection } from "@wildboar/idm";
 import versions from "./versions";
-import type {
-    DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
 import {
     DirectoryBindResult,
     _encode_DirectoryBindResult,
@@ -45,17 +44,11 @@ import {
     Abort_reasonNotSpecified,
     Abort_invalidPDU,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import {
-    SecurityProblem_noInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import { bind as doBind } from "./bind";
 import {
     directoryBindError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
-import {
-    DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
@@ -81,6 +74,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import isDebugging from "is-debugging";
 import printCode from "../utils/printCode";
+import { ASN1Element } from "asn1-ts";
+import {
+    _decode_DirectoryBindArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+import { strict as assert } from "assert";
 
 async function handleRequest (
     ctx: Context,
@@ -282,11 +280,75 @@ export default
 class DAPConnection extends ClientAssociation {
     public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
 
+    public async attemptBind (arg: ASN1Element): Promise<void> {
+        const arg_ = _decode_DirectoryBindArgument(arg);
+        const ctx = this.ctx;
+        const idm = this.idm;
+        const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
+        const startBindTime = new Date();
+        let outcome!: BindReturn;
+        try {
+            outcome = await doBind(ctx, this.idm.socket, arg_);
+        } catch (e) {
+            if (e instanceof DirectoryBindError) {
+                ctx.log.warn(e.message);
+                const endBindTime = new Date();
+                const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
+                const totalTimeInMilliseconds: number = this.ctx.config.bindMinSleepInMilliseconds
+                    + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
+                const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
+                await sleep(sleepTime);
+                const err: typeof directoryBindError["&ParameterType"] = {
+                    unsigned: e.data,
+                };
+                const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
+                await idm.writeBindError(dap_ip["&id"]!, error);
+                return;
+            } else {
+                ctx.log.warn(e?.message);
+                await idm.writeAbort(Abort_reasonNotSpecified);
+                return;
+            }
+        }
+        this.boundEntry = outcome.boundVertex;
+        this.boundNameAndUID = outcome.boundNameAndUID;
+        this.authLevel = outcome.authLevel;
+        if (
+            ("basicLevels" in outcome.authLevel)
+            && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
+        ) {
+            assert(!ctx.config.forbidAnonymousBind, "Somehow a user bound anonymously when anonymous binds are forbidden.");
+            ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
+                source: remoteHostIdentifier,
+                protocol: "DAP",
+            }));
+        } else {
+            ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
+                source: remoteHostIdentifier,
+                protocol: "DAP",
+                dn: this.boundNameAndUID?.dn
+                    ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                    : "",
+            }));
+        }
+        const bindResult = new DirectoryBindResult(
+            undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
+            versions,
+            undefined,
+        );
+        await idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
+        idm.events.removeAllListeners("request");
+        idm.events.on("request", this.handleRequest.bind(this));
+    }
+
     private handleRequest (request: Request): void {
         handleRequestAndErrors(this.ctx, this, request).catch();
     }
 
     private async handleUnbind (): Promise<void> {
+        if (!this.isBound()) {
+            return; // We don't want users to be able to spam unbinds.
+        }
         this.ctx.db.enqueuedListResult.deleteMany({ // INTENTIONAL_NO_AWAIT
             where: {
                 connection_uuid: this.id,
@@ -307,104 +369,10 @@ class DAPConnection extends ClientAssociation {
     constructor (
         readonly ctx: Context,
         readonly idm: IDMConnection,
-        readonly bind: DirectoryBindArgument,
     ) {
         super();
         this.socket = idm.s;
-        const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
-        const startBindTime = new Date();
-        doBind(ctx, idm.s, bind)
-            .then(async (outcome) => {
-                if (outcome.failedAuthentication) {
-                    const endBindTime = new Date();
-                    const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
-                    const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
-                        + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
-                    const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
-                    await sleep(sleepTime);
-                }
-                this.boundEntry = outcome.boundVertex;
-                this.boundNameAndUID = outcome.boundNameAndUID;
-                this.authLevel = outcome.authLevel;
-                if (outcome.failedAuthentication) {
-                    const err: typeof directoryBindError["&ParameterType"] = {
-                        unsigned: new DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1(
-                            versions,
-                            {
-                                securityError: SecurityProblem_noInformation,
-                            },
-                            undefined, // Failed authentication will not yield any security parameters.
-                        ),
-                    };
-                    const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
-                    idm
-                        .writeBindError(dap_ip["&id"]!, error)
-                        .then(() => {
-                            this.handleUnbind()
-                                .then(() => {
-                                    ctx.log.info(ctx.i18n.t("log:disconnected_auth_failure", {
-                                        ctype: DAPConnection.name,
-                                        cid: this.id,
-                                        source: remoteHostIdentifier,
-                                    }));
-                                })
-                                .catch((e) => {
-                                    ctx.log.info(ctx.i18n.t("log:error_unbinding", {
-                                        ctype: DAPConnection.name,
-                                        cid: this.id,
-                                        e: e.message,
-                                    }));
-                                });
-                        })
-                        .catch((e) => {
-                            ctx.log.info(ctx.i18n.t("log:error_writing_bind_error", {
-                                ctype: DAPConnection.name,
-                                cid: this.id,
-                                e: e.message,
-                            }));
-                        });
-                    ctx.log.info(ctx.i18n.t("log:auth_failure", {
-                        ctype: DAPConnection.name,
-                        cid: this.id,
-                        source: remoteHostIdentifier,
-                    }));
-                    return;
-                }
-                const bindResult = new DirectoryBindResult(
-                    undefined,
-                    versions,
-                    undefined,
-                );
-                idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
-                if (
-                    ("basicLevels" in outcome.authLevel)
-                    && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
-                ) {
-                    ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
-                        source: remoteHostIdentifier,
-                        protocol: "DAP",
-                    }));
-                } else {
-                    ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
-                        source: remoteHostIdentifier,
-                        protocol: "DAP",
-                        dn: this.boundNameAndUID?.dn
-                            ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
-                            : "",
-                    }));
-                }
-            })
-            .catch((e) => {
-                ctx.log.error(ctx.i18n.t("log:bind_error", {
-                    ctype: DAPConnection.name,
-                    cid: this.id,
-                    source: remoteHostIdentifier,
-                    e: e.message,
-                }));
-            });
-
-        idm.events.removeAllListeners("request");
-        idm.events.on("request", this.handleRequest.bind(this));
+        assert(ctx.config.dap.enabled, "User somehow bound via DAP when it was disabled.");
         idm.events.on("unbind", this.handleUnbind.bind(this));
     }
 }

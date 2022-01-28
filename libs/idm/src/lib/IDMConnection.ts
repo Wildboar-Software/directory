@@ -1,8 +1,6 @@
 import * as net from "net";
 import * as tls from "tls";
-import { strict as assert } from "assert";
 import IDMVersion from "./IDMVersion";
-import IDMSegmentField from "./IDMSegmentField";
 import IDMSegment from "./IDMSegment";
 import { BERElement, ASN1Element, INTEGER, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
@@ -59,7 +57,7 @@ class IDMConnection {
     private version: IDMVersion | undefined = IDMVersion.v1;
     private currentSegments: IDMSegment[] = [];
     public readonly events: IDMEventEmitter = new EventEmitter();
-    private socket!: net.Socket;
+    public socket!: net.Socket;
     private startTLSRequested: boolean = false;
 
     private resetState (): void {
