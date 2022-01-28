@@ -239,6 +239,15 @@ async function handleRequestAndErrors (
 export default
 class DSPConnection extends ClientAssociation {
 
+    /**
+     * This exists because ITU Recommendation X.519 states that requests may
+     * be sent before the bind is complete, as long as they are sent after the
+     * bind request. This means that we need to enqueue requests, then execute
+     * them once the bind is complete, if it completes. This array stores the
+     * requests that have come in before the association was bound.
+     */
+    public readonly prebindRequests: Request[] = [];
+
     public async attemptBind (arg: ASN1Element): Promise<void> {
         const arg_ = _decode_DSABindArgument(arg);
         const ctx = this.ctx;
@@ -297,6 +306,11 @@ class DSPConnection extends ClientAssociation {
         await idm.writeBindResult(dsp_ip["&id"]!, _encode_DSABindResult(bindResult, BER));
         idm.events.removeAllListeners("request");
         idm.events.on("request", this.handleRequest.bind(this));
+        for (const req of this.prebindRequests) {
+            // We process these requests serially, just because there could be
+            // many of them backed up prior to binding.
+            await handleRequestAndErrors(this.ctx, this, req).catch();
+        }
     }
 
     private async handleRequest (request: Request): Promise<void> {
@@ -332,5 +346,14 @@ class DSPConnection extends ClientAssociation {
         this.socket = idm.s;
         assert(ctx.config.dsp.enabled, "User somehow bound via DSP when it was disabled.");
         idm.events.on("unbind", this.handleUnbind.bind(this));
+        idm.events.removeAllListeners("request");
+        idm.events.on("request", (request: Request) => {
+            if (this.prebindRequests.length >= ctx.config.maxPreBindRequests) {
+                idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest)
+                    .catch(() => this.idm.close());
+                return;
+            }
+            this.prebindRequests.push(request);
+        });
     }
 }

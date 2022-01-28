@@ -501,6 +501,7 @@ interface Configuration {
     openTopLevel: boolean;
     dsaCanBindAsNonDSA: boolean;
     forbidAnonymousBind: boolean;
+    maxPreBindRequests: number;
     dap: {
         enabled: boolean;
     };

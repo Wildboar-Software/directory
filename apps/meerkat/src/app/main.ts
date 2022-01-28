@@ -23,12 +23,6 @@ import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop
 import DAPConnection from "./dap/DAPConnection";
 import DSPConnection from "./dsp/DSPConnection";
 import DOPConnection from "./dop/DOPConnection";
-import {
-    _decode_DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
-import {
-    _decode_DSABindArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import LDAPConnection from "./ldap/LDAPConnection";
 import loadDIT from "./init/loadDIT";
 import loadAttributeTypes from "./init/loadAttributeTypes";
@@ -212,8 +206,7 @@ function attachUnboundEventListenersToIDMConnection (
     idm.events.on("request", handleWrongSequence);
     idm.events.on("bind", async (idmBind: IdmBind) => {
         const existingAssociation = ctx.associations.get(originalSocket);
-        if (existingAssociation) { // FIXME: This logic is broken, because now an association does not guarantee that we are bound.
-            // FIXME: Fortunately, I think all you need to do is check .bound.
+        if (existingAssociation?.isBound()) {
             ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
                 source,
                 protocol: idmBind.protocolID.toString(),

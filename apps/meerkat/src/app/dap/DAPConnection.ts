@@ -280,6 +280,15 @@ export default
 class DAPConnection extends ClientAssociation {
     public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
 
+    /**
+     * This exists because ITU Recommendation X.519 states that requests may
+     * be sent before the bind is complete, as long as they are sent after the
+     * bind request. This means that we need to enqueue requests, then execute
+     * them once the bind is complete, if it completes. This array stores the
+     * requests that have come in before the association was bound.
+     */
+    public readonly prebindRequests: Request[] = [];
+
     public async attemptBind (arg: ASN1Element): Promise<void> {
         const arg_ = _decode_DirectoryBindArgument(arg);
         const ctx = this.ctx;
@@ -339,6 +348,11 @@ class DAPConnection extends ClientAssociation {
         await idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
         idm.events.removeAllListeners("request");
         idm.events.on("request", this.handleRequest.bind(this));
+        for (const req of this.prebindRequests) {
+            // We process these requests serially, just because there could be
+            // many of them backed up prior to binding.
+            await handleRequestAndErrors(this.ctx, this, req).catch();
+        }
     }
 
     private handleRequest (request: Request): void {
@@ -374,5 +388,14 @@ class DAPConnection extends ClientAssociation {
         this.socket = idm.s;
         assert(ctx.config.dap.enabled, "User somehow bound via DAP when it was disabled.");
         idm.events.on("unbind", this.handleUnbind.bind(this));
+        idm.events.removeAllListeners("request");
+        idm.events.on("request", (request: Request) => {
+            if (this.prebindRequests.length >= ctx.config.maxPreBindRequests) {
+                idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest)
+                    .catch(() => this.idm.close());
+                return;
+            }
+            this.prebindRequests.push(request);
+        });
     }
 }

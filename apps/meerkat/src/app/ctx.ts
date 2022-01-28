@@ -287,6 +287,9 @@ const ctx: Context = {
         openTopLevel: (process.env.MEERKAT_OPEN_TOP_LEVEL === "1"),
         dsaCanBindAsNonDSA: (process.env.MEERKAT_DSA_CAN_BIND_AS_NON_DSA === "1"),
         forbidAnonymousBind: (process.env.MEERKAT_FORBID_ANONYMOUS_BIND === "1"),
+        maxPreBindRequests: process.env.MEERKAT_MAX_PRE_BIND_REQUESTS
+            ? Number.parseInt(process.env.MEERKAT_MAX_PRE_BIND_REQUESTS, 10)
+            : 0,
         dap: {
             enabled: (process.env.MEERKAT_ENABLE_DAP !== "0"),
         },
