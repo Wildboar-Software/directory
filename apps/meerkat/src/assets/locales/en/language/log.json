@@ -9,7 +9,7 @@
     "connection_bound_auth": "{{source}}: {{protocol}} connection bound. Authenticated as {{dn}}.",
     "connection_bound_anon": "{{source}}: {{protocol}} connection bound anonymously.",
     "bind_error": "{{ctype}} {{cid}}: Error during DAP bind operation from {{source}}: {{e}}",
-    "double_bind_attempted": "{{source}} tried to double bind with protocol {{protocol}}.",
+    "double_bind_attempted": "{{source}} tried to double bind.",
     "unsupported_protocol": "Unsupported protocol: {{protocol}}.",
     "unhandled_exception": "Unhandled exception: {{e}}",
     "socket_error": "{{source}} socket error: {{e}}",
@@ -91,5 +91,6 @@
     "unusual_invoke_id": "IDM operation from connection {{cid}} from had an unusually large or negative invoke ID.",
     "dup_invoke_id": "Duplicated IDM invokeID {{iid}} from connection {{cid}}.",
     "max_concurrent_op": "Connection {{cid}} maxed out the number of permitted concurrent operations. The operation with invoke ID {{iid}} was rejected.",
-    "address_blocked": "COULD_BAN={{host}}; Remote host {{host}} was added to the blocklist."
+    "address_blocked": "COULD_BAN={{host}}; Remote host {{host}} was added to the blocklist.",
+    "idm_bad_sequence": "COULD_BAN={{host}}; Remote host {{host}} submitted IDM packets in an invalid sequence."
 }

@@ -18,7 +18,10 @@ import {
 import * as errors from "@wildboar/meerkat-types";
 import { ASN1Element } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import { IDMConnection } from "@wildboar/idm";
+import {
+    IDMConnection,
+    IDMStatus,
+} from "@wildboar/idm";
 import {
     DSABindArgument,
     _decode_DSABindArgument,
@@ -366,7 +369,7 @@ class DOPConnection extends ClientAssociation {
     }
 
     private async handleUnbind (): Promise<void> {
-        if (!this.isBound()) {
+        if (this.idm.remoteStatus !== IDMStatus.BOUND) {
             return; // We don't want users to be able to spam unbinds.
         }
         this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {

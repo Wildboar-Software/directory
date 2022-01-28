@@ -2,7 +2,7 @@ import { Context, Vertex, ClientAssociation, OperationStatistics } from "@wildbo
 import * as errors from "@wildboar/meerkat-types";
 import * as net from "net";
 import * as tls from "tls";
-import { BERElement, ASN1TruncationError, ASN1Element } from "asn1-ts";
+import { BERElement, ASN1TruncationError } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
     LDAPMessage,
@@ -301,13 +301,15 @@ class LDAPConnection extends ClientAssociation {
     public boundEntry: Vertex | undefined;
     public bound: boolean = false;
 
-    public async attemptBind (arg: ASN1Element): Promise<void> {
+    // Not used.
+    public async attemptBind (): Promise<void> {
         return;
     }
 
     // I _think_ this function MUST NOT be async, or this function could run
     // multiple times out-of-sync, mutating `this.buffer` indeterminately.
     private handleData (ctx: Context, data: Buffer): void {
+        // #region Pre-flight check if the message will fit in the buffer, if possible.
         if ((this.buffer.length + data.length) > ctx.config.ldap.bufferSize) {
             const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
             ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
@@ -329,6 +331,70 @@ class LDAPConnection extends ClientAssociation {
             this.socket.destroy();
             return;
         }
+
+        const lengthOctet: number | undefined = (this.buffer.length >= 2)
+            ? this.buffer[1]
+            : (data.length >= 2)
+                ? data[1]
+                : undefined;
+        const longDefiniteLengthUsed: boolean = !!(
+            (lengthOctet !== undefined)
+            && (lengthOctet & 0b1000_0000)
+            && (data[1] & 0b0111_1111)
+        );
+        if (longDefiniteLengthUsed) {
+            const numberOfLengthOctets: number = (lengthOctet! & 0b0111_1111);
+            // If the client is using more than four bytes to encode the length, they're probably messing with us.
+            if (numberOfLengthOctets > 4) {
+                const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
+                ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
+                    protocol: "LDAP",
+                    source,
+                    size: ctx.config.ldap.bufferSize.toString(),
+                }));
+                /**
+                 * IETF RFC 4511, Section 4.1.1 states that:
+                 *
+                 * > In other cases where the client or server cannot parse an LDAP
+                 * > PDU, it SHOULD abruptly terminate the LDAP session.
+                 *
+                 * An LDAP server is supposed to send a notice of disconnection, as
+                 * detailed in IETF RFC 4511, Section 4.4.1.
+                 */
+                const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
+                this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                this.socket.destroy();
+                return;
+            }
+            if ((numberOfLengthOctets + 2) >= data.length) { // If we have all length bytes.
+                const lengthBytes = Buffer.alloc(4);
+                lengthBytes.set(data.slice(2, 2 + numberOfLengthOctets), 4 - numberOfLengthOctets);
+                const length = lengthBytes.readUInt32BE();
+                if (length > ctx.config.ldap.bufferSize) {
+                    const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
+                    ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
+                        protocol: "LDAP",
+                        source,
+                        size: ctx.config.ldap.bufferSize.toString(),
+                    }));
+                    /**
+                     * IETF RFC 4511, Section 4.1.1 states that:
+                     *
+                     * > In other cases where the client or server cannot parse an LDAP
+                     * > PDU, it SHOULD abruptly terminate the LDAP session.
+                     *
+                     * An LDAP server is supposed to send a notice of disconnection, as
+                     * detailed in IETF RFC 4511, Section 4.4.1.
+                     */
+                    const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
+                    this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                    this.socket.destroy();
+                    return;
+                }
+            }
+        }
+        // #endregion
+
         this.buffer = Buffer.concat([
             this.buffer,
             data,

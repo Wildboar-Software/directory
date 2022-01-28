@@ -1213,9 +1213,6 @@ abstract class ClientAssociation {
     public readonly messageIDToInvokeID: Map<number, number> = new Map();
     public readonly invokeIDToMessageID: Map<number, number> = new Map();
     public abstract attemptBind (arg: ASN1Element): Promise<void>;
-    public isBound (): boolean {
-        return !!(this.boundEntry || this.boundNameAndUID);
-    }
 }
 
 

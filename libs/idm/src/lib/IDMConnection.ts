@@ -16,12 +16,16 @@ import { Unbind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/
 import {
     Abort,
     Abort_invalidPDU,
+    Abort_unboundRequest,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import type { IdmReject_reason } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
 import type { GeneralName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
 import { EventEmitter } from "events";
 import type IDMEventEmitter from "./IDMEventEmitter";
 import { BER } from "asn1-ts/dist/node/functional";
+import {
+    IdmBind,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
 import {
     IdmBindResult,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindResult.ta";
@@ -41,15 +45,17 @@ import type {
 import {
     IDM_WARN_PADDING_AFTER_PDU,
     IDM_WARN_DOUBLE_START_TLS,
+    IDM_WARN_MULTI_BIND,
+    IDM_WARN_BAD_SEQUENCE,
+    IDM_WARN_NEGATIVE_INVOKE_ID,
 } from "./warnings";
+import IDMStatus from "./IDMStatus";
 
 // NOTE: It does not seem to clearly state what the code for version 2 is.
 // TODO: Check for reused invoke IDs.
-// FIXME: Check for a maximum number of segments.
-// FIXME: Emit a separate event for segmentLength and dataLength
 
-const SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE: number = 6;
-const SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE: number = 8;
+const IDM_V1_FRAME_SIZE: number = 6;
+const IDM_V2_FRAME_SIZE: number = 8;
 
 export default
 class IDMConnection {
@@ -58,6 +64,8 @@ class IDMConnection {
     private currentSegments: IDMSegment[] = [];
     public readonly events: IDMEventEmitter = new EventEmitter();
     public socket!: net.Socket;
+    public localStatus: IDMStatus = IDMStatus.UNBOUND;
+    public remoteStatus: IDMStatus = IDMStatus.UNBOUND;
     private startTLSRequested: boolean = false;
 
     private resetState (): void {
@@ -93,24 +101,24 @@ class IDMConnection {
         }
         if (![ IDMVersion.v1, IDMVersion.v2 ].includes(this.buffer[0])) {
             this.events.emit("socketError", new Error(`Unsupported IDM version ${this.buffer[0]}`));
-            this.writeAbort(Abort_invalidPDU).then(() => this.socket.destroy());
+            this.writeAbort(Abort_invalidPDU);
             return;
         }
         if (
             (this.buffer[0] === IDMVersion.v2)
-            && (this.buffer.length >= SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE)
+            && (this.buffer.length >= IDM_V2_FRAME_SIZE)
         ) {
             const length = this.buffer.readUInt32BE(4);
             this.events.emit("segmentDataLength", length);
-            if (this.buffer.length >= (SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE + length)) {
+            if (this.buffer.length >= (IDM_V2_FRAME_SIZE + length)) {
                 const currentSegment: IDMSegment = {
                     version: IDMVersion.v2,
                     encoding: this.buffer.readUInt16BE(2),
                     final: (this.buffer[1] === 1),
                     length,
                     data: this.buffer.slice(
-                        SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE,
-                        (SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE + length),
+                        IDM_V2_FRAME_SIZE,
+                        (IDM_V2_FRAME_SIZE + length),
                     ),
                 };
                 this.currentSegments.push(currentSegment);
@@ -125,25 +133,25 @@ class IDMConnection {
                     this.handlePDU(pdu);
                     this.currentSegments = [];
                 }
-                this.buffer = this.buffer.slice(SMALLEST_POSSIBLE_IDM_V2_FRAME_SIZE + length);
+                this.buffer = this.buffer.slice(IDM_V2_FRAME_SIZE + length);
                 setImmediate(this.chompFrame.bind(this));
             }
         }
         else if (
             (this.buffer[0] === IDMVersion.v1)
-            && (this.buffer.length >= SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE)
+            && (this.buffer.length >= IDM_V1_FRAME_SIZE)
         ) {
             const length = this.buffer.readUInt32BE(2);
             this.events.emit("segmentDataLength", length);
-            if (this.buffer.length >= (SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE + length)) {
+            if (this.buffer.length >= (IDM_V1_FRAME_SIZE + length)) {
                 const currentSegment: IDMSegment = {
                     version: IDMVersion.v1,
                     encoding: 0,
                     final: (this.buffer[1] === 1),
                     length,
                     data: this.buffer.slice(
-                        SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE,
-                        (SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE + length),
+                        IDM_V1_FRAME_SIZE,
+                        (IDM_V1_FRAME_SIZE + length),
                     ),
                 };
                 this.currentSegments.push(currentSegment);
@@ -158,7 +166,7 @@ class IDMConnection {
                     this.handlePDU(pdu);
                     this.currentSegments = [];
                 }
-                this.buffer = this.buffer.slice(SMALLEST_POSSIBLE_IDM_V1_FRAME_SIZE + length);
+                this.buffer = this.buffer.slice(IDM_V1_FRAME_SIZE + length);
                 setImmediate(this.chompFrame.bind(this));
             }
         }
@@ -177,19 +185,39 @@ class IDMConnection {
 
     private async handlePDU (pdu: IDM_PDU): Promise<void> {
         if ("bind" in pdu) {
+            if (this.remoteStatus !== IDMStatus.UNBOUND) {
+                this.events.emit("warning", IDM_WARN_MULTI_BIND);
+            }
+            this.remoteStatus = IDMStatus.BIND_IN_PROGRESS;
             this.events.emit("bind", pdu.bind);
         } else if ("bindResult" in pdu) {
+            if (this.localStatus !== IDMStatus.BIND_IN_PROGRESS) {
+                this.events.emit("warning", IDM_WARN_BAD_SEQUENCE);
+            }
+            this.localStatus = IDMStatus.BOUND;
             this.events.emit("bindResult", pdu.bindResult);
         } else if ("bindError" in pdu) {
+            if (this.localStatus !== IDMStatus.BIND_IN_PROGRESS) {
+                this.events.emit("warning", IDM_WARN_BAD_SEQUENCE);
+            }
+            this.localStatus = IDMStatus.UNBOUND;
             this.events.emit("bindError", pdu.bindError);
         } else if ("request" in pdu) {
+            // Requests can come in before the bind response
+            if (this.remoteStatus === IDMStatus.UNBOUND) {
+                this.events.emit("warning", IDM_WARN_BAD_SEQUENCE);
+                this.writeAbort(Abort_unboundRequest);
+                return;
+            }
             if (pdu.request.invokeID < 0) {
+                this.events.emit("warning", IDM_WARN_NEGATIVE_INVOKE_ID);
                 this.writeAbort(Abort_invalidPDU);
                 return;
             }
             this.events.emit("request", pdu.request);
         } else if ("result" in pdu) {
             if (pdu.result.invokeID < 0) {
+                this.events.emit("warning", IDM_WARN_NEGATIVE_INVOKE_ID);
                 this.writeAbort(Abort_invalidPDU);
                 return;
             }
@@ -213,9 +241,15 @@ class IDMConnection {
         } else if ("reject" in pdu) {
             this.events.emit("reject", pdu.reject);
         } else if ("unbind" in pdu) {
+            if (this.remoteStatus !== IDMStatus.BOUND) {
+                this.events.emit("warning", IDM_WARN_BAD_SEQUENCE);
+            }
+            this.remoteStatus = IDMStatus.UNBOUND;
             this.events.emit("unbind", pdu.unbind);
         } else if ("abort" in pdu) {
+            this.localStatus = IDMStatus.UNBOUND;
             this.events.emit("abort", pdu.abort);
+            this.close();
         } else if ("startTLS" in pdu) {
             this.events.emit("startTLS", pdu.startTLS);
             if ((!this.starttlsOptions?.key || !this.starttlsOptions.cert) && !this.starttlsOptions?.pfx) {
@@ -311,11 +345,26 @@ class IDMConnection {
         // ]));
     }
 
+    public async writeBind (
+        protocolID: OBJECT_IDENTIFIER,
+        argument: ASN1Element,
+        callingAETitle?: GeneralName,
+        calledAETitle?: GeneralName,
+    ): Promise<void> {
+        this.localStatus = IDMStatus.BIND_IN_PROGRESS;
+        const bind = new IdmBind(protocolID, callingAETitle, calledAETitle, argument);
+        const idm: IDM_PDU = {
+            bind,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
     public async writeBindResult (
         protocolID: OBJECT_IDENTIFIER,
         result: ASN1Element,
         respondingAETitle?: GeneralName,
     ): Promise<void> {
+        this.remoteStatus = IDMStatus.BOUND;
         const bindResult = new IdmBindResult(protocolID, respondingAETitle, result);
         const idm: IDM_PDU = {
             bindResult,
@@ -328,6 +377,7 @@ class IDMConnection {
         error: ASN1Element,
         respondingAETitle?: GeneralName,
     ): Promise<void> {
+        this.remoteStatus = IDMStatus.UNBOUND;
         const bindError = new IdmBindError(
             protocolID,
             respondingAETitle,
@@ -336,44 +386,6 @@ class IDMConnection {
         );
         const idm: IDM_PDU = {
             bindError,
-        };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
-    }
-
-    public async writeError (invokeId: INTEGER, errcode: ASN1Element, data: ASN1Element): Promise<void> {
-        const error = new IDMError(invokeId, errcode, data);
-        const idm: IDM_PDU = {
-            error,
-        };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
-    }
-
-    public async writeReject (invokeID: INTEGER, reason: IdmReject_reason): Promise<void> {
-        const reject = new IdmReject(invokeID, reason);
-        const idm: IDM_PDU = {
-            reject,
-        };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
-    }
-
-    public async writeAbort (abort: Abort): Promise<void> {
-        const idm: IDM_PDU = {
-            abort,
-        };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
-    }
-
-    public async writeStartTLS (): Promise<void> {
-        this.startTLSRequested = true;
-        const idm: IDM_PDU = {
-            startTLS: null,
-        };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
-    }
-
-    public async writeTLSResponse (tLSResponse: TLSResponse): Promise<void> {
-        const idm: IDM_PDU = {
-            tLSResponse,
         };
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }
@@ -394,10 +406,54 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }
 
+    public async writeError (invokeId: INTEGER, errcode: ASN1Element, data: ASN1Element): Promise<void> {
+        const error = new IDMError(invokeId, errcode, data);
+        const idm: IDM_PDU = {
+            error,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeReject (invokeID: INTEGER, reason: IdmReject_reason): Promise<void> {
+        const reject = new IdmReject(invokeID, reason);
+        const idm: IDM_PDU = {
+            reject,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
     public async writeUnbind (): Promise<void> {
+        this.localStatus = IDMStatus.UNBOUND;
         const unbind: Unbind = null;
         const idm: IDM_PDU = {
             unbind,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeAbort (abort: Abort): Promise<void> {
+        try {
+            const idm: IDM_PDU = {
+                abort,
+            };
+            this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+            this.close();
+        } catch {
+            //
+        }
+    }
+
+    public async writeStartTLS (): Promise<void> {
+        this.startTLSRequested = true;
+        const idm: IDM_PDU = {
+            startTLS: null,
+        };
+        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+    }
+
+    public async writeTLSResponse (tLSResponse: TLSResponse): Promise<void> {
+        const idm: IDM_PDU = {
+            tLSResponse,
         };
         this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
     }

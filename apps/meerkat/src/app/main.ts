@@ -16,7 +16,10 @@ import {
     Abort_resourceLimitation,
     Abort_invalidProtocol,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import { IDMConnection } from "@wildboar/idm";
+import {
+    IDMConnection,
+    warnings,
+} from "@wildboar/idm";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
@@ -119,9 +122,8 @@ const getIdmBufferLengthGate = (ctx: Context, idm: IDMConnection, source: string
             source,
             size: ctx.config.idm.bufferSize.toString(),
         }));
-        idm.writeAbort(Abort_resourceLimitation)
-            .then(() => idm.close())
-            .catch();
+        idm.writeAbort(Abort_resourceLimitation);
+        return;
     }
 };
 
@@ -136,9 +138,8 @@ const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) =
             source,
             size: ctx.config.idm.maxPDUSize.toString(),
         }));
-        idm.writeAbort(Abort_resourceLimitation)
-            .then(() => idm.close())
-            .catch();
+        idm.writeAbort(Abort_resourceLimitation);
+        return;
     }
     const numberOfSegments: number = (idm.getNumberOfSegmentsInPDU() + 1);
     if (numberOfSegments > ctx.config.idm.maxSegments) {
@@ -146,9 +147,8 @@ const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) =
             source,
             limit: ctx.config.idm.maxSegments,
         }));
-        idm.writeAbort(Abort_resourceLimitation)
-            .then(() => idm.close())
-            .catch();
+        idm.writeAbort(Abort_resourceLimitation);
+        return;
     }
 };
 
@@ -166,14 +166,10 @@ function attachUnboundEventListenersToIDMConnection (
     startTimes: Map<net.Socket, Date>,
 ) {
     idm.events.on("startTLS", () => {
-        if (idm.protectedByTLS()) {
-            ctx.log.warn(ctx.i18n.t("log:double_starttls", { source }));
-        } else {
-            ctx.log.debug(ctx.i18n.t("log:starttls_established", {
-                source,
-                context: "transport",
-            }));
-        }
+        ctx.log.debug(ctx.i18n.t("log:starttls_established", {
+            source,
+            context: "transport",
+        }));
     });
     idm.events.on("socketError", (e) => {
         ctx.log.error(ctx.i18n.t("log:socket_error", {
@@ -195,31 +191,12 @@ function attachUnboundEventListenersToIDMConnection (
     idm.events.on("socketDataLength", getIdmBufferLengthGate(ctx, idm, source));
     idm.events.on("segmentDataLength", getIdmPduLengthGate(ctx, idm, source));
     const handleWrongSequence = () => {
-        idm.writeAbort(Abort_unboundRequest)
-            .then(() => idm.s.destroy())
-            .catch()
-            .finally(() => {
-                startTimes.delete(idm.s);
-                ctx.associations.delete(idm.s);
-            });
+        idm.writeAbort(Abort_unboundRequest);
+        startTimes.delete(idm.s);
+        ctx.associations.delete(idm.s);
     };
     idm.events.on("request", handleWrongSequence);
     idm.events.on("bind", async (idmBind: IdmBind) => {
-        const existingAssociation = ctx.associations.get(originalSocket);
-        if (existingAssociation?.isBound()) {
-            ctx.log.error(ctx.i18n.t("log:double_bind_attempted", {
-                source,
-                protocol: idmBind.protocolID.toString(),
-            }));
-            idm.writeAbort(Abort_reasonNotSpecified)
-                .then(() => idm.s.destroy())
-                .catch()
-                .finally(() => {
-                    startTimes.delete(idm.s);
-                    ctx.associations.delete(idm.s);
-                });
-            return;
-        }
         let conn!: ClientAssociation;
         if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!) && ctx.config.dap.enabled) {
             conn = new DAPConnection(ctx, idm);
@@ -232,26 +209,18 @@ function attachUnboundEventListenersToIDMConnection (
             ctx.log.warn(ctx.i18n.t("log:unsupported_protocol", {
                 protocol: idmBind.protocolID.toString(),
             }));
-            idm.writeAbort(Abort_invalidProtocol)
-                .then(() => idm.s.destroy())
-                .catch()
-                .finally(() => {
-                    startTimes.delete(idm.s);
-                    ctx.associations.delete(idm.s);
-                });
+            idm.writeAbort(Abort_invalidProtocol);
+            startTimes.delete(idm.s);
+            ctx.associations.delete(idm.s);
             return;
         }
         try {
             await conn.attemptBind(idmBind.argument);
             ctx.associations.set(originalSocket, conn);
         } catch (e) {
-            idm.writeAbort(Abort_reasonNotSpecified)
-                .then(() => idm.s.destroy())
-                .catch()
-                .finally(() => {
-                    startTimes.delete(idm.s);
-                    ctx.associations.delete(idm.s);
-                });
+            idm.writeAbort(Abort_reasonNotSpecified);
+            startTimes.delete(idm.s);
+            ctx.associations.delete(idm.s);
             // TODO: Log the error.
         }
     });
@@ -261,6 +230,47 @@ function attachUnboundEventListenersToIDMConnection (
         idm.events.removeAllListeners();
         // Recursive, but not really.
         attachUnboundEventListenersToIDMConnection(ctx, originalSocket, source, idm, startTimes);
+    });
+    idm.events.on("warning", (warningCode) => {
+        switch (warningCode) {
+        case (warnings.IDM_WARN_SLOW_LORIS): {
+            return;
+        }
+        case (warnings.IDM_WARN_BIG_INVOKE_ID): {
+            return;
+        }
+        case (warnings.IDM_WARN_NEGATIVE_INVOKE_ID): {
+            return;
+        }
+        case (warnings.IDM_WARN_DOUBLE_START_TLS): {
+            ctx.log.warn(ctx.i18n.t("log:double_starttls", { source }));
+            return;
+        }
+        case (warnings.IDM_WARN_PADDING_AFTER_PDU): {
+            return;
+        }
+        case (warnings.IDM_WARN_MULTI_BIND): {
+            // This is almost always nefarious activity. A malicious user may
+            // attempt to circumvent the rate-limiting of bind requests by
+            // issuing multiple bind requests back-to-back.
+            // Meerkat DSA will require remote hosts to wait for a bind response
+            // before attempting another bind.
+            ctx.log.error(ctx.i18n.t("log:double_bind_attempted", { source }));
+            idm.writeAbort(Abort_reasonNotSpecified);
+            startTimes.delete(idm.s);
+            ctx.associations.delete(idm.s);
+            return;
+        }
+        case (warnings.IDM_WARN_BAD_SEQUENCE): {
+            ctx.log.error(ctx.i18n.t("log:idm_bad_sequence", { host: source }));
+            startTimes.delete(idm.s);
+            ctx.associations.delete(idm.s);
+            return;
+        }
+        default: {
+            return;
+        }
+        }
     });
 }
 

@@ -9,7 +9,10 @@ import {
     DirectoryBindError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
-import { IDMConnection } from "@wildboar/idm";
+import {
+    IDMConnection,
+    IDMStatus,
+} from "@wildboar/idm";
 import versions from "./versions";
 import {
     DirectoryBindResult,
@@ -360,7 +363,7 @@ class DAPConnection extends ClientAssociation {
     }
 
     private async handleUnbind (): Promise<void> {
-        if (!this.isBound()) {
+        if (this.idm.remoteStatus !== IDMStatus.BOUND) {
             return; // We don't want users to be able to spam unbinds.
         }
         this.ctx.db.enqueuedListResult.deleteMany({ // INTENTIONAL_NO_AWAIT
