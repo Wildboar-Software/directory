@@ -192,11 +192,6 @@ async function findDSE (
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
     state: OperationDispatcherState,
-    // state.chainingArguments: ChainingArguments,
-    // argument: ASN1Element,
-    // operationType: Code,
-    // NRcontinuationList: ContinuationReference[],
-    // admPoints: Vertex[],
 ): Promise<void> {
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -231,7 +226,7 @@ async function findDSE (
         return;
     }
     let i: number = 0;
-    let dse_i: Vertex = haystackVertex; // FIXME: These should only be in state.
+    let dse_i: Vertex = haystackVertex;
     let nssrEncountered: boolean = false;
     const m: number = needleDN.length;
     let lastEntryFound: number = 0; // The last RDN whose DSE was of type entry.
