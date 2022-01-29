@@ -28,6 +28,8 @@ import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     AttributeUsage_userApplications as userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import hasValueWithoutDriver from "./hasValueWithoutDriver";
 
 async function validateValues(
     ctx: Context,
@@ -72,7 +74,6 @@ async function validateValues(
             }
         }
         if (checkForExisting) {
-            // TODO: This should use the equality matcher to determine duplication.
             /**
              * As I interpret it, the duplicate values checking does not have to
              * consider contexts. This is a fortuitous conclusion to come to, since
@@ -80,18 +81,38 @@ async function validateValues(
              * concept of contexts, so preventing duplicate values regardless of
              * their contexts is valuable here.
              */
-            const valueExists: boolean = attrSpec?.driver?.hasValue
+            let valueExists: boolean = attrSpec?.driver?.hasValue
                 ? await attrSpec.driver.hasValue(ctx, entry, value)
                 : !!(await ctx.db.attributeValue.findFirst({
                     where: {
                         entry_id: entry.dse.id,
                         type: TYPE_OID,
+                        tag_class: value.value.tagClass,
+                        constructed: (value.value.construction === ASN1Construction.constructed),
+                        tag_number: value.value.tagNumber,
                         ber: Buffer.from(value.value.toBytes()),
                     },
                     select: {
                         id: true,
                     },
                 }));
+            // We use the naming matcher getter because it is symmetrical.
+            // Equality matching rules are not required to be.
+            const emr = attrSpec?.equalityMatchingRule
+                ? getNamingMatcherGetter(ctx)(attrSpec.equalityMatchingRule)
+                : undefined;
+            // If a simple binary comparison of all `ber` values for that type
+            // did not turn up any matches, we now have to read all the
+            // possible matches and use the equality matcher to check for
+            // duplicates
+            if (
+                !attrSpec?.driver?.hasValue // this value is not handled exceptionally, and...
+                && !valueExists // a byte-for-byte database query did not identity any matches, and...
+                && emr // there is an equality matching rule
+                && (await hasValueWithoutDriver(ctx, entry.dse.id, value, emr))
+            ) {
+                valueExists = true;
+            }
             if (valueExists) {
                 throw new AttributeError(
                     ctx.i18n.t("err:value_already_exists", {

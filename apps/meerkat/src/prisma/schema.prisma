@@ -218,6 +218,7 @@ model AttributeValue {
   tag_class                  Int     @db.SmallInt
   constructed                Boolean
   tag_number                 Int
+  index_key                  Int? // Not currently used, but will store an int that "summarizes" the value.
   ber                        Bytes
   jer                        Json?
   // attributeValueSecurityLabelContext
@@ -229,7 +230,9 @@ model AttributeValue {
 
   ContextValue ContextValue[]
 
-  @@index([entry_id])
+  @@index([entry_id, type, index_key]) // For quick heuristic comparison.
+  @@index([entry_id, type, tag_class, constructed, tag_number]) // For byte-for-byte equality comparisons.
+  @@index([entry_id, operational, type]) // For operational attributes searches.
 }
 
 model ContextValue {

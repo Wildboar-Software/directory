@@ -542,6 +542,7 @@ async function list_i (
                     Boolean(subordinate.dse.shadow),
                 ));
             } else if (subordinate.dse.alias) {
+                // FIXME: Check for permission to: objectClass, alias, and aliasedEntryName
                 ret.results.push(new ListItem(
                     subordinate.dse.rdn,
                     true,
