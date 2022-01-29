@@ -166,7 +166,19 @@ async function handleRequestAndErrors (
         return;
     }
     if (dop.invocations.has(Number(request.invokeID))) {
-        await dop.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
+            iid: request.invokeID.toString(),
+            cid: dop.id,
+        }));
+        dop.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
+        return;
+    }
+    if (dop.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
+        ctx.log.warn(ctx.i18n.t("log:max_concurrent_op", {
+            cid: dop.id,
+            iid: request.invokeID.toString(),
+        }));
+        dop.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
         return;
     }
     try {

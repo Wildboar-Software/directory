@@ -22,15 +22,16 @@ async function getRelevantSubentries (
     const children = await readSubordinates(ctx, admPoint, undefined, undefined, undefined, {
         subentry: true,
     });
+    const objectClasses = Array.isArray(entry)
+        ? entry
+        : Array.from(entry.dse.objectClass.values()).map(ObjectIdentifier.fromString);
     return children
         .filter((child) => (
             child.dse.subentry
             && child.dse.objectClass.has(SUBENTRY)
             && child.dse.subentry.subtreeSpecification.some((subtree) => dnWithinSubtreeSpecification(
                 entryDN,
-                Array.isArray(entry)
-                    ? entry
-                    : Array.from(entry.dse.objectClass.values()).map(ObjectIdentifier.fromString),
+                objectClasses,
                 subtree,
                 getDistinguishedName(admPoint),
                 NAMING_MATCHER,

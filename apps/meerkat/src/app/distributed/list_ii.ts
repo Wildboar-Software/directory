@@ -1,8 +1,8 @@
 import { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import { ObjectIdentifier, TRUE_BIT, FALSE } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import readSubordinates from "../dit/readSubordinates";
 import {
     ListArgument,
@@ -37,24 +37,20 @@ import {
 import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
+    PERMISSION_CATEGORY_READ,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import { NameProblem_noSuchObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_opcode_list,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
-import {
-    nameError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
@@ -110,10 +106,34 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import {
+    id_ar_autonomousArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import {
+    id_ar_accessControlSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+import {
+    id_ar_accessControlInnerArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
+import {
+    objectClass,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import {
+    aliasedEntryName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
+import {
+    alias,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
 const CHILD: string = child["&id"].toString();
+const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
+const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
+const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
 
 export
 async function list_ii (
@@ -167,67 +187,13 @@ async function list_ii (
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
-    const relevantSubentries: Vertex[] = (await Promise.all(
+    const targetRelevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
-    const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
+    const targetAccessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const targetACI = getACIItems(accessControlScheme, target, relevantSubentries);
-    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
-        accessControlScheme,
-        acdfTuples,
-        user,
-        state.chainingArguments.authenticationLevel ?? conn.authLevel,
-        targetDN,
-        isMemberOfGroup,
-        NAMING_MATCHER,
-    );
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
-        const {
-            authorized,
-        } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
-            },
-            [
-                PERMISSION_CATEGORY_BROWSE,
-                PERMISSION_CATEGORY_RETURN_DN,
-            ],
-            bacSettings,
-            true,
-        );
-        if (!authorized) {
-            // Non-disclosure of the target object is at least addressed in X.501 RBAC!
-            throw new errors.NameError(
-                ctx.i18n.t("err:not_authz_list"),
-                new NameErrorData(
-                    NameProblem_noSuchObject,
-                    {
-                        rdnSequence: targetDN.slice(0, -1),
-                    },
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        conn.boundNameAndUID?.dn,
-                        undefined,
-                        nameError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            );
-        }
-    }
 
     const isParent: boolean = target.dse.objectClass.has(PARENT);
     const isChild: boolean = target.dse.objectClass.has(CHILD);
@@ -415,16 +381,28 @@ async function list_ii (
                 continue;
             }
 
+            let authorizedToKnowSubordinateIsAlias: boolean = true;
+            const effectiveAccessControlScheme = subordinate.dse.admPoint?.accessControlScheme
+                ?? targetAccessControlScheme;
             if (
-                accessControlScheme
-                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+                effectiveAccessControlScheme
+                && accessControlSchemesThatUseACIItems.has(effectiveAccessControlScheme.toString())
             ) {
                 const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
-                const subordinateACI = getACIItems(accessControlScheme, subordinate, relevantSubentries);
+                const effectiveRelevantSubentries = subordinate.dse.admPoint?.administrativeRole.has(ID_AUTONOMOUS)
+                    ? []
+                    : targetRelevantSubentries;
+                if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_SPECIFIC)) {
+                    effectiveRelevantSubentries.length = 0;
+                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
+                } else if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
+                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
+                }
+                const subordinateACI = getACIItems(effectiveAccessControlScheme, subordinate, effectiveRelevantSubentries);
                 const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
                     .flatMap((aci) => getACDFTuplesFromACIItem(aci));
                 const relevantSubordinateTuples: ACDFTupleExtended[] = await preprocessTuples(
-                    accessControlScheme,
+                    effectiveAccessControlScheme,
                     subordinateACDFTuples,
                     user,
                     state.chainingArguments.authenticationLevel ?? conn.authLevel,
@@ -432,14 +410,11 @@ async function list_ii (
                     isMemberOfGroup,
                     NAMING_MATCHER,
                 );
-                const {
-                    authorized: authorizedToList,
-                } = bacACDF(
+                const objectClasses = Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString);
+                const { authorized: authorizedToList } = bacACDF(
                     relevantSubordinateTuples,
                     user,
-                    {
-                        entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
-                    },
+                    { entry: objectClasses },
                     [
                         PERMISSION_CATEGORY_BROWSE,
                         PERMISSION_CATEGORY_RETURN_DN,
@@ -450,10 +425,48 @@ async function list_ii (
                 if (!authorizedToList) {
                     continue;
                 }
+                if (subordinate.dse.alias) {
+                    const { authorized: authorizedToReadObjectClasses } = bacACDF(
+                        relevantSubordinateTuples,
+                        user,
+                        { attributeType: objectClass["&id"] },
+                        [ PERMISSION_CATEGORY_READ ],
+                        bacSettings,
+                        true,
+                    );
+                    const { authorized: authorizedToReadAliasObjectClasses } = bacACDF(
+                        relevantSubordinateTuples,
+                        user,
+                        {
+                            value: new AttributeTypeAndValue(
+                                objectClass["&id"],
+                                _encodeObjectIdentifier(alias["&id"], DER),
+                            ),
+                        },
+                        [ PERMISSION_CATEGORY_READ ],
+                        bacSettings,
+                        true,
+                    );
+                    const { authorized: authorizedToReadAliasedEntryName } = bacACDF(
+                        relevantSubordinateTuples,
+                        user,
+                        { attributeType: aliasedEntryName["&id"] },
+                        [ PERMISSION_CATEGORY_READ ],
+                        bacSettings,
+                        true,
+                    );
+                    authorizedToKnowSubordinateIsAlias = (
+                        authorizedToReadObjectClasses
+                        && authorizedToReadAliasObjectClasses
+                        && authorizedToReadAliasedEntryName
+                    );
+                }
             }
             listItems.push(new ListItem(
                 subordinate.dse.rdn,
-                Boolean(subordinate.dse.alias),
+                authorizedToKnowSubordinateIsAlias
+                    ? Boolean(subordinate.dse.alias)
+                    : FALSE,
                 Boolean(subordinate.dse.shadow),
             ));
         }

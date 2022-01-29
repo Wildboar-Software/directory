@@ -728,9 +728,14 @@ async function findDSE (
          *
          * (Empirically, it seems like this is only worth it if there are about
          * 1000 immediate subordinates.)
+         *
+         * Also note that the short-circuit below is case-sensitive. For it to
+         * work, the queried RDN must match the present RDN byte-for-byte. This
+         * is kind of a big deal, since most attributes used for naming are
+         * case-insensitive strings. To make matters worse, they are also often
+         * `DirectoryString`, which has multiple encoding variants.
          */
         if (!dse_i.subordinates || (dse_i.subordinates.length > ctx.config.useDatabaseWhenThereAreXSubordinates)) {
-            // FIXME: This could find SN=Wilbur when you are searching for SN=Wilbur+GN=Jonathan
             const match = await ctx.db.entry.findFirst({
                 where: {
                     AND: [
@@ -748,8 +753,22 @@ async function findDSE (
                         })),
                     ],
                 },
+                include: {
+                    RDN: true,
+                },
             });
-            if (match) {
+            /**
+             * We have to check that the number of distinguished values in the
+             * entry found matches the number of RDNs we have sought, otherwise
+             * this short-circuit optimization could return a result for, say,
+             * SN=Wilbur, when we are actually searching for SN=Wilbur+GN=Jonathan.
+             *
+             * When/if Prisma implements relational counts, we will be able to
+             * remove this check.
+             *
+             * See: https://github.com/prisma/prisma/issues/8935
+             */
+            if (match && (match.RDN.length === needleRDN.length)) {
                 const matchedVertex = await vertexFromDatabaseEntry(ctx, dse_i, match, true);
                 if (matchedVertex.dse.admPoint?.accessControlScheme) {
                     accessControlScheme = matchedVertex.dse.admPoint.accessControlScheme;

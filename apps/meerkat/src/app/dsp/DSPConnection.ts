@@ -111,7 +111,19 @@ async function handleRequestAndErrors (
         return;
     }
     if (dsp.invocations.has(Number(request.invokeID))) {
-        await dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
+            iid: request.invokeID.toString(),
+            cid: dsp.id,
+        }));
+        dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
+        return;
+    }
+    if (dsp.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
+        ctx.log.warn(ctx.i18n.t("log:max_concurrent_op", {
+            cid: dsp.id,
+            iid: request.invokeID.toString(),
+        }));
+        dsp.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
         return;
     }
     const stats: OperationStatistics = {

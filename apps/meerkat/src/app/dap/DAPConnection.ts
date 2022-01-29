@@ -122,7 +122,6 @@ async function handleRequestAndErrors (
         return;
     }
     if (dap.invocations.has(Number(request.invokeID))) {
-        // TODO: Log this.
         ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
             iid: request.invokeID.toString(),
             cid: dap.id,
@@ -138,7 +137,6 @@ async function handleRequestAndErrors (
         dap.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
         return;
     }
-    // TODO: Check max concurrent operations.
     ctx.log.debug(ctx.i18n.t("log:received_request", {
         protocol: "DAP",
         iid: request.invokeID.toString(),

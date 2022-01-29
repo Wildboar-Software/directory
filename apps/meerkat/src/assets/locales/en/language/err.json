@@ -45,7 +45,6 @@
     "cannot_use_resetvalue_in_ldap": "Cannot use resetValue modification for type {{oid}} with an LDAP server.",
     "cannot_use_apw_in_ldap": "Cannot use the administerPassword operation with an LDAP server.",
     "cannot_use_cpw_in_ldap": "Cannot use the changePassword operation with an LDAP server.",
-    "not_authz_list": "Not permitted to list the subordinates of target entry.",
     "page_number_invalid": "Paginated query page index {{pi}} is invalid.",
     "page_size_invalid": "Paginated query page size {{ps}} is invalid.",
     "paginated_query_ref_invalid": "Paginated query reference is invalid.",
