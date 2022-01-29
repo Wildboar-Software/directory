@@ -550,7 +550,7 @@ class LDAPConnection extends ClientAssociation {
                 const oid = decodeLDAPOID(req.requestName);
                 if (oid.isEqualTo(startTLS)) {
                     if (this.socket instanceof tls.TLSSocket) {
-                        // TODO: Log this, because this is sketchy.
+                        ctx.log.warn(ctx.i18n.t("log:double_starttls", { source }));
                         const errorMessage: string = ctx.i18n.t("err:tls_already_in_use");
                         const res = new LDAPMessage(
                             message.messageID,

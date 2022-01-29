@@ -336,7 +336,7 @@ async function updateContextPrefix (
     //     await writeEntryAttributes(ctx, subr, values);
     // }
 
-    await ctx.db.entry.update({ // TODO: This does not need to await.
+    ctx.db.entry.update({
         where: {
             id: oldCP.dse.id,
         },
@@ -344,31 +344,31 @@ async function updateContextPrefix (
             deleteTimestamp: null,
             immediate_superior_id: currentRoot.dse.id,
         },
-    });
+    }).then(); // INTENTIONAL_NO_AWAIT
 
-    const newSuperiorKnowledge = (immSuprAccessPoints ?? [])
+    (immSuprAccessPoints ?? [])
         .map((mosap) => new AccessPoint(
             mosap.ae_title,
             mosap.address,
             mosap.protocolInformation,
-        ));
-    for (const ap of newSuperiorKnowledge) { // TODO: All of these can run in parallel
-        const ber = Buffer.from(_encode_AccessPoint(ap, DER).toBytes());
-        const alreadySavedAccessPoint = await ctx.db.accessPoint.findFirst({
-            where: {
-                ber,
-                knowledge_type: Knowledge.SUPERIOR,
-                active: true,
-            },
-            select: {
-                id: true,
-            },
+        ))
+        .forEach(async (ap) => { // NOTE: All of these can run in parallel.
+            const ber = Buffer.from(_encode_AccessPoint(ap, DER).toBytes());
+            const alreadySavedAccessPoint = await ctx.db.accessPoint.findFirst({
+                where: {
+                    ber,
+                    knowledge_type: Knowledge.SUPERIOR,
+                    active: true,
+                },
+                select: {
+                    id: true,
+                },
+            });
+            if (alreadySavedAccessPoint) {
+                return;
+            }
+            saveAccessPoint(ctx, ap, Knowledge.SUPERIOR, ctx.dit.root.dse.id); // INTENTIONAL_NO_AWAIT
         });
-        if (alreadySavedAccessPoint) {
-            continue;
-        }
-        await saveAccessPoint(ctx, ap, Knowledge.SUPERIOR, ctx.dit.root.dse.id); // TODO: This does not need to await.
-    }
 }
 
 export default updateContextPrefix;

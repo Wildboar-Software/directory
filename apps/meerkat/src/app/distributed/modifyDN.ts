@@ -1274,11 +1274,6 @@ async function modifyDN (
         }
     }
 
-    // FIXME: This looks like it's unfinished.
-    // for (const mp of materializedPathsToUpdate) {
-    //     await ctx.db
-    // }
-
     if (target.dse.entry || target.dse.alias || target.dse.subentry) {
         const affectedPrefix = target.dse.subentry
             ? targetDN.slice(0, -1)

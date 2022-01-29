@@ -1649,7 +1649,7 @@ async function search_i (
                         discloseIncompleteness
                             ? incompleteEntry
                             : false,
-                        FALSE, // FIXME: partialName
+                        (state.partialName && (searchState.depth === 0)),
                         undefined,
                     ));
                 for (const id of resultsById.keys()) {
@@ -1673,24 +1673,29 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
+                if (
+                    !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                    && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
+                ) {
+                    searchState.results.push(
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(rootResult[0]),
+                            },
+                            !rootResult[0].dse.shadow,
+                            attributeSizeLimit
+                                ? rootResult[2].filter(filterEntryInfoItemBySize)
+                                : rootResult[2],
+                            rootResult[3] // discloseOnError?
+                                ? rootResult[1] // -> tell them the truth
+                                : false, // -> say the entry is complete even when it is not
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    );
+                }
                 searchState.alreadyReturnedById.add(rootResult[0].dse.id);
                 searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
-                searchState.results.push(
-                    new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(rootResult[0]),
-                        },
-                        !rootResult[0].dse.shadow,
-                        attributeSizeLimit
-                            ? rootResult[2].filter(filterEntryInfoItemBySize)
-                            : rootResult[2],
-                        rootResult[3] // discloseOnError?
-                            ? rootResult[1] // -> tell them the truth
-                            : false, // -> say the entry is complete even when it is not
-                        (state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ),
-                );
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(
@@ -1729,7 +1734,6 @@ async function search_i (
             matched: false,
             contributingEntries: new Set(),
         };
-        // FIXME: If not separateFamilyMembers, and the ancestor was already returned, just skip.
         let matchedFamilySubset: Vertex[] | undefined;
         for (const familySubset of familySubsets) {
             if (familySubset.length === 0) {
@@ -1909,7 +1913,7 @@ async function search_i (
                         discloseIncompleteness
                             ? incompleteEntry
                             : false,
-                        FALSE, // FIXME: partialName
+                        (state.partialName && (searchState.depth === 0)),
                         undefined,
                     ));
                 for (const id of resultsById.keys()) {
@@ -1933,24 +1937,29 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
+                if (
+                    !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                    && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
+                ) {
+                    searchState.results.push(
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(rootResult[0]),
+                            },
+                            !rootResult[0].dse.shadow,
+                            attributeSizeLimit
+                                ? rootResult[2].filter(filterEntryInfoItemBySize)
+                                : rootResult[2],
+                            rootResult[3] // discloseOnError?
+                                ? rootResult[1] // -> tell them the truth
+                                : false, // -> say the entry is complete even when it is not
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    );
+                }
                 searchState.alreadyReturnedById.add(rootResult[0].dse.id);
                 searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
-                searchState.results.push(
-                    new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(rootResult[0]),
-                        },
-                        !rootResult[0].dse.shadow,
-                        attributeSizeLimit
-                            ? rootResult[2].filter(filterEntryInfoItemBySize)
-                            : rootResult[2],
-                        rootResult[3] // discloseOnError?
-                            ? rootResult[1] // -> tell them the truth
-                            : false, // -> say the entry is complete even when it is not
-                        (state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ),
-                );
             }
             if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
                 hierarchySelectionProcedure(

@@ -405,17 +405,6 @@ async function checkAttributePresence (
     }));
 }
 
-// FIXME: Why is this here?
-function checkEqualityMatchingPermitted (
-    ctx: Context,
-    target: Vertex,
-    type_: AttributeType,
-): boolean {
-    const TYPE_OID: string = type_.toString();
-    const spec = ctx.attributeTypes.get(TYPE_OID);
-    return !!spec?.equalityMatchingRule;
-}
-
 function checkPermissionToAddValues (
     modificationType: "addAttribute" | "addValues",
     attribute: Attribute,
@@ -766,7 +755,7 @@ async function executeAddAttribute (
         );
     }
     const values = valuesFromAttribute(mod);
-    addValuesToPatch(patch, mod.type_, values, bacSettings.getEqualityMatcher(mod.type_));
+    addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
     return addValues(ctx, entry, values);
 }
 
@@ -921,7 +910,7 @@ async function executeAddValues (
         aliasDereferenced,
     );
     const values = valuesFromAttribute(mod);
-    addValuesToPatch(patch, mod.type_, values, bacSettings.getEqualityMatcher(mod.type_));
+    addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
     return addValues(ctx, entry, values);
 }
 
@@ -966,8 +955,7 @@ async function executeRemoveValues (
             ),
         );
     }
-    // FIXME: Use the naming matcher here.
-    const EQUALITY_MATCHER = bacSettings.getEqualityMatcher(mod.type_);
+    const EQUALITY_MATCHER = getNamingMatcherGetter(ctx)(mod.type_);
     const values = valuesFromAttribute(mod);
     const rdnValueOfType = entry.dse.rdn.find((atav) => atav.type_.isEqualTo(mod.type_));
     if (
@@ -1356,7 +1344,7 @@ async function executeReplaceValues (
     }
     const oldValues = await readValuesOfType(ctx, entry, mod.type_);
     patch.removedValues.set(TYPE_OID, oldValues);
-    addValuesToPatch(patch, mod.type_, values, bacSettings.getEqualityMatcher(mod.type_));
+    addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
     return [
         ...(await removeAttribute(ctx, entry, mod.type_)),
         // Last argument to addValues() is false, because we don't want to check
@@ -1786,7 +1774,7 @@ async function modifyEntry (
     )
         ? Number(data.serviceControls!.attributeSizeLimit)
         : undefined;
-    const EQUALITY_MATCHER = getEqualityMatcherGetter(ctx);
+    const EQUALITY_MATCHER = getNamingMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
     const user = state.chainingArguments.originator
@@ -1844,7 +1832,7 @@ async function modifyEntry (
         const authorizedToModifyEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_MODIFY ]);
         if (!authorizedToModifyEntry) {
             throw new errors.SecurityError(
-                "Not permitted to modify entry.", // FIXME: Internationalize
+                ctx.i18n.t("err:not_authz_modify_entry"),
                 new SecurityErrorData(
                     SecurityProblem_insufficientAccessRights,
                     undefined,
