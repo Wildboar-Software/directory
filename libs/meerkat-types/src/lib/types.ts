@@ -511,9 +511,6 @@ interface Configuration {
     dop: {
         enabled: boolean;
     };
-    ipBlocklist: {
-        reasons: Set<string>;
-    };
 }
 
 export
@@ -1065,7 +1062,6 @@ interface Context {
     dit: DITInfo;
     dsa: DSAInfo;
     associations: Map<Socket, ClientAssociation | null>, // null = the socket exists, but has not bound yet.
-    ipBlocklist: BlockList;
     config: Configuration;
     log: Logger;
     db: PrismaClient;
@@ -1214,8 +1210,6 @@ abstract class ClientAssociation {
     public readonly invokeIDToMessageID: Map<number, number> = new Map();
     public abstract attemptBind (arg: ASN1Element): Promise<void>;
 }
-
-
 
 export
 interface BindReturn {

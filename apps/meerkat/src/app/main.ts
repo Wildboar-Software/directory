@@ -42,7 +42,6 @@ import axios from "axios";
 import {
     emailSignupEndpoint,
     updatesDomain,
-    IP_BL_REASON_SLOW_LORIS,
 } from "./constants";
 import createDatabaseReport from "./telemetry/createDatabaseReport";
 import semver from "semver";
@@ -281,10 +280,6 @@ function handleIDM (
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c: net.Socket | tls.TLSSocket): void => {
         c.pause();
-        if (c.remoteAddress && ctx.ipBlocklist.check(c.remoteAddress, c.remoteFamily!.toLowerCase() as net.IPVersion)) {
-            c.destroy();
-            return;
-        }
         ctx.associations.set(c, null); // Index this socket, noting that it has no established association.
         startTimes.set(c, new Date());
         const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
@@ -323,12 +318,6 @@ function handleIDM (
                     source,
                     bps: ctx.config.tcp.minimumTransferSpeedInBytesPerMinute.toString(),
                 }));
-                if (ctx.config.ipBlocklist.reasons.has(IP_BL_REASON_SLOW_LORIS) && c.remoteAddress) {
-                    ctx.ipBlocklist.addAddress(c.remoteAddress, c.remoteFamily!.toLowerCase() as net.IPVersion);
-                    ctx.log.warn(ctx.i18n.t("log:address_blocked", {
-                        host: c.remoteAddress,
-                    }));
-                }
                 c.destroy();
                 startTimes.delete(c);
                 ctx.associations.delete(c);

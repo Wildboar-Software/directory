@@ -131,6 +131,22 @@ function *generateGiantIDMv1Packet (size: number = 10_000_000): IterableIterator
 
 const giantIDMv1Packet = Readable.from(generateGiantIDMv1Packet());
 
+function *generateGiantIDMv2Packet (size: number = 10_000_000): IterableIterator<Buffer> {
+    yield Buffer.from([
+        0x02, // Version 2
+        0x01, // Final
+        0x00, 0x00, // Supported encodings
+    ]);
+    const lengthBytes = Buffer.allocUnsafe(4);
+    lengthBytes.writeUInt32BE(size);
+    yield lengthBytes;
+    for (let i = 0; i < size; i += 1000000) {
+        yield Buffer.allocUnsafe(1000000);
+    }
+}
+
+const giantIDMv2Packet = Readable.from(generateGiantIDMv2Packet());
+
 function *readSlowLorisIDMv1Packet (size: number = 10_000): IterableIterator<Buffer> {
     yield Buffer.from([
         // 0x02, // Version 2
@@ -471,7 +487,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    it("Avoids denial-of-service by large IDM packets", (done) => {
+    it("Avoids denial-of-service by large IDMv1 packets", (done) => {
         const errorHandler = jest.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
@@ -491,6 +507,29 @@ describe("Meerkat DSA", () => {
                 assert(false);
             });
             giantIDMv1Packet.pipe(client);
+        });
+    });
+
+    it.only("Avoids denial-of-service by large IDMv2 packets", (done) => {
+        const errorHandler = jest.fn();
+        const closeHandler = () => {
+            expect(errorHandler).toHaveBeenCalled();
+            giantIDMv2Packet.unpipe(client);
+            done();
+        };
+        const client = net.createConnection({
+            host: HOST,
+            port: PORT,
+        }, () => {
+            client.on("error", errorHandler);
+            client.on("close", closeHandler);
+            giantIDMv2Packet.on("end", () => {
+                assert(false);
+            });
+            giantIDMv2Packet.on("close", () => {
+                assert(false);
+            });
+            giantIDMv2Packet.pipe(client);
         });
     });
 

@@ -313,7 +313,7 @@ class IDMConnection {
             case (IDMVersion.v1): {
                 const VERSION_V1_BYTE: number = 0x01;
                 const FINAL_BYTE: number = 0x01; // FIXME: Support larger responses.
-                const ret = Buffer.alloc(6);
+                const ret = Buffer.alloc(IDM_V1_FRAME_SIZE);
                 ret.writeUInt8(VERSION_V1_BYTE, 0);
                 ret.writeUInt8(FINAL_BYTE, 1);
                 ret.writeUInt32BE(data.length, 2);
@@ -322,7 +322,7 @@ class IDMConnection {
             case (IDMVersion.v2): {
                 const VERSION_V2_BYTE: number = 0x02;
                 const FINAL_BYTE: number = 0x01; // FIXME: Support larger responses.
-                const ret = Buffer.alloc(7);
+                const ret = Buffer.alloc(IDM_V2_FRAME_SIZE);
                 ret.writeUInt8(VERSION_V2_BYTE, 0);
                 ret.writeUInt8(FINAL_BYTE, 1);
                 ret.writeUInt16BE(encodings, 2);
