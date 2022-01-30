@@ -1,6 +1,6 @@
 import type { Context } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
-import DOPConnection from "../DOPConnection";
+import DOPAssociation from "../DOPConnection";
 import type { INTEGER } from "asn1-ts";
 import type {
     EstablishOperationalBindingArgument,
@@ -102,7 +102,7 @@ function codeToString (code?: Code): string | undefined {
 export
 async function establishOperationalBinding (
     ctx: Context,
-    conn: DOPConnection,
+    conn: DOPAssociation,
     invokeId: INTEGER,
     arg: EstablishOperationalBindingArgument,
 ): Promise<EstablishOperationalBindingResult> {

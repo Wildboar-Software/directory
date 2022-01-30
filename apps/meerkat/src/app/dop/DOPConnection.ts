@@ -108,7 +108,7 @@ import { strict as assert } from "assert";
 
 async function handleRequest (
     ctx: Context,
-    conn: DOPConnection, // eslint-disable-line
+    conn: DOPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
     if (!("local" in request.opcode)) {
@@ -155,33 +155,33 @@ async function handleRequest (
 
 async function handleRequestAndErrors (
     ctx: Context,
-    dop: DOPConnection, // eslint-disable-line
+    assn: DOPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
     if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
-            host: dop.socket.remoteAddress,
-            cid: dop.id,
+            host: assn.socket.remoteAddress,
+            cid: assn.id,
         }));
-        dop.idm.writeAbort(Abort_invalidPDU);
+        assn.idm.writeAbort(Abort_invalidPDU);
         return;
     }
-    if (dop.invocations.has(Number(request.invokeID))) {
+    if (assn.invocations.has(Number(request.invokeID))) {
         ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
-            host: dop.socket.remoteAddress,
+            host: assn.socket.remoteAddress,
             iid: request.invokeID.toString(),
-            cid: dop.id,
+            cid: assn.id,
         }));
-        dop.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
         return;
     }
-    if (dop.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
+    if (assn.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
         ctx.log.warn(ctx.i18n.t("log:max_concurrent_op", {
-            host: dop.socket.remoteAddress,
-            cid: dop.id,
+            host: assn.socket.remoteAddress,
+            cid: assn.id,
             iid: request.invokeID.toString(),
         }));
-        dop.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
         return;
     }
     try {
@@ -193,9 +193,9 @@ async function handleRequestAndErrors (
          * service attack.
          */
         if (
-            !("basicLevels" in dop.authLevel)
-            || (dop.authLevel.basicLevels.level < ctx.config.minAuthLevelForOperationalBinding)
-            || ((dop.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.minAuthLocalQualifierForOperationalBinding)
+            !("basicLevels" in assn.authLevel)
+            || (assn.authLevel.basicLevels.level < ctx.config.minAuthLevelForOperationalBinding)
+            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.minAuthLocalQualifierForOperationalBinding)
         ) {
             throw new SecurityError(
                 ctx.i18n.t("err:not_authorized_ob"),
@@ -206,7 +206,7 @@ async function handleRequestAndErrors (
                     [],
                     createSecurityParameters(
                         ctx,
-                        dop.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -216,7 +216,7 @@ async function handleRequestAndErrors (
                 ),
             );
         }
-        await handleRequest(ctx, dop, request);
+        await handleRequest(ctx, assn, request);
     } catch (e) {
         if (isDebugging) {
             console.error(e);
@@ -226,63 +226,63 @@ async function handleRequestAndErrors (
         if (e instanceof AbandonError) {
             const code = _encode_Code(AbandonError.errcode, DER);
             const data = _encode_AbandonedData(e.data, DER);
-            await dop.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof AbandonFailedError) {
             const code = _encode_Code(AbandonFailedError.errcode, DER);
             const data = _encode_AbandonFailedData(e.data, DER);
-            await dop.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof AttributeError) {
             const code = _encode_Code(AttributeError.errcode, DER);
             const data = _encode_AttributeErrorData(e.data, DER);
-            await dop.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof NameError) {
             const code = _encode_Code(NameError.errcode, DER);
             const data = _encode_NameErrorData(e.data, DER);
-            await dop.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof ReferralError) {
             const code = _encode_Code(ReferralError.errcode, DER);
             const data = _encode_ReferralData(e.data, DER);
-            await dop.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof SecurityError) {
             const code = _encode_Code(SecurityError.errcode, DER);
             const data = _encode_SecurityErrorData(e.data, DER);
-            await dop.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof ServiceError) {
             const code = _encode_Code(ServiceError.errcode, DER);
             const data = _encode_ServiceErrorData(e.data, DER);
-            await dop.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof UpdateError) {
             const code = _encode_Code(UpdateError.errcode, DER);
             const data = _encode_UpdateErrorData(e.data, DER);
-            await dop.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof UnknownOperationError) {
-            await dop.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.DuplicateInvokeIdError) {
-            await dop.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         } else if (e instanceof errors.UnsupportedOperationError) {
-            await dop.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
         } else if (e instanceof errors.UnknownOperationError) {
-            await dop.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.MistypedPDUError) {
-            await dop.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
         } else if (e instanceof errors.MistypedArgumentError) {
-            await dop.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
         } else if (e instanceof errors.ResourceLimitationError) {
-            await dop.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         } else if (e instanceof errors.UnknownError) {
-            await dop.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
         } else if (e instanceof errors.UnboundRequestError) {
-            await dop.idm.writeAbort(Abort_unboundRequest).then(() => dop.idm.events.emit("unbind", null));
+            await assn.idm.writeAbort(Abort_unboundRequest).then(() => assn.idm.events.emit("unbind", null));
         } else if (e instanceof errors.InvalidProtocolError) {
-            await dop.idm.writeAbort(Abort_invalidProtocol).then(() => dop.idm.events.emit("unbind", null));
+            await assn.idm.writeAbort(Abort_invalidProtocol).then(() => assn.idm.events.emit("unbind", null));
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
-            await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.events.emit("unbind", null));
+            await assn.idm.writeAbort(Abort_reasonNotSpecified).then(() => assn.idm.events.emit("unbind", null));
         } else {
             const stats: OperationStatistics = {
                 type: "op",
                 inbound: true,
                 server: getServerStatistics(),
-                connection: getConnectionStatistics(dop),
+                connection: getConnectionStatistics(assn),
                 bind: {
                     protocol: dop_ip["&id"]!.toString(),
                 },
@@ -294,14 +294,14 @@ async function handleRequestAndErrors (
                 ...stats,
                 unusualError: e,
             });
-            await dop.idm.writeAbort(Abort_reasonNotSpecified).then(() => dop.idm.events.emit("unbind", null));
+            await assn.idm.writeAbort(Abort_reasonNotSpecified).then(() => assn.idm.events.emit("unbind", null));
         }
     }
 }
 
 
 export default
-class DOPConnection extends ClientAssociation {
+class DOPAssociation extends ClientAssociation {
 
     /**
      * This exists because ITU Recommendation X.519 states that requests may
@@ -388,7 +388,7 @@ class DOPConnection extends ClientAssociation {
             return; // We don't want users to be able to spam unbinds.
         }
         this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
-            ctype: DOPConnection.name,
+            ctype: DOPAssociation.name,
             cid: this.id,
             protocol: "DOP",
         }));

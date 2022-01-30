@@ -1,5 +1,5 @@
 import { Context, OperationalBindingError } from "@wildboar/meerkat-types";
-import type DOPConnection from "../DOPConnection";
+import type DOPAssociation from "../DOPConnection";
 import * as errors from "@wildboar/meerkat-types";
 import type {
     ModifyOperationalBindingArgument,
@@ -120,7 +120,7 @@ function codeToString (code?: Code): string | undefined {
 export
 async function modifyOperationalBinding (
     ctx: Context,
-    conn: DOPConnection,
+    conn: DOPAssociation,
     invokeId: InvokeId,
     arg: ModifyOperationalBindingArgument,
 ): Promise<ModifyOperationalBindingResult> {

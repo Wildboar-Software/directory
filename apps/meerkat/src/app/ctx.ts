@@ -323,6 +323,9 @@ const ctx: Context = {
             : logLevel,
         format: winston.format.combine(...winstonLogFormats),
         transports: winstonTransports,
+        defaultMeta: {
+            app: "meerkat",
+        },
     }),
     db: new PrismaClient(),
     telemetry: {

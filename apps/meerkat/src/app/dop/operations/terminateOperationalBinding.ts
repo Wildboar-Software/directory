@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type DOPConnection from "../DOPConnection";
+import type DOPAssociation from "../DOPConnection";
 import * as errors from "@wildboar/meerkat-types";
 import type {
     TerminateOperationalBindingArgument,
@@ -49,7 +49,7 @@ function getDateFromOBTime (time: Time): Date {
 export
 async function terminateOperationalBinding (
     ctx: Context,
-    conn: DOPConnection,
+    conn: DOPAssociation,
     arg: TerminateOperationalBindingArgument,
 ): Promise<TerminateOperationalBindingResult> {
     const data: TerminateOperationalBindingArgumentData = getOptionallyProtectedValue(arg);

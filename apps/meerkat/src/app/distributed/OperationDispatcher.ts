@@ -1,5 +1,5 @@
 import type { ClientAssociation, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "@wildboar/meerkat-types";
-import type DSPConnection from "../dsp/DSPConnection";
+import type DSPAssociation from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import {
     ChainingArguments,
@@ -667,7 +667,7 @@ class OperationDispatcher {
 
     public static async dispatchDSPRequest (
         ctx: Context,
-        conn: DSPConnection,
+        conn: DSPAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(

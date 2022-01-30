@@ -74,7 +74,7 @@ import { strict as assert } from "assert";
 
 async function handleRequest (
     ctx: Context,
-    dsp: DSPConnection, // eslint-disable-line
+    assn: DSPAssociation, // eslint-disable-line
     request: Request,
     stats: OperationStatistics,
 ): Promise<void> {
@@ -83,7 +83,7 @@ async function handleRequest (
     }
     const result = await OperationDispatcher.dispatchDSPRequest(
         ctx,
-        dsp,
+        assn,
         {
             invokeId: {
                 present: request.invokeID,
@@ -95,45 +95,45 @@ async function handleRequest (
     stats.request = result.request ?? stats.request;
     stats.outcome = result.outcome ?? stats.outcome;
     const encodedResult = chainedRead.encoderFor["&ResultType"]!(result.result, DER);
-    await dsp.idm.writeResult(request.invokeID, result.opCode, encodedResult);
+    await assn.idm.writeResult(request.invokeID, result.opCode, encodedResult);
 }
 
 async function handleRequestAndErrors (
     ctx: Context,
-    dsp: DSPConnection, // eslint-disable-line
+    assn: DSPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
     if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
-            host: dsp.socket.remoteAddress,
-            cid: dsp.id,
+            host: assn.socket.remoteAddress,
+            cid: assn.id,
         }));
-        dsp.idm.writeAbort(Abort_invalidPDU);
+        assn.idm.writeAbort(Abort_invalidPDU);
         return;
     }
-    if (dsp.invocations.has(Number(request.invokeID))) {
+    if (assn.invocations.has(Number(request.invokeID))) {
         ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
-            host: dsp.socket.remoteAddress,
+            host: assn.socket.remoteAddress,
             iid: request.invokeID.toString(),
-            cid: dsp.id,
+            cid: assn.id,
         }));
-        dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
         return;
     }
-    if (dsp.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
+    if (assn.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
         ctx.log.warn(ctx.i18n.t("log:max_concurrent_op", {
-            host: dsp.socket.remoteAddress,
-            cid: dsp.id,
+            host: assn.socket.remoteAddress,
+            cid: assn.id,
             iid: request.invokeID.toString(),
         }));
-        dsp.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
         return;
     }
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
         server: getServerStatistics(),
-        connection: getConnectionStatistics(dsp),
+        connection: getConnectionStatistics(assn),
         // idm?: IDMTransportStatistics;
         bind: {
             protocol: dsp_ip["&id"]!.toString(),
@@ -148,9 +148,9 @@ async function handleRequestAndErrors (
         startTime: new Date(),
         events: new EventEmitter(),
     };
-    dsp.invocations.set(Number(request.invokeID), info);
+    assn.invocations.set(Number(request.invokeID), info);
     try {
-        await handleRequest(ctx, dsp, request, stats);
+        await handleRequest(ctx, assn, request, stats);
     } catch (e) {
         if (isDebugging) {
             console.error(e);
@@ -172,17 +172,17 @@ async function handleRequestAndErrors (
         if (e instanceof errors.AbandonError) {
             const code = _encode_Code(errors.AbandonError.errcode, BER);
             const data = _encode_AbandonedData(e.data, BER);
-            await dsp.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
         } else if (e instanceof errors.AbandonFailedError) {
             const code = _encode_Code(errors.AbandonFailedError.errcode, BER);
             const data = _encode_AbandonFailedData(e.data, BER);
-            await dsp.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.AttributeError) {
             const code = _encode_Code(errors.AttributeError.errcode, BER);
             const data = _encode_AttributeErrorData(e.data, BER);
-            await dsp.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
                 type: ap.type_.toString(),
                 problem: Number(ap.problem),
@@ -190,27 +190,27 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.NameError) {
             const code = _encode_Code(errors.NameError.errcode, BER);
             const data = _encode_NameErrorData(e.data, BER);
-            await dsp.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
         } else if (e instanceof errors.ReferralError) {
             const code = _encode_Code(errors.ReferralError.errcode, BER);
             const data = _encode_ReferralData(e.data, BER);
-            await dsp.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.candidate = getContinuationReferenceStatistics(e.data.candidate);
         } else if (e instanceof errors.SecurityError) {
             const code = _encode_Code(errors.SecurityError.errcode, BER);
             const data = _encode_SecurityErrorData(e.data, BER);
-            await dsp.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
             const data = _encode_ServiceErrorData(e.data, BER);
-            await dsp.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.UpdateError) {
             const code = _encode_Code(errors.UpdateError.errcode, BER);
             const data = _encode_UpdateErrorData(e.data, BER);
-            await dsp.idm.writeError(request.invokeID, code, data);
+            await assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.problem = Number(e.data.problem);
             stats.outcome.error.attributeInfo = e.data.attributeInfo?.map((ai) => {
                 if ("attributeType" in ai) {
@@ -222,40 +222,40 @@ async function handleRequestAndErrors (
                 }
             }).filter((ainfo): ainfo is string => !!ainfo);
         } else if (e instanceof errors.DuplicateInvokeIdError) {
-            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         } else if (e instanceof errors.UnsupportedOperationError) {
-            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
         } else if (e instanceof errors.UnknownOperationError) {
-            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.MistypedPDUError) {
-            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
         } else if (e instanceof errors.MistypedArgumentError) {
-            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
         } else if (e instanceof errors.ResourceLimitationError) {
-            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         } else if (e instanceof errors.UnknownError) {
-            await dsp.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
         } else if (e instanceof errors.UnboundRequestError) {
-            await dsp.idm.writeAbort(Abort_unboundRequest).then(() => dsp.idm.events.emit("unbind", null));
+            await assn.idm.writeAbort(Abort_unboundRequest).then(() => assn.idm.events.emit("unbind", null));
         } else if (e instanceof errors.InvalidProtocolError) {
-            await dsp.idm.writeAbort(Abort_invalidProtocol).then(() => dsp.idm.events.emit("unbind", null));
+            await assn.idm.writeAbort(Abort_invalidProtocol).then(() => assn.idm.events.emit("unbind", null));
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
-            await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.events.emit("unbind", null));
+            await assn.idm.writeAbort(Abort_reasonNotSpecified).then(() => assn.idm.events.emit("unbind", null));
         } else {
             ctx.telemetry.sendEvent({
                 ...stats,
                 unusualError: e,
             });
-            await dsp.idm.writeAbort(Abort_reasonNotSpecified).then(() => dsp.idm.events.emit("unbind", null));
+            await assn.idm.writeAbort(Abort_reasonNotSpecified).then(() => assn.idm.events.emit("unbind", null));
         }
     } finally {
-        dsp.invocations.delete(Number(request.invokeID));
+        assn.invocations.delete(Number(request.invokeID));
         ctx.telemetry.sendEvent(stats);
     }
 }
 
 export default
-class DSPConnection extends ClientAssociation {
+class DSPAssociation extends ClientAssociation {
 
     /**
      * This exists because ITU Recommendation X.519 states that requests may
@@ -350,7 +350,7 @@ class DSPConnection extends ClientAssociation {
             },
         });
         this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
-            ctype: DSPConnection.name,
+            ctype: DSPAssociation.name,
             cid: this.id,
             protocol: "DSP",
         }));

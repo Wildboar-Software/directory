@@ -23,9 +23,9 @@ import {
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
-import DAPConnection from "./dap/DAPConnection";
-import DSPConnection from "./dsp/DSPConnection";
-import DOPConnection from "./dop/DOPConnection";
+import DAPAssociation from "./dap/DAPConnection";
+import DSPAssociation from "./dsp/DSPConnection";
+import DOPAssociation from "./dop/DOPConnection";
 import LDAPConnection from "./ldap/LDAPConnection";
 import loadDIT from "./init/loadDIT";
 import loadAttributeTypes from "./init/loadAttributeTypes";
@@ -139,7 +139,9 @@ const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) =
             protocol: "IDM",
             source,
             size: ctx.config.idm.maxPDUSize.toString(),
-        }));
+        }), {
+            remoteAddress: idm.s.remoteAddress,
+        });
         idm.writeAbort(Abort_resourceLimitation);
         return;
     }
@@ -149,7 +151,9 @@ const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) =
             host: idm.s.remoteAddress,
             source,
             limit: ctx.config.idm.maxSegments,
-        }));
+        }), {
+            remoteAddress: idm.s.remoteAddress,
+        });
         idm.writeAbort(Abort_resourceLimitation);
         return;
     }
@@ -172,14 +176,19 @@ function attachUnboundEventListenersToIDMConnection (
         ctx.log.debug(ctx.i18n.t("log:starttls_established", {
             source,
             context: "transport",
-        }));
+        }), {
+            remoteAddress: idm.s.remoteAddress,
+        });
     });
     idm.events.on("socketError", (e) => {
         ctx.log.error(ctx.i18n.t("log:socket_error", {
             host: originalSocket.remoteAddress,
             source,
             e,
-        }));
+        }), {
+            remoteAddress: idm.s.remoteAddress,
+            stack: e?.stack,
+        });
         idm.s.destroy();
         startTimes.delete(idm.s);
         ctx.associations.delete(idm.s);
@@ -203,17 +212,20 @@ function attachUnboundEventListenersToIDMConnection (
     idm.events.on("bind", async (idmBind: IdmBind) => {
         let conn!: ClientAssociation;
         if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!) && ctx.config.dap.enabled) {
-            conn = new DAPConnection(ctx, idm);
+            conn = new DAPAssociation(ctx, idm);
         } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!) && ctx.config.dsp.enabled) {
-            conn = new DSPConnection(ctx, idm);
+            conn = new DSPAssociation(ctx, idm);
         } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!) && ctx.config.dop.enabled) {
-            conn = new DOPConnection(ctx, idm);
+            conn = new DOPAssociation(ctx, idm);
         } else {
             ctx.log.warn(ctx.i18n.t("log:unsupported_protocol", {
                 protocol: idmBind.protocolID.toString(),
                 host: originalSocket.remoteAddress,
                 source,
-            }));
+            }), {
+                remoteAddress: idm.s.remoteAddress,
+                protocol: idmBind.protocolID.toString(),
+            });
             idm.writeAbort(Abort_invalidProtocol);
             startTimes.delete(idm.s);
             ctx.associations.delete(idm.s);
@@ -251,7 +263,9 @@ function attachUnboundEventListenersToIDMConnection (
             ctx.log.warn(ctx.i18n.t("log:double_starttls", {
                 host: idm.s.remoteAddress,
                 source,
-            }));
+            }), {
+                remoteAddress: idm.s.remoteAddress,
+            });
             return;
         }
         case (warnings.IDM_WARN_PADDING_AFTER_PDU): {
@@ -266,7 +280,9 @@ function attachUnboundEventListenersToIDMConnection (
             ctx.log.warn(ctx.i18n.t("log:double_bind_attempted", {
                 source,
                 host: idm.s.remoteAddress,
-            }));
+            }), {
+                remoteAddress: idm.s.remoteAddress,
+            });
             idm.writeAbort(Abort_reasonNotSpecified);
             startTimes.delete(idm.s);
             ctx.associations.delete(idm.s);
@@ -276,7 +292,9 @@ function attachUnboundEventListenersToIDMConnection (
             ctx.log.warn(ctx.i18n.t("log:idm_bad_sequence", {
                 host: idm.s.remoteAddress,
                 source,
-            }));
+            }), {
+                remoteAddress: idm.s.remoteAddress,
+            });
             startTimes.delete(idm.s);
             ctx.associations.delete(idm.s);
             return;
@@ -304,7 +322,9 @@ function handleIDM (
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
                 source,
                 max: ctx.config.maxConnections,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+            });
             return;
         }
         if ( // Check connections-per-address, which helps prevent Slow Loris attacks.
@@ -320,7 +340,9 @@ function handleIDM (
                 host: c.remoteAddress,
                 source,
                 max: ctx.config.maxConnectionsPerAddress,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+            });
             return;
         }
         c.on("data", () => { // Check data throughput of socket, which helps prevent Slow Loris attacks.
@@ -333,7 +355,9 @@ function handleIDM (
                     host: c.remoteAddress,
                     source,
                     bps: ctx.config.tcp.minimumTransferSpeedInBytesPerMinute.toString(),
-                }));
+                }), {
+                    remoteAddress: c.remoteAddress,
+                });
                 c.destroy();
                 startTimes.delete(c);
                 ctx.associations.delete(c);
@@ -346,21 +370,28 @@ function handleIDM (
                 ctx.log.warn(ctx.i18n.t("log:tcp_timeout", {
                     source,
                     seconds: ctx.config.tcp.timeoutInSeconds,
-                }));
+                }), {
+                    remoteAddress: c.remoteAddress,
+                });
                 c.destroy();
             });
         }
         ctx.log.info(ctx.i18n.t("log:transport_established", {
             source,
             transport: (c instanceof tls.TLSSocket) ? "IDMS" : "IDM",
-        }));
+        }), {
+            remoteAddress: c.remoteAddress,
+        });
 
         c.on("error", (e) => {
             ctx.log.error(ctx.i18n.t("log:socket_error", {
-                host: originalSocket.remoteAddress,
+                host: c.remoteAddress,
                 source,
                 e: e.message,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+                stack: e?.stack,
+            });
             c.destroy();
             startTimes.delete(c);
             ctx.associations.delete(c);
@@ -369,7 +400,9 @@ function handleIDM (
         c.on("close", () => {
             ctx.log.info(ctx.i18n.t("log:socket_closed", {
                 source,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+            });
             startTimes.delete(c);
             ctx.associations.delete(c);
         });
@@ -382,7 +415,10 @@ function handleIDM (
                 e: e.message,
                 host: c.remoteAddress,
                 source,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+                stack: e?.stack,
+            });
             c.destroy();
             startTimes.delete(c);
             ctx.associations.delete(c);
@@ -408,7 +444,9 @@ function handleLDAP (
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
                 source,
                 max: ctx.config.maxConnections,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+            });
             return;
         }
         if ( // Check connections-per-address, which helps prevent Slow Loris attacks.
@@ -424,7 +462,9 @@ function handleLDAP (
                 host: c.remoteAddress,
                 source,
                 max: ctx.config.maxConnectionsPerAddress,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+            });
             return;
         }
         c.on("data", () => { // Check data throughput of socket, which helps prevent Slow Loris attacks.
@@ -437,7 +477,9 @@ function handleLDAP (
                     host: c.remoteAddress,
                     source,
                     bps: ctx.config.tcp.minimumTransferSpeedInBytesPerMinute.toString(),
-                }));
+                }), {
+                    remoteAddress: c.remoteAddress,
+                });
                 c.destroy();
                 startTimes.delete(c);
                 ctx.associations.delete(c);
@@ -450,7 +492,9 @@ function handleLDAP (
                 ctx.log.warn(ctx.i18n.t("log:tcp_timeout", {
                     source,
                     seconds: ctx.config.tcp.timeoutInSeconds,
-                }));
+                }), {
+                    remoteAddress: c.remoteAddress,
+                });
                 c.destroy();
             });
         }
@@ -464,7 +508,9 @@ function handleLDAP (
                 host: c.remoteAddress,
                 source,
                 e: e.message,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+            });
             c.destroy();
             startTimes.delete(c);
             ctx.associations.delete(c);
@@ -473,7 +519,9 @@ function handleLDAP (
         c.on("close", () => {
             ctx.log.info(ctx.i18n.t("log:socket_closed", {
                 source,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+            });
             startTimes.delete(c);
             ctx.associations.delete(c);
         });
@@ -499,7 +547,9 @@ function handleLDAP (
                 e: e.message,
                 host: c.remoteAddress,
                 source,
-            }));
+            }), {
+                remoteAddress: c.remoteAddress,
+            });
             c.destroy();
             startTimes.delete(c);
             ctx.associations.delete(c);
