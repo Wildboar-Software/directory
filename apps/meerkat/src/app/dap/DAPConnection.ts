@@ -106,7 +106,7 @@ async function handleRequest (
     stats.request = result.request ?? stats.request;
     stats.outcome = result.outcome ?? stats.outcome;
     const unprotectedResult = getOptionallyProtectedValue(result.result);
-    await assn.idm.writeResult(request.invokeID, result.opCode, unprotectedResult.result);
+    assn.idm.writeResult(request.invokeID, result.opCode, unprotectedResult.result);
 }
 
 async function handleRequestAndErrors (
@@ -138,7 +138,7 @@ async function handleRequestAndErrors (
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
         });
-        assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
     }
     if (assn.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
@@ -152,7 +152,7 @@ async function handleRequestAndErrors (
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
         });
-        assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
     ctx.log.debug(ctx.i18n.t("log:received_request", {
@@ -214,17 +214,17 @@ async function handleRequestAndErrors (
         if (e instanceof errors.AbandonError) {
             const code = _encode_Code(errors.AbandonError.errcode, BER);
             const data = _encode_AbandonedData(e.data, BER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
         } else if (e instanceof errors.AbandonFailedError) {
             const code = _encode_Code(errors.AbandonFailedError.errcode, BER);
             const data = _encode_AbandonFailedData(e.data, BER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.AttributeError) {
             const code = _encode_Code(errors.AttributeError.errcode, BER);
             const data = _encode_AttributeErrorData(e.data, BER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
                 type: ap.type_.toString(),
                 problem: Number(ap.problem),
@@ -232,27 +232,27 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.NameError) {
             const code = _encode_Code(errors.NameError.errcode, BER);
             const data = _encode_NameErrorData(e.data, BER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
         } else if (e instanceof errors.ReferralError) {
             const code = _encode_Code(errors.ReferralError.errcode, BER);
             const data = _encode_ReferralData(e.data, BER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.candidate = getContinuationReferenceStatistics(e.data.candidate);
         } else if (e instanceof errors.SecurityError) {
             const code = _encode_Code(errors.SecurityError.errcode, BER);
             const data = _encode_SecurityErrorData(e.data, BER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
             const data = _encode_ServiceErrorData(e.data, BER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.UpdateError) {
             const code = _encode_Code(errors.UpdateError.errcode, BER);
             const data = _encode_UpdateErrorData(e.data, BER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
             stats.outcome.error.problem = Number(e.data.problem);
             stats.outcome.error.attributeInfo = e.data.attributeInfo?.map((ai) => {
                 if ("attributeType" in ai) {
@@ -264,31 +264,31 @@ async function handleRequestAndErrors (
                 }
             }).filter((ainfo): ainfo is string => !!ainfo);
         } else if (e instanceof errors.DuplicateInvokeIdError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         } else if (e instanceof errors.UnsupportedOperationError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
         } else if (e instanceof errors.UnknownOperationError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.MistypedPDUError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
         } else if (e instanceof errors.MistypedArgumentError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
         } else if (e instanceof errors.ResourceLimitationError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         } else if (e instanceof errors.UnknownError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
         } else if (e instanceof errors.UnboundRequestError) {
-            await assn.idm.writeAbort(Abort_unboundRequest).then(() => assn.idm.events.emit("unbind", null));
+            assn.idm.writeAbort(Abort_unboundRequest);
         } else if (e instanceof errors.InvalidProtocolError) {
-            await assn.idm.writeAbort(Abort_invalidProtocol).then(() => assn.idm.events.emit("unbind", null));
+            assn.idm.writeAbort(Abort_invalidProtocol);
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
-            await assn.idm.writeAbort(Abort_reasonNotSpecified).then(() => assn.idm.events.emit("unbind", null));
+            assn.idm.writeAbort(Abort_reasonNotSpecified);
         } else {
             ctx.telemetry.sendEvent({
                 ...stats,
                 unusualError: e,
             });
-            await assn.idm.writeAbort(Abort_reasonNotSpecified).then(() => assn.idm.events.emit("unbind", null));
+            assn.idm.writeAbort(Abort_reasonNotSpecified);
         }
     } finally {
         assn.invocations.delete(Number(request.invokeID));
@@ -319,6 +319,7 @@ class DAPAssociation extends ClientAssociation {
     public readonly prebindRequests: Request[] = [];
 
     public async attemptBind (arg: ASN1Element): Promise<void> {
+        await sleep(1000);
         const arg_ = _decode_DirectoryBindArgument(arg);
         const ctx = this.ctx;
         const idm = this.idm;
@@ -340,11 +341,11 @@ class DAPAssociation extends ClientAssociation {
                     unsigned: e.data,
                 };
                 const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
-                await idm.writeBindError(dap_ip["&id"]!, error);
+                idm.writeBindError(dap_ip["&id"]!, error);
                 return;
             } else {
                 ctx.log.warn(e?.message);
-                await idm.writeAbort(Abort_reasonNotSpecified);
+                idm.writeAbort(Abort_reasonNotSpecified);
                 return;
             }
         }
@@ -384,7 +385,7 @@ class DAPAssociation extends ClientAssociation {
             versions,
             undefined,
         );
-        await idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
+        idm.writeBindResult(dap_ip["&id"]!, _encode_DirectoryBindResult(bindResult, BER));
         idm.events.removeAllListeners("request");
         idm.events.on("request", this.handleRequest.bind(this));
         for (const req of this.prebindRequests) {
@@ -435,8 +436,16 @@ class DAPAssociation extends ClientAssociation {
         idm.events.removeAllListeners("request");
         idm.events.on("request", (request: Request) => {
             if (this.prebindRequests.length >= ctx.config.maxPreBindRequests) {
-                idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest)
-                    .catch(() => this.idm.close());
+                ctx.log.warn(ctx.i18n.t("log:too_many_prebind_requests", {
+                    host: this.socket.remoteAddress,
+                    cid: this.id,
+                }), {
+                    remoteFamily: this.socket.remoteFamily,
+                    remoteAddress: this.socket.remoteAddress,
+                    remotePort: this.socket.remotePort,
+                    association_id: this.id,
+                });
+                idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
                 return;
             }
             this.prebindRequests.push(request);

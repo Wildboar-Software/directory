@@ -4,16 +4,6 @@ import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import {
-    IDM_PDU,
-    _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
-import {
-    IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
-import {
-    Request,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
-import {
     DSABindArgument,
     _encode_DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
@@ -24,9 +14,7 @@ import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
 import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
 import type { ChainedResultOrError } from "@wildboar/x500/src/lib/types/ChainedResultOrError";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
-import type { OBJECT_IDENTIFIER, INTEGER, ASN1Element, OCTET_STRING } from "asn1-ts";
-import { ipv4FromNSAP } from "@wildboar/x500/src/lib/distributed/ipv4";
-import { uriFromNSAP } from "@wildboar/x500/src/lib/distributed/uri";
+import type { OBJECT_IDENTIFIER, INTEGER, ASN1Element } from "asn1-ts";
 import * as net from "net";
 import * as tls from "tls";
 import type Connection from "./Connection";
@@ -173,10 +161,6 @@ function getIDMOperationWriter (
             ),
         };
         const encodedParam = chainedRead.encoderFor["&ArgumentType"]!(param, DER);
-        const pdu: IDM_PDU = {
-            request: new Request(invokeID, req.opCode, encodedParam),
-        };
-        const encoded = _encode_IDM_PDU(pdu, DER);
         const ret = await Promise.race<ChainedResultOrError>([
             new Promise<ChainedResultOrError>((resolve) => {
                 idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
@@ -196,7 +180,11 @@ function getIDMOperationWriter (
                         });
                     }
                 });
-                idm.write(encoded.toBytes(), 0);
+                idm.writeRequest(
+                    invokeID,
+                    req.opCode,
+                    encodedParam,
+                );
             }),
             new Promise<never>((resolve, reject) => setTimeout(
                 () => {
@@ -629,22 +617,6 @@ async function connectToIdmNaddr (
             idm = idmGetter();
         }
         try {
-            const pdu: IDM_PDU = {
-                bind: new IdmBind(
-                    protocolID,
-                    {
-                        directoryName: ctx.dsa.accessPoint.ae_title,
-                    },
-                    {
-                        directoryName: targetSystem.ae_title,
-                    },
-                    _encode_DSABindArgument(new DSABindArgument(
-                        cred,
-                        undefined, // v1
-                    ), DER),
-                ),
-            };
-            const encoded = _encode_IDM_PDU(pdu, DER);
             await Promise.race([
                 await new Promise((resolve, reject) => {
                     idm.events.once("bindError", (err) => {
@@ -653,7 +625,19 @@ async function connectToIdmNaddr (
                     idm.events.once("bindResult", (result) => {
                         resolve(result);
                     });
-                    idm.write(encoded.toBytes(), 0);
+                    idm.writeBind(
+                        protocolID,
+                        _encode_DSABindArgument(new DSABindArgument(
+                            cred,
+                            undefined, // v1
+                        ), DER),
+                        {
+                            directoryName: ctx.dsa.accessPoint.ae_title,
+                        },
+                        {
+                            directoryName: targetSystem.ae_title,
+                        },
+                    );
                 }),
                 new Promise<void>((_, reject) => setTimeout(reject, differenceInMilliseconds(timeoutTime, new Date()))),
             ]);

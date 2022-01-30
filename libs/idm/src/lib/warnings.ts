@@ -5,3 +5,5 @@ export const IDM_WARN_DOUBLE_START_TLS: number = 3;
 export const IDM_WARN_PADDING_AFTER_PDU: number = 4;
 export const IDM_WARN_MULTI_BIND: number = 5;
 export const IDM_WARN_BAD_SEQUENCE: number = 6;
+export const IDM_WARN_VERSION_CHANGE: number = 7;
+export const IDM_WARN_ENCODING_CHANGE: number = 8;

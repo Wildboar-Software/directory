@@ -118,7 +118,7 @@ async function handleRequest (
     case (100): { // establish
         const arg = _decode_EstablishOperationalBindingArgument(request.argument);
         const result = await establishOperationalBinding(ctx, assn, request.invokeID, arg);
-        await assn.idm.writeResult(
+        assn.idm.writeResult(
             request.invokeID,
             request.opcode,
             _encode_EstablishOperationalBindingResult(result, DER),
@@ -130,7 +130,7 @@ async function handleRequest (
         const result = await modifyOperationalBinding(ctx, assn, {
             present: request.invokeID,
         }, arg);
-        await assn.idm.writeResult(
+        assn.idm.writeResult(
             request.invokeID,
             request.opcode,
             _encode_ModifyOperationalBindingResult(result, DER),
@@ -140,7 +140,7 @@ async function handleRequest (
     case (101): { // terminate
         const arg = _decode_TerminateOperationalBindingArgument(request.argument);
         const result = await terminateOperationalBinding(ctx, this, arg);
-        await assn.idm.writeResult(
+        assn.idm.writeResult(
             request.invokeID,
             request.opcode,
             _encode_TerminateOperationalBindingResult(result, DER),
@@ -182,7 +182,7 @@ async function handleRequestAndErrors (
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
         });
-        assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
     }
     if (assn.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
@@ -196,7 +196,7 @@ async function handleRequestAndErrors (
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
         });
-        assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
     try {
@@ -246,57 +246,57 @@ async function handleRequestAndErrors (
         if (e instanceof AbandonError) {
             const code = _encode_Code(AbandonError.errcode, DER);
             const data = _encode_AbandonedData(e.data, DER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof AbandonFailedError) {
             const code = _encode_Code(AbandonFailedError.errcode, DER);
             const data = _encode_AbandonFailedData(e.data, DER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof AttributeError) {
             const code = _encode_Code(AttributeError.errcode, DER);
             const data = _encode_AttributeErrorData(e.data, DER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof NameError) {
             const code = _encode_Code(NameError.errcode, DER);
             const data = _encode_NameErrorData(e.data, DER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof ReferralError) {
             const code = _encode_Code(ReferralError.errcode, DER);
             const data = _encode_ReferralData(e.data, DER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof SecurityError) {
             const code = _encode_Code(SecurityError.errcode, DER);
             const data = _encode_SecurityErrorData(e.data, DER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof ServiceError) {
             const code = _encode_Code(ServiceError.errcode, DER);
             const data = _encode_ServiceErrorData(e.data, DER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof UpdateError) {
             const code = _encode_Code(UpdateError.errcode, DER);
             const data = _encode_UpdateErrorData(e.data, DER);
-            await assn.idm.writeError(request.invokeID, code, data);
+            assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof UnknownOperationError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.DuplicateInvokeIdError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         } else if (e instanceof errors.UnsupportedOperationError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
         } else if (e instanceof errors.UnknownOperationError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.MistypedPDUError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
         } else if (e instanceof errors.MistypedArgumentError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
         } else if (e instanceof errors.ResourceLimitationError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         } else if (e instanceof errors.UnknownError) {
-            await assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+            assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
         } else if (e instanceof errors.UnboundRequestError) {
-            await assn.idm.writeAbort(Abort_unboundRequest).then(() => assn.idm.events.emit("unbind", null));
+            assn.idm.writeAbort(Abort_unboundRequest);
         } else if (e instanceof errors.InvalidProtocolError) {
-            await assn.idm.writeAbort(Abort_invalidProtocol).then(() => assn.idm.events.emit("unbind", null));
+            assn.idm.writeAbort(Abort_invalidProtocol);
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
-            await assn.idm.writeAbort(Abort_reasonNotSpecified).then(() => assn.idm.events.emit("unbind", null));
+            assn.idm.writeAbort(Abort_reasonNotSpecified);
         } else {
             const stats: OperationStatistics = {
                 type: "op",
@@ -314,7 +314,7 @@ async function handleRequestAndErrors (
                 ...stats,
                 unusualError: e,
             });
-            await assn.idm.writeAbort(Abort_reasonNotSpecified).then(() => assn.idm.events.emit("unbind", null));
+            assn.idm.writeAbort(Abort_reasonNotSpecified);
         }
     }
 }
@@ -355,11 +355,11 @@ class DOPAssociation extends ClientAssociation {
                     unsigned: e.data,
                 };
                 const error = directoryBindError.encoderFor["&ParameterType"]!(err, DER);
-                await idm.writeBindError(dop_ip["&id"]!, error);
+                idm.writeBindError(dop_ip["&id"]!, error);
                 return;
             } else {
                 ctx.log.warn(e?.message);
-                await idm.writeAbort(Abort_reasonNotSpecified);
+                idm.writeAbort(Abort_reasonNotSpecified);
                 return;
             }
         }
@@ -399,7 +399,7 @@ class DOPAssociation extends ClientAssociation {
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
             versions,
         );
-        await idm.writeBindResult(dop_ip["&id"]!, _encode_DSABindResult(bindResult, DER));
+        idm.writeBindResult(dop_ip["&id"]!, _encode_DSABindResult(bindResult, DER));
         idm.events.removeAllListeners("request");
         idm.events.on("request", this.handleRequest.bind(this));
         for (const req of this.prebindRequests) {
@@ -440,8 +440,16 @@ class DOPAssociation extends ClientAssociation {
         idm.events.removeAllListeners("request");
         idm.events.on("request", (request: Request) => {
             if (this.prebindRequests.length >= ctx.config.maxPreBindRequests) {
-                idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest)
-                    .catch(() => this.idm.close());
+                ctx.log.warn(ctx.i18n.t("log:too_many_prebind_requests", {
+                    host: this.socket.remoteAddress,
+                    cid: this.id,
+                }), {
+                    remoteFamily: this.socket.remoteFamily,
+                    remoteAddress: this.socket.remoteAddress,
+                    remotePort: this.socket.remotePort,
+                    association_id: this.id,
+                });
+                idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
                 return;
             }
             this.prebindRequests.push(request);

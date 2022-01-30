@@ -48,11 +48,11 @@ import {
     IDM_WARN_MULTI_BIND,
     IDM_WARN_BAD_SEQUENCE,
     IDM_WARN_NEGATIVE_INVOKE_ID,
+    IDM_WARN_VERSION_CHANGE,
 } from "./warnings";
 import IDMStatus from "./IDMStatus";
 
 // NOTE: It does not seem to clearly state what the code for version 2 is.
-// TODO: Check for reused invoke IDs.
 
 const IDM_V1_FRAME_SIZE: number = 6;
 const IDM_V2_FRAME_SIZE: number = 8;
@@ -60,18 +60,23 @@ const IDM_V2_FRAME_SIZE: number = 8;
 export default
 class IDMConnection {
     private buffer: Buffer = Buffer.allocUnsafe(0);
-    private version: IDMVersion | undefined = IDMVersion.v1;
+    private version: IDMVersion | undefined = undefined;
     private currentSegments: IDMSegment[] = [];
     public readonly events: IDMEventEmitter = new EventEmitter();
     public socket!: net.Socket;
     public localStatus: IDMStatus = IDMStatus.UNBOUND;
     public remoteStatus: IDMStatus = IDMStatus.UNBOUND;
     private startTLSRequested: boolean = false;
+    private framesReceived: number = 0;
 
     private resetState (): void {
         this.buffer = Buffer.allocUnsafe(0);
         this.version = IDMVersion.v1;
         this.currentSegments = [];
+    }
+
+    public getFramesReceived (): number {
+        return this.framesReceived;
     }
 
     public getBufferSize (): number {
@@ -104,6 +109,13 @@ class IDMConnection {
             this.writeAbort(Abort_invalidPDU);
             return;
         }
+        if (this.version === undefined) { // The version is not established.
+            this.version = this.buffer[0];
+        } else if (this.version !== this.buffer[0]) {
+            // Technically, this is not really permitted, but we can tolerate
+            // this, as long as the encodings didn't change.
+            this.events.emit("warning", IDM_WARN_VERSION_CHANGE);
+        }
         if (
             (this.buffer[0] === IDMVersion.v2)
             && (this.buffer.length >= IDM_V2_FRAME_SIZE)
@@ -134,6 +146,7 @@ class IDMConnection {
                     this.currentSegments = [];
                 }
                 this.buffer = this.buffer.slice(IDM_V2_FRAME_SIZE + length);
+                this.framesReceived++;
                 setImmediate(this.chompFrame.bind(this));
             }
         }
@@ -167,15 +180,20 @@ class IDMConnection {
                     this.currentSegments = [];
                 }
                 this.buffer = this.buffer.slice(IDM_V1_FRAME_SIZE + length);
+                this.framesReceived++;
                 setImmediate(this.chompFrame.bind(this));
             }
         }
     }
 
     private handleData (data: Buffer): void {
-        this.events.emit("socketDataLength", data.length);
-        this.buffer = Buffer.concat([ this.buffer, data ]);
-        this.chompFrame();
+        try {
+            this.events.emit("socketDataLength", data.length);
+            this.buffer = Buffer.concat([ this.buffer, data ]);
+            this.chompFrame();
+        } catch (e) {
+            this.events.emit("socketError", e);
+        }
     };
 
     public close (): void {
@@ -254,15 +272,21 @@ class IDMConnection {
             this.events.emit("startTLS", pdu.startTLS);
             if ((!this.starttlsOptions?.key || !this.starttlsOptions.cert) && !this.starttlsOptions?.pfx) {
                 // TLS is not configured.
-                this.writeTLSResponse(TLSResponse_protocolError)
-                    .catch((e) => this.events.emit("socketError", e));
+                try {
+                    this.writeTLSResponse(TLSResponse_protocolError);
+                } catch (e) {
+                    this.events.emit("socketError", e);
+                }
                 return;
             }
             if (this.socket instanceof tls.TLSSocket) {
                 // TLS is already in use.
                 this.events.emit("warning", IDM_WARN_DOUBLE_START_TLS);
-                this.writeTLSResponse(TLSResponse_operationsError)
-                    .catch((e) => this.events.emit("socketError", e));
+                try {
+                    this.writeTLSResponse(TLSResponse_operationsError);
+                } catch (e) {
+                    this.events.emit("socketError", e);
+                }
                 return;
             }
             this.resetState();
@@ -279,8 +303,11 @@ class IDMConnection {
                 this.writeTLSResponse(TLSResponse_success);
                 this.socket = encryptedSocket;
             } catch (e) {
-                this.writeTLSResponse(TLSResponse_unavailable)
-                    .catch((e) => this.events.emit("socketError", e));
+                try {
+                    this.writeTLSResponse(TLSResponse_unavailable);
+                } catch (e) {
+                    this.close();
+                }
             }
         } else if ("tLSResponse" in pdu) {
             this.events.emit("tLSResponse", pdu.tLSResponse);
@@ -307,12 +334,14 @@ class IDMConnection {
         }
     }
 
-    public write (data: Uint8Array, encodings: number): void {
+    public write (data: Uint8Array, final: boolean = true): void {
         const header = ((): Buffer => {
-            switch (this.version) {
+            switch (this.version ?? IDMVersion.v1) {
             case (IDMVersion.v1): {
                 const VERSION_V1_BYTE: number = 0x01;
-                const FINAL_BYTE: number = 0x01; // FIXME: Support larger responses.
+                const FINAL_BYTE: number = final
+                    ? 0x01
+                    : 0x00;
                 const ret = Buffer.alloc(IDM_V1_FRAME_SIZE);
                 ret.writeUInt8(VERSION_V1_BYTE, 0);
                 ret.writeUInt8(FINAL_BYTE, 1);
@@ -321,11 +350,13 @@ class IDMConnection {
             }
             case (IDMVersion.v2): {
                 const VERSION_V2_BYTE: number = 0x02;
-                const FINAL_BYTE: number = 0x01; // FIXME: Support larger responses.
+                const FINAL_BYTE: number = final
+                    ? 0x01
+                    : 0x00;
                 const ret = Buffer.alloc(IDM_V2_FRAME_SIZE);
                 ret.writeUInt8(VERSION_V2_BYTE, 0);
                 ret.writeUInt8(FINAL_BYTE, 1);
-                ret.writeUInt16BE(encodings, 2);
+                ret.writeUInt16BE(0x0000, 2); // Only BER is supported
                 ret.writeUInt32BE(data.length, 4);
                 return ret;
             }
@@ -345,38 +376,38 @@ class IDMConnection {
         // ]));
     }
 
-    public async writeBind (
+    public writeBind (
         protocolID: OBJECT_IDENTIFIER,
         argument: ASN1Element,
         callingAETitle?: GeneralName,
         calledAETitle?: GeneralName,
-    ): Promise<void> {
+    ): void {
         this.localStatus = IDMStatus.BIND_IN_PROGRESS;
         const bind = new IdmBind(protocolID, callingAETitle, calledAETitle, argument);
         const idm: IDM_PDU = {
             bind,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeBindResult (
+    public writeBindResult (
         protocolID: OBJECT_IDENTIFIER,
         result: ASN1Element,
         respondingAETitle?: GeneralName,
-    ): Promise<void> {
+    ): void {
         this.remoteStatus = IDMStatus.BOUND;
         const bindResult = new IdmBindResult(protocolID, respondingAETitle, result);
         const idm: IDM_PDU = {
             bindResult,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeBindError (
+    public writeBindError (
         protocolID: OBJECT_IDENTIFIER,
         error: ASN1Element,
         respondingAETitle?: GeneralName,
-    ): Promise<void> {
+    ): void {
         this.remoteStatus = IDMStatus.UNBOUND;
         const bindError = new IdmBindError(
             protocolID,
@@ -387,75 +418,75 @@ class IDMConnection {
         const idm: IDM_PDU = {
             bindError,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeRequest (invokeID: INTEGER, opcode: Code, argument: ASN1Element): Promise<void> {
+    public writeRequest (invokeID: INTEGER, opcode: Code, argument: ASN1Element): void {
         const request = new Request(invokeID, opcode, argument);
         const idm: IDM_PDU = {
             request,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeResult (invokeID: INTEGER, opcode: Code, resultValue: ASN1Element): Promise<void> {
+    public writeResult (invokeID: INTEGER, opcode: Code, resultValue: ASN1Element): void {
         const result = new IdmResult(invokeID, opcode, resultValue);
         const idm: IDM_PDU = {
             result,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeError (invokeId: INTEGER, errcode: ASN1Element, data: ASN1Element): Promise<void> {
+    public writeError (invokeId: INTEGER, errcode: ASN1Element, data: ASN1Element): void {
         const error = new IDMError(invokeId, errcode, data);
         const idm: IDM_PDU = {
             error,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeReject (invokeID: INTEGER, reason: IdmReject_reason): Promise<void> {
+    public writeReject (invokeID: INTEGER, reason: IdmReject_reason): void {
         const reject = new IdmReject(invokeID, reason);
         const idm: IDM_PDU = {
             reject,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeUnbind (): Promise<void> {
+    public writeUnbind (): void {
         this.localStatus = IDMStatus.UNBOUND;
         const unbind: Unbind = null;
         const idm: IDM_PDU = {
             unbind,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeAbort (abort: Abort): Promise<void> {
+    public writeAbort (abort: Abort): void {
         try {
             const idm: IDM_PDU = {
                 abort,
             };
-            this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+            this.write(_encode_IDM_PDU(idm, BER).toBytes());
             this.close();
         } catch {
             //
         }
     }
 
-    public async writeStartTLS (): Promise<void> {
+    public writeStartTLS (): void {
         this.startTLSRequested = true;
         const idm: IDM_PDU = {
             startTLS: null,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
-    public async writeTLSResponse (tLSResponse: TLSResponse): Promise<void> {
+    public writeTLSResponse (tLSResponse: TLSResponse): void {
         const idm: IDM_PDU = {
             tLSResponse,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes(), 0);
+        this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
     constructor (

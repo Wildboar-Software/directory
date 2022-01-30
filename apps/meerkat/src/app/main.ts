@@ -50,7 +50,6 @@ import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import isDebugging from "is-debugging";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 
-
 async function checkForUpdates (ctx: Context, currentVersionString: string): Promise<void> {
     const currentVersion = semver.parse(currentVersionString);
     if (!currentVersion) {
@@ -235,10 +234,17 @@ function attachUnboundEventListenersToIDMConnection (
             await conn.attemptBind(idmBind.argument);
             ctx.associations.set(originalSocket, conn);
         } catch (e) {
+            ctx.log.warn(ctx.i18n.t("log:bind_error", {
+                host: originalSocket.remoteAddress,
+                source,
+                e,
+            }), {
+                remoteAddress: idm.s.remoteAddress,
+                protocol: idmBind.protocolID.toString(),
+            });
             idm.writeAbort(Abort_reasonNotSpecified);
             startTimes.delete(idm.s);
             ctx.associations.delete(idm.s);
-            // TODO: Log the error.
         }
     });
     idm.events.on("unbind", () => {
