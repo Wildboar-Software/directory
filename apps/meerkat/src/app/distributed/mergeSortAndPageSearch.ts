@@ -1,5 +1,5 @@
 import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
-import { LDAPConnection } from "../ldap/LDAPConnection";
+import { LDAPAssociation } from "../ldap/LDAPConnection";
 import { ASN1Element, DERElement, TRUE, FALSE, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type {
@@ -285,7 +285,7 @@ async function mergeSortAndPageSearch(
                 b,
                 prr.sortKeys!,
                 prr.reverse,
-                (conn instanceof LDAPConnection),
+                (conn instanceof LDAPAssociation),
             ));
         }
         const nonSkippedResults = mergedResult.entries.slice(pageNumberSkips);

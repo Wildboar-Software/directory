@@ -112,7 +112,7 @@ const CHILD: string = id_oc_child.toString();
 export
 async function removeEntry (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
@@ -120,7 +120,7 @@ async function removeEntry (
     const argument = _decode_RemoveEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -134,7 +134,7 @@ async function removeEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -171,7 +171,7 @@ async function removeEntry (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            state.chainingArguments.authenticationLevel ?? assn.authLevel,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,
@@ -200,7 +200,7 @@ async function removeEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -235,7 +235,7 @@ async function removeEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -258,7 +258,7 @@ async function removeEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -331,14 +331,24 @@ async function removeEntry (
                             obid: bindingID.identifier.toString(),
                             version: bindingID.version.toString(),
                             e: e.message,
-                        }));
+                        }), {
+                            remoteFamily: assn.socket.remoteFamily,
+                            remoteAddress: assn.socket.remoteAddress,
+                            remotePort: assn.socket.remotePort,
+                            association_id: assn.id,
+                        });
                     });
             } catch (e) {
                 ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
                     obid: bindingID.identifier.toString(),
                     version: bindingID.version.toString(),
                     e: e.message,
-                }));
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
                 continue;
             }
         }
@@ -357,7 +367,7 @@ async function removeEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
                 ),
@@ -391,7 +401,7 @@ async function removeEntry (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_removeEntry,
                     ),
                     undefined,

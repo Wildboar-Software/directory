@@ -89,7 +89,7 @@ const USER_PWD_OID: string = userPwd["&id"].toString();
 export
 async function changePassword (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
@@ -116,7 +116,7 @@ async function changePassword (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
                 ),
@@ -154,7 +154,7 @@ async function changePassword (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            state.chainingArguments.authenticationLevel ?? assn.authLevel,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,
@@ -219,7 +219,7 @@ async function changePassword (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -235,9 +235,14 @@ async function changePassword (
     });
     if (!oldPasswordIsCorrect) {
         ctx.log.warn(ctx.i18n.t("log:change_password_incorrect", {
-            cid: conn.id,
+            cid: assn.id,
             uuid: target.dse.uuid,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         throw new errors.SecurityError(
             ctx.i18n.t("err:old_password_incorrect"),
             new SecurityErrorData(
@@ -247,7 +252,7 @@ async function changePassword (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
                 ),
@@ -257,7 +262,7 @@ async function changePassword (
             ),
         );
     }
-    const promises = await setEntryPassword(ctx, conn, target, data.newPwd);
+    const promises = await setEntryPassword(ctx, assn, target, data.newPwd);
     await ctx.db.$transaction(promises);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for
@@ -274,7 +279,7 @@ async function changePassword (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_changePassword,
                     ),
                     undefined,

@@ -188,7 +188,7 @@ function makeContinuationRefFromSupplierKnowledge (
 export
 async function findDSE (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
     state: OperationDispatcherState,
@@ -205,7 +205,7 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -234,7 +234,7 @@ async function findDSE (
     let lastCP: Vertex | undefined;
     const candidateRefs: ContinuationReference[] = [];
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const opArgElements = state.operationArgument.set;
     const criticalExtensions = opArgElements
@@ -297,7 +297,12 @@ async function findDSE (
             if (!lastCP) {
                 ctx.log.warn(ctx.i18n.t("log:shadow_not_under_cp", {
                     id: dse_i.dse.uuid,
-                }));
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
                 return undefined;
             }
             const cr = makeContinuationRefFromSupplierKnowledge(
@@ -370,7 +375,7 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         nameError["&errorCode"],
                     ),
@@ -465,7 +470,7 @@ async function findDSE (
                                 [],
                                 createSecurityParameters(
                                     ctx,
-                                    conn.boundNameAndUID?.dn,
+                                    assn.boundNameAndUID?.dn,
                                     undefined,
                                     nameError["&errorCode"],
                                 ),
@@ -553,7 +558,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
                             ),
@@ -570,7 +575,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
                             ),
@@ -603,7 +608,7 @@ async function findDSE (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
                         ),
@@ -616,8 +621,13 @@ async function findDSE (
             default: {
                 ctx.log.error(ctx.i18n.t("log:operation_progress_not_understood", {
                     value: nameResolutionPhase,
-                    cid: conn.id,
-                }));
+                    cid: assn.id,
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
                 throw new MistypedArgumentError();
             }
         }
@@ -626,7 +636,7 @@ async function findDSE (
     const targetFoundSubprocedure = async (): Promise<Vertex | undefined> => {
         const suitable: boolean = await checkSuitabilityProcedure(
             ctx,
-            conn,
+            assn,
             dse_i,
             state.operationCode,
             state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
@@ -793,7 +803,7 @@ async function findDSE (
                         accessControlScheme,
                         acdfTuples,
                         user,
-                        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                        state.chainingArguments.authenticationLevel ?? assn.authLevel,
                         childDN,
                         isMemberOfGroup,
                         NAMING_MATCHER,
@@ -831,7 +841,7 @@ async function findDSE (
                                     [],
                                     createSecurityParameters(
                                         ctx,
-                                        conn.boundNameAndUID?.dn,
+                                        assn.boundNameAndUID?.dn,
                                         undefined,
                                         securityError["&errorCode"],
                                     ),
@@ -885,7 +895,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 abandoned["&errorCode"],
                             ),
@@ -925,7 +935,7 @@ async function findDSE (
                             accessControlScheme,
                             acdfTuples,
                             user,
-                            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                            state.chainingArguments.authenticationLevel ?? assn.authLevel,
                             childDN,
                             isMemberOfGroup,
                             NAMING_MATCHER,
@@ -968,7 +978,7 @@ async function findDSE (
                                         [],
                                         createSecurityParameters(
                                             ctx,
-                                            conn.boundNameAndUID?.dn,
+                                            assn.boundNameAndUID?.dn,
                                             undefined,
                                             securityError["&errorCode"],
                                         ),
@@ -988,7 +998,7 @@ async function findDSE (
                                     [],
                                     createSecurityParameters(
                                         ctx,
-                                        conn.boundNameAndUID?.dn,
+                                        assn.boundNameAndUID?.dn,
                                         undefined,
                                         nameError["&errorCode"],
                                     ),
@@ -1032,7 +1042,7 @@ async function findDSE (
                 accessControlScheme,
                 acdfTuples,
                 user,
-                state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                state.chainingArguments.authenticationLevel ?? assn.authLevel,
                 currentDN,
                 isMemberOfGroup,
                 NAMING_MATCHER,
@@ -1074,7 +1084,7 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -1218,7 +1228,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
                             ),
@@ -1251,7 +1261,7 @@ async function findDSE (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             nameError["&errorCode"],
                         ),
@@ -1284,7 +1294,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
                             ),
@@ -1344,7 +1354,7 @@ async function findDSE (
                 };
                 await findDSE(
                     ctx,
-                    conn,
+                    assn,
                     haystackVertex,
                     newN,
                     newState,
@@ -1360,7 +1370,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
                             ),
@@ -1382,7 +1392,7 @@ async function findDSE (
             [],
             createSecurityParameters(
                 ctx,
-                conn.boundNameAndUID?.dn,
+                assn.boundNameAndUID?.dn,
                 undefined,
                 serviceError["&errorCode"],
             ),

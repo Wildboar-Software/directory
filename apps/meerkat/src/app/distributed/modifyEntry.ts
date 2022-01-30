@@ -1722,14 +1722,14 @@ async function executeEntryModification (
 export
 async function modifyEntry (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ModifyEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -1743,7 +1743,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -1810,7 +1810,7 @@ async function modifyEntry (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            state.chainingArguments.authenticationLevel ?? assn.authLevel,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,
@@ -1848,7 +1848,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -1886,7 +1886,7 @@ async function modifyEntry (
                 id: target.dse.id,
             },
             data: {
-                modifiersName: conn.boundNameAndUID?.dn.map(rdnToJson),
+                modifiersName: assn.boundNameAndUID?.dn.map(rdnToJson),
                 modifyTimestamp: new Date(),
             },
         }),
@@ -1906,7 +1906,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -1920,7 +1920,7 @@ async function modifyEntry (
         pendingUpdates.push(
             ...(await executeEntryModification(
                 ctx,
-                conn,
+                assn,
                 user,
                 target,
                 targetDN,
@@ -1975,7 +1975,7 @@ async function modifyEntry (
                         mod: "*",
                         type: type_,
                     }),
-                    notPermittedData(ctx, conn, state.chainingArguments.aliasDereferenced),
+                    notPermittedData(ctx, assn, state.chainingArguments.aliasDereferenced),
                 );
             }
         }
@@ -2057,7 +2057,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -2099,7 +2099,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -2133,7 +2133,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -2158,7 +2158,12 @@ async function modifyEntry (
             // class.
             ctx.log.warn(ctx.i18n.t("log:entry_has_unrecognized_object_class", {
                 oid: ocid.toString(),
-            }));
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
             continue;
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
@@ -2205,7 +2210,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -2242,7 +2247,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -2268,7 +2273,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -2308,7 +2313,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -2346,7 +2351,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -2382,7 +2387,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -2413,7 +2418,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -2450,7 +2455,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -2471,7 +2476,7 @@ async function modifyEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
                 ),
@@ -2496,7 +2501,12 @@ async function modifyEntry (
     } else {
         ctx.log.warn(ctx.i18n.t("log:entry_deleted_while_being_modified", {
             id: target.dse.uuid,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
     }
 
     if (
@@ -2504,9 +2514,14 @@ async function modifyEntry (
         || patch.addedValues.has(USER_PWD)
     ) {
         ctx.log.info(ctx.i18n.t("log:password_changed", {
-            cid: conn.id,
+            cid: assn.id,
             uuid: target.dse.uuid,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
     }
 
     /**
@@ -2548,7 +2563,12 @@ async function modifyEntry (
         } else {
             ctx.log.warn(ctx.i18n.t("log:entry_deleted_while_being_modified", {
                 id: target.dse.uuid,
-            }));
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
         }
     }
 
@@ -2594,7 +2614,7 @@ async function modifyEntry (
                             undefined,
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 id_opcode_modifyEntry,
                             ),
                             undefined,
@@ -2682,7 +2702,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_modifyEntry,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -2699,7 +2719,7 @@ async function modifyEntry (
                         undefined,
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             id_opcode_modifyEntry,
                         ),
                         undefined,
@@ -2732,7 +2752,7 @@ async function modifyEntry (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_modifyEntry,
                     ),
                     undefined,

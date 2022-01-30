@@ -210,7 +210,7 @@ function namingViolationErrorData (
 export
 async function addEntry (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);
@@ -222,7 +222,7 @@ async function addEntry (
         )
         : undefined;
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -240,7 +240,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -260,7 +260,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -292,8 +292,13 @@ async function addEntry (
     const isFirstLevel: boolean = !!immediateSuperior.dse.root;
 
     if (isFirstLevel) {
-        if (!await mayAddTopLeveDSE(ctx, conn)) {
-            ctx.log.debug(ctx.i18n.t("log:not_authz_to_add_top_level", { context: "hint" }));
+        if (!await mayAddTopLeveDSE(ctx, assn)) {
+            ctx.log.debug(ctx.i18n.t("log:not_authz_to_add_top_level", { context: "hint" }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_to_add_top_level"),
                 new SecurityErrorData(
@@ -303,7 +308,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -316,7 +321,12 @@ async function addEntry (
     }
 
     if (isFirstLevel && !data.entry.some((info) => info.type_.isEqualTo(administrativeRole["&id"]))) {
-        ctx.log.warn(ctx.i18n.t("log:admin_role_not_present_first_level_dse"));
+        ctx.log.warn(ctx.i18n.t("log:admin_role_not_present_first_level_dse"), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         data.entry.push(new Attribute(
             administrativeRole["&id"],
             [_encodeObjectIdentifier(id_ar_autonomousArea, DER)],
@@ -343,7 +353,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -374,7 +384,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -404,7 +414,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -436,7 +446,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -467,7 +477,7 @@ async function addEntry (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            state.chainingArguments.authenticationLevel ?? assn.authLevel,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,
@@ -509,7 +519,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -524,7 +534,7 @@ async function addEntry (
     if (immediateSuperior.dse.alias) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:add_entry_beneath_alias"),
-            namingViolationErrorData(ctx, conn, [], state.chainingArguments.aliasDereferenced),
+            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
         );
     }
     if (isSubentry && !immediateSuperior.dse.admPoint) {
@@ -536,7 +546,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -555,7 +565,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -570,7 +580,7 @@ async function addEntry (
     if (!rdn) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:root_dse_may_not_be_added"),
-            namingViolationErrorData(ctx, conn, [], state.chainingArguments.aliasDereferenced),
+            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
         );
     }
     if (!ctx.config.bulkInsertMode) {
@@ -597,7 +607,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -628,7 +638,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
                         ),
@@ -646,7 +656,7 @@ async function addEntry (
     if (!ctx.config.bulkInsertMode && immediateSuperior.dse.nssr) {
         await checkIfNameIsAlreadyTakenInNSSR(
             ctx,
-            conn,
+            assn,
             state.invokeId,
             state.chainingArguments.aliasDereferenced ?? false,
             immediateSuperior.dse.nssr?.nonSpecificKnowledge ?? [],
@@ -662,7 +672,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),
@@ -702,7 +712,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -775,7 +785,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
                             ),
@@ -822,7 +832,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
                             ),
@@ -889,7 +899,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -993,7 +1003,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
                     ),
@@ -1031,7 +1041,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
                             ),
@@ -1068,7 +1078,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -1092,7 +1102,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -1142,7 +1152,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
                             ),
@@ -1174,7 +1184,7 @@ async function addEntry (
                 ctx.i18n.t("err:rdn_types_duplicated", {
                     oids: duplicatedAFDNs.join(", "),
                 }),
-                namingViolationErrorData(ctx, conn, duplicatedAFDNs, state.chainingArguments.aliasDereferenced),
+                namingViolationErrorData(ctx, assn, duplicatedAFDNs, state.chainingArguments.aliasDereferenced),
             );
         }
 
@@ -1183,7 +1193,7 @@ async function addEntry (
                 ctx.i18n.t("err:rdn_types_unrecognized", {
                     oids: unrecognizedAFDNs.join(", "),
                 }),
-                namingViolationErrorData(ctx, conn, unrecognizedAFDNs, state.chainingArguments.aliasDereferenced),
+                namingViolationErrorData(ctx, assn, unrecognizedAFDNs, state.chainingArguments.aliasDereferenced),
             );
         }
 
@@ -1192,7 +1202,7 @@ async function addEntry (
                 ctx.i18n.t("err:rdn_types_prohibited_in_naming", {
                     oids: cannotBeUsedInNameAFDNs.join(", "),
                 }),
-                namingViolationErrorData(ctx, conn, cannotBeUsedInNameAFDNs, state.chainingArguments.aliasDereferenced),
+                namingViolationErrorData(ctx, assn, cannotBeUsedInNameAFDNs, state.chainingArguments.aliasDereferenced),
             );
         }
 
@@ -1201,7 +1211,7 @@ async function addEntry (
                 ctx.i18n.t("err:rdn_values_not_present_in_entry", {
                     oids: unmatchedAFDNs.join(", "),
                 }),
-                namingViolationErrorData(ctx, conn, unmatchedAFDNs, state.chainingArguments.aliasDereferenced),
+                namingViolationErrorData(ctx, assn, unmatchedAFDNs, state.chainingArguments.aliasDereferenced),
             );
         }
     }
@@ -1244,7 +1254,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -1287,7 +1297,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
                             ),
@@ -1338,7 +1348,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
                             ),
@@ -1365,7 +1375,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -1411,7 +1421,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -1456,7 +1466,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 attributeError["&errorCode"],
                             ),
@@ -1500,7 +1510,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 attributeError["&errorCode"],
                             ),
@@ -1541,7 +1551,7 @@ async function addEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 attributeError["&errorCode"],
                             ),
@@ -1584,7 +1594,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),
@@ -1604,7 +1614,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
                 ),
@@ -1621,7 +1631,7 @@ async function addEntry (
     const newEntry = await createEntry(ctx, immediateSuperior, rdn, {
         governingStructureRule,
         structuralObjectClass: structuralObjectClass.toString(),
-    }, values, conn.boundNameAndUID?.dn);
+    }, values, assn.boundNameAndUID?.dn);
     immediateSuperior.subordinates?.push(newEntry);
 
     // Update relevant hierarchical operational bindings
@@ -1653,7 +1663,7 @@ async function addEntry (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_addEntry,
                     ),
                     undefined,

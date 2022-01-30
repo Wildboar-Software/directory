@@ -107,7 +107,12 @@ async function handleRequestAndErrors (
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
             host: assn.socket.remoteAddress,
             cid: assn.id,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         assn.idm.writeAbort(Abort_invalidPDU);
         return;
     }
@@ -116,7 +121,12 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             iid: request.invokeID.toString(),
             cid: assn.id,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
         return;
     }
@@ -125,7 +135,12 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             cid: assn.id,
             iid: request.invokeID.toString(),
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
         return;
     }
@@ -155,7 +170,12 @@ async function handleRequestAndErrors (
         if (isDebugging) {
             console.error(e);
         } else {
-            ctx.log.error(e.message);
+            ctx.log.error(e.message, {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
         }
         if (!stats.outcome) {
             stats.outcome = {};
@@ -307,7 +327,12 @@ class DSPAssociation extends ClientAssociation {
             ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
                 source: remoteHostIdentifier,
                 protocol: "DSP",
-            }));
+            }), {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            });
         } else {
             ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
                 source: remoteHostIdentifier,
@@ -315,7 +340,12 @@ class DSPAssociation extends ClientAssociation {
                 dn: this.boundNameAndUID?.dn
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",
-            }));
+            }), {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            });
         }
         const bindResult = new DSABindArgument(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
@@ -353,7 +383,12 @@ class DSPAssociation extends ClientAssociation {
             ctype: DSPAssociation.name,
             cid: this.id,
             protocol: "DSP",
-        }));
+        }), {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            association_id: this.id,
+        });
     }
 
     constructor (

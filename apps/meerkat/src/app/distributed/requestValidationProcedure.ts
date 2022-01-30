@@ -426,7 +426,7 @@ function createChainingArgumentsFromDUA (
 export
 async function requestValidationProcedure (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     req: Request,
     alreadyChained: boolean,
     authenticationLevel: AuthenticationLevel,
@@ -452,7 +452,7 @@ async function requestValidationProcedure (
         : ((): Chain => {
             const chainingArguments = createChainingArgumentsFromDUA(
                 ctx,
-                conn,
+                assn,
                 req.opCode!,
                 req.argument!,
                 authenticationLevel,
@@ -531,8 +531,13 @@ async function requestValidationProcedure (
     if (chainedArgument.operationIdentifier) {
         ctx.log.debug(ctx.i18n.t("log:received_chained_operation", {
             opid: chainedArgument.operationIdentifier,
-            cid: conn.id,
-        }));
+            cid: assn.id,
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
     }
     return hydratedArgument;
 }

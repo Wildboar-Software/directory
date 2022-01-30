@@ -26,7 +26,7 @@ import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop
 import DAPAssociation from "./dap/DAPConnection";
 import DSPAssociation from "./dsp/DSPConnection";
 import DOPAssociation from "./dop/DOPConnection";
-import LDAPConnection from "./ldap/LDAPConnection";
+import LDAPAssociation from "./ldap/LDAPConnection";
 import loadDIT from "./init/loadDIT";
 import loadAttributeTypes from "./init/loadAttributeTypes";
 import loadObjectClasses from "./init/loadObjectClasses";
@@ -527,7 +527,7 @@ function handleLDAP (
         });
 
         try {
-            const conn = new LDAPConnection(ctx, c);
+            const conn = new LDAPAssociation(ctx, c);
             c.on("end", () => {
                 ctx.db.enqueuedSearchResult.deleteMany({
                     where: {

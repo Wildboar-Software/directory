@@ -81,15 +81,20 @@ function isRootSubschemaDN (dn: Uint8Array): boolean {
 
 async function handleRequest (
     ctx: Context,
-    conn: LDAPConnection,
+    assn: LDAPAssociation,
     message: LDAPMessage,
     stats: OperationStatistics,
 ): Promise<void> {
     ctx.log.debug(ctx.i18n.t("log:received_ldap_request", {
         mid: message.messageID,
         type: Object.keys(message.protocolOp)[0],
-        cid: conn.id,
-    }));
+        cid: assn.id,
+    }), {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+    });
     // let toWriteBuffer: Buffer = Buffer.alloc(0);
     // let resultsBuffered: number = 0;
     const onEntry = async (searchResEntry: SearchResultEntry): Promise<void> => {
@@ -109,7 +114,7 @@ async function handleRequest (
         //     conn.socket.write(toWriteBuffer);
         //     toWriteBuffer = Buffer.alloc(0);
         // }
-        conn.socket.write(_encode_LDAPMessage(resultMessage, BER).toBytes());
+        assn.socket.write(_encode_LDAPMessage(resultMessage, BER).toBytes());
     };
     if (
         ("searchRequest" in message.protocolOp)
@@ -125,7 +130,7 @@ async function handleRequest (
          * conditions are not met, the user will only see a small selection of
          * schema.
          */
-        const permittedToSeeSchema: boolean = Boolean(conn.boundEntry || !(await anyPasswordsExist(ctx)));
+        const permittedToSeeSchema: boolean = Boolean(assn.boundEntry || !(await anyPasswordsExist(ctx)));
         const entry = new SearchResultEntry(
             Buffer.from("cn=subschema", "utf-8"),
             getRootSubschema(ctx, permittedToSeeSchema),
@@ -143,20 +148,20 @@ async function handleRequest (
             },
             undefined,
         );
-        conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+        assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
         return;
     }
-    const dapRequest = ldapRequestToDAPRequest(ctx, conn, message);
+    const dapRequest = ldapRequestToDAPRequest(ctx, assn, message);
     if (!dapRequest) {
         return;
     }
     if ("present" in dapRequest.invokeId) {
-        conn.messageIDToInvokeID.set(Number(message.messageID), Number(dapRequest.invokeId.present));
-        conn.invokeIDToMessageID.set(Number(dapRequest.invokeId.present), Number(message.messageID));
+        assn.messageIDToInvokeID.set(Number(message.messageID), Number(dapRequest.invokeId.present));
+        assn.invokeIDToMessageID.set(Number(dapRequest.invokeId.present), Number(message.messageID));
     }
     const result = await OperationDispatcher.dispatchDAPRequest(
         ctx,
-        conn,
+        assn,
         {
             invokeId: dapRequest.invokeId,
             opCode: dapRequest.opCode,
@@ -169,27 +174,27 @@ async function handleRequest (
         opCode: dapRequest.opCode,
         result: unprotectedResult.result,
     }, message, onEntry);
-    conn.socket.write(_encode_LDAPMessage(ldapResult, BER).toBytes());
+    assn.socket.write(_encode_LDAPMessage(ldapResult, BER).toBytes());
     stats.request = result.request ?? stats.request;
     stats.outcome = result.outcome ?? stats.outcome;
 }
 
 async function handleRequestAndErrors (
     ctx: Context,
-    conn: LDAPConnection,
+    assn: LDAPAssociation,
     message: LDAPMessage,
 ): Promise<void> {
-    if (conn.status !== Status.BOUND) {
+    if (assn.status !== Status.BOUND) {
         const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
-        conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-        conn.socket.destroy();
+        assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+        assn.socket.destroy();
         return;
     }
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
         server: getServerStatistics(),
-        connection: getConnectionStatistics(conn),
+        connection: getConnectionStatistics(assn),
         bind: {
             protocol: "ldap",
         },
@@ -208,7 +213,7 @@ async function handleRequestAndErrors (
     //     startTime: new Date(),
     // });
     try {
-        await handleRequest(ctx, conn, message, stats);
+        await handleRequest(ctx, assn, message, stats);
     } catch (e) {
         ctx.log.error(e.message);
         if (!stats.outcome) {
@@ -229,22 +234,22 @@ async function handleRequestAndErrors (
         }
         if ("addRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { addResponse: result }, undefined);
-            conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("compareRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { compareResponse: result }, undefined);
-            conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("delRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { delResponse: result }, undefined);
-            conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("modDNRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { modDNResponse: result }, undefined);
-            conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("modifyRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { modifyResponse: result }, undefined);
-            conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("searchRequest" in message.protocolOp) {
             const res = new LDAPMessage(message.messageID, { searchResDone: result }, undefined);
-            conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
         } else if ("extendedReq" in message.protocolOp) {
             const oid = decodeLDAPOID(message.protocolOp.extendedReq.requestName);
             if (oid.isEqualTo(modifyPassword)) {
@@ -263,7 +268,7 @@ async function handleRequestAndErrors (
                     },
                     undefined,
                 );
-                conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+                assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
             } else {
                 return;
             }
@@ -279,16 +284,16 @@ async function handleRequestAndErrors (
              * detailed in IETF RFC 4511, Section 4.4.1.
              */
             const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, errorMessage);
-            conn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-            conn.socket.destroy();
+            assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            assn.socket.destroy();
             return;
         }
     } finally {
-        const invokeID = conn.messageIDToInvokeID.get(Number(message.messageID));
+        const invokeID = assn.messageIDToInvokeID.get(Number(message.messageID));
         if (invokeID) {
-            conn.invokeIDToMessageID.delete(invokeID);
+            assn.invokeIDToMessageID.delete(invokeID);
         }
-        conn.messageIDToInvokeID.delete(Number(message.messageID));
+        assn.messageIDToInvokeID.delete(Number(message.messageID));
         // ctx.log.debug(`Finished operation ${invokeID} / ${message.messageID}.`);
         // dap.invocations.set(request.invokeID, {
         //     invokeId: request.invokeID,
@@ -301,7 +306,7 @@ async function handleRequestAndErrors (
 }
 
 export
-class LDAPConnection extends ClientAssociation {
+class LDAPAssociation extends ClientAssociation {
 
     public status: Status = Status.UNBOUND;
     private buffer: Buffer = Buffer.alloc(0);
@@ -323,7 +328,12 @@ class LDAPConnection extends ClientAssociation {
                 protocol: "LDAP",
                 source,
                 size: ctx.config.ldap.bufferSize.toString(),
-            }));
+            }), {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            });
             /**
              * IETF RFC 4511, Section 4.1.1 states that:
              *
@@ -359,7 +369,12 @@ class LDAPConnection extends ClientAssociation {
                     protocol: "LDAP",
                     source,
                     size: ctx.config.ldap.bufferSize.toString(),
-                }));
+                }), {
+                    remoteFamily: this.socket.remoteFamily,
+                    remoteAddress: this.socket.remoteAddress,
+                    remotePort: this.socket.remotePort,
+                    association_id: this.id,
+                });
                 /**
                  * IETF RFC 4511, Section 4.1.1 states that:
                  *
@@ -385,7 +400,12 @@ class LDAPConnection extends ClientAssociation {
                         protocol: "LDAP",
                         source,
                         size: ctx.config.ldap.bufferSize.toString(),
-                    }));
+                    }), {
+                        remoteFamily: this.socket.remoteFamily,
+                        remoteAddress: this.socket.remoteAddress,
+                        remotePort: this.socket.remotePort,
+                        association_id: this.id,
+                    });
                     /**
                      * IETF RFC 4511, Section 4.1.1 states that:
                      *
@@ -416,7 +436,12 @@ class LDAPConnection extends ClientAssociation {
                     host: this.socket.remoteAddress,
                     source,
                     hexbyte: this.buffer[0].toString(16).padStart(2, "0"),
-                }));
+                }), {
+                    remoteFamily: this.socket.remoteFamily,
+                    remoteAddress: this.socket.remoteAddress,
+                    remotePort: this.socket.remotePort,
+                    association_id: this.id,
+                });
                 // We don't send a disconnection notice, because the traffic did not appear to be LDAP at all.
                 this.socket.destroy();
                 return;
@@ -432,7 +457,12 @@ class LDAPConnection extends ClientAssociation {
                 ctx.log.error(ctx.i18n.t("log:encoding_error", {
                     host: this.socket.remoteAddress,
                     uuid: this.id,
-                }));
+                }), {
+                    remoteFamily: this.socket.remoteFamily,
+                    remoteAddress: this.socket.remoteAddress,
+                    remotePort: this.socket.remotePort,
+                    association_id: this.id,
+                });
                 const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                 this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                 this.socket.destroy();
@@ -448,7 +478,12 @@ class LDAPConnection extends ClientAssociation {
                 ctx.log.error(ctx.i18n.t("log:malformed_ldapmessage", {
                     host: this.socket.remoteAddress,
                     uuid: this.id,
-                }));
+                }), {
+                    remoteFamily: this.socket.remoteFamily,
+                    remoteAddress: this.socket.remoteAddress,
+                    remotePort: this.socket.remotePort,
+                    association_id: this.id,
+                });
                 const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                 this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                 this.socket.destroy();
@@ -460,7 +495,12 @@ class LDAPConnection extends ClientAssociation {
                 ctx.log.warn(ctx.i18n.t("log:unusual_message_id", {
                     host: this.socket.remoteAddress,
                     source,
-                }));
+                }), {
+                    remoteFamily: this.socket.remoteFamily,
+                    remoteAddress: this.socket.remoteAddress,
+                    remotePort: this.socket.remotePort,
+                    association_id: this.id,
+                });
                 this.socket.destroy();
                 return;
             }
@@ -470,7 +510,12 @@ class LDAPConnection extends ClientAssociation {
                     ctx.log.warn(ctx.i18n.t("log:double_bind_attempted", {
                         source,
                         host: this.socket.remoteAddress,
-                    }));
+                    }), {
+                        remoteFamily: this.socket.remoteFamily,
+                        remoteAddress: this.socket.remoteAddress,
+                        remotePort: this.socket.remotePort,
+                        association_id: this.id,
+                    });
                     const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                     this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     this.socket.destroy();
@@ -504,7 +549,12 @@ class LDAPConnection extends ClientAssociation {
                         this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     })
                     .catch((e) => {
-                        ctx.log.error(e.message);
+                        ctx.log.error(e.message, {
+                            remoteFamily: this.socket.remoteFamily,
+                            remoteAddress: this.socket.remoteAddress,
+                            remotePort: this.socket.remotePort,
+                            association_id: this.id,
+                        });
                         if ("stack" in e) {
                             ctx.log.error(e.stack);
                         }
@@ -563,7 +613,12 @@ class LDAPConnection extends ClientAssociation {
                         ctx.log.warn(ctx.i18n.t("log:double_starttls", {
                             host: this.socket.remoteAddress,
                             source,
-                        }));
+                        }), {
+                            remoteFamily: this.socket.remoteFamily,
+                            remoteAddress: this.socket.remoteAddress,
+                            remotePort: this.socket.remotePort,
+                            association_id: this.id,
+                        });
                         const errorMessage: string = ctx.i18n.t("err:tls_already_in_use");
                         const res = new LDAPMessage(
                             message.messageID,
@@ -590,7 +645,12 @@ class LDAPConnection extends ClientAssociation {
                         ctx.log.debug(ctx.i18n.t("log:starttls_established", {
                             context: "association",
                             cid: this.id,
-                        }));
+                        }), {
+                            remoteFamily: this.socket.remoteFamily,
+                            remoteAddress: this.socket.remoteAddress,
+                            remotePort: this.socket.remotePort,
+                            association_id: this.id,
+                        });
                         const successMessage = ctx.i18n.t("main:starttls_established");
                         const res = new LDAPMessage(
                             message.messageID,
@@ -667,4 +727,4 @@ class LDAPConnection extends ClientAssociation {
 
 }
 
-export default LDAPConnection;
+export default LDAPAssociation;

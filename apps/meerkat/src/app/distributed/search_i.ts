@@ -165,7 +165,7 @@ import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
 import getApproxMatcherGetter from "../x500/getApproxMatcherGetter";
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import LDAPConnection from "../ldap/LDAPConnection";
+import LDAPAssociation from "../ldap/LDAPConnection";
 import readFamily from "../database/family/readFamily";
 import readEntryOnly from "../database/family/readEntryOnly";
 import readCompoundEntry from "../database/family/readCompoundEntry";
@@ -729,7 +729,7 @@ function getFamilyMembersToReturnById (
 export
 async function search_i (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
     argument: SearchArgument,
     searchState: SearchState,
@@ -737,7 +737,7 @@ async function search_i (
     const target = state.foundDSE;
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
 
     /**
@@ -773,7 +773,7 @@ async function search_i (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_serviceError,
                 ),
@@ -837,7 +837,7 @@ async function search_i (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_serviceError,
                     ),
@@ -860,7 +860,7 @@ async function search_i (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
                         ),
@@ -881,7 +881,7 @@ async function search_i (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
                         ),
@@ -898,13 +898,13 @@ async function search_i (
                 alreadyReturnedById: new Set(),
             };
             searchState.paging = [ queryReference, newPagingState ];
-            if (conn.pagedResultsRequests.size >= 5) {
-                conn.pagedResultsRequests.clear();
+            if (assn.pagedResultsRequests.size >= 5) {
+                assn.pagedResultsRequests.clear();
             }
-            conn.pagedResultsRequests.set(queryReference, newPagingState);
+            assn.pagedResultsRequests.set(queryReference, newPagingState);
         } else if ("queryReference" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.queryReference).toString("base64");
-            const paging = conn.pagedResultsRequests.get(queryReference);
+            const paging = assn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
                     ctx.i18n.t("err:paginated_query_ref_invalid"),
@@ -913,7 +913,7 @@ async function search_i (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
                         ),
@@ -928,7 +928,7 @@ async function search_i (
             return;
         } else if ("abandonQuery" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
-            conn.pagedResultsRequests.delete(queryReference);
+            assn.pagedResultsRequests.delete(queryReference);
             throw new errors.AbandonError(
                 ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
@@ -936,7 +936,7 @@ async function search_i (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -953,7 +953,7 @@ async function search_i (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_serviceError,
                     ),
@@ -1015,7 +1015,7 @@ async function search_i (
         accessControlScheme,
         acdfTuples,
         user,
-        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        state.chainingArguments.authenticationLevel ?? assn.authLevel,
         targetDN,
         isMemberOfGroup,
         NAMING_MATCHER,
@@ -1059,7 +1059,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
                             ),
@@ -1079,7 +1079,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
                             ),
@@ -1280,7 +1280,7 @@ async function search_i (
         } else {
             const suitable: boolean = await checkSuitabilityProcedure(
                 ctx,
-                conn,
+                assn,
                 target,
                 search["&operationCode"]!,
                 state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
@@ -1383,7 +1383,7 @@ async function search_i (
         }
         await searchAliasesProcedure(
             ctx,
-            conn,
+            assn,
             target,
             argument,
             state.chainingArguments,
@@ -1412,7 +1412,7 @@ async function search_i (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_serviceError,
                     ),
@@ -1446,7 +1446,7 @@ async function search_i (
                  * actually trying to read the subentry itself--it only sends it
                  * when you are querying its superior.
                  */
-                (conn instanceof LDAPConnection)
+                (assn instanceof LDAPAssociation)
                 && (subset === SearchArgumentData_subset_baseObject)
             )
         )) {
@@ -1473,7 +1473,12 @@ async function search_i (
         let matchedFamilySubset: Vertex[] | undefined;
         for (const familySubset of familySubsets) {
             if (familySubset.length === 0) {
-                ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
+                ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
                 continue; // This should never happen, but just handling it in case it does.
             }
             const familyInfos = await Promise.all(
@@ -1490,7 +1495,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 id_errcode_serviceError,
                             ),
@@ -1659,7 +1664,7 @@ async function search_i (
                 searchState.results.push(...separateResults);
             } else {
                 const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
-                if ((resultsById.size > 1) && !(conn instanceof LDAPConnection)) { // If there actually are children.
+                if ((resultsById.size > 1) && !(assn instanceof LDAPAssociation)) { // If there actually are children.
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                         familySubsetToReturn,
                         (vertex: Vertex) => resultsById.get(vertex.dse.id)?.[2] ?? [],
@@ -1737,7 +1742,12 @@ async function search_i (
         let matchedFamilySubset: Vertex[] | undefined;
         for (const familySubset of familySubsets) {
             if (familySubset.length === 0) {
-                ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"));
+                ctx.log.warn(ctx.i18n.t("log:family_subset_had_zero_members"), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
                 continue; // This should never happen, but just handling it in case it does.
             }
             const familyInfos = await Promise.all(
@@ -1754,7 +1764,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 id_errcode_serviceError,
                             ),
@@ -1923,7 +1933,7 @@ async function search_i (
                 searchState.results.push(...separateResults);
             } else {
                 const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
-                if ((resultsById.size > 1) && !(conn instanceof LDAPConnection)) { // If there actually are children.
+                if ((resultsById.size > 1) && !(assn instanceof LDAPAssociation)) { // If there actually are children.
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                         familySubsetToReturn,
                         (vertex: Vertex) => resultsById.get(vertex.dse.id)?.[2] ?? [],
@@ -2035,7 +2045,7 @@ async function search_i (
                         object_class: CHILD,
                     },
                 }
-                : (conn instanceof LDAPConnection)
+                : (assn instanceof LDAPAssociation)
                     ? undefined
                     : {
                         none: {
@@ -2056,7 +2066,7 @@ async function search_i (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -2093,7 +2103,7 @@ async function search_i (
             if (
                 searchFamilyInEffect
                     ? !subordinate.dse.objectClass.has(CHILD)
-                    : (subordinate.dse.objectClass.has(CHILD) && !(conn instanceof LDAPConnection))
+                    : (subordinate.dse.objectClass.has(CHILD) && !(assn instanceof LDAPAssociation))
             ) {
                 cursorId = subordinate.dse.id;
                 if (searchState.paging?.[1].cursorIds) {
@@ -2149,7 +2159,7 @@ async function search_i (
             searchState.familyOnly = searchFamilyInEffect;
             await search_i(
                 ctx,
-                conn,
+                assn,
                 {
                     ...state,
                     admPoints: subordinate.dse.admPoint

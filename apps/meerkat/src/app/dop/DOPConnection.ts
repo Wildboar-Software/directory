@@ -108,7 +108,7 @@ import { strict as assert } from "assert";
 
 async function handleRequest (
     ctx: Context,
-    conn: DOPAssociation, // eslint-disable-line
+    assn: DOPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
     if (!("local" in request.opcode)) {
@@ -117,8 +117,8 @@ async function handleRequest (
     switch (request.opcode.local) {
     case (100): { // establish
         const arg = _decode_EstablishOperationalBindingArgument(request.argument);
-        const result = await establishOperationalBinding(ctx, conn, request.invokeID, arg);
-        await conn.idm.writeResult(
+        const result = await establishOperationalBinding(ctx, assn, request.invokeID, arg);
+        await assn.idm.writeResult(
             request.invokeID,
             request.opcode,
             _encode_EstablishOperationalBindingResult(result, DER),
@@ -127,10 +127,10 @@ async function handleRequest (
     }
     case (102): { // modify
         const arg = _decode_ModifyOperationalBindingArgument(request.argument);
-        const result = await modifyOperationalBinding(ctx, conn, {
+        const result = await modifyOperationalBinding(ctx, assn, {
             present: request.invokeID,
         }, arg);
-        await conn.idm.writeResult(
+        await assn.idm.writeResult(
             request.invokeID,
             request.opcode,
             _encode_ModifyOperationalBindingResult(result, DER),
@@ -140,7 +140,7 @@ async function handleRequest (
     case (101): { // terminate
         const arg = _decode_TerminateOperationalBindingArgument(request.argument);
         const result = await terminateOperationalBinding(ctx, this, arg);
-        await conn.idm.writeResult(
+        await assn.idm.writeResult(
             request.invokeID,
             request.opcode,
             _encode_TerminateOperationalBindingResult(result, DER),
@@ -162,7 +162,12 @@ async function handleRequestAndErrors (
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
             host: assn.socket.remoteAddress,
             cid: assn.id,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         assn.idm.writeAbort(Abort_invalidPDU);
         return;
     }
@@ -171,7 +176,12 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             iid: request.invokeID.toString(),
             cid: assn.id,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest).catch();
         return;
     }
@@ -180,7 +190,12 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             cid: assn.id,
             iid: request.invokeID.toString(),
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest).catch();
         return;
     }
@@ -221,7 +236,12 @@ async function handleRequestAndErrors (
         if (isDebugging) {
             console.error(e);
         } else {
-            ctx.log.error(e.message);
+            ctx.log.error(e.message, {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
         }
         if (e instanceof AbandonError) {
             const code = _encode_Code(AbandonError.errcode, DER);
@@ -355,7 +375,12 @@ class DOPAssociation extends ClientAssociation {
             ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
                 source: remoteHostIdentifier,
                 protocol: "DOP",
-            }));
+            }), {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            });
         } else {
             ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
                 source: remoteHostIdentifier,
@@ -363,7 +388,12 @@ class DOPAssociation extends ClientAssociation {
                 dn: this.boundNameAndUID?.dn
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",
-            }));
+            }), {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            });
         }
         const bindResult = new DSABindArgument(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
@@ -391,7 +421,12 @@ class DOPAssociation extends ClientAssociation {
             ctype: DOPAssociation.name,
             cid: this.id,
             protocol: "DOP",
-        }));
+        }), {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            association_id: this.id,
+        });
     }
 
     constructor (

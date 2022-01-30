@@ -69,11 +69,11 @@ async function apinfoProcedure (
     ctx: Context,
     api: AccessPointInformation,
     req: ChainedRequest,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<ResultOrError | null> {
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     // Loop avoidance is handled below.
     const serviceControls = req.argument?.set
@@ -124,7 +124,7 @@ async function apinfoProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -228,7 +228,12 @@ async function apinfoProcedure (
                 if (!result.opCode) {
                     ctx.log.warn(ctx.i18n.t("log:dsa_returned_no_opcode", {
                         dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
-                    }));
+                    }), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                    });
                     continue;
                 }
                 return {
@@ -240,7 +245,12 @@ async function apinfoProcedure (
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:could_not_write_operation_to_dsa", {
                 dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
-            }));
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
             continue;
         }
     }

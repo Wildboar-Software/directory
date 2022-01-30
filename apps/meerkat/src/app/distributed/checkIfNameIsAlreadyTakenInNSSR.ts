@@ -75,7 +75,7 @@ import { randomInt } from "crypto";
 export
 async function checkIfNameIsAlreadyTakenInNSSR (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     invokeId: InvokeId,
     aliasDereferenced: BOOLEAN,
     nonSpecificKnowledges: MasterAndShadowAccessPoints[],
@@ -83,7 +83,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
     timeLimitInMilliseconds?: INTEGER,
 ): Promise<void> {
     const op = ("present" in invokeId)
-        ? conn.invocations.get(Number(invokeId.present))
+        ? assn.invocations.get(Number(invokeId.present))
         : undefined;
     for (const nsk of nonSpecificKnowledges) {
         const [ masters ] = splitIntoMastersAndShadows(nsk);
@@ -97,7 +97,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -148,7 +148,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         accessPoint.ae_title.rdnSequence,
                         chainedRead["&operationCode"],
                     ),
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_completed,
                         undefined,
@@ -166,10 +166,15 @@ async function checkIfNameIsAlreadyTakenInNSSR (
             const operationIdentifier: INTEGER = randomInt(2147483648);
             ctx.log.debug(ctx.i18n.t("log:checking_if_name_taken_in_nssr", {
                 opid: operationIdentifier,
-            }));
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
             const chained: ChainedArgument = new ChainedArgument(
                 new ChainingArguments(
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     destinationDN,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_proceeding,
@@ -192,8 +197,8 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         chainedRead["&operationCode"],
                     ),
                     undefined,
-                    conn.boundNameAndUID?.uid,
-                    conn.authLevel,
+                    assn.boundNameAndUID?.uid,
+                    assn.authLevel,
                     undefined,
                     undefined,
                     undefined,
@@ -231,7 +236,12 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 ctx.log.warn(ctx.i18n.t("log:failed_to_access_master", {
                     dsa: encodeLDAPDN(ctx, accessPoint.ae_title.rdnSequence),
                     e: e.message,
-                }));
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
                 continue;
             }
         }

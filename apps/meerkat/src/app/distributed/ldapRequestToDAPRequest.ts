@@ -696,7 +696,7 @@ function convertAttributeSelectiontoEIS (
 export
 function ldapRequestToDAPRequest (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     req: LDAPMessage,
 ): Request | null {
     const invokeId: InvokeId = {
@@ -746,7 +746,7 @@ function ldapRequestToDAPRequest (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
                             ),
@@ -838,7 +838,7 @@ function ldapRequestToDAPRequest (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
                             ),
@@ -1046,7 +1046,12 @@ function ldapRequestToDAPRequest (
                             ctx.log.warn(ctx.i18n.t("log:could_not_decode_ldap_attribute", {
                                 desc,
                                 e: e.message,
-                            }));
+                            }), {
+                                remoteFamily: assn.socket.remoteFamily,
+                                remoteAddress: assn.socket.remoteAddress,
+                                remotePort: assn.socket.remotePort,
+                                association_id: assn.id,
+                            });
                             return undefined;
                         }
                     })
@@ -1248,12 +1253,22 @@ function ldapRequestToDAPRequest (
     }
     else if ("abandonRequest" in req.protocolOp) {
         const messageID = req.protocolOp.abandonRequest;
-        ctx.log.debug(ctx.i18n.t("log:abandon_ldap_op", { mid: messageID }));
-        const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(Number(messageID));
+        ctx.log.debug(ctx.i18n.t("log:abandon_ldap_op", { mid: messageID }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
+        const abandonedOperationInvokeID: number | undefined = assn.messageIDToInvokeID.get(Number(messageID));
         ctx.log.debug(ctx.i18n.t("log:abandoning_invocation_from_ldap", {
             iid: abandonedOperationInvokeID,
             mid: messageID,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         if (abandonedOperationInvokeID === undefined) {
             return null;
         }
@@ -1284,7 +1299,7 @@ function ldapRequestToDAPRequest (
             const newPasswd = elements.find((el) => (el.tagNumber === 2))?.octetString;
             const dn: DistinguishedName | undefined = userIdentityElement
                 ? decodeLDAPDN(ctx, userIdentityElement.octetString)
-                : conn.boundNameAndUID?.dn;
+                : assn.boundNameAndUID?.dn;
             if (!dn) {
                 throw new Error();
             }
@@ -1336,7 +1351,7 @@ function ldapRequestToDAPRequest (
                 throw new Error();
             }
             const messageID: number = Number(cancelIDElement.integer);
-            const abandonedOperationInvokeID: number | undefined = conn.messageIDToInvokeID.get(messageID);
+            const abandonedOperationInvokeID: number | undefined = assn.messageIDToInvokeID.get(messageID);
             if (abandonedOperationInvokeID === undefined) {
                 return null;
             }

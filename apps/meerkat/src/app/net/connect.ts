@@ -443,7 +443,9 @@ async function connectToLDAP (
         : 389;
     ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
         uri,
-    }));
+    }), {
+        dest: uri,
+    });
     const getLDAPSocket = async (): Promise<LDAPSocket> => {
         const socket = net.createConnection({
             host: uri.hostname,
@@ -476,7 +478,9 @@ async function connectToLDAP (
             if (Date.now().valueOf() > timeoutTime.valueOf()) {
                 ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
                     uri,
-                }));
+                }), {
+                    dest: uri,
+                });
                 return null;
             }
             messageID++;
@@ -509,17 +513,23 @@ async function connectToLDAP (
             } catch {
                 ctx.log.warn(ctx.i18n.t("log:error_naddr", {
                     uri,
-                }));
+                }), {
+                    dest: uri,
+                });
                 continue;
             }
             ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
                 uri,
-            }));
+            }), {
+                dest: uri,
+            });
             messageID++;
             connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
             ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
                 uri,
-            }));
+            }), {
+                dest: uri,
+            });
             try { // STARTTLS
                 const req = new LDAPMessage(
                     messageID,
@@ -550,14 +560,18 @@ async function connectToLDAP (
                 ]);
                 ctx.log.debug(ctx.i18n.t("log:established_starttls", {
                     uri,
-                }));
+                }), {
+                    dest: uri,
+                });
             } catch (e) {
                 if (tlsRequired) {
                     ctx.log.debug(ctx.i18n.t("log:starttls_error", {
                         uri,
                         context: "tls_required",
                         e,
-                    }));
+                    }), {
+                        dest: uri,
+                    });
                     continue;
                 } else {
                     ctx.log.debug(ctx.i18n.t("log:starttls_error", {
@@ -599,12 +613,16 @@ async function connectToIdmNaddr (
         if (Date.now().valueOf() > timeoutTime.valueOf()) {
             ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
                 uri,
-            }));
+            }), {
+                dest: uri,
+            });
             return null;
         }
         ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
             uri,
-        }));
+        }), {
+            dest: uri,
+        });
         // If we got disconnected because of a bad bind, reconnect.
         // TODO: Make this configurable.
         if (!idm.s.readable) {
@@ -641,17 +659,23 @@ async function connectToIdmNaddr (
             ]);
             ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
                 uri,
-            }));
+            }), {
+                dest: uri,
+            });
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:error_naddr", {
                 uri,
-            }));
+            }), {
+                dest: uri,
+            });
             continue;
         }
 
         ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
             uri,
-        }));
+        }), {
+            dest: uri,
+        });
         try { // STARTTLS
             await Promise.race([
                 await new Promise<void>((resolve, reject) => {
@@ -668,21 +692,27 @@ async function connectToIdmNaddr (
             ]);
             ctx.log.debug(ctx.i18n.t("log:established_starttls", {
                 uri,
-            }));
+            }), {
+                dest: uri,
+            });
         } catch (e) {
             if (tlsRequired) {
                 ctx.log.debug(ctx.i18n.t("log:starttls_error", {
                     uri,
                     context: "tls_required",
                     e,
-                }));
+                }), {
+                    dest: uri,
+                });
                 continue;
             } else {
                 ctx.log.debug(ctx.i18n.t("log:starttls_error", {
                     uri,
                     context: "tls_optional",
                     e,
-                }));
+                }), {
+                    dest: uri,
+                });
             }
         }
     }

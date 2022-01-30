@@ -190,7 +190,7 @@ async function allSubordinatesWithinThisDSA (
 export
 async function modifyDN (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
@@ -203,7 +203,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -222,7 +222,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -235,7 +235,7 @@ async function modifyDN (
     const argument = _decode_ModifyDNArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -249,7 +249,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -283,7 +283,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -313,7 +313,7 @@ async function modifyDN (
         accessControlScheme,
         acdfTuples,
         user,
-        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        state.chainingArguments.authenticationLevel ?? assn.authLevel,
         targetDN,
         isMemberOfGroup,
         NAMING_MATCHER,
@@ -347,7 +347,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
                         ),
@@ -383,7 +383,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
                         ),
@@ -411,7 +411,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -433,7 +433,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -466,7 +466,7 @@ async function modifyDN (
                 accessControlScheme,
                 acdfTuples,
                 user,
-                state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                state.chainingArguments.authenticationLevel ?? assn.authLevel,
                 targetDN,
                 isMemberOfGroup,
                 NAMING_MATCHER,
@@ -501,7 +501,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
                         ),
@@ -523,7 +523,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -543,7 +543,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -561,7 +561,7 @@ async function modifyDN (
         ctx,
         [ ...superiorDN, newRDN ],
         user,
-        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        state.chainingArguments.authenticationLevel ?? assn.authLevel,
     );
     if (permittedToFindResult.exists) {
         if (permittedToFindResult.discloseOnError) {
@@ -573,7 +573,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -592,7 +592,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -641,7 +641,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -658,7 +658,7 @@ async function modifyDN (
         // Follow instructions in 19.1.5. These are the only steps unique to this DSE type.
         await checkIfNameIsAlreadyTakenInNSSR(
             ctx,
-            conn,
+            assn,
             state.invokeId,
             state.chainingArguments.aliasDereferenced ?? false,
             superior.dse.nssr.nonSpecificKnowledge ?? [],
@@ -713,7 +713,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -759,7 +759,7 @@ async function modifyDN (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
                             ),
@@ -807,7 +807,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -851,7 +851,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -892,7 +892,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -918,7 +918,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -963,7 +963,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -993,7 +993,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -1019,7 +1019,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -1086,7 +1086,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),
@@ -1148,7 +1148,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
                         ),
@@ -1170,7 +1170,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
                 ),
@@ -1264,12 +1264,17 @@ async function modifyDN (
                 value: oldATAV.value,
             };
             try {
-                await removeValues(ctx, target, [valueToDelete], conn.boundNameAndUID?.dn ?? []);
+                await removeValues(ctx, target, [valueToDelete], assn.boundNameAndUID?.dn ?? []);
             } catch (e) {
                 ctx.log.warn(ctx.i18n.t("log:failed_to_delete_old_rdn", {
                     oid: oldATAV.type_.toString(),
                     uuid: target.dse.uuid,
-                }));
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
             }
         }
     }
@@ -1293,7 +1298,7 @@ async function modifyDN (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_modifyDN,
                     ),
                     undefined,

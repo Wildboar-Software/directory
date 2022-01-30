@@ -53,14 +53,14 @@ import { randomInt } from "crypto";
 export
 async function relatedEntryProcedure (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
     search: SearchState,
     argument: SearchArgument,
     chaining?: ChainingArguments,
 ): Promise<void> {
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = chaining?.timeLimit
         ? getDateFromTime(chaining.timeLimit)
@@ -74,7 +74,7 @@ async function relatedEntryProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -99,7 +99,7 @@ async function relatedEntryProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -114,7 +114,12 @@ async function relatedEntryProcedure (
         const operationIdentifier: INTEGER = randomInt(2147483648);
         ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
             opid: operationIdentifier,
-        }));
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
         const newChaining = new ChainingArguments(
             chaining?.originator,
             undefined,
@@ -136,8 +141,8 @@ async function relatedEntryProcedure (
                 chainedSearch["&operationCode"],
             ),
             undefined,
-            conn.boundNameAndUID?.uid,
-            conn.authLevel,
+            assn.boundNameAndUID?.uid,
+            assn.authLevel,
             undefined,
             undefined,
             undefined,
@@ -172,7 +177,7 @@ async function relatedEntryProcedure (
         try {
             const response = await OperationDispatcher.dispatchLocalSearchDSPRequest(
                 ctx,
-                conn,
+                assn,
                 state.invokeId,
                 newArgument,
                 newChaining,

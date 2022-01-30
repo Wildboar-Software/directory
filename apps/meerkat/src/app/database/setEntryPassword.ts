@@ -12,7 +12,7 @@ import {
 export
 async function setEntryPassword (
     ctx: Context,
-    conn: ClientAssociation | undefined,
+    assn: ClientAssociation | undefined,
     vertex: Vertex,
     pwd: UserPwd,
 ): Promise<PrismaPromise<any>[]> {
@@ -34,11 +34,16 @@ async function setEntryPassword (
         if (!encrypted) {
             throw new Error();
         }
-        if (conn) {
+        if (assn) {
             ctx.log.info(ctx.i18n.t("log:password_changed", {
-                cid: conn.id,
+                cid: assn.id,
                 uuid: vertex.dse.uuid,
-            }));
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
         }
         return [
             /**
@@ -94,11 +99,16 @@ async function setEntryPassword (
             }),
         ];
     } else if ("encrypted" in pwd) {
-        if (conn) {
+        if (assn) {
             ctx.log.info(ctx.i18n.t("log:password_changed", {
-                cid: conn.id,
+                cid: assn.id,
                 uuid: vertex.dse.uuid,
-            }));
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
         }
         return [
             /**
