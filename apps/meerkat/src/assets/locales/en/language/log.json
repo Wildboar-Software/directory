@@ -87,5 +87,7 @@
     "dup_invoke_id": "COULD_BAN={{host}}; Duplicated IDM invokeID {{iid}} from connection {{cid}}.",
     "max_concurrent_op": "COULD_BAN={{host}}; Connection {{cid}} maxed out the number of permitted concurrent operations. The operation with invoke ID {{iid}} was rejected.",
     "address_blocked": "COULD_BAN={{host}}; Remote host {{host}} was added to the blocklist.",
+    "cert_chain_no_certificates": "Certificate chain file '{{envvar}}' indicated by environment variable MEERKAT_SIGNING_CERT_CHAIN had no PEM-encoded certificates.",
+    "failed_to_decode_subordinates": "Failed to load a subordinate of entry {{uuid}} with this error. No subordinates will be cached for this entry. This was the error: {{e}}",
     "idm_bad_sequence": "COULD_BAN={{host}}; Remote host {{source}} submitted IDM packets in an invalid sequence."
 }

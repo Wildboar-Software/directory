@@ -32,7 +32,7 @@ async function vertexFromDatabaseEntry (
                 })).map((child) => vertexFromDatabaseEntry(ctx, ret, child)),
             );
     } catch (e) {
-        ctx.log.error(ctx.i18n.t("err:failed_to_decode_subordinates", {
+        ctx.log.error(ctx.i18n.t("log:failed_to_decode_subordinates", {
             uuid: ret.dse.uuid,
             e: e,
         }));

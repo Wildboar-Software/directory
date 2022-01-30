@@ -1252,7 +1252,7 @@ async function findDSE (
                 return;
             } else {
                 throw new errors.NameError(
-                    ctx.i18n.t("err:reached_subentry_above_target"),
+                    ctx.i18n.t("err:entry_not_found"),
                     new NameErrorData(
                         NameProblem_noSuchObject,
                         {

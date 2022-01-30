@@ -591,7 +591,7 @@ async function main (): Promise<void> {
         const pkiPath = decodePkiPathFromPEM(chainFile);
         const dsaCert = pkiPath[pkiPath.length - 1];
         if (!dsaCert) {
-            ctx.log.error(ctx.i18n.t("err:cert_chain_no_certificates", {
+            ctx.log.warn(ctx.i18n.t("log:cert_chain_no_certificates", {
                 envvar: process.env.MEERKAT_SIGNING_CERT_CHAIN,
             }));
             process.exit(1);
