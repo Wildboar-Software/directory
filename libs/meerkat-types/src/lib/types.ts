@@ -499,7 +499,6 @@ interface Configuration {
     transcodeValuesToDER: boolean;
     transcodeDistinguishedValuesToDER: boolean;
     openTopLevel: boolean;
-    dsaCanBindAsNonDSA: boolean;
     forbidAnonymousBind: boolean;
     maxPreBindRequests: number;
     dap: {

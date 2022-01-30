@@ -446,9 +446,7 @@ function checkPermissionToAddValues (
         );
     }
     for (const value of values) {
-        const {
-            authorized: authorizedForValue,
-        } = bacACDF(
+        const { authorized: authorizedForValue } = bacACDF(
             relevantACDFTuples,
             user,
             {
@@ -456,6 +454,11 @@ function checkPermissionToAddValues (
                     value.type,
                     value.value,
                 ),
+                contexts: value.contexts?.map((context) => new X500Context(
+                    context.contextType,
+                    context.contextValues,
+                    context.fallback,
+                )),
             },
             [
                 PERMISSION_CATEGORY_ADD,
@@ -1162,6 +1165,11 @@ async function executeAlterValues (
                         value.type,
                         value.value,
                     ),
+                    contexts: value.contexts?.map((context) => new X500Context(
+                        context.contextType,
+                        context.contextValues,
+                        context.fallback,
+                    )),
                 },
                 // DEVIATON: X.511 does not explicitly require add permissions
                 // for the newly-produced values, but I think this is an error.

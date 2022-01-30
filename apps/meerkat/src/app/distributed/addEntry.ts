@@ -177,6 +177,9 @@ import {
 import preprocessTuples from "../authz/preprocessTuples";
 import findEntry from "../x500/findEntry";
 import groupByOID from "../utils/groupByOID";
+import {
+    Context as X500Context,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -789,9 +792,7 @@ async function addEntry (
                 accessControlScheme
                 && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
             ) {
-                const {
-                    authorized: authorizedToAddAttributeValue,
-                } = bacACDF(
+                const { authorized: authorizedToAddAttributeValue } = bacACDF(
                     relevantTuples,
                     user,
                     {
@@ -799,10 +800,13 @@ async function addEntry (
                             value.type,
                             value.value,
                         ),
+                        contexts: value.contexts?.map((context) => new X500Context(
+                            context.contextType,
+                            context.contextValues,
+                            context.fallback,
+                        )),
                     },
-                    [
-                        PERMISSION_CATEGORY_ADD,
-                    ],
+                    [PERMISSION_CATEGORY_ADD],
                     bacSettings,
                     true,
                 );
