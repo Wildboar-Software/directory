@@ -74,6 +74,45 @@ async function validateValues(
             }
         }
         if (checkForExisting) {
+            if (attrSpec?.singleValued) {
+                const attributeExists = attrSpec?.driver?.isPresent
+                    ? await attrSpec.driver.isPresent(ctx, entry)
+                    : !!(await ctx.db.attributeValue.findFirst({
+                        where: {
+                            entry_id: entry.dse.id,
+                            type: TYPE_OID,
+                        },
+                    }));
+                if (attributeExists) {
+                    throw new AttributeError(
+                        ctx.i18n.t("err:single_valued", {
+                            context: "added",
+                            oid: TYPE_OID,
+                        }),
+                        new AttributeErrorData(
+                            {
+                                rdnSequence: getDistinguishedName(entry),
+                            },
+                            [
+                                new AttributeErrorData_problems_Item(
+                                    AttributeProblem_invalidAttributeSyntax,
+                                    value.type,
+                                ),
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                attributeError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                    );
+                }
+            }
             /**
              * As I interpret it, the duplicate values checking does not have to
              * consider contexts. This is a fortuitous conclusion to come to, since

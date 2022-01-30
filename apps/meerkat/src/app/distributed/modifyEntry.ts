@@ -353,7 +353,7 @@ function checkAttributeArity (
         const targetDN = getDistinguishedName(target);
         throw new errors.AttributeError(
             ctx.i18n.t("err:single_valued", {
-                oids: TYPE_OID,
+                oid: TYPE_OID,
             }),
             new AttributeErrorData(
                 {
@@ -1937,35 +1937,57 @@ async function modifyEntry (
         );
     }
 
-    const maxValueCountInUse: boolean = relevantTuples
-        .some((tuple) => (tuple[2].maxValueCount !== undefined));
-    if (maxValueCountInUse) {
-        /**
-         * Unfortunately, we have to check the BAC for all add types again, because
-         * we have to make sure that the maxValueCount will not be exceeded, if it
-         * is defined. This cannot be done within the individual modification
-         * executors, because:
-         *
-         * 1. Nefarious users may try to break up attributes into smaller
-         *    modifications so that each attribute individually does not exceed
-         *    the limit, even though they do collectively.
-         * 2. Some values that are added will be removed by subsequent
-         *    modifications.
-         */
-        for (const [ type_, values ] of patch.addedValues.entries()) {
+    /**
+     * Unfortunately, we have to check the whole patch to make sure that the
+     * user did not attempt to sneak a non-permitted number of values for
+     * given attribute types by breaking added values up into separate
+     * modifications.
+     */
+    for (const [ type_, values ] of patch.addedValues.entries()) {
+        const spec = ctx.attributeTypes.get(type_);
+        if (spec?.singleValued && (values.length > 1)) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:single_valued", {
+                    context: "added",
+                    oid: type_,
+                }),
+                new AttributeErrorData(
+                    {
+                        rdnSequence: targetDN,
+                    },
+                    [
+                        new AttributeErrorData_problems_Item(
+                            AttributeProblem_invalidAttributeSyntax,
+                            values[0].type,
+                        ),
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        if (
+            !ctx.config.bulkInsertMode
+            && accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        ) {
             const deletedValues = patch.removedValues.get(type_)?.length ?? 0;
-            const {
-                authorized: authorizedForAttributeType,
-            } = bacACDF(
+            const { authorized: authorizedForAttributeType } = bacACDF(
                 relevantTuples,
                 user,
                 {
                     attributeType: ObjectIdentifier.fromString(type_),
                     valuesCount: (values.length - deletedValues),
                 },
-                [
-                    PERMISSION_CATEGORY_ADD,
-                ],
+                [ PERMISSION_CATEGORY_ADD ],
                 bacSettings,
                 true,
             );

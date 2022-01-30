@@ -945,7 +945,7 @@ async function addEntry (
             }
             if (incorrectlyMultiValuedAttributes.length > 0) {
                 ctx.log.debug(ctx.i18n.t("err:single_valued", {
-                    oids: incorrectlyMultiValuedAttributes.map((at) => at.toString()).join(", "),
+                    oid: incorrectlyMultiValuedAttributes.map((at) => at.toString()).join(", "),
                 }));
             }
             const oids: OBJECT_IDENTIFIER[] = [

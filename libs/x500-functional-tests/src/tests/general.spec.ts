@@ -6848,6 +6848,85 @@ describe("Meerkat DSA", () => {
         }
     });
 
+    it("List yielding no results does not cause an error", async () => {
+        const testId = `List.noResults-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const reqData: ListArgumentData = new ListArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            undefined,
+            undefined,
+        );
+        const arg: ListArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            list["&operationCode"]!,
+            _encode_ListArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_ListResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("listInfo" in resData);
+        expect(resData.listInfo.subordinates.length).toBe(0);
+    });
+
+    it("Search yielding no results does not cause an error", async () => {
+        const testId = `Search.noResults-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const nonExistingId: string = "8DFCA253-EAE2-4C2D-AC6D-455340BF759E";
+        const subordinates = [
+            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
+            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
+            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
+        ];
+        await Promise.all(subordinates.map((id) => createTestNode(connection!, dn, id)));
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            { // Filter out one result.
+                item: {
+                    equality: new AttributeValueAssertion(
+                        commonName["&id"],
+                        utf8(nonExistingId),
+                        undefined,
+                    ),
+                },
+            },
+            true,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            false,
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_SearchResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries.length).toBe(0);
+    });
+
     it("Search with FamilyGrouping.entryOnly", async () => {
         const testId = `Search.familyGrouping.entryOnly-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
