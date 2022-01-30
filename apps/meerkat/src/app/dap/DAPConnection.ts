@@ -116,6 +116,7 @@ async function handleRequestAndErrors (
 ): Promise<void> {
     if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
+            host: dap.socket.remoteAddress,
             cid: dap.id,
         }));
         dap.idm.writeAbort(Abort_invalidPDU);
@@ -123,6 +124,7 @@ async function handleRequestAndErrors (
     }
     if (dap.invocations.has(Number(request.invokeID))) {
         ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
+            host: dap.socket.remoteAddress,
             iid: request.invokeID.toString(),
             cid: dap.id,
         }));
@@ -131,6 +133,7 @@ async function handleRequestAndErrors (
     }
     if (dap.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
         ctx.log.warn(ctx.i18n.t("log:max_concurrent_op", {
+            host: dap.socket.remoteAddress,
             cid: dap.id,
             iid: request.invokeID.toString(),
         }));

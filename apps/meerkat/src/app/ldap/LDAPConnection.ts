@@ -319,6 +319,7 @@ class LDAPConnection extends ClientAssociation {
         // #region Pre-flight check if the message will fit in the buffer, if possible.
         if ((this.buffer.length + data.length) > ctx.config.ldap.bufferSize) {
             ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
+                host: this.socket.remoteAddress,
                 protocol: "LDAP",
                 source,
                 size: ctx.config.ldap.bufferSize.toString(),
@@ -354,6 +355,7 @@ class LDAPConnection extends ClientAssociation {
             if (numberOfLengthOctets > 4) {
                 const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
                 ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
+                    host: this.socket.remoteAddress,
                     protocol: "LDAP",
                     source,
                     size: ctx.config.ldap.bufferSize.toString(),
@@ -379,6 +381,7 @@ class LDAPConnection extends ClientAssociation {
                 if (length > ctx.config.ldap.bufferSize) {
                     const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
                     ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
+                        host: this.socket.remoteAddress,
                         protocol: "LDAP",
                         source,
                         size: ctx.config.ldap.bufferSize.toString(),
@@ -410,6 +413,7 @@ class LDAPConnection extends ClientAssociation {
             if (this.buffer[0] !== UNIVERSAL_SEQUENCE_TAG) {
                 const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
                 ctx.log.warn(ctx.i18n.t("log:non_ldap_data", {
+                    host: this.socket.remoteAddress,
                     source,
                     hexbyte: this.buffer[0].toString(16).padStart(2, "0"),
                 }));
@@ -426,6 +430,7 @@ class LDAPConnection extends ClientAssociation {
                     return;
                 }
                 ctx.log.error(ctx.i18n.t("log:encoding_error", {
+                    host: this.socket.remoteAddress,
                     uuid: this.id,
                 }));
                 const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
@@ -441,6 +446,7 @@ class LDAPConnection extends ClientAssociation {
                     return;
                 }
                 ctx.log.error(ctx.i18n.t("log:malformed_ldapmessage", {
+                    host: this.socket.remoteAddress,
                     uuid: this.id,
                 }));
                 const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
@@ -452,6 +458,7 @@ class LDAPConnection extends ClientAssociation {
             if ((message.messageID > 2147483647) || (message.messageID < 0)) {
                 const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
                 ctx.log.warn(ctx.i18n.t("log:unusual_message_id", {
+                    host: this.socket.remoteAddress,
                     source,
                 }));
                 this.socket.destroy();
@@ -460,7 +467,10 @@ class LDAPConnection extends ClientAssociation {
 
             if ("bindRequest" in message.protocolOp) {
                 if (this.status !== Status.UNBOUND) {
-                    ctx.log.error(ctx.i18n.t("log:double_bind_attempted", { source }));
+                    ctx.log.warn(ctx.i18n.t("log:double_bind_attempted", {
+                        source,
+                        host: this.socket.remoteAddress,
+                    }));
                     const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                     this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     this.socket.destroy();
@@ -550,7 +560,10 @@ class LDAPConnection extends ClientAssociation {
                 const oid = decodeLDAPOID(req.requestName);
                 if (oid.isEqualTo(startTLS)) {
                     if (this.socket instanceof tls.TLSSocket) {
-                        ctx.log.warn(ctx.i18n.t("log:double_starttls", { source }));
+                        ctx.log.warn(ctx.i18n.t("log:double_starttls", {
+                            host: this.socket.remoteAddress,
+                            source,
+                        }));
                         const errorMessage: string = ctx.i18n.t("err:tls_already_in_use");
                         const res = new LDAPMessage(
                             message.messageID,

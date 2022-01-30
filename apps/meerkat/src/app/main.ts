@@ -118,6 +118,7 @@ const getIdmBufferLengthGate = (ctx: Context, idm: IDMConnection, source: string
     );
     if (currentBufferSize > ctx.config.idm.bufferSize) {
         ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
+            host: idm.s.remoteAddress,
             protocol: "IDM",
             source,
             size: ctx.config.idm.bufferSize.toString(),
@@ -134,6 +135,7 @@ const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) =
     );
     if (currentPduSize > ctx.config.idm.maxPDUSize) {
         ctx.log.warn(ctx.i18n.t("log:pdu_limit", {
+            host: idm.s.remoteAddress,
             protocol: "IDM",
             source,
             size: ctx.config.idm.maxPDUSize.toString(),
@@ -144,6 +146,7 @@ const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) =
     const numberOfSegments: number = (idm.getNumberOfSegmentsInPDU() + 1);
     if (numberOfSegments > ctx.config.idm.maxSegments) {
         ctx.log.warn(ctx.i18n.t("log:idm_segment_limit", {
+            host: idm.s.remoteAddress,
             source,
             limit: ctx.config.idm.maxSegments,
         }));
@@ -173,6 +176,7 @@ function attachUnboundEventListenersToIDMConnection (
     });
     idm.events.on("socketError", (e) => {
         ctx.log.error(ctx.i18n.t("log:socket_error", {
+            host: originalSocket.remoteAddress,
             source,
             e,
         }));
@@ -205,9 +209,10 @@ function attachUnboundEventListenersToIDMConnection (
         } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!) && ctx.config.dop.enabled) {
             conn = new DOPConnection(ctx, idm);
         } else {
-            // TODO: Log the source.
             ctx.log.warn(ctx.i18n.t("log:unsupported_protocol", {
                 protocol: idmBind.protocolID.toString(),
+                host: originalSocket.remoteAddress,
+                source,
             }));
             idm.writeAbort(Abort_invalidProtocol);
             startTimes.delete(idm.s);
@@ -243,7 +248,10 @@ function attachUnboundEventListenersToIDMConnection (
             return;
         }
         case (warnings.IDM_WARN_DOUBLE_START_TLS): {
-            ctx.log.warn(ctx.i18n.t("log:double_starttls", { source }));
+            ctx.log.warn(ctx.i18n.t("log:double_starttls", {
+                host: idm.s.remoteAddress,
+                source,
+            }));
             return;
         }
         case (warnings.IDM_WARN_PADDING_AFTER_PDU): {
@@ -255,14 +263,20 @@ function attachUnboundEventListenersToIDMConnection (
             // issuing multiple bind requests back-to-back.
             // Meerkat DSA will require remote hosts to wait for a bind response
             // before attempting another bind.
-            ctx.log.error(ctx.i18n.t("log:double_bind_attempted", { source }));
+            ctx.log.warn(ctx.i18n.t("log:double_bind_attempted", {
+                source,
+                host: idm.s.remoteAddress,
+            }));
             idm.writeAbort(Abort_reasonNotSpecified);
             startTimes.delete(idm.s);
             ctx.associations.delete(idm.s);
             return;
         }
         case (warnings.IDM_WARN_BAD_SEQUENCE): {
-            ctx.log.error(ctx.i18n.t("log:idm_bad_sequence", { host: source }));
+            ctx.log.warn(ctx.i18n.t("log:idm_bad_sequence", {
+                host: idm.s.remoteAddress,
+                source,
+            }));
             startTimes.delete(idm.s);
             ctx.associations.delete(idm.s);
             return;
@@ -303,6 +317,7 @@ function handleIDM (
             startTimes.delete(c);
             ctx.associations.delete(c);
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn_per_addr", {
+                host: c.remoteAddress,
                 source,
                 max: ctx.config.maxConnectionsPerAddress,
             }));
@@ -315,6 +330,7 @@ function handleIDM (
                 && ((c.bytesRead / minutesSinceStart) < ctx.config.tcp.minimumTransferSpeedInBytesPerMinute)
             ) {
                 ctx.log.warn(ctx.i18n.t("log:slow_loris", {
+                    host: c.remoteAddress,
                     source,
                     bps: ctx.config.tcp.minimumTransferSpeedInBytesPerMinute.toString(),
                 }));
@@ -341,6 +357,7 @@ function handleIDM (
 
         c.on("error", (e) => {
             ctx.log.error(ctx.i18n.t("log:socket_error", {
+                host: originalSocket.remoteAddress,
                 source,
                 e: e.message,
             }));
@@ -363,6 +380,8 @@ function handleIDM (
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
+                host: c.remoteAddress,
+                source,
             }));
             c.destroy();
             startTimes.delete(c);
@@ -402,6 +421,7 @@ function handleLDAP (
             startTimes.delete(c);
             ctx.associations.delete(c);
             ctx.log.warn(ctx.i18n.t("log:tcp_max_conn_per_addr", {
+                host: c.remoteAddress,
                 source,
                 max: ctx.config.maxConnectionsPerAddress,
             }));
@@ -414,6 +434,7 @@ function handleLDAP (
                 && ((c.bytesRead / minutesSinceStart) < ctx.config.tcp.minimumTransferSpeedInBytesPerMinute)
             ) {
                 ctx.log.warn(ctx.i18n.t("log:slow_loris", {
+                    host: c.remoteAddress,
                     source,
                     bps: ctx.config.tcp.minimumTransferSpeedInBytesPerMinute.toString(),
                 }));
@@ -440,6 +461,7 @@ function handleLDAP (
 
         c.on("error", (e) => {
             ctx.log.error(ctx.i18n.t("log:socket_error", {
+                host: c.remoteAddress,
                 source,
                 e: e.message,
             }));
@@ -475,6 +497,8 @@ function handleLDAP (
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
+                host: c.remoteAddress,
+                source,
             }));
             c.destroy();
             startTimes.delete(c);
