@@ -9209,7 +9209,7 @@ describe("Meerkat DSA Basic Access Control", () => {
         expect(ss).toBeUndefined();
     });
 
-    it.only("List uses the access controls of the subordinates to determine what is revealed", async () => {
+    it("List uses the access controls of the subordinates to determine what is revealed", async () => {
         const testId = `bac.list.subordinate-acsa-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         { // Setup

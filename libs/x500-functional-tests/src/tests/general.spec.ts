@@ -9650,7 +9650,7 @@ describe("Meerkat DSA", () => {
         expect(cn.attribute.values).toHaveLength(1);
     });
 
-    it.only("info selection does not double attributes when a selected type is repeated in operational attributes", async () => {
+    it("info selection does not double attributes when a selected type is repeated in operational attributes", async () => {
         const testId = `eis.repeated-select-2-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
