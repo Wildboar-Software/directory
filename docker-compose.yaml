@@ -35,6 +35,7 @@ services:
   db:
     image: mysql
     command: --default-authentication-plugin=mysql_native_password
+    # command: --default-authentication-plugin=mysql_native_password --slow-query-log=ON --slow-query-log-file=/var/lib/mysqllog/slow.log --long-query-time=2
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: example
@@ -42,6 +43,7 @@ services:
       - '3306:3306/tcp'
     volumes:
       - data:/var/lib/mysql
+      # - './data/mysql:/var/lib/mysqllog:rw'
 
 volumes:
   data: {}
