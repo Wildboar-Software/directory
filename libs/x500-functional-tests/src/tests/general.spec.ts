@@ -9320,14 +9320,8 @@ describe("Meerkat DSA", () => {
             read["&operationCode"]!,
             _encode_ReadArgument(arg, DER),
         );
-        assert("result" in result);
-        assert(result.result);
-        const param = _decode_ReadResult(result.result);
-        const data = getOptionallyProtectedValue(param);
-        expect(data.aliasDereferenced).toBe(TRUE);
-        expect(data.entry.name.rdnSequence).toHaveLength(2);
-        expect(data.entry.name.rdnSequence[1]).toHaveLength(1);
-        expect(data.entry.name.rdnSequence[1][0].value.utf8String).toBe(soughtId);
+        assert("error" in result);
+        assert(result.error);
     });
 
     /**

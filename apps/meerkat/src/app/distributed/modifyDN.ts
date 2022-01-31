@@ -41,6 +41,7 @@ import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
+    PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_RENAME,
     PERMISSION_CATEGORY_EXPORT,
     PERMISSION_CATEGORY_IMPORT,
@@ -130,6 +131,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
 import permittedToFindDSE from "../authz/permittedToFindDSE";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import readValuesOfType from "../utils/readValuesOfType";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -323,15 +328,26 @@ async function modifyDN (
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
         if (data.newRDN) {
-            const {
-                authorized: authorizedToEntry,
-            } = bacACDF(
+            const { authorized: authorizedToEntry } = bacACDF(
                 relevantTuples,
                 user,
-                {
-                    entry: objectClasses,
-                },
+                { entry: objectClasses },
                 [
+                    /**
+                     * Read permission is not required by the specification, but
+                     * it is necessary for preventing information disclosure,
+                     * because we have to report back to the user if the values
+                     * of the new RDN are not present in the entry. So we check
+                     * here that the user has read access to the entry to make
+                     * sure that they could legitimately read values from the
+                     * entry if they wanted to. Further below, we also check
+                     * that they have permission to read the attribute types and
+                     * values of the new RDN.
+                     *
+                     * Search for this UUID to find that:
+                     * 4E7AC6BB-CD58-47C8-B4DC-1B101A608C0E
+                     */
+                    PERMISSION_CATEGORY_READ,
                     PERMISSION_CATEGORY_RENAME,
                 ],
                 bacSettings,
@@ -357,19 +373,70 @@ async function modifyDN (
                     ),
                 );
             }
+            /**
+             * This part is not required by the specification, but it is
+             * necessary for preventing information disclosure. Basically, if
+             * you rename an entry, you must have permission to read the
+             * attribute types and values that are being used in the new RDN.
+             *
+             * If we establish that the user has these permissions here, it is
+             * not a problem that we throw an error later on if those values
+             * are not present in the entry, because the user would have had
+             * permission to read them anyway.
+             *
+             * Search for this UUID for where we check for read permission to
+             * the entry itself: 4E7AC6BB-CD58-47C8-B4DC-1B101A608C0E
+             */
+            for (const atav of data.newRDN) {
+                const { authorized: authorizedToReadAttributeType } = bacACDF(
+                    relevantTuples,
+                    user,
+                    { attributeType: atav.type_ },
+                    [ PERMISSION_CATEGORY_READ ],
+                    bacSettings,
+                    true,
+                );
+                const { authorized: authorizedToReadValue } = bacACDF(
+                    relevantTuples,
+                    user,
+                    {
+                        value: new AttributeTypeAndValue(
+                            atav.type_,
+                            atav.value,
+                        ),
+                    },
+                    [ PERMISSION_CATEGORY_READ ],
+                    bacSettings,
+                    true,
+                );
+                if (!authorizedToReadAttributeType || !authorizedToReadValue) {
+                    throw new errors.SecurityError(
+                        ctx.i18n.t("err:not_authz_modify_rdn"),
+                        new SecurityErrorData(
+                            SecurityProblem_insufficientAccessRights,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                securityError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+            }
         }
         if (data.newSuperior) {
-            const {
-                authorized: authorizedToEntry,
-            } = bacACDF(
+            const { authorized: authorizedToEntry } = bacACDF(
                 relevantTuples,
                 user,
-                {
-                    entry: objectClasses,
-                },
-                [
-                    PERMISSION_CATEGORY_EXPORT,
-                ],
+                { entry: objectClasses },
+                [ PERMISSION_CATEGORY_EXPORT ],
                 bacSettings,
                 true,
             );
@@ -1049,28 +1116,8 @@ async function modifyDN (
                     ? ctx.equalityMatchingRules.get(spec.equalityMatchingRule.toString())
                     : undefined;
                 const matcher = matchingRule?.matcher;
-                const {
-                    userValues: userAttributes,
-                    operationalValues: operationalAttributes,
-                } = await readValues(ctx, target, { // TODO: Replace with readValuesOfType()
-                    selection: new EntryInformationSelection(
-                        {
-                            select: [ atav.type_ ],
-                        },
-                        undefined,
-                        {
-                            select: [ atav.type_ ],
-                        },
-                        undefined,
-                        false,
-                        undefined,
-                    ),
-                });
-                const attributes = [
-                    ...userAttributes,
-                    ...operationalAttributes,
-                ];
-                if (attributes.some((attr) => matcher && matcher(attr.value, atav.value))) {
+                const values = await readValuesOfType(ctx, target, atav.type_);
+                if (values.some((v) => matcher && matcher(v.value, atav.value))) {
                     hasValue = true;
                 }
             }
