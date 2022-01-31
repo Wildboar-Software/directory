@@ -486,7 +486,7 @@ async function requestValidationProcedure (
                 [],
                 createSecurityParameters(
                     ctx,
-                    undefined,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
                 ),
@@ -518,7 +518,7 @@ async function requestValidationProcedure (
                 [],
                 createSecurityParameters(
                     ctx,
-                    undefined,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),

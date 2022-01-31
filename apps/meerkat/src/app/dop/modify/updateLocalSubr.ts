@@ -47,6 +47,7 @@ import {
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 
 
 export
@@ -92,9 +93,9 @@ async function updateLocalSubr (
                     [],
                     createSecurityParameters(
                         ctx,
+                        conn.boundNameAndUID?.dn,
                         undefined,
-                        undefined,
-                        securityError["&errorCode"],
+                        operationalBindingError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,

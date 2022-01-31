@@ -106,6 +106,7 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 
 export
 async function read (
@@ -356,7 +357,7 @@ async function read (
                     ctx,
                     conn.boundNameAndUID?.dn,
                     undefined,
-                    abandoned["&errorCode"],
+                    attributeError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 state.chainingArguments.aliasDereferenced,

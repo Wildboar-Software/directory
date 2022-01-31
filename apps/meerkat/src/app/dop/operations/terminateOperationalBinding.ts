@@ -115,7 +115,7 @@ async function terminateOperationalBinding (
                     [],
                     createSecurityParameters(
                         ctx,
-                        undefined,
+                        conn.boundNameAndUID?.dn,
                         undefined,
                         id_err_operationalBindingError,
                     ),
@@ -155,7 +155,7 @@ async function terminateOperationalBinding (
                     [],
                     createSecurityParameters(
                         ctx,
-                        undefined,
+                        conn.boundNameAndUID?.dn,
                         undefined,
                         id_err_operationalBindingError,
                     ),

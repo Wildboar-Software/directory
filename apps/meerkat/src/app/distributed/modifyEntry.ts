@@ -1417,7 +1417,7 @@ function handleContextRule (
                         ctx,
                         conn.boundNameAndUID?.dn,
                         undefined,
-                        updateError["&errorCode"],
+                        attributeError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     aliasDereferenced,

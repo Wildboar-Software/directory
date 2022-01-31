@@ -180,6 +180,7 @@ import groupByOID from "../utils/groupByOID";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -1154,7 +1155,7 @@ async function addEntry (
                                 ctx,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
-                                updateError["&errorCode"],
+                                nameError["&errorCode"],
                             ),
                             ctx.dsa.accessPoint.ae_title.rdnSequence,
                             state.chainingArguments.aliasDereferenced,

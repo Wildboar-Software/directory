@@ -135,6 +135,8 @@ import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import readValuesOfType from "../utils/readValuesOfType";
+import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -1062,7 +1064,7 @@ async function modifyDN (
                         ctx,
                         assn.boundNameAndUID?.dn,
                         undefined,
-                        updateError["&errorCode"],
+                        attributeError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     state.chainingArguments.aliasDereferenced,
@@ -1088,7 +1090,7 @@ async function modifyDN (
                             ctx,
                             assn.boundNameAndUID?.dn,
                             undefined,
-                            updateError["&errorCode"],
+                            nameError["&errorCode"],
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
                         state.chainingArguments.aliasDereferenced,

@@ -54,7 +54,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
             },
         ];
     } else {
-        throw new Error();
+        return [];
     }
 };
 

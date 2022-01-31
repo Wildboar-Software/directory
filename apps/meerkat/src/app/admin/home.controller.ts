@@ -1,6 +1,6 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { CONTEXT } from "../constants";
-import { Controller, Get, Post, Render, Inject, Param, Res } from "@nestjs/common";
+import { Controller, Get, Post, Render, Inject, Param, Res, NotFoundException } from "@nestjs/common";
 import type { Response } from "express";
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -66,7 +66,7 @@ export class HomeController {
             },
         });
         if (!ob) {
-            throw new Error();
+            throw new NotFoundException();
         }
         const templateVariables = {
             ...ob,

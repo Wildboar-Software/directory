@@ -56,6 +56,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import createEntry from "../../database/createEntry";
 import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
+import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 
 export
 async function becomeSuperior (
@@ -98,9 +99,9 @@ async function becomeSuperior (
                     [],
                     createSecurityParameters(
                         ctx,
+                        conn.boundNameAndUID?.dn,
                         undefined,
-                        undefined,
-                        securityError["&errorCode"],
+                        operationalBindingError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
@@ -120,7 +121,7 @@ async function becomeSuperior (
                 [],
                 createSecurityParameters(
                     ctx,
-                    undefined,
+                    conn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
