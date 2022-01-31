@@ -77,7 +77,7 @@ import type { KeyObject } from "crypto";
 import type { PkiPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import type { cpus, networkInterfaces } from "os";
-import type { Socket, BlockList } from "net";
+import type { Socket } from "net";
 import {
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";

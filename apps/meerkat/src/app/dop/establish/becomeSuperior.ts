@@ -19,7 +19,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier, INTEGER } from "asn1-ts";
 import findEntry from "../../x500/findEntry";
-import rdnToJson from "../../x500/rdnToJson";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
@@ -43,9 +42,6 @@ import {
     OpBindingErrorParam_problem_roleAssignment,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
 import {
-    _encode_MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
-import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
@@ -57,6 +53,7 @@ import {
 import createEntry from "../../database/createEntry";
 import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
 import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+import saveAccessPoint from "../../database/saveAccessPoint";
 
 export
 async function becomeSuperior (
@@ -149,24 +146,13 @@ async function becomeSuperior (
         ctx,
         superior,
         agreement.rdn,
-        {
-            subr: true,
-            AccessPoint: {
-                createMany: {
-                    data: sub2sup.accessPoints
-                        ? sub2sup.accessPoints.map((ap) => ({
-                            ae_title: ap.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
-                            knowledge_type: Knowledge.SPECIFIC,
-                            category: ap.category,
-                            chainingRequired: ap.chainingRequired,
-                            ber: Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes()),
-                        }))
-                        : [],
-                },
-            },
-        },
+        { subr: true },
         sub2sup.entryInfo?.flatMap((attr) => valuesFromAttribute(attr)) ?? [],
         ctx.dsa.accessPoint.ae_title.rdnSequence,
+    );
+    await Promise.all(
+        sub2sup.accessPoints
+            ?.map((ap) => saveAccessPoint(ctx, ap, Knowledge.SPECIFIC, subr.dse.id)) ?? [],
     );
 
     const immediateSuperiorInfo: Attribute[] = [

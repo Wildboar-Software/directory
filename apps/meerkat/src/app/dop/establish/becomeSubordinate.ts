@@ -11,13 +11,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import {
     MasterOrShadowAccessPoint,
-    _encode_MasterOrShadowAccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
 import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
 import findEntry from "../../x500/findEntry";
-import rdnToJson from "../../x500/rdnToJson";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -33,6 +31,7 @@ import {
     AccessPoint,
     _encode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import saveAccessPoint from "../../database/saveAccessPoint";
 
 export
 async function becomeSubordinate (
@@ -58,24 +57,13 @@ async function becomeSubordinate (
                     glue: (!vertex.admPointInfo && !vertex.accessPoints),
                     rhob: Boolean(vertex.admPointInfo),
                     immSupr,
-                    AccessPoint: immSupr
-                        ? {
-                            createMany: {
-                                data: vertex.accessPoints
-                                    ? vertex.accessPoints.map((ap) => ({
-                                        ae_title: ap.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
-                                        knowledge_type: Knowledge.SPECIFIC,
-                                        category: ap.category,
-                                        chainingRequired: ap.chainingRequired,
-                                        ber: Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes()),
-                                    }))
-                                    : [],
-                            }
-                        }
-                        : undefined,
                 },
                 vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
                 [],
+            );
+            await Promise.all(
+                vertex.accessPoints?.map((ap) => saveAccessPoint(
+                    ctx, ap, Knowledge.SPECIFIC, createdEntry.dse.id)) ?? [],
             );
             currentRoot = createdEntry;
             for (const subentry of (vertex.subentries ?? [])) {

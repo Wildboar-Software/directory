@@ -89,9 +89,9 @@ async function saveAccessPoint (
         },
     });
     if (("consumers" in ap) && ap.consumers) {
-        for (const consumer of ap.consumers) {
-            await saveAccessPoint(ctx, consumer, Knowledge.CONSUMER, undefined, created.id);
-        }
+        await Promise.all(
+            ap.consumers.map((consumer) => saveAccessPoint(ctx, consumer, Knowledge.CONSUMER, undefined, created.id)),
+        );
     }
     return created.id;
 }

@@ -6,7 +6,6 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import findEntry from "../../x500/findEntry";
-import rdnToJson from "../../x500/rdnToJson";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
@@ -20,16 +19,11 @@ import { OpBindingErrorParam } from "@wildboar/x500/src/lib/modules/OperationalB
 import {
     OpBindingErrorParam_problem_roleAssignment,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
-import { DER } from "asn1-ts/dist/node/functional";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import createEntry from "../../database/createEntry";
-import {
-    _encode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import addAttributes from "../../database/entry/addAttributes";
@@ -48,6 +42,7 @@ import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+import saveAccessPoint from "../../database/saveAccessPoint";
 
 
 export
@@ -163,42 +158,29 @@ async function updateLocalSubr (
         ]);
     }
 
+    await ctx.db.accessPoint.updateMany({
+        where: {
+            entry_id: oldSubordinate.dse.id,
+            knowledge_type: Knowledge.SPECIFIC,
+        },
+        data: {
+            active: false,
+        },
+    });
+
     if (sub2sup.accessPoints) {
-        await ctx.db.$transaction([
-            ctx.db.accessPoint.deleteMany({
-                where: {
-                    entry_id: oldSubordinate.dse.id,
-                    knowledge_type: Knowledge.SPECIFIC,
-                },
-            }),
-            ...sub2sup.accessPoints
-                .map((ap) => ctx.db.accessPoint.create({
-                    data: {
-                        knowledge_type: Knowledge.SPECIFIC,
-                        ae_title: ap.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
-                        entry_id: oldSubordinate.dse.id,
-                        ber: Buffer.from(_encode_AccessPoint(ap, DER).toBytes()),
-                        NSAP: {
-                            createMany: {
-                                data: ap.address.nAddresses.map((nsap) => {
-                                    const uri = naddrToURI(nsap);
-                                    if (!uri) {
-                                        return {
-                                            bytes: Buffer.from(nsap),
-                                        };
-                                    }
-                                    const url = new URL(uri);
-                                    return {
-                                        url: url.toString(),
-                                        bytes: Buffer.from(nsap),
-                                        hostname: url.hostname,
-                                    };
-                                }),
-                            },
-                        },
-                    },
-                }))
-        ]);
+        await Promise.all(
+            sub2sup.accessPoints
+                .map((ap) => saveAccessPoint(
+                    ctx, ap, Knowledge.SPECIFIC, oldSubordinate.dse.id)),
+        );
+        await ctx.db.accessPoint.deleteMany({
+            where: {
+                entry_id: oldSubordinate.dse.id,
+                knowledge_type: Knowledge.SPECIFIC,
+                active: false,
+            },
+        });
     }
 
     // NOTE: SubordinateToSuperior.alias can be ignored, because you cannot change structural object classes.
