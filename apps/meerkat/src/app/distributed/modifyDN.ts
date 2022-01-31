@@ -1052,7 +1052,7 @@ async function modifyDN (
                 const {
                     userValues: userAttributes,
                     operationalValues: operationalAttributes,
-                } = await readValues(ctx, target, {
+                } = await readValues(ctx, target, { // TODO: Replace with readValuesOfType()
                     selection: new EntryInformationSelection(
                         {
                             select: [ atav.type_ ],

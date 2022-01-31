@@ -9270,6 +9270,279 @@ describe("Meerkat DSA", () => {
         }
     });
 
+    /**
+     * In this test, we create an alias that points to its superior and make
+     * sure the Find DSE procedure still completes.
+     */
+    it("alias loops do not cause the find DSE procedure to run indefinitely", async () => {
+        const testId = `alias-loop-find-dse-${(new Date()).toISOString()}`;
+        const soughtId = "5C87CF80-CAF2-46FD-9655-48757F0DF40E";
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const aliasedDN: DistinguishedName = dn;
+        // It's stupid to use this in the RDN, but alias is a _structural_ object class.
+        const aliasRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(alias["&id"]),
+            ),
+        ];
+        await createEntry( // Creates an alias that points to `subordinateWithSubordinates`.
+            connection!,
+            dn,
+            aliasRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName(aliasedDN, DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        await createTestNode(connection!, dn, soughtId);
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, aliasRDN, aliasRDN, createTestRDN(soughtId) ],
+            },
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const param = _decode_ReadResult(result.result);
+        const data = getOptionallyProtectedValue(param);
+        expect(data.aliasDereferenced).toBe(TRUE);
+        expect(data.entry.name.rdnSequence).toHaveLength(2);
+        expect(data.entry.name.rdnSequence[1]).toHaveLength(1);
+        expect(data.entry.name.rdnSequence[1][0].value.utf8String).toBe(soughtId);
+    });
+
+    /**
+     * In this test, we create an alias that points to its superior and make
+     * sure the search procedure still completes.
+     */
+    it("alias loops do not cause the search procedure to run indefinitely", async () => {
+        const testId = `alias-loop-search-${(new Date()).toISOString()}`;
+        const soughtId = "5C87CF80-CAF2-46FD-9655-48757F0DF40E";
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const aliasedDN: DistinguishedName = dn;
+        // It's stupid to use this in the RDN, but alias is a _structural_ object class.
+        const aliasRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(alias["&id"]),
+            ),
+        ];
+        await createEntry( // Creates an alias that points to `subordinateWithSubordinates`.
+            connection!,
+            dn,
+            aliasRDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName(aliasedDN, DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        await createTestNode(connection!, dn, soughtId);
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            TRUE, // search aliases
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const param = _decode_SearchResult(result.result);
+        const data = getOptionallyProtectedValue(param);
+        assert("searchInfo" in data);
+        expect(data.searchInfo.entries).toHaveLength(2); // Should just have the test root and the non-alias.
+        /**
+         * This should actually be FALSE. It only gets set to TRUE when an alias
+         * is dereferenced in finding the base object.
+         */
+        expect(data.searchInfo.aliasDereferenced).toBe(FALSE);
+    });
+
+    it("alias loops do not cause the find DSE procedure to run indefinitely", async () => {
+        const testId = `alias-loop-find-dse-2-${(new Date()).toISOString()}`;
+        const soughtId = "5C87CF80-CAF2-46FD-9655-48757F0DF40E";
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        // It's stupid to use this in the RDN, but alias is a _structural_ object class.
+        const alias1RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(alias["&id"]),
+            ),
+        ];
+        const alias2RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(userPwdClass["&id"]),
+            ),
+        ];
+        await createEntry( // Alias A, which points to B.
+            connection!,
+            dn,
+            alias1RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"]), oid(userPwdClass["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName([ ...dn, alias2RDN ], DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry( // Alias B, which points to A.
+            connection!,
+            dn,
+            alias2RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"]), oid(userPwdClass["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName([ ...dn, alias1RDN ], DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        await createTestNode(connection!, dn, soughtId);
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: [ ...dn, alias1RDN, createTestRDN(soughtId) ],
+            },
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("error" in result);
+        assert(result.error);
+    }, 5000);
+
+    it("alias loops do not cause the search procedure to run indefinitely", async () => {
+        const testId = `alias-loop-search-2-${(new Date()).toISOString()}`;
+        const soughtId = "5C87CF80-CAF2-46FD-9655-48757F0DF40E";
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        // It's stupid to use this in the RDN, but alias is a _structural_ object class.
+        const alias1RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(alias["&id"]),
+            ),
+        ];
+        const alias2RDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                objectClass["&id"],
+                oid(userPwdClass["&id"]),
+            ),
+        ];
+        await createEntry( // Alias A, which points to B.
+            connection!,
+            dn,
+            alias1RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"]), oid(userPwdClass["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName([ ...dn, alias2RDN ], DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        await createEntry( // Alias B, which points to A.
+            connection!,
+            dn,
+            alias2RDN,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(alias["&id"]), oid(userPwdClass["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    aliasedEntryName["&id"],
+                    [ _encode_DistinguishedName([ ...dn, alias1RDN ], DER) ],
+                    undefined,
+                ),
+            ],
+        );
+        await createTestNode(connection!, dn, soughtId);
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_wholeSubtree,
+            undefined,
+            TRUE, // search aliases
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("error" in result);
+        assert(result.error);
+    }, 5000);
+
     it.todo("An entry's structural object class is calculated correctly"); // Do via unit testing instead.
     it.todo("Alias attributes update correctly when aliases change."); // This might actually not be required.
     // Can't really be tested right now, because there's no way to remotely create a shadow entry.

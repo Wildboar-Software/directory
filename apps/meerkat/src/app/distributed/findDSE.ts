@@ -1273,6 +1273,36 @@ async function findDSE (
             }
         }
         if (dse_i.dse.alias) {
+            /**
+             * This is not required by the specification explicitly. In fact,
+             * the specification only mentions this in a diagram for alias
+             * dereferencing on search, but not during the Find DSE procedure.
+             *
+             * This exists exclusively to protect against direct cyclical
+             * aliases (e.g. A points to B, then B points to A). All other alias
+             * loops are innately not a problem for the find DSE
+             * algorithm, because it subtracts an RDN from the remaining DN to
+             * find after each entry processed.
+             */
+            if (state.aliasesEncounteredById.has(dse_i.dse.id)) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:loop_detected"),
+                    new ServiceErrorData(
+                        ServiceProblem_loopDetected,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            undefined,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        TRUE,
+                        undefined,
+                    ),
+                );
+            }
+            state.aliasesEncounteredById.add(dse_i.dse.id);
             if (dontDereferenceAliases) {
                 if (i === m) {
                     await targetFoundSubprocedure();

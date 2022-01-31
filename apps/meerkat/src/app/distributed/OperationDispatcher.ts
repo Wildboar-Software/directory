@@ -134,6 +134,10 @@ interface OperationDispatcherState {
     entrySuitable: boolean;
     partialName: boolean;
     rdnsResolved: number;
+
+    // Not explicitly defined in the spec, but needed for preventing alias
+    // loops.
+    aliasesEncounteredById: Set<number>;
 }
 
 export
@@ -576,6 +580,7 @@ class OperationDispatcher {
             entrySuitable: false,
             partialName: false,
             rdnsResolved: 0,
+            aliasesEncounteredById: new Set(),
         };
         await findDSE(
             ctx,
@@ -788,6 +793,7 @@ class OperationDispatcher {
             entrySuitable: false,
             partialName: false,
             rdnsResolved: 0,
+            aliasesEncounteredById: new Set(),
         };
         await findDSE(
             ctx,
