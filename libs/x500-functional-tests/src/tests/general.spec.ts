@@ -393,6 +393,18 @@ import {
     FamilyGrouping_multiStrand,
     FamilyGrouping_strands,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import type {
+    Credentials,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta";
+import {
+    SimpleCredentials,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    AttributeProblem_noSuchAttributeOrValue,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 
 jest.setTimeout(30000);
 
@@ -439,9 +451,9 @@ function int (i: INTEGER): ASN1Element {
     return _encodeInteger(i, DER);
 }
 
-async function connect(): Promise<IDMConnection> {
+async function connect (credentials?: Credentials): Promise<IDMConnection> {
     const dba = new DirectoryBindArgument(
-        undefined,
+        credentials,
         undefined,
     );
     const dapBind = {
@@ -1299,21 +1311,34 @@ describe("Meerkat DSA", () => {
             await createTestRootNode(connection!, testId);
         }
         const dn = createTestRootDN(testId);
+        const FINAL_PASSWORD: string = "asdf";
         const reqData: AdministerPasswordArgumentData = new AdministerPasswordArgumentData(
             dn,
             {
-                clear: "asdf",
+                clear: FINAL_PASSWORD,
             },
         );
         const arg: AdministerPasswordArgument = {
             unsigned: reqData,
         };
-        const result = await writeOperation(
+        const response = await writeOperation(
             connection!,
             administerPassword["&operationCode"]!,
             _encode_AdministerPasswordArgument(arg, DER),
         );
-        expect(("result" in result) && result.result).toBeTruthy();
+        assert("result" in response);
+        assert(response.result);
+        const creds: Credentials = {
+            simple: new SimpleCredentials(
+                dn,
+                undefined,
+                {
+                    unprotected: Buffer.from(FINAL_PASSWORD, "utf-8"),
+                },
+            ),
+        };
+        // Jest seems to require that you return .resolves / .rejects expects.
+        return expect(connect(creds)).resolves.toBeInstanceOf(IDMConnection);
     });
 
     it("ChangePassword", async () => {
@@ -1351,12 +1376,24 @@ describe("Meerkat DSA", () => {
         const arg: ChangePasswordArgument = {
             unsigned: reqData,
         };
-        const result = await writeOperation(
+        const response = await writeOperation(
             connection!,
             changePassword["&operationCode"]!,
             _encode_ChangePasswordArgument(arg, DER),
         );
-        expect(("result" in result) && result.result).toBeTruthy();
+        assert("result" in response);
+        assert(response.result);
+        const creds: Credentials = {
+            simple: new SimpleCredentials(
+                dn,
+                undefined,
+                {
+                    unprotected: Buffer.from(FINAL_PASSWORD, "utf-8"),
+                },
+            ),
+        };
+        // Jest seems to require that you return .resolves / .rejects expects.
+        return expect(connect(creds)).resolves.toBeInstanceOf(IDMConnection);
     });
 
     it("Read.selection", async () => {
@@ -9536,6 +9573,167 @@ describe("Meerkat DSA", () => {
         assert("error" in result);
         assert(result.error);
     }, 5000);
+
+    it("does not lock out a user when their password is set to an empty string", async () => {
+        const testId = `zero-length-password-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const password: string = "";
+        const reqData: AdministerPasswordArgumentData = new AdministerPasswordArgumentData(
+            dn,
+            {
+                clear: password,
+            },
+        );
+        const arg: AdministerPasswordArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            administerPassword["&operationCode"]!,
+            _encode_AdministerPasswordArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const creds: Credentials = {
+            simple: new SimpleCredentials(
+                dn,
+                undefined,
+                {
+                    unprotected: Buffer.from(password, "utf-8"),
+                },
+            ),
+        };
+        // Jest seems to require that you return .resolves / .rejects expects.
+        return expect(connect(creds)).resolves.toBeInstanceOf(IDMConnection);
+    });
+
+    it("info selection does not double attributes when a selected type is repeated", async () => {
+        const testId = `eis.repeated-select-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            {
+                select: [
+                    commonName["&id"],
+                    commonName["&id"],
+                ],
+            },
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            selection,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ReadResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        expect(resData.entry.information?.length).toBe(1);
+        const cn: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"]));
+        assert(cn);
+        assert("attribute" in cn);
+        expect(cn.attribute.values).toHaveLength(1);
+    });
+
+    it.only("info selection does not double attributes when a selected type is repeated in operational attributes", async () => {
+        const testId = `eis.repeated-select-2-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            {
+                select: [
+                    commonName["&id"],
+                ],
+            },
+            undefined,
+            {
+                select: [
+                    commonName["&id"],
+                ],
+            },
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            selection,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ReadResult(response.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        expect(resData.entry.information?.length).toBe(1);
+        const cn: EntryInformation_information_Item | undefined = resData.entry.information
+            ?.find((einfo) => ("attribute" in einfo) && einfo.attribute.type_.isEqualTo(commonName["&id"]));
+        assert(cn);
+        assert("attribute" in cn);
+        expect(cn.attribute.values).toHaveLength(1);
+    });
+
+    it("returns the appropriate error when no attributes are read at all", async () => {
+        const testId = `eis.select-nothing-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId);
+        }
+        const dn = createTestRootDN(testId);
+        const selection = new EntryInformationSelection(
+            {
+                select: [],
+            },
+            undefined,
+            {
+                select: [],
+            },
+        );
+        const reqData: ReadArgumentData = new ReadArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            selection,
+        );
+        const arg: ReadArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            read["&operationCode"]!,
+            _encode_ReadArgument(arg, DER),
+        );
+        assert("error" in response);
+        assert(response.error);
+        assert(response.errcode);
+        expect(compareCode(response.errcode, attributeError["&errorCode"]!)).toBeTruthy();
+        const param = attributeError.decoderFor["&ParameterType"]!(response.error);
+        const data = getOptionallyProtectedValue(param);
+        for (const problem of data.problems) {
+            expect(problem.problem).toBe(AttributeProblem_noSuchAttributeOrValue);
+        }
+    });
 
     it.todo("An entry's structural object class is calculated correctly"); // Do via unit testing instead.
     it.todo("Alias attributes update correctly when aliases change."); // This might actually not be required.

@@ -17,6 +17,8 @@ async function setEntryPassword (
     pwd: UserPwd,
 ): Promise<PrismaPromise<any>[]> {
     const entriesWithPasswordsExist: boolean = await anyPasswordsExist(ctx);
+    // Notice that we do not await this promise here, so it does not execute.
+    // (`PrismaPromise`s only run the callback when awaited.)
     const makeTopLevelAdmin = ctx.db.entry.update({
         where: {
             id: vertex.dse.id,

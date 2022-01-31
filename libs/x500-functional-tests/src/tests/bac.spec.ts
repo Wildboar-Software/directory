@@ -9209,6 +9209,279 @@ describe("Meerkat DSA Basic Access Control", () => {
         expect(ss).toBeUndefined();
     });
 
+    it.only("List uses the access controls of the subordinates to determine what is revealed", async () => {
+        const testId = `bac.list.subordinate-acsa-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+            ]);
+            // A subordinate in a new ACSA with no ACI items. Should be hidden.
+            const withAcsaId: string = "with-acsa";
+            // A subordinate in an ACIA with ACI items that deny access. Should be hidden.
+            const withAciaId: string = "with-acia";
+            // A subordinate in a new AAP with no access control at all. Should be visible.
+            const withAapId: string = "with-aap";
+            // A subordinate within the same ACSA as the superior. Should be visible.
+            const sameAcsaId: string = "same-acsa"
+
+            await createTestNode(connection!, dn, withAcsaId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlSpecificArea)],
+                    undefined,
+                ),
+            ]);
+            await activateAccessControl(connection!, [ ...dn, createTestRDN(withAcsaId) ], basicAccessControlScheme);
+
+            await createTestNode(connection!, dn, withAciaId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_accessControlInnerArea)],
+                    undefined,
+                ),
+            ]);
+
+            await createTestNode(connection!, dn, withAapId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_autonomousArea)],
+                    undefined,
+                ),
+            ]);
+
+            await createTestNode(connection!, dn, sameAcsaId);
+
+            const prohibitDiscoveryACI = new ACIItem(
+                {
+                    uTF8String: "Prohibit discovery",
+                },
+                1,
+                {
+                    basicLevels: new AuthenticationLevel_basicLevels(
+                        AuthenticationLevel_basicLevels_level_none,
+                        undefined,
+                        undefined,
+                    ),
+                },
+                {
+                    itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                        new ProtectedItems(
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            {
+                                item: applicationProcess["&id"],
+                            },
+                        ),
+                        [
+                            new ItemPermission(
+                                undefined,
+                                new UserClasses(
+                                    null,
+                                ),
+                                new Uint8ClampedArray([
+                                    FALSE_BIT,
+                                    FALSE_BIT, // denyAdd.
+                                    FALSE_BIT, // disclose on error
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantRead
+                                    FALSE_BIT, // denyRead
+                                    FALSE_BIT,
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantBrowse
+                                    TRUE_BIT,
+                                    FALSE_BIT, // grantExport
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantImport
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantModify
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantRename
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantReturnDN
+                                    TRUE_BIT,
+                                ]),
+                            ),
+                        ],
+                    ),
+                },
+            );
+
+            const permitDiscoveryACI = new ACIItem(
+                {
+                    uTF8String: "Permit discovery",
+                },
+                5,
+                {
+                    basicLevels: new AuthenticationLevel_basicLevels(
+                        AuthenticationLevel_basicLevels_level_none,
+                        undefined,
+                        undefined,
+                    ),
+                },
+                {
+                    itemFirst: new ACIItem_itemOrUserFirst_itemFirst(
+                        new ProtectedItems(
+                            null,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ),
+                        [
+                            new ItemPermission(
+                                undefined,
+                                new UserClasses(
+                                    null,
+                                ),
+                                new Uint8ClampedArray([
+                                    FALSE_BIT,
+                                    FALSE_BIT, // denyAdd.
+                                    TRUE_BIT, // disclose on error
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantRead
+                                    FALSE_BIT, // denyRead
+                                    FALSE_BIT,
+                                    FALSE_BIT,
+                                    TRUE_BIT, // grantBrowse
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantExport
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantImport
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantModify
+                                    FALSE_BIT,
+                                    FALSE_BIT, // grantRename
+                                    FALSE_BIT,
+                                    TRUE_BIT, // grantReturnDN
+                                ]),
+                            ),
+                        ],
+                    ),
+                },
+            );
+
+            const acis: ACIItem[] = [
+                ...aciForTesting,
+                permitDiscoveryACI,
+            ];
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(AC_SUBENTRY_NAME),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        acis.map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await createEntry(
+                connection!,
+                [ ...dn, createTestRDN(withAciaId) ],
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(accessControlSubentry["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(AC_SUBENTRY_NAME)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        prescriptiveACI["&id"],
+                        [
+                            prohibitDiscoveryACI,
+                        ].map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
+                        undefined,
+                    ),
+                ],
+            );
+            await activateAccessControl(connection!, dn, basicAccessControlScheme);
+        }
+        const reqData = new ListArgumentData(
+            {
+                rdnSequence: dn,
+            },
+        );
+        const arg: ListArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            list["&operationCode"]!,
+            _encode_ListArgument(arg, DER),
+        );
+        assert("result" in response);
+        assert(response.result);
+        const decoded = _decode_ListResult(response.result);
+        const data = getOptionallyProtectedValue(decoded);
+        assert("listInfo" in data);
+        expect(data.listInfo.subordinates).toHaveLength(2);
+    });
+
     it.todo("simplifiedAccessControl");
 
 });

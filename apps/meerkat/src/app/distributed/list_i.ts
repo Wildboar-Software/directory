@@ -419,9 +419,9 @@ async function list_i (
                 const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
                 const effectiveRelevantSubentries = subordinate.dse.admPoint?.administrativeRole.has(ID_AUTONOMOUS)
                     ? []
-                    : targetRelevantSubentries;
-                if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_SPECIFIC)) {
-                    effectiveRelevantSubentries.length = 0;
+                    : [ ...targetRelevantSubentries ]; // Must spread to create a new reference. Otherwise...
+                if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_SPECIFIC)) { // ... (keep going)
+                    effectiveRelevantSubentries.length = 0; // ...this will modify the target-relevant subentries!
                     effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
                 } else if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
                     effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));

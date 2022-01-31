@@ -142,7 +142,6 @@ async function attemptPassword (
             }),
         ]);
     } else {
-        const now = new Date();
         const nowElement = _encodeGeneralizedTime(new Date(), DER);
         await ctx.db.$transaction([
             ctx.db.attributeValue.deleteMany({
