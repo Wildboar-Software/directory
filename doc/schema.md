@@ -373,3 +373,58 @@ The `SubstringsMatcher` determines if the asserted substring appears within the
 value at the selected location (the start, end, or anywhere), and returns a
 `boolean` value of `true` if the substring appears within the string where it is
 sought and `false` if it does not.
+
+## Guidance
+
+If an attribute type that you're defining is complicated enough to warrant a
+`SEQUENCE` or `SET`, you should consider breaking all of its components into
+individual single-valued attributes, and creating an object class that
+represents that type instead. You can use children within compound entries to
+represent these structs instead. The benefit of doing this is easier
+extensibility, and a greater likelihood that you can define your attribute
+type in terms of one of the subset of pre-defined LDAP syntaxes instead of
+having to define a new LDAP syntax.
+
+The only case where you should do something like this is when: (1) for some
+reason, it would be burdensome to name these child entries, or (2) when all
+fields of the structured type are required, few and fixed in number.
+
+Instead of defining an attribute type like so:
+
+```asn1
+AccountInfo ::= {
+  name    UTF8String,
+  balance INTEGER,
+  ...
+}
+
+account ATTRIBUTE ::= {
+  WITH SYNTAX AccountInfo
+  ID { 1 2 3 4 }
+}
+```
+
+...define separate single-valued attributes and an object class for them:
+
+```asn1
+accountName ATTRIBUTE ::= {
+  WITH SYNTAX   UTF8String
+  SINGLE VALUE  TRUE
+  ID            { 1 2 3 4 }
+}
+
+accountBalance ATTRIBUTE ::= {
+  WITH SYNTAX   INTEGER
+  SINGLE VALUE  TRUE
+  ID            { 1 2 3 4 }
+}
+
+account OBJECT-CLASS ::= {
+  SUBCLASS OF   {top}
+  MUST CONTAIN  {accountName | accountBalance}
+  ID            { 1 2 3 4 }
+}
+```
+
+You may want to make the above object class auxiliary if you expect it to be
+merely an aspect of some other object, such as a person or organization.
