@@ -11,7 +11,7 @@ export
 function attributeFromInformationObject (io: ATTRIBUTE, name?: string): AttributeInfo {
     return {
         id: io["&id"],
-        name: name ? [ name ] : undefined,
+        name: name ? [ name.replace(/_/g, "-") ] : undefined,
         parent: io["&derivation"]?.["&id"],
         equalityMatchingRule: io["&equality-match"]?.["&id"],
         orderingMatchingRule: io["&ordering-match"]?.["&id"],
