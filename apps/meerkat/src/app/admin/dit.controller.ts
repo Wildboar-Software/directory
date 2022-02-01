@@ -338,7 +338,7 @@ export class DitController {
                     try {
                         return Buffer.from(encoder(attr.value)).toString("utf-8");
                     } catch {
-                        return "COULD NOT DECODE";
+                        return "COULD NOT DISPLAY";
                     }
                 })(),
                 Array.from(attr.contexts?.values() ?? [])
