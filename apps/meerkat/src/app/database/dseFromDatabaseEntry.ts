@@ -106,6 +106,7 @@ async function dseFromDatabaseEntry (
     const ret: DSE = {
         id: dbe.id,
         uuid: dbe.dseUUID,
+        entryUUID: dbe.entryUUID ?? undefined,
         rdn,
         objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
         clearances: clearances.map((c) => {
