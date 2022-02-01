@@ -376,6 +376,8 @@ sought and `false` if it does not.
 
 ## Guidance
 
+### Prefer objects, not structured attributes
+
 If an attribute type that you're defining is complicated enough to warrant a
 `SEQUENCE` or `SET`, you should consider breaking all of its components into
 individual single-valued attributes, and creating an object class that
@@ -428,3 +430,43 @@ account OBJECT-CLASS ::= {
 
 You may want to make the above object class auxiliary if you expect it to be
 merely an aspect of some other object, such as a person or organization.
+
+### Use MAY CONTAINS in auxiliary object classes
+
+Auxiliary object classes can be useful for extending the schema of entries,
+however, but they can also function as a sort of "tag" if they are defined
+without required attributes.
+
+Let's say you define an auxiliary object class called `married` that has an
+attribute `spouseDN` that points to the entry's marital partner. You would not
+want to make `spouseDN` a _required_ attribute of `married`, even though it
+might theoretically make sense that somebody that is married has a spouse.
+
+By making `spouseDN` an _optional_ attribute of the `married` auxiliary object
+class, you can represent that an entry is married even if you do not know the
+name of the spouse.
+
+You can think of this like `NULL` in relational databases: you should only make
+a field `NOT NULL` if you can _never_ think of a situation in which it would be
+acceptable for that field to be absent (such as a lack of knowledge). Most
+fields are not like this.
+
+Also be aware that, if you define an attribute as required in an object class
+and users of the directory system do not know the value for that attribute for
+that entry, they may attempt to bypass such a restriction by putting in, say, a
+"nullish" string like `"N/A"`, `"UNKNOWN"`, `"NULL"`, `""`, or using `0` for
+a required attribute with `INTEGER` syntax. The result is that you could wind
+up with garbage data in your directory because you required of users what they
+could not provide.
+
+### Do not embed entries within entries
+
+Use compound entries, or attributes with a distinguished name syntax to point
+to other entries. You should not define attributes with a syntax like this:
+
+```asn1
+biologicalChildren ATTRIBUTE ::= {
+  WITH SYNTAX   SET OF Attribute
+  ID            id-at-biologicalChildren
+}
+```
