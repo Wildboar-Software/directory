@@ -108,5 +108,20 @@
                 {{/each}}
             </tbody>
         </table>
+        <h2>Subordinates</h2>
+        <hr />
+        <ol>
+            {{#each subordinates}}
+            <li>
+                <span>
+                    <a href="/dsait/dse/{{[0]}}">
+                        {{[1]}}
+                    </a>
+                    &nbsp;
+                    {{[2]}}
+                </span>
+            </li>
+            {{/each}}
+        </ol>
     </body>
 </html>

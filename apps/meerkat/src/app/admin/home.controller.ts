@@ -19,7 +19,9 @@ export class HomeController {
     @Get("/home")
     @Render('index')
     index () {
-        return {};
+        return {
+            rootuuid: this.ctx.dit.root.dse.uuid,
+        };
     }
 
     @Get("/conformance")

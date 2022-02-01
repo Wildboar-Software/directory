@@ -750,7 +750,9 @@ async function main (): Promise<void> {
     if (ctx.config.webAdmin.port) {
         // I tried making AppModule a dynamic module that would take `ctx` as an argument, but that did not work. See:
         // See: https://github.com/nestjs/nest/issues/671
-        const app = await NestFactory.create<NestExpressApplication>(AppModule);
+        const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+            logger: isDebugging ? undefined : false,
+        });
         app.useStaticAssets(path.join(__dirname, "assets", "static"));
         app.setBaseViewsDir(path.join(__dirname, "assets", "views"));
         app.setViewEngine("hbs");

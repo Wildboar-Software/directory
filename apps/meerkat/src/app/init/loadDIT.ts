@@ -9,7 +9,6 @@ async function loadDIT (
     ctx: Context,
 ): Promise<DIT> {
     const now = new Date();
-    ctx.log.info(ctx.i18n.t("log:loading_dit"));
     let rootDSE = await ctx.db.entry.findFirst({
         where: {
             immediate_superior_id: null,
@@ -41,12 +40,11 @@ async function loadDIT (
                 modifiersName: ROOT_DSE_NAME,
             },
         });
-        ctx.log.warn(ctx.i18n.t("log:created_root_dse", {
+        ctx.log.debug(ctx.i18n.t("log:created_root_dse", {
             uuid: rootDSE.entryUUID,
         }));
     }
     ctx.dit.root = await vertexFromDatabaseEntry(ctx, undefined, rootDSE);
-    ctx.log.info(ctx.i18n.t("log:dit_loaded"));
     return ctx.dit.root;
 }
 

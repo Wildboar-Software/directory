@@ -43,6 +43,7 @@ import {
     _decode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import readSubordinates from "../dit/readSubordinates";
 
 const selectAllInfo = new EntryInformationSelection(
     {
@@ -219,13 +220,13 @@ function printFlags (vertex: Vertex): string {
     return ret;
 }
 
-async function convertVertexToHTML (ctx: Context, vertex: Vertex): Promise<string> {
+async function convertSubtreeToHTML (ctx: Context, vertex: Vertex): Promise<string> {
     const stringifiedRDN = (vertex.dse.rdn.length === 0)
         ? "(Empty RDN)"
         : escape(encodeRDN(ctx, vertex.dse.rdn));
 
     const subordinates = await Promise.all(
-        vertex.subordinates?.map((sub) => convertVertexToHTML(ctx, sub)) ?? [],
+        vertex.subordinates?.map((sub) => convertSubtreeToHTML(ctx, sub)) ?? [],
     );
 
     return (
@@ -239,6 +240,13 @@ async function convertVertexToHTML (ctx: Context, vertex: Vertex): Promise<strin
         + "</ul>"
         + "</li>"
     );
+}
+
+function convertDSEToHTML (ctx: Context, vertex: Vertex): [ string, string, string ] {
+    const stringifiedRDN = (vertex.dse.rdn.length === 0)
+        ? "(Empty RDN)"
+        : escape(encodeRDN(ctx, vertex.dse.rdn));
+    return [ vertex.dse.uuid, stringifiedRDN, printFlags(vertex) ];
 }
 
 function hexEncode (value: ASN1Element): string {
@@ -268,7 +276,7 @@ export class DitController {
     @Render('tree')
     async tree () {
         return {
-            tree: await convertVertexToHTML(this.ctx, this.ctx.dit.root),
+            tree: await convertSubtreeToHTML(this.ctx, this.ctx.dit.root),
         };
     }
 
@@ -338,6 +346,9 @@ export class DitController {
                     .join(", "),
             ]);
 
+        const subordinates: [ string, string, string ][] = (await readSubordinates(this.ctx, vertex))
+            .map((sub) => convertDSEToHTML(this.ctx, sub));
+
         return {
             ...entry,
             superiorUUID,
@@ -365,6 +376,7 @@ export class DitController {
             modifiersName: (vertex.dse.modifiersName?.rdnSequence ?? [])
                 .map((rdn) => escape(encodeRDN(this.ctx, rdn))),
             attributes,
+            subordinates,
         };
     }
 
