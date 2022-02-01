@@ -175,14 +175,24 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
-import findEntry from "../x500/findEntry";
 import groupByOID from "../utils/groupByOID";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import rdnToID from "../dit/rdnToID";
+import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import {
+    id_ar_accessControlSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+import {
+    id_ar_accessControlInnerArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
+const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
+const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
+const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
 
 function namingViolationErrorData (
     ctx: Context,
@@ -488,9 +498,7 @@ async function addEntry (
         && accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const {
-            authorized,
-        } = bacACDF(
+        const { authorized } = bacACDF(
             relevantTuples,
             user,
             {
@@ -585,15 +593,86 @@ async function addEntry (
         );
     }
     if (!ctx.config.bulkInsertMode) {
-        const existingEntry = await findEntry(ctx, ctx.dit.root, targetDN);
-        if (existingEntry) {
-            const {
-                authorized: authorizedToKnowAboutExistingEntry,
-            } = bacACDF(
-                relevantTuples,
+        const existingEntryId = await rdnToID(ctx, immediateSuperior.dse.id, rdn);
+        if (existingEntryId !== undefined) {
+            const existing_dbe = await ctx.db.entry.findUnique({
+                where: {
+                    id: existingEntryId,
+                },
+            });
+            // This could happen if the entry is deleted within the tiny span of
+            // time between us finding the entry's ID and querying it.
+            if (!existing_dbe) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_add_entry"),
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+            const existing = await vertexFromDatabaseEntry(ctx, immediateSuperior, existing_dbe, false);
+            const effectiveAccessControlScheme = existing.dse.admPoint?.accessControlScheme
+                ?? accessControlScheme;
+            if ( // If access control does not apply to the existing entry,...
+                !effectiveAccessControlScheme
+                || !accessControlSchemesThatUseACIItems.has(effectiveAccessControlScheme.toString())
+            ) { // We can inform the user that it does not exist; no need to do any more work.
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:entry_already_exists"),
+                    new UpdateErrorData(
+                        UpdateProblem_entryAlreadyExists,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+            const effectiveRelevantSubentries = existing.dse.admPoint?.administrativeRole.has(ID_AUTONOMOUS)
+                ? []
+                : [ ...relevantSubentries ]; // Must spread to create a new reference. Otherwise...
+            if (existing.dse.admPoint?.administrativeRole.has(ID_AC_SPECIFIC)) { // ... (keep going)
+                effectiveRelevantSubentries.length = 0; // ...this will modify the target-relevant subentries!
+                effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, existing, targetDN, existing)));
+            } else if (existing.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
+                effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, existing, targetDN, existing)));
+            }
+            const subordinateACI = getACIItems(effectiveAccessControlScheme, existing, effectiveRelevantSubentries);
+            const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const relevantSubordinateTuples: ACDFTupleExtended[] = await preprocessTuples(
+                effectiveAccessControlScheme,
+                subordinateACDFTuples,
+                user,
+                state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                targetDN,
+                isMemberOfGroup,
+                NAMING_MATCHER,
+            );
+            const { authorized: authorizedToKnowAboutExistingEntry } = bacACDF(
+                relevantSubordinateTuples,
                 user,
                 {
-                    entry: objectClasses,
+                    entry: Array.from(existing.dse.objectClass).map(ObjectIdentifier.fromString),
                 },
                 [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
                 bacSettings,

@@ -15,7 +15,7 @@ import {
 import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
-import findEntry from "../../x500/findEntry";
+import dnToVertex from "../../dit/dnToVertex";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -45,7 +45,7 @@ async function becomeSubordinate (
         const vertex = sup2sub.contextPrefixInfo[i];
         let immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = undefined;
         const last: boolean =( sup2sub.contextPrefixInfo.length === (i + 1));
-        const existingEntry = await findEntry(ctx, currentRoot, [ vertex.rdn ]);
+        const existingEntry = await dnToVertex(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
             immSuprAccessPoints = vertex.accessPoints;
             const immSupr: boolean = Boolean(immSuprAccessPoints && last);
@@ -94,7 +94,7 @@ async function becomeSubordinate (
         sup2sub.entryInfo?.flatMap(valuesFromAttribute) ?? [],
     );
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
-    const existing = await findEntry(ctx, ctx.dit.root, itinerantDN, false);
+    const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);
     /**
      * These steps below "swap out" an existing entry with the entry created by
      * the HOB, keeping the immediate superior and the subordinates the same in

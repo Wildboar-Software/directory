@@ -5,7 +5,7 @@ import {
 import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
-import findEntry from "../../x500/findEntry";
+import dnToVertex from "../../dit/dnToVertex";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
@@ -55,7 +55,7 @@ async function updateLocalSubr (
     sub2sup: SubordinateToSuperior,
 ): Promise<void> {
     // oldAgreement.immediateSuperior === newAgreement.immediateSuperior
-    const superior = await findEntry(ctx, ctx.dit.root, newAgreement.immediateSuperior, false);
+    const superior = await dnToVertex(ctx, ctx.dit.root, newAgreement.immediateSuperior);
     if (!superior) {
         throw new errors.SecurityError(
             ctx.i18n.t("err:no_such_superior"),
@@ -100,7 +100,7 @@ async function updateLocalSubr (
         );
     }
     // const oldDN = [ ...oldAgreement.immediateSuperior, oldAgreement.rdn ];
-    const oldSubordinate = await findEntry(ctx, superior, [ oldAgreement.rdn ], false);
+    const oldSubordinate = await dnToVertex(ctx, superior, [ oldAgreement.rdn ]);
     if (!oldSubordinate) {
         throw new Error(); // The old subordinate should have disappeared.
     }
@@ -204,7 +204,7 @@ async function updateLocalSubr (
     }
 
     for (const subentry of sub2sup.subentries ?? []) {
-        const existingSubentry = await findEntry(ctx, oldSubordinate, [ subentry.rdn ], false);
+        const existingSubentry = await dnToVertex(ctx, oldSubordinate, [ subentry.rdn ]);
         if (!existingSubentry) {
             await createEntry(
                 ctx,

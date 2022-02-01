@@ -11,7 +11,6 @@ import {
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import findEntry from "../x500/findEntry";
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
@@ -31,6 +30,7 @@ import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import versions from "./versions";
+import dnToVertex from "../dit/dnToVertex";
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
@@ -93,7 +93,7 @@ async function bind (
         };
     }
     if ("simple" in arg.credentials) {
-        const foundEntry = await findEntry(ctx, ctx.dit.root, arg.credentials.simple.name);
+        const foundEntry = await dnToVertex(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {
             if (ctx.config.forbidAnonymousBind) {
                 throw new DirectoryBindError(

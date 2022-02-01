@@ -7,7 +7,7 @@ import { TLSSocket } from "tls";
 import {
     BindResponse,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindResponse.ta";
-import findEntry from "../x500/findEntry";
+import dnToVertex from "../dit/dnToVertex";
 import decodeLDAPDN from "./decodeLDAPDN";
 import encodeLDAPDN from "./encodeLDAPDN";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -98,7 +98,7 @@ async function bind (
     }
     const successMessage = ctx.i18n.t("main:success");
     const dn = decodeLDAPDN(ctx, req.name);
-    const entry = await findEntry(ctx, ctx.dit.root, dn, true);
+    const entry = await dnToVertex(ctx, ctx.dit.root, dn);
     if (!entry) {
         return {
             authLevel: notAuthed(),

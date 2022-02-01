@@ -18,7 +18,7 @@ import {
     _encode_ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier, INTEGER } from "asn1-ts";
-import findEntry from "../../x500/findEntry";
+import dnToVertex from "../../dit/dnToVertex";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
@@ -63,7 +63,7 @@ async function becomeSuperior (
     agreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
 ): Promise<SuperiorToSubordinate> {
-    const superior = await findEntry(ctx, ctx.dit.root, agreement.immediateSuperior, false);
+    const superior = await dnToVertex(ctx, ctx.dit.root, agreement.immediateSuperior);
     if (!superior) {
         throw new errors.SecurityError(
             ctx.i18n.t("err:no_such_superior"),
@@ -108,7 +108,7 @@ async function becomeSuperior (
         );
     }
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
-    const existing = await findEntry(ctx, ctx.dit.root, itinerantDN, false);
+    const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);
     if (existing) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:entry_already_exists"),

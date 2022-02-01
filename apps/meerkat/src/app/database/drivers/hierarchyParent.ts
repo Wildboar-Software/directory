@@ -17,7 +17,6 @@ import rdnToJson from "../../x500/rdnToJson";
 import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
-import findEntry from "../../x500/findEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import { Prisma } from "@prisma/client";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
@@ -40,6 +39,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import rdnFromJson from "../../x500/rdnFromJson";
+import dnToVertex from "../../dit/dnToVertex";
 
 const CHILD: string = id_oc_child.toString();
 
@@ -77,7 +77,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         await sleep(randomInt(1000));
     }
     const dn = hierarchyParent.decoderFor["&Type"]!(value.value);
-    const parent = await findEntry(ctx, ctx.dit.root, dn);
+    const parent = await dnToVertex(ctx, ctx.dit.root, dn);
     if (!parent) {
         // Hierarchical groups are required to be within a single DSA.
         throw new UpdateError(

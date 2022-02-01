@@ -32,7 +32,7 @@ import readValues from "../database/entry/readValues";
 import deleteEntry from "../database/deleteEntry";
 import escape from "escape-html";
 import type { DistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/DistinguishedName.ta";
-import findEntry from "../x500/findEntry";
+import dnToVertex from "../dit/dnToVertex";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
@@ -392,7 +392,7 @@ export class DitController {
                 },
             });
         }
-        const entry = await findEntry(this.ctx, this.ctx.dit.root, currentDN, false);
+        const entry = await dnToVertex(this.ctx, this.ctx.dit.root, currentDN);
         if (entry) {
             await deleteEntry(this.ctx, entry);
         }

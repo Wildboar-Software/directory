@@ -18,7 +18,7 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import rdnToJson from "../../x500/rdnToJson";
-import findEntry from "../../x500/findEntry";
+import dnToID from "../../dit/dnToID";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -44,8 +44,8 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decodedName = _decode_DistinguishedName(value.value);
-    const aliasedEntry = await findEntry(ctx, ctx.dit.root, decodedName, true);
-    if (!aliasedEntry) {
+    const aliasedEntryId = await dnToID(ctx, ctx.dit.root.dse.id, decodedName);
+    if (!aliasedEntryId) {
         ctx.log.warn(ctx.i18n.t("log:aliased_does_not_exist", {
             id: vertex.dse.uuid ?? vertex.dse.id,
         }));
@@ -54,7 +54,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         data: {
             alias_entry_id: vertex.dse.id,
             aliased_entry_name: decodedName.map(rdnToJson),
-            aliased_entry_id: aliasedEntry?.dse.id,
+            aliased_entry_id: aliasedEntryId,
         },
     }));
     pendingUpdates.entryUpdate.alias = true;
@@ -68,12 +68,12 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decodedName = _decode_DistinguishedName(value.value);
-    const aliasedEntry = await findEntry(ctx, ctx.dit.root, decodedName, true);
-    if (aliasedEntry) {
+    const aliasedEntryId = await dnToID(ctx, ctx.dit.root.dse.id, decodedName);
+    if (aliasedEntryId) {
         pendingUpdates.otherWrites.push(ctx.db.alias.delete({
             where: {
                 alias_entry_id: vertex.dse.id,
-                aliased_entry_id: aliasedEntry.dse.id,
+                aliased_entry_id: aliasedEntryId,
             },
         }));
     } else {
@@ -132,12 +132,12 @@ const hasValue: SpecialAttributeValueDetector = async (
     value: Value,
 ): Promise<boolean> => {
     const decodedName = _decode_DistinguishedName(value.value);
-    const aliasedEntry = await findEntry(ctx, ctx.dit.root, decodedName, true);
-    if (aliasedEntry) {
+    const aliasedEntryId = await dnToID(ctx, ctx.dit.root.dse.id, decodedName);
+    if (aliasedEntryId) {
         return !!(await ctx.db.alias.findFirst({
             where: {
                 alias_entry_id: vertex.dse.id,
-                aliased_entry_id: aliasedEntry.dse.id,
+                aliased_entry_id: aliasedEntryId,
             },
         }))
     } else {

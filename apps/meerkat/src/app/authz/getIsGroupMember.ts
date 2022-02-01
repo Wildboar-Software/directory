@@ -12,7 +12,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
-import findEntry from "../x500/findEntry";
+import dnToVertex from "../dit/dnToVertex";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import readValues from "../database/entry/readValues";
 import {
@@ -61,7 +61,7 @@ function getIsGroupMember (
         userGroup: NameAndOptionalUID,
         user: NameAndOptionalUID,
     ): Promise<boolean | undefined> {
-        const groupEntry = await findEntry(ctx, ctx.dit.root, userGroup.dn);
+        const groupEntry = await dnToVertex(ctx, ctx.dit.root, userGroup.dn);
         if (
             !groupEntry?.dse.objectClass.has(GROUP_OF_NAMES)
             && !groupEntry?.dse.objectClass.has(GROUP_OF_UNIQUE_NAMES)
@@ -69,7 +69,7 @@ function getIsGroupMember (
             return undefined;
         }
         if (user.uid) {
-            const userEntry = await findEntry(ctx, ctx.dit.root, user.dn);
+            const userEntry = await dnToVertex(ctx, ctx.dit.root, user.dn);
             if (!userEntry) {
                 return undefined;
             }

@@ -9497,7 +9497,7 @@ describe("Meerkat DSA", () => {
         );
         assert("error" in result);
         assert(result.error);
-    }, 5000);
+    }, 10000);
 
     it("alias loops do not cause the search procedure to run indefinitely", async () => {
         const testId = `alias-loop-search-2-${(new Date()).toISOString()}`;
@@ -9572,7 +9572,7 @@ describe("Meerkat DSA", () => {
         );
         assert("error" in result);
         assert(result.error);
-    }, 5000);
+    }, 10000);
 
     it("does not lock out a user when their password is set to an empty string", async () => {
         const testId = `zero-length-password-${(new Date()).toISOString()}`;

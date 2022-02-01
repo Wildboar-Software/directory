@@ -1,6 +1,6 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { BERElement } from "asn1-ts";
-import findEntry from "../x500/findEntry";
+import dnToVertex from "../dit/dnToVertex";
 import getRelevantOperationalBindings from "./getRelevantOperationalBindings";
 import {
     HierarchicalAgreement,
@@ -51,7 +51,7 @@ async function updateAffectedSubordinateDSAs (
             agreement.rdn,
         ];
         try {
-            const subr = await findEntry(ctx, ctx.dit.root, subrDN);
+            const subr = await dnToVertex(ctx, ctx.dit.root, subrDN);
             if (!subr) {
                 ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
                     obid: bindingID.identifier.toString(),

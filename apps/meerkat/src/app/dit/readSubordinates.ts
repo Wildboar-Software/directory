@@ -31,7 +31,7 @@ async function readSubordinates (
                     deleteTimestamp: null,
                 },
                 orderBy: {
-                    id: "asc",
+                    id: "desc", // Theory: newer IDs are more likely to be queried.
                 },
             })).map((child) => vertexFromDatabaseEntry(ctx, entry, child, true)),
         );

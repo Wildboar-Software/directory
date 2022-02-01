@@ -29,7 +29,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
-import findEntry from "../x500/findEntry";
+import dnToVertex from "../dit/dnToVertex";
 import { strict as assert } from "assert";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import removeValues from "../database/entry/removeValues";
@@ -491,7 +491,7 @@ async function modifyDN (
         );
     }
     const newSuperior = data.newSuperior
-        ? await findEntry(ctx, ctx.dit.root, data.newSuperior)
+        ? await dnToVertex(ctx, ctx.dit.root, data.newSuperior)
         : null; // `null` means we did not try.
     if (newSuperior === undefined) { // `undefined` means we tried and failed.
         throw new errors.UpdateError(
@@ -628,6 +628,7 @@ async function modifyDN (
     const superiorDN = getDistinguishedName(superior);
     const permittedToFindResult = await permittedToFindDSE(
         ctx,
+        ctx.dit.root,
         [ ...superiorDN, newRDN ],
         user,
         state.chainingArguments.authenticationLevel ?? assn.authLevel,

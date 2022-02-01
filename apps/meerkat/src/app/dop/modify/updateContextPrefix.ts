@@ -14,7 +14,7 @@ import type {
 import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
-import findEntry from "../../x500/findEntry";
+import dnToVertex from "../../dit/dnToVertex";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import deleteEntry from "../../database/deleteEntry";
@@ -95,7 +95,7 @@ async function updateContextPrefix (
         oldAgreement.rdn,
     ];
 
-    const oldCP = await findEntry(ctx, ctx.dit.root, oldDN);
+    const oldCP = await dnToVertex(ctx, ctx.dit.root, oldDN);
     if (!oldCP) {
         throw new OperationalBindingError(
             ctx.i18n.t("err:could_not_find_cp", {
@@ -185,7 +185,7 @@ async function updateContextPrefix (
         const last: boolean = (mod.contextPrefixInfo.length === (i + 1));
         immSuprAccessPoints = vertex.accessPoints;
         const immSupr: boolean = Boolean(immSuprAccessPoints && last);
-        const existingEntry = await findEntry(ctx, currentRoot, [ vertex.rdn ]);
+        const existingEntry = await dnToVertex(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
             const createdEntry = await createEntry(
                 ctx,
@@ -223,7 +223,7 @@ async function updateContextPrefix (
                 );
             }
             const oldRDN: RDN = oldAgreement.immediateSuperior[i];
-            const oldVertex = await findEntry(ctx, currentRoot, [ oldRDN ]);
+            const oldVertex = await dnToVertex(ctx, currentRoot, [ oldRDN ]);
             if (oldVertex) {
                 await deleteEntry(ctx, oldVertex);
             }
@@ -247,7 +247,7 @@ async function updateContextPrefix (
                     ...await addAttributes(ctx, currentRoot, vertex.admPointInfo),
                 ]);
                 for (const subentry of vertex.subentries ?? []) {
-                    const oldSubentry = await findEntry(ctx, currentRoot, [ subentry.rdn ]);
+                    const oldSubentry = await dnToVertex(ctx, currentRoot, [ subentry.rdn ]);
                     if (!oldSubentry) {
                         await createEntry(
                             ctx,

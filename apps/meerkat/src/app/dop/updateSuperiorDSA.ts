@@ -11,7 +11,7 @@ import type {
     Connection,
     WriteOperationOptions,
 } from "../net/Connection";
-import findEntry from "../x500/findEntry";
+import dnToVertex from "../dit/dnToVertex";
 import getRelevantOperationalBindings from "./getRelevantOperationalBindings";
 import {
     HierarchicalAgreement,
@@ -139,7 +139,7 @@ async function updateSuperiorDSA (
         accessPointElement.fromBytes(hob.access_point.ber);
         const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
         try {
-            const subr = await findEntry(ctx, ctx.dit.root, agreementDN);
+            const subr = await dnToVertex(ctx, ctx.dit.root, agreementDN);
             if (!subr) {
                 ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
                     obid: bindingID.identifier.toString(),

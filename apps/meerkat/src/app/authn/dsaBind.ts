@@ -7,7 +7,7 @@ import {
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import findEntry from "../x500/findEntry";
+import dnToVertex from "../dit/dnToVertex";
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
@@ -92,7 +92,7 @@ async function bind (
         };
     }
     if ("simple" in arg.credentials) {
-        const foundEntry = await findEntry(ctx, ctx.dit.root, arg.credentials.simple.name);
+        const foundEntry = await dnToVertex(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {
             if (ctx.config.forbidAnonymousBind) {
                 throw new DSABindError(

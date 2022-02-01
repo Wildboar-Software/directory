@@ -40,8 +40,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
-import readSubordinates from "../dit/readSubordinates";
+import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     ServiceProblem_timeLimitExceeded,
@@ -114,6 +113,10 @@ import {
 import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import listSubordinates from "../dit/listSubordinates";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -865,9 +868,9 @@ async function findDSE (
             if (rdnMatched) {
                 return [];
             }
-            return readSubordinates(
+            return listSubordinates(
                 ctx,
-                dse_i,
+                dse_i.dse.id,
                 ctx.config.entriesPerSubordinatesPage,
                 undefined,
                 cursorId,
@@ -884,8 +887,8 @@ async function findDSE (
         };
         let subordinatesInBatch = await getNextBatchOfSubordinates();
         while (subordinatesInBatch.length) {
-            for (const child of subordinatesInBatch) {
-                cursorId = child.dse.id;
+            for (const subordinate of subordinatesInBatch) {
+                cursorId = subordinate.id;
                 if (op?.abandonTime) {
                     op.events.emit("abandon");
                     throw new errors.AbandonError(
@@ -906,12 +909,29 @@ async function findDSE (
                     );
                 }
                 checkTimeLimit();
+                const childRDN = subordinate.RDN.map((atav) => new AttributeTypeAndValue(
+                    ObjectIdentifier.fromString(atav.type),
+                    (() => {
+                        const el = new BERElement();
+                        el.fromBytes(atav.value);
+                        return el;
+                    })(),
+                ));
                 rdnMatched = compareRDN(
                     needleRDN,
-                    child.dse.rdn,
+                    childRDN,
                     getNamingMatcherGetter(ctx),
                 );
                 if (rdnMatched) {
+                    const child_dbe = await ctx.db.entry.findUnique({
+                        where: {
+                            id: subordinate.id
+                        },
+                    })
+                    if (!child_dbe) {
+                        break; // TODO: Break out of the loop entirely if this happens.
+                    }
+                    const child = await vertexFromDatabaseEntry(ctx, dse_i, child_dbe, false);
                     if (child.dse.admPoint?.accessControlScheme) {
                         accessControlScheme = child.dse.admPoint.accessControlScheme;
                     }
