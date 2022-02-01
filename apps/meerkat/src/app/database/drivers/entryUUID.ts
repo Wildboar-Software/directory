@@ -25,6 +25,9 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    if (!vertex.dse.entryUUID) {
+        return [];
+    }
     return [
         {
             type: new ObjectIdentifier([ 1, 3, 6, 1, 1, 16, 4 ]),
@@ -32,7 +35,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
                 ASN1TagClass.universal,
                 ASN1Construction.primitive,
                 ASN1UniversalType.octetString,
-                Buffer.from(vertex.dse.uuid.replace(/-/g, ""), "hex"),
+                Buffer.from(vertex.dse.entryUUID.replace(/-/g, ""), "hex"),
             ),
         },
     ];
