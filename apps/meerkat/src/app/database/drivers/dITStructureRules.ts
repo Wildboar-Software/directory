@@ -16,8 +16,14 @@ import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdminist
 import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
 import readDITStructureRuleDescriptions from "../readers/readDITStructureRuleDescriptions";
+import {
+    id_ar_subschemaAdminSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
+import checkNameForm from "@wildboar/x500/src/lib/utils/checkNameForm";
+import getSubschemaSubentry from "../../dit/getSubschemaSubentry";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
+const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -42,6 +48,50 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = dITStructureRules.decoderFor["&Type"]!(value.value);
+    /**
+     * When we are defining a new subschema administrative point, the
+     * administrative point itself may be `null` because there were no structure
+     * rules to apply to it yet.
+     *
+     * For that reason, when we add a DIT Structure Rule, we check if the
+     * superior is a subschema admin point, and update its governing structure
+     * rule if this newly-added DIT structure rule applies to it.
+     */
+    if (
+        !decoded.superiorStructureRules?.length // If this structure rule applies to the admin point...
+        // And what is above this entry is actually a subschema administrative point...
+        && vertex.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA)
+        // And it has no governing structure rule...
+        && (typeof vertex.immediateSuperior.dse.governingStructureRule !== "number")
+        // NOTE: We do not check if the current entry is a subschema. We just
+        // assume it is, because this attribute / value may have been supplied
+        // during the subentry's creation, and therefore, it may not be a
+        // subentry _yet_ in the eyes of Meerkat DSA.
+    ) {
+        const nameForm = ctx.nameForms.get(decoded.nameForm.toString());
+        if (nameForm) {
+            const structureRuleIsApplicableToTheAdminPoint: boolean = !!(
+                vertex.immediateSuperior.dse.structuralObjectClass?.isEqualTo(nameForm.namedObjectClass)
+                && checkNameForm(
+                    vertex.immediateSuperior.dse.rdn,
+                    nameForm.mandatoryAttributes,
+                    nameForm.optionalAttributes,
+                )
+            );
+            if (structureRuleIsApplicableToTheAdminPoint) {
+                vertex.immediateSuperior.dse.governingStructureRule = Number(decoded.ruleIdentifier);
+                pendingUpdates.otherWrites.push(ctx.db.entry.update({
+                    where: {
+                        id: vertex.immediateSuperior.dse.id,
+                    },
+                    data: {
+                        governingStructureRule: Number(decoded.ruleIdentifier),
+                    },
+                }));
+            }
+        }
+    }
+
     pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.create({
         data: {
             entry_id: vertex.dse.id,
@@ -79,12 +129,58 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = dITStructureRules.decoderFor["&Type"]!(value.value);
-    pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.deleteMany({
+    pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.delete({
         where: {
-            entry_id: vertex.dse.id,
-            ruleIdentifier: Number(decoded.ruleIdentifier),
+            entry_id_ruleIdentifier: {
+                entry_id: vertex.dse.id,
+                ruleIdentifier: Number(decoded.ruleIdentifier),
+            },
         },
     }));
+
+    if (
+        !decoded.superiorStructureRules?.length // If this structure rule applies to the admin point...
+        // And what is above this entry is actually a subschema administrative point...
+        && vertex.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA)
+        // And the admin point's GSR is THIS GSR.
+        && (decoded.ruleIdentifier === vertex.immediateSuperior?.dse.governingStructureRule)
+    ) { // We have to recalculate the GSR for the admin point.
+        const structureRules = vertex.dse.subentry?.ditStructureRules ?? [];
+        const applicableStructureRule = structureRules.find((sr) => {
+            if (sr.ruleIdentifier === decoded.ruleIdentifier) {
+                return false;
+            }
+            const nameForm = ctx.nameForms.get(sr.nameForm.toString());
+            if (!nameForm) {
+                return false;
+            }
+            return (
+                vertex.immediateSuperior!.dse.structuralObjectClass?.isEqualTo(nameForm.namedObjectClass)
+                && checkNameForm(vertex.immediateSuperior!.dse.rdn, nameForm.mandatoryAttributes, nameForm.optionalAttributes)
+            );
+        });
+        if (applicableStructureRule) {
+            vertex.immediateSuperior.dse.governingStructureRule = Number(decoded.ruleIdentifier);
+            pendingUpdates.otherWrites.push(ctx.db.entry.update({
+                where: {
+                    id: vertex.immediateSuperior.dse.id,
+                },
+                data: {
+                    governingStructureRule: Number(decoded.ruleIdentifier),
+                },
+            }));
+        } else {
+            vertex.immediateSuperior.dse.governingStructureRule = undefined;
+            pendingUpdates.otherWrites.push(ctx.db.entry.update({
+                where: {
+                    id: vertex.immediateSuperior.dse.id,
+                },
+                data: {
+                    governingStructureRule: null,
+                },
+            }));
+        }
+    }
 };
 
 export
@@ -98,6 +194,12 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
             entry_id: vertex.dse.id,
         },
     }));
+
+    // The admin point now has no governing structure rule.
+    if (vertex.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA)) {
+        pendingUpdates.entryUpdate.governingStructureRule = null;
+        vertex.dse.governingStructureRule = undefined;
+    }
 };
 
 export

@@ -84,8 +84,24 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     const description = decoded.description
         ? directoryStringToString(decoded.description)
         : undefined;
-    pendingUpdates.otherWrites.push(ctx.db.nameForm.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.nameForm.upsert({
+        where: {
+            identifier: decoded.identifier.toString(),
+        },
+        create: {
+            identifier: decoded.identifier.toString(),
+            name,
+            description,
+            obsolete: decoded.obsolete,
+            namedObjectClass: decoded.information.subordinate.toString(),
+            mandatoryAttributes: decoded.information.namingMandatories
+                .map((oid) => oid.toString())
+                .join(" "),
+            optionalAttributes: decoded.information.namingOptionals
+                ?.map((oid) => oid.toString())
+                .join(" "),
+        },
+        update: {
             identifier: decoded.identifier.toString(),
             name,
             description,

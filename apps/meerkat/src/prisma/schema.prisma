@@ -457,8 +457,7 @@ model DITStructureRule {
   active                 Boolean  @default(true)
   created_at             DateTime @default(now())
 
-  @@index([ruleIdentifier])
-  @@index([entry_id])
+  @@unique([entry_id, ruleIdentifier])
 }
 
 // CONTENT-RULE ::= CLASS {
@@ -515,7 +514,7 @@ model ContextUseRule {
   created_at    DateTime @default(now())
 
   // NOTE: X.501 does not say that this has to be unique by attribute type.
-  @@index([entry_id])
+  @@index([entry_id, active])
 }
 
 // FRIENDS ::= CLASS {

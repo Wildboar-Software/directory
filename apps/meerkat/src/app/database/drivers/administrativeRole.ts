@@ -18,6 +18,17 @@ import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import {
     administrativeRole,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+import {
+    id_ar_subschemaAdminSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
+import {
+    subschema,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+import { Prisma } from "@prisma/client";
+import checkNameForm from "@wildboar/x500/src/lib/utils/checkNameForm";
+import getSubschemaSubentry from "../../dit/getSubschemaSubentry";
+
+const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -40,19 +51,73 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    const OID: string = value.value.objectIdentifier.toString();
+    const oid = value.value.objectIdentifier;
+
+    /**
+     * This section exists because, when we make an entry a subschema admin
+     * point, it's governing structure rule must be recalculated according to
+     * the new DIT structure rules that are (or will be) defined.
+     */
+    if (oid.isEqualTo(id_ar_subschemaAdminSpecificArea)) {
+        const subschemaSubentry = await ctx.db.entry.findFirst({
+            where: {
+                immediate_superior_id: vertex.dse.id,
+                deleteTimestamp: null,
+                subentry: true,
+                EntryObjectClass: {
+                    some: {
+                        object_class: subschema["&id"].toString(),
+                    },
+                },
+            },
+            select: {
+                DITStructureRule: {
+                    where: {
+                        superiorStructureRules: Prisma.DbNull,
+                    },
+                    select: {
+                        ruleIdentifier: true,
+                        nameForm: true,
+                    },
+                },
+            },
+        });
+        // vertex.dse.structuralObjectClass should be defined.
+        if (subschemaSubentry && vertex.dse.structuralObjectClass) {
+            const applicableStructureRule = subschemaSubentry.DITStructureRule
+                .find((sr) => {
+                    const nameForm = ctx.nameForms.get(sr.nameForm);
+                    if (!nameForm) {
+                        return false;
+                    }
+                    return (
+                        vertex.dse.structuralObjectClass!.isEqualTo(nameForm.namedObjectClass)
+                        && checkNameForm(vertex.dse.rdn, nameForm.mandatoryAttributes, nameForm.optionalAttributes)
+                    );
+                });
+            if (applicableStructureRule) {
+                pendingUpdates.entryUpdate.governingStructureRule = applicableStructureRule.ruleIdentifier;
+            } else {
+                pendingUpdates.entryUpdate.governingStructureRule = null;
+            }
+        } else {
+            pendingUpdates.entryUpdate.governingStructureRule = null;
+        }
+    }
+
+    const oidStr: string = oid.toString();
     pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.create({
         data: {
             entry_id: vertex.dse.id,
-            administrativeRole: OID,
+            administrativeRole: oidStr,
         },
     }));
     pendingUpdates.entryUpdate.admPoint = true;
     if (vertex.dse.admPoint) {
-        vertex.dse.admPoint.administrativeRole.add(OID);
+        vertex.dse.admPoint.administrativeRole.add(oidStr);
     } else {
         vertex.dse.admPoint = {
-            administrativeRole: new Set([ OID ]),
+            administrativeRole: new Set([ oidStr ]),
         };
     }
 };
@@ -70,15 +135,48 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     ) {
         pendingUpdates.entryUpdate.admPoint = false;
     }
-    const OID: string = value.value.objectIdentifier.toString();
+    const oid = value.value.objectIdentifier;
+
+    /**
+     * If the subschema admin role is removed, the governing structure rule from
+     * the old subschema is now incorrect, and it needs to be re-calculated
+     * according to the structure rules of the superior (and now governing)
+     * subschema administrative area.
+     */
+    if (oid.isEqualTo(id_ar_subschemaAdminSpecificArea) && vertex.immediateSuperior) {
+        const subschema = await getSubschemaSubentry(ctx, vertex.immediateSuperior);
+        if (subschema) {
+            const structureRules = subschema.dse.subentry?.ditStructureRules;
+            const applicableStructureRule = structureRules
+                ?.find((sr) => {
+                    const nameForm = ctx.nameForms.get(sr.nameForm.toString());
+                    if (!nameForm) {
+                        return false;
+                    }
+                    return (
+                        vertex.dse.structuralObjectClass!.isEqualTo(nameForm.namedObjectClass)
+                        && checkNameForm(vertex.dse.rdn, nameForm.mandatoryAttributes, nameForm.optionalAttributes)
+                    );
+                });
+            if (applicableStructureRule) {
+                pendingUpdates.entryUpdate.governingStructureRule = Number(applicableStructureRule.ruleIdentifier);
+                vertex.dse.governingStructureRule = Number(applicableStructureRule.ruleIdentifier);
+            } else {
+                pendingUpdates.entryUpdate.governingStructureRule = null;
+                vertex.dse.governingStructureRule = undefined;
+            }
+        }
+    }
+
+    const oidStr: string = oid.toString();
     pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            administrativeRole: OID,
+            administrativeRole: oidStr,
         },
     }));
     if (vertex.dse.admPoint) {
-        vertex.dse.admPoint.administrativeRole.delete(OID);
+        vertex.dse.admPoint.administrativeRole.delete(oidStr);
     }
 };
 
@@ -88,6 +186,37 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    /**
+     * If the subschema admin role is removed, the governing structure rule from
+     * the old subschema is now incorrect, and it needs to be re-calculated
+     * according to the structure rules of the superior (and now governing)
+     * subschema administrative area.
+     */
+    if (vertex.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA) && vertex.immediateSuperior) {
+        const subschema = await getSubschemaSubentry(ctx, vertex.immediateSuperior);
+        if (subschema) {
+            const structureRules = subschema.dse.subentry?.ditStructureRules;
+            const applicableStructureRule = structureRules
+                ?.find((sr) => {
+                    const nameForm = ctx.nameForms.get(sr.nameForm.toString());
+                    if (!nameForm) {
+                        return false;
+                    }
+                    return (
+                        vertex.dse.structuralObjectClass!.isEqualTo(nameForm.namedObjectClass)
+                        && checkNameForm(vertex.dse.rdn, nameForm.mandatoryAttributes, nameForm.optionalAttributes)
+                    );
+                });
+            if (applicableStructureRule) {
+                pendingUpdates.entryUpdate.governingStructureRule = Number(applicableStructureRule.ruleIdentifier);
+                vertex.dse.governingStructureRule = Number(applicableStructureRule.ruleIdentifier);
+            } else {
+                pendingUpdates.entryUpdate.governingStructureRule = null;
+                vertex.dse.governingStructureRule = undefined;
+            }
+        }
+    }
+
     pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.deleteMany({
         where: {
             entry_id: vertex.dse.id,

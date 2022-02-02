@@ -1312,7 +1312,8 @@ async function addEntry (
                 )
                 || (
                     !newEntryIsANewSubschema
-                    && (rule.superiorStructureRules === immediateSuperior.dse.governingStructureRule)
+                    && immediateSuperior.dse.governingStructureRule
+                    && rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule)
                 )
             ))
             .filter((rule) => {

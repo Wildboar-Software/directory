@@ -1,12 +1,6 @@
 import { Context } from "@wildboar/meerkat-types";
 import objectClassFromInformationObject from "./objectClassFromInformationObject";
 import * as x500oc from "@wildboar/x500/src/lib/collections/objectClasses";
-import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
-import { accessControlSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
-import { collectiveAttributeSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
-import { contextAssertionSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
-import { serviceAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
-import { pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
 import { ObjectClassKind as PrismaObjectClassKind } from "@prisma/client";
 import {
     ObjectClassKind,
@@ -15,19 +9,7 @@ import {
     ObjectClassKind_structural,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import { ObjectIdentifier } from "asn1-ts";
-import type {
-    OBJECT_CLASS,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
 import { AssertionError } from "assert";
-
-const additionalObjectClasses: Record<string, OBJECT_CLASS> = {
-    "subentry": subentry,
-    "accessControlSubentry": accessControlSubentry,
-    "collectiveAttributeSubentry": collectiveAttributeSubentry,
-    "contextAssertionSubentry": contextAssertionSubentry,
-    "serviceAdminSubentry": serviceAdminSubentry,
-    "pwdAdminSubentry": pwdAdminSubentry,
-};
 
 function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     switch (ock) {
@@ -48,7 +30,6 @@ export
 async function loadObjectClasses (ctx: Context): Promise<void> {
     const objectClassInfoObjects = [
         ...Object.values(x500oc),
-        ...Object.values(additionalObjectClasses),
     ];
     objectClassInfoObjects
         .map(objectClassFromInformationObject)

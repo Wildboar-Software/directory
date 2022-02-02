@@ -759,8 +759,11 @@ async function modifyDN (
         : await getSubschemaSubentry(ctx, superior);
     if (!target.dse.subentry && schemaSubentry) { // Schema rules only apply to entries.
         const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
-            .filter((rule) => !rule.obsolete)
-            .filter((rule) => (rule.superiorStructureRules === superior.dse.governingStructureRule))
+            .filter((rule) => (
+                !rule.obsolete
+                && superior.dse.governingStructureRule
+                && rule.superiorStructureRules?.includes(superior.dse.governingStructureRule)
+            ))
             .filter((rule) => {
                 const nf = ctx.nameForms.get(rule.nameForm.toString());
                 if (!nf) {
