@@ -188,6 +188,12 @@ import {
 import {
     id_ar_accessControlInnerArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
+import {
+    subtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
+import {
+    _decode_SubtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -1293,6 +1299,106 @@ async function addEntry (
                 }),
                 namingViolationErrorData(ctx, assn, unmatchedAFDNs, state.chainingArguments.aliasDereferenced),
             );
+        }
+    }
+
+    if (isSubentry && objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]))) {
+        const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
+            where: {
+                immediate_superior_id: immediateSuperior.dse.id,
+                deleteTimestamp: null,
+                subentry: true,
+                EntryObjectClass: {
+                    some: {
+                        object_class: subschema["&id"].toString(),
+                    },
+                },
+            },
+            select: {
+                dseUUID: true,
+            },
+        });
+        if (subschemaThatAlreadyExists) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:one_subschema", {
+                    uuid: subschemaThatAlreadyExists.dseUUID,
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_namingViolation,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        const subtreeSpec = data.entry
+            .find((attr) => attr.type_.isEqualTo(subtreeSpecification["&id"]));
+        if (subtreeSpec) {
+            const ssValues = subtreeSpec.values.length;
+            const ssValuesWithContext = (subtreeSpec.valuesWithContext?.length ?? 0);
+            if ((ssValues !== 1) || (ssValuesWithContext > 0)) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:subschema_whole_area"),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attributeType: subtreeSpecification["&id"],
+                            }
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+            const invalidSubtreeForSubschema = subtreeSpec.values
+                .map((v) => _decode_SubtreeSpecification(v))
+                .some((ss) => (
+                    ((ss.base !== undefined) && (ss.base.length > 0))
+                    || ![ undefined, 0 ].includes(ss.minimum as number)
+                    || ![ undefined, 0 ].includes(ss.maximum as number)
+                    || ss.specificExclusions?.length
+                    || ss.specificationFilter
+                ));
+            if (invalidSubtreeForSubschema) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:subschema_whole_area"),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attributeType: subtreeSpecification["&id"],
+                            }
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
         }
     }
 

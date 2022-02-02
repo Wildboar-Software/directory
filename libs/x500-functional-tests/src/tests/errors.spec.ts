@@ -1329,6 +1329,10 @@ describe("Meerkat DSA", () => {
 
     });
 
+    it.todo("does not allow users to add multiple subschema subentries to a subschema administrative area");
+    it.todo("does not allow users to add multiple subtrees to the subschema subentry within a subschema administrative area");
+    it.todo("does not allow users to define a subschema subentry with a subtree specification that does not cover the whole administrative area");
+
     it.only("An error is thrown when an attempt is made to add a second value to a single-valued attribute", async () => {
         const rdn = [
             new AttributeTypeAndValue(

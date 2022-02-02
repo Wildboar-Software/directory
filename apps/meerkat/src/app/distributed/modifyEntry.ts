@@ -26,6 +26,7 @@ import {
     UpdateProblem_objectClassModificationProhibited,
     UpdateProblem_familyRuleViolation,
     UpdateProblem_notAllowedOnRDN,
+    UpdateProblem_namingViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     objectClass,
@@ -149,7 +150,6 @@ import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromComm
 import getEntryModificationStatistics from "../telemetry/getEntryModificationStatistics";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import validateObjectClasses from "../x500/validateObjectClasses";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import {
     ObjectClassKind_auxiliary,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
@@ -229,6 +229,15 @@ import {
 import {
     userPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import {
+    subschema,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+import {
+    subtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
+import {
+    _decode_SubtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -2053,6 +2062,109 @@ async function modifyEntry (
     }
     const addedObjectClasses = patch.addedValues.get(objectClass["&id"].toString())
         ?.map((value) => value.value.objectIdentifier) ?? [];
+    if (addedObjectClasses.some((oc) => oc.isEqualTo(subschema["&id"]))) {
+        const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
+            where: {
+                immediate_superior_id: target.immediateSuperior!.dse.id,
+                deleteTimestamp: null,
+                subentry: true,
+                EntryObjectClass: {
+                    some: {
+                        object_class: subschema["&id"].toString(),
+                    },
+                },
+            },
+            select: {
+                dseUUID: true,
+            },
+        });
+        if (subschemaThatAlreadyExists) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:one_subschema", {
+                    uuid: subschemaThatAlreadyExists.dseUUID,
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_namingViolation,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        const subtreeSpecAdded = patch.addedValues.get(subtreeSpecification["&id"].toString());
+        const subtreeSpecRemoved = patch.removedValues.get(subtreeSpecification["&id"].toString());
+        if (subtreeSpecAdded || subtreeSpecRemoved) {
+            const existingSubtrees = await ctx.db.subtreeSpecification.count({
+                where: {
+                    entry_id: target.dse.id,
+                },
+            });
+            const totalSubtrees = (existingSubtrees + (subtreeSpecAdded?.length ?? 0) - (subtreeSpecRemoved?.length ?? 0));
+            if (totalSubtrees > 0) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:subschema_whole_area"),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attributeType: subtreeSpecification["&id"],
+                            }
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+            const invalidSubtreeForSubschema = (subtreeSpecAdded ?? [])
+                .map((v) => _decode_SubtreeSpecification(v.value))
+                .some((ss) => (
+                    ((ss.base !== undefined) && (ss.base.length > 0))
+                    || ![ undefined, 0 ].includes(ss.minimum as number)
+                    || ![ undefined, 0 ].includes(ss.maximum as number)
+                    || ss.specificExclusions?.length
+                    || ss.specificationFilter
+                ));
+            if (invalidSubtreeForSubschema) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:subschema_whole_area"),
+                    new UpdateErrorData(
+                        UpdateProblem_objectClassViolation,
+                        [
+                            {
+                                attributeType: subtreeSpecification["&id"],
+                            }
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+    }
     for (const ocid of addedObjectClasses) {
         if (ctx.config.bulkInsertMode) {
             continue;

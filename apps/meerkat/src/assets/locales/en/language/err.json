@@ -143,5 +143,7 @@
     "unrecognized_ext_op": "Unrecognized extended operation.",
     "tls_already_in_use": "TLS is already in use.",
     "anon_bind_disabled": "COULD_BAN={{host}}; Client {{host}} attempted to bind anonymously, but anonymous binds are disabled.",
-    "invalid_credentials": "COULD_BAN={{host}}; Client {{host}} attempted to bind with invalid credentials."
+    "invalid_credentials": "COULD_BAN={{host}}; Client {{host}} attempted to bind with invalid credentials.",
+    "one_subschema": "There may only be one subschema subentry in a subschema administrative area. One already exists with the DSE UUID {{uuid}}.",
+    "subschema_whole_area": "A subschema subentry's subtree specification must cover the entire subschema administrative area (e.g. an empty sequence)."
 }

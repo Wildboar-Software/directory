@@ -91,5 +91,6 @@
     "failed_to_decode_subordinates": "Failed to load a subordinate of entry {{uuid}} with this error. No subordinates will be cached for this entry. This was the error: {{e}}",
     "idm_bad_sequence": "COULD_BAN={{host}}; Remote host {{source}} submitted IDM packets in an invalid sequence.",
     "too_many_prebind_requests": "COULD_BAN={{host}}; Association {{cid}} submitted too many requests before receiving a bind response.",
-    "bind_error": "COULD_BAN={{host}}; Error encountered during bind from host {{source}}: {{e}}"
+    "bind_error": "COULD_BAN={{host}}; Error encountered during bind from host {{source}}: {{e}}",
+    "gsr_recalculated": "The governing structure rule for entry with dseUUID {{uuid}} was recalculated due to a change in the relevant subschema."
 }
