@@ -103,6 +103,9 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         } else {
             pendingUpdates.entryUpdate.governingStructureRule = null;
         }
+        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
+            uuid: vertex.dse.uuid,
+        }));
     }
 
     const oidStr: string = oid.toString();
@@ -166,6 +169,9 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                 vertex.dse.governingStructureRule = undefined;
             }
         }
+        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
+            uuid: vertex.dse.uuid,
+        }));
     }
 
     const oidStr: string = oid.toString();
@@ -215,6 +221,9 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                 vertex.dse.governingStructureRule = undefined;
             }
         }
+        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
+            uuid: vertex.dse.uuid,
+        }));
     }
 
     pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.deleteMany({

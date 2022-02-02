@@ -66,6 +66,7 @@ async function createEntry (
         },
         select: {
             id: true,
+            dseUUID: true,
         },
     });
     const vertex = await vertexFromDatabaseEntry(ctx, superior, createdEntry as DatabaseEntry, true);

@@ -20,7 +20,6 @@ import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 import checkNameForm from "@wildboar/x500/src/lib/utils/checkNameForm";
-import getSubschemaSubentry from "../../dit/getSubschemaSubentry";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
@@ -87,6 +86,9 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                     data: {
                         governingStructureRule: Number(decoded.ruleIdentifier),
                     },
+                }));
+                ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
+                    uuid: vertex.dse.uuid,
                 }));
             }
         }
@@ -180,6 +182,9 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                 },
             }));
         }
+        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
+            uuid: vertex.dse.uuid,
+        }));
     }
 };
 
@@ -199,6 +204,9 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     if (vertex.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA)) {
         pendingUpdates.entryUpdate.governingStructureRule = null;
         vertex.dse.governingStructureRule = undefined;
+        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
+            uuid: vertex.dse.uuid,
+        }));
     }
 };
 
