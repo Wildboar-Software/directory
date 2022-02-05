@@ -39,9 +39,6 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    if (!vertex.dse.shadow) {
-        return;
-    }
     pendingUpdates.entryUpdate.governingStructureRule = Number(value.value.integer);
 };
 
@@ -52,9 +49,6 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    if (!vertex.dse.shadow) {
-        return;
-    }
     pendingUpdates.entryUpdate.governingStructureRule = null;
 };
 
@@ -65,9 +59,6 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    if (!vertex.dse.shadow) {
-        return;
-    }
     pendingUpdates.entryUpdate.governingStructureRule = null;
 };
 
