@@ -303,6 +303,12 @@ import {
     ModifyRights_Item_permission_rename,
     ModifyRights_Item_permission_move,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights-Item-permission.ta";
+import {
+    createTestRootDN,
+    createTestRootNode,
+    utf8,
+    oid,
+} from "../utils";
 
 jest.setTimeout(30000);
 
@@ -330,20 +336,6 @@ function frame(ber: ASN1Element): Buffer {
 
 const HOST: string = "localhost";
 const PORT: number = 4632;
-
-const encodedDesc = _encode_UnboundedDirectoryString({
-    uTF8String: "testeroo",
-}, DER);
-
-function utf8 (str: string): ASN1Element {
-    return _encode_UnboundedDirectoryString({
-        uTF8String: str,
-    }, DER);
-}
-
-function oid (o: OBJECT_IDENTIFIER): ASN1Element {
-    return _encodeObjectIdentifier(o, DER);
-}
 
 async function connect(credentials?: Credentials): Promise<IDMConnection> {
     const dba = new DirectoryBindArgument(
@@ -407,14 +399,6 @@ function createTestRDN (str: string): RelativeDistinguishedName {
     ];
 }
 
-function createTestRootDN(
-    testId: string,
-): DistinguishedName {
-    return [
-        createTestRDN(testId),
-    ];
-}
-
 function writeOperation(
     connection: IDMConnection,
     opCode: Code,
@@ -439,73 +423,6 @@ function writeOperation(
             invokeID,
             opCode,
             argument,
-        );
-    });
-}
-
-async function createTestRootNode(
-    connection: IDMConnection,
-    testId: string,
-    extraAttributes?: Attribute[],
-): Promise<ResultOrError> {
-    const encodedCN = _encode_UnboundedDirectoryString({
-        uTF8String: testId,
-    }, DER);
-
-    const addTestRoot = createAddEntryArguments(
-        createTestRootDN(testId),
-        [
-            new Attribute(
-                administrativeRole["&id"],
-                [
-                    _encodeObjectIdentifier(id_ar_autonomousArea, DER),
-                ],
-                undefined,
-            ),
-            new Attribute(
-                objectClass["&id"],
-                [
-                    _encodeObjectIdentifier(applicationProcess["&id"], DER),
-                    _encodeObjectIdentifier(userPwdClass["&id"], DER), // So passwords can be set.
-                ],
-                undefined,
-            ),
-            new Attribute(
-                commonName["&id"],
-                [
-                    encodedCN,
-                ],
-                undefined,
-            ),
-            new Attribute(
-                description["&id"],
-                [
-                    encodedDesc,
-                ],
-                undefined,
-            ),
-            ...(extraAttributes ?? []),
-        ],
-    );
-    const invokeID = crypto.randomInt(1_000_000);
-    return new Promise((resolve) => {
-        connection.events.on(invokeID.toString(), (roe: ResultOrError) => {
-            if ("error" in roe) {
-                resolve(roe);
-            } else {
-                resolve({
-                    invokeId: {
-                        present: invokeID,
-                    },
-                    opCode: addEntry["&operationCode"]!,
-                    result: roe.result,
-                });
-            }
-        });
-        connection!.writeRequest(
-            invokeID,
-            addEntry["&operationCode"]!,
-            _encode_AddEntryArgument(addTestRoot, DER),
         );
     });
 }

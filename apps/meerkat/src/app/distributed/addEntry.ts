@@ -194,6 +194,7 @@ import {
 import {
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+import { strict as assert } from "assert";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -307,6 +308,48 @@ async function addEntry (
     const isChild: boolean = objectClassesIndex.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
     const isFirstLevel: boolean = !!immediateSuperior.dse.root;
+    /**
+     * It would be impossible to create anything other than first-level DSEs if
+     * subentries were not exempt from subschema restrictions, because they must
+     * be created before the subschema can be defined!
+     *
+     * ITU Recommendation X.501 (2016), Section 14.2 states that:
+     *
+     * > Although subentry and subentryNameForm are specified using the notation
+     * > of clause 13, subentries are not regulated by DIT structure or DIT
+     * > content rules.
+     *
+     * However, regarding `subentryNameForm`, Section 14.2.2 states that:
+     *
+     * > No other name form shall be used for subentries.
+     *
+     * As such, Meerkat DSA will perform a hard-coded check that subentries have
+     * this attribute type exclusively in their RDN.
+     */
+    const isExemptFromSubschema: boolean = (isSubentry || isFirstLevel);
+
+    if (
+        (immediateSuperior.dse.governingStructureRule === undefined) // The immediate superior has no GSR, and...
+        && !isExemptFromSubschema
+    ) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:no_gsr", { uuid: immediateSuperior.dse.uuid }),
+            new UpdateErrorData(
+                UpdateProblem_namingViolation,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
 
     if (isFirstLevel) {
         if (!await mayAddTopLeveDSE(ctx, assn)) {
@@ -1409,6 +1452,8 @@ async function addEntry (
         : await getSubschemaSubentry(ctx, immediateSuperior);
     if (!isSubentry && schemaSubentry) { // Schema rules only apply to entries.
         const newEntryIsANewSubschema = objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
+        assert(schemaSubentry.dse.subentry);
+        // TODO: Use find instead of filter.
         const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
             .filter((rule) => !rule.obsolete)
             .filter((rule) => (
@@ -1418,7 +1463,7 @@ async function addEntry (
                 )
                 || (
                     !newEntryIsANewSubschema
-                    && immediateSuperior.dse.governingStructureRule
+                    && immediateSuperior.dse.governingStructureRule // TODO: Does not tolerate being 0
                     && rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule)
                 )
             ))

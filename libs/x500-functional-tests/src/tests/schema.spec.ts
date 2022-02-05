@@ -1156,4 +1156,9 @@ describe("Meerkat DSA", () => {
 
     });
 
+    it.todo("Ignores obsolete DIT structure rules");
+    it.todo("Ignores obsolete DIT content rules");
+    it.todo("Ignores obsolete DIT context use rules");
+    it.todo("Ignores obsolete friendships");
+
 });
