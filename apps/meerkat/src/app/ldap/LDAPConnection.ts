@@ -153,6 +153,7 @@ async function handleRequest (
     }
     const dapRequest = ldapRequestToDAPRequest(ctx, assn, message);
     if (!dapRequest) {
+        // TODO: Log something, response with something. Something!
         return;
     }
     if ("present" in dapRequest.invokeId) {

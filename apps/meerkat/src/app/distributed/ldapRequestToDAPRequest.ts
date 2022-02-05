@@ -1260,16 +1260,26 @@ function ldapRequestToDAPRequest (
             association_id: assn.id,
         });
         const abandonedOperationInvokeID: number | undefined = assn.messageIDToInvokeID.get(Number(messageID));
-        ctx.log.debug(ctx.i18n.t("log:abandoning_invocation_from_ldap", {
-            iid: abandonedOperationInvokeID,
-            mid: messageID,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-        });
-        if (abandonedOperationInvokeID === undefined) {
+        if (abandonedOperationInvokeID !== undefined) {
+            ctx.log.debug(ctx.i18n.t("log:abandoning_invocation_from_ldap", {
+                iid: abandonedOperationInvokeID,
+                mid: messageID,
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
+        } else {
+            ctx.log.debug(ctx.i18n.t("log:no_such_ldap_operation", {
+                mid: messageID,
+                assn: assn.id,
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+            });
             return null;
         }
         const ar: AbandonArgument = {
@@ -1352,7 +1362,26 @@ function ldapRequestToDAPRequest (
             }
             const messageID: number = Number(cancelIDElement.integer);
             const abandonedOperationInvokeID: number | undefined = assn.messageIDToInvokeID.get(messageID);
-            if (abandonedOperationInvokeID === undefined) {
+            if (abandonedOperationInvokeID !== undefined) {
+                ctx.log.debug(ctx.i18n.t("log:abandoning_invocation_from_ldap", {
+                    iid: abandonedOperationInvokeID,
+                    mid: messageID,
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
+            } else {
+                ctx.log.debug(ctx.i18n.t("log:no_such_ldap_operation", {
+                    mid: messageID,
+                    assn: assn.id,
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                });
                 return null;
             }
             const ar: AbandonArgument = {

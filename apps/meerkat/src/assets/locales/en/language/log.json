@@ -73,6 +73,7 @@
     "received_request": "Received {{protocol}} request with invoke ID {{iid}} and operation {{op}} from connection {{cid}}.",
     "abandon_ldap_op": "Abandoning LDAP operation from message {{mid}}.",
     "abandoning_invocation_from_ldap": "Abandoning invocation {{iid}}, which corresponds to LDAP message {{mid}}.",
+    "no_such_ldap_operation": "There is no LDAP operation with message ID {{mid}} for association {{assn}} in progress to abandon.",
     "tcp_max_conn": "TCP connection from {{source}} turned away because the maximum configured number of connections ({{max}}) has been reached.",
     "tcp_max_conn_per_addr": "COULD_BAN={{host}}; TCP connection from {{source}} turned away because the maximum configured number of connections ({{max}}) per address has been reached.",
     "buffer_limit": "COULD_BAN={{host}}; TCP connection from {{source}} did or would have exceeded the configured {{protocol}} buffer size of {{size}} bytes. The socket will be closed.",
@@ -93,6 +94,7 @@
     "too_many_prebind_requests": "COULD_BAN={{host}}; Association {{cid}} submitted too many requests before receiving a bind response.",
     "bind_error": "COULD_BAN={{host}}; Error encountered during bind from host {{source}}: {{e}}",
     "admpoint_gsr_recalculated": "The governing structure rule for administrative point with dseUUID {{uuid}} was recalculated due to a change in the relevant subschema.",
+    "admpoint_gsr_recalculated@hint": "Meerkat DSA does not automatically recursively recalculate the governing structure rules for subtrees of the subschema impacted by structure rule changes. Review the documentation on how to manually update the governing structure rule of the subschema.",
     "gsr_changed": "The governing structure rule for entry with dseUUID {{uuid}} changed due to a change in the relevant subschema.",
     "beta": "This is a beta version of Meerkat DSA, so it is likely that there are bugs, including security vulnerabilities. If you feel that you have discovered an issue, please report it here: https://github.com/Wildboar-Software/directory/issues. If you would like to ask a question, please create a GitHub issue, or (preferably) post a question to StackOverflow with the tag 'meerkat-dsa'."
 }
