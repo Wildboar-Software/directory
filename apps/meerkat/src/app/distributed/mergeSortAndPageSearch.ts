@@ -386,13 +386,20 @@ async function mergeSortAndPageSearch(
                         mergedResult.partialOutcomeQualifier?.overspecFilter,
                         mergedResult.partialOutcomeQualifier?.notification,
                         entryCount
+                            /**
+                             * TODO: Use `.count()` instead once this bug is
+                             * fixed: https://github.com/prisma/prisma/issues/11645
+                             */
                             ? {
-                                exact: await ctx.db.enqueuedSearchResult.count({
+                                exact: (await ctx.db.enqueuedSearchResult.findMany({
                                     where: {
                                         connection_uuid: conn.id,
                                         query_ref: searchState.paging![0],
                                     },
-                                }),
+                                    select: {
+                                        id: true,
+                                    },
+                                })).length,
                             }
                             : undefined,
                     ),
