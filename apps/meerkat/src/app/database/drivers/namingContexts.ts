@@ -24,6 +24,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -59,17 +60,28 @@ const readValues: SpecialAttributeDatabaseReader = async (
             agreement_ber: true,
         },
     });
+
+    const firstLevel = await isFirstLevelDSA(ctx);
+
     return [
-        ...obs.map((ob): Value => {
-            const argreementElement = new BERElement();
-            argreementElement.fromBytes(ob.agreement_ber);
-            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-            return {
-                type: namingContexts["&id"],
-                value: namingContexts.encoderFor["&Type"]!([ ...agreement.immediateSuperior, agreement.rdn ], DER),
-            };
-        }),
-    ];
+            ...(firstLevel // If this is a first-level DSA, we still need to return an empty namingContext.
+                ? [
+                    {
+                        type: namingContexts["&id"],
+                        value: namingContexts.encoderFor["&Type"]!([], DER),
+                    },
+                ]
+                : []),
+            ...obs.map((ob): Value => {
+                const argreementElement = new BERElement();
+                argreementElement.fromBytes(ob.agreement_ber);
+                const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
+                return {
+                    type: namingContexts["&id"],
+                    value: namingContexts.encoderFor["&Type"]!([ ...agreement.immediateSuperior, agreement.rdn ], DER),
+                };
+            }),
+        ];
 };
 
 export
