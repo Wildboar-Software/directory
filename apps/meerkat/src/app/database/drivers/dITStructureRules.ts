@@ -78,17 +78,23 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 )
             );
             if (structureRuleIsApplicableToTheAdminPoint) {
-                vertex.immediateSuperior.dse.governingStructureRule = Number(decoded.ruleIdentifier);
+                const newGSR = Number(decoded.ruleIdentifier);
+                vertex.immediateSuperior.dse.governingStructureRule = newGSR;
                 pendingUpdates.otherWrites.push(ctx.db.entry.update({
                     where: {
                         id: vertex.immediateSuperior.dse.id,
                     },
                     data: {
-                        governingStructureRule: Number(decoded.ruleIdentifier),
+                        governingStructureRule: newGSR,
                     },
                 }));
-                ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
-                    uuid: vertex.dse.uuid,
+                /**
+                 * We log this at a debug level here, because it looks like the
+                 * GSR is just getting set for the first time, which is no
+                 * cause for any alarm at all.
+                 */
+                ctx.log.debug(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+                    uuid: vertex.immediateSuperior.dse.uuid,
                 }));
             }
         }
@@ -182,8 +188,11 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                 },
             }));
         }
-        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
-            uuid: vertex.dse.uuid,
+        ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+            uuid: vertex.immediateSuperior.dse.uuid,
+        }));
+        ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+            context: "hint",
         }));
     }
 };
@@ -202,10 +211,20 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
 
     // The admin point now has no governing structure rule.
     if (vertex.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA)) {
-        pendingUpdates.entryUpdate.governingStructureRule = null;
-        vertex.dse.governingStructureRule = undefined;
-        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
-            uuid: vertex.dse.uuid,
+        vertex.immediateSuperior.dse.governingStructureRule = undefined;
+        pendingUpdates.otherWrites.push(ctx.db.entry.update({
+            where: {
+                id: vertex.immediateSuperior.dse.id,
+            },
+            data: {
+                governingStructureRule: null,
+            },
+        }));
+        ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+            uuid: vertex.immediateSuperior.dse.uuid,
+        }));
+        ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+            context: "hint",
         }));
     }
 };

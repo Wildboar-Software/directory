@@ -92,6 +92,7 @@
     "idm_bad_sequence": "COULD_BAN={{host}}; Remote host {{source}} submitted IDM packets in an invalid sequence.",
     "too_many_prebind_requests": "COULD_BAN={{host}}; Association {{cid}} submitted too many requests before receiving a bind response.",
     "bind_error": "COULD_BAN={{host}}; Error encountered during bind from host {{source}}: {{e}}",
-    "gsr_recalculated": "The governing structure rule for entry with dseUUID {{uuid}} was recalculated due to a change in the relevant subschema.",
+    "admpoint_gsr_recalculated": "The governing structure rule for administrative point with dseUUID {{uuid}} was recalculated due to a change in the relevant subschema.",
+    "gsr_changed": "The governing structure rule for entry with dseUUID {{uuid}} changed due to a change in the relevant subschema.",
     "beta": "This is a beta version of Meerkat DSA, so it is likely that there are bugs, including security vulnerabilities. If you feel that you have discovered an issue, please report it here: https://github.com/Wildboar-Software/directory/issues. If you would like to ask a question, please create a GitHub issue, or (preferably) post a question to StackOverflow with the tag 'meerkat-dsa'."
 }

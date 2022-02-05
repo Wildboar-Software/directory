@@ -19,6 +19,9 @@ import {
     administrativeRole,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
 import {
+    id_ar_autonomousArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 import {
@@ -28,6 +31,7 @@ import { Prisma } from "@prisma/client";
 import checkNameForm from "@wildboar/x500/src/lib/utils/checkNameForm";
 import getSubschemaSubentry from "../../dit/getSubschemaSubentry";
 
+const ID_AR_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
 
 export
@@ -82,6 +86,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 },
             },
         });
+        const previousGSR = vertex.dse.governingStructureRule;
         // vertex.dse.structuralObjectClass should be defined.
         if (subschemaSubentry && vertex.dse.structuralObjectClass) {
             const applicableStructureRule = subschemaSubentry.DITStructureRule
@@ -95,17 +100,27 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                         && checkNameForm(vertex.dse.rdn, nameForm.mandatoryAttributes, nameForm.optionalAttributes)
                     );
                 });
-            if (applicableStructureRule) {
-                pendingUpdates.entryUpdate.governingStructureRule = applicableStructureRule.ruleIdentifier;
-            } else {
-                pendingUpdates.entryUpdate.governingStructureRule = null;
+            const newGSR = applicableStructureRule?.ruleIdentifier ?? null;
+            pendingUpdates.entryUpdate.governingStructureRule = newGSR;
+            if ((newGSR ?? undefined) !== previousGSR) {
+                ctx.log.warn(ctx.i18n.t("log:gsr_changed", {
+                    uuid: vertex.dse.uuid,
+                }));
+                ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+                    context: "hint",
+                }));
             }
         } else {
             pendingUpdates.entryUpdate.governingStructureRule = null;
+            if (previousGSR !== undefined) {
+                ctx.log.warn(ctx.i18n.t("log:gsr_changed", {
+                    uuid: vertex.dse.uuid,
+                }));
+                ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+                    context: "hint",
+                }));
+            }
         }
-        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
-            uuid: vertex.dse.uuid,
-        }));
     }
 
     const oidStr: string = oid.toString();
@@ -139,14 +154,20 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         pendingUpdates.entryUpdate.admPoint = false;
     }
     const oid = value.value.objectIdentifier;
-
     /**
      * If the subschema admin role is removed, the governing structure rule from
      * the old subschema is now incorrect, and it needs to be re-calculated
      * according to the structure rules of the superior (and now governing)
      * subschema administrative area.
      */
-    if (oid.isEqualTo(id_ar_subschemaAdminSpecificArea) && vertex.immediateSuperior) {
+    if (
+        (
+            oid.isEqualTo(id_ar_subschemaAdminSpecificArea)
+            || oid.isEqualTo(id_ar_autonomousArea)
+        )
+        && vertex.immediateSuperior
+    ) {
+        const previousGSR = vertex.dse.governingStructureRule;
         const subschema = await getSubschemaSubentry(ctx, vertex.immediateSuperior);
         if (subschema) {
             const structureRules = subschema.dse.subentry?.ditStructureRules;
@@ -161,17 +182,20 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                         && checkNameForm(vertex.dse.rdn, nameForm.mandatoryAttributes, nameForm.optionalAttributes)
                     );
                 });
-            if (applicableStructureRule) {
-                pendingUpdates.entryUpdate.governingStructureRule = Number(applicableStructureRule.ruleIdentifier);
-                vertex.dse.governingStructureRule = Number(applicableStructureRule.ruleIdentifier);
-            } else {
-                pendingUpdates.entryUpdate.governingStructureRule = null;
-                vertex.dse.governingStructureRule = undefined;
+            const newGSR = applicableStructureRule?.ruleIdentifier
+                ? Number(applicableStructureRule.ruleIdentifier)
+                : null;
+            pendingUpdates.entryUpdate.governingStructureRule = newGSR;
+            vertex.dse.governingStructureRule = newGSR ?? undefined;
+            if ((newGSR ?? undefined) !== previousGSR) {
+                ctx.log.warn(ctx.i18n.t("log:gsr_changed", {
+                    uuid: vertex.dse.uuid,
+                }));
+                ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+                    context: "hint",
+                }));
             }
         }
-        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
-            uuid: vertex.dse.uuid,
-        }));
     }
 
     const oidStr: string = oid.toString();
@@ -198,9 +222,16 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
      * according to the structure rules of the superior (and now governing)
      * subschema administrative area.
      */
-    if (vertex.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA) && vertex.immediateSuperior) {
+    if (
+        (
+            vertex.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA)
+            || vertex.dse.admPoint?.administrativeRole.has(ID_AR_AUTONOMOUS)
+        )
+        && vertex.immediateSuperior
+    ) {
         const subschema = await getSubschemaSubentry(ctx, vertex.immediateSuperior);
         if (subschema) {
+            const previousGSR = vertex.dse.governingStructureRule;
             const structureRules = subschema.dse.subentry?.ditStructureRules;
             const applicableStructureRule = structureRules
                 ?.find((sr) => {
@@ -213,17 +244,20 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                         && checkNameForm(vertex.dse.rdn, nameForm.mandatoryAttributes, nameForm.optionalAttributes)
                     );
                 });
-            if (applicableStructureRule) {
-                pendingUpdates.entryUpdate.governingStructureRule = Number(applicableStructureRule.ruleIdentifier);
-                vertex.dse.governingStructureRule = Number(applicableStructureRule.ruleIdentifier);
-            } else {
-                pendingUpdates.entryUpdate.governingStructureRule = null;
-                vertex.dse.governingStructureRule = undefined;
+            const newGSR = applicableStructureRule?.ruleIdentifier
+                ? Number(applicableStructureRule.ruleIdentifier)
+                : null;
+            pendingUpdates.entryUpdate.governingStructureRule = newGSR;
+            vertex.dse.governingStructureRule = newGSR ?? undefined;
+            if ((newGSR ?? undefined) !== previousGSR) {
+                ctx.log.warn(ctx.i18n.t("log:gsr_changed", {
+                    uuid: vertex.dse.uuid,
+                }));
+                ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
+                    context: "hint",
+                }));
             }
         }
-        ctx.log.warn(ctx.i18n.t("log:gsr_recalculated", {
-            uuid: vertex.dse.uuid,
-        }));
     }
 
     pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.deleteMany({
