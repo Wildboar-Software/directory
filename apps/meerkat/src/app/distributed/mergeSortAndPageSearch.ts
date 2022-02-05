@@ -90,7 +90,7 @@ function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): Part
 function mergeResultSet (
     acc: ISearchInfo,
     resultSet: SearchResult,
-): void {
+): ISearchInfo {
     const data = getOptionallyProtectedValue(resultSet);
     if ("searchInfo" in data) {
         acc.entries.push(...data.searchInfo.entries);
@@ -107,6 +107,7 @@ function mergeResultSet (
         data.uncorrelatedSearchInfo
             .forEach((usi) => mergeResultSet(acc, usi));
     }
+    return acc;
 }
 
 const A_COMES_FIRST: number = -1;
@@ -274,10 +275,7 @@ async function mergeSortAndPageSearch(
             ? Number(searchArgument.pagedResults.newRequest.pageNumber ?? 0)
             : 0;
         pageNumberSkips = Math.max(0, pageNumber * Number(searchArgument.pagedResults.newRequest.pageSize));
-        mergedResult = searchState.resultSets.reduce((acc, rs) => {
-            mergeResultSet(acc, rs);
-            return acc;
-        }, mergedResult);
+        mergedResult = searchState.resultSets.reduce(mergeResultSet, mergedResult);
         if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
             mergedResult.entries.sort((a, b) => compareEntries(
                 ctx,

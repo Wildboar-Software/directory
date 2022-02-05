@@ -759,7 +759,7 @@ async function modifyDN (
         : await getSubschemaSubentry(ctx, superior);
     if (!target.dse.subentry && schemaSubentry) { // Schema rules only apply to entries.
         const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
-            .filter((rule) => (
+            .filter((rule) => ( // TODO: You can do better than this ugly code.
                 !rule.obsolete
                 && superior.dse.governingStructureRule
                 && rule.superiorStructureRules?.includes(superior.dse.governingStructureRule)

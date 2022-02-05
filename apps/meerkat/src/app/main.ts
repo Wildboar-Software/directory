@@ -534,19 +534,6 @@ function handleLDAP (
 
         try {
             const conn = new LDAPAssociation(ctx, c);
-            c.on("end", () => {
-                ctx.db.enqueuedSearchResult.deleteMany({
-                    where: {
-                        connection_uuid: conn.id,
-                    },
-                }).then().catch();
-                ctx.db.enqueuedListResult.deleteMany({
-                    where: {
-                        connection_uuid: conn.id,
-                    },
-                }).then().catch();
-                ctx.associations.delete(c);
-            });
             ctx.associations.set(c, conn);
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
@@ -838,4 +825,6 @@ async function main (): Promise<void> {
             time: ob.terminated_time.toISOString(),
         }));
     });
+
+    ctx.log.warn(ctx.i18n.t("log:beta"));
 }

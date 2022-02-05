@@ -601,6 +601,16 @@ class LDAPAssociation extends ClientAssociation {
                         false,
                     ),
                 };
+                ctx.db.enqueuedSearchResult.deleteMany({
+                    where: {
+                        connection_uuid: this.id,
+                    },
+                }).then().catch();
+                ctx.db.enqueuedListResult.deleteMany({
+                    where: {
+                        connection_uuid: this.id,
+                    },
+                }).then().catch();
             } else if (
                 ("extendedReq" in message.protocolOp)
                 && !decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(modifyPassword)
@@ -722,6 +732,18 @@ class LDAPAssociation extends ClientAssociation {
     ) {
         super();
         this.socket = tcp;
+        this.socket.on("close", () => {
+            ctx.db.enqueuedSearchResult.deleteMany({
+                where: {
+                    connection_uuid: this.id,
+                },
+            }).then().catch();
+            ctx.db.enqueuedListResult.deleteMany({
+                where: {
+                    connection_uuid: this.id,
+                },
+            }).then().catch();
+        });
         this.socket.on("data", (data: Buffer): void => this.handleData(ctx, data));
     }
 

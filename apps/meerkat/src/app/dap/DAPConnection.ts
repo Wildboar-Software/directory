@@ -407,12 +407,12 @@ class DAPAssociation extends ClientAssociation {
             where: {
                 connection_uuid: this.id,
             },
-        });
+        }).then().catch();
         this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
             where: {
                 connection_uuid: this.id,
             },
-        });
+        }).then().catch();
         this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
             ctype: DAPAssociation.name,
             cid: this.id,
@@ -432,6 +432,18 @@ class DAPAssociation extends ClientAssociation {
         super();
         this.socket = idm.s;
         assert(ctx.config.dap.enabled, "User somehow bound via DAP when it was disabled.");
+        this.socket.on("close", () => {
+            this.ctx.db.enqueuedListResult.deleteMany({ // INTENTIONAL_NO_AWAIT
+                where: {
+                    connection_uuid: this.id,
+                },
+            }).then().catch();
+            this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
+                where: {
+                    connection_uuid: this.id,
+                },
+            }).then().catch();
+        });
         idm.events.on("unbind", this.handleUnbind.bind(this));
         idm.events.removeAllListeners("request");
         idm.events.on("request", (request: Request) => {

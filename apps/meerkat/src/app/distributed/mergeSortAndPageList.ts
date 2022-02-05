@@ -71,17 +71,15 @@ function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): Part
                 ...(b.notification ?? []),
             ]
             : undefined,
-        // REVIEW: I am not sure this is how you should do this. You might need
-        // to add these together. The reason I don't is the specification says
-        // that hierarchy selections should not count when merging these.
-        a.entryCount ?? b.entryCount,
+        // NOTE: entryCount is only for `search` operations.
+        undefined,
     );
 }
 
 function mergeResultSet (
     acc: IListInfo,
     resultSet: ListResult,
-): void {
+): IListInfo {
     const data = getOptionallyProtectedValue(resultSet);
     if ("listInfo" in data) {
         acc.subordinates.push(...data.listInfo.subordinates);
@@ -95,6 +93,7 @@ function mergeResultSet (
         data.uncorrelatedListInfo
             .forEach((usi) => mergeResultSet(acc, usi));
     }
+    return acc;
 }
 
 const A_COMES_FIRST: number = -1;
@@ -253,10 +252,7 @@ async function mergeSortAndPageList(
             ? Number(listArgument.pagedResults.newRequest.pageNumber ?? 0)
             : 0;
         pageNumberSkips = Math.max(0, pageNumber * Number(listArgument.pagedResults.newRequest.pageSize));
-        mergedResult = listState.resultSets.reduce((acc, rs) => {
-            mergeResultSet(acc, rs);
-            return acc;
-        }, mergedResult);
+        mergedResult = listState.resultSets.reduce(mergeResultSet, mergedResult);
         if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
             mergedResult.subordinates.sort((a, b) => compareSubordinates(
                 ctx,
@@ -313,7 +309,14 @@ async function mergeSortAndPageList(
         || ((cursorId + 1) >= (paging.totalResults ?? -1)) // The cursor is greater than count
     );
     if (cursorId) {
-        // We dispose of results as soon as have returned them.
+        /**
+         * We dispose of results as soon as have returned them.
+         *
+         * NOTE: The same cannot be done for `search` operations, because they
+         * may use the `entryCount` control, which must return the same value
+         * between pages. With `list`, on the other hand, there is no problem
+         * in discarding results after they have been returned.
+         */
         await ctx.db.enqueuedListResult.deleteMany({
             where: {
                 connection_uuid: conn.id,
@@ -361,7 +364,8 @@ async function mergeSortAndPageList(
                         Buffer.from(queryReference!, "base64"),
                         mergedResult.partialOutcomeQualifier?.overspecFilter,
                         mergedResult.partialOutcomeQualifier?.notification,
-                        mergedResult.partialOutcomeQualifier?.entryCount,
+                        // NOTE: entryCount is only for the `search` operation.
+                        undefined,
                     ),
                 [],
                 createSecurityParameters(
