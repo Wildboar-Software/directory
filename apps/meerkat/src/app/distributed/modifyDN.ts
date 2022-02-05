@@ -674,11 +674,55 @@ async function modifyDN (
         }
     }
 
+    const isFirstLevel: boolean = !!superior.dse.root;
+    const isSubentry: boolean = !!target.dse.subentry;
+    /**
+     * It would be impossible to create anything other than first-level DSEs if
+     * subentries were not exempt from subschema restrictions, because they must
+     * be created before the subschema can be defined!
+     *
+     * ITU Recommendation X.501 (2016), Section 14.2 states that:
+     *
+     * > Although subentry and subentryNameForm are specified using the notation
+     * > of clause 13, subentries are not regulated by DIT structure or DIT
+     * > content rules.
+     *
+     * However, regarding `subentryNameForm`, Section 14.2.2 states that:
+     *
+     * > No other name form shall be used for subentries.
+     *
+     * As such, Meerkat DSA will perform a hard-coded check that subentries have
+     * this attribute type exclusively in their RDN.
+     */
+    const isExemptFromSubschema: boolean = (isSubentry || isFirstLevel);
+    if (
+        (superior.dse.governingStructureRule === undefined) // The immediate superior has no GSR, and...
+        && !isExemptFromSubschema
+    ) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:no_gsr", { uuid: superior.dse.uuid }),
+            new UpdateErrorData(
+                UpdateProblem_namingViolation,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+
     checkTimeLimit();
     const timeRemainingInMilliseconds = timeLimitEndTime
         ? differenceInMilliseconds(timeLimitEndTime, new Date())
         : undefined;
-    if (target.dse.subentry) { // Continue at step 7.
+    if (isSubentry) { // Continue at step 7.
         // DEVIATION: from the specification: we update the subordinates AFTER we update the DN locally.
         if (target.immediateSuperior?.dse.cp) {
             // DEVIATION:
@@ -757,7 +801,7 @@ async function modifyDN (
     const schemaSubentry = target.dse.subentry // Schema rules only apply to entries.
         ? undefined
         : await getSubschemaSubentry(ctx, superior);
-    if (!target.dse.subentry && schemaSubentry) { // Schema rules only apply to entries.
+    if (!isSubentry && schemaSubentry) { // Schema rules only apply to entries.
         const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
             .filter((rule) => ( // TODO: You can do better than this ugly code.
                 !rule.obsolete
