@@ -1876,10 +1876,10 @@ async function modifyEntry (
     const subschemaSubentry = await getSubschemaSubentry(ctx, target);
     if (!ctx.config.bulkInsertMode && subschemaSubentry && !target.dse.subentry) {
         const contentRule = (subschemaSubentry.dse.subentry?.ditContentRules ?? [])
-            .filter((rule) => !rule.obsolete)
             // .find(), because there should only be one per SOC.
             .find((rule) => (
-                target.dse.structuralObjectClass
+                !rule.obsolete
+                && target.dse.structuralObjectClass
                 && rule.structuralObjectClass.isEqualTo(target.dse.structuralObjectClass)
             ));
         contentRule?.mandatory?.forEach((ma) => requiredAttributes.add(ma.toString()));

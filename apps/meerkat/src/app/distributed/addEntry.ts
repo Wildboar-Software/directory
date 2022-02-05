@@ -1683,7 +1683,9 @@ async function addEntry (
             if (!applicableRule) {
                 if (value.contexts && (value.contexts.length > 0)) {
                     throw new errors.AttributeError(
-                        ctx.i18n.t("err:no_contexts_permitted"),
+                        ctx.i18n.t("err:no_contexts_permitted", {
+                            oid: value.type.toString(),
+                        }),
                         new AttributeErrorData(
                             {
                                 rdnSequence: targetDN,
