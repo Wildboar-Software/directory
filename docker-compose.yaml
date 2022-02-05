@@ -37,6 +37,10 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     # command: --default-authentication-plugin=mysql_native_password --slow-query-log=ON --slow-query-log-file=/var/lib/mysqllog/slow.log --long-query-time=2
     restart: always
+    # This gets rid of the "mbind: Operation not permitted" error message in the MySQL logs.
+    # See: https://thegeekbin.com/mbind-operation-not-permitted-docker-mysql/
+    security_opt:
+      - "seccomp=unconfined"
     environment:
       MYSQL_ROOT_PASSWORD: example
     ports:
