@@ -114,7 +114,6 @@ function sleep (ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// FIXME: It seemed like IDM v2 had some strange issue.
 function *generateGiantIDMv1Packet (size: number = 10_000_000): IterableIterator<Buffer> {
     yield Buffer.from([
         // 0x02, // Version 2

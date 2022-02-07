@@ -195,6 +195,9 @@ import {
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import { strict as assert } from "assert";
+import {
+    subentryNameForm,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/subentryNameForm.oa";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -233,6 +236,14 @@ async function addEntry (
 ): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const targetDN = data.object.rdnSequence;
+    const rdn = getRDN(targetDN);
+    if (!rdn) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:root_dse_may_not_be_added"),
+            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
+        );
+    }
     const user = state.chainingArguments.originator
         ? new NameAndOptionalUID(
             state.chainingArguments.originator,
@@ -334,6 +345,35 @@ async function addEntry (
     ) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:no_gsr", { uuid: immediateSuperior.dse.uuid }),
+            new UpdateErrorData(
+                UpdateProblem_namingViolation,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+
+    if (
+        isSubentry
+        && !checkNameForm( // And the name is not valid for a subentry...
+            rdn,
+            subentryNameForm["&MandatoryAttributes"].map((a) => a["&id"]),
+            subentryNameForm["&OptionalAttributes"]?.map((a) => a["&id"]),
+        )
+    ) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:name_form_invalid", {
+                context: "subentry",
+            }),
             new UpdateErrorData(
                 UpdateProblem_namingViolation,
                 undefined,
@@ -517,7 +557,6 @@ async function addEntry (
         );
     }
 
-    const targetDN = data.object.rdnSequence;
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
         ? []
         : (await Promise.all(
@@ -634,13 +673,6 @@ async function addEntry (
         );
     }
 
-    const rdn = getRDN(data.object.rdnSequence);
-    if (!rdn) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:root_dse_may_not_be_added"),
-            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
-        );
-    }
     if (!ctx.config.bulkInsertMode) {
         const existingEntryId = await rdnToID(ctx, immediateSuperior.dse.id, rdn);
         if (existingEntryId !== undefined) {

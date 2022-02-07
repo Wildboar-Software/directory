@@ -137,6 +137,9 @@ import {
 import readValuesOfType from "../utils/readValuesOfType";
 import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import {
+    subentryNameForm,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/subentryNameForm.oa";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -701,6 +704,35 @@ async function modifyDN (
     ) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:no_gsr", { uuid: superior.dse.uuid }),
+            new UpdateErrorData(
+                UpdateProblem_namingViolation,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+
+    if (
+        isSubentry
+        && !checkNameForm( // And the name is not valid for a subentry...
+            data.newRDN,
+            subentryNameForm["&MandatoryAttributes"].map((a) => a["&id"]),
+            subentryNameForm["&OptionalAttributes"]?.map((a) => a["&id"]),
+        )
+    ) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:name_form_invalid", {
+                context: "subentry",
+            }),
             new UpdateErrorData(
                 UpdateProblem_namingViolation,
                 undefined,
