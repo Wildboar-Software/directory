@@ -112,6 +112,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                     entry_id: vertex.dse.id,
                     knowledge_type: Knowledge.NON_SPECIFIC,
                     nsk_group: possible_nsk_group,
+                    active: true,
                 },
                 select: {
                     // ber: true,

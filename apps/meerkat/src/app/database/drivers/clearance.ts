@@ -90,6 +90,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 },
             },
             ber: Buffer.from(value.value.toBytes()),
+            active: true,
         },
     }));
 };
@@ -130,6 +131,7 @@ const countValues: SpecialAttributeCounter = async (
     return ctx.db.clearance.count({
         where: {
             entry_id: vertex.dse.id,
+            active: true,
         },
     });
 };
@@ -142,6 +144,7 @@ const isPresent: SpecialAttributeDetector = async (
     return !!(await ctx.db.clearance.findFirst({
         where: {
             entry_id: vertex.dse.id,
+            active: true,
         },
     }));
 };
@@ -156,6 +159,7 @@ const hasValue: SpecialAttributeValueDetector = async (
         where: {
             entry_id: vertex.dse.id,
             ber: Buffer.from(value.value.toBytes()),
+            active: true,
         },
     }));
 };

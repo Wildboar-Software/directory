@@ -68,6 +68,7 @@ async function saveAccessPoint (
             is_consumer_of_id,
             ber,
             nsk_group,
+            active: true,
             NSAP: {
                 createMany: {
                     data: ap.address.nAddresses.map((nsap) => {

@@ -142,6 +142,7 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
                     category: true,
                     chainingRequired: true,
                     supplier_is_master: true,
+                    active: true,
                     NSAP: {
                         select: {
                             url: true,

@@ -431,7 +431,6 @@ model NameForm {
   name                String?
   description         String?
   obsolete            Boolean  @default(false)
-  active              Boolean  @default(true)
   created_at          DateTime @default(now())
 
   @@unique([identifier])

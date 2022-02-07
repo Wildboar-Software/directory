@@ -38,6 +38,7 @@ const writeSomeACI: (scope: ACIScope) => SpecialAttributeDatabaseEditor = (scope
                     : undefined,
                 ber: Buffer.from(attribute.value.toBytes()),
                 scope,
+                active: true,
             },
         });
     };

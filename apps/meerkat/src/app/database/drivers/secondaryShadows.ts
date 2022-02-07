@@ -142,6 +142,7 @@ const hasValue: SpecialAttributeValueDetector = async (
         where: {
             entry_id: vertex.dse.id,
             knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+            active: true,
             OR: [
                 {
                     ber: Buffer.from(value.value.toBytes()),

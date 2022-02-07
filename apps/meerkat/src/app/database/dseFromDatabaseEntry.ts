@@ -73,6 +73,7 @@ async function dseFromDatabaseEntry (
         : await ctx.db.aCIItem.findMany({
             where: {
                 entry_id: dbe.id,
+                active: true,
             },
             select: {
                 scope: true,
@@ -87,6 +88,7 @@ async function dseFromDatabaseEntry (
         ? acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem)
         : [];
     const rdn = await getRDNFromEntryId(ctx, dbe.id);
+    //
     const objectClasses = await ctx.db.entryObjectClass.findMany({
         where: {
             entry_id: dbe.id,
@@ -98,6 +100,7 @@ async function dseFromDatabaseEntry (
     const clearances = await ctx.db.clearance.findMany({
         where: {
             entry_id: dbe.id,
+            active: true,
         },
         select: {
             ber: true,
