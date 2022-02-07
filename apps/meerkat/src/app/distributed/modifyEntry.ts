@@ -238,6 +238,9 @@ import {
 import {
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+import {
+    id_oa_allAttributeTypes,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -249,6 +252,7 @@ interface Patch {
 
 const USER_PASSWORD: string = userPassword["&id"].toString();
 const USER_PWD: string = userPwd["&id"].toString();
+const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
 const notPermittedData =  (
     ctx: Context,
@@ -1390,8 +1394,36 @@ function handleContextRule (
     contextRuleIndex: ContextRulesIndex,
     aliasDereferenced?: boolean,
 ): Attribute {
-    const rule = contextRuleIndex.get(attribute.type_.toString());
+    const rule = contextRuleIndex.get(attribute.type_.toString())
+        ?? contextRuleIndex.get(ALL_ATTRIBUTE_TYPES);
     if (!rule) {
+        if (attribute.valuesWithContext?.length) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:no_contexts_permitted", {
+                    oid: attribute.type_.toString(),
+                }),
+                new AttributeErrorData(
+                    {
+                        rdnSequence: targetDN,
+                    },
+                    attribute.valuesWithContext.map((vwc) => new AttributeErrorData_problems_Item(
+                        AttributeProblem_contextViolation,
+                        attribute.type_,
+                        vwc.value,
+                    )),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        conn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         return attribute;
     }
     if (rule.information.mandatoryContexts?.length && attribute.values.length) {
