@@ -1148,8 +1148,8 @@ async function addEntry (
         objectClasses
             .map((oc) => ctx.objectClasses.get(oc.toString()))
             .forEach((oc, i) => {
+                const oid = objectClassValues[i].value.objectIdentifier;
                 if (!oc) {
-                    const oid = objectClassValues[i].value.objectIdentifier;
                     throw new errors.UpdateError(
                         ctx.i18n.t("err:unrecognized_object_class", {
                             oid: oid.toString(),
@@ -1180,6 +1180,38 @@ async function addEntry (
                         ),
                     );
                 }
+                if (oc.obsolete) {
+                    throw new errors.UpdateError(
+                        ctx.i18n.t("err:cannot_add_obsolete_oc", {
+                            oid: oid.toString(),
+                        }),
+                        new UpdateErrorData(
+                            UpdateProblem_objectClassViolation,
+                            [
+                                {
+                                    attribute: new Attribute(
+                                        id_at_objectClass,
+                                        [
+                                            _encodeObjectIdentifier(oid, DER),
+                                        ],
+                                        undefined,
+                                    ),
+                                },
+                            ],
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                updateError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+                // TODO: Throw if obsolete object class.
                 for (const at of oc.mandatoryAttributes) {
                     missingMandatoryAttributes.add(at);
                     optionalAttributes.add(at);
@@ -1475,6 +1507,9 @@ async function addEntry (
                 if (!nf.namedObjectClass.isEqualTo(structuralObjectClass)) {
                     return false;
                 }
+                if (nf.obsolete) {
+                    return false;
+                }
                 return checkNameForm(rdn, nf.mandatoryAttributes, nf.optionalAttributes);
             });
         if (structuralRules.length === 0) {
@@ -1498,9 +1533,7 @@ async function addEntry (
         }
         governingStructureRule = Number(structuralRules[0].ruleIdentifier);
         const contentRule = (schemaSubentry.dse.subentry?.ditContentRules ?? [])
-            .filter((rule) => !rule.obsolete)
-            // .find(), because there should only be one per SOC.
-            .find((rule) => rule.structuralObjectClass.isEqualTo(structuralObjectClass));
+            .find((rule) => !rule.obsolete && rule.structuralObjectClass.isEqualTo(structuralObjectClass));
         const auxiliaryClasses = objectClasses
             .filter((oc) => ctx.objectClasses.get(oc.toString())?.kind == ObjectClassKind_auxiliary);
         if (contentRule) {

@@ -126,7 +126,7 @@ function addFriends (
             const bdn = getDistinguishedName(b);
             return (bdn.length - adn.length);
         }) // Select the nearest subschema
-        [0]?.dse.subentry!.friendships?.find((fr) => fr.anchor.isEqualTo(type_));
+        [0]?.dse.subentry!.friendships?.find((fr) => fr.anchor.isEqualTo(type_) && !fr.obsolete);
     if (friendship) {
         for (const friend of friendship.friends) {
             if (!selectedUserAttributes.has(friend.toString())) {

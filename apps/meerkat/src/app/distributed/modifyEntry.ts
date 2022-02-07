@@ -2201,6 +2201,37 @@ async function modifyEntry (
                 ),
             );
         }
+        if (spec.obsolete) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:cannot_add_obsolete_oc", {
+                    oid: ocid.toString(),
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_objectClassViolation,
+                    [
+                        {
+                            attribute: new Attribute(
+                                id_at_objectClass,
+                                [
+                                    _encodeObjectIdentifier(ocid, DER),
+                                ],
+                                undefined,
+                            ),
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         /**
          * NOTE: You cannot even tolerate modifications that make the entry a
          * subclass of the original structural object class for these reasons

@@ -819,6 +819,9 @@ async function modifyDN (
                 ) {
                     return false;
                 }
+                if (nf.obsolete) {
+                    return false;
+                }
                 return checkNameForm(newRDN, nf.mandatoryAttributes, nf.optionalAttributes);
             });
         if (structuralRules.length === 0) {
@@ -842,10 +845,10 @@ async function modifyDN (
         }
         newGoverningStructureRule = structuralRules[0].ruleIdentifier;
         const contentRule = (schemaSubentry.dse.subentry?.ditContentRules ?? [])
-            .filter((rule) => !rule.obsolete)
             // .find(), because there should only be one per SOC.
             .find((rule) => (
-                target.dse.structuralObjectClass
+                !rule.obsolete
+                && target.dse.structuralObjectClass
                 && rule.structuralObjectClass.isEqualTo(target.dse.structuralObjectClass)
             ));
         const auxiliaryClasses = objectClasses
