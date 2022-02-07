@@ -45,11 +45,18 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.otherWrites.push(ctx.db.entryCollectiveExclusion.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.entryCollectiveExclusion.upsert({
+        where: {
+            entry_id_collectiveExclusion: {
+                entry_id: vertex.dse.id,
+                collectiveExclusion: value.value.objectIdentifier.toString(),
+            },
+        },
+        create: {
             entry_id: vertex.dse.id,
             collectiveExclusion: value.value.objectIdentifier.toString(),
         },
+        update: {},
     }));
 };
 

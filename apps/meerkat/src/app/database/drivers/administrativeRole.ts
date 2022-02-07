@@ -124,8 +124,15 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     }
 
     const oidStr: string = oid.toString();
-    pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.entryAdministrativeRole.upsert({
+        where: {
+            entry_id_administrativeRole: {
+                entry_id: vertex.dse.id,
+                administrativeRole: oidStr,
+            },
+        },
+        update: {},
+        create: {
             entry_id: vertex.dse.id,
             administrativeRole: oidStr,
         },

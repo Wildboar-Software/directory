@@ -42,10 +42,31 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = matchingRuleUse.decoderFor["&Type"]!(value.value);
-    pendingUpdates.otherWrites.push(ctx.db.matchingRuleUse.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.matchingRuleUse.upsert({
+        where: {
+            entry_id_identifier: {
+                entry_id: vertex.dse.id,
+                identifier: decoded.identifier.toString(),
+            },
+        },
+        create: {
             entry_id: vertex.dse.id,
             identifier: decoded.identifier.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            information: decoded.information
+                .map((oid) => oid.toString())
+                .join(" "),
+        },
+        update: {
             name: decoded.name
                 ? decoded.name
                     .map(directoryStringToString)

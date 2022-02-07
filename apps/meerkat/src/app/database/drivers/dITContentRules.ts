@@ -42,10 +42,32 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = dITContentRules.decoderFor["&Type"]!(value.value);
-    pendingUpdates.otherWrites.push(ctx.db.contentRule.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.contentRule.upsert({
+        where: {
+            entry_id_structural_class: {
+                entry_id: vertex.dse.id,
+                structural_class: decoded.structuralObjectClass.toString(),
+            },
+        },
+        create: {
             entry_id: vertex.dse.id,
             structural_class: decoded.structuralObjectClass.toString(),
+            auxiliary_classes: decoded.auxiliaries?.map((aux) => aux.toString()).join(" "),
+            mandatory_attributes: decoded.mandatory?.map((attr) => attr.toString()).join(" "),
+            optional_attributes: decoded.optional?.map((attr) => attr.toString()).join(" "),
+            precluded_attributes: decoded.precluded?.map((attr) => attr.toString()).join(" "),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+        },
+        update: {
             auxiliary_classes: decoded.auxiliaries?.map((aux) => aux.toString()).join(" "),
             mandatory_attributes: decoded.mandatory?.map((attr) => attr.toString()).join(" "),
             optional_attributes: decoded.optional?.map((attr) => attr.toString()).join(" "),

@@ -157,6 +157,7 @@ model UniqueIdentifier {
   entry            Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   uniqueIdentifier Bytes // DER-encoded bitstring value (not tag and length bytes)
 
+  // This cannot be a unique index right now, just because Prisma does not yet support index key length specification.
   @@index([entry_id])
 }
 
@@ -282,7 +283,7 @@ model ACIItem {
   active     Boolean  @default(true)
   created_at DateTime @default(now())
 
-  @@index([entry_id])
+  @@index([entry_id, active, precedence])
 }
 
 model Clearance {
@@ -302,7 +303,7 @@ model Clearance {
   created_at                DateTime                    @default(now())
   ClearanceSecurityCategory ClearanceSecurityCategory[]
 
-  @@index([entry_id])
+  @@index([entry_id, active, policy_id])
 }
 
 model ClearanceSecurityCategory {
@@ -312,7 +313,7 @@ model ClearanceSecurityCategory {
   type         String    @db.VarChar(128) // OID
   value        Bytes
 
-  @@index([clearance_id])
+  @@index([clearance_id, type])
 }
 
 enum Knowledge {
@@ -454,7 +455,6 @@ model DITStructureRule {
   obsolete               Boolean  @default(false)
   entry_id               Int
   entry                  Entry    @relation(fields: [entry_id], references: [id])
-  active                 Boolean  @default(true)
   created_at             DateTime @default(now())
 
   @@unique([entry_id, ruleIdentifier])
@@ -485,7 +485,6 @@ model ContentRule {
   obsolete             Boolean  @default(false)
   entry_id             Int
   entry                Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  active               Boolean  @default(true)
   created_at           DateTime @default(now())
 
   @@unique([entry_id, structural_class])
@@ -510,11 +509,9 @@ model ContextUseRule {
   obsolete      Boolean  @default(false)
   entry_id      Int
   entry         Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  active        Boolean  @default(true)
   created_at    DateTime @default(now())
 
-  // NOTE: X.501 does not say that this has to be unique by attribute type.
-  @@index([entry_id, active])
+  @@unique([entry_id, attributeType])
 }
 
 // FRIENDS ::= CLASS {
@@ -533,7 +530,6 @@ model Friendship {
   obsolete    Boolean  @default(false)
   entry_id    Int
   entry       Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  active      Boolean  @default(true)
   created_at  DateTime @default(now())
 
   @@unique([entry_id, anchor])
@@ -556,7 +552,6 @@ model MatchingRuleUse {
   information String   @db.Text // OIDs
   entry_id    Int
   entry       Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  active      Boolean  @default(true)
   created_at  DateTime @default(now())
 
   @@unique([entry_id, identifier])
@@ -590,7 +585,6 @@ model AttributeTypeDescription {
   ldapNames       String?
   ldapDescription String?
   dummy           Boolean  @default(false)
-  active          Boolean  @default(true)
   created_at      DateTime @default(now())
 
   @@unique([identifier])
@@ -608,7 +602,6 @@ model ObjectClassDescription {
   optionals       String?         @db.Text // OIDs
   ldapNames       String?
   ldapDescription String?
-  active          Boolean         @default(true)
   created_at      DateTime        @default(now())
 
   @@unique([identifier])
@@ -622,7 +615,6 @@ model ContextDescription {
   obsolete        Boolean  @default(false)
   syntax          String
   assertionSyntax String?
-  active          Boolean  @default(true)
   created_at      DateTime @default(now())
 
   @@unique([identifier])

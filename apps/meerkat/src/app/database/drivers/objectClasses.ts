@@ -89,9 +89,42 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     const description = decoded.description
         ? directoryStringToString(decoded.description)
         : undefined;
-    pendingUpdates.otherWrites.push(ctx.db.objectClassDescription.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.objectClassDescription.upsert({
+        where: {
             identifier: decoded.identifier.toString(),
+        },
+        create: {
+            identifier: decoded.identifier.toString(),
+            name,
+            description,
+            obsolete: decoded.obsolete,
+            subclassOf: decoded.information.subclassOf
+                ?.map((oid) => oid.toString())
+                .join(" "),
+            mandatories: decoded.information.mandatories?.map((attr) => attr.toString()).join(" "),
+            optionals: decoded.information.optionals?.map((attr) => attr.toString()).join(" "),
+            kind: (() => {
+                switch (decoded.information.kind) {
+                case (ObjectClassKind_abstract):
+                    return PrismaObjectClassKind.ABSTRACT;
+                case (ObjectClassKind_auxiliary):
+                    return PrismaObjectClassKind.AUXILIARY
+                case (ObjectClassKind_structural):
+                    return PrismaObjectClassKind.STRUCTURAL;
+                default: return undefined;
+                }
+            })(),
+            ldapDescription: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            ldapNames: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+        },
+        update: {
             name,
             description,
             obsolete: decoded.obsolete,

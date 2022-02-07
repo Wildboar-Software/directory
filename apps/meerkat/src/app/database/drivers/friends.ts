@@ -42,10 +42,29 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = friends.decoderFor["&Type"]!(value.value);
-    pendingUpdates.otherWrites.push(ctx.db.friendship.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.friendship.upsert({
+        where: {
+            entry_id_anchor: {
+                entry_id: vertex.dse.id,
+                anchor: decoded.anchor.toString(),
+            },
+        },
+        create: {
             entry_id: vertex.dse.id,
             anchor: decoded.anchor.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            friends: decoded.friends.map((oid) => oid.toString()).join(" "),
+        },
+        update: {
             name: decoded.name
                 ? decoded.name
                     .map(directoryStringToString)

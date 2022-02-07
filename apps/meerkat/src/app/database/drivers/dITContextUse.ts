@@ -42,8 +42,14 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = dITContextUse.decoderFor["&Type"]!(value.value);
-    pendingUpdates.otherWrites.push(ctx.db.contextUseRule.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.contextUseRule.upsert({
+        where: {
+            entry_id_attributeType: {
+                entry_id: vertex.dse.id,
+                attributeType: decoded.identifier.toString(),
+            },
+        },
+        create: {
             entry_id: vertex.dse.id,
             attributeType: decoded.identifier.toString(),
             name: decoded.name
@@ -62,7 +68,25 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             optional: decoded.information.optionalContexts
                 ?.map((oid) => oid.toString())
                 .join(" "),
-        }
+        },
+        update: {
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            mandatory: decoded.information.mandatoryContexts
+                ?.map((oid) => oid.toString())
+                .join(" "),
+            optional: decoded.information.optionalContexts
+                ?.map((oid) => oid.toString())
+                .join(" "),
+        },
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.ditContextUse) {

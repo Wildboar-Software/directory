@@ -49,10 +49,14 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    // We do this to normalize the bit string.
+    const bits = value.value.bitString;
+    const el = new DERElement();
+    el.bitString = bits;
     pendingUpdates.otherWrites.push(ctx.db.uniqueIdentifier.create({
         data: {
             entry_id: vertex.dse.id,
-            uniqueIdentifier: Buffer.from(value.value.value),
+            uniqueIdentifier: Buffer.from(el.value),
         },
     }));
 };

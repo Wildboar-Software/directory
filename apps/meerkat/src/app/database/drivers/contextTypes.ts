@@ -70,9 +70,28 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = contextTypes.decoderFor["&Type"]!(value.value);
-    pendingUpdates.otherWrites.push(ctx.db.contextDescription.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.contextDescription.upsert({
+        where: {
             identifier: decoded.identifier.toString(),
+        },
+        create: {
+            identifier: decoded.identifier.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            syntax: directoryStringToString(decoded.information.syntax),
+            assertionSyntax: decoded.information.assertionSyntax
+                ? directoryStringToString(decoded.information.assertionSyntax)
+                : undefined,
+        },
+        update: {
             name: decoded.name
                 ? decoded.name
                     .map(directoryStringToString)

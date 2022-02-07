@@ -56,12 +56,49 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = searchRules.decoderFor["&Type"]!(value.value);
-    pendingUpdates.otherWrites.push(ctx.db.searchRule.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.searchRule.upsert({
+        where: {
+            dmd_id_rule_id: {
+                dmd_id: decoded.dmdId.toString(),
+                rule_id: Number(decoded.id),
+            },
+        },
+        create: {
+            dmd_id: decoded.dmdId.toString(),
+            rule_id: Number(decoded.id),
             entry_id: vertex.dse.id,
             ber: Buffer.from(value.value.toBytes()),
-            rule_id: Number(decoded.id),
-            dmd_id: decoded.dmdId.toString(),
+            service_type: decoded.serviceType?.toJSON(),
+            user_class: (decoded.userClass !== undefined)
+                ? Number(decoded.userClass)
+                : undefined,
+            family_grouping: decoded.familyGrouping,
+            family_return_member_select: decoded.familyReturn?.memberSelect,
+            relaxation_minimum: (decoded.relaxation?.minimum !== undefined)
+                ? Number(decoded.relaxation.minimum)
+                : undefined,
+            relaxation_maximum: (decoded.relaxation?.maximum !== undefined)
+                ? Number(decoded.relaxation.maximum)
+                : undefined,
+            additionalControl: decoded.additionalControl?.map((oid) => oid.toString()).join(" "),
+            base_object_allowed: (decoded.allowedSubset?.[0] === FALSE_BIT) ? false : true,
+            one_level_allowed: (decoded.allowedSubset?.[1] === FALSE_BIT) ? false : true,
+            whole_subtree_allowed: (decoded.allowedSubset?.[2] === FALSE_BIT) ? false : true,
+            imposed_subset: decoded.imposedSubset,
+            entry_limit_default: (decoded.entryLimit?.default_ !== undefined)
+                ? Number(decoded.entryLimit.default_)
+                : undefined,
+            entry_limit_max: (decoded.entryLimit?.max !== undefined)
+                ? Number(decoded.entryLimit.max)
+                : undefined,
+            name: decoded.name?.map(directoryStringToString).join(" "),
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+        },
+        update: {
+            entry_id: vertex.dse.id,
+            ber: Buffer.from(value.value.toBytes()),
             service_type: decoded.serviceType?.toJSON(),
             user_class: (decoded.userClass !== undefined)
                 ? Number(decoded.userClass)

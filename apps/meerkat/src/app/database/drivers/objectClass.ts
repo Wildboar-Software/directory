@@ -75,10 +75,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 entry_id: vertex.immediateSuperior.dse.id,
                 object_class: PARENT,
             },
-            update: {
-                entry_id: vertex.immediateSuperior.dse.id,
-                object_class: PARENT,
-            },
+            update: {},
         }));
         vertex.immediateSuperior.dse.objectClass.add(PARENT);
         if (vertex.immediateSuperior.dse.familyMember) {
@@ -90,11 +87,18 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             };
         }
     }
-    pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.upsert({
+        where: {
+            entry_id_object_class: {
+                entry_id: vertex.dse.id,
+                object_class: value.value.objectIdentifier.toString(),
+            },
+        },
+        create: {
             entry_id: vertex.dse.id,
             object_class: value.value.objectIdentifier.toString(),
         },
+        update: {},
     }));
 };
 

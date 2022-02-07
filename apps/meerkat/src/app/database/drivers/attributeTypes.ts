@@ -95,9 +95,48 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = attributeTypes.decoderFor["&Type"]!(value.value);
-    pendingUpdates.otherWrites.push(ctx.db.attributeTypeDescription.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.attributeTypeDescription.upsert({
+        where: {
             identifier: decoded.identifier.toString(),
+        },
+        create: {
+            identifier: decoded.identifier.toString(),
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+            derivation: decoded.information.derivation?.toString(),
+            equalityMatch: decoded.information.equalityMatch?.toString(),
+            orderingMatch: decoded.information.orderingMatch?.toString(),
+            substringsMatch: decoded.information.substringsMatch?.toString(),
+            attributeSyntax: decoded.information.attributeSyntax
+                ? directoryStringToString(decoded.information.attributeSyntax)
+                : undefined,
+            multiValued: decoded.information.multi_valued,
+            collective: decoded.information.collective,
+            userModifiable: decoded.information.userModifiable,
+            application: (() => {
+                switch (decoded.information.application) {
+                case (AttributeUsage_dSAOperation):
+                    return PrismaAttributeUsage.DSA_OPERATION;
+                case (AttributeUsage_directoryOperation):
+                    return PrismaAttributeUsage.DIRECTORY_OPERATION;
+                case (AttributeUsage_distributedOperation):
+                    return PrismaAttributeUsage.DISTRIBUTED_OPERATION;
+                case (AttributeUsage_userApplications):
+                    return PrismaAttributeUsage.USER_APPLICATIONS;
+                default:
+                    return PrismaAttributeUsage.USER_APPLICATIONS;
+                }
+            })(),
+        },
+        update: {
             name: decoded.name
                 ? decoded.name
                     .map(directoryStringToString)

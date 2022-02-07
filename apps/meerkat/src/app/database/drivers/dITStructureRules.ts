@@ -100,10 +100,32 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         }
     }
 
-    pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.create({
-        data: {
+    pendingUpdates.otherWrites.push(ctx.db.dITStructureRule.upsert({
+        where: {
+            entry_id_ruleIdentifier: {
+                entry_id: vertex.dse.id,
+                ruleIdentifier: Number(decoded.ruleIdentifier),
+            },
+        },
+        create: {
             entry_id: vertex.dse.id,
             ruleIdentifier: Number(decoded.ruleIdentifier),
+            nameForm: decoded.nameForm.toString(),
+            superiorStructureRules: decoded.superiorStructureRules
+                ?.map((ssr) => ssr.toString())
+                .join(" ") ?? null,
+            name: decoded.name
+                ? decoded.name
+                    .map(directoryStringToString)
+                    .map((str) => str.replace(/\|/g, ""))
+                    .join("|")
+                : null,
+            description: decoded.description
+                ? directoryStringToString(decoded.description)
+                : undefined,
+            obsolete: decoded.obsolete,
+        },
+        update: {
             nameForm: decoded.nameForm.toString(),
             superiorStructureRules: decoded.superiorStructureRules
                 ?.map((ssr) => ssr.toString())

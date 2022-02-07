@@ -102,7 +102,6 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 .join(" "),
         },
         update: {
-            identifier: decoded.identifier.toString(),
             name,
             description,
             obsolete: decoded.obsolete,

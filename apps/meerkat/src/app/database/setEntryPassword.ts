@@ -69,7 +69,6 @@ async function setEntryPassword (
                         : undefined,
                 },
                 update: {
-                    entry_id: vertex.dse.id,
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: algid.algorithm.toString(),
                     algorithm_parameters_der: algid.parameters
@@ -134,7 +133,6 @@ async function setEntryPassword (
                         : undefined,
                 },
                 update: {
-                    entry_id: vertex.dse.id,
                     encrypted: Buffer.from(pwd.encrypted.encryptedString),
                     algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
