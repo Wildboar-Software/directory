@@ -26,7 +26,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    if (vertex.dse.shadow) {
+    if (vertex.dse.shadow) { // Shadow has sDSEType
         return [];
     }
     return [

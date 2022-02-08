@@ -7,7 +7,6 @@
     "add_entry_beneath_alias": "Cannot add an entry beneath an alias.",
     "object_class_not_found": "Object class attribute not found.",
     "invalid_object_classes": "Invalid object classes.",
-    "cannot_add_subentry_below_non_admpoint": "Cannot add a subentry below a DSE that is not an administrative point.",
     "cannot_add_subentry_in_another_dsa": "Cannot add a subentry in another DSA.",
     "root_dse_may_not_be_added": "Root DSE may not be added.",
     "time_limit": "Could not complete operation within requested time limit.",

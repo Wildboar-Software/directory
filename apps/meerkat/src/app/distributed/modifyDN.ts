@@ -757,6 +757,9 @@ async function modifyDN (
     if (isSubschemaSubentry && data.newSuperior) {
         const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
             where: {
+                id: { // It's not a problem if we just move a subschema in-place.
+                    not: target.dse.id,
+                },
                 immediate_superior_id: superior.dse.id,
                 deleteTimestamp: null,
                 subentry: true,

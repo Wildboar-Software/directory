@@ -45,6 +45,7 @@ function getACIItems (
     const accessControlSubentries = relevantSubentries
         .filter((sub) => sub.dse.objectClass.has(AC_SUBENTRY))
         .reverse();
+    // FIXME: This needs to keep iterating until it finds the LAST subentry under the ACSA.
     const indexOfFirstACSA: number = accessControlSubentries
         .findIndex((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_SPECIFIC));
     if (indexOfFirstACSA === -1) {

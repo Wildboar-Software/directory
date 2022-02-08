@@ -79,6 +79,7 @@ import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import bacACDF, {
     PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
@@ -198,6 +199,15 @@ import { strict as assert } from "assert";
 import {
     subentryNameForm,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentryNameForm.oa";
+import { dseType } from "@wildboar/x500/src/lib/collections/attributes";
+import readValues from "../database/entry/readValues";
+import readValuesOfType from "../utils/readValuesOfType";
+import {
+    objectClass,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import {
+    aliasedEntryName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -629,31 +639,192 @@ async function addEntry (
         }
     }
 
-    if (immediateSuperior.dse.alias) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:add_entry_beneath_alias"),
-            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
-        );
-    }
-    if (isSubentry && !immediateSuperior.dse.admPoint) {
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:cannot_add_subentry_below_non_admpoint"),
-            new UpdateErrorData(
-                UpdateProblem_namingViolation,
+    /**
+     * This section checks that the immediate superior is a DSE type under which
+     * we can add subordinates. If the user is not permitted to discover the DSE
+     * type of the superior, we return an insufficientAccessRights error instead
+     * of a namingViolation to avoid disclosing the DSE type of the immediate
+     * superior.
+     */
+    if (
+        immediateSuperior.dse.alias
+        || immediateSuperior.dse.subr
+        || immediateSuperior.dse.subentry
+        || immediateSuperior.dse.shadow
+        || immediateSuperior.dse.sa
+        || immediateSuperior.dse.dsSubentry
+    ) {
+        if (
+            !ctx.config.bulkInsertMode
+            && accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        ) {
+            const relevantACIItemsForSuperior = getACIItems(
+                accessControlScheme,
+                undefined,
+                relevantSubentries,
+                !!immediateSuperior.dse.subentry,
+            );
+            const acdfTuplesForSuperior: ACDFTuple[] = (relevantACIItemsForSuperior ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const relevantTuplesForSuperior: ACDFTupleExtended[] = await preprocessTuples(
+                accessControlScheme,
+                acdfTuplesForSuperior,
+                user,
+                state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                targetDN.slice(0, -1),
+                isMemberOfGroup,
+                NAMING_MATCHER,
+            );
+
+            const superiorObjectClasses = Array
+                .from(immediateSuperior.dse.objectClass)
+                .map(ObjectIdentifier.fromString);
+            const { authorized: authorizedToReadSuperior } = bacACDF(
+                relevantTuplesForSuperior,
+                user,
+                { entry: superiorObjectClasses },
+                [ PERMISSION_CATEGORY_READ ],
+                bacSettings,
+                true,
+            );
+
+            const notAuthData = new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
                 undefined,
                 [],
                 createSecurityParameters(
                     ctx,
                     assn.boundNameAndUID?.dn,
                     undefined,
-                    updateError["&errorCode"],
+                    securityError["&errorCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 state.chainingArguments.aliasDereferenced,
                 undefined,
-            ),
+            );
+
+            // If the user is not authorized to read the superior at all, just
+            // throw insufficientAccessRights.
+            if (!authorizedToReadSuperior) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_add_entry"),
+                    notAuthData,
+                );
+            }
+
+            const { authorized: authorizedToReadSuperiorDSEType } = bacACDF(
+                relevantTuplesForSuperior,
+                user,
+                { attributeType: dseType["&id"] },
+                [ PERMISSION_CATEGORY_READ ],
+                bacSettings,
+                true,
+            );
+            // TODO: We do not check that the user has permission to the DSEType value!
+            // const superiorDSEType = await readValuesOfType(ctx, immediateSuperior, dseType["&id"])[0];
+            const { authorized: authorizedToReadSuperiorObjectClasses } = bacACDF(
+                relevantTuplesForSuperior,
+                user,
+                { attributeType: objectClass["&id"] },
+                [ PERMISSION_CATEGORY_READ ],
+                bacSettings,
+                true,
+            );
+            const superiorObjectClassesAuthorized = superiorObjectClasses
+                .filter((oc) => bacACDF(
+                    relevantTuplesForSuperior,
+                    user,
+                    {
+                        value: new AttributeTypeAndValue(
+                            objectClass["&id"],
+                            _encodeObjectIdentifier(oc, DER),
+                        ),
+                    },
+                    [ PERMISSION_CATEGORY_READ ],
+                    bacSettings,
+                    true,
+                ).authorized);
+
+            if (
+                (immediateSuperior.dse.alias || immediateSuperior.dse.sa) // superior is some kind of alias, and...
+                // // the user does not have one of the basic permissions that
+                // // could be used to determine that it is an alias.
+                && (
+                    !authorizedToReadSuperiorDSEType
+                    && !(
+                        authorizedToReadSuperiorObjectClasses
+                        && superiorObjectClassesAuthorized.some((oc) => oc.isEqualTo(id_oc_alias))
+                    )
+                    && !(bacACDF(
+                        relevantTuplesForSuperior,
+                        user,
+                        { attributeType: aliasedEntryName["&id"] },
+                        [ PERMISSION_CATEGORY_READ ],
+                        bacSettings,
+                        true,
+                    ).authorized)
+                )
+            ) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_add_entry"),
+                    notAuthData,
+                );
+            }
+
+            if (
+                // superior is some kind of subentry, and...
+                (immediateSuperior.dse.subentry || immediateSuperior.dse.dsSubentry)
+                // the user does not have one of the basic permissions that
+                // could be used to determine that it is a subentry.
+                && (
+                    !authorizedToReadSuperiorDSEType
+                    && !(
+                        authorizedToReadSuperiorObjectClasses
+                        && superiorObjectClassesAuthorized.some((oc) => oc.isEqualTo(id_sc_subentry))
+                    )
+                )
+                // NOTE: We don't check for other attribute types, like
+                // `subtreeSpecification`, because technically, those could
+                // appear in non-subentries too.
+            ) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_add_entry"),
+                    notAuthData,
+                );
+            }
+        }
+        // If there was no authorization issue with revealing the DSE type of the
+        // superior, or if the superior was of DSE type shadow or subr, we can
+        // just return the true error: namingViolation.
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:not_authz_to_add_entry"),
+            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
         );
     }
+    // This check has been removed because there might be times when you want to
+    // add a subentry and plan to make the superior an admin point after.
+    // NOTE: The error message has been deleted, too.
+    // if (isSubentry && !immediateSuperior.dse.admPoint) {
+    //     throw new errors.UpdateError(
+    //         ctx.i18n.t("err:cannot_add_subentry_below_non_admpoint"),
+    //         new UpdateErrorData(
+    //             UpdateProblem_namingViolation,
+    //             undefined,
+    //             [],
+    //             createSecurityParameters(
+    //                 ctx,
+    //                 assn.boundNameAndUID?.dn,
+    //                 undefined,
+    //                 updateError["&errorCode"],
+    //             ),
+    //             ctx.dsa.accessPoint.ae_title.rdnSequence,
+    //             state.chainingArguments.aliasDereferenced,
+    //             undefined,
+    //         ),
+    //     );
+    // }
     if (isSubentry && data.targetSystem) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:cannot_add_subentry_in_another_dsa"),
