@@ -140,6 +140,9 @@ import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractServi
 import {
     subentryNameForm,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentryNameForm.oa";
+import {
+    subschema,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -679,6 +682,7 @@ async function modifyDN (
 
     const isFirstLevel: boolean = !!superior.dse.root;
     const isSubentry: boolean = !!target.dse.subentry;
+    const isSubschemaSubentry: boolean = isSubentry && objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
     /**
      * It would be impossible to create anything other than first-level DSEs if
      * subentries were not exempt from subschema restrictions, because they must
@@ -748,6 +752,45 @@ async function modifyDN (
                 undefined,
             ),
         );
+    }
+
+    if (isSubschemaSubentry && data.newSuperior) {
+        const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
+            where: {
+                immediate_superior_id: superior.dse.id,
+                deleteTimestamp: null,
+                subentry: true,
+                EntryObjectClass: {
+                    some: {
+                        object_class: subschema["&id"].toString(),
+                    },
+                },
+            },
+            select: {
+                dseUUID: true,
+            },
+        });
+        if (subschemaThatAlreadyExists) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:one_subschema", {
+                    uuid: subschemaThatAlreadyExists.dseUUID,
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_namingViolation,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
     }
 
     checkTimeLimit();

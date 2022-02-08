@@ -313,6 +313,7 @@ async function addEntry (
      * subentry by checking that the `subentry` object class is present.
      */
     const isSubentry: boolean = objectClassesIndex.has(id_sc_subentry.toString());
+    const isSubschemaSubentry: boolean = isSubentry && objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
     const isAlias: boolean = objectClassesIndex.has(id_oc_alias.toString());
     const isExtensible: boolean = objectClassesIndex.has(extensibleObject.toString());
     const isParent: boolean = objectClassesIndex.has(id_oc_parent.toString());
@@ -1409,7 +1410,7 @@ async function addEntry (
         }
     }
 
-    if (isSubentry && objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]))) {
+    if (isSubschemaSubentry) {
         const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
             where: {
                 immediate_superior_id: immediateSuperior.dse.id,
