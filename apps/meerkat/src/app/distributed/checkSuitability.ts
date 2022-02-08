@@ -75,6 +75,10 @@ async function checkSuitabilityProcedure (
     encodedArgument?: ASN1Element,
     searchArgument?: SearchArgument,
 ): Promise<boolean> {
+    // DEVIATION: This is not required by the specification.
+    if (vertex.dse.root && isModificationOperation(operationType)) {
+        return false; // You cannot modify the Root DSE.
+    }
     if (!vertex.dse.shadow) {
         const unmet = unmetCriticalExtension(criticalExtensions);
         if (unmet !== undefined) {

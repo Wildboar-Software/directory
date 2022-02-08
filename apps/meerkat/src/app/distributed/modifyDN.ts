@@ -143,6 +143,19 @@ import {
 import {
     subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+import { dseType } from "@wildboar/x500/src/lib/collections/attributes";
+import {
+    objectClass,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import {
+    aliasedEntryName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
+import {
+    id_oc_alias,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-alias.va";
+import {
+    id_sc_subentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -678,6 +691,186 @@ async function modifyDN (
                 ),
             );
         }
+    }
+
+    /**
+     * This section checks that the immediate superior is a DSE type under which
+     * we can add subordinates. If the user is not permitted to discover the DSE
+     * type of the superior, we return an insufficientAccessRights error instead
+     * of a namingViolation to avoid disclosing the DSE type of the immediate
+     * superior.
+     *
+     * NOTE: This was copied over from addEntry.
+     */
+    if (
+        superior.dse.alias
+        || superior.dse.subr
+        || superior.dse.subentry
+        || superior.dse.shadow
+        || superior.dse.sa
+        || superior.dse.dsSubentry
+    ) {
+        if (
+            !ctx.config.bulkInsertMode
+            && accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        ) {
+            const relevantACIItemsForSuperior = getACIItems(
+                accessControlScheme,
+                undefined,
+                relevantSubentries,
+                !!superior.dse.subentry,
+            );
+            const acdfTuplesForSuperior: ACDFTuple[] = (relevantACIItemsForSuperior ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const relevantTuplesForSuperior: ACDFTupleExtended[] = await preprocessTuples(
+                accessControlScheme,
+                acdfTuplesForSuperior,
+                user,
+                state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                targetDN.slice(0, -1),
+                isMemberOfGroup,
+                NAMING_MATCHER,
+            );
+
+            const superiorObjectClasses = Array
+                .from(superior.dse.objectClass)
+                .map(ObjectIdentifier.fromString);
+            const { authorized: authorizedToReadSuperior } = bacACDF(
+                relevantTuplesForSuperior,
+                user,
+                { entry: superiorObjectClasses },
+                [ PERMISSION_CATEGORY_READ ],
+                bacSettings,
+                true,
+            );
+
+            const notAuthData = new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            );
+
+            // If the user is not authorized to read the superior at all, just
+            // throw insufficientAccessRights.
+            if (!authorizedToReadSuperior) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_add_entry"),
+                    notAuthData,
+                );
+            }
+
+            const { authorized: authorizedToReadSuperiorDSEType } = bacACDF(
+                relevantTuplesForSuperior,
+                user,
+                { attributeType: dseType["&id"] },
+                [ PERMISSION_CATEGORY_READ ],
+                bacSettings,
+                true,
+            );
+            // TODO: We do not check that the user has permission to the DSEType value!
+            // const superiorDSEType = await readValuesOfType(ctx, immediateSuperior, dseType["&id"])[0];
+            const { authorized: authorizedToReadSuperiorObjectClasses } = bacACDF(
+                relevantTuplesForSuperior,
+                user,
+                { attributeType: objectClass["&id"] },
+                [ PERMISSION_CATEGORY_READ ],
+                bacSettings,
+                true,
+            );
+            const superiorObjectClassesAuthorized = superiorObjectClasses
+                .filter((oc) => bacACDF(
+                    relevantTuplesForSuperior,
+                    user,
+                    {
+                        value: new AttributeTypeAndValue(
+                            objectClass["&id"],
+                            _encodeObjectIdentifier(oc, DER),
+                        ),
+                    },
+                    [ PERMISSION_CATEGORY_READ ],
+                    bacSettings,
+                    true,
+                ).authorized);
+
+            if (
+                (superior.dse.alias || superior.dse.sa) // superior is some kind of alias, and...
+                // // the user does not have one of the basic permissions that
+                // // could be used to determine that it is an alias.
+                && (
+                    !authorizedToReadSuperiorDSEType
+                    && !(
+                        authorizedToReadSuperiorObjectClasses
+                        && superiorObjectClassesAuthorized.some((oc) => oc.isEqualTo(id_oc_alias))
+                    )
+                    && !(bacACDF(
+                        relevantTuplesForSuperior,
+                        user,
+                        { attributeType: aliasedEntryName["&id"] },
+                        [ PERMISSION_CATEGORY_READ ],
+                        bacSettings,
+                        true,
+                    ).authorized)
+                )
+            ) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_add_entry"),
+                    notAuthData,
+                );
+            }
+
+            if (
+                // superior is some kind of subentry, and...
+                (superior.dse.subentry || superior.dse.dsSubentry)
+                // the user does not have one of the basic permissions that
+                // could be used to determine that it is a subentry.
+                && (
+                    !authorizedToReadSuperiorDSEType
+                    && !(
+                        authorizedToReadSuperiorObjectClasses
+                        && superiorObjectClassesAuthorized.some((oc) => oc.isEqualTo(id_sc_subentry))
+                    )
+                )
+                // NOTE: We don't check for other attribute types, like
+                // `subtreeSpecification`, because technically, those could
+                // appear in non-subentries too.
+            ) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_add_entry"),
+                    notAuthData,
+                );
+            }
+        }
+        // If there was no authorization issue with revealing the DSE type of the
+        // superior, or if the superior was of DSE type shadow or subr, we can
+        // just return the true error: namingViolation.
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:not_authz_to_add_entry"),
+            new UpdateErrorData(
+                UpdateProblem_namingViolation,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
     }
 
     const isFirstLevel: boolean = !!superior.dse.root;

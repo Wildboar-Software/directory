@@ -200,8 +200,6 @@ import {
     subentryNameForm,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentryNameForm.oa";
 import { dseType } from "@wildboar/x500/src/lib/collections/attributes";
-import readValues from "../database/entry/readValues";
-import readValuesOfType from "../utils/readValuesOfType";
 import {
     objectClass,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
@@ -645,6 +643,8 @@ async function addEntry (
      * type of the superior, we return an insufficientAccessRights error instead
      * of a namingViolation to avoid disclosing the DSE type of the immediate
      * superior.
+     *
+     * NOTE: This was copied over to modifyDN.
      */
     if (
         immediateSuperior.dse.alias
