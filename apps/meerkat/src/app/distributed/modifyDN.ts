@@ -156,6 +156,7 @@ import {
 import {
     id_sc_subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
+import isPrefix from "../x500/isPrefix";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -856,6 +857,26 @@ async function modifyDN (
         // just return the true error: namingViolation.
         throw new errors.UpdateError(
             ctx.i18n.t("err:not_authz_to_add_entry"),
+            new UpdateErrorData(
+                UpdateProblem_namingViolation,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+        );
+    }
+
+    if (isPrefix(ctx, targetDN, superiorDN)) {
+        throw new errors.UpdateError(
+            ctx.i18n.t("err:cannot_move_dse_below_itself"),
             new UpdateErrorData(
                 UpdateProblem_namingViolation,
                 undefined,

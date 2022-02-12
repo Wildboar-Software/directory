@@ -148,5 +148,6 @@
     "subschema_whole_area": "A subschema subentry's subtree specification must cover the entire subschema administrative area (e.g. an empty sequence).",
     "no_gsr": "Cannot insert beneath DSE {{uuid}}, which has no governing structure rule. Configure a subschema administrative area first.",
     "no_gsr@hint": "To create a subschema administrative area, you must make the superior under which you wanted to insert an entry an administrative point, having the administrative role id-ar-subschemaAdminSpecificArea (2.5.23.4), then create a subschema subentry underneath it that has a dITStructureRules attribute with a value whose superiorStructureRules is omitted (and therefore applies to the administrative point).",
-    "name_form_invalid@subentry": "Subentries must have only one value in their relative distinguished name of attribute type commonName (2.5.4.3)."
+    "name_form_invalid@subentry": "Subentries must have only one value in their relative distinguished name of attribute type commonName (2.5.4.3).",
+    "cannot_move_dse_below_itself": "Cannot move an object below itself."
 }
