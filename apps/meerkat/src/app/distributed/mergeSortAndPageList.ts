@@ -149,7 +149,7 @@ function compareSubordinates (
 export
 async function mergeSortAndPageList(
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
     listArgument: ListArgumentData,
     listState: ListState,
@@ -164,7 +164,7 @@ async function mergeSortAndPageList(
         ? Buffer.from(listArgument.pagedResults.queryReference).toString("base64")
         : listState.queryReference;
     const paging = queryReference
-        ? conn.pagedResultsRequests.get(queryReference)
+        ? assn.pagedResultsRequests.get(queryReference)
         : undefined;
     // If there is no paging, we just return an arbitrary selection of the results that is less than the sizeLimit.
     if(!paging) {
@@ -195,7 +195,7 @@ async function mergeSortAndPageList(
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         list["&operationCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -234,7 +234,7 @@ async function mergeSortAndPageList(
         [],
         createSecurityParameters(
             ctx,
-            conn.boundNameAndUID?.dn,
+            assn.boundNameAndUID?.dn,
             list["&operationCode"],
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -265,7 +265,7 @@ async function mergeSortAndPageList(
         const nonSkippedResults = mergedResult.subordinates.slice(pageNumberSkips);
         await ctx.db.enqueuedListResult.createMany({
             data: nonSkippedResults.map((sub, i) => ({
-                connection_uuid: conn.id,
+                connection_uuid: assn.id,
                 query_ref: queryReference!,
                 result_index: i,
                 subordinate_info: Buffer.from(_encode_ListResultData_listInfo_subordinates_Item(sub, DER).toBytes()),
@@ -282,7 +282,7 @@ async function mergeSortAndPageList(
         take: Math.max(Number(prr.pageSize), 1),
         skip: (paging.cursorId === undefined) ? 0 : 1,
         where: {
-            connection_uuid: conn.id,
+            connection_uuid: assn.id,
             query_ref: queryReference!,
         },
         select: {
@@ -295,7 +295,7 @@ async function mergeSortAndPageList(
         },
         cursor: {
             connection_uuid_query_ref_result_index: {
-                connection_uuid: conn.id,
+                connection_uuid: assn.id,
                 query_ref: queryReference!,
                 result_index: paging.cursorId ?? 0,
             },
@@ -319,7 +319,7 @@ async function mergeSortAndPageList(
          */
         await ctx.db.enqueuedListResult.deleteMany({
             where: {
-                connection_uuid: conn.id,
+                connection_uuid: assn.id,
                 query_ref: queryReference,
                 result_index: {
                     lt: cursorId,
@@ -328,11 +328,11 @@ async function mergeSortAndPageList(
         });
     }
     if (done && queryReference) {
-        conn.pagedResultsRequests.delete(queryReference);
+        assn.pagedResultsRequests.delete(queryReference);
         // These should already be gone, but this is just to make sure.
         await ctx.db.enqueuedListResult.deleteMany({
             where: {
-                connection_uuid: conn.id,
+                connection_uuid: assn.id,
                 query_ref: queryReference,
             },
         });
@@ -370,7 +370,7 @@ async function mergeSortAndPageList(
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     list["&operationCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,

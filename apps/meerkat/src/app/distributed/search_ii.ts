@@ -72,7 +72,7 @@ const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 export
 async function search_ii (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
     argument: SearchArgument,
     searchState: SearchState,
@@ -96,7 +96,7 @@ async function search_ii (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_serviceError,
                 ),
@@ -107,7 +107,7 @@ async function search_ii (
         );
     }
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
     const serviceControlOptions = data.serviceControls?.options;
@@ -147,7 +147,7 @@ async function search_ii (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_serviceError,
                 ),
@@ -173,7 +173,7 @@ async function search_ii (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
                         ),
@@ -194,7 +194,7 @@ async function search_ii (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
                         ),
@@ -211,13 +211,13 @@ async function search_ii (
                 alreadyReturnedById: new Set(),
             };
             searchState.paging = [ queryReference, newPagingState ];
-            if (conn.pagedResultsRequests.size >= 5) {
-                conn.pagedResultsRequests.clear();
+            if (assn.pagedResultsRequests.size >= 5) {
+                assn.pagedResultsRequests.clear();
             }
-            conn.pagedResultsRequests.set(queryReference, newPagingState);
+            assn.pagedResultsRequests.set(queryReference, newPagingState);
         } else if ("queryReference" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.queryReference).toString("base64");
-            const paging = conn.pagedResultsRequests.get(queryReference);
+            const paging = assn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
                     ctx.i18n.t("err:paginated_query_ref_invalid"),
@@ -226,7 +226,7 @@ async function search_ii (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
                         ),
@@ -240,7 +240,7 @@ async function search_ii (
             cursorId = searchState.paging[1].cursorIds[searchState.depth];
         } else if ("abandonQuery" in data.pagedResults) {
             const queryReference: string = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
-            conn.pagedResultsRequests.delete(queryReference);
+            assn.pagedResultsRequests.delete(queryReference);
             throw new errors.AbandonError(
                 ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
@@ -248,7 +248,7 @@ async function search_ii (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -265,7 +265,7 @@ async function search_ii (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_serviceError,
                     ),
@@ -296,7 +296,7 @@ async function search_ii (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -311,7 +311,7 @@ async function search_ii (
             }
             const suitable: boolean = await checkSuitabilityProcedure(
                 ctx,
-                conn,
+                assn,
                 subordinate,
                 search["&operationCode"]!,
                 state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
@@ -365,7 +365,7 @@ async function search_ii (
             searchState.depth++;
             await search_i(
                 ctx,
-                conn,
+                assn,
                 {
                     ...state,
                     admPoints: subordinate.dse.admPoint

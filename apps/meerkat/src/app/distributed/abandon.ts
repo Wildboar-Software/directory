@@ -35,7 +35,7 @@ import { DER } from "asn1-ts/dist/node/functional";
 export
 async function abandon (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     request: ChainedArgument,
 ): Promise<ChainedResult> {
     const argument = _decode_AbandonArgument(request.argument);
@@ -49,7 +49,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
                 ),
@@ -60,7 +60,7 @@ async function abandon (
         );
     }
     const invokeID = data.invokeID.present;
-    const op = conn.invocations.get(Number(invokeID));
+    const op = assn.invocations.get(Number(invokeID));
     if (!op) {
         throw new errors.AbandonFailedError(
             ctx.i18n.t("err:invocation_not_found", {
@@ -72,7 +72,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
                 ),
@@ -93,7 +93,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
                 ),
@@ -127,7 +127,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
                 ),
@@ -147,7 +147,7 @@ async function abandon (
             undefined,
             createSecurityParameters(
                 ctx,
-                conn.boundNameAndUID?.dn,
+                assn.boundNameAndUID?.dn,
                 id_opcode_abandon,
             ),
             undefined,

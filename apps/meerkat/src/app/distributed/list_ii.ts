@@ -138,7 +138,7 @@ const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
 export
 async function list_ii (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
     fromDAP: boolean,
 ): Promise<OperationReturn> {
@@ -162,7 +162,7 @@ async function list_ii (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),
@@ -173,7 +173,7 @@ async function list_ii (
         );
     }
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -218,7 +218,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
                         ),
@@ -239,7 +239,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
                         ),
@@ -253,7 +253,7 @@ async function list_ii (
             pagingRequest = data.pagedResults.newRequest;
         } else if ("queryReference" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
-            const paging = conn.pagedResultsRequests.get(queryReference);
+            const paging = assn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
                     ctx.i18n.t("err:paginated_query_ref_invalid"),
@@ -262,7 +262,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
                         ),
@@ -276,7 +276,7 @@ async function list_ii (
             cursorId = paging.cursorIds[0];
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
-            conn.pagedResultsRequests.delete(queryReference);
+            assn.pagedResultsRequests.delete(queryReference);
             throw new errors.AbandonError(
                 ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
@@ -284,7 +284,7 @@ async function list_ii (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -301,7 +301,7 @@ async function list_ii (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -343,7 +343,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -405,7 +405,7 @@ async function list_ii (
                     effectiveAccessControlScheme,
                     subordinateACDFTuples,
                     user,
-                    state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                    state.chainingArguments.authenticationLevel ?? assn.authLevel,
                     subordinateDN,
                     isMemberOfGroup,
                     NAMING_MATCHER,
@@ -487,7 +487,7 @@ async function list_ii (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),
@@ -519,7 +519,7 @@ async function list_ii (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     id_opcode_list,
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -536,7 +536,7 @@ async function list_ii (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_list,
                     ),
                     undefined,

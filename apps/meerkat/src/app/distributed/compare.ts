@@ -133,14 +133,14 @@ function contextFromStoredContext (sc: StoredContext): X500Context {
 export
 async function compare (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_CompareArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const noSubtypeMatch: boolean = (
         data.serviceControls?.options?.[ServiceControlOptions_noSubtypeMatch] === TRUE_BIT);
@@ -173,7 +173,7 @@ async function compare (
         accessControlScheme,
         acdfTuples,
         user,
-        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        state.chainingArguments.authenticationLevel ?? assn.authLevel,
         targetDN,
         isMemberOfGroup,
         NAMING_MATCHER,
@@ -206,7 +206,7 @@ async function compare (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -226,7 +226,7 @@ async function compare (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -268,7 +268,7 @@ async function compare (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
                             ),
@@ -295,7 +295,7 @@ async function compare (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -318,7 +318,7 @@ async function compare (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),
@@ -343,7 +343,7 @@ async function compare (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -403,7 +403,7 @@ async function compare (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -548,7 +548,7 @@ async function compare (
             [],
             createSecurityParameters(
                 ctx,
-                conn.boundNameAndUID?.dn,
+                assn.boundNameAndUID?.dn,
                 id_opcode_compare,
             ),
             ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -565,7 +565,7 @@ async function compare (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_compare,
                     ),
                     undefined,

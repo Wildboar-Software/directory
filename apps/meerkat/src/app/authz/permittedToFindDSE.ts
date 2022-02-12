@@ -26,7 +26,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import preprocessTuples from "./preprocessTuples";
 import rdnToID from "../dit/rdnToID";
-import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 
 export
 interface PermittedToFindDSEReturn {

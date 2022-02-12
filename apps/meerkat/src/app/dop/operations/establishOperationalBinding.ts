@@ -102,7 +102,7 @@ function codeToString (code?: Code): string | undefined {
 export
 async function establishOperationalBinding (
     ctx: Context,
-    conn: DOPAssociation,
+    assn: DOPAssociation,
     invokeId: INTEGER,
     arg: EstablishOperationalBindingArgument,
 ): Promise<EstablishOperationalBindingResult> {
@@ -264,7 +264,7 @@ async function establishOperationalBinding (
                                 [],
                                 createSecurityParameters(
                                     ctx,
-                                    conn.boundNameAndUID?.dn,
+                                    assn.boundNameAndUID?.dn,
                                     undefined,
                                     id_err_operationalBindingError,
                                 ),
@@ -324,55 +324,55 @@ async function establishOperationalBinding (
                     security_errorCode: codeToString(sp?.errorCode),
                     new_context_prefix_rdn: rdnToJson(agreement.rdn),
                     immediate_superior: agreement.immediateSuperior.map(rdnToJson),
-                    source_ip: conn.socket.remoteAddress,
-                    source_tcp_port: conn.socket.remotePort,
+                    source_ip: assn.socket.remoteAddress,
+                    source_tcp_port: assn.socket.remotePort,
                     source_credentials_type: ((): number | null => {
-                        if (!conn.bind) {
+                        if (!assn.bind) {
                             return null;
                         }
-                        if (!conn.bind.credentials) {
+                        if (!assn.bind.credentials) {
                             return null;
                         }
-                        if ("simple" in conn.bind.credentials) {
+                        if ("simple" in assn.bind.credentials) {
                             return 0;
                         }
-                        if ("strong" in conn.bind.credentials) {
+                        if ("strong" in assn.bind.credentials) {
                             return 1;
                         }
-                        if ("external" in conn.bind.credentials) {
+                        if ("external" in assn.bind.credentials) {
                             return 2;
                         }
-                        if ("spkm" in conn.bind.credentials) {
+                        if ("spkm" in assn.bind.credentials) {
                             return 3;
                         }
                         return 4;
                     })(),
                     source_certificate_path: (
-                        conn.bind?.credentials
-                        && ("strong" in conn.bind.credentials)
-                        && conn.bind.credentials.strong.certification_path
+                        assn.bind?.credentials
+                        && ("strong" in assn.bind.credentials)
+                        && assn.bind.credentials.strong.certification_path
                     )
-                        ? Buffer.from(_encode_CertificationPath(conn.bind.credentials.strong.certification_path, DER).toBytes())
+                        ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes())
                         : undefined,
                     source_attr_cert_path: (
-                        conn.bind?.credentials
-                        && ("strong" in conn.bind.credentials)
-                        && conn.bind.credentials.strong.attributeCertificationPath
+                        assn.bind?.credentials
+                        && ("strong" in assn.bind.credentials)
+                        && assn.bind.credentials.strong.attributeCertificationPath
                     )
-                        ? Buffer.from(_encode_ACP(conn.bind.credentials.strong.attributeCertificationPath, DER).toBytes())
+                        ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes())
                         : undefined,
                     source_bind_token: (
-                        conn.bind?.credentials
-                        && ("strong" in conn.bind.credentials)
+                        assn.bind?.credentials
+                        && ("strong" in assn.bind.credentials)
                     )
-                        ? Buffer.from(_encode_Token(conn.bind.credentials.strong.bind_token, DER).toBytes())
+                        ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes())
                         : undefined,
                     source_strong_name: (
-                        conn.bind?.credentials
-                        && ("strong" in conn.bind.credentials)
-                        && conn.bind.credentials.strong.name
+                        assn.bind?.credentials
+                        && ("strong" in assn.bind.credentials)
+                        && assn.bind.credentials.strong.name
                     )
-                        ? conn.bind.credentials.strong.name.map(rdnToJson)
+                        ? assn.bind.credentials.strong.name.map(rdnToJson)
                         : undefined,
                     supply_contexts: null,
                     requested_time: new Date(),
@@ -423,7 +423,7 @@ async function establishOperationalBinding (
             };
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
-            const reply = await becomeSuperior(ctx, conn, invokeId, agreement, init);
+            const reply = await becomeSuperior(ctx, assn, invokeId, agreement, init);
             return {
                 unsigned: new EstablishOperationalBindingResultData(
                     data.bindingType,

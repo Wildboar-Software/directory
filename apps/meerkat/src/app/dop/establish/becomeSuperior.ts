@@ -58,7 +58,7 @@ import saveAccessPoint from "../../database/saveAccessPoint";
 export
 async function becomeSuperior (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     invokeId: INTEGER,
     agreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
@@ -96,7 +96,7 @@ async function becomeSuperior (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         operationalBindingError["&errorCode"],
                     ),
@@ -118,7 +118,7 @@ async function becomeSuperior (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -132,7 +132,7 @@ async function becomeSuperior (
     if (superior.dse.nssr) {
         await checkIfNameIsAlreadyTakenInNSSR(
             ctx,
-            conn,
+            assn,
             {
                 present: invokeId,
             },

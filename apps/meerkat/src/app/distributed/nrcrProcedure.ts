@@ -61,14 +61,14 @@ import type {
 export
 async function nrcrProcedure (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     state: OperationDispatcherState,
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
 ): Promise<OPCR | Error_> {
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -82,7 +82,7 @@ async function nrcrProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -112,10 +112,10 @@ async function nrcrProcedure (
      * the same name.
      */
     const insufficientAuthForChaining = (
-        ("basicLevels" in conn.authLevel)
+        ("basicLevels" in assn.authLevel)
         && (
-            (conn.authLevel.basicLevels.level < ctx.config.chaining.minAuthLevel)
-            || ((conn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.chaining.minAuthLocalQualifier)
+            (assn.authLevel.basicLevels.level < ctx.config.chaining.minAuthLevel)
+            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.chaining.minAuthLocalQualifier)
         )
     )
     if (
@@ -130,7 +130,7 @@ async function nrcrProcedure (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     referral["&errorCode"],
                 ),
@@ -156,7 +156,7 @@ async function nrcrProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -179,7 +179,7 @@ async function nrcrProcedure (
         //  */
         const isNSSR = (cref.accessPoints.length > 1);
         if (!isNSSR) {
-            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req, conn, state);
+            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req, assn, state);
             if (!outcome) {
                 continue;
             } else if (("result" in outcome) && outcome.result) {
@@ -199,7 +199,7 @@ async function nrcrProcedure (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -211,7 +211,7 @@ async function nrcrProcedure (
             }
             let outcome: ResultOrError | null = null;
             try {
-                outcome = await apinfoProcedure(ctx, ap, req, conn, state);
+                outcome = await apinfoProcedure(ctx, ap, req, assn, state);
             } catch {
                 continue;
             }
@@ -252,7 +252,7 @@ async function nrcrProcedure (
                                 [],
                                 createSecurityParameters(
                                     ctx,
-                                    conn.boundNameAndUID?.dn,
+                                    assn.boundNameAndUID?.dn,
                                     undefined,
                                     serviceError["&errorCode"],
                                 ),
@@ -283,7 +283,7 @@ async function nrcrProcedure (
                 const localResult = await OperationDispatcher.operationEvaluation(
                     ctx,
                     state,
-                    conn,
+                    assn,
                     req,
                     reqData,
                     false,
@@ -300,7 +300,7 @@ async function nrcrProcedure (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             nameError["&errorCode"],
                         ),
@@ -319,7 +319,7 @@ async function nrcrProcedure (
             [],
             createSecurityParameters(
                 ctx,
-                conn.boundNameAndUID?.dn,
+                assn.boundNameAndUID?.dn,
                 undefined,
                 serviceError["&errorCode"],
             ),

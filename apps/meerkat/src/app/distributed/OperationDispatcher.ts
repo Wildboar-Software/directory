@@ -158,7 +158,7 @@ class OperationDispatcher {
     public static async operationEvaluation (
         ctx: Context,
         state: OperationDispatcherState,
-        conn: ClientAssociation,
+        assn: ClientAssociation,
         req: Request,
         reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
         local: boolean = false,
@@ -166,7 +166,7 @@ class OperationDispatcher {
         assert(req.opCode);
         assert(req.argument);
         if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
-            const outcome = await doAddEntry(ctx, conn, state);
+            const outcome = await doAddEntry(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -186,7 +186,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
-            const outcome = await doAdministerPassword(ctx, conn, state);
+            const outcome = await doAdministerPassword(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -202,7 +202,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, changePassword["&operationCode"]!)) {
-            const outcome = await doChangePassword(ctx, conn, state);
+            const outcome = await doChangePassword(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -218,7 +218,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, compare["&operationCode"]!)) {
-            const outcome = await doCompare(ctx, conn, state);
+            const outcome = await doCompare(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -234,7 +234,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
-            const outcome = await doModifyDN(ctx, conn, state);
+            const outcome = await doModifyDN(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -250,7 +250,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
-            const outcome = await doModifyEntry(ctx, conn, state);
+            const outcome = await doModifyEntry(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -268,13 +268,13 @@ class OperationDispatcher {
         else if (compareCode(req.opCode, ldapTransport["&operationCode"]!)) {
             const arg = ldapTransport.decoderFor["&ArgumentType"]!(state.operationArgument);
             const data = getOptionallyProtectedValue(arg);
-            const dapRequest = ldapRequestToDAPRequest(ctx, conn, data.ldapMessage);
+            const dapRequest = ldapRequestToDAPRequest(ctx, assn, data.ldapMessage);
             if (!dapRequest) {
                 throw new Error();
             }
             return OperationDispatcher.dispatchDAPRequest(
                 ctx,
-                conn,
+                assn,
                 {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
@@ -303,7 +303,7 @@ class OperationDispatcher {
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             if (nameResolutionPhase === completed) { // List (II)
-                const outcome = await list_ii(ctx, conn, state, true);
+                const outcome = await list_ii(ctx, assn, state, true);
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
@@ -319,16 +319,16 @@ class OperationDispatcher {
                 };
             } else { // List (I)
                 // Only List (I) results in results merging.
-                const response = await list_i(ctx, conn, state);
+                const response = await list_i(ctx, assn, state);
                 const postMergeState = await resultsMergingProcedureForList(
                     ctx,
-                    conn,
+                    assn,
                     response,
                     local,
                     state.NRcontinuationList,
                     state.SRcontinuationList,
                 );
-                const result = await mergeSortAndPageList(ctx, conn, state, data, postMergeState);
+                const result = await mergeSortAndPageList(ctx, assn, state, data, postMergeState);
                 const unprotectedResult = getOptionallyProtectedValue(result);
                 return {
                     invokeId: req.invokeId,
@@ -361,7 +361,7 @@ class OperationDispatcher {
             }
         }
         else if (compareCode(req.opCode, read["&operationCode"]!)) {
-            const outcome = await doRead(ctx, conn, state);
+            const outcome = await doRead(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -377,7 +377,7 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
-            const outcome = await doRemoveEntry(ctx, conn, state);
+            const outcome = await doRemoveEntry(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -437,7 +437,7 @@ class OperationDispatcher {
                 undefined,
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     search["&operationCode"],
                 ),
                 undefined,
@@ -451,7 +451,7 @@ class OperationDispatcher {
             };
             await relatedEntryProcedure( // REVIEW: Is there any reason for REP to return chaining results?
                 ctx,
-                conn,
+                assn,
                 state,
                 searchResponse,
                 argument,
@@ -462,7 +462,7 @@ class OperationDispatcher {
             if (nameResolutionPhase === completed) { // Search (II)
                 await search_ii(
                     ctx,
-                    conn,
+                    assn,
                     state,
                     argument,
                     searchResponse,
@@ -471,7 +471,7 @@ class OperationDispatcher {
                 // Only Search (I) results in results merging.
                 await search_i(
                     ctx,
-                    conn,
+                    assn,
                     state,
                     argument,
                     searchResponse,
@@ -483,7 +483,7 @@ class OperationDispatcher {
                 state.NRcontinuationList,
                 state.SRcontinuationList,
             );
-            const result = await mergeSortAndPageSearch(ctx, conn, state, postMergeState, data);
+            const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
             const unprotectedResult = getOptionallyProtectedValue(result);
             return {
                 invokeId: {
@@ -516,7 +516,7 @@ class OperationDispatcher {
 
     private static async dispatchPreparedDSPRequest (
         ctx: Context,
-        conn: ClientAssociation,
+        assn: ClientAssociation,
         req: Request,
         preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
         local: boolean,
@@ -525,7 +525,7 @@ class OperationDispatcher {
         assert(req.argument);
         const reqData = getOptionallyProtectedValue(preparedRequest);
         if (compareCode(req.opCode, abandon["&operationCode"]!)) {
-            const result = await doAbandon(ctx, conn, reqData);
+            const result = await doAbandon(ctx, assn, reqData);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -554,7 +554,7 @@ class OperationDispatcher {
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_securityError,
                     ),
@@ -584,7 +584,7 @@ class OperationDispatcher {
         };
         await findDSE(
             ctx,
-            conn,
+            assn,
             ctx.dit.root,
             targetObject,
             state,
@@ -608,7 +608,7 @@ class OperationDispatcher {
             const partialNameResolution = (scoBitField?.[partialNameResolutionBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
-                conn,
+                assn,
                 reqData,
                 state,
                 chainingProhibited,
@@ -618,7 +618,7 @@ class OperationDispatcher {
                 return OperationDispatcher.operationEvaluation(
                     ctx,
                     state,
-                    conn,
+                    assn,
                     req,
                     reqData,
                     local,
@@ -641,7 +641,7 @@ class OperationDispatcher {
         return OperationDispatcher.operationEvaluation(
             ctx,
             state,
-            conn,
+            assn,
             req,
             reqData,
             local,
@@ -650,20 +650,20 @@ class OperationDispatcher {
 
     public static async dispatchDAPRequest (
         ctx: Context,
-        conn: ClientAssociation,
+        assn: ClientAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(
             ctx,
-            conn,
+            assn,
             req,
             false,
-            conn.authLevel,
-            conn.boundNameAndUID?.uid,
+            assn.authLevel,
+            assn.boundNameAndUID?.uid,
         );
         return this.dispatchPreparedDSPRequest(
             ctx,
-            conn,
+            assn,
             req,
             preparedRequest,
             false,
@@ -672,20 +672,20 @@ class OperationDispatcher {
 
     public static async dispatchDSPRequest (
         ctx: Context,
-        conn: DSPAssociation,
+        assn: DSPAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
         const preparedRequest = await requestValidationProcedure(
             ctx,
-            conn,
+            assn,
             req,
             true,
-            conn.authLevel,
-            conn.boundNameAndUID?.uid,
+            assn.authLevel,
+            assn.boundNameAndUID?.uid,
         );
         return this.dispatchPreparedDSPRequest(
             ctx,
-            conn,
+            assn,
             req,
             preparedRequest,
             false,
@@ -695,7 +695,7 @@ class OperationDispatcher {
     private static async localSearchOperationEvaluation (
         ctx: Context,
         state: OperationDispatcherState,
-        conn: ClientAssociation,
+        assn: ClientAssociation,
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,
@@ -710,7 +710,7 @@ class OperationDispatcher {
         };
         await relatedEntryProcedure(
             ctx,
-            conn,
+            assn,
             state,
             searchResponse,
             argument,
@@ -719,10 +719,10 @@ class OperationDispatcher {
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
         if (nameResolutionPhase === completed) { // Search (II)
-            await search_ii(ctx, conn, state, argument, searchResponse);
+            await search_ii(ctx, assn, state, argument, searchResponse);
         } else { // Search (I)
             // Only Search (I) results in results merging.
-            await search_i(ctx, conn, state, argument, searchResponse);
+            await search_i(ctx, assn, state, argument, searchResponse);
         }
         // REVIEW: Is this right? Just above, you say "Only Search (I) results in results merging."
         const postMergeState = await resultsMergingProcedureForSearch(
@@ -731,7 +731,7 @@ class OperationDispatcher {
             state.NRcontinuationList,
             state.SRcontinuationList,
         );
-        const result = await mergeSortAndPageSearch(ctx, conn, state, postMergeState, data);
+        const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
         return {
             invokeId: {
                 present: 1,
@@ -744,7 +744,7 @@ class OperationDispatcher {
 
     public static async dispatchLocalSearchDSPRequest (
         ctx: Context,
-        conn: ClientAssociation,
+        assn: ClientAssociation,
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,
@@ -767,7 +767,7 @@ class OperationDispatcher {
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_securityError,
                     ),
@@ -797,7 +797,7 @@ class OperationDispatcher {
         };
         await findDSE(
             ctx,
-            conn,
+            assn,
             ctx.dit.root,
             targetObject,
             state,
@@ -811,7 +811,7 @@ class OperationDispatcher {
             const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
-                conn,
+                assn,
                 new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                     state.chainingArguments,
                     encodedArgument,
@@ -824,7 +824,7 @@ class OperationDispatcher {
                 return OperationDispatcher.localSearchOperationEvaluation(
                     ctx,
                     state,
-                    conn,
+                    assn,
                     invokeId,
                     argument,
                     chaining,
@@ -851,7 +851,7 @@ class OperationDispatcher {
         return OperationDispatcher.localSearchOperationEvaluation(
             ctx,
             state,
-            conn,
+            assn,
             invokeId,
             argument,
             chaining,

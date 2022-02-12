@@ -10,7 +10,7 @@ import type { ListState } from "./list_i";
 export
 async function resultsMergingProcedureForList (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     res: ListState,
     local: boolean,
     NRcontinuationList: ContinuationReference[],

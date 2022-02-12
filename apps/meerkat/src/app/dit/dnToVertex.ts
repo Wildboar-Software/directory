@@ -3,7 +3,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import rdnToID from "./rdnToID";
-import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 
 export
 async function dnToVertex (

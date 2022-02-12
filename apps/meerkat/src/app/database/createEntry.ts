@@ -1,6 +1,6 @@
 import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
 import { Prisma, Entry as DatabaseEntry } from "@prisma/client";
-import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";

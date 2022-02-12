@@ -50,7 +50,7 @@ import {
 export
 async function searchAliases (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     target: Vertex,
     argument: SearchArgument,
     chaining: ChainingArguments,
@@ -101,7 +101,7 @@ async function searchAliases (
     );
     const outcome = await OperationDispatcher.dispatchLocalSearchDSPRequest(
         ctx,
-        conn,
+        assn,
         invokeId,
         argument,
         newChaining,

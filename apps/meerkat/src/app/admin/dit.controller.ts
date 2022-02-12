@@ -27,7 +27,7 @@ import { id_sc_serviceAdminSubentry } from "@wildboar/x500/src/lib/modules/Infor
 import { id_sc_pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-pwdAdminSubentry.va";
 import { id_oc_parent } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
 import { id_oc_child } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
-import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import readValues from "../database/entry/readValues";
 import deleteEntry from "../database/deleteEntry";
 import escape from "escape-html";

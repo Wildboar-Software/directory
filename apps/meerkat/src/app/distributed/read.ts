@@ -111,14 +111,14 @@ import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstract
 export
 async function read (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ReadArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
@@ -145,7 +145,7 @@ async function read (
         accessControlScheme,
         acdfTuples,
         user,
-        state.chainingArguments.authenticationLevel ?? conn.authLevel,
+        state.chainingArguments.authenticationLevel ?? assn.authLevel,
         targetDN,
         isMemberOfGroup,
         NAMING_MATCHER,
@@ -171,7 +171,7 @@ async function read (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -192,7 +192,7 @@ async function read (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
                 ),
@@ -322,7 +322,7 @@ async function read (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -355,7 +355,7 @@ async function read (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -371,7 +371,7 @@ async function read (
         data.modifyRightsRequest
         // We only return these rights to the user if they are authenticated.
         // TODO: Make this behavior configurable.
-        && (("basicLevels" in conn.authLevel) && (conn.authLevel.basicLevels.level > 0))
+        && (("basicLevels" in assn.authLevel) && (assn.authLevel.basicLevels.level > 0))
         && accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
@@ -437,7 +437,7 @@ async function read (
             [],
             createSecurityParameters(
                 ctx,
-                conn.boundNameAndUID?.dn,
+                assn.boundNameAndUID?.dn,
                 id_opcode_read,
             ),
             ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -453,7 +453,7 @@ async function read (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_read,
                     ),
                     undefined,

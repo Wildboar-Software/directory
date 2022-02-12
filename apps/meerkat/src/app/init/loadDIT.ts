@@ -1,5 +1,5 @@
 import type { Context, DIT } from "@wildboar/meerkat-types";
-import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import { randomUUID } from "crypto";
 
 const ROOT_DSE_NAME = [];

@@ -49,7 +49,7 @@ function getDateFromOBTime (time: Time): Date {
 export
 async function terminateOperationalBinding (
     ctx: Context,
-    conn: DOPAssociation,
+    assn: DOPAssociation,
     arg: TerminateOperationalBindingArgument,
 ): Promise<TerminateOperationalBindingResult> {
     const data: TerminateOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
@@ -97,7 +97,7 @@ async function terminateOperationalBinding (
                 return false;
             }
             const pa = _decode_PresentationAddress(address);
-            return pa.nAddresses.some((naddr) => compareSocketToNSAP(conn.idm.s, naddr));
+            return pa.nAddresses.some((naddr) => compareSocketToNSAP(assn.idm.s, naddr));
         })
         .map((ap) => ap.id);
 
@@ -115,7 +115,7 @@ async function terminateOperationalBinding (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_err_operationalBindingError,
                     ),
@@ -155,7 +155,7 @@ async function terminateOperationalBinding (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_err_operationalBindingError,
                     ),

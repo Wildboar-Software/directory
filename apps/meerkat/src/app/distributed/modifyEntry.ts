@@ -256,7 +256,7 @@ const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
 const notPermittedData =  (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     aliasDereferenced?: boolean,
 ) => new SecurityErrorData(
     SecurityProblem_insufficientAccessRights,
@@ -265,7 +265,7 @@ const notPermittedData =  (
     [],
     createSecurityParameters(
         ctx,
-        conn.boundNameAndUID?.dn,
+        assn.boundNameAndUID?.dn,
         undefined,
         securityError["&errorCode"],
     ),
@@ -348,7 +348,7 @@ function getValueAlterer (
 
 function checkAttributeArity (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     target: Vertex,
     attr: Attribute,
     aliasDereferenced?: boolean,
@@ -382,7 +382,7 @@ function checkAttributeArity (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -423,7 +423,7 @@ function checkPermissionToAddValues (
     attribute: Attribute,
     ctx: Context,
     user: NameAndOptionalUID | undefined | null,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
@@ -455,7 +455,7 @@ function checkPermissionToAddValues (
                 mod: modificationType,
                 type: attribute.type_.toString(),
             }),
-            notPermittedData(ctx, conn, aliasDereferenced),
+            notPermittedData(ctx, assn, aliasDereferenced),
         );
     }
     for (const value of values) {
@@ -485,7 +485,7 @@ function checkPermissionToAddValues (
                     mod: modificationType,
                     type: attribute.type_.toString(),
                 }),
-                notPermittedData(ctx, conn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced),
             );
         }
     }
@@ -493,7 +493,7 @@ function checkPermissionToAddValues (
 
 function checkAbilityToModifyAttributeType (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     attributeType: AttributeType,
     entry: Vertex,
     targetDN: DistinguishedName,
@@ -523,7 +523,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -545,7 +545,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
                 ),
@@ -574,7 +574,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -603,7 +603,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -632,7 +632,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -716,7 +716,7 @@ function removeValuesFromPatch (
 async function executeAddAttribute (
     mod: Attribute,
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -724,7 +724,7 @@ async function executeAddAttribute (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
-    checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
     /**
      * This is done before checking if the attribute is already present to avoid
      * disclosing its presence. Once you've added the attribute, its presence is
@@ -735,7 +735,7 @@ async function executeAddAttribute (
         mod,
         ctx,
         user,
-        conn,
+        assn,
         accessControlScheme,
         relevantACDFTuples,
         aliasDereferenced,
@@ -760,7 +760,7 @@ async function executeAddAttribute (
                 undefined,
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -778,7 +778,7 @@ async function executeAddAttribute (
 async function executeRemoveAttribute (
     mod: AttributeType,
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -799,7 +799,7 @@ async function executeRemoveAttribute (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -831,7 +831,7 @@ async function executeRemoveAttribute (
                     mod: "removeAttribute",
                     type: mod.toString(),
                 }),
-                notPermittedData(ctx, conn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced),
             );
         }
     }
@@ -855,7 +855,7 @@ async function executeRemoveAttribute (
                 undefined,
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -876,7 +876,7 @@ async function executeRemoveAttribute (
 async function executeAddValues (
     mod: Attribute,
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -904,7 +904,7 @@ async function executeAddValues (
                 undefined,
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -914,13 +914,13 @@ async function executeAddValues (
             ),
         );
     }
-    checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
     checkPermissionToAddValues(
         "addValues",
         mod,
         ctx,
         user,
-        conn,
+        assn,
         accessControlScheme,
         relevantACDFTuples,
         aliasDereferenced,
@@ -933,7 +933,7 @@ async function executeAddValues (
 async function executeRemoveValues (
     mod: Attribute,
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -961,7 +961,7 @@ async function executeRemoveValues (
                 undefined,
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -995,7 +995,7 @@ async function executeRemoveValues (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
                 ),
@@ -1025,7 +1025,7 @@ async function executeRemoveValues (
                     mod: "removeValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, conn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced),
             );
         }
         for (const value of values) {
@@ -1050,7 +1050,7 @@ async function executeRemoveValues (
                         mod: "removeValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, conn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced),
                 );
             }
         }
@@ -1065,7 +1065,7 @@ async function executeRemoveValues (
 async function executeAlterValues (
     mod: AttributeTypeAndValue,
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -1121,7 +1121,7 @@ async function executeAlterValues (
                     mod: "alterValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, conn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced),
             );
         }
     }
@@ -1158,7 +1158,7 @@ async function executeAlterValues (
                         mod: "alterValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, conn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced),
                 );
             }
         }
@@ -1196,7 +1196,7 @@ async function executeAlterValues (
                         mod: "alterValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, conn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced),
                 );
             }
         }
@@ -1214,7 +1214,7 @@ async function executeAlterValues (
 async function executeResetValue (
     mod: AttributeType,
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -1269,7 +1269,7 @@ async function executeResetValue (
                         mod: "resetValue",
                         type: mod.toString(),
                     }),
-                    notPermittedData(ctx, conn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced),
                 );
             }
         }
@@ -1299,7 +1299,7 @@ async function executeResetValue (
 async function executeReplaceValues (
     mod: Attribute,
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     patch: Patch,
@@ -1307,7 +1307,7 @@ async function executeReplaceValues (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
 ): Promise<PrismaPromise<any>[]> {
-    checkAttributeArity(ctx, conn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
     if (
@@ -1332,7 +1332,7 @@ async function executeReplaceValues (
                     mod: "replaceValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, conn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced),
             );
         }
         const existingValues = await readValuesOfType(ctx, entry, mod.type_);
@@ -1358,7 +1358,7 @@ async function executeReplaceValues (
                         mod: "replaceValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, conn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced),
                 );
             }
         }
@@ -1388,7 +1388,7 @@ async function executeReplaceValues (
  */
 function handleContextRule (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     targetDN: DistinguishedName,
     attribute: Attribute,
     contextRuleIndex: ContextRulesIndex,
@@ -1414,7 +1414,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
                     ),
@@ -1456,7 +1456,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
                     ),
@@ -1498,7 +1498,7 @@ function handleContextRule (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             attributeError["&errorCode"],
                         ),
@@ -1530,7 +1530,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
                     ),
@@ -1617,7 +1617,7 @@ function handleContextRule (
  */
 async function executeEntryModification (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
     targetDN: DistinguishedName,
@@ -1634,7 +1634,7 @@ async function executeEntryModification (
 
     const commonArguments = [
         ctx,
-        conn,
+        assn,
         user,
         entry,
         patch,
@@ -1646,7 +1646,7 @@ async function executeEntryModification (
     const check = (attributeType: AttributeType, isRemoving: boolean) => {
         checkAbilityToModifyAttributeType(
             ctx,
-            conn,
+            assn,
             attributeType,
             entry,
             targetDN,
@@ -1660,7 +1660,7 @@ async function executeEntryModification (
     const checkContextRule = (attribute: Attribute): Attribute => {
         return handleContextRule(
             ctx,
-            conn,
+            assn,
             targetDN,
             attribute,
             contextRuleIndex,
@@ -1684,7 +1684,7 @@ async function executeEntryModification (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
                     ),

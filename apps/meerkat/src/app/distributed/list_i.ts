@@ -151,7 +151,7 @@ interface ListState extends Partial<WithRequestStatistics>, Partial<WithOutcomeS
 export
 async function list_i (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<ListState> {
     const target = state.foundDSE;
@@ -174,7 +174,7 @@ async function list_i (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),
@@ -185,7 +185,7 @@ async function list_i (
         );
     }
     const op = ("present" in state.invokeId)
-        ? conn.invocations.get(Number(state.invokeId.present))
+        ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -219,7 +219,7 @@ async function list_i (
         undefined,
         createSecurityParameters(
             ctx,
-            conn.boundNameAndUID?.dn,
+            assn.boundNameAndUID?.dn,
             id_opcode_list,
         ),
         undefined,
@@ -245,7 +245,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
                         ),
@@ -266,7 +266,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
                         ),
@@ -284,14 +284,14 @@ async function list_i (
                 alreadyReturnedById: new Set(),
             };
             // listState.paging = [ queryReference, newPagingState ];
-            if (conn.pagedResultsRequests.size >= 5) {
-                conn.pagedResultsRequests.clear();
+            if (assn.pagedResultsRequests.size >= 5) {
+                assn.pagedResultsRequests.clear();
             }
-            conn.pagedResultsRequests.set(queryReference, newPagingState);
+            assn.pagedResultsRequests.set(queryReference, newPagingState);
             ret.queryReference = queryReference;
         } else if ("queryReference" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.queryReference).toString("base64");
-            const paging = conn.pagedResultsRequests.get(queryReference);
+            const paging = assn.pagedResultsRequests.get(queryReference);
             if (!paging) {
                 throw new errors.ServiceError(
                     ctx.i18n.t("err:paginated_query_ref_invalid"),
@@ -300,7 +300,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
                         ),
@@ -315,7 +315,7 @@ async function list_i (
             return ret;
         } else if ("abandonQuery" in data.pagedResults) {
             queryReference = Buffer.from(data.pagedResults.abandonQuery).toString("base64");
-            conn.pagedResultsRequests.delete(queryReference);
+            assn.pagedResultsRequests.delete(queryReference);
             throw new errors.AbandonError(
                 ctx.i18n.t("err:abandoned_paginated_query"),
                 new AbandonedData(
@@ -323,7 +323,7 @@ async function list_i (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -340,7 +340,7 @@ async function list_i (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -379,7 +379,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
-                            conn.boundNameAndUID?.dn,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -433,7 +433,7 @@ async function list_i (
                     effectiveAccessControlScheme,
                     subordinateACDFTuples,
                     user,
-                    state.chainingArguments.authenticationLevel ?? conn.authLevel,
+                    state.chainingArguments.authenticationLevel ?? assn.authLevel,
                     subordinateDN,
                     isMemberOfGroup,
                     NAMING_MATCHER,

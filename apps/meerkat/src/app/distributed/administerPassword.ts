@@ -87,7 +87,7 @@ const USER_PWD_OID: string = userPwd["&id"].toString();
 export
 async function administerPassword (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
@@ -114,7 +114,7 @@ async function administerPassword (
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
                 ),
@@ -152,7 +152,7 @@ async function administerPassword (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? conn.authLevel,
+            state.chainingArguments.authenticationLevel ?? assn.authLevel,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,
@@ -217,7 +217,7 @@ async function administerPassword (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -228,7 +228,7 @@ async function administerPassword (
             );
         }
     }
-    const promises = await setEntryPassword(ctx, conn, target, data.newPwd);
+    const promises = await setEntryPassword(ctx, assn, target, data.newPwd);
     await ctx.db.$transaction(promises);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for
@@ -245,7 +245,7 @@ async function administerPassword (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         id_opcode_administerPassword,
                     ),
                     undefined,

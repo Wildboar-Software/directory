@@ -48,7 +48,7 @@ import saveAccessPoint from "../../database/saveAccessPoint";
 export
 async function updateLocalSubr (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     invokeId: InvokeId,
     oldAgreement: HierarchicalAgreement,
     newAgreement: HierarchicalAgreement,
@@ -88,7 +88,7 @@ async function updateLocalSubr (
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         operationalBindingError["&errorCode"],
                     ),
@@ -111,7 +111,7 @@ async function updateLocalSubr (
             try {
                 await checkIfNameIsAlreadyTakenInNSSR(
                     ctx,
-                    conn,
+                    assn,
                     invokeId,
                     false,
                     superior.dse.nssr.nonSpecificKnowledge,
@@ -129,7 +129,7 @@ async function updateLocalSubr (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                conn.boundNameAndUID?.dn,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
                                 id_err_operationalBindingError,
                             ),

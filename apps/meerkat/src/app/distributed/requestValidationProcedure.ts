@@ -93,13 +93,13 @@ type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Para
 
 function createChainingArgumentsFromDUA (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     operationCode: Code,
     operationArgument: ASN1Element,
     authenticationLevel: AuthenticationLevel,
     uniqueIdentifier?: UniqueIdentifier,
 ): ChainingArguments {
-    let originator: OPTIONAL<DistinguishedName> = conn.boundNameAndUID?.dn;
+    let originator: OPTIONAL<DistinguishedName> = assn.boundNameAndUID?.dn;
     let targetObject: OPTIONAL<DistinguishedName>;
     let operationProgress: OPTIONAL<OperationProgress>;
     const traceInformation: TraceInformation = [];

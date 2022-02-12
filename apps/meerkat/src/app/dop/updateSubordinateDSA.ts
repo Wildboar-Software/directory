@@ -219,10 +219,10 @@ async function updateSubordinateDSA (
     const timeoutTime: Date | undefined = connectionTimeout
         ? addMilliseconds(startTime, connectionTimeout)
         : undefined;
-    const conn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
+    const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
     });
-    if (!conn) {
+    if (!assn) {
         throw new ServiceError(
             ctx.i18n.t("err:could_not_connect"),
             new ServiceErrorData(
@@ -338,7 +338,7 @@ async function updateSubordinateDSA (
     const timeRemainingForOperation: number | undefined = timeoutTime
         ? differenceInMilliseconds(timeoutTime, new Date())
         : undefined;
-    return conn.writeOperation({
+    return assn.writeOperation({
         opCode: modifyOperationalBinding["&operationCode"]!,
         argument: _encode_ModifyOperationalBindingArgument(arg, DER),
     }, {

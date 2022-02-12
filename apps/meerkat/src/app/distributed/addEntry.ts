@@ -182,7 +182,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
 import rdnToID from "../dit/rdnToID";
-import vertexFromDatabaseEntry from "../database/entryFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import {
     id_ar_accessControlSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
@@ -214,7 +214,7 @@ const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
 
 function namingViolationErrorData (
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     attributeTypes: AttributeType[],
     aliasDereferenced?: boolean,
 ): UpdateErrorData {
@@ -226,7 +226,7 @@ function namingViolationErrorData (
         [],
         createSecurityParameters(
             ctx,
-            conn.boundNameAndUID?.dn,
+            assn.boundNameAndUID?.dn,
             undefined,
             updateError["&errorCode"],
         ),

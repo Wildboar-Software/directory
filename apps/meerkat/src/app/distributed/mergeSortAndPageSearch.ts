@@ -183,7 +183,7 @@ function compareEntries (
 export
 async function mergeSortAndPageSearch(
     ctx: Context,
-    conn: ClientAssociation,
+    assn: ClientAssociation,
     state: OperationDispatcherState,
     searchState: SearchState,
     searchArgument: SearchArgumentData,
@@ -221,7 +221,7 @@ async function mergeSortAndPageSearch(
                     [],
                     createSecurityParameters(
                         ctx,
-                        conn.boundNameAndUID?.dn,
+                        assn.boundNameAndUID?.dn,
                         search["&operationCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -257,7 +257,7 @@ async function mergeSortAndPageSearch(
         [],
         createSecurityParameters(
             ctx,
-            conn.boundNameAndUID?.dn,
+            assn.boundNameAndUID?.dn,
             search["&operationCode"],
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -283,13 +283,13 @@ async function mergeSortAndPageSearch(
                 b,
                 prr.sortKeys!,
                 prr.reverse,
-                (conn instanceof LDAPAssociation),
+                (assn instanceof LDAPAssociation),
             ));
         }
         const nonSkippedResults = mergedResult.entries.slice(pageNumberSkips);
         await ctx.db.enqueuedSearchResult.createMany({
             data: nonSkippedResults.map((entry, i) => ({
-                connection_uuid: conn.id,
+                connection_uuid: assn.id,
                 query_ref: searchState.paging![0],
                 result_index: i,
                 entry_info: Buffer.from(_encode_EntryInformation(entry, DER).toBytes()),
@@ -306,7 +306,7 @@ async function mergeSortAndPageSearch(
         take: Math.max(Number(prr.pageSize), 1),
         skip: (searchState.paging[1].cursorId === undefined) ? 0 : 1,
         where: {
-            connection_uuid: conn.id,
+            connection_uuid: assn.id,
             query_ref: searchState.paging![0],
         },
         select: {
@@ -319,7 +319,7 @@ async function mergeSortAndPageSearch(
         },
         cursor: {
             connection_uuid_query_ref_result_index: {
-                connection_uuid: conn.id,
+                connection_uuid: assn.id,
                 query_ref: searchState.paging![0],
                 result_index: searchState.paging[1].cursorId ?? 0,
             },
@@ -347,11 +347,11 @@ async function mergeSortAndPageSearch(
     //     });
     // }
     if (done) {
-        conn.pagedResultsRequests.delete(searchState.paging[0]);
+        assn.pagedResultsRequests.delete(searchState.paging[0]);
         // These should already be gone, but this is just to make sure.
         await ctx.db.enqueuedSearchResult.deleteMany({
             where: {
-                connection_uuid: conn.id,
+                connection_uuid: assn.id,
                 query_ref: searchState.paging![0],
             },
         });
@@ -391,7 +391,7 @@ async function mergeSortAndPageSearch(
                             ? {
                                 exact: (await ctx.db.enqueuedSearchResult.findMany({
                                     where: {
-                                        connection_uuid: conn.id,
+                                        connection_uuid: assn.id,
                                         query_ref: searchState.paging![0],
                                     },
                                     select: {
@@ -405,7 +405,7 @@ async function mergeSortAndPageSearch(
                 [],
                 createSecurityParameters(
                     ctx,
-                    conn.boundNameAndUID?.dn,
+                    assn.boundNameAndUID?.dn,
                     search["&operationCode"],
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,

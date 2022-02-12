@@ -148,10 +148,10 @@ async function updateSuperiorDSA (
                 continue;
             }
             assert(subr.immediateSuperior);
-            const conn: Connection | null = await connect(ctx, accessPoint, dop_ip["&id"]!, {
+            const assn: Connection | null = await connect(ctx, accessPoint, dop_ip["&id"]!, {
                 timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
             });
-            if (!conn) {
+            if (!assn) {
                 throw new ServiceError(
                     ctx.i18n.t("err:could_not_connect"),
                     new ServiceErrorData(
@@ -281,7 +281,7 @@ async function updateSuperiorDSA (
                     ),
                 ),
             };
-            return conn.writeOperation({
+            return assn.writeOperation({
                 opCode: modifyOperationalBinding["&operationCode"]!,
                 argument: _encode_ModifyOperationalBindingArgument(arg, DER),
             }, {

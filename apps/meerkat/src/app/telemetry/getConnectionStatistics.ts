@@ -1,11 +1,11 @@
 import type { ClientAssociation, ConnectionStatistics } from "@wildboar/meerkat-types";
 
 export
-function getConnectionStatistics (conn: ClientAssociation): ConnectionStatistics {
+function getConnectionStatistics (assn: ClientAssociation): ConnectionStatistics {
     return {
-        remoteFamily: conn.socket.remoteFamily,
-        remoteAddress: conn.socket.remoteAddress,
-        remotePort: conn.socket.remotePort,
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
     };
 }
 
