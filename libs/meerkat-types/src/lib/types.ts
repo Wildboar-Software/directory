@@ -1065,7 +1065,6 @@ interface Context {
     log: Logger;
     db: PrismaClient;
     telemetry: Telemetry;
-    structuralObjectClassHierarchy: StructuralObjectClassInfo;
     /**
      * LDAP often uses human-friendly names object descriptors instead of object
      * identifiers.

@@ -173,6 +173,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             })(),
         },
     }));
+    // TODO: Support hot-added attribute types
 };
 
 export

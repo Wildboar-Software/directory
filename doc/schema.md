@@ -25,8 +25,9 @@ In X.500 directories, schema are stored and served from subschema subentries.
 The schema that these subentries serve applies only to the subentry's
 administrative area. (Note that the `subtreeSpecification` is ignored for
 subschema subentries. There may only be one subschema subentry, and it applies
-for the whole administrative area.) Within a subschema subentry, the elements of
-the schema are served in attributes.
+for the whole administrative area. The subtree specification must not have any
+minimums, maximums, chops, or refinements at all.) Within a subschema subentry,
+the elements of the schema are served in attributes.
 
 Even though these attributes are supposed to be stored in subschema subentries,
 some of these subschema elements describe attribute types, context types, name
@@ -186,6 +187,14 @@ instance, if you wanted to store attribute values of this type in their own
 separate table in the database, you could define a driver that reads and writes
 from this table instead of the `AttributeValue` table.
 
+Note that attribute drivers should be used sparingly. It is common for users
+to request all attribute types when reading or searching an entry. When this
+happens, every attribute type's `readValues()` driver will be called. If this
+function contains a database query, it will slightly slow down the time it
+takes to read an entry. Attribute drivers should only be used where there is
+some utility in storing values of a given attribute in their own table, rather
+than in the `AttributeValue` table.
+
 ### Custom Object Classes
 
 Object classes are pure data, and as such, there are three ways they can be
@@ -208,7 +217,7 @@ added to Meerkat DSA:
 - Directory Access Protocol (DAP) addition to a subschema subentry via the
   `nameForms` attribute, or
 - Adding the name form to the `nameForms` index of the context object in
-  an init script. (This is not advised, because the object class will only
+  an init script. (This is not advised, because the name form will only
   continue to be defined so long as its definition continues to exist in the
   init script.)
 
@@ -305,6 +314,13 @@ identify with the LDAP syntax via the `ldapSyntax` property of the custom
 attribute type. If an attribute type has no associated LDAP syntax, it will
 simply be invisible to LDAP. (Note that "invisible" does not mean "ignored.")
 
+It is also highly recommended that you add an entry to the `Context` object's
+`ldapSyntaxToASN1Syntax` map. This is simply a map of the object identifier
+as a `string` in dot-delimited notation to the ASN.1 syntax, as described in
+ITU Recommendation X.501 (2016 edition), Section 15.7.3. The ASN.1 does not
+have to be a complete ASN.1 module, and assumes the existence of all X.500
+schema without importing them.
+
 ### Custom Matching Rules
 
 Below is an example for implementing a custom matching rule:
@@ -373,6 +389,19 @@ The `SubstringsMatcher` determines if the asserted substring appears within the
 value at the selected location (the start, end, or anywhere), and returns a
 `boolean` value of `true` if the substring appears within the string where it is
 sought and `false` if it does not.
+
+### Object Identifiers
+
+Particularly in LDAP, it is desirable (if not expected by some implementations)
+to represent object identifiers by their human-friendly names. Whenever a
+schema element, such as an attribute type or name form, is added to Meerkat
+DSA, it is recommended that the object identifier get added to the `Context`
+object's `objectIdentifierToName` and `nameToObjectIdentifier` maps. In each
+case, the object identifier is represented in dot-delimited form.
+
+Note that future versions of Meerkat DSA may expect object identifier names
+used in the `nameToObjectIdentifier` map to be normalized to lowercase or
+uppercase, but this is currently not the case.
 
 ## Guidance
 

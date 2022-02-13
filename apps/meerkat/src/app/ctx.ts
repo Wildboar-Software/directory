@@ -350,11 +350,6 @@ const ctx: Context = {
             // } catch {} // eslint-disable-line
         },
     },
-    structuralObjectClassHierarchy: {
-        ...objectClassFromInformationObject(top),
-        parent: undefined,
-        children: [],
-    },
     objectIdentifierToName: new Map(),
     nameToObjectIdentifier: new Map(),
     objectClasses: new Map(),
