@@ -9025,4 +9025,6 @@ describe("Meerkat DSA", () => {
     // Can't really be tested right now, because there's no way to remotely create a shadow entry.
     it.todo("An entry modification is not allowed to happen to a DSE of type shadow");
 
+    it.todo("searchFamily does not yield results for subordinate compound entries");
+
 });

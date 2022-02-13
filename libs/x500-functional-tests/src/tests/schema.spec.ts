@@ -7,12 +7,14 @@ import {
     INTEGER,
     FALSE,
     TRUE,
+    DERElement,
 } from "asn1-ts";
 import {
     BER,
     DER,
     _encodeObjectIdentifier,
     _encodeInteger,
+    _encodePrintableString,
 } from "asn1-ts/dist/node/functional";
 import * as net from "net";
 import {
@@ -422,6 +424,54 @@ import {
 import {
     NameFormInformation,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+import {
+    dITContentRules,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+import {
+    DITContentRuleDescription,
+    _encode_DITContentRuleDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+import {
+    telephoneNumber,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumber.oa";
+import {
+    seeAlso,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/seeAlso.oa";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    UpdateProblem_objectClassViolation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+import {
+    userSecurityInformation,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userSecurityInformation.oa";
+import {
+    isoTagInfo,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/isoTagInfo.oa";
+import {
+    dITContextUse,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+import {
+    DITContextUseDescription,
+    _encode_DITContextUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+import {
+    DITContextUseInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
+import {
+    languageContext,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
+import {
+    temporalContext,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/temporalContext.oa";
+import {
+    TimeSpecification,
+    _encode_TimeSpecification,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification.ta";
+import {
+    TimeSpecification_time_absolute,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
 
 jest.setTimeout(30000);
 
@@ -458,6 +508,10 @@ function utf8 (str: string): ASN1Element {
     return _encode_UnboundedDirectoryString({
         uTF8String: str,
     }, DER);
+}
+
+function printable (str: string): ASN1Element {
+    return _encodePrintableString(str, DER);
 }
 
 function oid (o: OBJECT_IDENTIFIER): ASN1Element {
@@ -937,7 +991,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    it.only("enforces DIT structure rules on entries in a subschema", async () => {
+    it("enforces DIT structure rules on entries in a subschema", async () => {
         const testId = `subschema.structure-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
         const personNameForm = new ObjectIdentifier([ 2, 5, 100, 1 ]);
@@ -1149,11 +1203,935 @@ describe("Meerkat DSA", () => {
     });
 
     it("enforces DIT content rules on entries in a subschema", async () => {
+        const testId = `subschema.content-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const personNameForm = new ObjectIdentifier([ 2, 5, 100, 1 ]);
+        const processNameForm = new ObjectIdentifier([ 2, 5, 100, 2 ]);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_subschemaAdminSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8("subschema"),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(subschema["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [
+                            utf8("subschema"),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        nameForms["&id"],
+                        [
+                            _encode_NameFormDescription(new NameFormDescription(
+                                processNameForm,
+                                undefined,
+                                undefined,
+                                undefined,
+                                new NameFormInformation(
+                                    applicationProcess["&id"],
+                                    [commonName["&id"]],
+                                    undefined,
+                                ),
+                            ), DER),
+                            _encode_NameFormDescription(new NameFormDescription(
+                                personNameForm,
+                                undefined,
+                                undefined,
+                                undefined,
+                                new NameFormInformation(
+                                    person["&id"],
+                                    [surname["&id"]],
+                                    undefined,
+                                ),
+                            ), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        dITStructureRules["&id"],
+                        [
+                            _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                                1,
+                                processNameForm,
+                            ), DER),
+                            _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                                2,
+                                personNameForm,
+                                [1], // People may appear below a process.
+                            ), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        dITContentRules["&id"],
+                        [
+                            _encode_DITContentRuleDescription(new DITContentRuleDescription(
+                                person["&id"],
+                                [userPwdClass["&id"], isoTagInfo["&id"]], // auxiliaries
+                                [telephoneNumber["&id"]], // mandatory
+                                [organizationName["&id"]], // optional
+                                [seeAlso["&id"]], // precluded
+                            ), DER),
+                        ],
+                        undefined,
+                    ),
+                ],
+            );
+        }
+
+        { // Create person with no telephoneNumber, which should fail.
+            const entryName: string = "no-telephoneNumber";
+            const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+                {
+                    rdnSequence: [
+                        ...dn,
+                        [
+                            new AttributeTypeAndValue(
+                                surname["&id"],
+                                utf8(entryName),
+                            ),
+                        ],
+                    ],
+                },
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [oid(person["&id"])],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        surname["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                ],
+            );
+            const arg: AddEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                addEntry["&operationCode"]!,
+                _encode_AddEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Create person with seeAlso
+        {
+            const entryName: string = "with-seeAlso";
+            const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+                {
+                    rdnSequence: [
+                        ...dn,
+                        [
+                            new AttributeTypeAndValue(
+                                surname["&id"],
+                                utf8(entryName),
+                            ),
+                        ],
+                    ],
+                },
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [oid(person["&id"])],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        surname["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        telephoneNumber["&id"],
+                        [printable("+1 (888) 111-1111")],
+                        undefined,
+                    ),
+                    new Attribute(
+                        seeAlso["&id"],
+                        [DERElement.fromSequence([])],
+                        undefined,
+                    ),
+                ],
+            );
+            const arg: AddEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                addEntry["&operationCode"]!,
+                _encode_AddEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Create person with non-permitted auxiliary object class
+        {
+            const entryName: string = "with-forbidden-aux-oc";
+            const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+                {
+                    rdnSequence: [
+                        ...dn,
+                        [
+                            new AttributeTypeAndValue(
+                                surname["&id"],
+                                utf8(entryName),
+                            ),
+                        ],
+                    ],
+                },
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(person["&id"]),
+                            oid(userSecurityInformation["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        surname["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        telephoneNumber["&id"],
+                        [printable("+1 (888) 111-1111")],
+                        undefined,
+                    ),
+                ],
+            );
+            const arg: AddEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                addEntry["&operationCode"]!,
+                _encode_AddEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Create person that complies with content rule
+        const compliantEntryName: string = "compliant";
+        const compliantEntryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                surname["&id"],
+                utf8(compliantEntryName),
+            ),
+        ];
+        const compliantEntryDN: DistinguishedName = [
+            ...dn,
+            compliantEntryRDN,
+        ];
+        {
+            const entryName: string = compliantEntryName;
+            const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(person["&id"]),
+                            oid(userPwdClass["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        surname["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        telephoneNumber["&id"],
+                        [printable("+1 (888) 111-1111")],
+                        undefined,
+                    ),
+                ],
+            );
+            const arg: AddEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                addEntry["&operationCode"]!,
+                _encode_AddEntryArgument(arg, DER),
+            );
+            assert("result" in response);
+            assert(response.result);
+        }
+
+        // Modify person to add non-permitted auxiliary object class
+        {
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    {
+                        addValues: new Attribute(
+                            objectClass["&id"],
+                            [oid(userSecurityInformation["&id"])],
+                            undefined,
+                        ),
+                    },
+                ],
+                undefined,
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Modify person to add permitted auxiliary object class
+        {
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    {
+                        addValues: new Attribute(
+                            objectClass["&id"],
+                            [oid(isoTagInfo["&id"])],
+                            undefined,
+                        ),
+                    },
+                ],
+                undefined,
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+            assert("result" in response);
+            assert(response.result);
+        }
+
+        // Modify person to add precluded attribute type
+        {
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    {
+                        addValues: new Attribute(
+                            seeAlso["&id"],
+                            [DERElement.fromSequence([])],
+                            undefined,
+                        ),
+                    },
+                ],
+                undefined,
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Modify person to remove mandatory attribute type
+        {
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    {
+                        removeAttribute: telephoneNumber["&id"],
+                    },
+                ],
+                undefined,
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Commented out because it would be a pain in the ass to test, because I have
+        // to change the name, name form, and DIT structure rule.
+        // Modify person to remove permitted auxiliary object class
+        // {
+        //     const reqData: ModifyDNArgumentData = new ModifyDNArgumentData(
+        //         compliantEntryDN,
+        //         [],
+        //         TRUE,
+        //     );
+        //     const arg: ModifyDNArgument = {
+        //         unsigned: reqData,
+        //     };
+        //     const response = await writeOperation(
+        //         connection!,
+        //         modifyDN["&operationCode"]!,
+        //         _encode_ModifyDNArgument(arg, DER),
+        //     );
+        //     assert("result" in response);
+        //     assert(response.result);
+        // }
+
+        // ModifyDN.deleteOldRDN cannot delete a mandatory attribute type
 
     });
 
     it("enforces DIT context use rules on entries in a subschema", async () => {
+        const testId = `subschema.context-${(new Date()).toISOString()}`;
+        const dn = createTestRootDN(testId);
+        const personNameForm = new ObjectIdentifier([ 2, 5, 100, 1 ]);
+        const processNameForm = new ObjectIdentifier([ 2, 5, 100, 2 ]);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [
+                        oid(id_ar_subschemaAdminSpecificArea),
+                    ],
+                    undefined,
+                ),
+            ]);
+            const subentryRDN: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8("subschema"),
+                ),
+            ];
+            await createEntry(
+                connection!,
+                dn,
+                subentryRDN,
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [
+                            oid(subentry["&id"]),
+                            oid(subschema["&id"]),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [
+                            utf8("subschema"),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        subtreeSpecification["&id"],
+                        [
+                            _encode_SubtreeSpecification(new SubtreeSpecification(), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        nameForms["&id"],
+                        [
+                            _encode_NameFormDescription(new NameFormDescription(
+                                processNameForm,
+                                undefined,
+                                undefined,
+                                undefined,
+                                new NameFormInformation(
+                                    applicationProcess["&id"],
+                                    [commonName["&id"]],
+                                    undefined,
+                                ),
+                            ), DER),
+                            _encode_NameFormDescription(new NameFormDescription(
+                                personNameForm,
+                                undefined,
+                                undefined,
+                                undefined,
+                                new NameFormInformation(
+                                    person["&id"],
+                                    [surname["&id"]],
+                                    undefined,
+                                ),
+                            ), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        dITStructureRules["&id"],
+                        [
+                            _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                                1,
+                                processNameForm,
+                            ), DER),
+                            _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                                2,
+                                personNameForm,
+                                [1], // People may appear below a process.
+                            ), DER),
+                        ],
+                        undefined,
+                    ),
+                    new Attribute(
+                        dITContextUse["&id"],
+                        [
+                            _encode_DITContextUseDescription(new DITContextUseDescription(
+                                description["&id"],
+                                undefined,
+                                undefined,
+                                undefined,
+                                new DITContextUseInformation(
+                                    [languageContext["&id"]],
+                                    [localeContext["&id"]],
+                                ),
+                            ), DER),
+                        ],
+                        undefined,
+                    ),
+                ],
+            );
+        }
 
+        // Create person with description with non-permitted context
+        {
+            const entryName: string = "asdf";
+            const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+                {
+                    rdnSequence: [
+                        ...dn,
+                        [
+                            new AttributeTypeAndValue(
+                                surname["&id"],
+                                utf8(entryName),
+                            ),
+                        ],
+                    ],
+                },
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [oid(person["&id"])],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        surname["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        description["&id"],
+                        [],
+                        [
+                            new Attribute_valuesWithContext_Item(
+                                utf8("desc"),
+                                [
+                                    new Context(
+                                        temporalContext["&id"],
+                                        [
+                                            _encode_TimeSpecification(new TimeSpecification(
+                                                {
+                                                    absolute: new TimeSpecification_time_absolute(
+                                                        new Date(),
+                                                        undefined,
+                                                    ),
+                                                },
+                                                FALSE,
+                                                undefined,
+                                            ), DER),
+                                        ],
+                                        FALSE,
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            );
+            const arg: AddEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                addEntry["&operationCode"]!,
+                _encode_AddEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Create person with description without mandatory context
+        {
+            const entryName: string = "asdf";
+            const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+                {
+                    rdnSequence: [
+                        ...dn,
+                        [
+                            new AttributeTypeAndValue(
+                                surname["&id"],
+                                utf8(entryName),
+                            ),
+                        ],
+                    ],
+                },
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [oid(person["&id"])],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        surname["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        description["&id"],
+                        [utf8("desc")],
+                        undefined,
+                    ),
+                ],
+            );
+            const arg: AddEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                addEntry["&operationCode"]!,
+                _encode_AddEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Create person with description that complies
+        const compliantEntryName: string = "compliant";
+        const compliantEntryRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                surname["&id"],
+                utf8(compliantEntryName),
+            ),
+        ];
+        const compliantEntryDN: DistinguishedName = [
+            ...dn,
+            compliantEntryRDN,
+        ];
+        {
+            const entryName: string = compliantEntryName;
+            const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    new Attribute(
+                        objectClass["&id"],
+                        [oid(person["&id"])],
+                        undefined,
+                    ),
+                    new Attribute(
+                        commonName["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        surname["&id"],
+                        [utf8(entryName)],
+                        undefined,
+                    ),
+                    new Attribute(
+                        description["&id"],
+                        [],
+                        [
+                            new Attribute_valuesWithContext_Item(
+                                utf8("desc"),
+                                [
+                                    new Context(
+                                        languageContext["&id"],
+                                        [printable("EN")],
+                                        FALSE,
+                                    ),
+                                    new Context(
+                                        localeContext["&id"],
+                                        [localeContext.encoderFor["&Type"]!({
+                                            localeID2: {
+                                                uTF8String: "en-US",
+                                            },
+                                        }, DER)],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            );
+            const arg: AddEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                addEntry["&operationCode"]!,
+                _encode_AddEntryArgument(arg, DER),
+            );
+            assert("result" in response);
+            assert(response.result);
+        }
+
+        // Add description with non-permitted context
+        {
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    {
+                        addValues: new Attribute(
+                            description["&id"],
+                            [],
+                            [
+                                new Attribute_valuesWithContext_Item(
+                                    utf8("desc2"),
+                                    [
+                                        new Context(
+                                            temporalContext["&id"],
+                                            [
+                                                _encode_TimeSpecification(new TimeSpecification(
+                                                    {
+                                                        absolute: new TimeSpecification_time_absolute(
+                                                            new Date(),
+                                                            undefined,
+                                                        ),
+                                                    },
+                                                    FALSE,
+                                                    undefined,
+                                                ), DER),
+                                            ],
+                                            FALSE,
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    },
+                ],
+                undefined,
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Add description without mandatory context
+        {
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    {
+                        addValues: new Attribute(
+                            description["&id"],
+                            [utf8("desc2")],
+                            undefined,
+                        ),
+                    },
+                ],
+                undefined,
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+            assert("error" in response);
+            assert(response.error);
+            assert(response.errcode);
+            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
+            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            const data = getOptionallyProtectedValue(param);
+            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+        }
+
+        // Add description that complies
+        {
+            const reqData: ModifyEntryArgumentData = new ModifyEntryArgumentData(
+                {
+                    rdnSequence: compliantEntryDN,
+                },
+                [
+                    {
+                        addValues: new Attribute(
+                            description["&id"],
+                            [],
+                            [
+                                new Attribute_valuesWithContext_Item(
+                                    utf8("desc2"),
+                                    [
+                                        new Context(
+                                            languageContext["&id"],
+                                            [printable("fr")],
+                                            FALSE,
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    },
+                ],
+                undefined,
+            );
+            const arg: ModifyEntryArgument = {
+                unsigned: reqData,
+            };
+            const response = await writeOperation(
+                connection!,
+                modifyEntry["&operationCode"]!,
+                _encode_ModifyEntryArgument(arg, DER),
+            );
+            assert("result" in response);
+            assert(response.result);
+        }
+
+        // ModifyDN.deleteOldRDN will not be tested, because it will require
+        // changes to the name, name form, and DIT structure rules.
     });
 
     it.todo("Ignores obsolete DIT structure rules");

@@ -1333,7 +1333,7 @@ describe("Meerkat DSA", () => {
     it.todo("does not allow users to add multiple subtrees to the subschema subentry within a subschema administrative area");
     it.todo("does not allow users to define a subschema subentry with a subtree specification that does not cover the whole administrative area");
 
-    it.only("An error is thrown when an attempt is made to add a second value to a single-valued attribute", async () => {
+    it("An error is thrown when an attempt is made to add a second value to a single-valued attribute", async () => {
         const rdn = [
             new AttributeTypeAndValue(
                 countryName["&id"],
@@ -1406,5 +1406,9 @@ describe("Meerkat DSA", () => {
         );
         expect(("error" in result) && result.error).toBeTruthy();
     });
+
+    it.todo("throws an error when an RDN is created using more than one value of the same attribute type");
+
+    it.todo("throws an error when a multi-valued RDN is created with duplicate values");
 
 });
