@@ -130,6 +130,7 @@ async function handleRequest (
          * conditions are not met, the user will only see a small selection of
          * schema.
          */
+        // FIXME: Expect a higher level of authentication.
         const permittedToSeeSchema: boolean = Boolean(assn.boundEntry || !(await anyPasswordsExist(ctx)));
         const entry = new SearchResultEntry(
             Buffer.from("cn=subschema", "utf-8"),
