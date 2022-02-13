@@ -499,3 +499,9 @@ biologicalChildren ATTRIBUTE ::= {
   ID            id-at-biologicalChildren
 }
 ```
+
+### Matchers should tolerate symmetrical syntax, if possible
+
+Even if a matching rule specifies an assertion syntax that differs from the
+attribute syntax, the matching rule should attempt to tolerate an assertion
+having the value's syntax.
