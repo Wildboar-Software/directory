@@ -1,48 +1,35 @@
-# Operational Binding
+# Operational Bindings
+
+## Hierarchical Operational Bindings
+
+The only way hierarchical operational bindings may be created is through the
+`addEntry` operation with the `targetSystem` parameter set to the access point
+of the subordinate DSA to which the entry is to be added.
+
+There is no way to initiate a hierarchical operational binding as a subordinate
+DSA, but this may change in the future.
+
+## Other Operational Bindings
+
+There is no way to initiate any other type of operational binding.
 
 ## Authentication
 
-A DSA will almost never have an AE-Title that falls within a naming context of
-a remote DSA. Even if so, it would only be for one remote DSA. For operational
-binding to scale, Meerkat DSA must have some procedure for authenticating to any
-DSA in the world.
+Operational bindings are extremely sensitive matters. For this reason, Meerkat
+DSA _requires_ at least simple authentication over TLS to authorize a
+Directory Operational Binding Management Protocol (DOP) request. This can be
+configured via the `MEERKAT_MIN_AUTH_LEVEL_FOR_OB` environment variable, which
+controls the authentication level required for operational bindings, and the
+`MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB`, which controls the local qualifier
+required for operational bindings.
 
-## Authorization
+Even after this, operational bindings require acceptance. The only way to do
+this currently is with the web administration console. Review the requested
+operational binding and click the "approve" button to approve it. If you do
+not click "approve" quickly enough, the request will expire and the proposed
+operational binding will be rejected. Currently the timeout is five minutes,
+but this will eventually be configurable.
 
-### Authorizing users to create operational bindings through the `targetSystem` option
-
-Users may log in as the root DSE. The root DSE user has all permissions. The
-root DSE user is the only user that may use the `targetSystem` option to create
-new hierarchical operational bindings.
-
-Alternatively, I could just allow any user with normal permissions to add that
-entry to initiate the HOB.
-
-### Accepting operational binding requests from remote DSAs
-
-Accepting operational binding requests from remote DSAs can only be done via the
-administrative web portal. A requested operational binding will sit in the queue
-until the sooner of `OPERATIONAL_BINDING_REQUEST_TTL_IN_SECONDS` seconds or the
-`timeLimit` of the request, if one is requested, before a
-`currentlyNotDecidable` error is returned. If the request is rejected, the
-rejecting administrator may instruct the local DSA to respond with a
-`invalidStartTime`, `invalidEndTime`, or `invalidAgreement` error.
-
-<!-- By default, a DSA blacklists all other DSAs. Any DSA attempting to create an
-operational binding must be explicitly whitelisted. In addition, the remote DSA
-will be checked against an explicit blacklist. The blacklist is for prohibiting
-DSAs from all operations, chained or operational, entirely. The whitelist is
-solely for permitting operational binding operations.
-
-If the DSA is whitelisted according to the above, the operational binding will
-then be checked against an explicit whitelist filter that is recursively
-composed of `and`, `or`, `not`, and `item` alternatives, just like the X.500
-`Filter` or `Refinement` types. The `item` alternatives are:
-
-- `host`, which filters what DSA(s) are authorized by their hostname or IP address (string)
-- `since`, which filters the time after which the request may be authorized (date string)
-- `until`, which filters the time before which the request may be authorized (date string)
-- `type`, which filters what types of operational bindings may be authorized (OID string)
-- ~~`tls`, which filters if `tls` was used to secure the request (boolean)~~ (This cannot be used, because future interactions cannot be guaranteed.)
-- `duration`, which limits how long the operational binding may last in seconds (integer)
-- `subtree`, which limits the entries that may be targeted for the HOB or shadowing (JSON `SubtreeSpecification`) -->
+**It is DANGEROUS to enable the web administration console at all. Please
+ensure that it is only available behind a reverse proxy that requires
+authentication and transport security.**

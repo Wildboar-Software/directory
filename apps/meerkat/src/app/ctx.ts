@@ -6,11 +6,7 @@ import {
 import {
     PresentationAddress,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
-import {
-    top,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
 import { PrismaClient } from "@prisma/client";
-import objectClassFromInformationObject from "./init/objectClassFromInformationObject";
 import { EventEmitter } from "stream";
 import winston from "winston";
 import isDebugging from "is-debugging";

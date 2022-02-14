@@ -114,7 +114,7 @@ async function establishOperationalBinding (
                 resolve(approved);
             });
         }),
-        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 30000)),
+        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 300000)),
     ]);
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(

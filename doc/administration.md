@@ -1,27 +1,17 @@
 # Administration
 
-## Hibernate
+## Hibernation
 
-- All requests, both DAP, DSP, and LDAP, return `busy`.
+All requests, both DAP, DSP, and LDAP, return a `serviceError` with problem
+`busy`.
 
-## Lockdown
+## Handling Memory Pressure
 
-- Server stays up, sockets remain open, but IDM sockets return an `abort`
-  packet to all requests, with the reason `reasonNotSpecified`.
-- All LDAP connections are immediately terminated.
+What research I have done into this has shown me:
 
-## Hierarchical Operational Bindings
+- There is almost no support in NodeJS or any NPM libraries for detecting
+  dangerously high memory usage.
+- There is no way to determine what the max heap size is.
 
-### Blacklisting Requests
-
-- by Requestor
-- by Requestor + Type
-- by Requestor + Type + Parameters
-
-## Shadow Operational Bindings
-
-## Updates
-
-## Blacklisting DSAs
-
-## Whitelisting DSAs
+That said, I think the only approach I can realistically use is to document what
+to do if you run out of memory: increase the `max-old-heap-size` of NodeJS.
