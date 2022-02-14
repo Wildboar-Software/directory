@@ -97,3 +97,12 @@ alongside all other phases, but enterprise users will have these features:
   - Generate keypair and cert for an entry
   - Generate attribute certificate for an entry
 - Automation
+
+## Never Will Support
+
+- LDAP `matchedValues` control, because it is a superset of the DAP
+  `matchedValuesOnly` option.
+- Multi-stage SASL authentication mechanisms, because the specification does not
+  make it clear how the DSA is expected to return an intermediate SASL response.
+  Note that the `credentials` field of a `DirectoryBindResult` is to
+  authenticate the DSA to the DUA, not to provide SASL continuation.
