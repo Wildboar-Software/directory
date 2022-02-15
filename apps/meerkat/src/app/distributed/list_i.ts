@@ -148,6 +148,21 @@ interface ListState extends Partial<WithRequestStatistics>, Partial<WithOutcomeS
     queryReference?: string;
 }
 
+/**
+ * @summary The List (I) Procedure, as specified in ITU Recommendation X.518.
+ * @description
+ *
+ * The `list` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 11.1, per the recommended implementation of the List (I) procedure
+ * defined in in ITU Recommendation X.518 (2016), Section 19.3.1.2.1.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function list_i (
     ctx: Context,

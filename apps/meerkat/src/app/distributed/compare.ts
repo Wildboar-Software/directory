@@ -113,15 +113,6 @@ import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 
-// AttributeValueAssertion ::= SEQUENCE {
-//     type              ATTRIBUTE.&id({SupportedAttributes}),
-//     assertion         ATTRIBUTE.&equality-match.&AssertionType
-//                         ({SupportedAttributes}{@type}),
-//     assertedContexts  CHOICE {
-//       allContexts       [0]  NULL,
-//       selectedContexts  [1]  SET SIZE (1..MAX) OF ContextAssertion } OPTIONAL,
-//     ... }
-
 function contextFromStoredContext (sc: StoredContext): X500Context {
     return new X500Context(
         sc.contextType,
@@ -130,6 +121,21 @@ function contextFromStoredContext (sc: StoredContext): X500Context {
     );
 }
 
+/**
+ * @summary The compare operation, as specified in ITU Recommendation X.511.
+ * @description
+ *
+ * The `compare` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 10.2. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 19.2.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function compare (
     ctx: Context,

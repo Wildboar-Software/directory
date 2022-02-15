@@ -69,6 +69,23 @@ const BYTES_IN_A_UUID: number = 16;
 const ENTRIES_PER_BATCH: number = 1000;
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 
+/**
+ * @summary The Search (II) Procedure, as specified in ITU Recommendation X.518.
+ * @description
+ *
+ * The `search` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 11.2, per the recommended implementation of the Search (II) procedure
+ * defined in in ITU Recommendation X.518 (2016), Section 19.3.2.2.6.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @param argument The original SearchArgument
+ * @param searchState The current search state
+ *
+ * @function
+ * @async
+ */
 export
 async function search_ii (
     ctx: Context,

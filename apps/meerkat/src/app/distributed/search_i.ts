@@ -726,6 +726,23 @@ function getFamilyMembersToReturnById (
 //     }
 // }
 
+/**
+ * @summary The Search (I) Procedure, as specified in ITU Recommendation X.518.
+ * @description
+ *
+ * The `search` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 11.2, per the recommended implementation of the Search (I) procedure
+ * defined in in ITU Recommendation X.518 (2016), Section 19.3.2.2.5.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @param argument The original SearchArgument
+ * @param searchState The current search state
+ *
+ * @function
+ * @async
+ */
 export
 async function search_i (
     ctx: Context,

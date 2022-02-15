@@ -1736,29 +1736,19 @@ async function executeEntryModification (
 }
 
 /**
- * @summary Modify an entry
+ * @summary The modifyEntry operation, as specified in ITU Recommendation X.511.
  * @description
  *
- * ## Implementation
+ * The `modifyEntry` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 12.3. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 19.1.3.
  *
- * ### Schema Validation
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
  *
- * ### System Schema Validation
- *
- * There are some attributes that may be added to any entry of any object class,
- * such as `administrativeRole`, because there is no object class defined for
- * every DSE type, and thus, these special attributes are used to validate if
- * the DSE is, de facto, of a given type.
- *
- * Continuing on the aforementioned example, the mere presence of an
- * `administrativeRole` attribute is what determines whether Meerkat DSA views
- * the entry as an administrative point.
- *
- * @param ctx
- * @param target
- * @param admPoints
- * @param request
- * @returns
+ * @function
+ * @async
  */
 export
 async function modifyEntry (

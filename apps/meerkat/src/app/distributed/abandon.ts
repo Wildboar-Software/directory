@@ -32,6 +32,22 @@ import {
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-abandonFailed.va";
 import { DER } from "asn1-ts/dist/node/functional";
 
+/**
+ * @summary The abandon operation, as specified in ITU Recommendation X.511.
+ * @description
+ *
+ * The `abandon` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 10.3. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 20.5.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param request The chained abandon
+ * @returns A chained result
+ *
+ * @function
+ * @async
+ */
 export
 async function abandon (
     ctx: Context,

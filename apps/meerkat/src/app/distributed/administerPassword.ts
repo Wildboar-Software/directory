@@ -59,31 +59,21 @@ import preprocessTuples from "../authz/preprocessTuples";
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
 
-// administerPassword OPERATION ::= {
-//   ARGUMENT  AdministerPasswordArgument
-//   RESULT    AdministerPasswordResult
-//   ERRORS    {securityError |
-//              updateError}
-//   CODE      id-opcode-administerPassword }
-
-// AdministerPasswordArgument ::=
-//   OPTIONALLY-PROTECTED-SEQ { AdministerPasswordArgumentData }
-
-// AdministerPasswordArgumentData ::= SEQUENCE {
-//   object  [0]  DistinguishedName,
-//   newPwd  [1]  UserPwd,
-//   ... }
-
-// AdministerPasswordResult ::= CHOICE {
-//   null NULL,
-//   information OPTIONALLY-PROTECTED-SEQ { AdministerPasswordResultData },
-//   ...}
-
-// AdministerPasswordResultData ::= SEQUENCE {
-//   ...,
-//   ...,
-//   COMPONENTS OF CommonResultsSeq }
-
+/**
+ * @summary The administerPassword operation, as specified in ITU Recommendation X.511.
+ * @description
+ *
+ * The `administerPassword` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 12.6. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 19.1.3.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function administerPassword (
     ctx: Context,

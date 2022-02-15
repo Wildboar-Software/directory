@@ -108,6 +108,21 @@ import {
 import preprocessTuples from "../authz/preprocessTuples";
 import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 
+/**
+ * @summary The read operation, as specified in ITU Recommendation X.511.
+ * @description
+ *
+ * The `read` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 10.1. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 19.2.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function read (
     ctx: Context,

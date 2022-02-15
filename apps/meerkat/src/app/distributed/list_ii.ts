@@ -135,6 +135,22 @@ const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
 const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
 
+/**
+ * @summary The List (II) Procedure, as specified in ITU Recommendation X.518.
+ * @description
+ *
+ * The `list` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 11.1, per the recommended implementation of the List (II) procedure
+ * defined in in ITU Recommendation X.518 (2016), Section 19.3.1.2.2.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @param fromDAP Whether the request came from DAP, rather than DSP or something else.
+ *
+ * @function
+ * @async
+ */
 export
 async function list_ii (
     ctx: Context,

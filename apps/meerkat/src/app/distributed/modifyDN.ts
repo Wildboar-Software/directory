@@ -214,6 +214,21 @@ async function allSubordinatesWithinThisDSA (
     return (externalDSEs.length > 0);
 }
 
+/**
+ * @summary The modifyDN operation, as specified in ITU Recommendation X.511.
+ * @description
+ *
+ * The `modifyDN` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 12.4. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 19.1.4.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function modifyDN (
     ctx: Context,

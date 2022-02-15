@@ -61,31 +61,21 @@ import preprocessTuples from "../authz/preprocessTuples";
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
 
-// changePassword OPERATION ::= {
-//   ARGUMENT  ChangePasswordArgument
-//   RESULT    ChangePasswordResult
-//   ERRORS    {securityError |
-//              updateError }
-//   CODE      id-opcode-changePassword }
-
-// ChangePasswordArgument ::= OPTIONALLY-PROTECTED-SEQ { ChangePasswordArgumentData }
-
-// ChangePasswordArgumentData ::= SEQUENCE {
-//   object   [0]  DistinguishedName,
-//   oldPwd   [1]  UserPwd,
-//   newPwd   [2]  UserPwd,
-//   ... }
-
-// ChangePasswordResult ::= CHOICE {
-//   null        NULL,
-//   information OPTIONALLY-PROTECTED-SEQ { ChangePasswordResultData },
-//   ...}
-
-// ChangePasswordResultData ::= SEQUENCE {
-//   ...,
-//   ...,
-//   COMPONENTS OF CommonResultsSeq }
-
+/**
+ * @summary The changePassword operation, as specified in ITU Recommendation X.511.
+ * @description
+ *
+ * The `changePassword` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 12.5. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 19.1.3.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function changePassword (
     ctx: Context,

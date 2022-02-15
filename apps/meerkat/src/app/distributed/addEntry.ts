@@ -236,6 +236,21 @@ function namingViolationErrorData (
     );
 }
 
+/**
+ * @summary The addEntry operation, as specified in ITU Recommendation X.511.
+ * @description
+ *
+ * The `addEntry` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 12.1. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 19.1.1.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function addEntry (
     ctx: Context,

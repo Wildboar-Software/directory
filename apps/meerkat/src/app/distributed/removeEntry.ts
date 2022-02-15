@@ -109,6 +109,21 @@ import preprocessTuples from "../authz/preprocessTuples";
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
 
+/**
+ * @summary The removeEntry operation, as specified in ITU Recommendation X.511.
+ * @description
+ *
+ * The `removeEntry` operation, as specified in ITU Recommendation X.511 (2016),
+ * Section 12.2. per the recommended implementation in ITU Recommendation X.518
+ * (2016), Section 19.1.2.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function removeEntry (
     ctx: Context,
