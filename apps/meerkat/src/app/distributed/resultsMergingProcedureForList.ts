@@ -7,6 +7,24 @@ import { strict as assert } from "assert";
 import lcrProcedure from "./lcrProcedure";
 import type { ListState } from "./list_i";
 
+/**
+ * @summary The Results Merging Procedure (for list), defined in ITU Recommendation X.518.
+ * @description
+ *
+ * The variant of the Results Merging Procedure for the list operation, as
+ * defined in ITU Recommendation X.518 (2016), Section 21.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param res The list operation state
+ * @param local Whether the request originated internally by the DSA itself
+ * @param NRcontinuationList The list of name resolution continuation references
+ * @param SRcontinuationList The list of subrequest continuation references
+ * @returns An updated list operation state
+ *
+ * @function
+ * @async
+ */
 export
 async function resultsMergingProcedureForList (
     ctx: Context,

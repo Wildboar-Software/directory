@@ -6,6 +6,16 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/rule-and-basic-access-control.va";
 import { IndexableOID } from "@wildboar/meerkat-types";
 
+/**
+ * @summary The access control schemes that use access control inner areas
+ * @description
+ *
+ * This is a set of stringified object identifiers in dot-delimited notation,
+ * each of which is an access control scheme that uses access control inner
+ * areas.
+ *
+ * @constant
+ */
 export
 const accessControlSchemesThatUseInnerAreas: Set<IndexableOID> = new Set([
     basicAccessControlScheme.toString(),

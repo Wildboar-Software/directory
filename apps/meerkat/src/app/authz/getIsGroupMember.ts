@@ -49,6 +49,24 @@ const selectMemberships = new EntryInformationSelection(
     undefined,
 );
 
+/**
+ * @summary Higher-order function that produces a function for checking if a user is in a group.
+ * @description
+ *
+ * This is a higher-order function that takes the context object, and equality
+ * matcher getter, and returns a new asynchronous function that will return a
+ * `boolean` indicating whether the user is a member of the group, or
+ * `undefined` if it cannot be determined.
+ *
+ * @param ctx The context object
+ * @param getEqualityMatcher A function that gets an equality matcher from an
+ *  attribute type object identifier
+ * @returns An async function that takes a user group and user and returns a
+ *  boolean indicating whether a user is a member of the group, or `undefined`
+ *  if the user is not.
+ *
+ * @function
+ */
 export
 function getIsGroupMember (
     ctx: Context,

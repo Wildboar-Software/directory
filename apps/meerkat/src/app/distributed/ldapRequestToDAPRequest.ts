@@ -693,6 +693,20 @@ function convertAttributeSelectiontoEIS (
     );
 }
 
+/**
+ * @summary Converts an LDAP request to a DAP request
+ * @description
+ *
+ * This procedure is not specified in the X.500 series, but can be inferred from
+ * ITU X.518 (2016), Section 20.6.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param req The LDAPMessage of the request that is to be converted to an X.500 request
+ * @returns An equivalent X.500 request if one could be generated, or `null` otherwise
+ *
+ * @function
+ */
 export
 function ldapRequestToDAPRequest (
     ctx: Context,

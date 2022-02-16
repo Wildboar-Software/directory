@@ -21,6 +21,22 @@ const AC_SUBENTRY: string = accessControlSubentry["&id"].toString();
 const AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
 const AC_INNER: string = id_ar_accessControlInnerArea.toString();
 
+/**
+ * @summary Get the ACI items that apply to a given entry.
+ * @description
+ *
+ * Gets the ACI items that apply to a given entry from subentries, the
+ * administrative point, and entry ACI depending.
+ *
+ * @param accessControlScheme The access control scheme in place for the
+ *  applicable access control administrative area
+ * @param vertex The DSE whose relevant ACI items are to be determined
+ * @param relevantSubentries The subentries whose subtree select for this entry
+ * @param isSubentry Whether the DSE in question is a subentry
+ * @returns An array of ACI items that are in effect for the DSE in question.
+ *
+ * @function
+ */
 export
 function getACIItems (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,

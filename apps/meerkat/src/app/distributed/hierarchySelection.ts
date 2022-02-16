@@ -22,6 +22,23 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/hierarchySelectList.oa";
 import createSecurityParameters from "../x500/createSecurityParameters";
 
+/**
+ * @summary The Hierarchy Selection Procedure as defined in ITU Recommendation X.518.
+ * @description
+ *
+ * The Hierarchy Selection Procedure (I) as defined in ITU Recommendation X.518
+ * (2016), Section 19.3.2.2.10.
+ *
+ * Unimplemented. Meerkat DSA does not currently support hierarchy selections.
+ * Throws a `serviceError`.
+ *
+ * @param ctx The context object
+ * @param hierarchySelections The hierarchy selections
+ * @param serviceControls_serviceType The service type
+ *
+ * @function
+ * @throws {ServiceError} An error reporting that hierarchy selections are not supported.
+ */
 export
 function hierarchySelectionProcedure (
     ctx: Context,

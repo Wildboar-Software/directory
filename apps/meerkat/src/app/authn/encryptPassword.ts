@@ -5,6 +5,9 @@ import { scrypt } from "@wildboar/scrypt-0";
 import * as crypto from "crypto";
 
 /**
+ * @summary Encrypts a password for storage in the database or for comparison.
+ * @description
+ *
  * This implementation currently only supports the Scrypt algorithm. The
  * algorithm identifier for this is specified in IETF RFC 7914.
  *
@@ -12,6 +15,7 @@ import * as crypto from "crypto";
  * @param password The password to be encrypted as an opaque sequence of bytes.
  * @returns The encrypted password as an opaque sequence of bytes.
  * @function
+ * @async
  * @link https://datatracker.ietf.org/doc/html/rfc7914
  */
 export

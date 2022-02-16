@@ -9,6 +9,26 @@ import type { PrismaPromise } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import rdnToJson from "../../x500/rdnToJson";
 
+/**
+ * @summary Delete an attribute from an entry
+ * @description
+ *
+ * This function produces an array of `PrismaPromise`s that will perform the
+ * deletion. Note that `PrismaPromise` differs from `Promise` in that it will
+ * not execute any database query until it is `await`ed or `.then()`'d. The
+ * rationale for returning unexecuted `PrismaPromise`s is that they can all be
+ * executed within a transaction by the callee, if desired.
+ *
+ * @param ctx The context object
+ * @param entry The entry whose values are to be deleted
+ * @param values The values to be deleted
+ * @param modifier The distinguished name of the user doing the deletion
+ * @returns An array of `PrismaPromise`s that will perform the deletion once
+ *  they are `await`ed or `.then()`'d.
+ *
+ * @function
+ * @async
+ */
 export
 async function removeValues (
     ctx: Context,

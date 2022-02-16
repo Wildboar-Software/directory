@@ -25,6 +25,22 @@ import {
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
 import { DER, _encodeInteger, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
 
+/**
+ * @summary Attempts a password for a bind operation.
+ * @description
+ *
+ * Attempts a password as a part of a bind operation. This function updates the
+ * failed attempts count, failure timestamp, and other operational attributes.
+ *
+ * @param ctx The context object
+ * @param vertex The entry which is attempting to be bound
+ * @param attemptedPassword The attempted password
+ * @returns A boolean indicating whether the password passed or failed, or
+ *  `undefined` if this cannot be determined.
+ *
+ * @function
+ * @async
+ */
 export
 async function attemptPassword (
     ctx: Context,

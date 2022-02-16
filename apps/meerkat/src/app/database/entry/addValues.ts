@@ -224,13 +224,33 @@ async function validateValues(
     }
 }
 
+/**
+ * @summary Add values to an entry.
+ * @description
+ *
+ * Resolves an array of `PrismaPromise`s, which can be `await`ed or `.then()`'d
+ * independently or within a Prisma transaction. These promises together will
+ * execute the database queries to add the values to the entry.
+ *
+ * @param ctx The context object
+ * @param entry The vertex to which attributes are to be added
+ * @param values The values to be added to the entry
+ * @param modifier The modifier of the entry
+ * @param checkForExisting Whether to check whether the values already exist and
+ *  throw an error if so
+ * @returns An array of `PrismaPromise`s that will effectively add those
+ *  attributes to the entry
+ *
+ * @function
+ * @async
+ */
 export
-    async function addValues(
-        ctx: Context,
-        entry: Vertex,
-        values: Value[],
-        modifier?: DistinguishedName,
-        checkForExisting: boolean = true,
+async function addValues(
+    ctx: Context,
+    entry: Vertex,
+    values: Value[],
+    modifier?: DistinguishedName,
+    checkForExisting: boolean = true,
 ): Promise<PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
         await validateValues(ctx, entry, values, checkForExisting);

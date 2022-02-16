@@ -146,6 +146,27 @@ function compareSubordinates (
     return B_COMES_FIRST * (reverse ? -1 : 1);
 }
 
+/**
+ * @summary A procedure that merges, sorts, and pages list results.
+ * @description
+ *
+ * This procedure is not defined in any of the X.500 specifications, yet it
+ * appears to be needed implicitly.
+ *
+ * This procedure takes local list results, as well as result sets obtained from
+ * chaining, and merges them, sorts them, and paginates over them as the user
+ * requests.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @param listArgument The list argument data
+ * @param listState The list operation state
+ * @returns A ListResult
+ *
+ * @function
+ * @async
+ */
 export
 async function mergeSortAndPageList(
     ctx: Context,

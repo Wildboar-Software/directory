@@ -412,16 +412,25 @@ function createChainingArgumentsFromDUA (
 }
 
 /**
- * @summary
+ * @summary The Request Validation Procedure, defined in ITU Recommendation X.518.
  * @description
+ *
+ * The Request Validation Procedure, defined in ITU Recommendation X.518 (2016),
+ * Section 17.
  *
  * Note: this is only used for DAP, LDAP, and DSP requests. DOP and DISP bypass
  * this procedure.
  *
- * @param ctx
- * @param applicationContextOrProtocolID
- * @param operationCode
- * @param operationArgument
+ * @param ctx The context object
+ * @param assn The client association
+ * @param req The X.500 directory request
+ * @param alreadyChained Whether the request was already chained.
+ * @param authenticationLevel The authentication level of the user or DSA.
+ * @param uniqueIdentifier The unique identifier of the user or DSA.
+ * @returns A chained and optionally-signed equivalent of the argument.
+ *
+ * @function
+ * @async
  */
 export
 async function requestValidationProcedure (

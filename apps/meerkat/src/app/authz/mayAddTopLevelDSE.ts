@@ -4,6 +4,20 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import anyPasswordsExist from "./anyPasswordsExist";
 
+/**
+ * @summary Whether a bound client may add a top-level DSE.
+ * @description
+ *
+ * Resolves a `boolean` indicating whether the bound client may add a top-level
+ * DSE.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @returns A `boolean` indicating whether the bound client may add a top-level DSE.
+ *
+ * @function
+ * @async
+ */
 export
 async function mayAddTopLevelDSE (
     ctx: Context,

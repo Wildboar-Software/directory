@@ -50,6 +50,23 @@ import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperati
 import type { INTEGER } from "asn1-ts";
 import { randomInt } from "crypto";
 
+/**
+ * @summary The Related Entry Procedure, defined in ITU Recommendation X.518.
+ * @description
+ *
+ * The Related Entry Procedure, defined in ITU Recommendation X.518 (2016),
+ * Section 19.3.2.2.1.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @param search The search state
+ * @param argument The search argument
+ * @param chaining The chaining arguments, if present
+ *
+ * @function
+ * @async
+ */
 export
 async function relatedEntryProcedure (
     ctx: Context,
@@ -112,14 +129,14 @@ async function relatedEntryProcedure (
         checkTimeLimit();
         const jarg = data.joinArguments[i];
         const operationIdentifier: INTEGER = randomInt(2147483648);
-        ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
-            opid: operationIdentifier,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-        });
+        // ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
+        //     opid: operationIdentifier,
+        // }), {
+        //     remoteFamily: assn.socket.remoteFamily,
+        //     remoteAddress: assn.socket.remoteAddress,
+        //     remotePort: assn.socket.remotePort,
+        //     association_id: assn.id,
+        // });
         const newChaining = new ChainingArguments(
             chaining?.originator,
             undefined,

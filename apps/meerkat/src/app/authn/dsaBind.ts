@@ -23,16 +23,13 @@ import {
     SecurityProblem_inappropriateAuthentication,
     SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import { dSA } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/dSA.oa";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import versions from "../dap/versions";
 
-const DSA_OC_ID: string = dSA["&id"].toString();
-
 /**
- * @summary X.500 Directory Access Protocol (DSP) bind operation
+ * @summary X.500 Directory System Protocol (DSP) bind operation
  * @description
  *
  * ## Technical Details
@@ -43,9 +40,13 @@ const DSA_OC_ID: string = dSA["&id"].toString();
  * actually exist. This is so anonymous authentication cannot be used to
  * enumerate directory entries.
  *
- * @param ctx
- * @param creds
+ * @param ctx The context object
+ * @param socket The underlying TCP or TLS socket
+ * @param arg The DSABindArgument
  * @returns `null` if the authentication failed.
+ *
+ * @function
+ * @async
  */
 export
 async function bind (

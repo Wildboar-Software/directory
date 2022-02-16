@@ -208,7 +208,17 @@ function successfulResultCode (code: number): boolean {
     );
 }
 
-
+/**
+ * @summary Converts an LDAP result into an X.500 error.
+ * @description
+ *
+ * Converts an LDAP result into an X.500 error. Throws the error rather than
+ * returning it.
+ *
+ * @param res The LDAP result
+ *
+ * @function
+ */
 export
 function ldapResultToDAPError (res: LDAPResult): void {
     if (successfulResultCode(res.resultCode)) {

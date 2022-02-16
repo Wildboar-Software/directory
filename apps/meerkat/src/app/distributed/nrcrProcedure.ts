@@ -58,6 +58,25 @@ import type {
 
 // TODO: Really, this should have the same return type as the OperationDispatcher.
 // This also returns a value, but also mutates the OD state, which is sketchy.
+
+/**
+ * @summary The Name Resolution Continuation Reference Procedure, defined in ITU Recommendation X.518.
+ * @description
+ *
+ * The Name Resolution Continuation Reference Procedure, as defined in ITU
+ * Recommendation X.518 (2016), Section 20.4.1.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param reqData The chained request
+ * @param state The operation dispatcher state
+ * @param chainingProhibited Whether chaining was prohibited
+ * @param partialNameResolution Whether partial name resolution is permitted
+ * @returns An optionally-protected chained result or an error
+ *
+ * @function
+ * @async
+ */
 export
 async function nrcrProcedure (
     ctx: Context,

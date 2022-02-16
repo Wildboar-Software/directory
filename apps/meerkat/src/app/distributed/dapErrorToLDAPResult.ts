@@ -159,6 +159,19 @@ function apiToURL (
         .filter((url) => url.toUpperCase().startsWith("LDAP"));
 }
 
+/**
+ * @summary Convert an error into an LDAP result
+ * @description
+ *
+ * Converts an error to the corresponding LDAP result.
+ *
+ * @param ctx The context object
+ * @param e The thrown error
+ * @param isCancel Whether the original LDAP request was a `cancel` extended operation.
+ * @returns An LDAP result
+ *
+ * @function
+ */
 export
 function dapErrorToLDAPResult (
     ctx: Context,

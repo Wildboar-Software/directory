@@ -18,6 +18,22 @@ interface ReadAttributesOptions extends ReadValuesOptions {
     readonly attributeSizeLimit?: number;
 }
 
+/**
+ * @summary Read the attributes of an entry
+ * @description
+ *
+ * Reads the attributes of an entry, grouped into user attributes, operational
+ * attributes, and collective attributes.
+ *
+ * @param ctx The context object
+ * @param vertex The DSE whose attributes are to be read
+ * @param options Options
+ * @returns The attributes, grouped into user attributes, operational attributes
+ *  and collective attributes.
+ *
+ * @function
+ * @async
+ */
 export
 async function readAttributes (
     ctx: Context,

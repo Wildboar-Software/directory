@@ -6,13 +6,27 @@ import type {
 import readCollectiveAttributes from "./readCollectiveAttributes";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 
+/**
+ * @summary Read the collective values of an entry
+ * @description
+ *
+ * Reads the collective values of an entry.
+ *
+ * @param ctx The context object
+ * @param vertex The DSE whose attributes are to be read
+ * @param relevantSubentries The subentries whose subtree specification selects
+ *  for the DSE indicated by the argument `vertex`
+ * @returns An array of collective values
+ *
+ * @function
+ */
 export
 function readCollectiveValues (
     ctx: Context,
-    entry: Vertex,
+    vertex: Vertex,
     relevantSubentries: Vertex[],
 ): Value[] {
-    return readCollectiveAttributes(ctx, entry, relevantSubentries).flatMap(valuesFromAttribute);
+    return readCollectiveAttributes(ctx, vertex, relevantSubentries).flatMap(valuesFromAttribute);
 }
 
 export default readCollectiveValues;

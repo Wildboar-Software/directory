@@ -180,6 +180,27 @@ function compareEntries (
     return B_COMES_FIRST * ((reverse && isLDAP) ? -1 : 1);
 }
 
+/**
+ * @summary A procedure that merges, sorts, and pages search results.
+ * @description
+ *
+ * This procedure is not defined in any of the X.500 specifications, yet it
+ * appears to be needed implicitly.
+ *
+ * This procedure takes local search results, as well as result sets obtained
+ * from chaining, and merges them, sorts them, and paginates over them as the
+ * user requests.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @param searchState The search operation state
+ * @param searchArgument The search argument data
+ * @returns A SearchResult
+ *
+ * @function
+ * @async
+ */
 export
 async function mergeSortAndPageSearch(
     ctx: Context,

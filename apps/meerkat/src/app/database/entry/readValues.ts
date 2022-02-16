@@ -222,6 +222,33 @@ function *filterByTypeAndContextAssertion (
     }
 }
 
+/**
+ * @summary Read the values of an entry
+ * @description
+ *
+ * Reads the values of an entry, grouped into user values, operational values,
+ * and collective values.
+ *
+ * This implementation handles:
+ *
+ * - Entry information selection
+ * - Context assertions from:
+ *   - The entry information selection
+ *   - `operationContexts`
+ *   - context assertion defaults
+ * - Friendships
+ * - `dontSelectFriends`
+ * - `noSubtypeSelection`
+ * - Collective attributes
+ *
+ * @param ctx The context object
+ * @param entry The DSE whose attributes are to be read
+ * @param options Options
+ * @returns The values, grouped into user, operational, and collective values
+ *
+ * @function
+ * @async
+ */
 export
 async function readValues (
     ctx: Context,

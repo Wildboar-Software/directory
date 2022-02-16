@@ -44,9 +44,13 @@ import dnToVertex from "../dit/dnToVertex";
  * actually exist. This is so anonymous authentication cannot be used to
  * enumerate directory entries.
  *
- * @param ctx
- * @param creds
+ * @param ctx The context object
+ * @param socket The underlying TCP or TLS socket
+ * @param arg The DirectoryBindArgument
  * @returns `null` if the authentication failed.
+ *
+ * @function
+ * @async
  */
 export
 async function bind (

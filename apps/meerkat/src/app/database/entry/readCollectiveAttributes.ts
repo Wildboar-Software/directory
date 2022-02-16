@@ -24,13 +24,28 @@ const ID_CAIA: string = id_ar_collectiveAttributeInnerArea.toString();
 const EXCLUDE_ALL: string = id_oa_excludeAllCollectiveAttributes.toString();
 
 // TODO: Document expectation of ordering of relevantSubentries.
+
+/**
+ * @summary Read the collective attributes of an entry
+ * @description
+ *
+ * Reads the collective attributes of an entry.
+ *
+ * @param ctx The context object
+ * @param vertex The DSE whose attributes are to be read
+ * @param relevantSubentries The subentries whose subtree specification selects
+ *  for the DSE indicated by the argument `vertex`
+ * @returns An array of collective attributes
+ *
+ * @function
+ */
 export
 function readCollectiveAttributes (
     ctx: Context,
-    entry: Vertex,
+    vertex: Vertex,
     relevantSubentries: Vertex[],
 ): Attribute[] {
-    if (entry.dse.entry?.collectiveExclusions.has(EXCLUDE_ALL)) {
+    if (vertex.dse.entry?.collectiveExclusions.has(EXCLUDE_ALL)) {
         return [];
     }
     const collectiveAttributeSubentries = relevantSubentries
@@ -49,7 +64,7 @@ function readCollectiveAttributes (
         ));
     return subentriesWithinScope
         .flatMap((subentry) => subentry.dse.subentry?.collectiveAttributes ?? [])
-        .filter((attr) => !entry.dse.entry?.collectiveExclusions.has(attr.type_.toString()));
+        .filter((attr) => !vertex.dse.entry?.collectiveExclusions.has(attr.type_.toString()));
         ;
 }
 

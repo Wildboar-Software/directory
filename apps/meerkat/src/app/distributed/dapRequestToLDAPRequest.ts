@@ -412,12 +412,17 @@ function convertDAPFilterToLDAPFilter (ctx: Context, filter: DAPFilter): LDAPFil
 }
 
 /**
+ * @summary Converts an X.500 directory request to an LDAP request
+ * @description
+ *
  * This procedure is not specified in the X.500 series, but can be inferred from
  * ITU X.518 (2016), Section 20.6.
  *
- * @param ctx
- * @param req
- * @returns
+ * @param ctx The context object
+ * @param req The X.500 directory request that is to be converted to an LDAP request
+ * @returns An LDAP message equivalent of the X.500 directory request
+ *
+ * @function
  */
 export
 function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {

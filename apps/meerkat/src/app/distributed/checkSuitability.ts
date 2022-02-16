@@ -61,6 +61,29 @@ async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promis
     }));
 }
 
+/**
+ * @summary The check suitability procedure
+ * @description
+ *
+ * The distributed procedure to check if a request is valid and can be
+ * satisfied, as described in ITU Recommendation X.518 (2016), Section 17.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param vertex The vertex whose suitability is to be determined
+ * @param operationType The type of the operation
+ * @param aliasDereferenced A boolean indicating whether an alias was dereferenced
+ * @param criticalExtensions Critical extensions from chaining arguments
+ * @param dontUseCopy Whether the `dontUseCopy` service control was set
+ * @param copyShallDo Whether the `copyShallDo` service control was set
+ * @param excludeShadows Whether the `excludeShadows` service control was set
+ * @param encodedArgument The encoded argument as an ASN.1 element
+ * @param searchArgument The search argument, if it is a search operation
+ * @returns
+ *
+ * @function
+ * @async
+ */
 export
 async function checkSuitabilityProcedure (
     ctx: Context,

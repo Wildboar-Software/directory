@@ -7,6 +7,41 @@ import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
 
+/**
+ * @summary Read the entry information of an entry
+ * @description
+ *
+ * ITU Recommendation X.511 defines the `EntryInformation` type, whose
+ * `information` component is a `SET` of `CHOICE`, where the alternatives of
+ * each choice are either an attribute, or merely an attribute type.
+ *
+ * ```asn1
+ * EntryInformation ::= SEQUENCE {
+ *   name                  Name,
+ *   fromEntry             BOOLEAN DEFAULT TRUE,
+ *   information           SET SIZE (1..MAX) OF CHOICE {
+ *     attributeType         AttributeType,
+ *     attribute             Attribute{{SupportedAttributes}},
+ *     ...} OPTIONAL,
+ *   incompleteEntry  [3]  BOOLEAN DEFAULT FALSE,
+ *   partialName      [4]  BOOLEAN DEFAULT FALSE,
+ *   derivedEntry     [5]  BOOLEAN DEFAULT FALSE,
+ *   ... }
+ * ```
+ *
+ * This function works like `readAttributes()` or `readValues()`, except that
+ * it returns this information as an array of the `CHOICE` type described above,
+ * such that the output of this function may be readily used within
+ * `EntryInformation`.
+ *
+ * @param ctx The context object
+ * @param vertex The DSE whose entry information is to be read
+ * @param options Options
+ * @returns An array of entry information items
+ *
+ * @function
+ * @async
+ */
 export
 async function readEntryInformation (
     ctx: Context,

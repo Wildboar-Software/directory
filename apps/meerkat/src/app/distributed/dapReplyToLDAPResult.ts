@@ -89,15 +89,21 @@ async function getSearchResultEntries (
 }
 
 /**
+ * @summary Converts a DAP reply into an LDAP result
+ * @description
+ *
  * This procedure is not specified in the X.500 series, but can be inferred from
  * ITU X.518 (2016), Section 20.7.
  *
- * @param ctx
- * @param res
- * @param messageId
- * @param onEntry
- * @param foundDSE
- * @returns
+ * @param ctx The context object
+ * @param res The X.500 directory result that is to be translated to an LDAP result
+ * @param messageId The message ID of the original LDAP request
+ * @param onEntry A callback that takes a search result
+ * @param foundDSE The DSE returned by the Find DSE procedure.
+ * @returns An LDAP message response
+ *
+ * @function
+ * @async
  */
 export
 async function dapReplyToLDAPResult (

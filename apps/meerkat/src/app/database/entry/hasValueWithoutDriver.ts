@@ -16,6 +16,29 @@ import { BERElement } from "asn1-ts";
  */
 const TARGET_MEMORY_USAGE: number = 1_000_000;
 
+/**
+ * @summary A default hasValue() function for attribute types without a driver
+ * @description
+ *
+ * ## Implementation
+ *
+ * Multiple database trips will take a toll on performance. However, it is not
+ * safe to load all values for a given attribute type all at once. There could
+ * be thousands, if not millions, and each could be millions of bytes in size.
+ * The balance between these two contending desires is that we read multiple
+ * values in at a time, and if their total size falls below a target number, we
+ * increase the page size; if their total size goes above this target number,
+ * we decrease the page size.
+ *
+ * @param ctx The context object
+ * @param entry_id The database ID of the entry that is to be checked
+ * @param value The value whose existence is to be checked
+ * @param matcher The equality matcher
+ * @returns A boolean indicating whether the entry has the inquired value
+ *
+ * @function
+ * @async
+ */
 export
 async function hasValueWithoutDriver (
     ctx: Context,
@@ -64,7 +87,7 @@ async function hasValueWithoutDriver (
         if (totalSize < TARGET_MEMORY_USAGE) {
             take *= 2; // Double our read size every time we have spare capacity.
         } else {
-            take--;
+            take = Math.max(1, take - 1);
         }
         i++;
     }

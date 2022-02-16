@@ -41,6 +41,21 @@ const ENTRY_NOT_FOUND: PermittedToFindDSEReturn = {
     permittedToFind: true,
 };
 
+/**
+ * @summary Whether a user is permitted to find a given DSE.
+ * @description
+ *
+ * Resolves a `boolean` indicating whether the user can discover a given DSE.
+ * This function checks that every vertex from the top-level DSE down to the
+ * target DSE can be discovered by the user.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @returns A `boolean` indicating whether the bound client may add a top-level DSE.
+ *
+ * @function
+ * @async
+ */
 export
 async function permittedToFindDSE (
     ctx: Context,

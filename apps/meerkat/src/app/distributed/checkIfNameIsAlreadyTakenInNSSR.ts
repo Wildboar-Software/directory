@@ -72,6 +72,25 @@ import type {
 import { addMilliseconds } from "date-fns";
 import { randomInt } from "crypto";
 
+/**
+ * @summary Check if name is already taken among NSSR.
+ * @description
+ *
+ * The distributed procedure to check if a name is already taken among a
+ * non-specific subordinate reference (NSSR), per ITU Recommendation X.518
+ * (2016), Section 19.1.5.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param invokeId The InvokeId of the current operation
+ * @param aliasDereferenced A boolean indicating whether an alias has been dereferenced
+ * @param nonSpecificKnowledges The DSAs that participate in the NSSR, whose access points are to be interrogated
+ * @param destinationDN The distinguished name whose existence is being determined
+ * @param timeLimitInMilliseconds The remaining time for the operation to complete in milliseconds
+ *
+ * @function
+ * @async
+ */
 export
 async function checkIfNameIsAlreadyTakenInNSSR (
     ctx: Context,

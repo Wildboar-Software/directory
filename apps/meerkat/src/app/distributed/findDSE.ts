@@ -188,6 +188,22 @@ function makeContinuationRefFromSupplierKnowledge (
     );
 }
 
+/**
+ * @summary The Find DSE procedure defined in ITU Recommendation X.518.
+ * @description
+ *
+ * The Find DSE procedure defined in ITU Recommendation X.518 (2016), Section
+ * 18.2.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param haystackVertex The root of the DIT
+ * @param needleDN The distinguished name of the sought-after DSE
+ * @param state The operation dispatcher state
+ *
+ * @function
+ * @async
+ */
 export
 async function findDSE (
     ctx: Context,

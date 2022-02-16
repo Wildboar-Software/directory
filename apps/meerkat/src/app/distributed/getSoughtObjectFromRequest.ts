@@ -23,6 +23,20 @@ import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/re
 import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 
+/**
+ * @summary Determines the target object from operation arguments
+ * @description
+ *
+ * Determines the target object from operation arguments, returning its
+ * distinguished name if the target object could be determined, or `undefined`
+ * if no target object could be determined.
+ *
+ * @param req The X.500 directory request
+ * @param chainingArguments The chaining arguments, if the request was chained
+ * @returns The distinguished name of the target object, if one could be determined, or `undefined` otherwise.
+ *
+ * @function
+ */
 export
 function getSoughtObjectFromRequest (
     req: Request,

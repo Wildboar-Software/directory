@@ -47,6 +47,24 @@ import {
     AccessPointInformation,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
 
+/**
+ * @summary The Search Aliases Procedure, as defined in ITU Recommendation X.518.
+ * @description
+ *
+ * The Search Aliases Procedure, as defined in ITU Recommendation X.518 (2016),
+ * Section 19.3.2.2.9.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param target The target object
+ * @param argument The search argument
+ * @param chaining The chaining arguments
+ * @param ret The mutable search state.
+ * @returns Nothing. This function mutates the search state by reference.
+ *
+ * @function
+ * @async
+ */
 export
 async function searchAliases (
     ctx: Context,

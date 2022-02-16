@@ -57,6 +57,7 @@ function compareExternals (a: EXTERNAL, b: EXTERNAL): boolean {
 }
 
 /**
+ * @summary Pre-processes ACDF tuples for use in the basic access control ACDF
  * @description
  *
  * This performs ITU Recommendation X.501 (2016), Section 18.8.2 and Section
@@ -68,7 +69,9 @@ function compareExternals (a: EXTERNAL, b: EXTERNAL): boolean {
  * @param targetDN
  * @param isMemberOfGroup
  * @param namingMatcherGetter
- * @returns
+ *
+ * @function
+ * @async
  */
 export
 async function preprocessTuples (

@@ -7,6 +7,22 @@ import { strict as assert } from "assert";
 import scrProcedure from "./scrProcedure";
 import type { SearchState } from "./search_i";
 
+/**
+ * @summary The Results Merging Procedure (for search), defined in ITU Recommendation X.518.
+ * @description
+ *
+ * The variant of the Results Merging Procedure for the search operation, as
+ * defined in ITU Recommendation X.518 (2016), Section 21.
+ *
+ * @param ctx The context object
+ * @param res The search operation state
+ * @param NRcontinuationList The list of name resolution continuation references
+ * @param SRcontinuationList The list of subrequest continuation references
+ * @returns An updated search operation state
+ *
+ * @function
+ * @async
+ */
 export
 async function resultsMergingProcedureForSearch (
     ctx: Context,

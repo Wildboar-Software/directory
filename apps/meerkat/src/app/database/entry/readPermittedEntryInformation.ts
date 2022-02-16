@@ -28,6 +28,64 @@ interface ReadPermittedEntryInformationReturn {
     discloseIncompleteEntry: boolean;
 }
 
+/**
+ * @summary Read the entry information of an entry that is permitted by access controls
+ * @description
+ *
+ * ITU Recommendation X.511 defines the `EntryInformation` type, whose
+ * `information` component is a `SET` of `CHOICE`, where the alternatives of
+ * each choice are either an attribute, or merely an attribute type.
+ *
+ * ```asn1
+ * EntryInformation ::= SEQUENCE {
+ *   name                  Name,
+ *   fromEntry             BOOLEAN DEFAULT TRUE,
+ *   information           SET SIZE (1..MAX) OF CHOICE {
+ *     attributeType         AttributeType,
+ *     attribute             Attribute{{SupportedAttributes}},
+ *     ...} OPTIONAL,
+ *   incompleteEntry  [3]  BOOLEAN DEFAULT FALSE,
+ *   partialName      [4]  BOOLEAN DEFAULT FALSE,
+ *   derivedEntry     [5]  BOOLEAN DEFAULT FALSE,
+ *   ... }
+ * ```
+ *
+ * Reading this information may be subject to access controls. As such, some of
+ * it may get filtered out from what is ultimately returned to the user. Whether
+ * any of this information is filtered out may be indicated to the user via the
+ * `incompleteEntry` flag shown in the ASN.1 definition above, but this too is
+ * subject to access controls. Access controls may prevent the DSA from even
+ * disclosing that any information was withheld at all.
+ *
+ * As such, this function returns three things:
+ *
+ * - The information, as an array of the `CHOICE` types in the ASN.1 definition
+ *   above
+ * - Whether any information was omitted (`incompleteEntry`)
+ * - Whether the user may _know_ that any information was omitted
+ *
+ * ## Implementation
+ *
+ * - `readPermittedEntryInformation()` calls
+ *   - `readEntryInformation()`, which calls
+ *     - `readAttributes()`, which calls
+ *       - `readValues()`
+ *
+ * @param ctx The context object
+ * @param target The DSE whose entry information is to be read
+ * @param user The distinguished name and unique identifier of the user
+ *  attempting to read the entry
+ * @param relevantTuples The extended, pre-processed ACDF tuples used by
+ *  access control schemes that use ACI items
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that is in effect
+ * @param options Options
+ * @returns The entry information, whether some of it was omitted, and whether
+ *  the user was permitted to know about any omission.
+ *
+ * @function
+ * @async
+ */
 export
 async function readPermittedEntryInformation (
     ctx: Context,
