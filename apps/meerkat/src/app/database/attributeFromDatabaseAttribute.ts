@@ -3,6 +3,14 @@ import type { ContextValue } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
 import groupByOID from "../utils/groupByOID";
 
+/**
+ * @summary Converts a value from the database into an in-memory value
+ * @param ctx The context object
+ * @param attr The attribute to be read
+ *
+ * @function
+ * @async
+ */
 export
 async function attributeFromDatabaseAttribute (
     ctx: Context,

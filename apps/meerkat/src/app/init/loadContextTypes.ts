@@ -18,6 +18,16 @@ import {
     evaluateTemporalContext,
 } from "@wildboar/x500/src/lib/matching/context/temporalContext";
 
+/**
+ * @summary Initialize Meerkat DSA's internal index of known context types.
+ * @description
+ *
+ * Initialize Meerkat DSA's internal index of known context types.
+ *
+ * @param ctx The context object
+ *
+ * @function
+ */
 export
 function loadContextTypes (ctx: Context): void {
     const contextTypes: [ CONTEXT, ContextMatcher ][] = [

@@ -5,6 +5,30 @@ import type {
 } from "@wildboar/meerkat-types";
 import { strict as assert } from "assert";
 
+/**
+ * @summary Keep a subset of a tree of entries by their database ID
+ * @description
+ *
+ * This function takes a subtree of vertices and returns a new subtree of
+ * vertices whose members are exclusively those vertices whose IDs are present
+ * in the `idsToKeep` set, with the exception of the case where the inclusion of
+ * the root of the DIT is necessary to include two or more subordinates which
+ * are themselves included by this selection.
+ *
+ * NOTE: This was made for producing the `family-information` attribute, which
+ * is precisely such a subtree of entries.
+ *
+ * @param dit The root of some subset of the DIT
+ * @param idsToKeep The set of database IDs of entries to keep from the DIT
+ *  given by the `dit` parameter
+ * @param familySelect The set of string-formatted dot-delimited object
+ *  identifiers of the object classes selected by the `familySelect`, or `null`
+ *  if there is no such selection
+ * @param depth The depth of the current recursion
+ * @returns
+ *
+ * @function
+ */
 export
 function keepSubsetOfDITById (
     dit: DIT,

@@ -10,6 +10,24 @@ import {
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
+/**
+ * @summary Determine the database ID of a subordinate by its RDN
+ * @description
+ *
+ * This function takes an immediate superior DSE's database ID and a
+ * sought-after relative distinguished name (RDN) and returns a database ID of
+ * a subordinate whose RDN matched that which was supplied, if one exists, or
+ * `undefined` if none matched.
+ *
+ * @param ctx The context object
+ * @param superior_id The database ID of the immediately superior entry
+ * @param rdn The sought-after relative distinguished name (RDN)
+ * @returns The database ID of the subordinate having that RDN, if it exists, or
+ *  `undefined` otherwise.
+ *
+ * @function
+ * @async
+ */
 export
 async function rdnToID (
     ctx: Context,

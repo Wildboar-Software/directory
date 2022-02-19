@@ -1,13 +1,26 @@
-import {
+import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
 import {
     ObjectClassKind_structural,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import {
+import type {
     ObjectClassInfo,
 } from "@wildboar/meerkat-types";
 
+/**
+ * @summary Convert an `OBJECT-CLASS` information object into `ObjectClassInfo`.
+ * @description
+ *
+ * Converts an `OBJECT-CLASS` information object into `ObjectClassInfo`.
+ *
+ * @param io The `OBJECT-CLASS` information object, as produced by the Wildboar
+ *  ASN.1 compiler.
+ * @returns An `ObjectClassInfo` as used by Meerkat DSA's internal index of
+ *  known object classes.
+ *
+ * @function
+ */
 export
 function objectClassFromInformationObject (io: OBJECT_CLASS): ObjectClassInfo {
     return {

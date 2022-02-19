@@ -3,6 +3,23 @@ import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import type { Prisma } from "@prisma/client";
 import { MAX_RESULTS } from "../constants";
 
+/**
+ * @summary Read a DSE's subordinates into memory from the database
+ * @description
+ *
+ * Reads the subordinates of a DSE into memory from the database as vertices.
+ *
+ * @param ctx The context object
+ * @param entry The entry whose subordinates are to be read
+ * @param take The maximum number of subordinates to return
+ * @param skip The number of subordinates to skip over
+ * @param cursorId The database ID of the last subordinate that was read
+ * @param where Optional filtering on the subordinates to return
+ * @returns An array of vertices, where each is a subordinate
+ *
+ * @function
+ * @async
+ */
 export
 async function readSubordinates (
     ctx: Context,
@@ -33,7 +50,7 @@ async function readSubordinates (
                 orderBy: {
                     id: "desc", // Theory: newer IDs are more likely to be queried.
                 },
-            })).map((child) => vertexFromDatabaseEntry(ctx, entry, child, true)),
+            })).map((child) => vertexFromDatabaseEntry(ctx, entry, child)),
         );
     }
     if (cursorId !== undefined) {

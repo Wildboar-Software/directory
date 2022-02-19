@@ -4,6 +4,21 @@ import {
     MatchingRuleUseDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
 
+/**
+ * @summary Load an entry's MatchingRuleUseDescription from the database
+ * @description
+ *
+ * Loads an entry's MatchingRuleUseDescription from the database
+ *
+ * @param ctx The context object
+ * @param entryId The database ID of the entry whose
+ *  `MatchingRuleUseDescription` are to be read from the database.
+ * @returns An array of the `MatchingRuleUseDescription`s associated with the
+ *  entry.
+ *
+ * @function
+ * @async
+ */
 export
 async function readMatchingRuleUseDescriptions (
     ctx: Readonly<Context>,

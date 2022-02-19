@@ -127,6 +127,16 @@ const ldapSyntaxToASN1Syntax = {
     "1.3.6.1.1.16.1": "UUID"
 };
 
+/**
+ * @summary Initialize Meerkat DSA's internal index of known LDAP syntaxes.
+ * @description
+ *
+ * Initialize Meerkat DSA's internal index of known LDAP syntaxes.
+ *
+ * @param ctx The context object
+ *
+ * @function
+ */
 export
 function loadLDAPSyntaxes (ctx: Context): void {
     Object.values(ldapSyntaxes)

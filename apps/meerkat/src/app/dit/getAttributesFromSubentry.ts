@@ -50,10 +50,21 @@ import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/Passw
 import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa"
 import { DER } from "asn1-ts/dist/node/functional";
 
+/**
+ * @summary Reads a specific subset of attributes from a subentry
+ * @description
+ *
+ * This function reads a specific subset of attributes from a subentry. It's
+ * purpose is for constructing subentry information when establishing
+ * hierarchical operational bindings.
+ *
+ * @param subentry The subentry vertex whose attributes are to be read
+ * @returns An array of attributes from the subentry
+ *
+ * @function
+ */
 export
-function getAttributesFromSubentry (
-    subentry: Vertex,
-): Attribute[] {
+function getAttributesFromSubentry (subentry: Vertex): Attribute[] {
     if (!subentry.dse.subentry) {
         return [];
     }

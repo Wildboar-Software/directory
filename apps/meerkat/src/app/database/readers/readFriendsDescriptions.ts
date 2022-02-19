@@ -4,6 +4,21 @@ import {
     FriendsDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
 
+/**
+ * @summary Load an entry's FriendsDescription from the database
+ * @description
+ *
+ * Loads an entry's FriendsDescription from the database
+ *
+ * @param ctx The context object
+ * @param entryId The database ID of the entry whose
+ *  `FriendsDescription` are to be read from the database.
+ * @returns An array of the `FriendsDescription`s associated with the
+ *  entry.
+ *
+ * @function
+ * @async
+ */
 export
 async function readFriendsDescriptions (
     ctx: Readonly<Context>,

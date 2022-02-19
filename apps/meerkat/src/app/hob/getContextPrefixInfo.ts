@@ -36,6 +36,23 @@ import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectId
 import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
 import { DER } from "asn1-ts/dist/node/functional";
 
+/**
+ * @summary Given a vertex, produce a `DITcontext` per ITU Recommendation X.518.
+ * @description
+ *
+ * This function takes a vertex, and traverses upwards towards the root DSE, to
+ * produce a `DITcontext`, which is used in establishing and modifying
+ * hierarchical operational bindings, per ITU Recommendation X.518 (2016),
+ * Section 24.1.4.1.1.
+ *
+ * @param ctx The context object
+ * @param immediateSuperiorOfNewContextPrefix The vertex of the immediate
+ *  superior of the new context prefix
+ * @returns A `DITcontext`, as used in hierarchical operational bindings.
+ *
+ * @function
+ * @async
+ */
 export
 async function getContextPrefixInfo (
     ctx: Context,

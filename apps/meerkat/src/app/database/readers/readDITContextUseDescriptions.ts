@@ -7,6 +7,21 @@ import {
     DITContextUseInformation,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
 
+/**
+ * @summary Load an entry's DITContextUseDescriptions from the database
+ * @description
+ *
+ * Loads an entry's DITContextUseDescriptions from the database
+ *
+ * @param ctx The context object
+ * @param entryId The database ID of the entry whose
+ *  `DITContextUseDescription` are to be read from the database.
+ * @returns An array of the `DITContextUseDescription`s associated with the
+ *  entry.
+ *
+ * @function
+ * @async
+ */
 export
 async function readDITContextUseDescriptions (
     ctx: Readonly<Context>,

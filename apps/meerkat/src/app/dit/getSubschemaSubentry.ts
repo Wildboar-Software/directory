@@ -15,6 +15,24 @@ const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
 const SUBSCHEMA_OC: string = id_soc_subschema.toString();
 
+/**
+ * @summary Get the subschema subentry that applies to a specified entry
+ * @description
+ *
+ * Gets the subschema subentry that applies to the entry specified with the
+ * `entry` parameter. Note that, in the X.500 specifications, subschema
+ * subentries are required to have a subtree specification that encompasses the
+ * entire administrative area, and there may not be more than one subschema
+ * subentry within a subschema administrative area.
+ *
+ * @param ctx The contxt object
+ * @param entry The DSE whose applicable subschema is to be located
+ * @returns A the vertex of the applicable subschema, if it can be found, or
+ *  `undefined` otherwise
+ *
+ * @function
+ * @async
+ */
 export
 async function getSubschemaSubentry (
     ctx: Context,
@@ -35,7 +53,7 @@ async function getSubschemaSubentry (
             // Return the first one that we find, since there is only supposed
             // to be one subschema anyway.
             return results
-                .filter((result) => result.dse.objectClass.has(SUBSCHEMA_OC))[0];
+                .find((result) => result.dse.objectClass.has(SUBSCHEMA_OC));
         }
         if (current.dse.admPoint?.administrativeRole.has(AUTONOMOUS)) {
             return;

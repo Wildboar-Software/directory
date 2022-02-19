@@ -17,6 +17,23 @@ import { strict as assert } from "assert";
 import { randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 
+/**
+ * @summary Create a DSE
+ * @description
+ *
+ * Creates a DSE in the database and returns the vertex from that DSE.
+ *
+ * @param ctx The context object
+ * @param superior The superior to the created entry
+ * @param rdn The relative distinguished name of the new entry
+ * @param entryInit Properties of the new entry
+ * @param values Initial values of the entry
+ * @param modifier The distinguished name of the user that created the entry
+ * @returns The newly created vertex
+ *
+ * @function
+ * @async
+ */
 export
 async function createEntry (
     ctx: Context,
@@ -69,7 +86,7 @@ async function createEntry (
             dseUUID: true,
         },
     });
-    const vertex = await vertexFromDatabaseEntry(ctx, superior, createdEntry as DatabaseEntry, true);
+    const vertex = await vertexFromDatabaseEntry(ctx, superior, createdEntry as DatabaseEntry);
     await ctx.db.$transaction([
         ctx.db.distinguishedValue.createMany({
             data: rdn.map((atav, i) => ({
@@ -96,7 +113,7 @@ async function createEntry (
         },
     });
     assert(newEntry);
-    const ret = await vertexFromDatabaseEntry(ctx, superior, newEntry, false);
+    const ret = await vertexFromDatabaseEntry(ctx, superior, newEntry);
     return ret;
 }
 

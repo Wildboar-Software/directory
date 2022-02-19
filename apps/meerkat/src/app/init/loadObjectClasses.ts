@@ -26,6 +26,17 @@ function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     }
 }
 
+/**
+ * @summary Initialize Meerkat DSA's internal index of known object classes.
+ * @description
+ *
+ * Initialize Meerkat DSA's internal index of known object classes.
+ *
+ * @param ctx The context object
+ *
+ * @function
+ * @async
+ */
 export
 async function loadObjectClasses (ctx: Context): Promise<void> {
     const objectClassInfoObjects = [

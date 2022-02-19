@@ -9,6 +9,23 @@ import {
     pwdStartTime,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
 
+/**
+ * @summary Set the password of an entry
+ * @description
+ *
+ * This function sets the password of an entry and also updates any relevant
+ * password-policy related operational attributes, such as `pwdStartTime`.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param vertex The entry whose password is to be set
+ * @param pwd The password to assign to the entry
+ * @returns An array of `PrismaPromise`s that can be `await`ed or `then()`'d
+ *  either separately or as a transaction to set the password.
+ *
+ * @function
+ * @async
+ */
 export
 async function setEntryPassword (
     ctx: Context,

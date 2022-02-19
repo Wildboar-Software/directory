@@ -37,6 +37,20 @@ async function deleteChildren (ctx: Context, id: number): Promise<void> {
     ]);
 }
 
+/**
+ * @summary Delete a DSE
+ * @description
+ *
+ * Deletes a DSE from the database and from the subordinates of the superior, if
+ * the superior has its subordinates in memory.
+ *
+ * @param ctx The context object
+ * @param entry The vertex to be deleted
+ * @param alsoDeleteFamily Whether to also delete childre
+ *
+ * @function
+ * @async
+ */
 export
 async function deleteEntry (
     ctx: Context,

@@ -7,6 +7,20 @@ import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 
+/**
+ * @summary Convert an `ATTRIBUTE` information object into `AttributeInfo`.
+ * @description
+ *
+ * Converts an `ATTRIBUTE` information object into `AttributeInfo`.
+ *
+ * @param io The `ATTRIBUTE` information object, as produced by the Wildboar
+ *  ASN.1 compiler.
+ * @param name The name of the `ATTRIBUTE` information object.
+ * @returns An `AttributeInfo` as used by Meerkat DSA's internal index of known
+ *  attribute types.
+ *
+ * @function
+ */
 export
 function attributeFromInformationObject (io: ATTRIBUTE, name?: string): AttributeInfo {
     return {

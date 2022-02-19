@@ -12,6 +12,19 @@ import { MAX_TRAVERSAL } from "../constants";
 
 const SHADOW: string = id_op_binding_shadow.toString();
 
+/**
+ * @summary Determines the applicable shadowing agreement from a shadowed entry
+ * @description
+ *
+ * This function traverses up the DIT until it finds a context prefix, and
+ * attempts to identify a shadowing agreement associated with that context
+ * prefix. This function returns that shadowing agreement, if it exists, or
+ * `null` otherwise.
+ *
+ * @param ctx The context object
+ * @param entry The entry whose shadowing agreement is to be identified
+ * @returns The shadowing agreement, if one can be identified.
+ */
 export
 async function getShadowingAgreementInfo (
     ctx: Context,

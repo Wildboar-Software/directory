@@ -4,6 +4,19 @@ import { randomUUID } from "crypto";
 
 const ROOT_DSE_NAME = [];
 
+/**
+ * @summary Load or initialize the DIT
+ * @description
+ *
+ * This function loads the Root DSE from the database, creating it if it does
+ * not exist.
+ *
+ * @param ctx The context object
+ * @returns The vertex of the Root DSE
+ *
+ * @function
+ * @async
+ */
 export
 async function loadDIT (
     ctx: Context,

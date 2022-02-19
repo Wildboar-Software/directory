@@ -4,6 +4,21 @@ import {
     DITContentRuleDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
 
+/**
+ * @summary Load an entry's DITContentRuleDescriptions from the database
+ * @description
+ *
+ * Loads an entry's DITContentRuleDescriptions from the database
+ *
+ * @param ctx The context object
+ * @param entryId The database ID of the entry whose
+ *  `DITContentRuleDescription` are to be read from the database.
+ * @returns An array of the `DITContentRuleDescription`s associated with the
+ *  entry.
+ *
+ * @function
+ * @async
+ */
 export
 async function readDITContentRuleDescriptions (
     ctx: Readonly<Context>,

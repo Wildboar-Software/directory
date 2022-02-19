@@ -2,6 +2,23 @@ import type { Context } from "@wildboar/meerkat-types";
 import type { Prisma } from "@prisma/client";
 import { MAX_RESULTS } from "../constants";
 
+/**
+ * @summary Get the RDNs of immediately suborinate entries
+ * @description
+ *
+ * This function returns the relative distinguished names of immediately
+ * subordinate DSEs, as well as their database IDs.
+ *
+ * @param ctx The context object
+ * @param entry_id The database ID of the entry whose subordinates are to be listed
+ * @param take How many results to return
+ * @param skip How many results to skip over
+ * @param cursorId The ID of the last entry returned, or `undefined`.
+ * @param where An optional filter to apply to the subordinates to be returned
+ *
+ * @function
+ * @async
+ */
 export
 async function listSubordinates (
     ctx: Context,

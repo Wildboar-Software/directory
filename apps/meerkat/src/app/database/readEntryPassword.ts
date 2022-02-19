@@ -6,6 +6,26 @@ import { UserPwd_encrypted } from "@wildboar/x500/src/lib/modules/PasswordPolicy
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
 import { DERElement, ObjectIdentifier } from "asn1-ts";
 
+/**
+ * @summary Read the password of an entry from the database
+ * @description
+ *
+ * This function reads the password for an entry from the database into memory.
+ * Note that passwords in Meerkat DSA (at least when using the `userPassword` or
+ * `userPwd` attribute, as intended) will be salted and hashed in the database.
+ * Reading them into memory cannot reverse this; they will be salted and hashed
+ * in memory. This function is still useful, because this in-memory object
+ * representing the hashed password can be compared for equality to another
+ * hashed and salted password generated from a password submitted during
+ * authentication.
+ *
+ * @param ctx The context object
+ * @param entry The vertex whose password is to be read
+ * @returns The password as a `UserPwd` if one is defined, or `null` otherwise.
+ *
+ * @function
+ * @async
+ */
 export
 async function readEntryPassword (
     ctx: Context,

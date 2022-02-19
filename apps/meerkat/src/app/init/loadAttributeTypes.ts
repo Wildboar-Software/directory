@@ -70,6 +70,17 @@ import userPasswordDriver from "../database/drivers/userPassword";
 import userPwdDriver from "../database/drivers/userPwd";
 import userPwdHistoryDriver from "../database/drivers/userPwdHistory";
 
+/**
+ * @summary Initialize Meerkat DSA's internal index of known attribute types.
+ * @description
+ *
+ * Initialize Meerkat DSA's internal index of known attribute types.
+ *
+ * @param ctx The context object
+ *
+ * @function
+ * @async
+ */
 export
 async function loadAttributeTypes (ctx: Context): Promise<void> {
     Object.entries({

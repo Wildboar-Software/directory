@@ -312,6 +312,16 @@ function toInfo <Matcher> (
     };
 }
 
+/**
+ * @summary Initialize Meerkat DSA's internal index of known matching rules.
+ * @description
+ *
+ * Initialize Meerkat DSA's internal index of known matching rules.
+ *
+ * @param ctx The context object
+ *
+ * @function
+ */
 export
 function loadMatchingRules (ctx: Context): void {
     const equalityInfo: [ MATCHING_RULE, EqualityMatcher ][] = [

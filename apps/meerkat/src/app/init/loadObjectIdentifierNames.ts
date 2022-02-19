@@ -1,6 +1,17 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
 
+/**
+ * @summary Initialize Meerkat DSA's internal index of object identifier names.
+ * @description
+ *
+ * Initialize Meerkat DSA's internal index of object identifier names.
+ *
+ * @param ctx The context object
+ *
+ * @function
+ * @async
+ */
 export
 async function loadObjectIdentifierNames (ctx: Context): Promise<void> {
     const namedOids = await ctx.db.namedObjectIdentifier.findMany({

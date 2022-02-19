@@ -4,6 +4,21 @@ import {
     DITStructureRuleDescription,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
 
+/**
+ * @summary Load an entry's DITStructureRuleDescriptions from the database
+ * @description
+ *
+ * Loads an entry's DITStructureRuleDescriptions from the database
+ *
+ * @param ctx The context object
+ * @param entryId The database ID of the entry whose
+ *  `DITStructureRuleDescription` are to be read from the database.
+ * @returns An array of the `DITStructureRuleDescription`s associated with the
+ *  entry.
+ *
+ * @function
+ * @async
+ */
 export
 async function readDITStructureRuleDescriptions (
     ctx: Readonly<Context>,

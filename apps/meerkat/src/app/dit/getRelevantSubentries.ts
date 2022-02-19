@@ -11,6 +11,25 @@ import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 const SUBENTRY: string = id_sc_subentry.toString();
 
+/**
+ * @summary Get the subentries whose subtree specification select for an entry
+ * @description
+ *
+ * This function returns the subentries whose subtree specifications select an
+ * entry of interest. This takes into account the object classes of the entry,
+ * chop, and so on.
+ *
+ * @param ctx The context object
+ * @param entry The DSE whose relevant subentries are to be returned, or just an
+ *  array of object identifiers of the object classes the entry has.
+ * @param entryDN The distinguished name of the DSE given by the `entry` parameter
+ * @param admPoint The autonomous administrative point
+ * @returns An array of vertices, which are the subentries whose subtree
+ *  specification selected for the specified entry
+ *
+ * @function
+ * @async
+ */
 export
 async function getRelevantSubentries (
     ctx: Context,

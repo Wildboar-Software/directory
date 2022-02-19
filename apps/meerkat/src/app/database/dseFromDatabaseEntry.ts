@@ -63,6 +63,23 @@ const PARENT: string = parent["&id"].toString();
 const CHILD: string = child["&id"].toString();
 let collectiveAttributeTypes: string[] = [];
 
+/**
+ * @summary Produce an in-memory DSE from the Prisma `Entry` model
+ * @description
+ *
+ * This function takes the `Entry` model used in the Prisma client, which can
+ * only have fields of types that are native to a relational database (strings,
+ * numbers, null, etc.) and converts them to the stronger ASN.1 types, and
+ * generally "hydrates" the raw data queried from the database to assemble a
+ * DSE populated with important operational attributes in memory.
+ *
+ * @param ctx The context object
+ * @param dbe The DSE as returned by the Prisma
+ * @returns The DSE
+ *
+ * @function
+ * @async
+ */
 export
 async function dseFromDatabaseEntry (
     ctx: Context,

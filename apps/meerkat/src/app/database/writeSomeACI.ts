@@ -11,6 +11,19 @@ import {
 import { PrismaPromise, ACIScope } from "@prisma/client";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
 
+/**
+ * @summary Higher-order function that produces a function that can save an ACI item of a specified scope
+ * @description
+ *
+ * This function takes an ACI item scope (prescriptive, subentry, or entry) and
+ * returns an asynchronous function that itself returns a `PrismaPromise` that
+ * can be used to save that ACI item to the database with the specified scope.
+ *
+ * @param scope The scope of the ACI item (e.g. prescriptive, subentry, or entry)
+ * @returns A function that can be used to write an ACI item of the specified scope
+ *
+ * @function
+ */
 export
 const writeSomeACI: (scope: ACIScope) => SpecialAttributeDatabaseEditor = (scope: ACIScope) => {
     return (
