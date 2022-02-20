@@ -36,6 +36,19 @@ function getAttributeTypesFromFilterItem (item: FilterItem): AttributeType[] {
     }
 }
 
+/**
+ * @summary Get the attribute types used in a filter
+ * @description
+ *
+ * This function returns an array of object identifiers of attribute types that
+ * are referenced in the filter.
+ *
+ * @param filter The X.500 `Filter` whose attribute types are sought
+ * @returns An array of object identifiers of the attribute types that are used
+ *  in the filter
+ *
+ * @function
+ */
 export
 function getAttributeTypesFromFilter (filter: Filter): AttributeType[] {
     if ("item" in filter) {

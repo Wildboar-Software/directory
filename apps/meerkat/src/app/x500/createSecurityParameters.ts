@@ -31,7 +31,7 @@ function createSecurityParameters (
     errorCode?: Code,
 ): SecurityParameters {
     return new SecurityParameters(
-        ctx.dsa.signing
+        (ctx.dsa.signing && !ctx.config.bulkInsertMode)
             ? new CertificationPath(
                 ctx.dsa.signing.certPath[ctx.dsa.signing.certPath.length - 1],
                 (ctx.dsa.signing.certPath.length > 1)
@@ -49,7 +49,9 @@ function createSecurityParameters (
         {
             generalizedTime: new Date((new Date()).valueOf() + 60000),
         },
-        unpackBits(randomBytes(16)),
+        ctx.config.bulkInsertMode
+            ? undefined
+            : unpackBits(randomBytes(16)),
         ProtectionRequest_signed,
         operationCode,
         ErrorProtectionRequest_signed,

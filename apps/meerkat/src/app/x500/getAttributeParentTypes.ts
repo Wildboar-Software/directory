@@ -3,6 +3,20 @@ import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 
+/**
+ * @summary Get the supertypes of an attribute type
+ * @description
+ *
+ * This function yields the queried object identifier of the attribute type
+ * specified by the `type_` argument, then all of its supertypes, if there are
+ * any.
+ *
+ * @param ctx The context object
+ * @param type_ The object identifier of the attribute type whose supertypes are queried
+ * @yields The supertypes of the attribute type given by `type_`
+ *
+ * @function
+ */
 export
 function *getAttributeParentTypes (
     ctx: Context,

@@ -10,6 +10,21 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntry.ta";
 import groupByOID from "../utils/groupByOID";
 
+/**
+ * @summary Convert a subtree of entries into groups of `FamilyEntries`
+ * @description
+ *
+ * This function takes a root of a subtree whose subordinates are to be grouped
+ * into `FamilyEntries` values by their structural object class. The returned
+ * `FamilyEntries` values can be used as values of the `family-information`
+ * attribute type described in ITU Recommendation X.511 (2016), Section 7.7.2.
+ *
+ * @param dit The root of the subtree to be converted
+ * @param getInfo A function that will take a vertex and return entry information
+ * @returns An array of `FamilyEntries` as used in the X.500 `family-information` attribute
+ *
+ * @function
+ */
 export
 function convertSubtreeToFamilyInformation (
     dit: DIT,

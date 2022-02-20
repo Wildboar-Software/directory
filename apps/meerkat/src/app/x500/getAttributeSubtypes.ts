@@ -3,6 +3,20 @@ import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 
+/**
+ * @summary Gets all subtypes of an attribute type
+ * @description
+ *
+ * This function gets all subtypes of an attribute type recursively, returning
+ * an array of object identifiers that represent all direct and indirect
+ * subtypes.
+ *
+ * @param ctx The context object
+ * @param type_ The object identifier of the attribute type whose subtypes are sought
+ * @returns The object identifiers of all known subtypes of the attribute type
+ *
+ * @function
+ */
 export
 function getAttributeSubtypes (
     ctx: Context,

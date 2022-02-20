@@ -199,6 +199,7 @@ function filterItemCanBeUsedInShadowedArea (
     }
 }
 
+// This will remain undocumented for now, since it is very likely to change.
 // As this function is extremely complicated, it is almost impossible to get it
 // correct, and this is almost GUARANTEED to be incorrect.
 // For this reason, the response will err "false."

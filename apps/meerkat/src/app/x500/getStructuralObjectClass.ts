@@ -7,11 +7,21 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 
 /**
+ * @summary Get the structural object class among a set of object classes
+ * @description
+ *
+ * This function takes a set of object identifiers that refer to object classes
+ * and identifies the structural object class among them.
+ *
  * NOTE: There may only be one structural object class chain in an entry.
  *
- * @param ctx
- * @param objectClasses
- * @returns
+ * @param ctx The context object
+ * @param objectClasses An array of object identifiers of the object classes of
+ *  the entry whose structural object class is sought
+ * @returns An object identifier that identifies the structural object class of
+ *  the entry
+ *
+ * @function
  */
 export
 function getStructuralObjectClass (

@@ -10,6 +10,18 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import groupByOID from "../utils/groupByOID";
 
+/**
+ * @summary Convert values into X.500 directory attributes
+ * @description
+ *
+ * This function converts values as Meerkat DSA uses them internally into
+ * X.500 directory attributes.
+ *
+ * @param values The values to be converted into Attributes
+ * @returns X.500 directory attributes
+ *
+ * @function
+ */
 export
 function attributesFromValues (values: Value[]): Attribute[] {
     const valuesByType: Record<IndexableOID, Value[]> = groupByOID<Value>(values, (value) => value.type);

@@ -7,6 +7,7 @@ import {
 /**
  * @summary Array of object identifiers for attribute types that are always permitted in an entry.
  * @description
+ *
  * To be clear, by "entry," I mean a DSE of type entry, subentry, or alias.
  *
  * @constant

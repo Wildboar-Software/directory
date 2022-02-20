@@ -8,6 +8,21 @@ import {
 import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
 import getAncestorObjectClasses from "./getAncestorObjectClasses";
 
+/**
+ * @summary Determine whether a group of object classes are invalid
+ * @description
+ *
+ * This function returns `true` if the object classes given by the
+ * `objectClasses` argument are valid. They can be invalid if there are multiple
+ * structural object class chains, auxiliary object classes missing a
+ * superclass, or merely if there is an unrecognized object class.
+ *
+ * @param ctx The context object
+ * @param objectClasses The object identifiers of the object classes that are to be validated together
+ * @returns A boolean indicating whether the group of object classes are valid
+ *
+ * @function
+ */
 export
 function validateObjectClasses (
     ctx: Context,

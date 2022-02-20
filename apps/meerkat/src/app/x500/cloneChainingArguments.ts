@@ -2,6 +2,19 @@ import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 
+/**
+ * @summary Clone a `ChainingArguments` object, and possibly update some of its fields
+ * @description
+ *
+ * This function clones a `ChainingArguments` object, and can be used to change
+ * some of the fields in the new clone via the `delta` parameter.
+ *
+ * @param chaining The chaining arguments to be cloned
+ * @param delta Overrrides to apply to the fields of the new `ChainingArguments`
+ * @returns A new `ChainingArguments` object
+ *
+ * @function
+ */
 export
 function cloneChainingArgs (chaining: ChainingArguments, delta?: Partial<ChainingArguments>): ChainingArguments {
     return new ChainingArguments(
