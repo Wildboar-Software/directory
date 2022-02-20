@@ -726,6 +726,24 @@ async function connectToIdmNaddr (
     return ret;
 }
 
+/**
+ * @summary Establish a connection to a remote DSA
+ * @description
+ *
+ * This function attempts to establish a connection to a remote DSA. This is the
+ * foundation for subsequent distributed directory operations, such as
+ * establishing hierarchical operational bindings. Such operations will use the
+ * connection established through this function.
+ *
+ * @param ctx The context object
+ * @param targetSystem The access point of the remote DSA to which a connection is sought
+ * @param protocolID The object identifier of the protocol with which to bind
+ * @param options Options
+ * @returns A connection to the remote DSA, if one could be established, or `null` otherwise.
+ *
+ * @function
+ * @async
+ */
 export
 async function connect (
     ctx: Context,

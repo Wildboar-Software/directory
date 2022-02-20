@@ -20,6 +20,20 @@ import {
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
 import { BERElement, ObjectIdentifier, unpackBits } from "asn1-ts";
 
+/**
+ * @summary Get credentials to try when establishing a connection to a remote DSA
+ * @description
+ *
+ * This function reads credentials to attempt when accessing a remote DSA from
+ * the database.
+ *
+ * @param ctx The context object
+ * @param url The URL of the NSAP
+ * @returns An array of credentials to try
+ *
+ * @function
+ * @async
+ */
 export
 async function getCredentialsForNSAP (
     ctx: Context,

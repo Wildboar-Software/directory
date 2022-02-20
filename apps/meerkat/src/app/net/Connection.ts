@@ -31,6 +31,14 @@ interface WriteOperationOptions {
     timeLimitInMilliseconds?: number;
 }
 
+/**
+ * @summary An established connection that Meerkat DSA has to another DSA.
+ * @description
+ *
+ * An established connection that Meerkat DSA has to another DSA.
+ *
+ * @interface
+ */
 export
 interface Connection {
     writeOperation: (req: Omit<Request, "invokeId">, options?: WriteOperationOptions) => Promise<ResultOrError>;
