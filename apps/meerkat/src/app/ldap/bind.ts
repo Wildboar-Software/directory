@@ -67,15 +67,26 @@ function notAuthed (localQualifierPoints?: number): AuthenticationLevel {
 }
 
 /**
+ * @summary The bind operation defined in IETF RFC 4511
+ * @description
+ *
+ * The bind operation defined in IETF RFC 4511
+ *
  * The `userPassword` attribute described in ITU Recommendation X.520 is
  * problematic because it is not single-valued and has no concept of encryption.
  * This implementation prefers the `userPwd` attribute defined in ITU
  * Recommendation X.520, which is both single-valued and has a concept of
  * encryption.
  *
- * @param ctx
- * @param req
- * @returns
+ * @see https://datatracker.ietf.org/doc/html/rfc4511#section-4.2
+ *
+ * @param ctx The context object
+ * @param socket The TCP or TLS socket from whence the request originated
+ * @param req The `BindRequest` argument
+ * @returns an `LDAPBindReturn`
+ *
+ * @function
+ * @async
  */
 export
 async function bind (

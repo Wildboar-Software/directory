@@ -1,8 +1,13 @@
 import { ObjectIdentifier } from "asn1-ts";
 
 /**
+ * @summary The LDAP extensibleObject object class
+ * @description
+ *
  * Specified in IETF RFC 4512. This is a special object class that may have
  * any attribute.
+ *
+ * @constant
  */
 export
 const extensibleObject = new ObjectIdentifier([

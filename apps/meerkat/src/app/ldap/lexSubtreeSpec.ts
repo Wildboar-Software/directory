@@ -154,10 +154,20 @@ function lexRefinement (ctx: Context, input: string): RefinementLexingReturn {
 }
 
 /**
- * See: https://datatracker.ietf.org/doc/html/rfc3672#appendix-A
+ * @summary A higher-order function that returns a function that can parse LDAP subtree specifications
+ * @description
  *
- * @param text
- * @returns
+ * This is a higher order function that takes a context object and returns a
+ * function that can be used to parse an LDAP subtree specification. The
+ * returned function takes the string form of the LDAP value as an input and
+ * produces an X.500 `SubtreeSpecification`.
+ *
+ * @see https://datatracker.ietf.org/doc/html/rfc3672#appendix-A
+ *
+ * @param ctx The context object
+ * @returns A function that can parse an LDAP subtree specification
+ *
+ * @function
  */
 export
 function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecification {
@@ -233,7 +243,6 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
             index++; // Skip over the bracket.
             while (index < toParse.length) {
                 skipOverWhitespace();
-                const startOfSpex: number = index;
                 let exclusion: string = "";
                 if (toParse.slice(index, index + CHOP_BEFORE.length) === CHOP_BEFORE) {
                     index += CHOP_BEFORE.length;

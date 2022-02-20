@@ -19,6 +19,17 @@ import {
 import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
 import type { URI } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/URI.ta";
 
+/**
+ * @summary Converts LDAP referral URIs into an X.500 `ContinuationReference`
+ * @description
+ *
+ * Converts LDAP referral URIs into an X.500 `ContinuationReference`
+ *
+ * @param uris The LDAP referral URIs to be converted
+ * @returns An X.500 `ContinuationReference`
+ *
+ * @function
+ */
 export
 function ldapReferenceToContinuationReference (
     uris: URI[],

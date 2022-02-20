@@ -28,6 +28,24 @@ const now: TimeAssertion = {
 };
 const encodedTimeAssertion = _encode_TimeAssertion(now, DER);
 
+/**
+ * @summary Convert X.500 entry information into LDAP `PartialAttribute`s
+ * @description
+ *
+ * This function converts X.500 entry information item into LDAP
+ * `PartialAttribute`s. Entry information items that cannot be converted are
+ * silently omitted from the return value.
+ *
+ * The LDAP `PartialAttribute` type is defined in IETF RFC 4511, Section 4.1.7.
+ *
+ * @see https://datatracker.ietf.org/doc/html/rfc4511#section-4.1.7
+ *
+ * @param ctx The context object
+ * @param infoItems The X.500 entry information to be converted to LDAP `PartialAttribute`s
+ * @returns An array of LDAP `PartialAttribute`s
+ *
+ * @function
+ */
 export
 function getPartialAttributesFromEntryInformation (
     ctx: Context,

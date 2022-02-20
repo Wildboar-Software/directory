@@ -8,6 +8,22 @@ import type {
 import getAttributeFromPartialAttribute from "./getAttributeFromPartialAttribute";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 
+/**
+ * @summary Converts an LDAP `PartialAttribute` into an X.500 entry information item
+ * @description
+ *
+ * This function converts an LDAP `PartialAttribute`, which is described in IETF
+ * RFC 4511, Section 4.1.7, into an X.500 entry information item. It accepts
+ * non-numeric object identifier names as the `type`, and it converts all
+ * LDAP-string-represented values into native X.500 attribute values.
+ *
+ * @param ctx The context object
+ * @param partattr The partial attribute to be converted
+ * @param typesOnly Whether only types were requested
+ * @returns An X.500 `EntryInformation.information` item
+ *
+ * @function
+ */
 export
 function getEntryInfoItemFromPartialAttribute (
     ctx: Context,

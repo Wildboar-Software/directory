@@ -12,9 +12,13 @@ import destringifyRDNSequence from "@wildboar/ldap/src/lib/destringifiers/RDNSeq
  * it so that the ordering of RDNs matches that of the X.500 specifications'
  * `RDNSequence` production.
  *
- * @param ctx
- * @param dn
- * @returns
+ * @see https://datatracker.ietf.org/doc/html/rfc4514
+ *
+ * @param ctx The context object
+ * @param dn The distinguished name to be decoded from an LDAP string
+ * @returns The decoded X.500 distinguished name
+ *
+ * @function
  */
 export
 function decodeLDAPDN (ctx: Context, dn: Uint8Array | string): RDNSequence {

@@ -25,13 +25,17 @@ function ock2str (ock: ObjectClassKind): string {
 let cachedValues: Buffer[] | null = null;
 
 /**
+ * @summary Read object classes directly into LDAP object classes descriptions
  * @description
  *
  * This function exists just to read object classes directly into LDAP
- * object class descriptions.
+ * object class descriptions. This bypasses the conversion to X.500
+ * `ObjectClassDescription` as an intermediary.
  *
- * @param ctx
- * @returns
+ * @param ctx The context object
+ * @returns Bytes that encode the LDAP string values of the `objectClasses` type
+ *
+ * @function
  */
 export
 function readObjectClasses (

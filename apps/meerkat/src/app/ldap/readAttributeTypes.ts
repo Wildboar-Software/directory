@@ -27,13 +27,17 @@ function au2str (au: AttributeUsage): string {
 let cachedValues: Buffer[] | null = null;
 
 /**
+ * @summary Read attribute types directly into LDAP attribute type descriptions
  * @description
  *
  * This function exists just to read attribute types directly into LDAP
- * attribute type descriptions.
+ * attribute type descriptions. This bypasses the conversion to X.500
+ * `AttributeTypeDescription` as an intermediary.
  *
- * @param ctx
- * @returns
+ * @param ctx The context object
+ * @returns Bytes that encode the LDAP string values of the `attributeTypes` type
+ *
+ * @function
  */
 export
 function readAttributeTypes (

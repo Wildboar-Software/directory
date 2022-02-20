@@ -21,6 +21,15 @@ const rootAttributeTypesValues: Buffer[] = [
 ];
 
 /**
+ * @summary Get LDAP `PartialAttribute`s of the Root DSE's subschema subentry for LDAP users
+ * @description
+ *
+ * Per IETF RFC 4512, Section 5.1, Root DSEs in LDAP servers may have
+ * subschema subentries that indicate what schema are in use for the Root DSE.
+ * Some LDAP clients, such as Apache Directory Studio, will display an error
+ * if this entry does not exist, even though IETF RFC 4512 makes it sound as
+ * though it is optional.
+ *
  * NOTE: The subschemaSubentry in the Root DSE only points to the subschema
  * subentry that provides schema for the Root DSE. However, it does provide
  * some editors with the schema needed to create first-level DSEs, too.
@@ -31,6 +40,14 @@ const rootAttributeTypesValues: Buffer[] = [
  * the user will only be able to see schema for attributes in the Root DSE.
  * Otherwise, they will be able to see all attribute types and object classes
  * defined in this DSA.
+ *
+ * @see https://datatracker.ietf.org/doc/html/rfc4512#section-5.1
+ *
+ * @param ctx The context object
+ * @param permittedToSeeSchema Whether the user is permitted to discover other schema within this DSA
+ * @returns LDAP `PartialAttribute`s of the Root DSE's subschema subentry
+ *
+ * @function
  */
 function getRootSubschema (ctx: Context, permittedToSeeSchema: boolean): PartialAttribute[] {
     const attributeTypesValues: Buffer[] = permittedToSeeSchema

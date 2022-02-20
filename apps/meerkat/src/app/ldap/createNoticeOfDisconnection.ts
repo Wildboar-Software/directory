@@ -10,6 +10,23 @@ import type {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 
+/**
+ * @summary Creates an LDAP unsolicited notification
+ * @description
+ *
+ * Creates an LDAP unsolicited notification as described in IETF RFC 4511,
+ * Section 4.4.
+ *
+ * Note that this function does not _send_ the response. It merely creates it.
+ *
+ * @see https://datatracker.ietf.org/doc/html/rfc4511#section-4.4
+ *
+ * @param resultCode The result code of the notification
+ * @param message The message of the notification
+ * @returns The notification
+ *
+ * @function
+ */
 export
 function createNoticeOfDisconnection (
     resultCode: LDAPResult_resultCode,

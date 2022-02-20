@@ -11,6 +11,19 @@ import type {
 import getPartialAttributeFromEntryInfoItem from "./getPartialAttributeFromEntryInfoItem";
 import encodeLDAPDN from "./encodeLDAPDN";
 
+/**
+ * @summary Converts X.500 `EntryInformation` into an LDAP `SearchResultEntry`
+ * @description
+ *
+ * This function converts X.500 `EntryInformation` into an LDAP
+ * `SearchResultEntry`.
+ *
+ * @param ctx The context object
+ * @param einfo The X.500 entry information to be converted to an LDAP search result
+ * @returns An LDAP search result
+ *
+ * @function
+ */
 export
 function getSearchResultEntryFromEntryInfo (
     ctx: Context,
