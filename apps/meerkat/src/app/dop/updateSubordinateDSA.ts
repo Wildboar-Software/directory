@@ -203,6 +203,27 @@ interface UpdateSubordinateOptions extends ConnectOptions, WriteOperationOptions
     endTime?: Date;
 }
 
+/**
+ * @summary Updates a subordinate DSA of changes that may affect a hierarchical operational binding
+ * @description
+ *
+ * This function sends an update to a subordinate DSA whose agreement with this
+ * DSA may be impacted by recent changes to a local DSE.
+ *
+ * @param ctx The context object
+ * @param currentBindingID The most binding ID whereby the subordinate is updated
+ * @param immediateSuperior The immediate superior vertex
+ * @param immediateSuperiorInfo Attributes of the immediate superior that are to
+ *  be disclosed to the subordinate
+ * @param subordinateRDN The subordinate entry's RDN
+ * @param targetSystem The remote DSA that is being updated
+ * @param aliasDereferenced Whether an alias was dereferenced leading up to this
+ * @param options Options
+ * @returns A result or error
+ *
+ * @function
+ * @async
+ */
 export
 async function updateSubordinateDSA (
     ctx: Context,

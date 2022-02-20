@@ -890,7 +890,7 @@ async function addEntry (
                     ),
                 );
             }
-            const existing = await vertexFromDatabaseEntry(ctx, immediateSuperior, existing_dbe, false);
+            const existing = await vertexFromDatabaseEntry(ctx, immediateSuperior, existing_dbe);
             const effectiveAccessControlScheme = existing.dse.admPoint?.accessControlScheme
                 ?? accessControlScheme;
             if ( // If access control does not apply to the existing entry,...

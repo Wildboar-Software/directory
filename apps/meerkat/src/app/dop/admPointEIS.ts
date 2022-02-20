@@ -6,12 +6,24 @@ import { accessControlScheme } from "@wildboar/x500/src/lib/modules/BasicAccessC
 import { entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
 import { subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
 import { aliasedEntryName } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
+import { clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/clearance.oa";
 
+/**
+ * @summary Selects attributes of an administrative point that are to be shared in a hierarchical operational binding
+ * @description
+ *
+ * This selection selects attributes of an administrative point that are to be
+ * shared between DSAs that are mutually part of a hierarchical operational
+ * binding.
+ *
+ * @constant
+ */
 export
 const admPointEIS = new EntryInformationSelection(
     {
         select: [
             aliasedEntryName["&id"],
+            clearance["&id"], // A userApplications attribute, for some stupid reason.
         ],
     },
     undefined,

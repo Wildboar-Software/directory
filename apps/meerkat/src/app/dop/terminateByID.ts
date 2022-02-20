@@ -9,6 +9,18 @@ import {
 import { OperationalBindingInitiator } from "@prisma/client";
 import removeSubordinate from "./terminate/removeSubordinate";
 
+/**
+ * @summary Terminates an operational binding by its database ID.
+ * @description
+ *
+ * This function terminates an operational binding by its database ID.
+ *
+ * @param ctx The context object
+ * @param id The database ID of the operational binding to terminate.
+ *
+ * @function
+ * @async
+ */
 export
 async function terminate (
     ctx: Context,

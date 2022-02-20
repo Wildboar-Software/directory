@@ -4,6 +4,19 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
 import { OperationalBindingInitiator } from "@prisma/client";
 
+/**
+ * @summary Get active hierarchical operational bindings
+ * @description
+ *
+ * This function returns information about the hierarchical operational bindings
+ * that are still active.
+ *
+ * @param ctx The context object
+ * @param localDSAIsSuperior Whether the local DSA is the superior DSA
+ * @returns A promise that resolves Prisma models of an operational binding
+ *
+ * @function
+ */
 export
 function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boolean = true) {
     const now = new Date();

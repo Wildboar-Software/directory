@@ -55,6 +55,28 @@ import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlre
 import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import saveAccessPoint from "../../database/saveAccessPoint";
 
+/**
+ * @summary Create a new subr reference, thereby becoming a superior DSA
+ * @description
+ *
+ * This function establishes a hierarchical operational binding as a superior
+ * DSA, which means that it merely creates the subr DSE used to route requests
+ * to the subordinate DSA, after validation. It also constructs a reciprocal
+ * result that can be used in a Directory Operational Binding Management
+ * Protocol (DOP) result.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param invokeId The InvokeId of the operation used to establish the
+ *  operational binding
+ * @param agreement The hierarchical agreement
+ * @param sub2sup The `SubordinateToSuperior` argument of the HOB
+ * @returns A `SuperiorToSubordinate` that can be returned to the superior DSA
+ *  in a Directory Operational Binding Management Protocol (DOP) result
+ *
+ * @function
+ * @async
+ */
 export
 async function becomeSuperior (
     ctx: Context,

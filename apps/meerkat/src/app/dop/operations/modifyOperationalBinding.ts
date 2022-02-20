@@ -107,6 +107,7 @@ function getInitiatorParam (init: Initiator): ASN1Element {
     }
 }
 
+// TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
     return (code
         ? ("global" in code)
@@ -117,6 +118,22 @@ function codeToString (code?: Code): string | undefined {
         : undefined);
 }
 
+/**
+ * @summary Modifies an operational binding, as described in ITU Recommendation X.501.
+ * @description
+ *
+ * This function implements the `modifyOperationalBinding` operation
+ * described in ITU Recommendation X.501 (2016), Section 28.3.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param invokeId The InvokeId of the operation
+ * @param arg The `ModifyOperationalBindingArgument` argument
+ * @returns The `ModifyOperationalBindingResult` result
+ *
+ * @function
+ * @async
+ */
 export
 async function modifyOperationalBinding (
     ctx: Context,

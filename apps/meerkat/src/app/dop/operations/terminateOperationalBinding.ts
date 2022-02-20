@@ -46,6 +46,21 @@ function getDateFromOBTime (time: Time): Date {
     }
 }
 
+/**
+ * @summary Terminates an operational binding, as described in ITU Recommendation X.501.
+ * @description
+ *
+ * This function implements the `terminateOperationalBinding` operation
+ * described in ITU Recommendation X.501 (2016), Section 28.4.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param arg The `TerminateOperationalBindingArgument` argument
+ * @returns The `TerminateOperationalBindingResult` result
+ *
+ * @function
+ * @async
+ */
 export
 async function terminateOperationalBinding (
     ctx: Context,

@@ -44,7 +44,25 @@ import {
 import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import saveAccessPoint from "../../database/saveAccessPoint";
 
-
+/**
+ * @summary Update an update to a local subr DSE given by a subordinate DSA
+ * @description
+ *
+ * This function takes an update given by a subordinate DSA in a hierarchical
+ * operational binding and applies it, thereby updating the local subr DSE if
+ * changes need to be made.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param invokeId The InvokeId of the operation used to establish the
+ *  operational binding
+ * @param oldAgreement The old hierarchical agreement
+ * @param newAgreement The new hierarchical agreement
+ * @param sub2sup The `SubordinateToSuperior` argument
+ *
+ * @function
+ * @async
+ */
 export
 async function updateLocalSubr (
     ctx: Context,

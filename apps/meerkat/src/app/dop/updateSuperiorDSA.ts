@@ -103,6 +103,24 @@ interface UpdateSuperiorOptions extends ConnectOptions, WriteOperationOptions {
     endTime?: Date;
 }
 
+/**
+ * @summary Update a superior DSA of changes made to the context prefix or its subentries, if present.
+ * @description
+ *
+ * This function updates a superior DSA with changes that were made to the
+ * context prefix, or one of its subentries.
+ *
+ * @param ctx The context object
+ * @param affectedDN The distinguished name of the entry whose change warrants
+ *  an update to the hierarchical operational binding
+ * @param newCP The vertex representing the new context prefix
+ * @param aliasDereferenced Whether an alias was dereferenced leading up to this
+ * @param options Options
+ * @returns A result or error
+ *
+ * @function
+ * @async
+ */
 export
 async function updateSuperiorDSA (
     ctx: Context,

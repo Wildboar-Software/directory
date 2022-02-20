@@ -73,12 +73,27 @@ import { strict as assert } from "assert";
  *
  * This is for RECEIVING an update to the CP, not creating one.
  *
- * @param ctx
- * @param oldAgreement
- * @param newAgreement
+ * @param ctx The context object
+ * @param oldAgreement The old hierarchical agreement
  * @param init
  * @param mod
  * @returns
+ */
+
+/**
+ * @summary Apply an update to a context prefix given by a superior DSA
+ * @description
+ *
+ * This function takes an update to a context prefix given by a superior DSA
+ * and applies all of its changes to the local DSEs.
+ *
+ * @param ctx The context object
+ * @param uuid The UUID of the operational binding
+ * @param oldAgreement The old hierarchical agreement
+ * @param mod The update to the context prefix
+ *
+ * @function
+ * @async
  */
 export
 async function updateContextPrefix (

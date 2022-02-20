@@ -19,9 +19,20 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 /**
+ * @summary Update subordinate DSAs when entries that relate to an operational binding are created, modified, or deleted.
+ * @description
+ *
+ * This function updates subordinate DSAs when entries that relate to an
+ * operational binding are created, modified, or deleted.
+ *
  * NOTE: In the future, this function could also be used to modify NHOBs, too.
- * @param ctx
- * @param affectedPrefix
+ *
+ * @param ctx The context object
+ * @param affectedPrefix The distinguished name of the subtree of all entries
+ *  affected by an operation.
+ *
+ * @function
+ * @async
  */
 export
 async function updateAffectedSubordinateDSAs (

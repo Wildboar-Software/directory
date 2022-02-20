@@ -33,6 +33,25 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import saveAccessPoint from "../../database/saveAccessPoint";
 
+/**
+ * @summary Create the necessary DSEs to establish a new context prefix
+ * @description
+ *
+ * This functions makes the local DSA a subordinate within a hierarchical
+ * operational binding. That is, it creates all of the DSEs (or just leaves them
+ * alone if they already exist) from the Root DSE all the way down to the new
+ * context prefix.
+ *
+ * @param ctx The context object
+ * @param superiorAccessPoint The superior DSA's access point
+ * @param agreement The hierarchical agreement
+ * @param sup2sub The `SuperiorToSubordinate` argument of the HOB
+ * @returns A `SubordinateToSuperior` that can be returned to the superior DSA
+ *  in a Directory Operational Binding Management Protocol (DOP) result
+ *
+ * @function
+ * @async
+ */
 export
 async function becomeSubordinate (
     ctx: Context,

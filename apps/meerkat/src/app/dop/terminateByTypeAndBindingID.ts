@@ -34,6 +34,23 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
+/**
+ * @summary Notifies another DSA about a termination of an operational binding.
+ * @description
+ *
+ * This function notifies another DSA about a termination of an operational
+ * binding.
+ *
+ * @param ctx The context object
+ * @param targetSystem The access point of the other affected DSA
+ * @param bindingType The object identifier of the binding type
+ * @param bindingID The operational binding ID
+ * @param aliasDereferenced Whether an alias was dereferenced in the operation leading up to this
+ * @returns A result or error
+ *
+ * @function
+ * @async
+ */
 export
 async function terminateByTypeAndBindingID (
     ctx: Context,

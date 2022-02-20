@@ -28,6 +28,16 @@ import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/Passw
 import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
 import { aliasedEntryName } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
 
+/**
+ * @summary Selects attributes of a subentry that are to be shared in a hierarchical operational binding
+ * @description
+ *
+ * This selection selects attributes of a subentry that are to be
+ * shared between DSAs that are mutually part of a hierarchical operational
+ * binding.
+ *
+ * @constant
+ */
 export
 const subentryEIS = new EntryInformationSelection(
     {

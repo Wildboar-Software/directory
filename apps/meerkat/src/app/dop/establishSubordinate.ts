@@ -175,6 +175,27 @@ interface EstablishSubordinateOptions extends ConnectOptions, WriteOperationOpti
     endTime?: Date;
 }
 
+/**
+ * @summary Make an outbound DOP request to establish another DSA as a subordinate DSA in a HOB.
+ * @description
+ *
+ * This function produces an outbound Directory Operational Binding Management
+ * Protocol (DOP) request to another DSA that may then agree, and thereby become
+ * a subordinate DSA in a hierarchical operational binding.
+ *
+ * @param ctx The context object
+ * @param immediateSuperior The immediate superior vertex
+ * @param immediateSuperiorInfo Attributes of the immediate superior to disclose to the subordinate DSA
+ * @param newEntryRDN The newly created context prefix's relative distinguished name (RDN)
+ * @param newEntryInfo The attributes of the newly created context prefix
+ * @param targetSystem The access point of the potential subordinate DSA
+ * @param aliasDereferenced Whether an alias was dereferenced in the operation leading up to this
+ * @param options Options
+ * @returns A result or an error
+ *
+ * @function
+ * @async
+ */
 export
 async function establishSubordinate (
     ctx: Context,

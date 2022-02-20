@@ -89,6 +89,7 @@ function getDateFromOBTime (time: Time): Date {
     }
 }
 
+// TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
     return (code
         ? ("global" in code)
@@ -99,6 +100,22 @@ function codeToString (code?: Code): string | undefined {
         : undefined);
 }
 
+/**
+ * @summary Establishes an operational binding, as described in ITU Recommendation X.501.
+ * @description
+ *
+ * This function implements the `establishOperationalBinding` operation
+ * described in ITU Recommendation X.501 (2016), Section 28.2.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param invokeId The InvokeId of the operation
+ * @param arg The `EstablishOperationalBindingArgument` argument
+ * @returns The `EstablishOperationalBindingResult` result
+ *
+ * @function
+ * @async
+ */
 export
 async function establishOperationalBinding (
     ctx: Context,
