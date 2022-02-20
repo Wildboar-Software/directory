@@ -8,11 +8,17 @@ import type {
 import { BERElement } from "asn1-ts";
 
 /**
+ * @summary Produce a `PkiPath` from a PEM-encoded X.509 certificate chain.
+ * @description
+ *
  * In a `PkiPath`, the certificates are ordered by descending authority, but in
  * a PEM chain, they are ordered by ascending authority.
  *
- * @param data
- * @returns
+ * @param data The file contents, which must contain at least one PEM-encoded
+ *  X.509 certificate.
+ * @returns A `PkiPath` (A sequence of `Certificate`)
+ *
+ * @function
  */
 export
 function decodePkiPathFromPEM (data: string): PkiPath {

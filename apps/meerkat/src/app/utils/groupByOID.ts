@@ -1,6 +1,22 @@
 import type { IndexableOID } from "@wildboar/meerkat-types";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 
+/**
+ * @summary Group items by object identifier
+ * @description
+ *
+ * This function takes an array of any kind of object and groups them by their
+ * object identifier into an object whose keys are dot-delimited string
+ * representations of the object identifier, and whose values are arrays of
+ * values having a common object identifier.
+ *
+ * @param items The items to be grouped.
+ * @param oidGetter A function that takes one item and returns its object
+ *  identifier
+ * @returns A dictionary of items by common object identifier.
+ *
+ * @function
+ */
 export
 function groupByOID <T>(
     items: T[],

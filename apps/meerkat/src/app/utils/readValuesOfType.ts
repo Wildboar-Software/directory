@@ -8,6 +8,20 @@ import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 
+/**
+ * @summary Read all values of a given type from a DSE
+ * @description
+ *
+ * This function reads all values of a given attribute type from a DSE.
+ *
+ * @param ctx The context object
+ * @param vertex The DSE whose values are to be read
+ * @param type_ The attribute type whose values are to be read
+ * @returns An array of values of the specified attribute type
+ *
+ * @function
+ * @async
+ */
 async function readValuesOfType (
     ctx: Context,
     vertex: Vertex,
@@ -36,6 +50,8 @@ async function readValuesOfType (
         operationalValues: operationalAttributes,
     } = await readValues(ctx, vertex, {
         selection: eis,
+        dontSelectFriends: true,
+        noSubtypeSelection: true,
     });
     return [
         ...userAttributes,
