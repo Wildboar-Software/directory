@@ -307,20 +307,80 @@ async function handleRequestAndErrors (
     }
 }
 
+/**
+ * @summary A Lightweight Directory Access Protocol (LDAP) association.
+ * @description
+ *
+ * A Lightweight Directory Access Protocol (LDAP) association.
+ *
+ * @kind class
+ */
 export
 class LDAPAssociation extends ClientAssociation {
 
+    /**
+     * @summary The association status
+     * @description
+     *
+     * The association status
+     *
+     * @public
+     * @property
+     */
     public status: Status = Status.UNBOUND;
+
+    /**
+     * @summary The internal buffer of received and unprocessed data
+     * @description
+     *
+     * The internal buffer of received and unprocessed data
+     *
+     * @public
+     * @property
+     */
     private buffer: Buffer = Buffer.alloc(0);
+
+    /**
+     * @summary The bound vertex
+     * @description
+     *
+     * The bound vertex. This value not being `undefined` does not imply that
+     * the user has authenticated successfully.
+     *
+     * @public
+     * @property
+     */
     public boundEntry: Vertex | undefined;
 
-    // Not used.
+    /**
+     * @summary Attempt a bind
+     * @description
+     *
+     * Not implemented for `LDAPAssociation`.
+     *
+     * @public
+     * @function
+     * @async
+     */
     public async attemptBind (): Promise<void> {
         return;
     }
 
-    // I _think_ this function MUST NOT be async, or this function could run
-    // multiple times out-of-sync, mutating `this.buffer` indeterminately.
+    /**
+     * @summary Handle a raw chunk of data from the TCP or TLS socket
+     * @description
+     *
+     * Handle a raw chunk of data from the TCP or TLS socket.
+     *
+     * I _think_ this function MUST NOT be `async`, or this function could run
+     * multiple times out-of-sync, mutating `this.buffer` indeterminately.
+     *
+     * @param ctx The context object
+     * @param data The new chunk of data to process
+     *
+     * @private
+     * @function
+     */
     private handleData (ctx: Context, data: Buffer): void {
         const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
         // #region Pre-flight check if the message will fit in the buffer, if possible.
@@ -727,6 +787,12 @@ class LDAPAssociation extends ClientAssociation {
         }
     }
 
+    /**
+     * @constructor
+     * @param ctx The context object
+     * @param tcp The underlying TCP socket
+     * @param starttlsOptions TLS options
+     */
     constructor (
         readonly ctx: Context,
         readonly tcp: net.Socket,

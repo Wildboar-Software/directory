@@ -1,7 +1,6 @@
 import {
     Context,
     ClientAssociation,
-    PagedResultsRequestState,
     OperationStatistics,
     OperationInvocationInfo,
     MistypedPDUError,
@@ -83,6 +82,20 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
 import { strict as assert } from "assert";
 
+/**
+ * @summary The handles a request, but not errors
+ * @description
+ *
+ * This function handles a request, but allows the errors to be thrown.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param request The request
+ * @param stats The statistics object
+ *
+ * @function
+ * @async
+ */
 async function handleRequest (
     ctx: Context,
     assn: DAPAssociation, // eslint-disable-line
@@ -109,6 +122,19 @@ async function handleRequest (
     assn.idm.writeResult(request.invokeID, result.opCode, unprotectedResult.result);
 }
 
+/**
+ * @summary Process a request
+ * @description
+ *
+ * Handles a request as well as any errors that might be thrown in the process.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param request The request
+ *
+ * @function
+ * @async
+ */
 async function handleRequestAndErrors (
     ctx: Context,
     assn: DAPAssociation, // eslint-disable-line
@@ -305,9 +331,16 @@ async function handleRequestAndErrors (
     }
 }
 
+/**
+ * @summary A Directory Access Protocol (DAP) association.
+ * @description
+ *
+ * A Directory Access Protocol (DAP) association.
+ *
+ * @kind class
+ */
 export default
 class DAPAssociation extends ClientAssociation {
-    public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map([]);
 
     /**
      * This exists because ITU Recommendation X.519 states that requests may
@@ -318,6 +351,17 @@ class DAPAssociation extends ClientAssociation {
      */
     public readonly prebindRequests: Request[] = [];
 
+    /**
+     * @summary Attempt a bind
+     * @description
+     *
+     * Attempt a bind
+     *
+     * @param arg The encoded bind argument
+     * @public
+     * @function
+     * @async
+     */
     public async attemptBind (arg: ASN1Element): Promise<void> {
         await sleep(1000);
         const arg_ = _decode_DirectoryBindArgument(arg);
@@ -395,10 +439,33 @@ class DAPAssociation extends ClientAssociation {
         }
     }
 
+    /**
+     * @summary Handle a request
+     * @description
+     *
+     * Handle a request
+     *
+     * @param request The request
+     * @private
+     * @function
+     */
     private handleRequest (request: Request): void {
         handleRequestAndErrors(this.ctx, this, request).catch();
     }
 
+    /**
+     * @summary Handle the unbind notification
+     * @description
+     *
+     * This function handles the unbind notification from a client.
+     *
+     * This implementation wipes out enqueued search and list results saved in
+     * the database.
+     *
+     * @private
+     * @function
+     * @async
+     */
     private async handleUnbind (): Promise<void> {
         if (this.idm.remoteStatus !== IDMStatus.BOUND) {
             return; // We don't want users to be able to spam unbinds.
@@ -425,6 +492,11 @@ class DAPAssociation extends ClientAssociation {
         });
     }
 
+    /**
+     * @constructor
+     * @param ctx The context object
+     * @param idm The underlying IDM transport socket
+     */
     constructor (
         readonly ctx: Context,
         readonly idm: IDMConnection,

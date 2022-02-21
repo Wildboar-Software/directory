@@ -72,6 +72,20 @@ import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 
+/**
+ * @summary The handles a request, but not errors
+ * @description
+ *
+ * This function handles a request, but allows the errors to be thrown.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param request The request
+ * @param stats The statistics object
+ *
+ * @function
+ * @async
+ */
 async function handleRequest (
     ctx: Context,
     assn: DSPAssociation, // eslint-disable-line
@@ -98,6 +112,19 @@ async function handleRequest (
     assn.idm.writeResult(request.invokeID, result.opCode, encodedResult);
 }
 
+/**
+ * @summary Process a request
+ * @description
+ *
+ * Handles a request as well as any errors that might be thrown in the process.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param request The request
+ *
+ * @function
+ * @async
+ */
 async function handleRequestAndErrors (
     ctx: Context,
     assn: DSPAssociation, // eslint-disable-line
@@ -274,6 +301,14 @@ async function handleRequestAndErrors (
     }
 }
 
+/**
+ * @summary A Directory System Protocol (DSP) association.
+ * @description
+ *
+ * A Directory SystemProtocol (DSP) association.
+ *
+ * @kind class
+ */
 export default
 class DSPAssociation extends ClientAssociation {
 
@@ -286,6 +321,17 @@ class DSPAssociation extends ClientAssociation {
      */
     public readonly prebindRequests: Request[] = [];
 
+    /**
+     * @summary Attempt a bind
+     * @description
+     *
+     * Attempt a bind
+     *
+     * @param arg The encoded bind argument
+     * @public
+     * @function
+     * @async
+     */
     public async attemptBind (arg: ASN1Element): Promise<void> {
         const arg_ = _decode_DSABindArgument(arg);
         const ctx = this.ctx;
@@ -361,10 +407,33 @@ class DSPAssociation extends ClientAssociation {
         }
     }
 
-    private async handleRequest (request: Request): Promise<void> {
-        await handleRequestAndErrors(this.ctx, this, request);
+    /**
+     * @summary Handle a request
+     * @description
+     *
+     * Handle a request
+     *
+     * @param request The request
+     * @private
+     * @function
+     */
+    private handleRequest (request: Request): void {
+        handleRequestAndErrors(this.ctx, this, request);
     }
 
+    /**
+     * @summary Handle the unbind notification
+     * @description
+     *
+     * This function handles the unbind notification from a client.
+     *
+     * This implementation wipes out enqueued search and list results saved in
+     * the database.
+     *
+     * @private
+     * @function
+     * @async
+     */
     private async handleUnbind (): Promise<void> {
         if (this.idm.remoteStatus !== IDMStatus.BOUND) {
             return; // We don't want users to be able to spam unbinds.
@@ -391,6 +460,11 @@ class DSPAssociation extends ClientAssociation {
         });
     }
 
+    /**
+     * @constructor
+     * @param ctx The context object
+     * @param idm The underlying IDM transport socket
+     */
     constructor (
         readonly ctx: Context,
         readonly idm: IDMConnection,

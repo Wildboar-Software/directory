@@ -106,6 +106,19 @@ import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 
+/**
+ * @summary The handles a request, but not errors
+ * @description
+ *
+ * This function handles a request, but allows the errors to be thrown.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param request The request
+ *
+ * @function
+ * @async
+ */
 async function handleRequest (
     ctx: Context,
     assn: DOPAssociation, // eslint-disable-line
@@ -153,6 +166,19 @@ async function handleRequest (
     }
 }
 
+/**
+ * @summary Process a request
+ * @description
+ *
+ * Handles a request as well as any errors that might be thrown in the process.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param request The request
+ *
+ * @function
+ * @async
+ */
 async function handleRequestAndErrors (
     ctx: Context,
     assn: DOPAssociation, // eslint-disable-line
@@ -319,7 +345,14 @@ async function handleRequestAndErrors (
     }
 }
 
-
+/**
+ * @summary A Directory Operational Binding Management Protocol (DOP) association.
+ * @description
+ *
+ * A Directory Operational Binding Management Protocol (DOP) association.
+ *
+ * @kind class
+ */
 export default
 class DOPAssociation extends ClientAssociation {
 
@@ -333,6 +366,17 @@ class DOPAssociation extends ClientAssociation {
     public readonly prebindRequests: Request[] = [];
     public bind: DSABindArgument | undefined;
 
+    /**
+     * @summary Attempt a bind
+     * @description
+     *
+     * Attempt a bind
+     *
+     * @param arg The encoded bind argument
+     * @public
+     * @function
+     * @async
+     */
     public async attemptBind (arg: ASN1Element): Promise<void> {
         const arg_ = _decode_DSABindArgument(arg);
         const ctx = this.ctx;
@@ -409,10 +453,30 @@ class DOPAssociation extends ClientAssociation {
         }
     }
 
-    private async handleRequest (request: Request): Promise<void> {
-        await handleRequestAndErrors(this.ctx, this, request);
+    /**
+     * @summary Handle a request
+     * @description
+     *
+     * Handle a request
+     *
+     * @param request The request
+     * @private
+     * @function
+     */
+    private handleRequest (request: Request): void {
+        handleRequestAndErrors(this.ctx, this, request); // INTENTIONAL_NO_AWAIT
     }
 
+    /**
+     * @summary Handle the unbind notification
+     * @description
+     *
+     * This function handles the unbind notification from a client.
+     *
+     * @private
+     * @function
+     * @async
+     */
     private async handleUnbind (): Promise<void> {
         if (this.idm.remoteStatus !== IDMStatus.BOUND) {
             return; // We don't want users to be able to spam unbinds.
@@ -429,6 +493,11 @@ class DOPAssociation extends ClientAssociation {
         });
     }
 
+    /**
+     * @constructor
+     * @param ctx The context object
+     * @param idm The underlying IDM transport socket
+     */
     constructor (
         readonly ctx: Context,
         readonly idm: IDMConnection,
