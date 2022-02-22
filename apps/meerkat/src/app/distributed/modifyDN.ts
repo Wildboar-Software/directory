@@ -1301,8 +1301,35 @@ async function modifyDN (
                 ];
             }),
     );
+    const attributesInRDN: Set<IndexableOID> = new Set();
     for (const atav of newRDN) {
         const TYPE_OID: string = atav.type_.toString();
+        if (attributesInRDN.has(TYPE_OID)) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_types_duplicated", {
+                    oids: Array.from(attributesInRDN.values()).join(", "),
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_namingViolation,
+                    [
+                        {
+                            attributeType: atav.type_,
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        attributesInRDN.add(TYPE_OID);
         // NOTE: This will not respect the extensibleObject OC if it was added through the RDN.
         if (!attributeTypesPermittedByObjectClasses.has(TYPE_OID) && !isExtensible) {
             throw new errors.UpdateError(

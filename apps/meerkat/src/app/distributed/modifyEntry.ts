@@ -1722,6 +1722,36 @@ async function executeEntryModification (
     }
     else if ("resetValue" in mod) {
         check(mod.resetValue, true);
+        const contextRule = contextRuleIndex.get(mod.resetValue.toString())
+            ?? contextRuleIndex.get(ALL_ATTRIBUTE_TYPES);;
+        if (contextRule?.information.mandatoryContexts?.length) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:cannot_reset_mandatory_contexts", {
+                    oid: mod.resetValue.toString(),
+                }),
+                new AttributeErrorData(
+                    {
+                        rdnSequence: targetDN,
+                    },
+                    [
+                        new AttributeErrorData_problems_Item(
+                            AttributeProblem_contextViolation,
+                            mod.resetValue,
+                        ),
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         return executeResetValue(mod.resetValue, ...commonArguments);
     }
     else if ("replaceValues" in mod) {

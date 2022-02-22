@@ -221,6 +221,41 @@ async function search_ii (
                     ),
                 );
             }
+            if (nr.sortKeys?.length) {
+                const uniqueSortKeys = new Set(nr.sortKeys.map((sk) => sk.type_.toString()));
+                if (uniqueSortKeys.size < nr.sortKeys.length) {
+                    throw new errors.ServiceError(
+                        ctx.i18n.t("err:duplicate_sort_key", {
+                            ps: nr.pageSize,
+                        }),
+                        new ServiceErrorData(
+                            ServiceProblem_unwillingToPerform,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_errcode_serviceError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+                if (nr.sortKeys.length > 3) {
+                    ctx.log.warn(ctx.i18n.t("log:too_many_sort_keys", {
+                        aid: assn.id,
+                        num: nr.sortKeys.length,
+                    }), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                    });
+                    nr.sortKeys.length = 3;
+                }
+            }
             const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             const newPagingState: PagedResultsRequestState = {
                 cursorIds: [],
