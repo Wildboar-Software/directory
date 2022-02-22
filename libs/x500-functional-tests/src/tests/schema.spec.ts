@@ -406,6 +406,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 import {
     AttributeProblem_noSuchAttributeOrValue,
+    AttributeProblem_contextViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
     dITStructureRules,
@@ -1867,10 +1868,13 @@ describe("Meerkat DSA", () => {
             assert("error" in response);
             assert(response.error);
             assert(response.errcode);
-            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
-            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            expect(compareCode(response.errcode, attributeError["&errorCode"]!)).toBeTruthy();
+            const param = attributeError.decoderFor["&ParameterType"]!(response.error);
             const data = getOptionallyProtectedValue(param);
-            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+            expect(data.problems).toHaveLength(1);
+            const problem = data.problems[0];
+            expect(problem.problem).toBe(AttributeProblem_contextViolation);
+            expect(problem.type_.toString()).toBe(description["&id"].toString());
         }
 
         // Create person with description without mandatory context
@@ -1922,10 +1926,13 @@ describe("Meerkat DSA", () => {
             assert("error" in response);
             assert(response.error);
             assert(response.errcode);
-            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
-            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            expect(compareCode(response.errcode, attributeError["&errorCode"]!)).toBeTruthy();
+            const param = attributeError.decoderFor["&ParameterType"]!(response.error);
             const data = getOptionallyProtectedValue(param);
-            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+            expect(data.problems).toHaveLength(1);
+            const problem = data.problems[0];
+            expect(problem.problem).toBe(AttributeProblem_contextViolation);
+            expect(problem.type_.toString()).toBe(description["&id"].toString());
         }
 
         // Create person with description that complies
@@ -1981,6 +1988,7 @@ describe("Meerkat DSA", () => {
                                                 uTF8String: "en-US",
                                             },
                                         }, DER)],
+                                        undefined,
                                     ),
                                 ],
                             ),
@@ -2050,10 +2058,13 @@ describe("Meerkat DSA", () => {
             assert("error" in response);
             assert(response.error);
             assert(response.errcode);
-            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
-            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            expect(compareCode(response.errcode, attributeError["&errorCode"]!)).toBeTruthy();
+            const param = attributeError.decoderFor["&ParameterType"]!(response.error);
             const data = getOptionallyProtectedValue(param);
-            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+            expect(data.problems).toHaveLength(1);
+            const problem = data.problems[0];
+            expect(problem.problem).toBe(AttributeProblem_contextViolation);
+            expect(problem.type_.toString()).toBe(description["&id"].toString());
         }
 
         // Add description without mandatory context
@@ -2084,10 +2095,13 @@ describe("Meerkat DSA", () => {
             assert("error" in response);
             assert(response.error);
             assert(response.errcode);
-            expect(compareCode(response.errcode, updateError["&errorCode"]!)).toBeTruthy();
-            const param = updateError.decoderFor["&ParameterType"]!(response.error);
+            expect(compareCode(response.errcode, attributeError["&errorCode"]!)).toBeTruthy();
+            const param = attributeError.decoderFor["&ParameterType"]!(response.error);
             const data = getOptionallyProtectedValue(param);
-            expect(data.problem).toBe(UpdateProblem_objectClassViolation);
+            expect(data.problems).toHaveLength(1);
+            const problem = data.problems[0];
+            expect(problem.problem).toBe(AttributeProblem_contextViolation);
+            expect(problem.type_.toString()).toBe(description["&id"].toString());
         }
 
         // Add description that complies
@@ -2138,5 +2152,10 @@ describe("Meerkat DSA", () => {
     it.todo("Ignores obsolete DIT content rules");
     it.todo("Ignores obsolete DIT context use rules");
     it.todo("Ignores obsolete friendships");
+    it.todo("Observes subschema friendships"); // This is implicitly tested elsewhere, but good to double-check
+    it.todo("Does not enforce DIT structure rules on subentries");
+    it.todo("Enforces name forms"); // This is already implicitly tested, but good to double-check
+    it.todo("Does not loop infinitely if a DIT structure rule references itself as a superior");
+    it.todo("Enforces DIT matching rule use"); // Meerkat DSA will definitely fail this, but just keeping this in view.
 
 });

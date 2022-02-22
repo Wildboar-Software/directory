@@ -1906,6 +1906,7 @@ async function modifyEntry (
             ));
         contentRule?.mandatory?.forEach((ma) => requiredAttributes.add(ma.toString()));
         contentRule?.precluded?.forEach((pa) => precludedAttributes.add(pa.toString()));
+        contentRule?.auxiliaries?.forEach((aux) => permittedAuxiliaries.add(aux.toString()));
         const contextUseRules = (subschemaSubentry.dse.subentry?.ditContextUse ?? [])
             .filter((rule) => !rule.obsolete);
         contextUseRules.forEach((rule) => contextRulesIndex.set(rule.identifier.toString(), rule));
@@ -2409,7 +2410,7 @@ async function modifyEntry (
         }
     }
     const addsExtensibleObjectClass: boolean = addedObjectClasses
-        .some((oc) => oc.isEqualTo(extensibleObject["&id"]));
+        .some((oc) => oc.isEqualTo(extensibleObject));
     if (!ctx.config.bulkInsertMode && !isExtensible && !addsExtensibleObjectClass) { // Check optional attributes
         const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
         for (const type_ of Array.from(patch.addedValues.keys())) {

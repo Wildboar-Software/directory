@@ -302,7 +302,7 @@ export class DitController {
             : undefined;
         const superiorUUID: string | undefined = superior?.dseUUID;
         const rdn: RelativeDistinguishedName = await getRDNFromEntryId(this.ctx, entry.id);
-        const vertex = await vertexFromDatabaseEntry(this.ctx, undefined, entry, true);
+        const vertex = await vertexFromDatabaseEntry(this.ctx, undefined, entry);
         const {
             userValues: userAttributes,
             operationalValues: operationalAttributes,
