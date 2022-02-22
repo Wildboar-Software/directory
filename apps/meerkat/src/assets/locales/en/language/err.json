@@ -29,6 +29,7 @@
     "dit_content_rule_missing_mandatory_attributes": "Missing the following mandatory attributes, which are required by the relevant DIT content rules for structural object class {{soc}}: {{oids}}.",
     "aux_oc_forbidden_because_no_dit_content_rules": "Auxiliary object classes {{oids}} are forbidden entirely, because there are no relevant DIT content rules defined for structural object class {{soc}}.",
     "no_contexts_permitted": "No contexts are permitted for attribute type {{oid}} due to an absence of DIT context use rules.",
+    "cannot_reset_mandatory_contexts": "Cannot reset values for attribute type {{oid}} because contexts are made mandatory per relevant DIT context use rules.",
     "context_type_prohibited_by_context_use_rule": "Context type {{ct}} prohibited by DIT context use rule for attribute type {{at}}.",
     "missing_required_context_types": "Missing the following context types that are required by context use rule for attribute type {{attr}}: {{oids}}.",
     "abandoned": "Abandoned.",
@@ -149,5 +150,7 @@
     "no_gsr": "Cannot insert beneath DSE {{uuid}}, which has no governing structure rule. Configure a subschema administrative area first.",
     "no_gsr@hint": "To create a subschema administrative area, you must make the superior under which you wanted to insert an entry an administrative point, having the administrative role id-ar-subschemaAdminSpecificArea (2.5.23.4), then create a subschema subentry underneath it that has a dITStructureRules attribute with a value whose superiorStructureRules is omitted (and therefore applies to the administrative point).",
     "name_form_invalid@subentry": "Subentries must have only one value in their relative distinguished name of attribute type commonName (2.5.4.3).",
-    "cannot_move_dse_below_itself": "Cannot move an object below itself."
+    "cannot_move_dse_below_itself": "Cannot move an object below itself.",
+    "duplicate_sort_key": "Duplicate sort key {{oid}}.",
+    "not_authz_delete_old_rdn": "Not authorized to delete the old RDN."
 }

@@ -45,6 +45,7 @@ import bacACDF, {
     PERMISSION_CATEGORY_RENAME,
     PERMISSION_CATEGORY_EXPORT,
     PERMISSION_CATEGORY_IMPORT,
+    PERMISSION_CATEGORY_REMOVE,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
 import getIsGroupMember from "../authz/getIsGroupMember";
@@ -1301,8 +1302,35 @@ async function modifyDN (
                 ];
             }),
     );
+    const attributesInRDN: Set<IndexableOID> = new Set();
     for (const atav of newRDN) {
         const TYPE_OID: string = atav.type_.toString();
+        if (attributesInRDN.has(TYPE_OID)) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:rdn_types_duplicated", {
+                    oids: Array.from(attributesInRDN.values()).join(", "),
+                }),
+                new UpdateErrorData(
+                    UpdateProblem_namingViolation,
+                    [
+                        {
+                            attributeType: atav.type_,
+                        },
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        attributesInRDN.add(TYPE_OID);
         // NOTE: This will not respect the extensibleObject OC if it was added through the RDN.
         if (!attributeTypesPermittedByObjectClasses.has(TYPE_OID) && !isExtensible) {
             throw new errors.UpdateError(
@@ -1506,8 +1534,43 @@ async function modifyDN (
     }
 
     const typesInNewRDN: Set<IndexableOID> = new Set(newRDN.map((atav) => atav.type_.toString()));
-    if (data.deleteOldRDN) { // Make sure that mandatory attributes are not deleted.
+    // Make sure that mandatory attributes are not deleted and that user has permission to delete.
+    if (data.deleteOldRDN) {
         for (const atav of oldRDN) {
+            if (
+                !ctx.config.bulkInsertMode
+                && accessControlScheme
+                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+            ) {
+                const { authorized: authorizedToRemoveOldRDNValue } = bacACDF(
+                    relevantTuples,
+                    user,
+                    { value: atav },
+                    [ PERMISSION_CATEGORY_REMOVE ],
+                    bacSettings,
+                    true,
+                );
+                if (!authorizedToRemoveOldRDNValue) {
+                    throw new errors.SecurityError(
+                        ctx.i18n.t("err:not_authz_delete_old_rdn"),
+                        new SecurityErrorData(
+                            SecurityProblem_insufficientAccessRights,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                securityError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+            }
             const TYPE_OID: string = atav.type_.toString();
             if (
                 !attributeTypesRequired.has(TYPE_OID)

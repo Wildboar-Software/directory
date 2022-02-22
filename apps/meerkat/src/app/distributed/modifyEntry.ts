@@ -1722,6 +1722,36 @@ async function executeEntryModification (
     }
     else if ("resetValue" in mod) {
         check(mod.resetValue, true);
+        const contextRule = contextRuleIndex.get(mod.resetValue.toString())
+            ?? contextRuleIndex.get(ALL_ATTRIBUTE_TYPES);;
+        if (contextRule?.information.mandatoryContexts?.length) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:cannot_reset_mandatory_contexts", {
+                    oid: mod.resetValue.toString(),
+                }),
+                new AttributeErrorData(
+                    {
+                        rdnSequence: targetDN,
+                    },
+                    [
+                        new AttributeErrorData_problems_Item(
+                            AttributeProblem_contextViolation,
+                            mod.resetValue,
+                        ),
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
         return executeResetValue(mod.resetValue, ...commonArguments);
     }
     else if ("replaceValues" in mod) {
@@ -1906,6 +1936,7 @@ async function modifyEntry (
             ));
         contentRule?.mandatory?.forEach((ma) => requiredAttributes.add(ma.toString()));
         contentRule?.precluded?.forEach((pa) => precludedAttributes.add(pa.toString()));
+        contentRule?.auxiliaries?.forEach((aux) => permittedAuxiliaries.add(aux.toString()));
         const contextUseRules = (subschemaSubentry.dse.subentry?.ditContextUse ?? [])
             .filter((rule) => !rule.obsolete);
         contextUseRules.forEach((rule) => contextRulesIndex.set(rule.identifier.toString(), rule));
@@ -2409,7 +2440,7 @@ async function modifyEntry (
         }
     }
     const addsExtensibleObjectClass: boolean = addedObjectClasses
-        .some((oc) => oc.isEqualTo(extensibleObject["&id"]));
+        .some((oc) => oc.isEqualTo(extensibleObject));
     if (!ctx.config.bulkInsertMode && !isExtensible && !addsExtensibleObjectClass) { // Check optional attributes
         const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
         for (const type_ of Array.from(patch.addedValues.keys())) {

@@ -532,7 +532,8 @@ function writeOperation(
     argument: ASN1Element,
 ): Promise<ResultOrError> {
     const invokeID = crypto.randomInt(1_000_000);
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+        connection.events.on("abort", reject);
         connection.events.on(invokeID.toString(), (roe: ResultOrError) => {
             if ("error" in roe) {
                 resolve(roe);
@@ -1037,8 +1038,55 @@ describe("Meerkat DSA", () => {
 
     });
 
-    it.skip("An error is thrown when an added entry's RDN has duplicated attribute types (not values)", async () => {
-
+    it("An error is thrown when an added entry's RDN has duplicated attribute types (not values)", async () => {
+        const entryName1: string = "asdf1";
+        const entryName2: string = "asdf2";
+        const reqData: AddEntryArgumentData = new AddEntryArgumentData(
+            {
+                rdnSequence: [
+                    [
+                        new AttributeTypeAndValue(
+                            commonName["&id"],
+                            utf8(entryName1),
+                        ),
+                        new AttributeTypeAndValue(
+                            commonName["&id"],
+                            utf8(entryName2),
+                        ),
+                    ],
+                ],
+            },
+            [
+                new Attribute(
+                    administrativeRole["&id"],
+                    [oid(id_ar_autonomousArea)],
+                    undefined,
+                ),
+                new Attribute(
+                    objectClass["&id"],
+                    [oid(applicationProcess["&id"])],
+                    undefined,
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [
+                        utf8(entryName1),
+                        utf8(entryName2),
+                    ],
+                    undefined,
+                ),
+            ],
+        );
+        const arg: AddEntryArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            addEntry["&operationCode"]!,
+            _encode_AddEntryArgument(arg, DER),
+        );
+        assert("errcode" in response);
+        assert(response.errcode);
     });
 
     it.skip("An error is thrown when an added entry's RDN has an unrecognized attribute type", async () => {
@@ -1103,6 +1151,44 @@ describe("Meerkat DSA", () => {
 
     it.skip("An error is thrown when a renamed entry already exists within an NSSR", async () => {
 
+    });
+
+    it("An error is thrown when an renamed entry's RDN has duplicated attribute types (not values)", async () => {
+        const testId = `errors.renamed.duplicate-attr-in-rdn-${(new Date()).toISOString()}`;
+        const otherName: string = "othername";
+        const dn = createTestRootDN(testId);
+        { // Setup
+            await createTestRootNode(connection!, testId, [
+                new Attribute(
+                    commonName["&id"],
+                    [utf8(otherName)],
+                    undefined,
+                ),
+            ]);
+        }
+        const reqData: ModifyDNArgumentData = new ModifyDNArgumentData(
+            dn,
+            [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(testId),
+                ),
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    utf8(otherName),
+                ),
+            ],
+        );
+        const arg: ModifyDNArgument = {
+            unsigned: reqData,
+        };
+        const response = await writeOperation(
+            connection!,
+            modifyDN["&operationCode"]!,
+            _encode_ModifyDNArgument(arg, DER),
+        );
+        assert("errcode" in response);
+        assert(response.errcode);
     });
 
     it.skip("An error is thrown if there is an unmet critical extension (See check suitability procedure)", async () => {
@@ -1410,5 +1496,9 @@ describe("Meerkat DSA", () => {
     it.todo("throws an error when an RDN is created using more than one value of the same attribute type");
 
     it.todo("throws an error when a multi-valued RDN is created with duplicate values");
+
+    it.todo("throws an error when a modifyEntry resetValue is used when DIT context rules make contexts mandatory");
+
+    it.todo("throws an error when duplicate sort keys are used");
 
 });

@@ -23,7 +23,7 @@ import {
 import {
     HierarchySelections_self,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
-import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier, BOOLEAN, FALSE } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier, BOOLEAN } from "asn1-ts";
 import readSubordinates from "../dit/readSubordinates";
 import {
     ChainingArguments,
@@ -835,6 +835,32 @@ async function search_i (
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
+    const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
+        .reverse()
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    const targetACI = getACIItems(accessControlScheme, target, relevantSubentries);
+    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
+    const user = state.chainingArguments.originator
+        ? new NameAndOptionalUID(
+            state.chainingArguments.originator,
+            state.chainingArguments.uniqueIdentifier,
+        )
+        : undefined;
+    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+        accessControlScheme,
+        acdfTuples,
+        user,
+        state.chainingArguments.authenticationLevel ?? assn.authLevel,
+        targetDN,
+        isMemberOfGroup,
+        NAMING_MATCHER,
+    );
     let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
     if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
         const chainingProhibited = (
@@ -907,6 +933,41 @@ async function search_i (
                         undefined,
                     ),
                 );
+            }
+            if (nr.sortKeys?.length) {
+                const uniqueSortKeys = new Set(nr.sortKeys.map((sk) => sk.type_.toString()));
+                if (uniqueSortKeys.size < nr.sortKeys.length) {
+                    throw new errors.ServiceError(
+                        ctx.i18n.t("err:duplicate_sort_key", {
+                            ps: nr.pageSize,
+                        }),
+                        new ServiceErrorData(
+                            ServiceProblem_unwillingToPerform,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_errcode_serviceError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                    );
+                }
+                if (nr.sortKeys.length > 3) {
+                    ctx.log.warn(ctx.i18n.t("log:too_many_sort_keys", {
+                        aid: assn.id,
+                        num: nr.sortKeys.length,
+                    }), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                    });
+                    nr.sortKeys.length = 3;
+                }
             }
             const queryReference: string = crypto.randomBytes(BYTES_IN_A_UUID).toString("base64");
             const newPagingState: PagedResultsRequestState = {
@@ -1011,37 +1072,9 @@ async function search_i (
         );
         return;
     }
-    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
-    const relevantSubentries: Vertex[] = (await Promise.all(
-        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
-    )).flat();
-    const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
-        .reverse()
-        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const targetACI = getACIItems(accessControlScheme, target, relevantSubentries);
-    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
-        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const user = state.chainingArguments.originator
-        ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
-            state.chainingArguments.uniqueIdentifier,
-        )
-        : undefined;
-    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
-        accessControlScheme,
-        acdfTuples,
-        user,
-        state.chainingArguments.authenticationLevel ?? assn.authLevel,
-        targetDN,
-        isMemberOfGroup,
-        NAMING_MATCHER,
-    );
     const onBaseObjectIteration: boolean = (targetDN.length === data.baseObject.rdnSequence.length);
     const authorized = (permissions: number[]) => {
-        const {
-            authorized,
-        } = bacACDF(
+        const { authorized } = bacACDF(
             relevantTuples,
             user,
             {

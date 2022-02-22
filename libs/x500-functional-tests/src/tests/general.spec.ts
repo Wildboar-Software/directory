@@ -2541,13 +2541,16 @@ describe("Meerkat DSA", () => {
     });
 
     it("Search.searchControlOptions.searchFamily", async () => {
-        const testId = `Search.searchControlOptions.entryCount-${(new Date()).toISOString()}`;
+        const testId = `Search.searchControlOptions.searchFamily-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
+        const compoundDN = [...dn, parentRDN];
         { // Setup
             await createTestRootNode(connection!, testId);
             await createCompoundEntry(connection!, dn);
+            // We create a second compound entry under the first to make test
+            // that only the queried compound entry's children appear.
+            await createCompoundEntry(connection!, compoundDN);
         }
-        const compoundDN = [...dn, parentRDN];
         const subordinatesLevel1: string[] = Array(2).fill("").map(() => crypto.randomUUID());
         await Promise.all(subordinatesLevel1.map((id) => createTestNode(connection!, compoundDN, id)));
         const encounteredOrNonFamily: Set<string> = new Set(subordinatesLevel1);
@@ -2583,7 +2586,8 @@ describe("Meerkat DSA", () => {
         const decoded = _decode_SearchResult(result.result);
         const resData = getOptionallyProtectedValue(decoded);
         assert("searchInfo" in resData);
-        expect(resData.searchInfo.entries.length).toBeGreaterThan(1);
+        // There are seven members in the compound entry.
+        expect(resData.searchInfo.entries).toHaveLength(7);
         for (const entry of resData.searchInfo.entries) {
             const rdn = entry.name.rdnSequence[entry.name.rdnSequence.length - 1];
             const foundId: string = rdn[0].value.utf8String;

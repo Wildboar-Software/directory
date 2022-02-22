@@ -33,7 +33,7 @@ import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
-import { MAX_RESULTS } from "../constants";
+import { MAX_RESULTS, MAX_SORT_KEYS } from "../constants";
 import {
     LimitProblem_sizeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
@@ -171,7 +171,7 @@ function compareEntries (
         } catch {
             return A_AND_B_EQUAL;
         }
-        return compareEntries(ctx, a, b, sortKeys.slice(1), reverse, isLDAP);
+        return compareEntries(ctx, a, b, sortKeys.slice(1, MAX_SORT_KEYS), reverse, isLDAP);
     }
     if (aValue) {
         return A_COMES_FIRST * ((reverse && isLDAP) ? -1 : 1);

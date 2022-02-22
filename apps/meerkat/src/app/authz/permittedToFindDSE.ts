@@ -89,7 +89,7 @@ async function permittedToFindDSE (
             : [ ...admPoints ])
                 .reverse()
                 .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-        dse_i = await vertexFromDatabaseEntry(ctx, dse_i, dbe, false);
+        dse_i = await vertexFromDatabaseEntry(ctx, dse_i, dbe);
         if (dse_i.dse.admPoint?.accessControlScheme) {
             accessControlScheme = dse_i.dse.admPoint.accessControlScheme;
         }

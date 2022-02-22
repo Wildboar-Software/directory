@@ -798,7 +798,7 @@ async function findDSE (
              * See: https://github.com/prisma/prisma/issues/8935
              */
             if (match && (match.RDN.length === needleRDN.length)) {
-                const matchedVertex = await vertexFromDatabaseEntry(ctx, dse_i, match, true);
+                const matchedVertex = await vertexFromDatabaseEntry(ctx, dse_i, match);
                 if (matchedVertex.dse.admPoint?.accessControlScheme) {
                     accessControlScheme = matchedVertex.dse.admPoint.accessControlScheme;
                 }
@@ -947,7 +947,7 @@ async function findDSE (
                     if (!child_dbe) {
                         break; // TODO: Break out of the loop entirely if this happens.
                     }
-                    const child = await vertexFromDatabaseEntry(ctx, dse_i, child_dbe, false);
+                    const child = await vertexFromDatabaseEntry(ctx, dse_i, child_dbe);
                     if (child.dse.admPoint?.accessControlScheme) {
                         accessControlScheme = child.dse.admPoint.accessControlScheme;
                     }

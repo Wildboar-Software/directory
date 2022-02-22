@@ -20,7 +20,7 @@ import type {
     SortKey,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
-import { MAX_RESULTS } from "../constants";
+import { MAX_RESULTS, MAX_SORT_KEYS } from "../constants";
 import {
     LimitProblem_sizeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
@@ -137,7 +137,7 @@ function compareSubordinates (
         } catch {
             return A_AND_B_EQUAL;
         }
-        return compareSubordinates(ctx, a, b, sortKeys.slice(1), reverse);
+        return compareSubordinates(ctx, a, b, sortKeys.slice(1, MAX_SORT_KEYS), reverse);
     }
     if (aValue) {
         return A_COMES_FIRST * (reverse ? -1 : 1);

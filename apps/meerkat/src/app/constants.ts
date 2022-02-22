@@ -7,6 +7,7 @@ export const MAX_RESULTS: number = 10_000_000;
 export const MAX_TRAVERSAL: number = 100000;
 export const DEFAULT_IDM_BUFFER_SIZE: number = 1_000_000;
 export const DEFAULT_LDAP_BUFFER_SIZE: number = 1_000_000;
+export const MAX_SORT_KEYS: number = 3;
 
 // IP Blacklist Reasons
 export const IP_BL_REASON_SLOW_LORIS: string = "SLOW_LORIS";
