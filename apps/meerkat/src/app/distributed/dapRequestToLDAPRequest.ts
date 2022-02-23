@@ -111,6 +111,21 @@ const DEFAULT_LDAP_FILTER: LDAPFilter = {
     present: encodeLDAPOID(objectClass["&id"]),
 };
 
+/**
+ * @summary Get the LDAP encoder for a given attribute type
+ * @description
+ *
+ * This function takes an attribute type object identifier and, using Meerkat
+ * DSA's internal index of known attribute types and LDAP syntaxes, determines
+ * which function, if any, can be used to decode LDAP string-encoded values into
+ * `ASN1Element`s, as used internally by Meerkat DSA to represent values.
+ *
+ * @param ctx The context object
+ * @param type_ The attribute type whose encoder is to be returned
+ * @returns The LDAP syntax encoder, or `null` if it cannot be determined
+ *
+ * @function
+ */
 function getLDAPEncoder (ctx: Context, type_: AttributeType): LDAPSyntaxEncoder | null {
     const spec = ctx.attributeTypes.get(type_.toString());
     if (!spec?.ldapSyntax) {
@@ -153,7 +168,22 @@ function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string
     ];
 }
 
-function convert_dap_mod_to_ldap_mod (ctx: Context, mod: EntryModification): LDAPEntryModification {
+/**
+ * @summary Converts a DAP modification to an LDAP modification
+ * @description
+ *
+ * Converts a DAP modification to an LDAP modification.
+ *
+ * @param ctx The context object
+ * @param mod The entry modification
+ * @returns The LDAP changes
+ *
+ * @function
+ */
+function convert_dap_mod_to_ldap_mod (
+    ctx: Context,
+    mod: EntryModification,
+): LDAPEntryModification {
     if ("addAttribute" in mod) {
         const encoder = getLDAPEncoder(ctx, mod.addAttribute.type_);
         if (!encoder) {

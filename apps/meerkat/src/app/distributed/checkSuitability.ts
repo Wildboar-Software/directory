@@ -33,7 +33,20 @@ import {
 import getShadowingAgreementInfo from "../dit/getShadowingAgreementInfo";
 import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea";
 
-async function isComplete (vertex: Vertex): Promise<boolean> {
+/**
+ * @summary Determine if a shadow DSE is complete.
+ * @description
+ *
+ * Determine if a shadow DSE is complete, meaning that all attributes and values
+ * have been replicated.
+ *
+ * @param vertex The vertex whose completeness is to be determined.
+ * @returns A `boolean` indicating whether the shadow DSE was replicated in its
+ *  entirety.
+ *
+ * @function
+ */
+function isComplete (vertex: Vertex): boolean {
     return (
         !vertex.dse.shadow
         || (
@@ -43,6 +56,20 @@ async function isComplete (vertex: Vertex): Promise<boolean> {
     );
 }
 
+/**
+ * @summary Determine whether all subordinates of a DSE are complete
+ * @description
+ *
+ * This function determines if all of the shadow DSEs below a DSE were fully
+ * replicated in their entirety. (E.g. no missing attributes or values.)
+ *
+ * @param ctx The context object
+ * @param vertex The vertex whose subordinate completeness is in question.
+ * @returns A `boolean` indicating whether all subordinates of a DSE are complete.
+ *
+ * @function
+ * @async
+ */
 async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promise<boolean> {
     return !(await ctx.db.entry.findFirst({
         where: {

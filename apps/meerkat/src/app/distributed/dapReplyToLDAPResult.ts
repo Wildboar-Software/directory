@@ -65,6 +65,20 @@ import {
 import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
 import { strict as assert } from "assert";
 
+/**
+ * @summary Break apart an X.500 SearchResult into LDAP search results
+ * @description
+ *
+ * This function takes an X.500 `SearchResult` and breaks it up into individual
+ * LDAP `SearchResultEntry` and pass each result into the `onEntry()` handler.
+ *
+ * @param ctx The context object
+ * @param searchResult The X.500 search result
+ * @param onEntry The `onEntry()` callback used to send results to an LDAP client.
+ *
+ * @function
+ * @async
+ */
 async function getSearchResultEntries (
     ctx: Context,
     searchResult: SearchResult,
