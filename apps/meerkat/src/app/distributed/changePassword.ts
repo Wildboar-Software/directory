@@ -149,9 +149,7 @@ async function changePassword (
             isMemberOfGroup,
             NAMING_MATCHER,
         );
-        const {
-            authorized: authorizedToModifyEntry,
-        } = bacACDF(
+        const { authorized: authorizedToModifyEntry } = bacACDF(
             relevantTuples,
             user,
             {
@@ -163,13 +161,12 @@ async function changePassword (
             bacSettings,
             true,
         );
-        const {
-            authorized: authorizedToModifyUserPassword,
-        } = bacACDF(
+        const { authorized: authorizedToModifyUserPassword } = bacACDF(
             relevantTuples,
             user,
             {
                 attributeType: userPassword["&id"],
+                operational: false,
             },
             [
                 PERMISSION_CATEGORY_ADD,
@@ -179,13 +176,12 @@ async function changePassword (
             bacSettings,
             true,
         );
-        const {
-            authorized: authorizedToModifyUserPwd,
-        } = bacACDF(
+        const { authorized: authorizedToModifyUserPwd } = bacACDF(
             relevantTuples,
             user,
             {
                 attributeType: userPwd["&id"],
+                operational: false,
             },
             [
                 PERMISSION_CATEGORY_ADD,

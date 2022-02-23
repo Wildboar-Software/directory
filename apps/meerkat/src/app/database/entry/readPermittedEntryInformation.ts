@@ -20,6 +20,7 @@ import type {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import bacSettings from "../../authz/bacSettings";
+import isOperationalAttributeType from "../../x500/isOperationalAttributeType";
 
 export
 interface ReadPermittedEntryInformationReturn {
@@ -117,13 +118,12 @@ async function readPermittedEntryInformation (
     let discloseIncompleteEntry: boolean = false;
     for (const info of einfo) {
         if ("attribute" in info) {
-            const {
-                authorized: authorizedToAddAttributeType,
-            } = bacACDF(
+            const { authorized: authorizedToAddAttributeType } = bacACDF(
                 relevantTuples,
                 user,
                 {
                     attributeType: info.attribute.type_,
+                    operational: isOperationalAttributeType(ctx, info.attribute.type_),
                 },
                 [
                     PERMISSION_CATEGORY_READ,
@@ -136,13 +136,12 @@ async function readPermittedEntryInformation (
                 // Optimization: we only need to check this if we haven't
                 // already established that we can disclose incompleteness.
                 if (!discloseIncompleteEntry) {
-                    const {
-                        authorized: authorizedToKnowAboutExcludedAttribute,
-                    } = bacACDF(
+                    const { authorized: authorizedToKnowAboutExcludedAttribute } = bacACDF(
                         relevantTuples,
                         user,
                         {
                             attributeType: info.attribute.type_,
+                            operational: isOperationalAttributeType(ctx, info.attribute.type_),
                         },
                         [
                             PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
@@ -165,7 +164,10 @@ async function readPermittedEntryInformation (
                     const acdfResult = bacACDF(
                         relevantTuples,
                         user,
-                        { value: atav },
+                        {
+                            value: atav,
+                            operational: isOperationalAttributeType(ctx, atav.type_),
+                        },
                         [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,
@@ -174,12 +176,13 @@ async function readPermittedEntryInformation (
                         // Optimization: we only need to check this if we haven't
                         // already established that we can disclose incompleteness.
                         if (!discloseIncompleteEntry) {
-                            const {
-                                authorized: authorizedToKnowAboutExcludedAttributeValue,
-                            } = bacACDF(
+                            const { authorized: authorizedToKnowAboutExcludedAttributeValue } = bacACDF(
                                 relevantTuples,
                                 user,
-                                { value: atav },
+                                {
+                                    value: atav,
+                                    operational: isOperationalAttributeType(ctx, atav.type_),
+                                },
                                 [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
                                 bacSettings,
                                 true,
@@ -201,17 +204,14 @@ async function readPermittedEntryInformation (
                 });
             }
         } else if ("attributeType" in info) {
-            const {
-                authorized: authorizedToAddAttributeType,
-            } = bacACDF(
+            const { authorized: authorizedToAddAttributeType } = bacACDF(
                 relevantTuples,
                 user,
                 {
                     attributeType: info.attributeType,
+                    operational: isOperationalAttributeType(ctx, info.attributeType),
                 },
-                [
-                    PERMISSION_CATEGORY_READ,
-                ],
+                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );

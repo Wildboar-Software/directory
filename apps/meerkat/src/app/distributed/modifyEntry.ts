@@ -241,6 +241,7 @@ import {
 import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -435,17 +436,14 @@ function checkPermissionToAddValues (
         return;
     }
     const values = valuesFromAttribute(attribute);
-    const {
-        authorized: authorizedForAttributeType,
-    } = bacACDF(
+    const { authorized: authorizedForAttributeType } = bacACDF(
         relevantACDFTuples,
         user,
         {
             attributeType: attribute.type_,
+            operational: isOperationalAttributeType(ctx, attribute.type_),
         },
-        [
-            PERMISSION_CATEGORY_ADD,
-        ],
+        [ PERMISSION_CATEGORY_ADD ],
         bacSettings,
         true,
     );
@@ -472,10 +470,9 @@ function checkPermissionToAddValues (
                     context.contextValues,
                     context.fallback,
                 )),
+                operational: isOperationalAttributeType(ctx, value.type),
             },
-            [
-                PERMISSION_CATEGORY_ADD,
-            ],
+            [ PERMISSION_CATEGORY_ADD ],
             bacSettings,
             true,
         );
@@ -820,7 +817,10 @@ async function executeRemoveAttribute (
         const { authorized: authorizedForAttributeType } = bacACDF(
             relevantACDFTuples,
             user,
-            { attributeType: mod },
+            {
+                attributeType: mod,
+                operational: isOperationalAttributeType(ctx, mod),
+            },
             [ PERMISSION_CATEGORY_REMOVE ],
             bacSettings,
             true,
@@ -1014,7 +1014,10 @@ async function executeRemoveValues (
         } = bacACDF(
             relevantACDFTuples,
             user,
-            { attributeType: mod.type_ },
+            {
+                attributeType: mod.type_,
+                operational: isOperationalAttributeType(ctx, mod.type_),
+            },
             [ PERMISSION_CATEGORY_REMOVE ],
             bacSettings,
             true,
@@ -1039,6 +1042,7 @@ async function executeRemoveValues (
                         value.type,
                         value.value,
                     ),
+                    operational: isOperationalAttributeType(ctx, value.type),
                 },
                 [ PERMISSION_CATEGORY_REMOVE ],
                 bacSettings,
@@ -1107,7 +1111,10 @@ async function executeAlterValues (
         const { authorized: authorizedForAttributeType } = bacACDF(
             relevantACDFTuples,
             user,
-            { attributeType: mod.type_ },
+            {
+                attributeType: mod.type_,
+                operational: isOperationalAttributeType(ctx, mod.type_),
+            },
             [
                 PERMISSION_CATEGORY_MODIFY, // DEVIATION: More strict than spec.
                 PERMISSION_CATEGORY_REMOVE,
@@ -1140,6 +1147,7 @@ async function executeAlterValues (
                         value.type,
                         value.value,
                     ),
+                    operational: isOperationalAttributeType(ctx, value.type),
                 },
                 // DEVIATON: X.511 requires Add permissions, but I think this is
                 // a mistake. Why would you need permission to add values that
@@ -1183,6 +1191,7 @@ async function executeAlterValues (
                         context.contextValues,
                         context.fallback,
                     )),
+                    operational: isOperationalAttributeType(ctx, value.type),
                 },
                 // DEVIATON: X.511 does not explicitly require add permissions
                 // for the newly-produced values, but I think this is an error.
@@ -1256,6 +1265,7 @@ async function executeResetValue (
                         mod,
                         el,
                     ),
+                    operational: isOperationalAttributeType(ctx, mod),
                 },
                 [
                     PERMISSION_CATEGORY_REMOVE,
@@ -1314,13 +1324,12 @@ async function executeReplaceValues (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const {
-            authorized: authorizedForAttributeType,
-        } = bacACDF(
+        const { authorized: authorizedForAttributeType } = bacACDF(
             relevantACDFTuples,
             user,
             {
                 attributeType: mod.type_,
+                operational: isOperationalAttributeType(ctx, mod.type_),
             },
             [ PERMISSION_CATEGORY_ADD ],
             bacSettings,
@@ -1337,9 +1346,7 @@ async function executeReplaceValues (
         }
         const existingValues = await readValuesOfType(ctx, entry, mod.type_);
         for (const xv of existingValues) {
-            const {
-                authorized: authorizedForValue,
-            } = bacACDF(
+            const { authorized: authorizedForValue } = bacACDF(
                 relevantACDFTuples,
                 user,
                 {
@@ -1347,6 +1354,7 @@ async function executeReplaceValues (
                         mod.type_,
                         xv.value,
                     ),
+                    operational: isOperationalAttributeType(ctx, mod.type_),
                 },
                 [ PERMISSION_CATEGORY_REMOVE ],
                 bacSettings,
@@ -2042,12 +2050,14 @@ async function modifyEntry (
             && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
         ) {
             const deletedValues = patch.removedValues.get(type_)?.length ?? 0;
+            const typeOid = ObjectIdentifier.fromString(type_);
             const { authorized: authorizedForAttributeType } = bacACDF(
                 relevantTuples,
                 user,
                 {
-                    attributeType: ObjectIdentifier.fromString(type_),
+                    attributeType: typeOid,
                     valuesCount: (values.length - deletedValues),
+                    operational: isOperationalAttributeType(ctx, typeOid),
                 },
                 [ PERMISSION_CATEGORY_ADD ],
                 bacSettings,

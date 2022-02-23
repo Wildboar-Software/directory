@@ -158,6 +158,7 @@ import {
     id_sc_subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import isPrefix from "../x500/isPrefix";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 
 function withinThisDSA (vertex: Vertex) {
     return (
@@ -429,7 +430,10 @@ async function modifyDN (
                 const { authorized: authorizedToReadAttributeType } = bacACDF(
                     relevantTuples,
                     user,
-                    { attributeType: atav.type_ },
+                    {
+                        attributeType: atav.type_,
+                        operational: isOperationalAttributeType(ctx, atav.type_),
+                    },
                     [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
                     true,
@@ -442,6 +446,7 @@ async function modifyDN (
                             atav.type_,
                             atav.value,
                         ),
+                        operational: isOperationalAttributeType(ctx, atav.type_),
                     },
                     [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
@@ -790,7 +795,10 @@ async function modifyDN (
             const { authorized: authorizedToReadSuperiorDSEType } = bacACDF(
                 relevantTuplesForSuperior,
                 user,
-                { attributeType: dseType["&id"] },
+                {
+                    attributeType: dseType["&id"],
+                    operational: true,
+                },
                 [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
@@ -800,7 +808,10 @@ async function modifyDN (
             const { authorized: authorizedToReadSuperiorObjectClasses } = bacACDF(
                 relevantTuplesForSuperior,
                 user,
-                { attributeType: objectClass["&id"] },
+                {
+                    attributeType: objectClass["&id"],
+                    operational: false,
+                },
                 [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
@@ -814,6 +825,7 @@ async function modifyDN (
                             objectClass["&id"],
                             _encodeObjectIdentifier(oc, DER),
                         ),
+                        operational: false,
                     },
                     [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
@@ -833,7 +845,10 @@ async function modifyDN (
                     && !(bacACDF(
                         relevantTuplesForSuperior,
                         user,
-                        { attributeType: aliasedEntryName["&id"] },
+                        {
+                            attributeType: aliasedEntryName["&id"],
+                            operational: false,
+                        },
                         [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,
@@ -1545,7 +1560,10 @@ async function modifyDN (
                 const { authorized: authorizedToRemoveOldRDNValue } = bacACDF(
                     relevantTuples,
                     user,
-                    { value: atav },
+                    {
+                        value: atav,
+                        operational: isOperationalAttributeType(ctx, atav.type_),
+                    },
                     [ PERMISSION_CATEGORY_REMOVE ],
                     bacSettings,
                     true,

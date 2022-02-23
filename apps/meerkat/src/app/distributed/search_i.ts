@@ -255,6 +255,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
 import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -1305,6 +1306,7 @@ async function search_i (
                             attributeType,
                             value,
                         ),
+                        operational: isOperationalAttributeType(ctx, attributeType),
                     }
                     : {
                         attributeType,
@@ -1392,23 +1394,18 @@ async function search_i (
             const authorizedToReadEntry: boolean = authorized([
                 PERMISSION_CATEGORY_READ,
             ]);
-            const {
-                authorized: authorizedToReadAliasedEntryName,
-            } = bacACDF(
+            const { authorized: authorizedToReadAliasedEntryName } = bacACDF(
                 relevantTuples,
                 user,
                 {
                     attributeType: id_at_aliasedEntryName,
+                    operational: false,
                 },
-                [
-                    PERMISSION_CATEGORY_READ,
-                ],
+                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
-            const {
-                authorized: authorizedToReadAliasedEntryNameValue,
-            } = bacACDF(
+            const { authorized: authorizedToReadAliasedEntryNameValue } = bacACDF(
                 relevantTuples,
                 user,
                 {
@@ -1416,10 +1413,9 @@ async function search_i (
                         id_at_aliasedEntryName,
                         _encode_DistinguishedName(target.dse.alias.aliasedEntryName, DER),
                     ),
+                    operational: false,
                 },
-                [
-                    PERMISSION_CATEGORY_READ,
-                ],
+                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );

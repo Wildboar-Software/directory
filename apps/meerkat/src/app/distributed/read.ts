@@ -107,6 +107,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
 import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 
 /**
  * @summary The read operation, as specified in ITU Recommendation X.511.
@@ -306,17 +307,14 @@ async function read (
     if (permittedEntryInfo.information.length === 0) {
         const discloseOnErrorOnAnyOfTheSelectedAttributes: boolean = selectedAttributes
             .some((attr) => {
-                const {
-                    authorized: authorizedToKnowAboutExcludedAttribute,
-                } = bacACDF(
+                const { authorized: authorizedToKnowAboutExcludedAttribute } = bacACDF(
                     relevantTuples,
                     user,
                     {
                         attributeType: attr,
+                        operational: isOperationalAttributeType(ctx, attr),
                     },
-                    [
-                        PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
-                    ],
+                    [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
                     bacSettings,
                     true,
                 );

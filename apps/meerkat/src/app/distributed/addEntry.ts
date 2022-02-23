@@ -206,6 +206,7 @@ import {
 import {
     aliasedEntryName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -732,7 +733,10 @@ async function addEntry (
             const { authorized: authorizedToReadSuperiorDSEType } = bacACDF(
                 relevantTuplesForSuperior,
                 user,
-                { attributeType: dseType["&id"] },
+                {
+                    attributeType: dseType["&id"],
+                    operational: true,
+                },
                 [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
@@ -742,7 +746,10 @@ async function addEntry (
             const { authorized: authorizedToReadSuperiorObjectClasses } = bacACDF(
                 relevantTuplesForSuperior,
                 user,
-                { attributeType: objectClass["&id"] },
+                {
+                    attributeType: objectClass["&id"],
+                    operational: false,
+                },
                 [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
@@ -756,6 +763,7 @@ async function addEntry (
                             objectClass["&id"],
                             _encodeObjectIdentifier(oc, DER),
                         ),
+                        operational: false,
                     },
                     [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
@@ -775,7 +783,10 @@ async function addEntry (
                     && !(bacACDF(
                         relevantTuplesForSuperior,
                         user,
-                        { attributeType: aliasedEntryName["&id"] },
+                        {
+                            attributeType: aliasedEntryName["&id"],
+                            operational: false,
+                        },
                         [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,
@@ -1116,6 +1127,7 @@ async function addEntry (
                     {
                         attributeType: attr.type_,
                         valuesCount: valueCountByAttribute.get(attr.type_.toString()),
+                        operational: isOperationalAttributeType(ctx, attr.type_),
                     },
                     [ PERMISSION_CATEGORY_ADD ],
                     bacSettings,
@@ -1163,6 +1175,7 @@ async function addEntry (
                             context.contextValues,
                             context.fallback,
                         )),
+                        operational: isOperationalAttributeType(ctx, value.type),
                     },
                     [PERMISSION_CATEGORY_ADD],
                     bacSettings,
