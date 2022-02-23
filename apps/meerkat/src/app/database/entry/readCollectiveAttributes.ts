@@ -23,8 +23,6 @@ const ID_CASA: string = id_ar_collectiveAttributeSpecificArea.toString();
 const ID_CAIA: string = id_ar_collectiveAttributeInnerArea.toString();
 const EXCLUDE_ALL: string = id_oa_excludeAllCollectiveAttributes.toString();
 
-// TODO: Document expectation of ordering of relevantSubentries.
-
 /**
  * @summary Read the collective attributes of an entry
  * @description
@@ -34,7 +32,8 @@ const EXCLUDE_ALL: string = id_oa_excludeAllCollectiveAttributes.toString();
  * @param ctx The context object
  * @param vertex The DSE whose attributes are to be read
  * @param relevantSubentries The subentries whose subtree specification selects
- *  for the DSE indicated by the argument `vertex`
+ *  for the DSE indicated by the argument `vertex`, in order of descending
+ *  administrative point
  * @returns An array of collective attributes
  *
  * @function
@@ -51,8 +50,28 @@ function readCollectiveAttributes (
     const collectiveAttributeSubentries = relevantSubentries
         .filter((sub) => sub.dse.objectClass.has(CA_SUBENTRY))
         .reverse();
+    /**
+     * It is not enough to simply stop once we've encountered the first subentry
+     * whose immediate superior DSE has a CASA administrative role, because
+     * there might be other subentries under that same administrative point.
+     * Instead, we must note that a CASA has been encountered, then keep
+     * iterating until we find a subentry that DOES NOT belong to that admin
+     * point.
+     */
     const indexOfFirstCASA: number = collectiveAttributeSubentries
-        .findIndex((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_CASA));
+        .findIndex((sub, i, array) => {
+            const admPoint = sub.immediateSuperior?.dse;
+            if (admPoint?.admPoint?.administrativeRole.has(ID_CASA)) {
+                const next = array[i + 1];
+                return (
+                    // If there is no next subentry, or no next admin point
+                    !next?.immediateSuperior
+                    // Or the next admin point is not the same as this one...
+                    || (admPoint.id !== next.immediateSuperior.dse.id)
+                );
+            }
+            return false;
+        });
     if (indexOfFirstCASA === -1) {
         return [];
     }

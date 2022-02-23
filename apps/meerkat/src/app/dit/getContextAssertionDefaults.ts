@@ -15,7 +15,6 @@ import type {
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 const ID_CDSA: string = id_ar_contextDefaultSpecificArea.toString();
 
-// TODO: Document expectation of ordering of relevantSubentries.
 /**
  * @summary Get the context assertion defaults for an entry
  * @description
@@ -25,7 +24,8 @@ const ID_CDSA: string = id_ar_contextDefaultSpecificArea.toString();
  * @param ctx The context object
  * @param entry The entry whose context assertion defaults are to be determined
  * @param relevantSubentries The subentries whose subtree specification selected
- *  the entry given by the `entry` parameter.
+ *  the entry given by the `entry` parameter, in order of descending
+ *  administrative point
  * @returns An array of `TypeAndContextAssertion`s, which are the applicable
  *  context assertion defaults
  *

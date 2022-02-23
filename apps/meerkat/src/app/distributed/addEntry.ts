@@ -206,6 +206,7 @@ import {
 import {
     aliasedEntryName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -732,7 +733,10 @@ async function addEntry (
             const { authorized: authorizedToReadSuperiorDSEType } = bacACDF(
                 relevantTuplesForSuperior,
                 user,
-                { attributeType: dseType["&id"] },
+                {
+                    attributeType: dseType["&id"],
+                    operational: true,
+                },
                 [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
@@ -742,7 +746,10 @@ async function addEntry (
             const { authorized: authorizedToReadSuperiorObjectClasses } = bacACDF(
                 relevantTuplesForSuperior,
                 user,
-                { attributeType: objectClass["&id"] },
+                {
+                    attributeType: objectClass["&id"],
+                    operational: false,
+                },
                 [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
@@ -756,6 +763,7 @@ async function addEntry (
                             objectClass["&id"],
                             _encodeObjectIdentifier(oc, DER),
                         ),
+                        operational: false,
                     },
                     [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
@@ -775,7 +783,10 @@ async function addEntry (
                     && !(bacACDF(
                         relevantTuplesForSuperior,
                         user,
-                        { attributeType: aliasedEntryName["&id"] },
+                        {
+                            attributeType: aliasedEntryName["&id"],
+                            operational: false,
+                        },
                         [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,
@@ -1116,6 +1127,7 @@ async function addEntry (
                     {
                         attributeType: attr.type_,
                         valuesCount: valueCountByAttribute.get(attr.type_.toString()),
+                        operational: isOperationalAttributeType(ctx, attr.type_),
                     },
                     [ PERMISSION_CATEGORY_ADD ],
                     bacSettings,
@@ -1163,6 +1175,7 @@ async function addEntry (
                             context.contextValues,
                             context.fallback,
                         )),
+                        operational: isOperationalAttributeType(ctx, value.type),
                     },
                     [PERMISSION_CATEGORY_ADD],
                     bacSettings,
@@ -1430,7 +1443,6 @@ async function addEntry (
                         ),
                     );
                 }
-                // TODO: Throw if obsolete object class.
                 for (const at of oc.mandatoryAttributes) {
                     missingMandatoryAttributes.add(at);
                     optionalAttributes.add(at);
@@ -1704,21 +1716,22 @@ async function addEntry (
     if (!isSubentry && schemaSubentry) { // Schema rules only apply to entries.
         const newEntryIsANewSubschema = objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
         assert(schemaSubentry.dse.subentry);
-        // TODO: Use find instead of filter.
-        const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
-            .filter((rule) => !rule.obsolete)
+        const structuralRule = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
             .filter((rule) => (
-                (
-                    newEntryIsANewSubschema
-                    && (rule.superiorStructureRules === undefined)
-                )
-                || (
-                    !newEntryIsANewSubschema
-                    && immediateSuperior.dse.governingStructureRule // TODO: Does not tolerate being 0
-                    && rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule)
+                !rule.obsolete
+                && (
+                    (
+                        newEntryIsANewSubschema
+                        && (rule.superiorStructureRules === undefined)
+                    )
+                    || (
+                        !newEntryIsANewSubschema
+                        && (immediateSuperior.dse.governingStructureRule !== undefined)
+                        && rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule)
+                    )
                 )
             ))
-            .filter((rule) => {
+            .find((rule) => {
                 const nf = ctx.nameForms.get(rule.nameForm.toString());
                 if (!nf) {
                     return false;
@@ -1731,7 +1744,7 @@ async function addEntry (
                 }
                 return checkNameForm(rdn, nf.mandatoryAttributes, nf.optionalAttributes);
             });
-        if (structuralRules.length === 0) {
+        if (!structuralRule) {
             throw new errors.UpdateError(
                 ctx.i18n.t("err:no_dit_structural_rules"),
                 new UpdateErrorData(
@@ -1750,7 +1763,7 @@ async function addEntry (
                 ),
             );
         }
-        governingStructureRule = Number(structuralRules[0].ruleIdentifier);
+        governingStructureRule = Number(structuralRule.ruleIdentifier);
         const contentRule = (schemaSubentry.dse.subentry?.ditContentRules ?? [])
             .find((rule) => !rule.obsolete && rule.structuralObjectClass.isEqualTo(structuralObjectClass));
         const auxiliaryClasses = objectClasses

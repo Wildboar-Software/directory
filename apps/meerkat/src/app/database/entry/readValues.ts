@@ -111,7 +111,8 @@ interface ReadValuesReturn {
  * resolution, because subtypes of friends are also friends.
  *
  * @param relevantSubentries The subentries whose subtree specification selects
- *  for the DSE indicated by the argument `vertex`
+ *  for the DSE indicated by the argument `vertex` in order of descending
+ *  administrative point
  * @param selectedUserAttributes The set of dot-delimited object identifier
  *  strings of all attribute types that are selected
  * @param type_ The object identifier of the attribute type

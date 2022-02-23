@@ -507,7 +507,10 @@ async function list_i (
                     const { authorized: authorizedToReadObjectClasses } = bacACDF(
                         relevantSubordinateTuples,
                         user,
-                        { attributeType: objectClass["&id"] },
+                        {
+                            attributeType: objectClass["&id"],
+                            operational: false,
+                        },
                         [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,
@@ -520,6 +523,7 @@ async function list_i (
                                 objectClass["&id"],
                                 _encodeObjectIdentifier(alias["&id"], DER),
                             ),
+                            operational: false,
                         },
                         [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
@@ -528,7 +532,10 @@ async function list_i (
                     const { authorized: authorizedToReadAliasedEntryName } = bacACDF(
                         relevantSubordinateTuples,
                         user,
-                        { attributeType: aliasedEntryName["&id"] },
+                        {
+                            attributeType: aliasedEntryName["&id"],
+                            operational: false,
+                        },
                         [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,

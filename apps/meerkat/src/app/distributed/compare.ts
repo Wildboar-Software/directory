@@ -112,6 +112,7 @@ import {
 import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 
 function contextFromStoredContext (sc: StoredContext): X500Context {
     return new X500Context(
@@ -188,9 +189,7 @@ async function compare (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const {
-            authorized: authorizedToEntry,
-        } = bacACDF(
+        const { authorized: authorizedToEntry } = bacACDF(
             relevantTuples,
             user,
             {
@@ -245,7 +244,10 @@ async function compare (
             const { authorized: authorizedToCompareAttributeType } = bacACDF(
                 relevantTuples,
                 user,
-                { attributeType: type_ },
+                {
+                    attributeType: type_,
+                    operational: isOperationalAttributeType(ctx, type_),
+                },
                 [
                     PERMISSION_CATEGORY_COMPARE,
                     PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
@@ -257,7 +259,10 @@ async function compare (
                 const { authorized: authorizedToDiscloseAttribute } = bacACDF(
                     relevantTuples,
                     user,
-                    { attributeType: type_ },
+                    {
+                        attributeType: type_,
+                        operational: isOperationalAttributeType(ctx, type_),
+                    },
                     [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
                     bacSettings,
                     true,
@@ -441,6 +446,7 @@ async function compare (
                             value.type,
                             value.value,
                         ),
+                        operational: isOperationalAttributeType(ctx, value.type),
                     },
                     [
                         PERMISSION_CATEGORY_COMPARE,

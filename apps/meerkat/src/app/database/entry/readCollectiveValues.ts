@@ -15,7 +15,8 @@ import valuesFromAttribute from "../../x500/valuesFromAttribute";
  * @param ctx The context object
  * @param vertex The DSE whose attributes are to be read
  * @param relevantSubentries The subentries whose subtree specification selects
- *  for the DSE indicated by the argument `vertex`
+ *  for the DSE indicated by the argument `vertex`, in order of descending
+ *  administrative point
  * @returns An array of collective values
  *
  * @function
