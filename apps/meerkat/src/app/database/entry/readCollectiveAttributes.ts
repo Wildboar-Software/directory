@@ -23,8 +23,6 @@ const ID_CASA: string = id_ar_collectiveAttributeSpecificArea.toString();
 const ID_CAIA: string = id_ar_collectiveAttributeInnerArea.toString();
 const EXCLUDE_ALL: string = id_oa_excludeAllCollectiveAttributes.toString();
 
-// TODO: Document expectation of ordering of relevantSubentries.
-
 /**
  * @summary Read the collective attributes of an entry
  * @description
@@ -34,7 +32,8 @@ const EXCLUDE_ALL: string = id_oa_excludeAllCollectiveAttributes.toString();
  * @param ctx The context object
  * @param vertex The DSE whose attributes are to be read
  * @param relevantSubentries The subentries whose subtree specification selects
- *  for the DSE indicated by the argument `vertex`
+ *  for the DSE indicated by the argument `vertex`, in order of descending
+ *  administrative point
  * @returns An array of collective attributes
  *
  * @function

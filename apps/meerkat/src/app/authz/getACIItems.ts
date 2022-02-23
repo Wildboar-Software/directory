@@ -31,7 +31,8 @@ const AC_INNER: string = id_ar_accessControlInnerArea.toString();
  * @param accessControlScheme The access control scheme in place for the
  *  applicable access control administrative area
  * @param vertex The DSE whose relevant ACI items are to be determined
- * @param relevantSubentries The subentries whose subtree select for this entry
+ * @param relevantSubentries The subentries whose subtree select for this entry,
+ *  in order of descending administrative point
  * @param isSubentry Whether the DSE in question is a subentry
  * @returns An array of ACI items that are in effect for the DSE in question.
  *

@@ -943,9 +943,9 @@ async function findDSE (
                         where: {
                             id: subordinate.id
                         },
-                    })
+                    });
                     if (!child_dbe) {
-                        break; // TODO: Break out of the loop entirely if this happens.
+                        return; // The entry was deleted right after we matched.
                     }
                     const child = await vertexFromDatabaseEntry(ctx, dse_i, child_dbe);
                     if (child.dse.admPoint?.accessControlScheme) {

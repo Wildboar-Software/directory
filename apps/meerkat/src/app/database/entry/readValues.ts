@@ -110,7 +110,8 @@ interface ReadValuesReturn {
  * It is also important that friend resolution occurs _before_ subtype
  * resolution, because subtypes of friends are also friends.
  *
- * @param relevantSubentries
+ * @param relevantSubentries The subentries whose subtree specification selects
+ *  for the target DSE, in order of descending administrative point
  * @param selectedUserAttributes
  * @param type_
  */

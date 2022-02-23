@@ -1443,7 +1443,6 @@ async function addEntry (
                         ),
                     );
                 }
-                // TODO: Throw if obsolete object class.
                 for (const at of oc.mandatoryAttributes) {
                     missingMandatoryAttributes.add(at);
                     optionalAttributes.add(at);
@@ -1717,21 +1716,22 @@ async function addEntry (
     if (!isSubentry && schemaSubentry) { // Schema rules only apply to entries.
         const newEntryIsANewSubschema = objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
         assert(schemaSubentry.dse.subentry);
-        // TODO: Use find instead of filter.
-        const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
-            .filter((rule) => !rule.obsolete)
+        const structuralRule = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
             .filter((rule) => (
-                (
-                    newEntryIsANewSubschema
-                    && (rule.superiorStructureRules === undefined)
-                )
-                || (
-                    !newEntryIsANewSubschema
-                    && immediateSuperior.dse.governingStructureRule // TODO: Does not tolerate being 0
-                    && rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule)
+                !rule.obsolete
+                && (
+                    (
+                        newEntryIsANewSubschema
+                        && (rule.superiorStructureRules === undefined)
+                    )
+                    || (
+                        !newEntryIsANewSubschema
+                        && (immediateSuperior.dse.governingStructureRule !== undefined)
+                        && rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule)
+                    )
                 )
             ))
-            .filter((rule) => {
+            .find((rule) => {
                 const nf = ctx.nameForms.get(rule.nameForm.toString());
                 if (!nf) {
                     return false;
@@ -1744,7 +1744,7 @@ async function addEntry (
                 }
                 return checkNameForm(rdn, nf.mandatoryAttributes, nf.optionalAttributes);
             });
-        if (structuralRules.length === 0) {
+        if (!structuralRule) {
             throw new errors.UpdateError(
                 ctx.i18n.t("err:no_dit_structural_rules"),
                 new UpdateErrorData(
@@ -1763,7 +1763,7 @@ async function addEntry (
                 ),
             );
         }
-        governingStructureRule = Number(structuralRules[0].ruleIdentifier);
+        governingStructureRule = Number(structuralRule.ruleIdentifier);
         const contentRule = (schemaSubentry.dse.subentry?.ditContentRules ?? [])
             .find((rule) => !rule.obsolete && rule.structuralObjectClass.isEqualTo(structuralObjectClass));
         const auxiliaryClasses = objectClasses
