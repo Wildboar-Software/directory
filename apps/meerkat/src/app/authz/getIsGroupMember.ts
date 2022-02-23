@@ -28,11 +28,6 @@ const selectOnlyUniqueIdentifier = new EntryInformationSelection(
             uniqueIdentifier["&id"],
         ],
     },
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
 );
 
 const selectMemberships = new EntryInformationSelection(
@@ -42,11 +37,6 @@ const selectMemberships = new EntryInformationSelection(
             uniqueMember["&id"],
         ],
     },
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
 );
 
 /**

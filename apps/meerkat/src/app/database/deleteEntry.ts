@@ -5,6 +5,18 @@ import {
 
 const CHILD: string = id_oc_child.toString();
 
+/**
+ * @summary Delete children within a compound entry
+ * @description
+ *
+ * Deletes children from a compound entry
+ *
+ * @param ctx The context object
+ * @param id the ID of the immediate superior whose children are to be deleted
+ *
+ * @function
+ * @async
+ */
 async function deleteChildren (ctx: Context, id: number): Promise<void> {
     const children = await ctx.db.entry.findMany({
         where: {

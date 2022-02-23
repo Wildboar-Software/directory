@@ -64,6 +64,23 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
+/**
+ * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
+ * @description
+ *
+ * The Access Point Information (APInfo) Procedure, as defined in ITU
+ * Recommendation X.518 (2016), Section 20.4.4.
+ *
+ * @param ctx The context object
+ * @param api The access point information
+ * @param req The chained request
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @returns A result or error
+ *
+ * @function
+ * @async
+ */
 export
 async function apinfoProcedure (
     ctx: Context,

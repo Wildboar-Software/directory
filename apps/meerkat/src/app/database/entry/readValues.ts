@@ -110,9 +110,13 @@ interface ReadValuesReturn {
  * It is also important that friend resolution occurs _before_ subtype
  * resolution, because subtypes of friends are also friends.
  *
- * @param relevantSubentries
- * @param selectedUserAttributes
- * @param type_
+ * @param relevantSubentries The subentries whose subtree specification selects
+ *  for the DSE indicated by the argument `vertex`
+ * @param selectedUserAttributes The set of dot-delimited object identifier
+ *  strings of all attribute types that are selected
+ * @param type_ The object identifier of the attribute type
+ *
+ * @function
  */
 function addFriends (
     relevantSubentries: Vertex[],
@@ -140,7 +144,19 @@ function addFriends (
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
-// Converts "preference" assertions to "all" assertions of the preferred context.
+/**
+ * @summary Evaluate all context assertions until a preference is determined
+ * @description
+ *
+ * Converts "preference" assertions to "all" assertions of the preferred
+ * context.
+ *
+ * @param ctx The context object
+ * @param valuesOfSameType Values of the same attribute type
+ * @param preference The context assertoins in order of decreasing preference
+ * @returns The first `ContextAssertion` that matched, or `null` if none matched
+ * @function
+ */
 function determinePreference (
     ctx: Context,
     valuesOfSameType: Value[],
@@ -165,6 +181,21 @@ function determinePreference (
     return null;
 }
 
+/**
+ * @summary Filters values by context assertions
+ * @description
+ *
+ * This function filters attribute values per context assertions.
+ *
+ * @param ctx The context object
+ * @param values The values to be filtered
+ * @param selectedContexts An index of `TypeAndContextAssertion` by attribute
+ *  type, or `null` if there are no selected contexts
+ * @yields Values that survived the context assertions, if any.
+ *
+ * @generator
+ * @function
+ */
 function *filterByTypeAndContextAssertion (
     ctx: Context,
     values: Value[],

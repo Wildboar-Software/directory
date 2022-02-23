@@ -31,6 +31,21 @@ import {
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import hasValueWithoutDriver from "./hasValueWithoutDriver";
 
+/**
+ * @summary Validate the values to be added to the entry
+ * @description
+ *
+ * Validate the values to be added to an entry, checking for invalid value
+ * syntax, invalid context syntaxes, or, optionally, duplicate values.
+ *
+ * @param ctx The context object
+ * @param entry The object to which the values are being added
+ * @param values The values to be added
+ * @param checkForExisting Whether to check whether the values already exist
+ *
+ * @function
+ * @async
+ */
 async function validateValues(
     ctx: Context,
     entry: Vertex,

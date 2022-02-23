@@ -20,6 +20,20 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 import compareAuthenticationLevel from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
 import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
 
+/**
+ * @summary Compares two EXTERNALs
+ * @description
+ *
+ * Compares two `EXTERNAL` values for equality, returning `true` if they are
+ * equal.
+ *
+ * @param a One EXTERNAL
+ * @param b Another EXTERNAL
+ * @returns A `boolean` indicating whether the two `EXTERNAL`s relay the same
+ *  data.
+ *
+ * @function
+ */
 function compareExternals (a: EXTERNAL, b: EXTERNAL): boolean {
     if (
         a.directReference
