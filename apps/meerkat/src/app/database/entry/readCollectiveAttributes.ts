@@ -51,8 +51,28 @@ function readCollectiveAttributes (
     const collectiveAttributeSubentries = relevantSubentries
         .filter((sub) => sub.dse.objectClass.has(CA_SUBENTRY))
         .reverse();
+    /**
+     * It is not enough to simply stop once we've encountered the first subentry
+     * whose immediate superior DSE has a CASA administrative role, because
+     * there might be other subentries under that same administrative point.
+     * Instead, we must note that a CASA has been encountered, then keep
+     * iterating until we find a subentry that DOES NOT belong to that admin
+     * point.
+     */
     const indexOfFirstCASA: number = collectiveAttributeSubentries
-        .findIndex((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_CASA));
+        .findIndex((sub, i, array) => {
+            const admPoint = sub.immediateSuperior?.dse;
+            if (admPoint?.admPoint?.administrativeRole.has(ID_CASA)) {
+                const next = array[i + 1];
+                return (
+                    // If there is no next subentry, or no next admin point
+                    !next?.immediateSuperior
+                    // Or the next admin point is not the same as this one...
+                    || (admPoint.id !== next.immediateSuperior.dse.id)
+                );
+            }
+            return false;
+        });
     if (indexOfFirstCASA === -1) {
         return [];
     }
