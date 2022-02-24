@@ -275,6 +275,17 @@ const notPermittedData =  (
     undefined,
 );
 
+/**
+ * @summary Determine whether an ASN.1 value may be used in arithmetic operations
+ * @description
+ *
+ * Determines whether an ASN.1 value may be used in arithmetic operations.
+ *
+ * @param el The value whose suitability for arithmetic is to be determined
+ * @returns Whether the value may be used in arithmetic operations
+ *
+ * @function
+ */
 function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
     return (
         (el.tagClass === ASN1TagClass.universal)
@@ -488,6 +499,27 @@ function checkPermissionToAddValues (
     }
 }
 
+/**
+ * @summary Throw an error if a non-modifiable attribute type would be modified
+ * @description
+ *
+ * This function determines whether the request would attempt to modify a
+ * non-modifiable attribute type, not including access control. Access controls
+ * are not checked in this function; this function checks other reasons why an
+ * attribute type may not be modified.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param attributeType The attribute type the user is attempting to modify
+ * @param entry The entry that will be modified
+ * @param targetDN The target distinguished name
+ * @param isSubentry Whether the entry is a subentry
+ * @param manageDSAIT Whether the manageDSAIT flag was set
+ * @param isRemoving Whether the attribute type is being removed
+ * @param aliasDereferenced Whether an alias was dereferenced in finding the entry
+ *
+ * @function
+ */
 function checkAbilityToModifyAttributeType (
     ctx: Context,
     assn: ClientAssociation,
@@ -1384,6 +1416,9 @@ async function executeReplaceValues (
 }
 
 /**
+ * @summary Evaluate an added attribute or values against context rules
+ * @description
+ *
  * This function both checks that the DIT context use rules are satisfied
  * and applies default context values, if there are any defined. These are
  * separate features, but it turns out that they innately share a lot of
@@ -1393,6 +1428,18 @@ async function executeReplaceValues (
  * Note that we do not handle the default context value post-processing
  * steps described in ITU Recommendation X.501 (2016), Section 13.9.2. As
  * far as I can see, these only exist to save storage space.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param targetDN The target distinguished name
+ * @param attribute The X.500 directory attribute whose contexts are to be
+ *  evaluated for compliance to the context rules
+ * @param contextRuleIndex The index of applicable context rules
+ * @param aliasDereferenced Whether an alias was dereferenced when finding the
+ *  target DSE.
+ * @returns An attribute that is populated with default context values
+ *
+ * @function
  */
 function handleContextRule (
     ctx: Context,

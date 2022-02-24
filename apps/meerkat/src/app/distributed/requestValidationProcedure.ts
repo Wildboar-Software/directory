@@ -91,6 +91,24 @@ type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Para
 //     excludeWriteableCopies     [24] BOOLEAN DEFAULT FALSE,
 //     ... }
 
+/**
+ * @summary Produce chaining arguments from a DAP request
+ * @description
+ *
+ * This function produces chaining arguments from the Directory Access Protocol
+ * (DAP) request, per the procedures defined in ITU Recommendation X.518 (2016),
+ * Section 17.3.3.1.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param operationCode The operation code
+ * @param operationArgument The operation argument
+ * @param authenticationLevel The authentication level of the bound user
+ * @param uniqueIdentifier The unique identifier of the bound user
+ * @returns A `ChainingArguments`
+ *
+ * @function
+ */
 function createChainingArgumentsFromDUA (
     ctx: Context,
     assn: ClientAssociation,

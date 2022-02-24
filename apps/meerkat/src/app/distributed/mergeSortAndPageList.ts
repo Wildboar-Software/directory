@@ -34,8 +34,20 @@ import { ListResultData_listInfo } from "@wildboar/x500/src/lib/modules/Director
 
 type IListInfo = { -readonly [K in keyof ListResultData_listInfo]: ListResultData_listInfo[K] };
 
-function getEntryCount (sr: ListResult): number {
-    const data = getOptionallyProtectedValue(sr);
+/**
+ * @summary Count the number of results in a `ListResult`
+ * @description
+ *
+ * This function counts the number of results in a `ListResult`, recursing into
+ * uncorrelated result sets, if they are present.
+ *
+ * @param lr The `ListResult` whose entries are to be counted
+ * @returns The number of entries in the `ListResult`
+ *
+ * @function
+ */
+function getEntryCount (lr: ListResult): number {
+    const data = getOptionallyProtectedValue(lr);
     if ("listInfo" in data) {
         return data.listInfo.subordinates.length;
     } else if ("uncorrelatedListInfo" in data) {
@@ -47,6 +59,21 @@ function getEntryCount (sr: ListResult): number {
     }
 }
 
+/**
+ * @summary Merge two partial outcome qualifiers
+ * @description
+ *
+ * Joins two partial outcome qualifiers to create one `PartialOutcomeQualifier`.
+ *
+ * NOTE: This differs from the `mergePOQ()` defined in
+ * `mergeSortAndPageSearch.ts`.
+ *
+ * @param a One `PartialOutcomeQualifier`
+ * @param b The other `PartialOutcomeQualifier`
+ * @returns A new, merged `PartialOutcomeQualifier`
+ *
+ * @function
+ */
 function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): PartialOutcomeQualifier {
     return new PartialOutcomeQualifier(
         a.limitProblem ?? b.limitProblem,
@@ -76,6 +103,19 @@ function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): Part
     );
 }
 
+/**
+ * @summary Merge list result set into another list result set
+ * @description
+ *
+ * This function uses a reducer pattern to merge an incoming list result set
+ * into another list result set.
+ *
+ * @param acc The accumulating result set
+ * @param resultSet The new result set to merge into the `acc` result set
+ * @returns The `acc` result set, by reference
+ *
+ * @function
+ */
 function mergeResultSet (
     acc: IListInfo,
     resultSet: ListResult,
@@ -100,6 +140,26 @@ const A_COMES_FIRST: number = -1;
 const B_COMES_FIRST: number = 1;
 const A_AND_B_EQUAL: number = 0;
 
+/**
+ * @summary Sorts two list subordinates
+ * @description
+ *
+ * This function orders two `list` operation subordinates / results by returning
+ * an integer that indicates which is "greater," if they are unequal, or `0` if
+ * they are equal. This logic was purposefully chosen so that this function
+ * could be used as a predicate in the `Array.sort()` method.
+ *
+ * @param ctx The context object
+ * @param a One subordinate
+ * @param b The other subordinate
+ * @param sortKeys The sort keys from the paging request
+ * @param reverse Whether the search should be reversed
+ * @returns A number indicating whether `a` should appear before, `b`, or vice
+ *  versa, or `0` if they are equal, according to the semantics of the predicate
+ *  used in `Array.sort()`.
+ *
+ * @function
+ */
 function compareSubordinates (
     ctx: Context,
     a: ListItem,

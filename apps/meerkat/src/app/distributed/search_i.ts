@@ -276,6 +276,18 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     alreadyReturnedById: Set<number>;
 }
 
+/**
+ * @summary Count the number of results in a `SearchResult`
+ * @description
+ *
+ * This function counts the number of results in a `SearchResult`, recursing
+ * into uncorrelated result sets, if they are present.
+ *
+ * @param result The `SearchResult` whose entries are to be counted
+ * @returns The number of entries in the `SearchResult`
+ *
+ * @function
+ */
 function getNumberOfResultsInSearch (result: SearchResult): number {
     const data = getOptionallyProtectedValue(result);
     if ("searchInfo" in data) {
@@ -289,6 +301,18 @@ function getNumberOfResultsInSearch (result: SearchResult): number {
     }
 }
 
+/**
+ * @summary Get the current number of results returning from the search operation
+ * @description
+ *
+ * This function gets the current number of results returning from the current
+ * search operation. It does not persist between pages of search operations.
+ *
+ * @param state The current search state
+ * @returns The number of results from the current search operation state
+ *
+ * @function
+ */
 function getCurrentNumberOfResults (state: SearchState): number {
     return (
         state.results.length
@@ -549,6 +573,21 @@ does not match, its subordinates still must be searched.
 //     }
 // }
 
+/**
+ * @summary Get the database IDs of family members to return
+ * @description
+ *
+ * Gets the database IDs of family members within a compound entry that should
+ * be returned per the `familyReturn` selection.
+ *
+ * @param familyReturn The family return selection
+ * @param participatingEntries An array of participating vertices
+ * @param contributingEntryIds A set of database IDs of entries that have contributed
+ * @returns A set of database IDs of entries to return, or `null` if all of them
+ *  should be returned
+ *
+ * @function
+ */
 function getFamilyMembersToReturnById (
     familyReturn: FamilyReturn,
     participatingEntries: Vertex[],

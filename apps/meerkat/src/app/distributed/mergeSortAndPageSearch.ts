@@ -43,6 +43,18 @@ import {
 
 type ISearchInfo = { -readonly [K in keyof SearchResultData_searchInfo]: SearchResultData_searchInfo[K] };
 
+/**
+ * @summary Count the number of results in a `SearchResult`
+ * @description
+ *
+ * This function counts the number of results in a `SearchResult`, recursing
+ * into uncorrelated result sets, if they are present.
+ *
+ * @param sr The `SearchResult` whose entries are to be counted
+ * @returns The number of entries in the `SearchResult`
+ *
+ * @function
+ */
 function getEntryCount (sr: SearchResult): number {
     const data = getOptionallyProtectedValue(sr);
     if ("searchInfo" in data) {
@@ -56,6 +68,21 @@ function getEntryCount (sr: SearchResult): number {
     }
 }
 
+/**
+ * @summary Merge two partial outcome qualifiers
+ * @description
+ *
+ * Joins two partial outcome qualifiers to create one `PartialOutcomeQualifier`.
+ *
+ * NOTE: This differs from the `mergePOQ()` defined in
+ * `mergeSortAndPageList.ts`.
+ *
+ * @param a One `PartialOutcomeQualifier`
+ * @param b The other `PartialOutcomeQualifier`
+ * @returns A new, merged `PartialOutcomeQualifier`
+ *
+ * @function
+ */
 function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): PartialOutcomeQualifier {
     return new PartialOutcomeQualifier(
         a.limitProblem ?? b.limitProblem,
@@ -87,6 +114,19 @@ function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): Part
     );
 }
 
+/**
+ * @summary Merge search result set into another search result set
+ * @description
+ *
+ * This function uses a reducer pattern to merge an incoming search result set
+ * into another search result set.
+ *
+ * @param acc The accumulating result set
+ * @param resultSet The new result set to merge into the `acc` result set
+ * @returns The `acc` result set, by reference
+ *
+ * @function
+ */
 function mergeResultSet (
     acc: ISearchInfo,
     resultSet: SearchResult,
@@ -114,6 +154,26 @@ const A_COMES_FIRST: number = -1;
 const B_COMES_FIRST: number = 1;
 const A_AND_B_EQUAL: number = 0;
 
+/**
+ * @summary Sorts two search results
+ * @description
+ *
+ * This function orders two `search` operation result entries by returning
+ * an integer that indicates which is "greater," if they are unequal, or `0` if
+ * they are equal. This logic was purposefully chosen so that this function
+ * could be used as a predicate in the `Array.sort()` method.
+ *
+ * @param ctx The context object
+ * @param a One entry
+ * @param b The other entry
+ * @param sortKeys The sort keys from the paging request
+ * @param reverse Whether the search should be reversed
+ * @returns A number indicating whether `a` should appear before, `b`, or vice
+ *  versa, or `0` if they are equal, according to the semantics of the predicate
+ *  used in `Array.sort()`.
+ *
+ * @function
+ */
 function compareEntries (
     ctx: Context,
     a: EntryInformation,

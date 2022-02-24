@@ -160,6 +160,18 @@ import {
 import isPrefix from "../x500/isPrefix";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 
+/**
+ * @summary Determine whether a DSE is local to this DSA
+ * @description
+ *
+ * This function determines whether a given is local to this DSA, meaning that
+ * it is not a shadow copy, some sort of knowledge reference, or a glue entry.
+ *
+ * @param vertex The DSE whose locality is to be determined
+ * @returns Whether the DSE in question is local to this DSA
+ *
+ * @function
+ */
 function withinThisDSA (vertex: Vertex) {
     return (
         !vertex.dse.shadow
@@ -174,6 +186,23 @@ function withinThisDSA (vertex: Vertex) {
     );
 }
 
+/**
+ * @summary Determine whether all subordinates of a DSE are local to this DSA
+ * @description
+ *
+ * Determines whether the entire subtree beneath a given DSE is local to this
+ * DSA, meaning that each subordinate (recursively) is not a shadow copy, a
+ * glue entry, or some kind of knowledge reference, or something else other
+ * than an entry, subentry, or alias.
+ *
+ * @param ctx The context object
+ * @param vertex The DSE that forms the root of the subtree whose locality to
+ *  this DSA is to be determined
+ * @returns Whether all subordinates are local to this DSA
+ *
+ * @function
+ * @async
+ */
 async function allSubordinatesWithinThisDSA (
     ctx: Context,
     vertex: Vertex,
