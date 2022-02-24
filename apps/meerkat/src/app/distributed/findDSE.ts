@@ -122,6 +122,19 @@ const autonomousArea: string = id_ar_autonomousArea.toString();
 
 const MAX_DEPTH: number = 10000;
 
+/**
+ * @summary Determine whether some subordinates of a DSE are context prefixes
+ * @description
+ *
+ * This function determines if any subordinate of a DSE is a context prefix.
+ *
+ * @param ctx The context object
+ * @param vertex The vertex whose subordinates are inquired
+ * @returns A `boolean` indicating whether at least one subordinate of `vertex`
+ *  is a context prefix.
+ *
+ * @function
+ */
 async function someSubordinatesAreCP (
     ctx: Context,
     vertex: Vertex,
@@ -140,6 +153,23 @@ async function someSubordinatesAreCP (
     }));
 }
 
+/**
+ * @summary Create a continuation reference from shadow supplier knowledge
+ * @description
+ *
+ * This function creates a `ContinuationReference` to continue the operation in
+ * the shadow supplier (meaning, the DSA that gave this DSA the replicated
+ * entries that are in this context prefix).
+ *
+ * @param cp The context prefix of the shadowed area
+ * @param needleDN The target distinguished name
+ * @param nextRDNToBeResolved The next RDN to be resolved
+ * @param rdnsResolved The number of RDNs resolved already
+ * @returns A `ContinuationReference` that will continue the operation in the
+ *  shadow supplier.
+ *
+ * @function
+ */
 function makeContinuationRefFromSupplierKnowledge (
     cp: Vertex,
     needleDN: DistinguishedName,
@@ -194,6 +224,10 @@ function makeContinuationRefFromSupplierKnowledge (
  *
  * The Find DSE procedure defined in ITU Recommendation X.518 (2016), Section
  * 18.2.
+ *
+ * Note that functions internal to this function are named after nodes in the
+ * diagrams in ITU Recommendation X.518 (2016), Sections 18.3.1, 18.3.2, and
+ * 18.3.3.
  *
  * @param ctx The context object
  * @param assn The client association

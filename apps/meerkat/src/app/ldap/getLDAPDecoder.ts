@@ -1,9 +1,14 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import {
     LDAPOID,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPOID.ta";
+import type {
+    AttributeType,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 
 /**
  * @summary Returns a function that can decode an LDAP value into an X.500 directory value
@@ -24,13 +29,26 @@ import {
  */
 export
 function getLDAPDecoder (ctx: Context, type_: LDAPOID): LDAPSyntaxDecoder | undefined {
-    const desc = normalizeAttributeDescription(type_);
-    const spec = ctx.attributeTypes.get(desc);
-    if (!spec?.ldapSyntax) {
+    const descriptor = normalizeAttributeDescription(type_);
+    const spec = ctx.attributeTypes.get(descriptor.toLowerCase());
+    if (!spec) {
         return undefined;
     }
-    const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
-    return ldapSyntax?.decoder;
+    const parentTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, spec.id));
+    const ldapSyntaxOID: OBJECT_IDENTIFIER | undefined = [
+        spec.id,
+        ...parentTypes,
+    ]
+        .map((spec) => ctx.attributeTypes.get(spec.toString())?.ldapSyntax)
+        .find((oid) => oid);
+    if (!ldapSyntaxOID) {
+        return undefined;
+    }
+    const ldapSyntax = ctx.ldapSyntaxes.get(ldapSyntaxOID.toString());
+    if (!ldapSyntax?.decoder) {
+        return undefined;
+    }
+    return ldapSyntax.decoder;
 }
 
 export default getLDAPDecoder;
