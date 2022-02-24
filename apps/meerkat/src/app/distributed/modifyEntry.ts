@@ -296,6 +296,24 @@ function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
     );
 }
 
+/**
+ * @summary Higher-order function that gets a function for adding two values
+ * @description
+ *
+ * This higher-order function returns a function that takes an in-memory value
+ * and adds the value given by `toBeAddedElement` (or subtracts if the
+ * `toBeAddedElement` encodes a negative `INTEGER` or `REAL`).
+ *
+ * @param ctx The context object
+ * @param vertex The DSE
+ * @param type_ The attribute type object identifier
+ * @param toBeAddedElement The ASN.1 value to be added
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A function that can be used to add to a given in-memory value
+ *
+ * @function
+ */
 function getValueAlterer (
     ctx: Context,
     vertex: Vertex,
@@ -358,6 +376,24 @@ function getValueAlterer (
     };
 }
 
+/**
+ * @summary If the attribute has multiple values, check if it MAY have multiple values
+ * @description
+ *
+ * This function checks if an attribute has multiple values. If it does, it then
+ * checks if that attribute type is single-valued. If the attribute type is
+ * single-valued, but there were multiple values given by a user, an error is
+ * thrown.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param target The target DSE
+ * @param attr The attribute to be added
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ *
+ * @function
+ */
 function checkAttributeArity (
     ctx: Context,
     assn: ClientAssociation,
@@ -406,6 +442,22 @@ function checkAttributeArity (
     }
 }
 
+/**
+ * @summary Determine whether an attribute is already present in a DSE
+ * @description
+ *
+ * This function returns a `boolean` indicating whether an attribute is already
+ * present in a DSE.
+ *
+ * @param ctx The context object
+ * @param target The target DSE
+ * @param type_ The attribute whose presence is to be determined
+ * @returns A `boolean` indicating whether the attribute is already present in
+ *  the entry.
+ *
+ * @function
+ * @async
+ */
 async function checkAttributePresence (
     ctx: Context,
     target: Vertex,
@@ -430,6 +482,30 @@ async function checkAttributePresence (
     }));
 }
 
+/**
+ * @summary Check if the user has permission to add values
+ * @description
+ *
+ * This function checks if a user has permission to add certain attribute types
+ * and values to an entry based on access controls. Subschema and other
+ * concerns, such as attributes being obsolete, are not checked by this
+ * function; this function only evaluates access control.
+ *
+ * @param modificationType The modification type
+ * @param attribute The attribute containing the values to be added
+ * @param ctx The context object
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param assn The client association
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ *
+ * @function
+ */
 function checkPermissionToAddValues (
     modificationType: "addAttribute" | "addValues",
     attribute: Attribute,
@@ -673,6 +749,21 @@ function checkAbilityToModifyAttributeType (
     }
 }
 
+/**
+ * @summary Update a patch object with added values
+ * @description
+ *
+ * This function adds added values to a patch object and, if those values are
+ * present in the "removed values" part of the patch, they are removed from
+ * there.
+ *
+ * @param patch The patch of pending changes to the entry
+ * @param type_ The attribute type affected
+ * @param toAdd The values to add
+ * @param equalityMatcher The equality matcher for that type
+ *
+ * @function
+ */
 function addValuesToPatch (
     patch: Patch,
     type_: AttributeType,
@@ -708,6 +799,20 @@ function addValuesToPatch (
     patch.removedAttributes.delete(TYPE_OID);
 }
 
+/**
+ * @summary Update a patch object with removed values
+ * @description
+ *
+ * This function adds removed values to a patch object and, if those values are
+ * present in the "added values" part of the patch, they are removed from there.
+ *
+ * @param patch The patch of pending changes to the entry
+ * @param type_ The attribute type affected
+ * @param toRemove The values to remove
+ * @param equalityMatcher The equality matcher for that type
+ *
+ * @function
+ */
 function removeValuesFromPatch (
     patch: Patch,
     type_: AttributeType,
@@ -742,6 +847,38 @@ function removeValuesFromPatch (
     }
 }
 
+/**
+ * @summary Produce the `PrismaPromise`s to execute a `addAttribute` modification
+ * @description
+ *
+ * This function produces the `PrismaPromise`s needed to execute a
+ * `addAttribute` modification, as defined in ITU Recommendation X.511 (2016),
+ * Section 12.3.2.
+ *
+ * Rather than doing the entry modification directly, this function returns
+ * `PrismaPromise`s, which can be used by the Prisma ORM to perform all of the
+ * necessary updates as a part of a transaction. This is important, because the
+ * specification mandates that all of the modifications in a `modifyEntry`
+ * operation must pass or fail as a unit.
+ *
+ * @param mod The modification
+ * @param ctx The context object
+ * @param assn The client association
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param entry The target DSE
+ * @param patch The accumulated patch that will apply to the entry
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A promise that resolves to an array of `PrismaPromise`s.
+ *
+ * @function
+ * @async
+ */
 async function executeAddAttribute (
     mod: Attribute,
     ctx: Context,
@@ -804,6 +941,38 @@ async function executeAddAttribute (
     return addValues(ctx, entry, values);
 }
 
+/**
+ * @summary Produce the `PrismaPromise`s to execute a `removeAttribute` modification
+ * @description
+ *
+ * This function produces the `PrismaPromise`s needed to execute a
+ * `removeAttribute` modification, as defined in ITU Recommendation X.511 (2016),
+ * Section 12.3.2.
+ *
+ * Rather than doing the entry modification directly, this function returns
+ * `PrismaPromise`s, which can be used by the Prisma ORM to perform all of the
+ * necessary updates as a part of a transaction. This is important, because the
+ * specification mandates that all of the modifications in a `modifyEntry`
+ * operation must pass or fail as a unit.
+ *
+ * @param mod The modification
+ * @param ctx The context object
+ * @param assn The client association
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param entry The target DSE
+ * @param patch The accumulated patch that will apply to the entry
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A promise that resolves to an array of `PrismaPromise`s.
+ *
+ * @function
+ * @async
+ */
 async function executeRemoveAttribute (
     mod: AttributeType,
     ctx: Context,
@@ -905,6 +1074,38 @@ async function executeRemoveAttribute (
     // REVIEW: Do you want to also fail if per-value remove is not granted?
 }
 
+/**
+ * @summary Produce the `PrismaPromise`s to execute a `addValues` modification
+ * @description
+ *
+ * This function produces the `PrismaPromise`s needed to execute a
+ * `addValues` modification, as defined in ITU Recommendation X.511 (2016),
+ * Section 12.3.2.
+ *
+ * Rather than doing the entry modification directly, this function returns
+ * `PrismaPromise`s, which can be used by the Prisma ORM to perform all of the
+ * necessary updates as a part of a transaction. This is important, because the
+ * specification mandates that all of the modifications in a `modifyEntry`
+ * operation must pass or fail as a unit.
+ *
+ * @param mod The modification
+ * @param ctx The context object
+ * @param assn The client association
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param entry The target DSE
+ * @param patch The accumulated patch that will apply to the entry
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A promise that resolves to an array of `PrismaPromise`s.
+ *
+ * @function
+ * @async
+ */
 async function executeAddValues (
     mod: Attribute,
     ctx: Context,
@@ -962,6 +1163,38 @@ async function executeAddValues (
     return addValues(ctx, entry, values);
 }
 
+/**
+ * @summary Produce the `PrismaPromise`s to execute a `removeValues` modification
+ * @description
+ *
+ * This function produces the `PrismaPromise`s needed to execute a
+ * `removeValues` modification, as defined in ITU Recommendation X.511 (2016),
+ * Section 12.3.2.
+ *
+ * Rather than doing the entry modification directly, this function returns
+ * `PrismaPromise`s, which can be used by the Prisma ORM to perform all of the
+ * necessary updates as a part of a transaction. This is important, because the
+ * specification mandates that all of the modifications in a `modifyEntry`
+ * operation must pass or fail as a unit.
+ *
+ * @param mod The modification
+ * @param ctx The context object
+ * @param assn The client association
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param entry The target DSE
+ * @param patch The accumulated patch that will apply to the entry
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A promise that resolves to an array of `PrismaPromise`s.
+ *
+ * @function
+ * @async
+ */
 async function executeRemoveValues (
     mod: Attribute,
     ctx: Context,
@@ -1098,6 +1331,38 @@ async function executeRemoveValues (
     return removeValues(ctx, entry, values);
 }
 
+/**
+ * @summary Produce the `PrismaPromise`s to execute a `alterValues` modification
+ * @description
+ *
+ * This function produces the `PrismaPromise`s needed to execute a
+ * `alterValues` modification, as defined in ITU Recommendation X.511 (2016),
+ * Section 12.3.2.
+ *
+ * Rather than doing the entry modification directly, this function returns
+ * `PrismaPromise`s, which can be used by the Prisma ORM to perform all of the
+ * necessary updates as a part of a transaction. This is important, because the
+ * specification mandates that all of the modifications in a `modifyEntry`
+ * operation must pass or fail as a unit.
+ *
+ * @param mod The modification
+ * @param ctx The context object
+ * @param assn The client association
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param entry The target DSE
+ * @param patch The accumulated patch that will apply to the entry
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A promise that resolves to an array of `PrismaPromise`s.
+ *
+ * @function
+ * @async
+ */
 async function executeAlterValues (
     mod: AttributeTypeAndValue,
     ctx: Context,
@@ -1252,6 +1517,38 @@ async function executeAlterValues (
     ];
 }
 
+/**
+ * @summary Produce the `PrismaPromise`s to execute a `resetValue` modification
+ * @description
+ *
+ * This function produces the `PrismaPromise`s needed to execute a
+ * `resetValue` modification, as defined in ITU Recommendation X.511 (2016),
+ * Section 12.3.2.
+ *
+ * Rather than doing the entry modification directly, this function returns
+ * `PrismaPromise`s, which can be used by the Prisma ORM to perform all of the
+ * necessary updates as a part of a transaction. This is important, because the
+ * specification mandates that all of the modifications in a `modifyEntry`
+ * operation must pass or fail as a unit.
+ *
+ * @param mod The modification
+ * @param ctx The context object
+ * @param assn The client association
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param entry The target DSE
+ * @param patch The accumulated patch that will apply to the entry
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A promise that resolves to an array of `PrismaPromise`s.
+ *
+ * @function
+ * @async
+ */
 async function executeResetValue (
     mod: AttributeType,
     ctx: Context,
@@ -1338,6 +1635,38 @@ async function executeResetValue (
     ];
 }
 
+/**
+ * @summary Produce the `PrismaPromise`s to execute a `replaceValues` modification
+ * @description
+ *
+ * This function produces the `PrismaPromise`s needed to execute a
+ * `replaceValues` modification, as defined in ITU Recommendation X.511 (2016),
+ * Section 12.3.2.
+ *
+ * Rather than doing the entry modification directly, this function returns
+ * `PrismaPromise`s, which can be used by the Prisma ORM to perform all of the
+ * necessary updates as a part of a transaction. This is important, because the
+ * specification mandates that all of the modifications in a `modifyEntry`
+ * operation must pass or fail as a unit.
+ *
+ * @param mod The modification
+ * @param ctx The context object
+ * @param assn The client association
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param entry The target DSE
+ * @param patch The accumulated patch that will apply to the entry
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A promise that resolves to an array of `PrismaPromise`s.
+ *
+ * @function
+ * @async
+ */
 async function executeReplaceValues (
     mod: Attribute,
     ctx: Context,
@@ -1654,7 +1983,24 @@ function handleContextRule (
 };
 
 /**
- * From ITU Recommendation X.501 (2016), Section 13.4.7:
+
+ *
+ */
+
+/**
+ * @summary Produce the `PrismaPromise`s needed to execute an entry modification.
+ * @description
+ *
+ * Rather than doing the entry modification directly, this function returns
+ * `PrismaPromise`s, which can be used by the Prisma ORM to perform all of the
+ * necessary updates as a part of a transaction. This is important, because the
+ * specification mandates that all of the modifications in a `modifyEntry`
+ * operation must pass or fail as a unit.
+ *
+ * Depending on the modification type, this function will "route" the arguments
+ * to a function that is specific for that modification type.
+ *
+ * Note: from ITU Recommendation X.501 (2016), Section 13.4.7:
  *
  * > If no equality matching rule is indicated, the Directory:
  * >
@@ -1669,6 +2015,32 @@ function handleContextRule (
  * >
  * > e) will not attempt to evaluate AVAs using values of such an attribute type.
  *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param user The requestor (not the bound user, because the request could have
+ *  been chained)
+ * @param entry The target DSE
+ * @param targetDN The target DSE's distinguished name
+ * @param mod The modification
+ * @param patch The accumulated patch that will apply to the entry
+ * @param accessControlScheme The object identifier of the access control scheme
+ *  that applies to this entry
+ * @param relevantACDFTuples The Basic Access Control Decision Function tuples
+ *  that apply to the current user
+ * @param precludedAttributes The set of strings of dot-delimited object
+ *  identifiers of attribute types that are precluded by the relevant DIT
+ *  content rules
+ * @param contextRuleIndex A map of context rules by the dot-delimited object
+ *  identifier string that identifies the attribute type to which the rule
+ *  applies.
+ * @param isSubentry Whether the entry is a subentry
+ * @param manageDSAIT Whether the `manageDSAIT` flag was set in the request
+ * @param aliasDereferenced Whether an alias was dereferenced in the process of
+ *  locating this entry.
+ * @returns A promise that resolves to an array of `PrismaPromise`s.
+ *
+ * @function
+ * @async
  */
 async function executeEntryModification (
     ctx: Context,
@@ -1698,30 +2070,29 @@ async function executeEntryModification (
         aliasDereferenced,
     ] as const;
 
-    const check = (attributeType: AttributeType, isRemoving: boolean) => {
-        checkAbilityToModifyAttributeType(
-            ctx,
-            assn,
-            attributeType,
-            entry,
-            targetDN,
-            isSubentry,
-            manageDSAIT,
-            isRemoving,
-            aliasDereferenced,
-        );
-    };
+    const check = (
+        attributeType: AttributeType,
+        isRemoving: boolean,
+    ) => checkAbilityToModifyAttributeType(
+        ctx,
+        assn,
+        attributeType,
+        entry,
+        targetDN,
+        isSubentry,
+        manageDSAIT,
+        isRemoving,
+        aliasDereferenced,
+    );
 
-    const checkContextRule = (attribute: Attribute): Attribute => {
-        return handleContextRule(
-            ctx,
-            assn,
-            targetDN,
-            attribute,
-            contextRuleIndex,
-            aliasDereferenced,
-        );
-    };
+    const checkContextRule = (attribute: Attribute): Attribute => handleContextRule(
+        ctx,
+        assn,
+        targetDN,
+        attribute,
+        contextRuleIndex,
+        aliasDereferenced,
+    );
 
     const checkPreclusion = (attributeType: AttributeType) => {
         if (precludedAttributes.has(attributeType.toString())) {

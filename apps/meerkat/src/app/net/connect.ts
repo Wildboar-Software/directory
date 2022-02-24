@@ -132,6 +132,20 @@ const networkAddressPreference = (a: url.URL, b: url.URL): number => {
     return (apref - bpref);
 };
 
+/**
+ * @summary Higher-order function for producing a `writeOperation` function from an IDM transport
+ * @description
+ *
+ * This is a higher-order function that produces a `writeOperation` function
+ * from an underlying IDM transport connnection.
+ *
+ * @param ctx The context object
+ * @param idm The underlying IDM transport connection
+ * @param targetSystem The target DSA
+ * @returns A `writeOperation` function
+ *
+ * @function
+ */
 function getIDMOperationWriter (
     ctx: Context,
     idm: IDMConnection,
@@ -225,6 +239,19 @@ function getIDMOperationWriter (
     };
 }
 
+/**
+ * @summary Higher-order function for producing a `writeOperation` function from an LDAP transport
+ * @description
+ *
+ * This is a higher-order function that produces a `writeOperation` function
+ * from an underlying LDAP transport connnection.
+ *
+ * @param ctx The context object
+ * @param socket The underlying LDAP socket
+ * @returns A `writeOperation` function
+ *
+ * @function
+ */
 function getLDAPOperationWriter (
     ctx: Context,
     socket: LDAPSocket,
@@ -376,6 +403,21 @@ function getLDAPOperationWriter (
     }
 }
 
+/**
+ * @summary Get LDAP `BindRequest`s from DSA credentials
+ * @description
+ *
+ * This function converts DSA credentials into one or more LDAP `BindRequest`s
+ * so that the credential, all variants of it, and an absence of it entirely,
+ * may be tried for the purposes of chaining.
+ *
+ * @param ctx The context object
+ * @param credentials DSA credentials to be translated to LDAP bind requests
+ * @yields LDAP `BindRequest`s
+ *
+ * @function
+ * @generator
+ */
 function *createBindRequests (
     ctx: Context,
     credentials?: DSACredentials,
@@ -419,6 +461,24 @@ function *createBindRequests (
     );
 }
 
+/**
+ * @summary Establish a connection to a remote LDAP server
+ * @description
+ *
+ * This function attempts to establish a connection to a remote LDAP server,
+ * possibly with multiple different credentials.
+ *
+ * @param ctx The context object
+ * @param uri The URI of the remote LDAP server
+ * @param credentials Array of DSA credentials to attempt, in order of
+ *  decreasing preference
+ * @param timeoutTime The time by which the operation must complete or abort
+ * @param tlsRequired Whether TLS shall be required for this connection
+ * @returns A connection, if one could be established, or `null` otherwise
+ *
+ * @function
+ * @async
+ */
 async function connectToLDAP (
     ctx: Context,
     uri: url.URL,
@@ -585,6 +645,24 @@ async function connectToLDAP (
 
 // TODO: connectToLDAPS() (once connectToLDAP() has been tested)
 
+/**
+ * @summary Establish a connection to a remote IDM socket
+ * @description
+ *
+ * This function attempts to establish a connection to a remote IDM socket,
+ * possibly with multiple different credentials.
+ *
+ * @param ctx The context object
+ * @param uri The URI of the remote DSA
+ * @param idmGetter A function for getting a new IDM transport
+ * @param targetSystem The target DSA's `AccessPoint`
+ * @param protocolID The object identifier of the protocol with which to bind
+ * @param credentials The set of DSA credentials to attempt, in order of
+ *  decreasing preference
+ * @param timeoutTime The time by which the operation must complete or abort
+ * @param tlsRequired Whether TLS shall be required for this connection
+ * @returns A connection, if one could be established, or `null` otherwise
+ */
 async function connectToIdmNaddr (
     ctx: Context,
     uri: string,

@@ -152,9 +152,38 @@ extends
     result: OPCR;
 }
 
+/**
+ * @summary The operation dispatcher described in ITU Recommendation X.518.
+ * @description
+ *
+ * This is a model of the Operation Dispatcher defined in ITU Recommendation
+ * X.518 (2016), Section 16.
+ *
+ * @class
+ */
 export
 class OperationDispatcher {
 
+    /**
+     * @summary Evaluate an operation
+     * @description
+     *
+     * This function does little more than route an operation to a function that
+     * performs it.
+     *
+     * @param ctx The context object
+     * @param state The operation dispatcher state
+     * @param assn The client association
+     * @param req The request
+     * @param reqData The chaining arguments and original argument
+     * @param local Whether this request was generated internally by Meerkat DSA
+     *
+     * @public
+     * @static
+     * @function
+     * @async
+     * @memberof OperationDispatcher
+     */
     public static async operationEvaluation (
         ctx: Context,
         state: OperationDispatcherState,
@@ -514,6 +543,32 @@ class OperationDispatcher {
         throw new errors.UnknownOperationError();
     }
 
+    /**
+     * @summary Dispatch a Directory System Protocol (DSP) request internally
+     * @description
+     *
+     * This function calls the Find DSE procedure defined in ITU Recommendation
+     * X.518 (2016), Section 18.3.1. If the target entry is not found, this
+     * function calls the Name Resolution Continuation Reference procedure
+     * defined in ITU Recommendation X.518 (2016), Section 20.4.1 to attempt to
+     * continue the request in other DSAs. If the request is chained to another
+     * DSA, this DSA simply returns the chained result. If a suitable DSE can be
+     * found locally, this DSA will begin operation evaluation against that DSE.
+     * If the target object cannot be found, an error is thrown accordingly.
+     *
+     * @param ctx The context object
+     * @param state The operation dispatcher state
+     * @param assn The client association
+     * @param req The request
+     * @param reqData The chaining arguments and original argument
+     * @param local Whether this request was generated internally by Meerkat DSA
+     *
+     * @public
+     * @static
+     * @function
+     * @async
+     * @memberof OperationDispatcher
+     */
     private static async dispatchPreparedDSPRequest (
         ctx: Context,
         assn: ClientAssociation,
@@ -648,6 +703,27 @@ class OperationDispatcher {
         );
     }
 
+    /**
+     * @summary Dispatch a Directory Access Protocol (DAP) request internally
+     * @description
+     *
+     * This function validates a Directory Access Protocol (DAP) request,
+     * "hydrates" it with chaining arguments per ITU Recommendation X.518
+     * (2016), Section 17.3.3.1, to make it as though it were a Directory System
+     * Protocol (DSP) request, and then internally dispatches it as though
+     * this DSA had received the Directory System Protocol (DSP) request in the
+     * first place.
+     *
+     * @param ctx The context object
+     * @param assn The client association
+     * @param req The request
+     *
+     * @public
+     * @static
+     * @function
+     * @async
+     * @memberof OperationDispatcher
+     */
     public static async dispatchDAPRequest (
         ctx: Context,
         assn: ClientAssociation,
@@ -670,6 +746,23 @@ class OperationDispatcher {
         );
     }
 
+    /**
+     * @summary Dispatch a Directory System Protocol (DAP) request internally
+     * @description
+     *
+     * This function validates a Directory Access Protocol (DAP) request,
+     * validates it, then internally dispatches it.
+     *
+     * @param ctx The context object
+     * @param assn The client association
+     * @param req The request
+     *
+     * @public
+     * @static
+     * @function
+     * @async
+     * @memberof OperationDispatcher
+     */
     public static async dispatchDSPRequest (
         ctx: Context,
         assn: DSPAssociation,
@@ -692,6 +785,26 @@ class OperationDispatcher {
         );
     }
 
+    /**
+     * @summary Dispatch a local search operation
+     * @description
+     *
+     * This function exists essentially to cut down on encoding and decoding
+     * search arguments repeatedly, and to bypass validation, since calls to
+     * this function will be assumed to have originated internally.
+     *
+     * @param ctx The context object
+     * @param state The operation dispatcher state
+     * @param assn The client association
+     * @param invokeId The invoke ID of the operation
+     * @param argument The search operation argument
+     * @param chaining The chaining arguments
+     *
+     * @private
+     * @static
+     * @function
+     * @async
+     */
     private static async localSearchOperationEvaluation (
         ctx: Context,
         state: OperationDispatcherState,
@@ -742,6 +855,25 @@ class OperationDispatcher {
         };
     }
 
+    /**
+     * @summary Dispatch a local search operation
+     * @description
+     *
+     * This function exists essentially to cut down on encoding and decoding
+     * search arguments repeatedly, and to bypass validation, since calls to
+     * this function will be assumed to have originated internally.
+     *
+     * @param ctx The context object
+     * @param assn The client association
+     * @param invokeId The invoke ID of the operation
+     * @param argument The search argument
+     * @param chaining The chaining arguments
+     *
+     * @public
+     * @static
+     * @function
+     * @async
+     */
     public static async dispatchLocalSearchDSPRequest (
         ctx: Context,
         assn: ClientAssociation,

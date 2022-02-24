@@ -7,6 +7,15 @@ import { SystemController } from "./admin/system.controller";
 import ctx from "./ctx";
 import { CONTEXT } from "./constants";
 
+/**
+ * @summary The root NestJS module for starting the web admin console
+ * @description
+ *
+ * This is the module that gets "bootstrapped" to start up the NestJS web admin
+ * console.
+ *
+ * @class
+ */
 @Module({
     controllers: [
         DitController,

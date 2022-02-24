@@ -50,6 +50,21 @@ import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import isDebugging from "is-debugging";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 
+/**
+ * @summary Check for Meerkat DSA updates
+ * @description
+ *
+ * This function checks for available Meerkat DSA updates via DNS. This checks
+ * a hard-coded updates domain's DNS TXT records for information as to what
+ * versions are available, then compares that to the local version of Meerkat
+ * DSA to decide if there is an update available.
+ *
+ * @param ctx The context object
+ * @param currentVersionString the current version (as a string)
+ *
+ * @function
+ * @async
+ */
 async function checkForUpdates (ctx: Context, currentVersionString: string): Promise<void> {
     const currentVersion = semver.parse(currentVersionString);
     if (!currentVersion) {
@@ -110,6 +125,23 @@ async function checkForUpdates (ctx: Context, currentVersionString: string): Pro
     }
 }
 
+/**
+ * @summary Higher-order function that gets a function that checks that a chunk of data will not exceed a buffer's limit
+ * @description
+ *
+ * This is a higher-order function that gets a function that checks that an
+ * added chunk of data from the IDM socket will not overflow the configured
+ * IDM buffer size. If it does, this function logs what happened, sends an IDM
+ * abort notification, and closes the connection.
+ *
+ * @param ctx The context object
+ * @param idm An IDM transport socket
+ * @param source A remote host identifier
+ * @returns A function that can be used to check if an additional chunk of data
+ *  would exceed a buffer limit.
+ *
+ * @function
+ */
 const getIdmBufferLengthGate = (ctx: Context, idm: IDMConnection, source: string) => (addedBytes: number) => {
     const currentBufferSize: number = (
         idm.getBufferSize()
@@ -127,6 +159,23 @@ const getIdmBufferLengthGate = (ctx: Context, idm: IDMConnection, source: string
     }
 };
 
+/**
+ * @summary Higher-order function that gets a function that checks if an IDM-PDU that is too large
+ * @description
+ *
+ * This higher-order function that returns a function that checks if the length
+ * of an IDM segment, combined with the current cumulative size of all other
+ * IDM segments into which an IDM-PDU is fragmented, would produce an IDM-PDU
+ * that would exceed the configured IDM-PDU size limit.
+ *
+ * @param ctx The context object
+ * @param idm An IDM transport socket
+ * @param source A remote host identifier
+ * @returns A function that can check if an added IDM segment would produce an
+ *  IDM-PDU that is too large
+ *
+ * @function
+ */
 const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) => (addedBytes: number) => {
     const currentPduSize: number = (
         idm.getAccumulatedPDUSize()
@@ -160,10 +209,32 @@ const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) =
 
 const PROCESS_NAME: string = "Meerkat DSA";
 
-// This function is necessary, because the TCP connection can be recycled
-// between multiple binds. An analog of this need not exist for LDAP, because
-// the LDAP connection alone monopolizes binds and unbinds, unlike IDM, which
-// can be used to transport multiple protocols.
+
+
+/**
+ * @summary Attach default event listeners to an IDM connection
+ * @description
+ *
+ * When an IDM connection is established, it must have event listeners set up
+ * to actually handle IDM PDUs. Further, some of these handlers will get
+ * removed after an association is bound on this IDM socket, so, if the
+ * association is ever unbound, we need to re-attach these event listeners so
+ * that it was as though it were a new IDM socket.
+ *
+ * This function is necessary, because the TCP connection can be recycled
+ * between multiple binds. An analog of this need not exist for LDAP, because
+ * the LDAP connection alone monopolizes binds and unbinds, unlike IDM, which
+ * can be used to transport multiple protocols.
+ *
+ * @param ctx The context object
+ * @param originalSocket The original socket (must be the original socket,
+ *  because it is indexed by reference)
+ * @param source A remote host identifier
+ * @param idm The underlying IDM transport socket
+ * @param startTimes An index of when sockets were opened
+ *
+ * @function
+ */
 function attachUnboundEventListenersToIDMConnection (
     ctx: Context,
     originalSocket: net.Socket | tls.TLSSocket, // Even if STARTTLS is used, you must use the original socket for "bookkeeping" in the associations index.
@@ -312,6 +383,18 @@ function attachUnboundEventListenersToIDMConnection (
     });
 }
 
+/**
+ * @summary Higher-order function that produces an IDM connection handler
+ * @description
+ *
+ * This higher-order function gets an IDM connection handler.
+ *
+ * @param ctx The context object
+ * @param startTimes A map of socket start times, indexed by socket reference
+ * @returns An IDM connection handler
+ *
+ * @function
+ */
 function handleIDM (
     ctx: Context,
     startTimes: Map<net.Socket, Date>,
@@ -434,6 +517,18 @@ function handleIDM (
     };
 }
 
+/**
+ * @summary Higher-order function that produces an LDAP connection handler
+ * @description
+ *
+ * This higher-order function gets an LDAP connection handler.
+ *
+ * @param ctx The context object
+ * @param startTimes A map of socket start times, indexed by socket reference
+ * @returns An LDAP connection handler
+ *
+ * @function
+ */
 function handleLDAP (
     ctx: Context,
     startTimes: Map<net.Socket, Date>,
@@ -552,6 +647,18 @@ function handleLDAP (
     };
 }
 
+/**
+ * @summary The entry point of the server
+ * @description
+ *
+ * This is the entry point of the server. This function prepares Meerkat DSA's
+ * internal index of schema objects, checks for updates, cleans up from the
+ * last run, runs an init script, starts up network sockets, and terminates any
+ * expired operational bindings.
+ *
+ * @function
+ * @async
+ */
 export default
 async function main (): Promise<void> {
     const packageJSON = await import("package.json").catch(() => {});
