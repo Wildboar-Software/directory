@@ -180,6 +180,7 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
+import getLDAPDecoder from "../ldap/getLDAPDecoder";
 
 const now: TimeAssertion = {
     now: null,
@@ -194,28 +195,22 @@ const NOT_UNDERSTOOD: DAPFilter = {
     and: [],
 };
 
-function getLDAPDecoder (ctx: Context, descriptor: string): LDAPSyntaxDecoder | null {
-    const spec = ctx.attributeTypes.get(descriptor.toLowerCase());
-    if (!spec) {
-        return null;
-    }
-    const parentTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, spec.id));
-    const ldapSyntaxOID: OBJECT_IDENTIFIER | undefined = [
-        spec.id,
-        ...parentTypes,
-    ]
-        .map((spec) => ctx.attributeTypes.get(spec.toString())?.ldapSyntax)
-        .find((oid) => oid);
-    if (!ldapSyntaxOID) {
-        return null;
-    }
-    const ldapSyntax = ctx.ldapSyntaxes.get(ldapSyntaxOID.toString());
-    if (!ldapSyntax?.decoder) {
-        return null;
-    }
-    return ldapSyntax.decoder;
-}
-
+/**
+ * @summary Get a function that can decode LDAP assertions for a given type
+ * @description
+ *
+ * For equality matching rules, the assertion syntax MAY differ from the value
+ * syntax. For this reason, we have to identify a different function that will
+ * decode LDAP values of the assertion syntax instead of the value syntax. That
+ * is what this function does, and how it differs from `getLDAPDecoder`.
+ *
+ * @param ctx The context object
+ * @param descriptor The attribute descriptor, which must already be normalized
+ * @returns An LDAP syntax decoder function, if one could be determined, or
+ *  `null` otherwise.
+ *
+ * @function
+ */
 function getLDAPDecoderForEqualityMatcher (ctx: Context, descriptor: string): LDAPSyntaxDecoder | null {
     const spec = ctx.attributeTypes.get(descriptor.toLowerCase());
     if (!spec) {
@@ -264,6 +259,18 @@ function createAttributeErrorData (ctx: Context, descriptor: string): [ string, 
     ];
 }
 
+/**
+ * @summary Convert an LDAP modification into an X.500 `EntryModification`
+ * @description
+ *
+ * Converts an LDAP entry modification into an X.500 `EntryModification`.
+ *
+ * @param ctx The context object
+ * @param mod The LDAP entry modification
+ * @returns An X.500 `EntryModification`
+ *
+ * @function
+ */
 function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification): EntryModification {
     const desc = normalizeAttributeDescription(mod.modification.type_);
     const spec = ctx.attributeTypes.get(desc.toLowerCase());
@@ -395,6 +402,18 @@ function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification):
     }
 }
 
+/**
+ * @summary Convert an LDAP `AttributeValueAssertion` into an X.500 `AttributeValueAssertion`
+ * @description
+ *
+ * Converts an LDAP `AttributeValueAssertion` into an X.500 `AttributeValueAssertion`
+ *
+ * @param ctx The context object
+ * @param ava An LDAP `AttributeValueAssertion`
+ * @returns An X.500 `AttributeValueAssertion`
+ *
+ * @function
+ */
 function convert_ldap_ava_to_dap_ava (ctx: Context, ava: LDAPAttributeValueAssertion): AttributeValueAssertion {
     const desc = normalizeAttributeDescription(ava.attributeDesc);
     const spec = ctx.attributeTypes.get(desc.toLowerCase());
@@ -443,6 +462,18 @@ function convert_ldap_ava_to_dap_ava (ctx: Context, ava: LDAPAttributeValueAsser
     );
 }
 
+/**
+ * @summary Convert an LDAP `Filter` into an X.500 `Filter`
+ * @description
+ *
+ * Converts an LDAP `Filter` into an X.500 `Filter`.
+ *
+ * @param ctx The context object
+ * @param filter An LDAP `Filter`
+ * @returns An X.500 `Filter`
+ *
+ * @function
+ */
 function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): DAPFilter {
     if ("and" in filter) {
         return {
@@ -581,6 +612,20 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
     }
 }
 
+/**
+ * @summary Convert an LDAP `AttributeSelection` to an X.500 `EntryInformationSelection`
+ * @description
+ *
+ * Converts an LDAP `AttributeSelection` to an X.500 `EntryInformationSelection`.
+ *
+ * @param ctx The context object
+ * @param selection An LDAP `AttributeSelection`
+ * @param typesOnly Whether only attribute types have been requested with the
+ *  `typesOnly` parameter in the LDAP `search` operation
+ * @returns An X.500 `EntryInformationSelection`
+ *
+ * @function
+ */
 function convertAttributeSelectiontoEIS (
     ctx: Context,
     selection: AttributeSelection,
@@ -1009,7 +1054,7 @@ function ldapRequestToDAPRequest (
                     .map((attr): Attribute | undefined => {
                         const desc = normalizeAttributeDescription(attr.type_);
                         const spec = ctx.attributeTypes.get(desc.toLowerCase());
-                        const decoder = getLDAPDecoder(ctx, desc);
+                        const decoder = getLDAPDecoder(ctx, attr.type_);
                         if (!decoder) {
                             throw new errors.AttributeError(...createAttributeErrorData(ctx, desc));
                         }

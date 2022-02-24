@@ -81,7 +81,6 @@ import {
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import {
     AttributeErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
@@ -106,37 +105,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 import { strict as assert } from "assert";
+import getLDAPEncoder from "../ldap/getLDAPEncoder";
 
 const DEFAULT_LDAP_FILTER: LDAPFilter = {
     present: encodeLDAPOID(objectClass["&id"]),
 };
-
-/**
- * @summary Get the LDAP encoder for a given attribute type
- * @description
- *
- * This function takes an attribute type object identifier and, using Meerkat
- * DSA's internal index of known attribute types and LDAP syntaxes, determines
- * which function, if any, can be used to decode LDAP string-encoded values into
- * `ASN1Element`s, as used internally by Meerkat DSA to represent values.
- *
- * @param ctx The context object
- * @param type_ The attribute type whose encoder is to be returned
- * @returns The LDAP syntax encoder, or `null` if it cannot be determined
- *
- * @function
- */
-function getLDAPEncoder (ctx: Context, type_: AttributeType): LDAPSyntaxEncoder | null {
-    const spec = ctx.attributeTypes.get(type_.toString());
-    if (!spec?.ldapSyntax) {
-        return null;
-    }
-    const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
-    if (!ldapSyntax?.encoder) {
-        return null;
-    }
-    return ldapSyntax.encoder;
-}
 
 function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string, AttributeErrorData ] {
     return [
@@ -306,6 +279,18 @@ function convert_dap_mod_to_ldap_mod (
     }
 }
 
+/**
+ * @summary Convert an X.500 `AttributeValueAssertion` to an LDAP `AttributeValueAssertion`
+ * @description
+ *
+ * Converts an X.500 `AttributeValueAssertion` to an LDAP `AttributeValueAssertion`.
+ *
+ * @param ctx The context object
+ * @param ava An X.500 `AttributeValueAssertion`
+ * @returns An LDAP `AttributeValueAssertion`
+ *
+ * @function
+ */
 function convert_dap_ava_to_ldap_ava (ctx: Context, ava: AttributeValueAssertion): LDAPAttributeValueAssertion {
     const encoder = getLDAPEncoder(ctx, ava.type_);
     if (!encoder) {
@@ -317,10 +302,26 @@ function convert_dap_ava_to_ldap_ava (ctx: Context, ava: AttributeValueAssertion
     );
 }
 
+/**
+ * @summary Default filter if a filter cannot be converted to LDAP.
+ * @constant
+ */
 const NOT_UNDERSTOOD: LDAPFilter = {
     and: [],
 };
 
+/**
+ * @summary Convert an X.500 `FilterItem` to an LDAP `FilterItem`
+ * @description
+ *
+ * Converts an X.500 `FilterItem` to an LDAP `FilterItem`.
+ *
+ * @param ctx The context object
+ * @param fi An X.500 `FilterItem`
+ * @returns An LDAP `FilterItem`
+ *
+ * @function
+ */
 function convertDAPFilterItemToLDAPFilterItem (ctx: Context, fi: DAPFilterItem): LDAPFilter {
     if ("equality" in fi) {
         return {
@@ -419,6 +420,18 @@ function convertDAPFilterItemToLDAPFilterItem (ctx: Context, fi: DAPFilterItem):
     }
 }
 
+/**
+ * @summary Convert an X.500 `Filter` into an LDAP `Filter`
+ * @description
+ *
+ * Converts an X.500 `Filter` into an LDAP `Filter`.
+ *
+ * @param ctx The context object
+ * @param filter An X.500 `Filter`
+ * @returns An LDAP `Filter`
+ *
+ * @function
+ */
 function convertDAPFilterToLDAPFilter (ctx: Context, filter: DAPFilter): LDAPFilter {
     if ("and" in filter) {
         return {
