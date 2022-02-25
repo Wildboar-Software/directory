@@ -1055,16 +1055,36 @@ interface ContextTypeInfo {
     validator?: (value: ASN1Element) => unknown;
 }
 
+/**
+ * @summary
+ */
 export
 interface Context {
+
+    /** The Internationalization object from i18next */
     i18n: i18n,
+
+    /** Information on the DIT from the perspective of this DSA */
     dit: DITInfo;
+
+    /** Information on this DSA */
     dsa: DSAInfo;
+
+    /** A map of TLS sockets by reference to application associations, or `null` if no association exists yet */
     associations: Map<Socket, ClientAssociation | null>, // null = the socket exists, but has not bound yet.
+
+    /** The current configuration of the DSA */
     config: Configuration;
+
+    /** The `winston` logger */
     log: Logger;
+
+    /** The Prisma client (for interacting with the database) */
     db: PrismaClient;
+
+    /** Telemetry-related stuff */
     telemetry: Telemetry;
+
     /**
      * LDAP often uses human-friendly names object descriptors instead of object
      * identifiers.
@@ -1073,29 +1093,107 @@ interface Context {
      * attributes, object classes, name forms, etc. using other fields of
      * `Context`, but it speeds up lookups, and it could contain object
      * identifiers that do not correspond to X.500-related objects.
+     *
+     * @example
+     * ctx.objectIdentifierToName.get("2.5.4.3"); // returns "commonName"
      */
     objectIdentifierToName: Map<IndexableOID, string>;
+
+    /**
+     * A mapping of object names to object identifiers
+     * @example
+     * ctx.nameToObjectIdentifier.get("organization");
+     */
     nameToObjectIdentifier: Map<string, OBJECT_IDENTIFIER>;
+
+    /**
+     * An index of object class information by object identifier strings and names
+     * @example
+     * ctx.objectClasses.get("1.2.3.4");
+     */
     objectClasses: Map<IndexableOID, ObjectClassInfo>;
-    /* Note that there cannot be a single attributes hierarchy like there is
-    with structural classes. */
+
+    /**
+     * An index of attribute type information by object identifier strings and names
+     * @example
+     * ctx.attributeTypes.get("2.5.4.3"); // Returns information on `commonName`
+     */
     attributeTypes: Map<IndexableOID, AttributeInfo>;
+
+    /**
+     * An index of LDAP syntaxes by object identifier strings and names
+     * @example
+     * ctx.ldapSyntaxes.get("1.2.3.4");
+     * */
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
+
+    /**
+     * A mapping of LDAP syntaxes of ASN.1 syntaxes by object identifier string
+     * @example
+     * ctx.ldapSyntaxToASN1Syntax.get("1.3.6.1.4.1.1466.115.121.1.50"); // Returns "TelephoneNumber"
+     */
     ldapSyntaxToASN1Syntax: Map<IndexableOID, string>;
+
+    /** An index of equality matching rules by object identifier strings and names */
     equalityMatchingRules: Map<IndexableOID, MatchingRuleInfo<EqualityMatcher>>;
+
+    /** An index of ordering matching rules by object identifier strings and names */
     orderingMatchingRules: Map<IndexableOID, MatchingRuleInfo<OrderingMatcher>>;
+
+    /** An index of substrings matching rules by object identifier strings and names */
     substringsMatchingRules: Map<IndexableOID, MatchingRuleInfo<SubstringsMatcher>>;
     /**
+     * An index of substrings matching rules by object identifier strings and
+     * names.
+     *
      * This maps the object identifiers of equality matching rules to
      * approximate matching rule, if there is one available.
      */
     approxMatchingRules: Map<IndexableOID, EqualityMatcher>;
+
+    /**
+     * An index of context type information by object identifier strings and names
+     * @example
+     * ctx.contextTypes.get("1.2.3.4");
+     */
     contextTypes: Map<IndexableOID, ContextTypeInfo>;
+
+    /**
+     * The set of object identifier strings of matching rules that may be used
+     * for equality matching in object names
+     */
     matchingRulesSuitableForNaming: Set<IndexableOID>;
+
+    /**
+     * An event emitter for operational binding events.
+     */
     operationalBindingControlEvents: OperationalBindingControlEvents;
+
+    /**
+     * The set of object identifier strings of attribute types that are
+     * collective
+     */
     collectiveAttributes: Set<IndexableOID>;
+
+    /**
+     * An index of name form information by object identifier strings and names
+     * @example
+     * ctx.nameForms.get("1.2.3.4");
+     */
     nameForms: Map<IndexableOID, NameFormInfo>;
+
+    /**
+     * The set of all recently used invokeIDs used by this DSA for outbound
+     * requests. This shall be cleared every so often so that invoke IDs are
+     * not exhausted (though that would be difficult!).
+     */
     usedInvokeIDs: Set<number>;
+
+    /**
+     * An index of LDAP names that are used to identify two different things.
+     * If an LDAP name is used twice between two different things, its numeric
+     * object identifier shall be used exclusively to identify it.
+     */
     duplicatedLDAPNames: Set<IndexableOID>;
 }
 
