@@ -14,14 +14,6 @@ are used, anything other than `1` simply gets interpreted as FALSE.
 Meerkat DSA does not validate environment variable values. If you supply
 invalid values, you will get unspecified behavior.
 
-## AUTH_LEVEL_LOCAL_QUALIFIER_POINTS_FOR_TLS
-
-The "points" that are added to the `localQualifier` component of the
-calculated `AuthenticationLevel` of a user. This can be used to "tip the scale"
-to enable a user to access an item that it would otherwise not be able to. For
-instance, this can be used to prohibit a user's access to reading an entry
-unless TLS is used.
-
 ## DATABASE_URL
 
 **Required**. A database URL indicating the database to which Meerkat DSA must
