@@ -57,32 +57,94 @@ import IDMStatus from "./IDMStatus";
 const IDM_V1_FRAME_SIZE: number = 6;
 const IDM_V2_FRAME_SIZE: number = 8;
 
+/**
+ * @summary An Internet Directly-Mapped (IDM) protocol socket
+ * @description
+ *
+ * An Internet Directly-Mapped (IDM) protocol socket.
+ *
+ * @class
+ */
 export default
 class IDMConnection {
+
+    /** The internal buffer of bytes received on the TCP socket */
     private buffer: Buffer = Buffer.allocUnsafe(0);
+
+    /** The established version of the IDM protocol used by this socket */
     private version: IDMVersion | undefined = undefined;
+
+    /** The IDM segments of the current IDM PDU */
     private currentSegments: IDMSegment[] = [];
+
+    /** A channel for IDM socket-related events */
     public readonly events: IDMEventEmitter = new EventEmitter();
+
+    /** The underlying TCP socket */
     public socket!: net.Socket;
+
+    /** The status of this side of the IDM connection */
     public localStatus: IDMStatus = IDMStatus.UNBOUND;
+
+    /** The inferred status of the other side of the IDM connection */
     public remoteStatus: IDMStatus = IDMStatus.UNBOUND;
+
+    /** Whether StartTLS was already requested */
     private startTLSRequested: boolean = false;
+
+    /** The count of how many IDM frames have been received */
     private framesReceived: number = 0;
 
+    /**
+     * @summary Reset the state of the IDM socket
+     * @description
+     *
+     * Resets the state of the IDM socket.
+     *
+     * @private
+     * @function
+     */
     private resetState (): void {
         this.buffer = Buffer.allocUnsafe(0);
         this.version = IDMVersion.v1;
         this.currentSegments = [];
     }
 
+    /**
+     * @summary Gets the number of frames received
+     * @description
+     *
+     * Gets the number of frames received.
+     *
+     * @public
+     * @function
+     */
     public getFramesReceived (): number {
         return this.framesReceived;
     }
 
+    /**
+     * @summary Gets the current size of the buffer
+     * @description
+     *
+     * Gets the current size of the buffer.
+     *
+     * @public
+     * @function
+     */
     public getBufferSize (): number {
         return this.buffer.length;
     }
 
+    /**
+     * @summary Gets the current size in bytes of the incoming IDM PDU
+     * @description
+     *
+     * Gets the current size in bytes of the incoming IDM PDU.
+     *
+     * @public
+     * @function
+     */
     public getAccumulatedPDUSize (): number {
         // Yes, I know you can do this with .reduce(), but this is more performant.
         let sum: number = 0;
@@ -92,14 +154,46 @@ class IDMConnection {
         return sum;
     }
 
+    /**
+     * @summary Gets the number of IDM segments in the incoming IDM PDU
+     * @description
+     *
+     * Gets the number of IDM segments in the incoming IDM PDU.
+     *
+     * @returns The number of IDM segments in the incoming IDM PDU.
+     *
+     * @public
+     * @function
+     */
     public getNumberOfSegmentsInPDU (): number {
         return this.currentSegments.length;
     }
 
+    /**
+     * @summary Indicates whether this IDM socket is protected by TLS
+     * @description
+     *
+     * Indicates whether this IDM socket is protected by TLS.
+     *
+     * @returns A `boolean` indicating whether this IDM socket is protected by TLS.
+     *
+     * @public
+     * @function
+     */
     public protectedByTLS (): boolean {
         return (this.socket instanceof tls.TLSSocket);
     }
 
+    /**
+     * @summary Read an IDM segment from the current buffer
+     * @description
+     *
+     * "Chomps" the first IDM segment that can be read from the current buffer,
+     * and shifts the read bytes out of the buffer.
+     *
+     * @private
+     * @function
+     */
     private chompFrame (): void {
         if (this.buffer.length === 0) {
             return;
@@ -186,6 +280,17 @@ class IDMConnection {
         }
     }
 
+    /**
+     * @summary Handle a chunk of received bytes from the underlying TCP socket
+     * @description
+     *
+     * Handles a chunk of received bytes from the underlying TCP socket.
+     *
+     * @param data The chunk of bytes received from the underlying TCP socket
+     *
+     * @private
+     * @function
+     */
     private handleData (data: Buffer): void {
         try {
             this.events.emit("socketDataLength", data.length);
@@ -196,11 +301,32 @@ class IDMConnection {
         }
     };
 
+    /**
+     * @summary Close this IDM socket and the underlying TCP socket
+     * @description
+     *
+     * Closes this IDM socket and the underlying TCP socket.
+     *
+     * @public
+     * @function
+     */
     public close (): void {
         this.buffer = Buffer.alloc(0);
         this.socket.destroy();
     }
 
+    /**
+     * @summary Handle a received IDM PDU
+     * @description
+     *
+     * Handles a received IDM PDU.
+     *
+     * @param pdu The IDM PDU to be handled
+     *
+     * @async
+     * @private
+     * @function
+     */
     private async handlePDU (pdu: IDM_PDU): Promise<void> {
         if ("bind" in pdu) {
             if (this.remoteStatus !== IDMStatus.UNBOUND) {
@@ -334,6 +460,18 @@ class IDMConnection {
         }
     }
 
+    /**
+     * @summary Write raw data into IDM segments
+     * @description
+     *
+     * Writes raw data into IDM segments
+     *
+     * @param data The raw bytes of the PDU to be written into an IDM segment
+     * @param final Whether the IDM segment is the final segment
+     *
+     * @public
+     * @function
+     */
     public write (data: Uint8Array, final: boolean = true): void {
         const header = ((): Buffer => {
             switch (this.version ?? IDMVersion.v1) {
@@ -376,6 +514,20 @@ class IDMConnection {
         // ]));
     }
 
+    /**
+     * @summary Write an IDM bind PDU
+     * @description
+     *
+     * Write an IDM bind PDU
+     *
+     * @param protocolID The object identifier of the protocol
+     * @param argument The bind argument
+     * @param callingAETitle The calling application entity (AE) title
+     * @param calledAETitle The called application entity (AE) title
+     *
+     * @public
+     * @function
+     */
     public writeBind (
         protocolID: OBJECT_IDENTIFIER,
         argument: ASN1Element,
@@ -390,6 +542,19 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM bind result
+     * @description
+     *
+     * Write an IDM bind result PDU
+     *
+     * @param protocolID The object identifier of the protocol
+     * @param result The bind result parameter
+     * @param respondingAETitle The responding application entity (AE) title
+     *
+     * @public
+     * @function
+     */
     public writeBindResult (
         protocolID: OBJECT_IDENTIFIER,
         result: ASN1Element,
@@ -403,6 +568,19 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM bind error
+     * @description
+     *
+     * Write an IDM bind error PDU
+     *
+     * @param protocolID The object identifier of the protocol
+     * @param result The bind result parameter
+     * @param respondingAETitle The responding application entity (AE) title
+     *
+     * @public
+     * @function
+     */
     public writeBindError (
         protocolID: OBJECT_IDENTIFIER,
         error: ASN1Element,
@@ -421,6 +599,19 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM request
+     * @description
+     *
+     * Write an IDM request PDU
+     *
+     * @param invokeID The invoke ID of the request
+     * @param opcode The opcode of the request
+     * @param argument The request argument
+     *
+     * @public
+     * @function
+     */
     public writeRequest (invokeID: INTEGER, opcode: Code, argument: ASN1Element): void {
         const request = new Request(invokeID, opcode, argument);
         const idm: IDM_PDU = {
@@ -429,6 +620,19 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM result
+     * @description
+     *
+     * Write an IDM result PDU
+     *
+     * @param invokeID The invoke ID of the result
+     * @param opcode The opcode of the result
+     * @param resultValue The result parameter
+     *
+     * @public
+     * @function
+     */
     public writeResult (invokeID: INTEGER, opcode: Code, resultValue: ASN1Element): void {
         const result = new IdmResult(invokeID, opcode, resultValue);
         const idm: IDM_PDU = {
@@ -437,6 +641,19 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM error
+     * @description
+     *
+     * Write an IDM error PDU
+     *
+     * @param invokeID The invoke ID of the request that produced the error
+     * @param errcode The error code
+     * @param data The error parameter
+     *
+     * @public
+     * @function
+     */
     public writeError (invokeId: INTEGER, errcode: ASN1Element, data: ASN1Element): void {
         const error = new IDMError(invokeId, errcode, data);
         const idm: IDM_PDU = {
@@ -445,6 +662,18 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM reject
+     * @description
+     *
+     * Write an IDM reject PDU
+     *
+     * @param invokeID The invoke ID of the request that produced the reject
+     * @param reason The reject reason
+     *
+     * @public
+     * @function
+     */
     public writeReject (invokeID: INTEGER, reason: IdmReject_reason): void {
         const reject = new IdmReject(invokeID, reason);
         const idm: IDM_PDU = {
@@ -453,6 +682,15 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM unbind
+     * @description
+     *
+     * Write an IDM unbind PDU
+     *
+     * @public
+     * @function
+     */
     public writeUnbind (): void {
         this.localStatus = IDMStatus.UNBOUND;
         const unbind: Unbind = null;
@@ -462,6 +700,17 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM abort
+     * @description
+     *
+     * Write an IDM abort PDU
+     *
+     * @param abort The abort reason
+     *
+     * @public
+     * @function
+     */
     public writeAbort (abort: Abort): void {
         try {
             const idm: IDM_PDU = {
@@ -474,6 +723,15 @@ class IDMConnection {
         }
     }
 
+    /**
+     * @summary Write an IDM StartTLS PDU
+     * @description
+     *
+     * Write an IDM StartTLS PDU
+     *
+     * @public
+     * @function
+     */
     public writeStartTLS (): void {
         this.startTLSRequested = true;
         const idm: IDM_PDU = {
@@ -482,6 +740,15 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @summary Write an IDM TLS response
+     * @description
+     *
+     * Write an IDM TLSResponse PDU
+     *
+     * @public
+     * @function
+     */
     public writeTLSResponse (tLSResponse: TLSResponse): void {
         const idm: IDM_PDU = {
             tLSResponse,
@@ -489,6 +756,10 @@ class IDMConnection {
         this.write(_encode_IDM_PDU(idm, BER).toBytes());
     }
 
+    /**
+     * @param s The original TCP socket
+     * @param starttlsOptions Options to use if the socket changes to using TLS
+     */
     constructor (
         readonly s: net.Socket,
         readonly starttlsOptions?: tls.TLSSocketOptions,
@@ -496,4 +767,5 @@ class IDMConnection {
         this.socket = s;
         this.socket.on("data", (data: Buffer) => this.handleData(data));
     }
+
 }
