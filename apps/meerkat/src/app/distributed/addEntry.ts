@@ -1061,8 +1061,12 @@ async function addEntry (
                 result: chainedResult,
                 stats: {},
             };
-        // } else if ("error" in obResponse && obResponse.error) {
-        //     // FIXME: Shouldn't this throw the error that the remote DSA threw?
+        } else if ("error" in obResponse && obResponse.error) {
+            throw new errors.ChainedError(
+                ctx.i18n.t("err:chained_error"),
+                obResponse.error,
+                obResponse.errcode,
+            );
         } else {
             throw new errors.ServiceError(
                 ctx.i18n.t("err:could_not_add_entry_to_remote_dsa"),
