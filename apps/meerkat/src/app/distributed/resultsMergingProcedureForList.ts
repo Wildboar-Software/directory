@@ -36,7 +36,7 @@ async function resultsMergingProcedureForList (
 ): Promise<ListState> {
     // We skip deduplicating listInfo for now.
     if (local) {
-        /** REVIEW:
+        /** DEVIATION:
          * The specification says that, if the result is "null" (has no entries)
          * the DSA may choose to throw an "appropriate error" depending on
          * access controls and whether "local policy allows." The problem is

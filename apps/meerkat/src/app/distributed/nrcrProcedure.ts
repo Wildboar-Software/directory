@@ -55,6 +55,9 @@ import type {
 import type {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    ReferenceType_nonSpecificSubordinate,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 
 // TODO: Really, this should have the same return type as the OperationDispatcher.
 // This also returns a value, but also mutates the OD state, which is sketchy.
@@ -187,16 +190,7 @@ async function nrcrProcedure (
         }
         assert(cref.accessPoints[0]);
         checkTimeLimit();
-        // /**
-        //  * From ITU Recommendation X.518 (2016), Section 10.11, Item f:
-        //  *
-        //  * > Only where non-specific subordinate references are involved can
-        //  * > there be more than one AccessPointInformation item [on a
-        //  * > Continuation Reference].
-        //  *
-        //  * TODO: Review if NSSRs can produce a CR with only one API.
-        //  */
-        const isNSSR = (cref.accessPoints.length > 1);
+        const isNSSR = (cref.referenceType === ReferenceType_nonSpecificSubordinate);
         if (!isNSSR) {
             const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req, assn, state);
             if (!outcome) {

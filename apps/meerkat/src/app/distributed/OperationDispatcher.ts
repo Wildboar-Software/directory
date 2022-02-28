@@ -106,6 +106,8 @@ import failover from "../utils/failover";
 import emptyChainingResults from "../x500/emptyChainingResults";
 import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
 import mergeSortAndPageList from "./mergeSortAndPageList";
+import { SearchResultData_searchInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
+import getDistinguishedName from "../x500/getDistinguishedName";
 
 export
 type SearchResultOrError = {
@@ -478,7 +480,7 @@ class OperationDispatcher {
                 depth: 0,
                 alreadyReturnedById: new Set(),
             };
-            await relatedEntryProcedure( // REVIEW: Is there any reason for REP to return chaining results?
+            await relatedEntryProcedure(
                 ctx,
                 assn,
                 state,
@@ -837,14 +839,42 @@ class OperationDispatcher {
             // Only Search (I) results in results merging.
             await search_i(ctx, assn, state, argument, searchResponse);
         }
-        // REVIEW: Is this right? Just above, you say "Only Search (I) results in results merging."
         const postMergeState = await resultsMergingProcedureForSearch(
             ctx,
             searchResponse,
             state.NRcontinuationList,
             state.SRcontinuationList,
         );
-        const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
+        const result: SearchResult = (nameResolutionPhase === completed)
+            ? { // Only Search (I) results in results merging.
+                unsigned: {
+                    uncorrelatedSearchInfo: [
+                        {
+                            unsigned: {
+                                searchInfo: new SearchResultData_searchInfo(
+                                    {
+                                        rdnSequence: getDistinguishedName(state.foundDSE),
+                                    },
+                                    searchResponse.results,
+                                    searchResponse.poq,
+                                    undefined,
+                                    [],
+                                    createSecurityParameters(
+                                        ctx,
+                                        assn.boundNameAndUID?.dn,
+                                        search["&operationCode"],
+                                    ),
+                                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                    state.chainingArguments.aliasDereferenced,
+                                    undefined,
+                                ),
+                            },
+                        },
+                        ...searchResponse.resultSets,
+                    ],
+                },
+            }
+            : await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
         return {
             invokeId: {
                 present: 1,

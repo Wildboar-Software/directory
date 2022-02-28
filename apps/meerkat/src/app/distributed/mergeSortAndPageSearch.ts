@@ -107,10 +107,7 @@ function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): Part
                 ...(b.notification ?? []),
             ]
             : undefined,
-        // REVIEW: I am not sure this is how you should do this. You might need
-        // to add these together. The reason I don't is the specification says
-        // that hierarchy selections should not count when merging these.
-        a.entryCount ?? b.entryCount,
+        undefined, // entryCount does not matter because we don't even use it from the POQs.
     );
 }
 
@@ -273,7 +270,7 @@ async function mergeSortAndPageSearch(
     let resultsToReturn: EntryInformation[] = [];
     const foundDN = getDistinguishedName(state.foundDSE);
     // If there is no paging, we just return an arbitrary selection of the results that is less than the sizeLimit.
-    if(!searchState.paging?.[1]) {
+    if (!searchState.paging?.[1]) {
         const sizeLimit: number = searchArgument.serviceControls?.sizeLimit
             ? Math.max(Number(searchArgument.serviceControls.sizeLimit), 1)
             : MAX_RESULTS;
@@ -406,7 +403,6 @@ async function mergeSortAndPageSearch(
             },
         },
     });
-    // REVIEW: Will this get stuck in a loop if there are NO results?
     const cursorId: number = results[results.length - 1]?.result_index ?? 0;
     searchState.paging[1].cursorId = cursorId;
     const done: boolean = (

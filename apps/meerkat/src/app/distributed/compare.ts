@@ -505,7 +505,6 @@ async function compare (
                                         (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                     ));
                             } else if ("preference" in sc.contextAssertions) {
-                                // REVIEW: I _think_ this is fine. See X.511, Section 7.6.3.
                                 return sc.contextAssertions.preference
                                     .some((ca): boolean => evaluateContextAssertion(
                                         ca,

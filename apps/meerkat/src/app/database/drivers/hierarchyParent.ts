@@ -208,12 +208,24 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.entryUpdate.hierarchyParentDN = Prisma.DbNull;
     pendingUpdates.entryUpdate.hierarchyTopDN = Prisma.DbNull;
     pendingUpdates.entryUpdate.hierarchyPath = null;
-    // REVIEW: Set the subordinates as tops or delete?
-    // ITU X.501 says that when you remove an entry, all of its HC should be removed from the HG.
-    // Still, just changing the children to hierarchical tops preserves what could be a lot of work.
+    /**
+     * ITU Recommendation X.501 (2016), Section 14.10 states that, when a
+     * hierarchical parent is removed, its children are to be removed from _the_
+     * hierarchical group. The specification does not make it clear whether they
+     * should now belong to separate hierarchical groups with themselves at the top
+     * or if we should recursively remove all hierarchical group attributes for all
+     * hierarchical descendants. Meerkat DSA puts the children in their own separate
+     * hierarchical groups. It is not clear whether this is a deviation from the
+     * specification at all. This was chosen because it is the most performant,
+     * easiest to implement, and preserves potentially a lot of work from accidental
+     * deletion.
+     */
     const children = await ctx.db.entry.findMany({
         where: {
             hierarchyParent_id: vertex.dse.id,
+            hierarchyPath: {
+                not: null,
+            },
         },
         select: {
             id: true,
@@ -230,7 +242,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                 hierarchyTopDN: Prisma.DbNull,
                 hierarchyParentDN: Prisma.DbNull,
                 hierarchyParent_id: null,
-                hierarchyPath: child.id.toString(),
+                hierarchyPath: child.id.toString() + ".",
             },
         }));
         const childRDN = await getRDNFromEntryId(ctx, child.id);
@@ -257,7 +269,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                 data: {
                     hierarchyTopDN: [ rdnToJson(childRDN) ],
                     hierarchyPath: descendant.hierarchyPath
-                        ?.replace(`${child.hierarchyPath}.`, `${child.id}.`),
+                        ?.replace(child.hierarchyPath!, `${child.id}.`),
                 },
             })),
         );

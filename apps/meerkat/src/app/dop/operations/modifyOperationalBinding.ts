@@ -143,14 +143,14 @@ async function modifyOperationalBinding (
 ): Promise<ModifyOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
-    // const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
-    //     new Promise<boolean>((resolve) => {
-    //         ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
-    //             resolve(approved);
-    //         });
-    //     }),
-    //     new Promise<boolean>(resolve => setTimeout(() => resolve(false), 30000)),
-    // ]);
+    const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
+        new Promise<boolean>((resolve) => {
+            ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
+                resolve(approved);
+            });
+        }),
+        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 30000)),
+    ]);
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,
@@ -236,6 +236,15 @@ async function modifyOperationalBinding (
                 in: permittedAPs,
             },
         },
+        select: {
+            id: true,
+            uuid: true,
+            binding_version: true,
+            terminated_time: true,
+            initiator: true,
+            initiator_ber: true,
+            agreement_ber: true,
+        },
     });
 
     if (!opBinding) {
@@ -253,6 +262,31 @@ async function modifyOperationalBinding (
                     createSecurityParameters(
                         ctx,
                         assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+            },
+        );
+    }
+
+    const approved: boolean = await getApproval(opBinding.uuid);
+    if (!approved) {
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:ob_rejected"),
+            {
+                unsigned: new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
                         undefined,
                         id_err_operationalBindingError,
                     ),
@@ -357,7 +391,7 @@ async function modifyOperationalBinding (
     const sp = data.securityParameters;
     const created = await ctx.db.operationalBinding.create({
         data: {
-            accepted: true, // REVIEW: Automatically-accepted.
+            accepted: true,
             previous: {
                 connect: {
                     id: opBinding.id,
