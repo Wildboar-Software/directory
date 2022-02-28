@@ -1,8 +1,10 @@
 import type { Context } from "@wildboar/meerkat-types";
+import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 
 /**
  * @summary Returns a function that can encode an X.500 directory value into an LDAP value
@@ -23,12 +25,17 @@ import type {
  */
 export
 function getLDAPEncoder (ctx: Context, type_: AttributeType): LDAPSyntaxEncoder | undefined {
-    // FIXME: Make this like `getLDAPDecoder()`
-    const spec = ctx.attributeTypes.get(type_.toString());
-    if (!spec?.ldapSyntax) {
+    const parentTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+    const ldapSyntaxOID: OBJECT_IDENTIFIER | undefined = [
+        type_,
+        ...parentTypes,
+    ]
+        .map((spec) => ctx.attributeTypes.get(spec.toString())?.ldapSyntax)
+        .find((oid) => oid);
+    if (!ldapSyntaxOID) {
         return undefined;
     }
-    const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
+    const ldapSyntax = ctx.ldapSyntaxes.get(ldapSyntaxOID.toString());
     return ldapSyntax?.encoder;
 }
 

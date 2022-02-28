@@ -45,10 +45,7 @@ function getLDAPDecoder (ctx: Context, type_: LDAPOID): LDAPSyntaxDecoder | unde
         return undefined;
     }
     const ldapSyntax = ctx.ldapSyntaxes.get(ldapSyntaxOID.toString());
-    if (!ldapSyntax?.decoder) {
-        return undefined;
-    }
-    return ldapSyntax.decoder;
+    return ldapSyntax?.decoder;
 }
 
 export default getLDAPDecoder;
