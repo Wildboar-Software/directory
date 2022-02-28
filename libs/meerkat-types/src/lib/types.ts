@@ -361,20 +361,6 @@ extends UniquelyIdentifiedByObjectIdentifier, Partial<MultiNamed>, Partial<Descr
 
 }
 
-// TODO: Just use `Context` directly.
-/**
- * @summary An in-memory representation of an X.500 context
- * @description
- *
- * An in-memory representation of an X.500 context
- *
- * @interface
- */
-export
-interface StoredContext extends Omit<X500Context, "_unrecognizedExtensionsList"> {
-
-}
-
 /**
  * @summary A single attribute type and value, possibly with contexts
  * @description
@@ -399,7 +385,7 @@ interface Value {
      * The contexts of the attribute value. This field may be absent if there
      * are no contexts for this value.
      */
-    contexts?: StoredContext[];
+    contexts?: X500Context[];
 
 }
 
@@ -434,32 +420,6 @@ interface HierarchyInfo {
      */
     parent?: DistinguishedName;
 
-}
-
-/**
- * @summary A DSA-specific entry (DSE) of type `root`.
- * @description
- *
- * A DSA-specific entry (DSE) of type `root`.
- *
- * @interface
- */
-export
-interface RootDSE { // TODO: Convert this to a boolean (or just get rid of it)
-    myAccessPoint: AccessPoint;
-}
-
-/**
- * @summary A DSA-specific entry (DSE) of type `glue`.
- * @description
- *
- * A DSA-specific entry (DSE) of type `glue`.
- *
- * @interface
- */
-export
-interface GlueDSE { // TODO: Convert this to a boolean.
-    // Intentionally empty.
 }
 
 /**
@@ -630,7 +590,6 @@ interface SubentryDSE {
     /** Values of the `collectiveAttributes` operational attribute */
     collectiveAttributes?: Attribute[];
 
-    // TODO: Index these via Map().
     /** Values of the `contextAssertionDefaults` operational attribute */
     contextAssertionDefaults?: TypeAndContextAssertion[];
 
@@ -744,15 +703,9 @@ interface ShadowDSE {
 
     /**
      * Flag defined in ITU Recommendation X.525 (2016), Section 7.2.1.4, which
-     * indicates whether all user attributes of the entry, all relevant
-     * collective attributes, all values of such user or collective attributes,
-     * and all context information associated with those values, are present for
-     * the SDSE. This flag does not correspond to any attribute. It is an
-     * internal flag.
+     * indicates which attribute types have incomplete values.
      */
-    attributeValuesIncomplete: boolean;
-    // FIXME: This is supposed to be an index of attribute types for which not
-    // all values have been replicated.
+    attributeValuesIncomplete: Set<IndexableOID>;
 
 }
 
@@ -789,24 +742,6 @@ interface RelevantHierarchicalOperationalBindingDSE {
 // dsSubentry is just a boolean
 
 /**
- * @summary A DSA-specific entry (DSE) of type `familyMember`.
- * @description
- *
- * A DSA-specific entry (DSE) of type `familyMember`. A family member is
- * a part of a compound entry.
- *
- * @interface
- */
-export
-interface FamilyMemberDSE { // FIXME: These fields are basically not used. Just get rid of them.
-
-    parent: boolean;
-
-    child: boolean;
-
-}
-
-/**
  * @summary A DSA-specific entry (DSE) of type `ditBridge`.
  * @description
  *
@@ -840,6 +775,21 @@ interface DSE {
 
     /** The database primary key ID. */
     id: number;
+
+    /**
+     * The database IDs of all vertices starting from the root DSE, descending
+     * downward toward this vertex, delimited by periods, and ending with a
+     * period.
+     *
+     * Why do Materialized Paths end with a period? If they did not, searching
+     * for `1.2.3` would also turn up results for `1.2.31`.
+     *
+     * Materialized Path is a common term, not something invented by the Meerkat
+     * DSA authors:
+     *
+     * https://dzone.com/articles/materialized-paths-tree-structures-relational-database
+     */
+         materializedPath: string;
 
     /**
      * The internal UUID assigned to this DSE. This UUID is intentionally
@@ -910,10 +860,10 @@ interface DSE {
     // DSE type-specific data
 
     /** Information about a Root DSE, specifically. */
-    root?: RootDSE;
+    root?: boolean;
 
     /** Information about a Glue DSE, specifically. */
-    glue?: GlueDSE;
+    glue?: boolean;
 
     /** Information about a Context Prefix DSE, specifically. */
     cp?: ContextPrefixDSE;
@@ -965,11 +915,8 @@ interface DSE {
     /** Whether this DSE is a DSA-specific subentry. */
     dsSubentry?: boolean;
 
-    /**
-     * Information about an Family Member DSE, specifically. This field being
-     * defined for this DSE means that this DSE is a part of a compound entry.
-     */
-    familyMember?: FamilyMemberDSE;
+    /** Whether this DSE is a family member. */
+    familyMember?: boolean;
 
     /** Information about an DIT Bridge DSE, specifically. */
     ditBridge?: DITBridgeDSE;
@@ -998,21 +945,6 @@ interface Vertex {
 
     /** The immediately superior vertex in the DIT. */
     immediateSuperior?: Vertex;
-
-    /**
-     * The database IDs of all vertices starting from the root DSE, descending
-     * downward toward this vertex, delimited by periods, and ending with a
-     * period.
-     *
-     * Why do Materialized Paths end with a period? If they did not, searching
-     * for `1.2.3` would also turn up results for `1.2.31`.
-     *
-     * Materialized Path is a common term, not something invented by the Meerkat
-     * DSA authors:
-     *
-     * https://dzone.com/articles/materialized-paths-tree-structures-relational-database
-     */
-    materializedPath: string; // FIXME: Put this in `dse` instead.
 
     /**
      * The immediately subordinate vertices of this vertex in the DIT. If this
@@ -1116,7 +1048,6 @@ interface DSAInfo {
      */
     hibernatingSince?: Date;
 
-    // FIXME: I think this is unused.
     /**
      * The time at which the sentinel-based killswitch initiated hibernation.
      * If this is `undefined`, this DSA is not hibernating; if this is set, this

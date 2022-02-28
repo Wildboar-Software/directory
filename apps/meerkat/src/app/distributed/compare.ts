@@ -1,4 +1,4 @@
-import { Context, StoredContext, Vertex, ClientAssociation, OperationReturn, Value } from "@wildboar/meerkat-types";
+import { Context, Vertex, ClientAssociation, OperationReturn, Value } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -17,9 +17,6 @@ import {
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import {
-    Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
@@ -113,14 +110,6 @@ import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
-
-function contextFromStoredContext (sc: StoredContext): X500Context {
-    return new X500Context(
-        sc.contextType,
-        sc.contextValues,
-        sc.fallback,
-    );
-}
 
 /**
  * @summary The compare operation, as specified in ITU Recommendation X.511.
@@ -476,7 +465,7 @@ async function compare (
                 matched = acs.selectedContexts
                     .every((sc): boolean => evaluateContextAssertion(
                         sc,
-                        Object.values(value.contexts ?? {}).map(contextFromStoredContext),
+                        Object.values(value.contexts ?? {}),
                         (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                         (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                     ));
@@ -511,7 +500,7 @@ async function compare (
                                 return sc.contextAssertions.all
                                     .every((ca): boolean => evaluateContextAssertion(
                                         ca,
-                                        Object.values(value.contexts ?? {}).map(contextFromStoredContext),
+                                        Object.values(value.contexts ?? {}),
                                         (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                                         (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                     ));
@@ -520,7 +509,7 @@ async function compare (
                                 return sc.contextAssertions.preference
                                     .some((ca): boolean => evaluateContextAssertion(
                                         ca,
-                                        Object.values(value.contexts ?? {}).map(contextFromStoredContext),
+                                        Object.values(value.contexts ?? {}),
                                         (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.matcher,
                                         (ctype: OBJECT_IDENTIFIER) => ctx.contextTypes.get(ctype.toString())?.absentMatch ?? true,
                                     ));

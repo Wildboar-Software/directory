@@ -32,9 +32,9 @@ const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
 const rootID = uuid();
 const root: Vertex = {
     subordinates: [],
-    materializedPath: "",
     dse: {
         id: 1,
+        materializedPath: "",
         uuid: rootID,
         rdn: [],
         objectClass: new Set(),

@@ -2,6 +2,9 @@ import type { Context, Value } from "@wildboar/meerkat-types";
 import type { ContextValue } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
 import groupByOID from "../utils/groupByOID";
+import {
+    Context as X500Context,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 
 /**
  * @summary Converts a value from the database into an in-memory value
@@ -23,17 +26,15 @@ async function attributeFromDatabaseAttribute (
         type: ObjectIdentifier.fromString(attr.type),
         value,
         contexts: Object.entries(contexts)
-            .map(([ key, value ]) => {
-                return {
-                    contextType: ObjectIdentifier.fromString(key),
-                    fallback: value[0].fallback,
-                    contextValues: value.map((v) => {
-                        const el = new BERElement();
-                        el.fromBytes(v.ber);
-                        return el;
-                    }),
-                };
-            }),
+            .map(([ key, value ]) => new X500Context(
+                ObjectIdentifier.fromString(key),
+                value.map((v) => {
+                    const el = new BERElement();
+                    el.fromBytes(v.ber);
+                    return el;
+                }),
+                value[0].fallback,
+            )),
     };
 }
 

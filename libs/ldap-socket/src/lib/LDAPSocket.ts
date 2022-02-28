@@ -105,11 +105,13 @@ class LDAPSocket extends EventEmitter {
                 this.emit("drain");
             }
             if ("extendedReq" in message.protocolOp) {
-                // TODO: Error if already using TLS.
                 const req = message.protocolOp.extendedReq;
                 const oid = decodeLDAPOID(req.requestName);
                 if (!oid.isEqualTo(startTLS)) {
                     return;
+                }
+                if (this.socket instanceof tls.TLSSocket) {
+                    throw new Error();
                 }
                 this.startTLS(new tls.TLSSocket(this.socket, this.options));
                 const res = new LDAPMessage(

@@ -66,10 +66,10 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    if (!vertex.dse.root?.myAccessPoint) {
+    if (!vertex.dse.root) {
         return false;
     }
-    const encoded = _encode_AccessPoint(vertex.dse.root.myAccessPoint, DER);
+    const encoded = _encode_AccessPoint(ctx.dsa.accessPoint, DER);
     return !Buffer.compare(encoded.toBytes(), value.value.toBytes());
 };
 

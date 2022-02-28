@@ -17,19 +17,26 @@ import type {
  *  the context's assertion syntax, and the second being of the context's value
  *  syntax, and which returns a `boolean` if the value matches the assertion per
  *  the matching rules innate to the context type.
- * @param syntax The ASN.1 syntax of the context type.
+ * @param valueSyntax The ASN.1 syntax of values of the context type.
+ * @param assertionSyntax The ASN.1 assertion syntax of the context type.
  * @returns An `ContextTypeInfo` as used by Meerkat DSA's internal index of known
  *  context types.
  *
  * @function
  */
 export
-function contextTypeFromInformationObject (io: CONTEXT, matcher: ContextMatcher, syntax?: string): ContextTypeInfo {
+function contextTypeFromInformationObject (
+    io: CONTEXT,
+    matcher: ContextMatcher,
+    valueSyntax: string,
+    assertionSyntax?: string,
+): ContextTypeInfo {
     return {
         id: io["&id"],
         absentMatch: io["&absentMatch"] ?? TRUE,
         matcher,
-        syntax: syntax ?? "", // FIXME: You need two syntaxes. One for values and one for assertions. See ITU Recommendation X.501, Section 15.7.10.
+        syntax: valueSyntax,
+        assertionSyntax: assertionSyntax ?? valueSyntax,
         validator: io.decoderFor["&Type"]
             ? (value: ASN1Element) => io.decoderFor["&Type"]!(value)
             : undefined,

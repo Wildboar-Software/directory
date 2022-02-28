@@ -30,15 +30,23 @@ import {
  */
 export
 function loadContextTypes (ctx: Context): void {
-    const contextTypes: [ CONTEXT, ContextMatcher ][] = [
-        [ x500c.languageContext, evaluateLanguageContext ],
-        [ x500c.ldapAttributeOptionContext, evaluateLDAPAttributeOptionContext ],
-        [ x500c.localeContext, evaluateLocaleContext ],
-        [ x500c.temporalContext, evaluateTemporalContext ],
+    const contextTypes: [ CONTEXT, ContextMatcher, string, string? ][] = [
+        [ x500c.languageContext, evaluateLanguageContext, "LanguageContextSyntax" ],
+        [ x500c.ldapAttributeOptionContext, evaluateLDAPAttributeOptionContext, "AttributeOptionList" ],
+        [ x500c.localeContext, evaluateLocaleContext, "LocaleContextSyntax" ],
+        [ x500c.temporalContext, evaluateTemporalContext, "TimeSpecification", "TimeAssertion" ],
     ];
     contextTypes
-        .forEach(([ ct, matcher ]) => {
-            ctx.contextTypes.set(ct["&id"].toString(), contextTypeFromInformationObject(ct, matcher));
+        .forEach(([ ct, matcher, valueSyntax, assertionSyntax ]) => {
+            ctx.contextTypes.set(
+                ct["&id"].toString(),
+                contextTypeFromInformationObject(
+                    ct,
+                    matcher,
+                    valueSyntax,
+                    assertionSyntax,
+                ),
+            );
         });
 }
 

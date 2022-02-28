@@ -78,14 +78,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             update: {},
         }));
         vertex.immediateSuperior.dse.objectClass.add(PARENT);
-        if (vertex.immediateSuperior.dse.familyMember) {
-            vertex.immediateSuperior.dse.familyMember.parent = true;
-        } else {
-            vertex.immediateSuperior.dse.familyMember = {
-                parent: true,
-                child: false,
-            };
-        }
+        vertex.immediateSuperior.dse.familyMember = true;
     }
     pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.upsert({
         where: {
@@ -133,12 +126,11 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                     },
                 },
             }));
-            if (vertex.immediateSuperior.dse.familyMember) {
-                if (vertex.immediateSuperior.dse.familyMember.child) {
-                    vertex.immediateSuperior.dse.familyMember.parent = false;
-                } else { // If it neither a child, and no longer a parent, remove familyMember.
-                    delete vertex.immediateSuperior.dse.familyMember;
-                }
+            if (
+                vertex.immediateSuperior.dse.familyMember
+                && !vertex.immediateSuperior.dse.objectClass.has(child["&id"].toString())
+            ) {
+                vertex.immediateSuperior.dse.familyMember = false;
             }
         }
     }

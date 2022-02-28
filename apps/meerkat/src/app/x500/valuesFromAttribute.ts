@@ -1,4 +1,4 @@
-import type { Value, StoredContext } from "@wildboar/meerkat-types";
+import type { Value } from "@wildboar/meerkat-types";
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -25,11 +25,7 @@ function valuesFromAttribute (attr: Attribute): Value[] {
         ...attr.valuesWithContext?.map((vwc): Value => ({
             type: attr.type_,
             value: vwc.value,
-            contexts: vwc.contextList.map((context): StoredContext => ({
-                contextType: context.contextType,
-                fallback: context.fallback ?? false,
-                contextValues: context.contextValues,
-            })),
+            contexts: vwc.contextList,
         })) ?? [],
     ]
 }

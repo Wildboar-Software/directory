@@ -51,7 +51,7 @@ function isComplete (vertex: Vertex): boolean {
         !vertex.dse.shadow
         || (
             vertex.dse.shadow.attributeCompleteness
-            && vertex.dse.shadow.attributeValuesIncomplete
+            && (vertex.dse.shadow.attributeValuesIncomplete.size === 0)
         )
     );
 }

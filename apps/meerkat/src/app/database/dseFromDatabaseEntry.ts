@@ -125,6 +125,7 @@ async function dseFromDatabaseEntry (
     });
     const ret: DSE = {
         id: dbe.id,
+        materializedPath: dbe.materialized_path,
         uuid: dbe.dseUUID,
         entryUUID: dbe.entryUUID ?? undefined,
         rdn,
@@ -164,34 +165,18 @@ async function dseFromDatabaseEntry (
         createTimestamp: dbe.createTimestamp ?? undefined,
         modifyTimestamp: dbe.modifyTimestamp ?? undefined,
         entryACI,
+        glue: dbe.glue,
     };
 
-    if (ret.objectClass.has(PARENT)) {
-        if (ret.familyMember) {
-            ret.familyMember.parent = true;
-        } else {
-            ret.familyMember = {
-                parent: true,
-                child: false,
-            };
-        }
-    }
-    if (ret.objectClass.has(CHILD)) {
-        if (ret.familyMember) {
-            ret.familyMember.child = true;
-        } else {
-            ret.familyMember = {
-                parent: false,
-                child: true,
-            };
-        }
+    if (
+        ret.objectClass.has(PARENT)
+        || ret.objectClass.has(CHILD)
+    ) {
+        ret.familyMember = true;
     }
 
     if (dbe.immediate_superior_id === null) { // root and possibly supr
-        ret.root = {
-            myAccessPoint: ctx.dsa.accessPoint,
-        };
-
+        ret.root = true;
         const superiorKnowledgeRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
@@ -227,10 +212,6 @@ async function dseFromDatabaseEntry (
                 ditBridgeKnowledge,
             };
         }
-    }
-
-    if (dbe.glue) {
-        ret.glue = {};
     }
 
     if (dbe.cp) {
@@ -475,7 +456,16 @@ async function dseFromDatabaseEntry (
     if (dbe.shadow) {
         ret.shadow = {
             attributeCompleteness: dbe.attribute_completeness ?? false,
-            attributeValuesIncomplete: dbe.attribute_values_incomplete ?? true,
+            attributeValuesIncomplete: new Set(
+                (await ctx.db.entryAttributeValuesIncomplete.findMany({
+                    where: {
+                        entry_id: dbe.id,
+                    },
+                    select: {
+                        attribute_type: true,
+                    },
+                })).map((x) => x.attribute_type),
+            ),
             subordinateCompleteness: dbe.subordinate_completeness ?? false,
         };
     }

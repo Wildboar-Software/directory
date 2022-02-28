@@ -60,6 +60,9 @@ import * as crypto from "crypto";
 import sleep from "../utils/sleep";
 import getRootSubschema from "./getRootSubschema";
 import anyPasswordsExist from "../authz/anyPasswordsExist";
+import {
+    AuthenticationLevel_basicLevels_level_none as none,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -130,8 +133,13 @@ async function handleRequest (
          * conditions are not met, the user will only see a small selection of
          * schema.
          */
-        // FIXME: Expect a higher level of authentication.
-        const permittedToSeeSchema: boolean = Boolean(assn.boundEntry || !(await anyPasswordsExist(ctx)));
+        const permittedToSeeSchema: boolean = (
+            (
+                ("basicLevels" in assn.authLevel)
+                && (assn.authLevel.basicLevels.level > none)
+            )
+            || !(await anyPasswordsExist(ctx))
+        );
         const entry = new SearchResultEntry(
             Buffer.from("cn=subschema", "utf-8"),
             getRootSubschema(ctx, permittedToSeeSchema),
@@ -154,8 +162,7 @@ async function handleRequest (
     }
     const dapRequest = ldapRequestToDAPRequest(ctx, assn, message);
     if (!dapRequest) {
-        // TODO: Log something, response with something. Something!
-        return;
+        throw new Error(ctx.i18n.t("err:could_not_convert_ldap_to_dap"));
     }
     if ("present" in dapRequest.invokeId) {
         assn.messageIDToInvokeID.set(Number(message.messageID), Number(dapRequest.invokeId.present));

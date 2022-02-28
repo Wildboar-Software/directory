@@ -83,10 +83,11 @@ model Entry {
   // The structural object class is not permitted to change for an entry.
   structuralObjectClass String? @db.VarChar(128) // OID
 
-  // Shadowing flags. See ITU Recommendation X.525 (2016), Section 7.2.1.
+  // Shadowing flags. See ITU Recommendation X.525 (2019), Section 7.2.1.
   subordinate_completeness    Boolean?
   attribute_completeness      Boolean?
-  attribute_values_incomplete Boolean?
+  // This is not a boolean. It is a set of attribute types whose values are incomplete.
+  // attribute_values_incomplete
 
   lastShadowUpdate DateTime? // Could be used to populate the syncTimestamp attribute.
 
@@ -147,6 +148,7 @@ model Entry {
   @@index([hierarchyTop_id])
   @@index([hierarchyParent_id])
   @@index([hierarchyPath])
+  EntryAttributeValuesIncomplete EntryAttributeValuesIncomplete[]
 }
 
 // Technically a userApplications attribute, but still has operational uses.
@@ -231,9 +233,9 @@ model AttributeValue {
 
   ContextValue ContextValue[]
 
-  @@index([entry_id, type, index_key]) // For quick heuristic comparison.
-  @@index([entry_id, type, tag_class, constructed, tag_number]) // For byte-for-byte equality comparisons.
-  @@index([entry_id, operational, type]) // For operational attributes searches.
+  @@index([entry_id, type, index_key])
+  @@index([entry_id, type, tag_class, constructed, tag_number])
+  @@index([entry_id, operational, type])
 }
 
 model ContextValue {
@@ -817,6 +819,15 @@ model EntryAccessControlScheme {
   created_at          DateTime @default(now())
 
   @@unique([entry_id])
+}
+
+model EntryAttributeValuesIncomplete {
+  id             Int    @id @default(autoincrement())
+  entry_id       Int
+  entry          Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  attribute_type String @db.VarChar(128) // OID
+
+  @@unique([entry_id, attribute_type])
 }
 
 model AltServer {

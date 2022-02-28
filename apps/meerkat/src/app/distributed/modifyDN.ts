@@ -211,8 +211,8 @@ async function allSubordinatesWithinThisDSA (
     const externalDSEs = await ctx.db.entry.findMany({
         where: {
             materialized_path: {
-                startsWith: vertex.materializedPath.length
-                    ? `${vertex.materializedPath}.${vertex.dse.id}`
+                startsWith: vertex.dse.materializedPath.length
+                    ? `${vertex.dse.materializedPath}.${vertex.dse.id}`
                     : vertex.dse.id.toString(),
             },
             OR: [
@@ -1709,11 +1709,11 @@ async function modifyDN (
     }
     const oldMaterializedPathPrefix: string = target.immediateSuperior.dse.root
         ? (target.dse.id.toString() + ".")
-        : `${target.materializedPath}.${target.dse.id}.`;
+        : `${target.dse.materializedPath}.${target.dse.id}.`;
     const newMaterializedPath: string = superior.dse.root
         ? ""
-        : (superior.materializedPath.length
-            ? `${superior.materializedPath}${superior.dse.id.toString() + "."}`
+        : (superior.dse.materializedPath.length
+            ? `${superior.dse.materializedPath}${superior.dse.id.toString() + "."}`
             : superior.dse.id.toString() + ".");
     const materializedPathsToUpdate = await ctx.db.entry.findMany({
         where: {

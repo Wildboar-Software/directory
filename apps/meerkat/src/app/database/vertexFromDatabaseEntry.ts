@@ -28,7 +28,6 @@ async function vertexFromDatabaseEntry (
 ): Promise<Vertex> {
     return {
         immediateSuperior: superior,
-        materializedPath: dbe.materialized_path,
         subordinates: null,
         dse: await dseFromDatabaseEntry(ctx, dbe),
     };

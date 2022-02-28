@@ -152,5 +152,6 @@
     "name_form_invalid@subentry": "Subentries must have only one value in their relative distinguished name of attribute type commonName (2.5.4.3).",
     "cannot_move_dse_below_itself": "Cannot move an object below itself.",
     "duplicate_sort_key": "Duplicate sort key {{oid}}.",
-    "not_authz_delete_old_rdn": "Not authorized to delete the old RDN."
+    "not_authz_delete_old_rdn": "Not authorized to delete the old RDN.",
+    "could_not_convert_ldap_to_dap": "Could not convert LDAP request to DAP request."
 }

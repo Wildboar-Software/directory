@@ -55,8 +55,8 @@ async function createEntry (
             immediate_superior_id: superior.dse.id,
             materialized_path: superior.dse.root
                 ? ""
-                : (superior.materializedPath.length
-                    ? `${superior.materializedPath}${superior.dse.id.toString() + "."}`
+                : (superior.dse.materializedPath.length
+                    ? `${superior.dse.materializedPath}${superior.dse.id.toString() + "."}`
                     : superior.dse.id.toString() + "."),
             entryUUID: randomUUID(),
             creatorsName: [],
