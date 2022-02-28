@@ -54,7 +54,7 @@ import * as localDecoders from "../ldap/syntaxDecoders";
 const ldapSyntaxes = {
     "attributeTypeDescription": attributeTypeDescription,
     "bitString": bitString,
-    "boolean_": boolean_,
+    "boolean": boolean_,
     "countryString": countryString,
     "dn": dn,
     "deliveryMethod": deliveryMethod,
@@ -124,7 +124,7 @@ const ldapSyntaxToASN1Syntax = {
     // "1.3.6.1.4.1.1466.115.121.1.51": "", // Telex Terminal Identifier
     "1.3.6.1.4.1.1466.115.121.1.52": "TelexNumber",
     "1.3.6.1.4.1.1466.115.121.1.53": "UTCTime",
-    "1.3.6.1.1.16.1": "UUID"
+    "1.3.6.1.1.16.1": "UUID",
 };
 
 /**

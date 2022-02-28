@@ -11,17 +11,8 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-// import {
-//     DERElement,
-//     ASN1TagClass,
-//     ASN1UniversalType,
-//     ObjectIdentifier,
-// } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import NOOP from "./NOOP";
-// import {
-//     objectClass,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
 import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
 import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import {
@@ -37,9 +28,8 @@ import {
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import {
-    AttributeUsage as PrismaAttributeUsage,
-} from "@prisma/client";
+import { AttributeUsage as PrismaAttributeUsage } from "@prisma/client";
+import asn1SyntaxInfo from "../../x500/asn1SyntaxToInfo";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 
@@ -95,12 +85,17 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = attributeTypes.decoderFor["&Type"]!(value.value);
+    const TYPE_OID: string = decoded.identifier.toString();
+    const names = decoded.name?.map(directoryStringToString);
+    const syntax = decoded.information.attributeSyntax
+        ? directoryStringToString(decoded.information.attributeSyntax)
+        : undefined;
     pendingUpdates.otherWrites.push(ctx.db.attributeTypeDescription.upsert({
         where: {
-            identifier: decoded.identifier.toString(),
+            identifier: TYPE_OID,
         },
         create: {
-            identifier: decoded.identifier.toString(),
+            identifier: TYPE_OID,
             name: decoded.name
                 ? decoded.name
                     .map(directoryStringToString)
@@ -115,9 +110,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             equalityMatch: decoded.information.equalityMatch?.toString(),
             orderingMatch: decoded.information.orderingMatch?.toString(),
             substringsMatch: decoded.information.substringsMatch?.toString(),
-            attributeSyntax: decoded.information.attributeSyntax
-                ? directoryStringToString(decoded.information.attributeSyntax)
-                : undefined,
+            attributeSyntax: syntax,
             multiValued: decoded.information.multi_valued,
             collective: decoded.information.collective,
             userModifiable: decoded.information.userModifiable,
@@ -151,9 +144,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             equalityMatch: decoded.information.equalityMatch?.toString(),
             orderingMatch: decoded.information.orderingMatch?.toString(),
             substringsMatch: decoded.information.substringsMatch?.toString(),
-            attributeSyntax: decoded.information.attributeSyntax
-                ? directoryStringToString(decoded.information.attributeSyntax)
-                : undefined,
+            attributeSyntax: syntax,
             multiValued: decoded.information.multi_valued,
             collective: decoded.information.collective,
             userModifiable: decoded.information.userModifiable,
@@ -173,7 +164,36 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             })(),
         },
     }));
-    // TODO: Support hot-added attribute types
+    /**
+     * You cannot specify an LDAP syntax or a validator, so we have to infer
+     * them, if possible.
+     */
+    const [ ldapSyntax, validator ] = asn1SyntaxInfo[syntax ?? ""] ?? [ undefined, undefined ];
+    ctx.attributeTypes.set(TYPE_OID, {
+        id: decoded.identifier,
+        name: names,
+        parent: decoded.information.derivation,
+        equalityMatchingRule: decoded.information.equalityMatch,
+        orderingMatchingRule: decoded.information.orderingMatch,
+        substringsMatchingRule: decoded.information.substringsMatch,
+        singleValued: !(decoded.information.multi_valued ?? true),
+        collective: decoded.information.collective ?? false,
+        /**
+         * You can't add a dummy attribute, because the `attributeTypes` syntax
+         * is MISSING a `dummy` field! I will report this to the ITU.
+         */
+        dummy: false,
+        noUserModification: !(decoded.information.userModifiable ?? true),
+        obsolete: decoded.obsolete ?? false,
+        usage: decoded.information.application ?? AttributeUsage_userApplications,
+        ldapSyntax,
+        ldapNames: names,
+        description: decoded.description
+            ? directoryStringToString(decoded.description)
+            : undefined,
+        compatibleMatchingRules: new Set(),
+        validator,
+    });
 };
 
 export

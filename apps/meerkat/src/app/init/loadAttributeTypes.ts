@@ -6,6 +6,13 @@ import { AttributeUsage } from "@prisma/client";
 import entryUUID from "../schema/attributes/entryUUID";
 import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
 import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+import asn1SyntaxInfo from "../x500/asn1SyntaxToInfo";
+import {
+    AttributeUsage_userApplications,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { ObjectIdentifier } from "asn1-ts";
+
+// Drivers
 import accessControlSchemeDriver from "../database/drivers/accessControlScheme";
 import accessControlSubentryListDriver from "../database/drivers/accessControlSubentryList";
 import administrativeRoleDriver from "../database/drivers/administrativeRole";
@@ -108,12 +115,45 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     const storedTypes = await ctx.db.attributeTypeDescription.findMany();
     for (const storedType of storedTypes) {
         if (
+            // Only attributes with a defined syntax may be loaded
             !storedType.attributeSyntax
+            // Only user-modifiable attributes may be loaded
             || !storedType.userModifiable
+            // Only userApplications attributes may be loaded
             || (storedType.application !== AttributeUsage.USER_APPLICATIONS)
+            // If the attribute is already present, ignore.
+            || ctx.attributeTypes.has(storedType.identifier)
         ) {
             continue;
         }
+        const [ ldapSyntax, validator ] = asn1SyntaxInfo[storedType.attributeSyntax ?? ""] ?? [ undefined, undefined ];
+        ctx.attributeTypes.set(storedType.identifier, {
+            id: ObjectIdentifier.fromString(storedType.identifier),
+            name: storedType.ldapNames?.split("|"),
+            parent: storedType.derivation
+                ? ObjectIdentifier.fromString(storedType.identifier)
+                : undefined,
+            equalityMatchingRule: storedType.equalityMatch
+                ? ObjectIdentifier.fromString(storedType.equalityMatch)
+                : undefined,
+            orderingMatchingRule: storedType.orderingMatch
+                ? ObjectIdentifier.fromString(storedType.orderingMatch)
+                : undefined,
+            substringsMatchingRule: storedType.substringsMatch
+                ? ObjectIdentifier.fromString(storedType.substringsMatch)
+                : undefined,
+            singleValued: !(storedType.multiValued ?? true),
+            collective: storedType.collective ?? false,
+            dummy: storedType.dummy,
+            noUserModification: !(storedType.userModifiable ?? true),
+            obsolete: storedType.obsolete ?? false,
+            usage: AttributeUsage_userApplications,
+            ldapSyntax,
+            ldapNames: storedType.ldapNames?.split("|"),
+            description: storedType.description ?? undefined,
+            compatibleMatchingRules: new Set(),
+            validator,
+        });
     }
 
     Array.from(ctx.attributeTypes.values())
