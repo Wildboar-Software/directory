@@ -81,7 +81,9 @@ async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promis
                     attribute_completeness: false,
                 },
                 {
-                    attribute_values_incomplete: true,
+                    EntryAttributeValuesIncomplete: {
+                        some: {},
+                    },
                 },
             ],
         },
