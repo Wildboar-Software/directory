@@ -153,6 +153,11 @@ noted below are nuances in Meerkat DSA:
 - When using the `alterValues` change from the `modifyEntry` operation, `Modify`
   permission is also required for the values that are to be replaced. This is
   more strict than the specification.
+- Default context values are not used exactly as specified in X.501 (2016),
+  Section 13.9.2. If the context is required by context use rules, and if the
+  context of that type is not supplied, a default value can "fill the gap," but
+  beyond that, default context values are not used. This is because the verbiage
+  of the section 13.9.2 is unclear.
 
 ## The "Never Contributing" Bug
 

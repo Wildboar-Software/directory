@@ -1204,6 +1204,7 @@ async function addEntry (
                     );
                 }
             }
+
         }
 
         const unrecognizedAttributes: AttributeType[] = [];
@@ -1978,6 +1979,7 @@ async function addEntry (
                     continue;
                 }
             }
+
             const mandatoryContextsRemaining: Set<IndexableOID> = new Set(
                 applicableRule.information.mandatoryContexts?.map((con) => con.toString()),
             );
@@ -1986,6 +1988,30 @@ async function addEntry (
                 ...applicableRule.information.optionalContexts ?? [],
             ];
             const permittedContextsIndex: Set<IndexableOID> = new Set(permittedContexts.map((con) => con.toString()));
+            // Add default context values
+            for (const contextType of permittedContextsIndex.values()) {
+                const contextSpec = ctx.contextTypes.get(contextType);
+                if (
+                    (contextSpec?.defaultValue)
+                    && (
+                        !value.contexts?.length // If there are no contexts
+                        // Or there are no contexts of the defaulting context type
+                        || !value.contexts.some((c) => c.contextType.isEqualTo(contextSpec.id))
+                    )
+                ) {
+                    const defaultValue = contextSpec.defaultValue();
+                    const defaultedContext: X500Context = new X500Context(
+                        contextSpec.id,
+                        [ defaultValue ],
+                        undefined,
+                    );
+                    if (value.contexts) {
+                        value.contexts.push(defaultedContext);
+                    } else {
+                        value.contexts = [ defaultedContext ];
+                    }
+                }
+            }
             for (const context of value.contexts?.values() ?? []) {
                 const ID: string = context.contextType.toString();
                 mandatoryContextsRemaining.delete(ID);
@@ -2021,67 +2047,34 @@ async function addEntry (
                 }
             }
             if (mandatoryContextsRemaining.size > 0) {
-                /**
-                 * If every mandatory context has a default value defined, we do not
-                 * need to fail: the default value will be applied and this
-                 * requirement will be satisfied.
-                 */
-                const everyRequiredContextHasADefaultValue: boolean = applicableRule
-                    .information
-                    .mandatoryContexts
-                    ?.every((mc) => !!ctx.contextTypes.get(mc.toString())?.defaultValue) ?? true;
-                if (!everyRequiredContextHasADefaultValue) {
-                    throw new errors.AttributeError(
-                        ctx.i18n.t("err:missing_required_context_types", {
-                            attr: value.type.toString(),
-                            oids: Array.from(mandatoryContextsRemaining.values()).join(", "),
-                        }),
-                        new AttributeErrorData(
-                            {
-                                rdnSequence: targetDN,
-                            },
-                            [
-                                new AttributeErrorData_problems_Item(
-                                    AttributeProblem_contextViolation,
-                                    value.type,
-                                    value.value,
-                                ),
-                            ],
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                assn.boundNameAndUID?.dn,
-                                undefined,
-                                attributeError["&errorCode"],
+                throw new errors.AttributeError(
+                    ctx.i18n.t("err:missing_required_context_types", {
+                        attr: value.type.toString(),
+                        oids: Array.from(mandatoryContextsRemaining.values()).join(", "),
+                    }),
+                    new AttributeErrorData(
+                        {
+                            rdnSequence: targetDN,
+                        },
+                        [
+                            new AttributeErrorData_problems_Item(
+                                AttributeProblem_contextViolation,
+                                value.type,
+                                value.value,
                             ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            state.chainingArguments.aliasDereferenced,
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
                             undefined,
+                            attributeError["&errorCode"],
                         ),
-                    );
-                }
-            }
-            // Add default context values.
-            for (const ct of permittedContexts) { // TODO: This is O(n^2).
-                const CTYPE_OID: string = ct.toString();
-                const spec = ctx.contextTypes.get(CTYPE_OID);
-                if (!spec) {
-                    continue; // This is intentional. This is not supposed to throw.
-                }
-                if (!spec.defaultValue) {
-                    continue; // This is intentional. This is not supposed to throw.
-                }
-                const defaultValueGetter = spec.defaultValue;
-                if (!value.contexts?.some((context) => context.contextType.isEqualTo(ct))) {
-                    if (!value.contexts) {
-                        value.contexts = [];
-                    }
-                    value.contexts.push({
-                        contextType: ct,
-                        fallback: true,
-                        contextValues: [ defaultValueGetter() ],
-                    });
-                }
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
             }
         }
     }
