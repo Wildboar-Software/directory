@@ -39,7 +39,8 @@ Meerkat DSA is capable of acting as a first-level DSA.
 
 #### D. Chaining Support
 
-Meerkat DSA supports chaining.
+Meerkat DSA supports chaining, but does not validate signatures. Inbound
+chained requests are heavily restricted and not recommended.
 
 #### E. Directory Access Protocol (DAP) Authentication
 
@@ -52,17 +53,13 @@ Directory Access Protocol (DAP).
 | No         | Strong          |
 | No         | External        |
 | No         | SPKM            |
-| Yes        | SASL            |
+| No         | SASL            |
 
 Meerkat DSA supports simple authentication:
 
 - Without a password,
 - With a password, and
 - With a protected password.
-
-For SASL Authentication, Meerkat DSA supports the following mechanisms:
-
-- `PLAIN`
 
 Meerkat DSA Supports identity-based originator authentication as described in
 the International Telecommunication Union's Recommendation X.518 (2016),
