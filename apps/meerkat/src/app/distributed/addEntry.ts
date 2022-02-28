@@ -342,7 +342,7 @@ async function addEntry (
     const isExtensible: boolean = objectClassesIndex.has(extensibleObject.toString());
     const isParent: boolean = objectClassesIndex.has(id_oc_parent.toString());
     const isChild: boolean = objectClassesIndex.has(id_oc_child.toString());
-    const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
+    const isEntry: boolean = (!isSubentry && !isAlias);
     const isFirstLevel: boolean = !!immediateSuperior.dse.root;
     /**
      * It would be impossible to create anything other than first-level DSEs if

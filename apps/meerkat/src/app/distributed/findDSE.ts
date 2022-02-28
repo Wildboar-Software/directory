@@ -366,11 +366,11 @@ async function findDSE (
             );
             candidateRefs.push(cr);
             state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
-                // REVIEW: Do I need to update targetObject?
                 operationProgress: new OperationProgress(
                     OperationProgress_nameResolutionPhase_proceeding,
                     lastEntryFound,
                 ),
+                referenceType: ReferenceType_supplier,
             });
             return; // Entry unsuitable.
         }
@@ -461,9 +461,8 @@ async function findDSE (
     };
 
     const targetNotFoundSubprocedure_notStarted_branch = async (): Promise<void> => {
-        if (lastEntryFound === 0) {
+        if (lastEntryFound === 0) { // Target Not Found, Step 3.
             if (ctx.dit.root.dse.supr) { // If this is NOT a first-level DSA.
-                // REVIEW: superiorKnowledge is a multi-valued attribute. Should you create multiple CRs?
                 const superior = ctx.dit.root.dse.supr.superiorKnowledge[0];
                 assert(superior);
                 const cr = new ContinuationReference(
@@ -484,7 +483,13 @@ async function findDSE (
                             superior.protocolInformation,
                             undefined,
                             undefined,
-                            undefined,
+                            ctx.dit.root.dse.supr.superiorKnowledge
+                                .slice(1)
+                                .map((sk) => new MasterOrShadowAccessPoint(
+                                    sk.ae_title,
+                                    sk.address,
+                                    sk.protocolInformation,
+                                )),
                         ),
                     ],
                     undefined,
@@ -496,8 +501,9 @@ async function findDSE (
                 await candidateRefsEmpty1_Branch();
                 return;
             } else { // Root DSE is not of type subr (meaning that this IS a first-level DSA.)
+                // Target Not Found, Step 4.
                 if (m === 0) { // ...and the operation was directed at the root DSE.
-                    // Step 5.
+                    // Target Not Found, Step 5.
                     if (
                         compareCode(state.operationCode, list["&operationCode"]!)
                         || compareCode(state.operationCode, search["&operationCode"]!)
@@ -513,7 +519,6 @@ async function findDSE (
                         return;
                     } else {
                         throw new errors.NameError(
-                            // REVIEW: This seems incorrect to me... What about read or modifyEntry?
                             ctx.i18n.t("err:can_only_list_or_search_root"),
                             new NameErrorData(
                                 NameProblem_noSuchObject,
@@ -534,6 +539,7 @@ async function findDSE (
                         );
                     }
                 } else { // m !== 0
+                    // Target Not Found, Step 4 (continued).
                     // In a first-level DSA, the root DSE should have an NSSR.
                     // Basically, a root DSE will always have a type of either subr or nssr.
                     (ctx.dit.root.dse.nssr?.nonSpecificKnowledge ?? []).forEach((knowledge): void => {
@@ -1212,6 +1218,7 @@ async function findDSE (
                 }
                 return ReferenceType_cross;
             })();
+            // TODO: splitIntoMastersAndShadows()
             const masters: MasterOrShadowAccessPoint[] = [];
             const shadows: MasterOrShadowAccessPoint[] = [];
             knowledges!.forEach((mosap) => {
@@ -1226,8 +1233,8 @@ async function findDSE (
                 return;
             }
             const cr = new ContinuationReference(
-                { // REVIEW: This might be technically incorrect.
-                    rdnSequence: getDistinguishedName(dse_i), // Also requires Access Control checking
+                {
+                    rdnSequence: needleDN,
                 },
                 undefined,
                 new OperationProgress(

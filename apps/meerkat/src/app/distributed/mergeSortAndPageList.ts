@@ -248,7 +248,7 @@ async function mergeSortAndPageList(
         ? assn.pagedResultsRequests.get(queryReference)
         : undefined;
     // If there is no paging, we just return an arbitrary selection of the results that is less than the sizeLimit.
-    if(!paging) {
+    if (!paging) {
         const sizeLimit: number = listArgument.serviceControls?.sizeLimit
             ? Math.max(Number(listArgument.serviceControls.sizeLimit), 1)
             : MAX_RESULTS;
@@ -382,7 +382,6 @@ async function mergeSortAndPageList(
             },
         },
     });
-    // REVIEW: Will this get stuck in a loop if there are NO results?
     const cursorId: number = results[results.length - 1]?.result_index ?? 0;
     paging.cursorId = cursorId;
     const done: boolean = (

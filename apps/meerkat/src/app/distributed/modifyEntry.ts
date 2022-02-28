@@ -1071,7 +1071,6 @@ async function executeRemoveAttribute (
     patch.removedValues.delete(TYPE_OID); // Delete because we removed the whole attribute anyway.
     patch.removedAttributes.add(TYPE_OID);
     return removeAttribute(ctx, entry, mod);
-    // REVIEW: Do you want to also fail if per-value remove is not granted?
 }
 
 /**
@@ -2256,7 +2255,7 @@ async function modifyEntry (
     const isExtensible: boolean = target.dse.objectClass.has(extensibleObject.toString());
     // const isParent: boolean = target.dse.objectClass.has(id_oc_parent.toString());
     // const isChild: boolean = target.dse.objectClass.has(id_oc_child.toString());
-    const isEntry: boolean = (!isSubentry && !isAlias); // REVIEW: I could not find documentation if this is true.
+    const isEntry: boolean = (!isSubentry && !isAlias);
     const isFirstLevel: boolean = !!target.immediateSuperior?.dse.root;
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const noSubtypeSelection: boolean = (

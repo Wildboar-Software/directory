@@ -158,6 +158,18 @@ noted below are nuances in Meerkat DSA:
   context of that type is not supplied, a default value can "fill the gap," but
   beyond that, default context values are not used. This is because the verbiage
   of the section 13.9.2 is unclear.
+- ITU Recommendation X.501 (2016), Section 14.10 states that, when a
+  hierarchical parent is removed, its children are to be removed from _the_
+  hierarchical group. The specification does not make it clear whether they
+  should now belong to separate hierarchical groups with themselves at the top
+  or if we should recursively remove all hierarchical group attributes for all
+  hierarchical descendants. Meerkat DSA puts the children in their own separate
+  hierarchical groups. It is not clear whether this is a deviation from the
+  specification at all. This was chosen because it is the most performant,
+  easiest to implement, and preserves potentially a lot of work from accidental
+  deletion.
+- Meerkat DSA does not throw an error if a search or list operation returns a
+  null result (a result with zero entries or RDNs).
 
 ## The "Never Contributing" Bug
 

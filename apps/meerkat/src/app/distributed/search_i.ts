@@ -2196,11 +2196,16 @@ async function search_i (
                 }
                 continue;
             }
-            if (subordinate.dse.subr && !subordinate.dse.cp) {
+            if (subordinate.dse.subr && !subordinate.dse.cp) { // Step 7.a.
                 const cr = new ContinuationReference(
                     {
-                        // REVIEW: The documentation says use the DN of e, but I am pretty sure they mean e'.
-                        // rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
+                        /**
+                         * It might seem counter-intuitive that the specification says to
+                         * set the targetObject to e, rather than e', but if you look at
+                         * the implementation of Search (II), you'll see that Search (II)
+                         * only uses the subordinates of the target object that are of
+                         * type `cp` to resume the Search (I) recursion.
+                         */
                         rdnSequence: targetDN,
                     },
                     undefined,
