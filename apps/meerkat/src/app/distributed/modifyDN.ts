@@ -159,6 +159,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import isPrefix from "../x500/isPrefix";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -1725,46 +1726,66 @@ async function modifyDN (
             materialized_path: true,
         },
     });
-    await ctx.db.$transaction([
-        ctx.db.entry.update({
+    try {
+        await ctx.db.$transaction([
+            ctx.db.entry.update({
+                where: {
+                    id: target.dse.id,
+                },
+                data: {
+                    immediate_superior_id: superior.dse.id,
+                    governingStructureRule: Number.isSafeInteger(Number(newGoverningStructureRule))
+                        ? Number(newGoverningStructureRule)
+                        : undefined,
+                    materialized_path: newMaterializedPath,
+                },
+            }),
+            ctx.db.distinguishedValue.deleteMany({
+                where: {
+                    entry_id: target.dse.id,
+                },
+            }),
+            ctx.db.distinguishedValue.createMany({
+                data: newRDN.map((atav, i) => ({
+                    entry_id: target.dse.id,
+                    type: atav.type_.toString(),
+                    value: Buffer.from(atav.value.toBytes()),
+                    order_index: i,
+                })),
+            }),
+            ...materializedPathsToUpdate.map((mp) => ctx.db.entry.update({
+                where: {
+                    id: mp.id,
+                },
+                data: {
+                    materialized_path: mp.materialized_path.replace(
+                        oldMaterializedPathPrefix,
+                        newMaterializedPath.length
+                            ? `${newMaterializedPath}.${target.dse.id}.`
+                            : target.dse.id.toString() + ".",
+                    ),
+                },
+            })),
+        ]);
+    } catch (e) {
+        // If the update failed, reload the entry to negate any in-memory
+        // changes that took place. This same code exists in modifyEntry.
+        const dbe = await ctx.db.entry.findUnique({
             where: {
                 id: target.dse.id,
             },
-            data: {
-                immediate_superior_id: superior.dse.id,
-                governingStructureRule: Number.isSafeInteger(Number(newGoverningStructureRule))
-                    ? Number(newGoverningStructureRule)
-                    : undefined,
-                materialized_path: newMaterializedPath,
-            },
-        }),
-        ctx.db.distinguishedValue.deleteMany({
-            where: {
-                entry_id: target.dse.id,
-            },
-        }),
-        ctx.db.distinguishedValue.createMany({
-            data: newRDN.map((atav, i) => ({
-                entry_id: target.dse.id,
-                type: atav.type_.toString(),
-                value: Buffer.from(atav.value.toBytes()),
-                order_index: i,
-            })),
-        }),
-        ...materializedPathsToUpdate.map((mp) => ctx.db.entry.update({
-            where: {
-                id: mp.id,
-            },
-            data: {
-                materialized_path: mp.materialized_path.replace(
-                    oldMaterializedPathPrefix,
-                    newMaterializedPath.length
-                        ? `${newMaterializedPath}.${target.dse.id}.`
-                        : target.dse.id.toString() + ".",
-                ),
-            },
-        })),
-    ]);
+        });
+        if (dbe) {
+            try {
+                target.dse = await dseFromDatabaseEntry(ctx, dbe);
+            } catch {
+                // NOOP: This succeeding is not really that critical. This can
+                // silently fail.
+            }
+        }
+        throw e;
+    }
+
     target.dse.rdn = data.newRDN; // Update the RDN.
     if (data.deleteOldRDN) {
         for (const oldATAV of oldRDN) {

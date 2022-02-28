@@ -3136,7 +3136,26 @@ async function modifyEntry (
         op.pointOfNoReturnTime = new Date();
     }
     checkTimeLimit();
-    await ctx.db.$transaction(pendingUpdates);
+    try {
+        await ctx.db.$transaction(pendingUpdates);
+    } catch (e) {
+        // If the update failed, reload the entry to negate any in-memory
+        // changes that took place. This same code exists in modifyDN.
+        const dbe = await ctx.db.entry.findUnique({
+            where: {
+                id: target.dse.id,
+            },
+        });
+        if (dbe) {
+            try {
+                target.dse = await dseFromDatabaseEntry(ctx, dbe);
+            } catch {
+                // NOOP: This succeeding is not really that critical. This can
+                // silently fail.
+            }
+        }
+        throw e;
+    }
     const dbe = await ctx.db.entry.findUnique({
         where: {
             id: target.dse.id,
