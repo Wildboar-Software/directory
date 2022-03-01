@@ -105,6 +105,10 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import removeAttribute from "../database/entry/removeAttribute";
+import {
+    hierarchyParent,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -395,6 +399,10 @@ async function removeEntry (
     if (op) {
         op.pointOfNoReturnTime = new Date();
     }
+    /** Remove the `hierarchyParent` attribute so hierarchical children are updated */
+    ctx.db.$transaction(await removeAttribute(ctx, target, hierarchyParent["&id"]))
+        .then()
+        .catch();
     await deleteEntry(ctx, target, alsoDeleteFamily);
 
     if (target.dse.subentry) {
