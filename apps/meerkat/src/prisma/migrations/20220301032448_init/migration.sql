@@ -25,11 +25,12 @@ CREATE TABLE `Entry` (
     `creatorsName` JSON NULL,
     `modifiersName` JSON NULL,
     `expiresTimestamp` DATETIME(3) NULL,
+    `modifyNameTimestamp` DATETIME(3) NULL,
+    `previousName` JSON NULL,
     `governingStructureRule` INTEGER NULL,
     `structuralObjectClass` VARCHAR(128) NULL,
     `subordinate_completeness` BOOLEAN NULL,
     `attribute_completeness` BOOLEAN NULL,
-    `attribute_values_incomplete` BOOLEAN NULL,
     `lastShadowUpdate` DATETIME(3) NULL,
     `keep_children_in_database` BOOLEAN NOT NULL DEFAULT false,
     `may_add_top_level_dse` BOOLEAN NOT NULL DEFAULT false,
@@ -38,6 +39,7 @@ CREATE TABLE `Entry` (
     `hierarchyTop_id` INTEGER NULL,
     `hierarchyTopDN` JSON NULL,
     `hierarchyPath` VARCHAR(191) NULL,
+    `otherData` JSON NULL,
 
     INDEX `Entry_immediate_superior_id_deleteTimestamp_subentry_idx`(`immediate_superior_id`, `deleteTimestamp`, `subentry`),
     INDEX `Entry_materialized_path_idx`(`materialized_path`),
@@ -66,24 +68,8 @@ CREATE TABLE `Password` (
     `encrypted` LONGBLOB NOT NULL,
     `algorithm_oid` VARCHAR(128) NOT NULL,
     `algorithm_parameters_der` LONGBLOB NULL,
-    `pwdStartTime` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `pwdExpiryTime` DATETIME(3) NULL,
-    `pwdEndTime` DATETIME(3) NULL,
-    `pwdFails` INTEGER NOT NULL DEFAULT 0,
-    `pwdFailureTime` DATETIME(3) NULL,
-    `pwdGracesUsed` INTEGER NOT NULL DEFAULT 0,
 
     UNIQUE INDEX `Password_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdAttribute` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `pwd_attribute` VARCHAR(128) NOT NULL,
-
-    UNIQUE INDEX `PwdAttribute_entry_id_key`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -99,16 +85,6 @@ CREATE TABLE `PasswordHistory` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `PasswordRecentlyExpired` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `password` LONGBLOB NOT NULL,
-
-    UNIQUE INDEX `PasswordRecentlyExpired_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `PasswordEncryptionAlgorithm` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
@@ -120,193 +96,15 @@ CREATE TABLE `PasswordEncryptionAlgorithm` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `PwdModifyEntryAllowed` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` BOOLEAN NOT NULL,
-
-    UNIQUE INDEX `PwdModifyEntryAllowed_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdChangeAllowed` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` BOOLEAN NOT NULL,
-
-    UNIQUE INDEX `PwdChangeAllowed_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdMaxAge` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdMaxAge_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdExpiryAge` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdExpiryAge_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdMinLength` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdMinLength_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `NoDictionaryWords` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` BOOLEAN NOT NULL,
-
-    UNIQUE INDEX `NoDictionaryWords_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `NoPersonNames` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` BOOLEAN NOT NULL,
-
-    UNIQUE INDEX `NoPersonNames_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `NoGeographicalNames` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` BOOLEAN NOT NULL,
-
-    UNIQUE INDEX `NoGeographicalNames_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdDictionaries` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` TEXT NOT NULL,
-
-    INDEX `PwdDictionaries_entry_id_idx`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdExpiryWarning` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdExpiryWarning_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdGraces` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdGraces_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdFailureDuration` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdFailureDuration_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdLockoutDuration` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdLockoutDuration_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdMaxFailures` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdMaxFailures_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdMaxTimeInHistory` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdMaxTimeInHistory_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdMinTimeInHistory` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdMinTimeInHistory_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdHistorySlots` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdHistorySlots_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `PwdRecentlyExpiredDuration` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `value` INTEGER NOT NULL,
-
-    UNIQUE INDEX `PwdRecentlyExpiredDuration_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `AttributeValue` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `type` VARCHAR(128) NOT NULL,
+    `operational` BOOLEAN NOT NULL DEFAULT false,
     `tag_class` SMALLINT NOT NULL,
     `constructed` BOOLEAN NOT NULL,
     `tag_number` INTEGER NOT NULL,
+    `index_key` INTEGER NULL,
     `ber` LONGBLOB NOT NULL,
     `jer` JSON NULL,
     `security_label` LONGBLOB NULL,
@@ -314,7 +112,9 @@ CREATE TABLE `AttributeValue` (
     `security_classification` SMALLINT NULL,
     `privacy_mark` VARCHAR(191) NULL,
 
-    INDEX `AttributeValue_entry_id_idx`(`entry_id`),
+    INDEX `AttributeValue_entry_id_type_index_key_idx`(`entry_id`, `type`, `index_key`),
+    INDEX `AttributeValue_entry_id_type_tag_class_constructed_tag_numbe_idx`(`entry_id`, `type`, `tag_class`, `constructed`, `tag_number`),
+    INDEX `AttributeValue_entry_id_operational_type_idx`(`entry_id`, `operational`, `type`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -344,11 +144,17 @@ CREATE TABLE `ACIItem` (
     `auth_level_basic_level` INTEGER NULL,
     `auth_level_basic_local_qualifier` INTEGER NULL,
     `auth_level_basic_signed` BOOLEAN NULL,
+    `auth_level_other_dir_ref` VARCHAR(128) NULL,
+    `auth_level_other_indir_ref` INTEGER NULL,
+    `auth_level_other_descriptor` VARCHAR(191) NULL,
+    `auth_level_other_encoding_type` INTEGER NULL,
+    `auth_level_other_encoding` LONGBLOB NULL,
     `ber` LONGBLOB NOT NULL,
     `scope` ENUM('PRESCRIPTIVE', 'ENTRY', 'SUBENTRY') NOT NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `ACIItem_entry_id_idx`(`entry_id`),
+    INDEX `ACIItem_entry_id_active_precedence_idx`(`entry_id`, `active`, `precedence`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -364,8 +170,10 @@ CREATE TABLE `Clearance` (
     `secret` BOOLEAN NOT NULL DEFAULT false,
     `topSecret` BOOLEAN NOT NULL DEFAULT false,
     `ber` LONGBLOB NOT NULL,
+    `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `Clearance_entry_id_idx`(`entry_id`),
+    INDEX `Clearance_entry_id_active_policy_id_idx`(`entry_id`, `active`, `policy_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -376,7 +184,7 @@ CREATE TABLE `ClearanceSecurityCategory` (
     `type` VARCHAR(128) NOT NULL,
     `value` LONGBLOB NOT NULL,
 
-    INDEX `ClearanceSecurityCategory_clearance_id_idx`(`clearance_id`),
+    INDEX `ClearanceSecurityCategory_clearance_id_type_idx`(`clearance_id`, `type`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -393,6 +201,8 @@ CREATE TABLE `AccessPoint` (
     `is_consumer_of_id` INTEGER NULL,
     `entry_id` INTEGER NULL,
     `nsk_group` BIGINT NULL,
+    `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `AccessPoint_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
@@ -401,9 +211,8 @@ CREATE TABLE `AccessPoint` (
 -- CreateTable
 CREATE TABLE `NetworkServiceAccessPoint` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `ipv4` VARCHAR(191) NULL,
     `hostname` VARCHAR(255) NULL,
-    `tcp_port` INTEGER NULL,
+    `port` INTEGER NULL,
     `url` VARCHAR(191) NULL,
     `bytes` LONGBLOB NOT NULL,
     `access_point_id` INTEGER NOT NULL,
@@ -448,6 +257,7 @@ CREATE TABLE `NameForm` (
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `NameForm_namedObjectClass_idx`(`namedObjectClass`),
     UNIQUE INDEX `NameForm_identifier_key`(`identifier`),
@@ -464,9 +274,9 @@ CREATE TABLE `DITStructureRule` (
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
     `entry_id` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `DITStructureRule_ruleIdentifier_idx`(`ruleIdentifier`),
-    INDEX `DITStructureRule_entry_id_idx`(`entry_id`),
+    UNIQUE INDEX `DITStructureRule_entry_id_ruleIdentifier_key`(`entry_id`, `ruleIdentifier`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -482,6 +292,7 @@ CREATE TABLE `ContentRule` (
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
     `entry_id` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `ContentRule_entry_id_structural_class_key`(`entry_id`, `structural_class`),
     PRIMARY KEY (`id`)
@@ -497,8 +308,9 @@ CREATE TABLE `ContextUseRule` (
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
     `entry_id` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `ContextUseRule_entry_id_idx`(`entry_id`),
+    UNIQUE INDEX `ContextUseRule_entry_id_attributeType_key`(`entry_id`, `attributeType`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -511,6 +323,7 @@ CREATE TABLE `Friendship` (
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
     `entry_id` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `Friendship_entry_id_anchor_key`(`entry_id`, `anchor`),
     PRIMARY KEY (`id`)
@@ -525,6 +338,7 @@ CREATE TABLE `MatchingRuleUse` (
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
     `information` TEXT NOT NULL,
     `entry_id` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `MatchingRuleUse_entry_id_identifier_key`(`entry_id`, `identifier`),
     PRIMARY KEY (`id`)
@@ -550,6 +364,7 @@ CREATE TABLE `AttributeTypeDescription` (
     `ldapNames` VARCHAR(191) NULL,
     `ldapDescription` VARCHAR(191) NULL,
     `dummy` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `AttributeTypeDescription_identifier_key`(`identifier`),
     PRIMARY KEY (`id`)
@@ -568,6 +383,7 @@ CREATE TABLE `ObjectClassDescription` (
     `optionals` TEXT NULL,
     `ldapNames` VARCHAR(191) NULL,
     `ldapDescription` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `ObjectClassDescription_identifier_key`(`identifier`),
     PRIMARY KEY (`id`)
@@ -582,6 +398,7 @@ CREATE TABLE `ContextDescription` (
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
     `syntax` VARCHAR(191) NOT NULL,
     `assertionSyntax` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `ContextDescription_identifier_key`(`identifier`),
     PRIMARY KEY (`id`)
@@ -609,6 +426,8 @@ CREATE TABLE `SearchRule` (
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `entry_id` INTEGER NOT NULL,
+    `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `SearchRule_rule_id_key`(`rule_id`),
     INDEX `SearchRule_rule_id_idx`(`rule_id`),
@@ -697,6 +516,7 @@ CREATE TABLE `DistinguishedValue` (
     `type` VARCHAR(128) NOT NULL,
     `value` LONGBLOB NOT NULL,
     `str` VARCHAR(191) NULL,
+    `order_index` INTEGER NOT NULL,
 
     UNIQUE INDEX `DistinguishedValue_entry_id_type_key`(`entry_id`, `type`),
     PRIMARY KEY (`id`)
@@ -707,6 +527,7 @@ CREATE TABLE `EntryObjectClass` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `object_class` VARCHAR(128) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `EntryObjectClass_entry_id_object_class_key`(`entry_id`, `object_class`),
     PRIMARY KEY (`id`)
@@ -718,6 +539,8 @@ CREATE TABLE `Alias` (
     `alias_entry_id` INTEGER NOT NULL,
     `aliased_entry_id` INTEGER NULL,
     `aliased_entry_name` JSON NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `Alias_aliased_entry_id_key`(`aliased_entry_id`),
     INDEX `Alias_aliased_entry_id_idx`(`aliased_entry_id`),
@@ -730,6 +553,7 @@ CREATE TABLE `EntryAdministrativeRole` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `administrativeRole` VARCHAR(128) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `EntryAdministrativeRole_entry_id_administrativeRole_key`(`entry_id`, `administrativeRole`),
     PRIMARY KEY (`id`)
@@ -740,6 +564,7 @@ CREATE TABLE `EntryCollectiveExclusion` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `collectiveExclusion` VARCHAR(128) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `EntryCollectiveExclusion_entry_id_collectiveExclusion_key`(`entry_id`, `collectiveExclusion`),
     PRIMARY KEY (`id`)
@@ -750,8 +575,19 @@ CREATE TABLE `EntryAccessControlScheme` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `accessControlScheme` VARCHAR(128) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `EntryAccessControlScheme_entry_id_key`(`entry_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `EntryAttributeValuesIncomplete` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `entry_id` INTEGER NOT NULL,
+    `attribute_type` VARCHAR(128) NOT NULL,
+
+    UNIQUE INDEX `EntryAttributeValuesIncomplete_entry_id_attribute_type_key`(`entry_id`, `attribute_type`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -800,6 +636,25 @@ CREATE TABLE `EnqueuedListResult` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `AccessPointCredentials` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `uuid` VARCHAR(191) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `access_point_id` INTEGER NOT NULL,
+    `simple_name` JSON NULL,
+    `simple_password_unprotected` LONGBLOB NULL,
+    `simple_password_hash_value` LONGBLOB NULL,
+    `simple_password_hash_algorithm_oid` VARCHAR(191) NULL,
+    `simple_password_hash_algorithm_parameters` LONGBLOB NULL,
+    `strong_pkcs12` LONGBLOB NULL,
+    `mtls_client_pkcs12` LONGBLOB NULL,
+
+    UNIQUE INDEX `AccessPointCredentials_uuid_key`(`uuid`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Entry` ADD CONSTRAINT `Entry_immediate_superior_id_fkey` FOREIGN KEY (`immediate_superior_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -816,70 +671,10 @@ ALTER TABLE `UniqueIdentifier` ADD CONSTRAINT `UniqueIdentifier_entry_id_fkey` F
 ALTER TABLE `Password` ADD CONSTRAINT `Password_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `PwdAttribute` ADD CONSTRAINT `PwdAttribute_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `PasswordHistory` ADD CONSTRAINT `PasswordHistory_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `PasswordRecentlyExpired` ADD CONSTRAINT `PasswordRecentlyExpired_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `PasswordEncryptionAlgorithm` ADD CONSTRAINT `PasswordEncryptionAlgorithm_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdModifyEntryAllowed` ADD CONSTRAINT `PwdModifyEntryAllowed_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdChangeAllowed` ADD CONSTRAINT `PwdChangeAllowed_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdMaxAge` ADD CONSTRAINT `PwdMaxAge_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdExpiryAge` ADD CONSTRAINT `PwdExpiryAge_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdMinLength` ADD CONSTRAINT `PwdMinLength_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `NoDictionaryWords` ADD CONSTRAINT `NoDictionaryWords_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `NoPersonNames` ADD CONSTRAINT `NoPersonNames_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `NoGeographicalNames` ADD CONSTRAINT `NoGeographicalNames_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdDictionaries` ADD CONSTRAINT `PwdDictionaries_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdExpiryWarning` ADD CONSTRAINT `PwdExpiryWarning_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdGraces` ADD CONSTRAINT `PwdGraces_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdFailureDuration` ADD CONSTRAINT `PwdFailureDuration_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdLockoutDuration` ADD CONSTRAINT `PwdLockoutDuration_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdMaxFailures` ADD CONSTRAINT `PwdMaxFailures_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdMaxTimeInHistory` ADD CONSTRAINT `PwdMaxTimeInHistory_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdMinTimeInHistory` ADD CONSTRAINT `PwdMinTimeInHistory_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdHistorySlots` ADD CONSTRAINT `PwdHistorySlots_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PwdRecentlyExpiredDuration` ADD CONSTRAINT `PwdRecentlyExpiredDuration_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `AttributeValue` ADD CONSTRAINT `AttributeValue_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -897,13 +692,13 @@ ALTER TABLE `Clearance` ADD CONSTRAINT `Clearance_entry_id_fkey` FOREIGN KEY (`e
 ALTER TABLE `ClearanceSecurityCategory` ADD CONSTRAINT `ClearanceSecurityCategory_clearance_id_fkey` FOREIGN KEY (`clearance_id`) REFERENCES `Clearance`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_non_supplying_master_id_fkey` FOREIGN KEY (`non_supplying_master_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_is_consumer_of_id_fkey` FOREIGN KEY (`is_consumer_of_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `NetworkServiceAccessPoint` ADD CONSTRAINT `NetworkServiceAccessPoint_access_point_id_fkey` FOREIGN KEY (`access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -933,13 +728,13 @@ ALTER TABLE `SearchRule` ADD CONSTRAINT `SearchRule_entry_id_fkey` FOREIGN KEY (
 ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_previous_id_fkey` FOREIGN KEY (`previous_id`) REFERENCES `OperationalBinding`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_access_point_id_fkey` FOREIGN KEY (`access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_master_access_point_id_fkey` FOREIGN KEY (`master_access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_previous_id_fkey` FOREIGN KEY (`previous_id`) REFERENCES `OperationalBinding`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `DistinguishedValue` ADD CONSTRAINT `DistinguishedValue_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -963,7 +758,13 @@ ALTER TABLE `EntryCollectiveExclusion` ADD CONSTRAINT `EntryCollectiveExclusion_
 ALTER TABLE `EntryAccessControlScheme` ADD CONSTRAINT `EntryAccessControlScheme_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `EntryAttributeValuesIncomplete` ADD CONSTRAINT `EntryAttributeValuesIncomplete_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `EnqueuedSearchResult` ADD CONSTRAINT `EnqueuedSearchResult_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `EnqueuedListResult` ADD CONSTRAINT `EnqueuedListResult_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `AccessPointCredentials` ADD CONSTRAINT `AccessPointCredentials_access_point_id_fkey` FOREIGN KEY (`access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
