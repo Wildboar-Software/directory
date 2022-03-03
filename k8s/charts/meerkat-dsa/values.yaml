@@ -35,7 +35,7 @@ bindMinSleep: 1000
 bindSleepRange: 3000
 minAuthLevelForOB: 1
 minAuthLocalQualifierForOB: 128
-# myAccessPointNSAPs: idm://example.com:4632 idms://example.com:44632
+myAccessPointNSAPs: idm://demo.meerkat.wildboar.software:4632 idms://demo.meerkat.wildboar.software:44632 ldap://demo.meerkat.wildboar.software:389 ldaps://demo.meerkat.wildboar.software:636
 useDatabaseWhenThereAreXSubordinates: 1000
 entriesPerSubordinatesPage: 100
 transcodeValuestoDER: true

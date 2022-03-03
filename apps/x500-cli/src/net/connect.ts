@@ -100,7 +100,7 @@ async function connect (
             idm.events.once("bindResult", (result) => {
                 resolve(result);
             });
-            idm.write(encoded.toBytes(), 0);
+            idm.write(encoded.toBytes());
         });
     }
     const ret: Connection = {
@@ -126,7 +126,7 @@ async function connect (
                         });
                     }
                 });
-                idm.write(encoded.toBytes(), 0);
+                idm.write(encoded.toBytes());
             });
         },
         close: async (): Promise<void> => {

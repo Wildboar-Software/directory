@@ -1,0 +1,77 @@
+# This Docker Compose file is meant for production deployments, unlike the
+# Docker Compose file at the root of this monorepo, which is just intended for
+# local development and testing.
+version: '3.7'
+
+services:
+  meerkat:
+    image: wildboarsoftware/meerkat-dsa:latest
+    # env_file:
+    #   - .env
+    environment:
+      # What appears in this section overrides anything in .env.
+      DATABASE_URL: mysql://root:example@db:3306/directory
+      # MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
+      # MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
+      # MEERKAT_SIGNING_CERT_CHAIN: /data/keypair/cert.pem
+      # MEERKAT_SIGNING_KEY: /data/keypair/key.pem
+      # MEERKAT_INIT_JS: /data/init.mjs
+    hostname: 'meerkat'
+    labels:
+      author: Wildboar Software
+      app: meerkat
+      version: 1.0.0-beta.8
+    ports:
+      - '1389:389/tcp' # LDAP TCP Port
+      - '4632:4632/tcp' # IDM Socket
+      - '18080:18080/tcp' # Web administration console
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+        read_only: true
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+
+  init-db:
+    image: wildboarsoftware/meerkat-dsa:latest
+    # env_file:
+    #   - .env
+    environment:
+      # What appears in this section overrides anything in .env.
+      DATABASE_URL: mysql://root:example@db:3306/directory
+    command:
+      - npx
+      - prisma
+      - migrate
+      - deploy
+      - --schema=/srv/meerkat/prisma/schema.prisma
+    depends_on:
+      db:
+        condition: service_started
+
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    # command: --default-authentication-plugin=mysql_native_password --slow-query-log=ON --slow-query-log-file=/var/lib/mysqllog/slow.log --long-query-time=2
+    restart: always
+    # This gets rid of the "mbind: Operation not permitted" error message in the MySQL logs.
+    # See: https://thegeekbin.com/mbind-operation-not-permitted-docker-mysql/
+    security_opt:
+      - "seccomp=unconfined"
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    # ports:
+    #   - '3306:3306/tcp'
+    # volumes:
+    #   - data:/var/lib/mysql
+      # - './data/mysql:/var/lib/mysqllog:rw'
+
+# volumes:
+#   data: {}
+
+# networks:
+#   default:
+#     external:
+#       name: meerkat-deploy
