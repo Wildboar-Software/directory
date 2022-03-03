@@ -12,7 +12,17 @@ export class HomeController {
 
     constructor (
         @Inject(CONTEXT) readonly ctx: Context,
-    ) {}
+    ) {
+        /**
+         * hbs (Handlebars templating engine) is an implicit dependency for
+         * NestJS template rendering. However, since it is never explicitly
+         * imported, webpack will shake it out of the dependencies in the
+         * resulting package.json. Merely importing this here and doing nothing
+         * else with it makes sure that it appears in the post-webpack
+         * package.json file.
+         */
+        import("hbs").then();
+    }
 
     @Get()
     @Get("/index")

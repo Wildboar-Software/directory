@@ -71,8 +71,8 @@ async function setEntryPassword (
              * database.
              */
             ...(entriesWithPasswordsExist
-                ? [ makeTopLevelAdmin ]
-                : []),
+                ? []
+                : [ makeTopLevelAdmin ]),
             ctx.db.password.upsert({
                 where: {
                     entry_id: vertex.dse.id,
@@ -135,8 +135,8 @@ async function setEntryPassword (
              * database.
              */
             ...(entriesWithPasswordsExist
-                ? [ makeTopLevelAdmin ]
-                : []),
+                ? []
+                : [ makeTopLevelAdmin ]),
             ctx.db.password.upsert({
                 where: {
                     entry_id: vertex.dse.id,
