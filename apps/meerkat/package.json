@@ -31,7 +31,7 @@
         "url": "https://github.com/Wildboar-Software/directory.git"
     },
     "prisma": {
-        "seed": "ts-node src/prisma/seed.ts"
+        "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
     },
     "engines": {
         "node": ">=17.0.0"

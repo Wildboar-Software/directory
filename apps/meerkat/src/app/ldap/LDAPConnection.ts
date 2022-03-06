@@ -100,7 +100,7 @@ async function handleRequest (
     });
     // let toWriteBuffer: Buffer = Buffer.alloc(0);
     // let resultsBuffered: number = 0;
-    const onEntry = async (searchResEntry: SearchResultEntry): Promise<void> => {
+    const onEntry = (searchResEntry: SearchResultEntry): void => {
         const resultMessage = new LDAPMessage(
             message.messageID,
             {

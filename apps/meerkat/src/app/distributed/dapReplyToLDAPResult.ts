@@ -82,7 +82,7 @@ import { strict as assert } from "assert";
 async function getSearchResultEntries (
     ctx: Context,
     searchResult: SearchResult,
-    onEntry: (entry: SearchResultEntry) => Promise<void>,
+    onEntry: (entry: SearchResultEntry) => void,
 ): Promise<void> {
     const data = getOptionallyProtectedValue(searchResult);
     if ("searchInfo" in data) {
@@ -93,7 +93,7 @@ async function getSearchResultEntries (
                 dn,
                 attrs,
             );
-            await onEntry(entry);
+            onEntry(entry);
         }
     } else if ("uncorrelatedSearchInfo" in data) {
         for (const resultSet of data.uncorrelatedSearchInfo) {
@@ -124,7 +124,7 @@ async function dapReplyToLDAPResult (
     ctx: Context,
     res: Result,
     req: LDAPMessage,
-    onEntry: (entry: SearchResultEntry) => Promise<void>,
+    onEntry: (entry: SearchResultEntry) => void,
     foundDSE?: Vertex,
 ): Promise<LDAPMessage> {
     assert(res.opCode);
