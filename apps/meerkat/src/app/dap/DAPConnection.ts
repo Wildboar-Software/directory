@@ -81,7 +81,6 @@ import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
 import { strict as assert } from "assert";
-import { Prisma } from "@prisma/client";
 
 /**
  * @summary The handles a request, but not errors

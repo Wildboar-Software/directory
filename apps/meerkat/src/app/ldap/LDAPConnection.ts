@@ -63,6 +63,7 @@ import anyPasswordsExist from "../authz/anyPasswordsExist";
 import {
     AuthenticationLevel_basicLevels_level_none as none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import { EventEmitter } from "events";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -144,7 +145,7 @@ async function handleRequest (
             Buffer.from("cn=subschema", "utf-8"),
             getRootSubschema(ctx, permittedToSeeSchema),
         );
-        await onEntry(entry);
+        onEntry(entry);
         const res = new LDAPMessage(
             message.messageID,
             {
@@ -162,30 +163,34 @@ async function handleRequest (
     }
     const dapRequest = ldapRequestToDAPRequest(ctx, assn, message);
     if (!dapRequest) {
-        throw new Error(ctx.i18n.t("err:could_not_convert_ldap_to_dap"));
+        // Not all requests--such as abandon--warrant a response.
+        return;
     }
     if ("present" in dapRequest.invokeId) {
         assn.messageIDToInvokeID.set(Number(message.messageID), Number(dapRequest.invokeId.present));
         assn.invokeIDToMessageID.set(Number(dapRequest.invokeId.present), Number(message.messageID));
+        const now = new Date();
+        assn.invocations.set(Number(dapRequest.invokeId.present), {
+            invokeId: Number(dapRequest.invokeId.present),
+            operationCode: dapRequest.opCode,
+            startTime: now,
+            events: new EventEmitter(),
+        });
     }
     const result = await OperationDispatcher.dispatchDAPRequest(
         ctx,
         assn,
-        {
-            invokeId: dapRequest.invokeId,
-            opCode: dapRequest.opCode,
-            argument: dapRequest.argument,
-        },
+        { ...dapRequest },
     );
+    stats.request = result.request ?? stats.request;
+    stats.outcome = result.outcome ?? stats.outcome;
     const unprotectedResult = getOptionallyProtectedValue(result.result);
-    const ldapResult = await dapReplyToLDAPResult(ctx, {
+    const ldapResult = dapReplyToLDAPResult(ctx, {
         invokeId: dapRequest.invokeId,
         opCode: dapRequest.opCode,
         result: unprotectedResult.result,
     }, message, onEntry);
     assn.socket.write(_encode_LDAPMessage(ldapResult, BER).toBytes());
-    stats.request = result.request ?? stats.request;
-    stats.outcome = result.outcome ?? stats.outcome;
 }
 
 async function handleRequestAndErrors (
@@ -215,12 +220,6 @@ async function handleRequestAndErrors (
         ("extendedReq" in message.protocolOp)
         && decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(cancel)
     );
-    // const now = new Date();
-    // dap.invocations.set(request.invokeID, {
-    //     invokeId: request.invokeID,
-    //     operationCode: request.opcode,
-    //     startTime: new Date(),
-    // });
     try {
         await handleRequest(ctx, assn, message, stats);
     } catch (e) {
@@ -301,15 +300,9 @@ async function handleRequestAndErrors (
         const invokeID = assn.messageIDToInvokeID.get(Number(message.messageID));
         if (invokeID) {
             assn.invokeIDToMessageID.delete(invokeID);
+            assn.invocations.delete(invokeID);
         }
         assn.messageIDToInvokeID.delete(Number(message.messageID));
-        // ctx.log.debug(`Finished operation ${invokeID} / ${message.messageID}.`);
-        // dap.invocations.set(request.invokeID, {
-        //     invokeId: request.invokeID,
-        //     operationCode: request.opcode,
-        //     startTime: now,
-        //     resultTime: new Date(),
-        // });
         ctx.telemetry.sendEvent(stats);
     }
 }

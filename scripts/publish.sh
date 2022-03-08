@@ -44,6 +44,7 @@ cd ../../..
 az storage blob upload \
     --account-name=meerkatdsahelmtest \
     --container-name=asdf \
+    --overwrite \
     --file=k8s/charts/meerkat-dsa/index.yaml
 
 # Upload the charts
@@ -51,6 +52,7 @@ for FILE in k8s/charts/meerkat-dsa/*.tgz; do
     az storage blob upload \
         --account-name=meerkatdsahelmtest \
         --container-name=asdf \
+        --overwrite \
         --file=$FILE
 done
 
@@ -70,4 +72,5 @@ helm uninstall meerkat || true
 helm install meerkat meerkathelmtest/meerkat-dsa \
     --debug \
     --set service.type=LoadBalancer \
-    --set admin.type=LoadBalancer
+    --set admin.type=LoadBalancer \
+    --set logLevel=debug

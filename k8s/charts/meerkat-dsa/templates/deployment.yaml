@@ -36,6 +36,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.databaseSecretName }}
                   key: databaseUrl
+            - name: MEERKAT_LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: logLevel
             {{- if .Values.dapEnabled }}
             - name: MEERKAT_IDM_PORT
               valueFrom:

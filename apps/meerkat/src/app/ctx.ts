@@ -329,6 +329,7 @@ const ctx: Context = {
             if (bulkInsertMode || isDebugging) {
                 return;
             }
+            console.log(JSON.stringify(body, undefined, 4));
             // if (process.env.NODE_ENV === "development") {
             //     console.debug(body);
             // }

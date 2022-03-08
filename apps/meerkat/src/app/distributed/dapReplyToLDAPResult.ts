@@ -97,7 +97,7 @@ async function getSearchResultEntries (
         }
     } else if ("uncorrelatedSearchInfo" in data) {
         for (const resultSet of data.uncorrelatedSearchInfo) {
-            await getSearchResultEntries(ctx, resultSet, onEntry);
+            getSearchResultEntries(ctx, resultSet, onEntry);
         }
     }
 }
@@ -120,13 +120,13 @@ async function getSearchResultEntries (
  * @async
  */
 export
-async function dapReplyToLDAPResult (
+function dapReplyToLDAPResult (
     ctx: Context,
     res: Result,
     req: LDAPMessage,
     onEntry: (entry: SearchResultEntry) => void,
     foundDSE?: Vertex,
-): Promise<LDAPMessage> {
+): LDAPMessage {
     assert(res.opCode);
     const successMessage = ctx.i18n.t("main:success");
     let sortRequestControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc2891.html
@@ -259,7 +259,7 @@ async function dapReplyToLDAPResult (
             foundDN,
             attrs,
         );
-        await onEntry(entry);
+        onEntry(entry);
         return new LDAPMessage(
             req.messageID,
             {
@@ -290,7 +290,7 @@ async function dapReplyToLDAPResult (
     if (compareCode(res.opCode, search["&operationCode"]!)) {
         const result = search.decoderFor["&ResultType"]!(res.result!);
         const data = getOptionallyProtectedValue(result);
-        await getSearchResultEntries(ctx, result, onEntry);
+        getSearchResultEntries(ctx, result, onEntry);
         const responseControls: Control[] = [];
         if (sortRequestControl) {
             responseControls.push(new Control(

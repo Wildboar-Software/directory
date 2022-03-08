@@ -517,9 +517,7 @@ class OperationDispatcher {
             const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
             const unprotectedResult = getOptionallyProtectedValue(result);
             return {
-                invokeId: {
-                    present: 1,
-                },
+                invokeId: req.invokeId,
                 opCode: search["&operationCode"]!,
                 result: {
                     unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
@@ -876,9 +874,7 @@ class OperationDispatcher {
             }
             : await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
         return {
-            invokeId: {
-                present: 1,
-            },
+            invokeId,
             opCode: search["&operationCode"]!,
             chaining: searchResponse.chaining,
             result,
@@ -1001,9 +997,7 @@ class OperationDispatcher {
                 const unprotectedResult = getOptionallyProtectedValue(nrcrResult);
                 const searchResult = _decode_SearchResult(unprotectedResult.result);
                 return {
-                    invokeId: {
-                        present: 1,
-                    },
+                    invokeId,
                     opCode: search["&operationCode"]!,
                     chaining: unprotectedResult.chainedResult,
                     result: searchResult,
