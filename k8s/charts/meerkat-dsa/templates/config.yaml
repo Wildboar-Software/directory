@@ -7,14 +7,73 @@ metadata:
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 data:
   locale: {{ .Values.locale }}
-  logLevel: {{ .Values.logLevel | default "info" }}
+  log.level: {{ .Values.log.level | default "info" }}
+  {{- if .Values.log.json }}
+  log.json: "1"
+  {{- else }}
+  log.json: "0"
+  {{- end }}
+  {{- if .Values.log.color }}
+  log.color: "1"
+  {{- else }}
+  log.color: "0"
+  {{- end }}
+  {{- if .Values.log.console }}
+  log.console: "1"
+  {{- else }}
+  log.console: "0"
+  {{- end }}
+  {{- if .Values.log.timestamp }}
+  log.timestamp: "1"
+  {{- else }}
+  log.timestamp: "0"
+  {{- end }}
+  {{- if .Values.openTopLevel }}
+  openTopLevel: "1"
+  {{- else }}
+  openTopLevel: "0"
+  {{- end }}
+  {{- if .Values.forbidAnonymousBind }}
+  forbidAnonymousBind: "1"
+  {{- else }}
+  forbidAnonymousBind: "0"
+  {{- end }}
+  {{- if .Values.maxPreBindRequests }}
+  maxPreBindRequests: "1"
+  {{- else }}
+  maxPreBindRequests: "0"
+  {{- end }}
+  {{- if .Values.dap.enabled }}
+  dap.enabled: "1"
+  {{- else }}
+  dap.enabled: "0"
+  {{- end }}
+  {{- if .Values.dsp.enabled }}
+  dsp.enabled: "1"
+  {{- else }}
+  dsp.enabled: "0"
+  {{- end }}
+  {{- if .Values.dop.enabled }}
+  dop.enabled: "1"
+  {{- else }}
+  dop.enabled: "0"
+  {{- end }}
+  localQualifierPointsFor.startTLS: {{ .Values.localQualifierPointsFor.startTLS | default 0 | quote }}
+  localQualifierPointsFor.tls: {{ .Values.localQualifierPointsFor.tls | default 0 | quote }}
+  localQualifierPointsFor.sslv3: {{ .Values.localQualifierPointsFor.sslv3 | default 0 | quote }}
+  localQualifierPointsFor.tls1_0: {{ .Values.localQualifierPointsFor.tls1_0 | default 0 | quote }}
+  localQualifierPointsFor.tls1_1: {{ .Values.localQualifierPointsFor.tls1_1 | default 0 | quote }}
+  localQualifierPointsFor.tls1_2: {{ .Values.localQualifierPointsFor.tls1_2 | default 0 | quote }}
+  localQualifierPointsFor.tls1_3: {{ .Values.localQualifierPointsFor.tls1_3 | default 0 | quote }}
   {{- if .Values.dapEnabled }}
   idmPort: "4632"
   idmsPort: "44632"
   {{- end }}
+
   {{- if .Values.ldapEnabled }}
   ldapPort: "1389" # We use 1389 instead of 389 because ports under 1000 are privileged.
   ldapsPort: "1636" # We use 1636 instead of 636 because ports under 1000 are privileged.
+  ldapBufferSize: {{ .Values.ldap.bufferSize | default 10000000 | quote }}
   {{- end }}
   {{- if .Values.webAdminEnabled }}
   webAdminPort: "18080"
@@ -43,6 +102,15 @@ data:
   {{- if .Values.bulkInsertMode }}
   bulkInsertMode: "1"
   {{- end }}
+  ob.minAuthLevel: {{ .Values.ob.minAuthLevel | default 1 | quote }}
+  ob.minAuthLocalQualifier: {{ .Values.ob.minAuthLocalQualifier | default 0 | quote }}
+  {{-if .Values.chaining.prohibit }}
+  chaining.prohibit: "1"
+  {{- else }}
+  chaining.prohibit: "0"
+  {{- end }}
+  chaining.minAuthLevel: {{ .Values.ob.minAuthLevel | default 1 | quote }}
+  chaining.minAuthLocalQualifier: {{ .Values.ob.minAuthLocalQualifier | default 0 | quote }}
   {{- if .Values.init }}
   init: |-
 {{ toYaml .Values.init | indent 4 }}

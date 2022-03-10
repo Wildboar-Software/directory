@@ -7,17 +7,55 @@ nameOverride: ""
 fullnameOverride: ""
 service:
   type: ClusterIP
+maxConnections: 500
+maxConnectionsPerAddress: 10
+maxConcurrentOperationsPerConnection: 20
+tcp:
+  noDelay: false
+  timeoutInSeconds: 120
+  # A sensible default, since AX.25 radio--pretty much the slowest medium
+  # imaginable--typically transmits 150 bytes/second.
+  minimumTransferSpeedInBytesPerMinute: 1000
+tls:
+  # certFile: /example.pem
+  # keyFile: /example.key
+  # caFile: /ca.pem
+  # crlFile: /crl.pem
+  # pfxFile: /example.pfx
+  # sigalgs: ""
+  # ciphers: ""
+  # clientCertEngine: ""
+  # dhParamFile: /dhparam.pem
+  # ecdhCurve: ""
+  # honorCipherOrder: false
+  # minVersion: TLSv1
+  # maxVersion: TLSv1.3
+  # passphrase: ""
+  # privateKeyEngine: ""
+  handshakeTimeout: 30000
+  sessionTimeout: 3600
+  clientCertAuth: false
 idm:
   port: 4632
+  bufferSize: 1000000
+  maxPDUSize: 1000000
+  maxSegments: 10
 idms:
   port: 44632
 ldap:
   port: 389
+  bufferSize: 1000000
 ldaps:
   port: 636
 admin:
   type: ClusterIP
   port: 18080
+dap:
+  enabled: true
+dsp:
+  enabled: true
+dop:
+  enabled: true
 resources: {}
 nodeSelector: {}
 tolerations: []
@@ -41,4 +79,39 @@ entriesPerSubordinatesPage: 100
 transcodeValuestoDER: true
 transcodeDistinguishedValuesToDER: true
 bulkInsertMode: false
+openTopLevel: false
+forbidAnonymousBind: false
+maxPreBindRequests: 1
+log:
+  level: "debug"
+  json: true
+  color: true
+  console: true
+  timestamp: true
+  # http:
+  #   url: https://username:password@example.com/logs
+  # file:
+  #   path: /var/log/meerkat.log
+  #   maxSize: 10000000
+  #   maxFiles: 100
+  #   zip: true
+  #   tailable: true
+localQualifierPointsFor:
+  startTLS: 64
+  tls: 128
+  sslv3: 0
+  tls1_0: 0
+  tls1_1: 0
+  tls1_2: 32
+  tls1_3: 64
+chaining:
+  # This option determines whether Meerkat DSA will chain requests, not whether
+  # it will respond to inbound DSP requests.
+  prohibit: true
+  minAuthLevel: 1
+  minAuthLocalQualifier: 0
+ob:
+  minAuthLevel: 1
+  minAuthLocalQualifier: 0
+
 # init
