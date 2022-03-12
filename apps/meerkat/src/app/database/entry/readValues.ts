@@ -323,48 +323,65 @@ async function readValues (
             addFriends(options.relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
         }
     }
-    let userAttributes: Value[] = await Promise.all(
-        (await ctx.db.attributeValue.findMany({
-            where: {
-                entry_id: entry.dse.id,
-                type: selectedUserAttributes
-                    ? {
-                        in: options?.noSubtypeSelection
-                            ? Array.from(selectedUserAttributes)
-                            : Array.from(selectedUserAttributes)
-                                .flatMap((type_) => {
-                                    const subtypes = getAttributeSubtypes(ctx, ObjectIdentifier.fromString(type_));
-                                    return [
-                                        type_,
-                                        ...subtypes.map((st) => st.toString()),
-                                    ];
-                                }),
-                    }
+
+    const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));
+
+    const userAttributeReaderToExecute: SpecialAttributeDatabaseReader[] = selectedUserAttributes
+        ? Array.from(selectedUserAttributes)
+            .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
+            .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler)
+        : uniqueAttributeTypes
+            .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
+            .map((spec) => spec.driver!.readValues);
+
+    /**
+     * This variable exists to avoid an unnecessary database query.
+     */
+    const allUserAttributesUseDrivers = (selectedUserAttributes?.size === userAttributeReaderToExecute.length);
+    let userAttributes: Value[] = !allUserAttributesUseDrivers
+        ? await Promise.all(
+            (await ctx.db.attributeValue.findMany({
+                where: {
+                    entry_id: entry.dse.id,
+                    type: selectedUserAttributes
+                        ? {
+                            in: options?.noSubtypeSelection
+                                ? Array.from(selectedUserAttributes)
+                                : Array.from(selectedUserAttributes)
+                                    .flatMap((type_) => {
+                                        const subtypes = getAttributeSubtypes(ctx, ObjectIdentifier.fromString(type_));
+                                        return [
+                                            type_,
+                                            ...subtypes.map((st) => st.toString()),
+                                        ];
+                                    }),
+                        }
+                        : undefined,
+                    operational: false,
+                },
+                select: {
+                    type: true,
+                    ber: true,
+                    ContextValue: (
+                        contextSelection
+                        || options?.selection?.returnContexts
+                        // || ("selectedContexts" in contextSelection) // Why was this condition ever here?
+                    )
+                        ? {
+                            select: {
+                                type: true,
+                                ber: true,
+                            },
+                        }
+                        : undefined,
+                },
+                distinct: (options?.selection?.infoTypes === typesOnly)
+                    ? ["type"]
                     : undefined,
-                operational: false,
-            },
-            select: {
-                type: true,
-                ber: true,
-                ContextValue: (
-                    contextSelection
-                    || options?.selection?.returnContexts
-                    // || ("selectedContexts" in contextSelection) // Why was this condition ever here?
-                )
-                    ? {
-                        select: {
-                            type: true,
-                            ber: true,
-                        },
-                    }
-                    : undefined,
-            },
-            distinct: (options?.selection?.infoTypes === typesOnly)
-                ? ["type"]
-                : undefined,
-        }))
-            .map((a) => attributeFromDatabaseAttribute(ctx, a)),
-    );
+            }))
+                .map((a) => attributeFromDatabaseAttribute(ctx, a)),
+        )
+        : [];
 
     let operationalAttributes: Value[] = (selectedOperationalAttributes === undefined)
         ? []
@@ -399,15 +416,6 @@ async function readValues (
                 .map((a) => attributeFromDatabaseAttribute(ctx, a)),
     );
 
-    const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));
-
-    const userAttributeReaderToExecute: SpecialAttributeDatabaseReader[] = selectedUserAttributes
-        ? Array.from(selectedUserAttributes)
-            .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
-            .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler)
-        : uniqueAttributeTypes
-            .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
-            .map((spec) => spec.driver!.readValues);
     const operationalAttributeReadersToExecute: SpecialAttributeDatabaseReader[] = (
         selectedOperationalAttributes !== undefined
     )
