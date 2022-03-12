@@ -1,6 +1,6 @@
 name: meerkat-dsa
 base: core20
-version: '1.0.0-beta.14'
+version: '1.0.0-beta.15'
 summary: X.500 Directory (DSA) and LDAP Server
 description: |
   Fully-featured X.500 directory server / directory system agent (DSA)

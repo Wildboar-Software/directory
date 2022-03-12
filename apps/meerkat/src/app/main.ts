@@ -668,7 +668,7 @@ async function main (): Promise<void> {
 
     if (versionSlug) {
         ctx.log.info(ctx.i18n.t("log:starting_meerkat_version", {
-            version: "1.0.0-beta.14",
+            version: "1.0.0-beta.15",
         }));
     }
     process.title = PROCESS_NAME;
@@ -696,7 +696,7 @@ async function main (): Promise<void> {
             }));
             process.exit(1);
         }
-        ctx.dsa.signing = {
+        ctx.config.signing = {
             key: createPrivateKey({
                 key: keyFile,
                 format: "pem",

@@ -72,5 +72,6 @@ helm uninstall meerkat || true
 helm install meerkat meerkathelmtest/meerkat-dsa \
     --debug \
     --set service.type=LoadBalancer \
-    --set admin.type=LoadBalancer \
-    --set logLevel=debug
+    --set adminService.type=LoadBalancer \
+    --set logLevel=debug \
+    --set databaseSecretName=meerkat-dsa-database

@@ -135,6 +135,21 @@ export
 type DateString = string;
 
 /**
+ * @summary The log levels used by Meerkat DSA logging
+ * @description
+ *
+ * The log levels used by Meerkat DSA logging
+ *
+ */
+export
+enum LogLevel {
+    debug = "debug",
+    info = "info",
+    warn = "warn",
+    error = "error",
+};
+
+/**
  * @summary Something that has a uniquely-identifying object identifier
  * @description
  *
@@ -1055,14 +1070,6 @@ interface DSAInfo {
      */
     sentinelTriggeredHibernation?: Date;
 
-    /**
-     * DSA configuration pertaining to digital signing of requests, responses,
-     * and errors.
-     *
-     * Meerkat DSA will take its AE-Title from the public key certificate.
-     */
-    signing?: SigningInfo;
-
 }
 
 /**
@@ -1109,6 +1116,24 @@ interface NetworkService {
 export
 interface Configuration {
 
+    log: {
+        level: LogLevel;
+        color: boolean;
+        timestamp: boolean;
+        json: boolean;
+        console: boolean;
+        http?: {
+            url: string;
+        };
+        file?: {
+            path: string;
+            maxSize: number;
+            maxFiles: number;
+            zip: boolean;
+            tailable: boolean;
+        };
+    };
+
     /**
      * The absolute maximum number of connections globally. Connections opened
      * after this maximum has been reached will be automatically closed.
@@ -1130,6 +1155,14 @@ interface Configuration {
      * automatically rejected.
      */
     maxConcurrentOperationsPerConnection: number;
+
+    /**
+     * DSA configuration pertaining to digital signing of requests, responses,
+     * and errors.
+     *
+     * Meerkat DSA will take its AE-Title from the public key certificate.
+     */
+    signing?: SigningInfo;
 
     tcp: {
 

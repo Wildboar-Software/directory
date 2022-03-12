@@ -6,43 +6,132 @@ metadata:
   labels:
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 data:
-  locale: {{ .Values.locale }}
-  logLevel: {{ .Values.logLevel | default "info" }}
-  {{- if .Values.dapEnabled }}
-  idmPort: "4632"
-  idmsPort: "44632"
+  # The structure of this is based on the `Context.config` interface defined in
+  # `@wildboar/meerkat-types` and instantiated in `apps/meerkat/src/app/ctx.ts`.
+  {{- if .Values.log }}
+  log.level: {{ .Values.log.level | default "debug" }}
+  log.noConsole: {{ .Values.log.console | ternary 0 1 | quote }}
+  log.noColor: {{ .Values.log.color | ternary 0 1 | quote }}
+  log.noTimestamp: {{ .Values.log.timestamp | ternary 0 1 | quote }}
+  log.json: {{ .Values.log.json | ternary 1 0 | quote }}
+  {{- if .Values.log.file }}
+  log.file.path: {{ .Values.log.file.path }}
+  log.file.maxSize: {{ .Values.log.file.maxSize | default 1000000 | quote }}
+  log.file.maxFiles: {{ .Values.log.file.maxFiles | default 100 | quote }}
+  log.file.zip: {{ .Values.log.file.zip | ternary 1 0 | quote }}
+  log.file.tailable: {{ .Values.log.file.tailable | ternary 1 0 | quote }}
   {{- end }}
-  {{- if .Values.ldapEnabled }}
-  ldapPort: "1389" # We use 1389 instead of 389 because ports under 1000 are privileged.
-  ldapsPort: "1636" # We use 1636 instead of 636 because ports under 1000 are privileged.
+  {{- if .Values.log.http }}
+  {{- if .Values.log.http.url }}
+  log.http.url: {{ .Values.log.http.url }}
   {{- end }}
-  {{- if .Values.webAdminEnabled }}
-  webAdminPort: "18080"
+  {{- end }}
+  {{- end }}
+  maxConnections: {{ .Values.maxConnections | default 250 | quote }}
+  maxConnectionsPerAddress: {{ .Values.maxConnectionsPerAddress | default 10 | quote }}
+  maxConcurrentOperationsPerConnection: {{ .Values.maxConcurrentOperationsPerConnection | default 20 | quote }}
+  tcp.noDelay: {{ .Values.tcp.noDelay | ternary 1 0 | quote }}
+  tcp.timeoutInSeconds: {{ .Values.tcp.timeoutInSeconds | default 120 | quote }} # 0 means "do not timeout."
+  # This is a sensible default, since AX.25 radio--one of the slowest media
+  # available--transmits at about 150 bytes per second.
+  tcp.minimumTransferSpeedInBytesPerMinute: {{ .Values.tcp.minimumTransferSpeedInBytesPerMinute | default 1000 | quote }}
+  tls.handshakeTimeout: {{ .Values.tls.handshakeTimeout | default 30000 | div 1000 | int | quote }}
+  tls.sessionTimeout: {{ .Values.tls.sessionTimeout | default 3600 | quote }}
+  # This is a deviation from the `Context` interface.
+  tls.clientCertAuth: {{ .Values.tls.clientCertAuth | ternary 1 0 | quote }}
+  {{- if .Values.tls.cert }}
+  tls.cert: {{ .Values.tls.cert }}
+  {{- end }}
+  {{- if .Values.tls.key }}
+  tls.key: {{ .Values.tls.key }}
+  {{- end }}
+  {{- if .Values.tls.ca }}
+  tls.ca: {{ .Values.tls.ca }}
+  {{- end }}
+  {{- if .Values.tls.crl }}
+  tls.crl: {{ .Values.tls.crl }}
+  {{- end }}
+  {{- if .Values.tls.pfx }}
+  tls.pfx: {{ .Values.tls.pfx }}
+  {{- end }}
+  {{- if .Values.tls.sigalgs }}
+  tls.sigalgs: {{ .Values.tls.sigalgs }}
+  {{- end }}
+  {{- if .Values.tls.ciphers }}
+  tls.ciphers: {{ .Values.tls.ciphers }}
+  {{- end }}
+  {{- if .Values.tls.clientCertEngine }}
+  tls.clientCertEngine: {{ .Values.tls.clientCertEngine }}
+  {{- end }}
+  {{- if .Values.tls.dhparam }}
+  tls.dhparam: {{ .Values.tls.dhparam }}
+  {{- end }}
+  {{- if .Values.tls.ecdhCurve }}
+  tls.ecdhCurve: {{ .Values.tls.ecdhCurve }}
+  {{- end }}
+  tls.honorCipherOrder: {{ .Values.tls.honorCipherOrder | ternary 1 0 | quote }}
+  {{- if .Values.tls.minVersion }}
+  tls.minVersion: {{ .Values.tls.minVersion }}
+  {{- end }}
+  {{- if .Values.tls.maxVersion }}
+  tls.maxVersion: {{ .Values.tls.maxVersion }}
+  {{- end }}
+  {{- if .Values.tls.passphrase }}
+  tls.passphrase: {{ .Values.tls.passphrase }}
+  {{- end }}
+  {{- if .Values.tls.privateKeyEngine }}
+  tls.privateKeyEngine: {{ .Values.tls.privateKeyEngine }}
+  {{- end }}
+  # tls.ticketKeys: ???
+  # tls.pskIdentityHint: ???
+  idm.port: {{ .Values.idm.port | default 4632 | quote }}
+  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
+  idm.bufferSize: {{ .Values.idm.bufferSize | default "1000000" | quote }}
+  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
+  idm.maxPDUSize: {{ .Values.idm.maxPDUSize | default "1000000" | quote }}
+  idm.maxSegments: {{ .Values.idm.maxSegments | default 100 | quote }}
+  idms.port: {{ .Values.idms.port | default 44632 | quote }}
+  ldap.port: {{ .Values.ldap.port | default 389 | quote }}
+  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
+  ldap.bufferSize: {{ .Values.ldap.bufferSize | default "1000000" | quote }}
+  ldaps.port: {{ .Values.ldaps.port | default 636 | quote }}
+  webAdmin.port: {{ .Values.webAdmin.port | default 18080 | quote }}
+  localQualifierPointsFor.usingStartTLS: {{ .Values.localQualifierPointsFor.usingStartTLS | default 32 | quote }}
+  localQualifierPointsFor.usingTLS: {{ .Values.localQualifierPointsFor.usingTLS | default 64 | quote }}
+  localQualifierPointsFor.usingSSLv3: {{ .Values.localQualifierPointsFor.usingSSLv3 | default 0 | quote }}
+  localQualifierPointsFor.usingTLSv1_0: {{ .Values.localQualifierPointsFor.usingTLSv1_0 | default 16 | quote }}
+  localQualifierPointsFor.usingTLSv1_1: {{ .Values.localQualifierPointsFor.usingTLSv1_1 | default 32 | quote }}
+  localQualifierPointsFor.usingTLSv1_2: {{ .Values.localQualifierPointsFor.usingTLSv1_2 | default 64 | quote }}
+  localQualifierPointsFor.usingTLSv1_3: {{ .Values.localQualifierPointsFor.usingTLSv1_3 | default 128 | quote }}
+  chaining.minAuthLevel: {{ .Values.chaining.minAuthLevel | default 1 | quote }}
+  chaining.minAuthLocalQualifier: {{ .Values.chaining.minAuthLocalQualifier | default 32 | quote }}
+  {{- if .Values.sentinelDomain }}
+  sentinelDomain: {{ .Values.sentinelDomain }}
   {{- end }}
   {{- if .Values.administratorEmail }}
-  administratorEmail: {{ .Values.administratorEmail | quote }}
+  administratorEmail: {{ .Values.administratorEmail }}
   {{- end }}
-  {{- if .Values.sentinelDomain }}
-  sentinelDomain: {{ .Values.sentinelDomain | quote }}
-  {{- end }}
-  bindMinSleep: {{ .Values.bindMinSleep | default 1000 | quote }}
-  bindSleepRange: {{ .Values.bindSleepRange | default 3000 | quote }}
-  minAuthLevelForOB: {{ .Values.minAuthLevelForOB | default 1 | quote }}
-  minAuthLocalQualifierForOB: {{ .Values.minAuthLocalQualifierForOB | default 128 | quote }}
+  bulkInsertMode: {{ .Values.bulkInsertMode | ternary 1 0 | quote }}
+  bindMinSleepInMilliseconds: {{ .Values.bindMinSleepInMilliseconds | default 1000 | quote }}
+  bindSleepRangeInMilliseconds: {{ .Values.bindSleepRangeInMilliseconds | default 3000 | quote }}
+  minAuthLevelForOperationalBinding: {{ .Values.minAuthLevelForOperationalBinding | default 1 | quote }}
+  minAuthLocalQualifierForOperationalBinding: {{ .Values.minAuthLocalQualifierForOperationalBinding | default 32 | quote }}
   {{- if .Values.myAccessPointNSAPs }}
-  myAccessPointNSAPs: {{ .Values.myAccessPointNSAPs | quote }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  myAccessPointNSAPs: {{ join " " .Values.myAccessPointNSAPs }}
   {{- end }}
   useDatabaseWhenThereAreXSubordinates: {{ .Values.useDatabaseWhenThereAreXSubordinates | default 1000 | quote }}
+  prohibitChaining: {{ .Values.prohibitChaining | ternary 1 0 | quote }}
   entriesPerSubordinatesPage: {{ .Values.entriesPerSubordinatesPage | default 100 | quote }}
-  {{- if .Values.transcodeValuestoDER }}
-  transcodeValuestoDER: "1"
-  {{- end }}
-  {{- if .Values.transcodeDistinguishedValuesToDER }}
-  transcodeDistinguishedValuesToDER: "1"
-  {{- end }}
-  {{- if .Values.bulkInsertMode }}
-  bulkInsertMode: "1"
-  {{- end }}
+  transcodeValuesToDER: {{ .Values.transcodeValuesToDER | ternary 1 0 | quote }}
+  transcodeDistinguishedValuesToDER: {{ .Values.transcodeDistinguishedValuesToDER | ternary 1 0 | quote }}
+  openTopLevel: {{ .Values.openTopLevel | ternary 1 0 | quote }}
+  forbidAnonymousBind: {{ .Values.forbidAnonymousBind | ternary 1 0 | quote }}
+  maxPreBindRequests: {{ .Values.maxPreBindRequests | default 2 | quote }}
+  dap.enabled: {{ .Values.dap.enabled | ternary 1 0 | quote }}
+  dsp.enabled: {{ .Values.dsp.enabled | ternary 1 0 | quote }}
+  dop.enabled: {{ .Values.dop.enabled | ternary 1 0 | quote }}
   {{- if .Values.init }}
   init: |-
 {{ toYaml .Values.init | indent 4 }}

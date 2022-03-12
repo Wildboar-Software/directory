@@ -7,38 +7,129 @@ nameOverride: ""
 fullnameOverride: ""
 service:
   type: ClusterIP
-idm:
-  port: 4632
-idms:
-  port: 44632
-ldap:
-  port: 389
-ldaps:
-  port: 636
-admin:
+adminService:
   type: ClusterIP
-  port: 18080
 resources: {}
 nodeSelector: {}
 tolerations: []
 affinity: {}
-dapEnabled: true
-ldapEnabled: true
-webAdminEnabled: true
-locale: en_US.utf8
-# signingSecretName: meerkat-dsa-signing
-# tlsSecretName: meerkat-dsa-tls
+
+# This should be a secret of type "tls".
+# See: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+# This may be the same secret as `tlsSecretName`.
+# signingSecretName: meerkat-signing-secret
+
+# This should be a secret of type "tls".
+# See: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+# This may be the same secret as `signingSecretName`.
+# tlsSecretName: meerkat-tls-secret
+
+# Mandatory: an opaque secret containing a field called `databaseUrl` which
+# contains the database URL as used by a Prisma client.
+# See: https://www.prisma.io/docs/reference/database-reference/connection-urls
+# A secret is needed for this because the URL typically has a username and
+# password in it.
+databaseSecretName: meerkat-database-secret
+
+# The structure of what follows is based on the `Context.config` interface defined in
+# `@wildboar/meerkat-types` and instantiated in `apps/meerkat/src/app/ctx.ts`.
+
+log:
+  level: debug
+  console: true
+  color: true
+  timestamp: true
+  json: false
+  # file:
+  #   path: /example/file.log
+  #   maxSize: 1000000
+  #   maxFiles: 100
+  #   zip: true
+  #   tailable: true
+  # http:
+  #   url: https://username:password@example.com/log/endpoint
+maxConnections: 250
+maxConnectionsPerAddress: 10
+maxConcurrentOperationsPerConnection: 20
+tcp:
+  noDelay: false
+  timeoutInSeconds: 120 # 0 means "do not timeout."
+  # This is a sensible default, since AX.25 radio--one of the slowest media
+  # available--transmits at about 150 bytes per second.
+  minimumTransferSpeedInBytesPerMinute: 1000
+tls:
+  handshakeTimeout: 30000
+  sessionTimeout: 3600
+  # This is a deviation from the `Context` interface.
+  clientCertAuth: false
+  # cert: /cert.pem
+  # key: /key.pem
+  # ca: /ca.pem
+  # crl: /crl.pem
+  # pfx: /example.pfx
+  # sigalgs: ""
+  # ciphers: ""
+  # clientCertEngine: ""
+  # dhparam: /dhparam.pem
+  # ecdhCurve: ""
+  honorCipherOrder: false
+  # minVersion: TLSv1.1
+  maxVersion: TLSv1.3
+  # passphrase: banana123
+  # privateKeyEngine: ""
+  # ticketKeys: ???
+  # pskIdentityHint: ???
+idm:
+  port: 4632
+  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
+  bufferSize: "1000000"
+  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
+  maxPDUSize: "1000000"
+  maxSegments: 100
+idms:
+  port: 44632
+ldap:
+  port: 389
+  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
+  bufferSize: "1000000"
+ldaps:
+  port: 636
+webAdmin:
+  port: 18080
+localQualifierPointsFor:
+  usingStartTLS: 32
+  usingTLS: 64
+  usingSSLv3: 0
+  usingTLSv1_0: 16
+  usingTLSv1_1: 32
+  usingTLSv1_2: 64
+  usingTLSv1_3: 128
+chaining:
+  minAuthLevel: 1
+  minAuthLocalQualifier: 32
 sentinelDomain: sentinel.meerkat.wildboar.software
-databaseSecretName: meerkat-dsa-database
 # administratorEmail: example@example.com
-bindMinSleep: 1000
-bindSleepRange: 3000
-minAuthLevelForOB: 1
-minAuthLocalQualifierForOB: 128
-myAccessPointNSAPs: idm://demo.meerkat.wildboar.software:4632 idms://demo.meerkat.wildboar.software:44632 ldap://demo.meerkat.wildboar.software:389 ldaps://demo.meerkat.wildboar.software:636
-useDatabaseWhenThereAreXSubordinates: 1000
-entriesPerSubordinatesPage: 100
-transcodeValuestoDER: true
-transcodeDistinguishedValuesToDER: true
 bulkInsertMode: false
-# init
+bindMinSleepInMilliseconds: 100
+bindSleepRangeInMilliseconds: 500
+minAuthLevelForOperationalBinding: 1
+minAuthLocalQualifierForOperationalBinding: 32
+myAccessPointNSAPs:
+  - idm://dsa01.demo.meerkat.wildboar.software:4632
+  - idms://dsa01.demo.meerkat.wildboar.software:44632
+  - ldap://dsa01.demo.meerkat.wildboar.software:389
+  - ldaps://dsa01.demo.meerkat.wildboar.software:636
+useDatabaseWhenThereAreXSubordinates: 1000
+prohibitChaining: false
+entriesPerSubordinatesPage: 100
+transcodeValuesToDER: true
+transcodeDistinguishedValuesToDER: true
+openTopLevel: false
+forbidAnonymousBind: false
+maxPreBindRequests: 2
+dap:
+  enabled: true
+dsp:
+  enabled: true
+dop:
+  enabled: true

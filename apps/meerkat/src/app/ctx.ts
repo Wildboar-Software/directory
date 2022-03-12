@@ -1,4 +1,4 @@
-import { Context, Vertex } from "@wildboar/meerkat-types";
+import { Context, Vertex, LogLevel } from "@wildboar/meerkat-types";
 import { v4 as uuid } from "uuid";
 import {
     AccessPoint,
@@ -43,9 +43,12 @@ const root: Vertex = {
     },
 };
 const bulkInsertMode: boolean = (process.env.MEERKAT_BULK_INSERT_MODE === "1");
-const logNoColor: boolean = (process.env.MEERKAT_NO_COLOR === "1");
+const logNoColor: boolean = (
+    (process.env.MEERKAT_NO_COLOR === "1")
+    || !!(process.env.NO_COLOR) // See: https://no-color.org/
+);
 const logNoTimestamp: boolean = (process.env.MEERKAT_NO_TIMESTAMP === "1");
-const logLevel: string = (process.env.MEERKAT_LOG_LEVEL ?? "info");
+const logLevel: string = (process.env.MEERKAT_LOG_LEVEL || "info");
 const logJson: boolean = (process.env.MEERKAT_LOG_JSON === "1");
 const logNoConsole: boolean = (process.env.MEERKAT_NO_CONSOLE === "1");
 // const logToWindows: boolean = (process.env.MEERKAT_LOG_WINDOWS === "1");
@@ -62,8 +65,8 @@ const logToFile: string | undefined = (() => {
         process.exit(1);
     }
 })();
-const logFileMaxSize: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_SIZE ?? "1000000");
-const logFileMaxFiles: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_FILES ?? "100");
+const logFileMaxSize: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_SIZE || "1000000");
+const logFileMaxFiles: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_FILES || "100");
 const logFileZip: boolean = (process.env.MEERKAT_LOG_ZIP === "1");
 const logFilesTailable: boolean = (process.env.MEERKAT_LOG_TAILABLE === "1");
 const logToHTTP: winston.transports.HttpTransportOptions | undefined = (() => {
@@ -128,6 +131,27 @@ if (logToHTTP) {
 const ctx: Context = {
     i18n,
     config: {
+        log: {
+            level: logLevel as LogLevel,
+            console: !logNoConsole,
+            color: !logNoColor,
+            timestamp: !logNoTimestamp,
+            json: logJson,
+            file: logToFile
+                ? {
+                    path: logToFile,
+                    maxSize: logFileMaxSize,
+                    maxFiles: logFileMaxFiles,
+                    zip: logFileZip,
+                    tailable: logFilesTailable,
+                }
+                : undefined,
+            http: logToHTTP
+                ? {
+                    url: process.env.MEERKAT_LOG_HTTP!,
+                }
+                : undefined,
+        },
         maxConnections: process.env.MEERKAT_MAX_CONNECTIONS
             ? Number.parseInt(process.env.MEERKAT_MAX_CONNECTIONS)
             : 250,

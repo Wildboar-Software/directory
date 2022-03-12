@@ -31,11 +31,11 @@ function createSecurityParameters (
     errorCode?: Code,
 ): SecurityParameters {
     return new SecurityParameters(
-        (ctx.dsa.signing && !ctx.config.bulkInsertMode)
+        (ctx.config.signing && !ctx.config.bulkInsertMode)
             ? new CertificationPath(
-                ctx.dsa.signing.certPath[ctx.dsa.signing.certPath.length - 1],
-                (ctx.dsa.signing.certPath.length > 1)
-                    ? ctx.dsa.signing.certPath
+                ctx.config.signing.certPath[ctx.config.signing.certPath.length - 1],
+                (ctx.config.signing.certPath.length > 1)
+                    ? ctx.config.signing.certPath
                         .slice(0, -1) // The last certificate is the end-entity (the DSA.)
                         .reverse() // The certificates are in order of descending authority.
                         .map((cert) => new CertificatePair(
