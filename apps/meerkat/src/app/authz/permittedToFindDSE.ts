@@ -26,7 +26,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import preprocessTuples from "./preprocessTuples";
 import rdnToID from "../dit/rdnToID";
-import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
+import getVertexById from "../database/getVertexById";
 
 export
 interface PermittedToFindDSEReturn {
@@ -76,20 +76,16 @@ async function permittedToFindDSE (
         if (!id) {
             return ENTRY_NOT_FOUND;
         }
-        const dbe = await ctx.db.entry.findUnique({
-            where: {
-                id,
-            },
-        });
-        if (!dbe) {
-            return ENTRY_NOT_FOUND;
-        }
         accessControlScheme = (dse_i.dse.admPoint
             ? [ ...admPoints, dse_i ]
             : [ ...admPoints ])
                 .reverse()
                 .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-        dse_i = await vertexFromDatabaseEntry(ctx, dse_i, dbe);
+        const vertex = await getVertexById(ctx, dse_i, id);
+        if (!vertex) {
+            return ENTRY_NOT_FOUND;
+        }
+        dse_i = vertex;
         if (dse_i.dse.admPoint?.accessControlScheme) {
             accessControlScheme = dse_i.dse.admPoint.accessControlScheme;
         }

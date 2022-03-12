@@ -15,10 +15,10 @@ import {
  * @async
  */
 export
-async function attributeFromDatabaseAttribute (
+function attributeFromDatabaseAttribute (
     ctx: Context,
     attr: { type: string, ber: Buffer, ContextValue?: ContextValue[] },
-): Promise<Value> {
+): Value {
     const value = new BERElement();
     value.fromBytes(attr.ber);
     const contexts = groupByOID(attr.ContextValue ?? [], (cv) => cv.type);

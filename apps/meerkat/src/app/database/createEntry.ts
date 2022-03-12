@@ -10,12 +10,11 @@ import type {
 import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
 import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
 import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
-// import { parent } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
-// import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
 import addValues from "./entry/addValues";
 import { strict as assert } from "assert";
 import { randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
+import getVertexById from "./getVertexById";
 
 /**
  * @summary Create a DSE
@@ -107,13 +106,8 @@ async function createEntry (
             },
         }),
     ]);
-    const newEntry = await ctx.db.entry.findUnique({
-        where: {
-            id: createdEntry.id,
-        },
-    });
-    assert(newEntry);
-    const ret = await vertexFromDatabaseEntry(ctx, superior, newEntry);
+    const ret = await getVertexById(ctx, superior, createdEntry.id);
+    assert(ret);
     return ret;
 }
 

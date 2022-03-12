@@ -5,6 +5,13 @@
 # Set the AZURE_STORAGE_SAS_TOKEN environment variable.
 # Update the version numbers in: Chart.yaml, package.json.
 
+# Delete the pre-install job, if it exists
+kubectl delete job meerkat || true
+
+# Uninstall the Helm Chart. We do this at the start of the script because the
+# LoadBalancer must be deleted before we attempt to create a new one.
+helm uninstall meerkat || true
+
 # The extra sed at the end removes the carriage return.
 PUBLISHING_MEERKAT_VERSION=$(cat k8s/charts/meerkat-dsa/Chart.yaml | grep appVersion | sed 's/appVersion: //' | sed 's/\r$//')
 
@@ -61,12 +68,6 @@ helm repo add meerkathelmtest https://meerkatdsahelmtest.blob.core.windows.net/a
 
 # Update the Helm repo
 helm repo update
-
-# Delete the pre-install job, if it exists
-kubectl delete job meerkat || true
-
-# Uninstall the Helm Chart
-helm uninstall meerkat || true
 
 # Install the Helm chart
 helm install meerkat meerkathelmtest/meerkat-dsa \

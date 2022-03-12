@@ -3,7 +3,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import rdnToID from "./rdnToID";
-import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
+import getVertexById from "../database/getVertexById";
 
 /**
  * @summary Return an in-memory vertex from its distinguished name
@@ -41,15 +41,11 @@ async function dnToVertex (
             return undefined;
         }
         derefedAliases?.add(id);
-        const dbe = await ctx.db.entry.findUnique({
-            where: {
-                id,
-            },
-        });
-        if (!dbe) {
+        const vertex = await getVertexById(ctx, currentRoot, id);
+        if (!vertex) {
             return undefined;
         }
-        currentRoot = await vertexFromDatabaseEntry(ctx, currentRoot, dbe);
+        currentRoot = vertex;
         if (currentRoot.dse.alias && derefedAliases) {
             return dnToVertex(ctx, ctx.dit.root, currentRoot.dse.alias.aliasedEntryName, derefedAliases);
         }

@@ -117,6 +117,7 @@ import listSubordinates from "../dit/listSubordinates";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import getVertexById from "../database/getVertexById";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -823,7 +824,59 @@ async function findDSE (
                     ],
                 },
                 include: {
-                    RDN: true,
+                    RDN: {
+                        select: {
+                            type: true,
+                            value: true,
+                        },
+                        orderBy: { // So the RDNs appear in the order in which they were entered.
+                            // This prevents an undesirable scenario where some users might show
+                            // up as GN=Jonathan+SN=Wilbur or SN=Wilbur+GN=Jonathan.
+                            order_index: "asc",
+                        },
+                    },
+                    EntryObjectClass: {
+                        select: {
+                            object_class: true,
+                        },
+                    },
+                    UniqueIdentifier: {
+                        select: {
+                            uniqueIdentifier: true,
+                        },
+                    },
+                    ACIItem: {
+                        where: {
+                            active: true,
+                        },
+                        select: {
+                            scope: true,
+                            ber: true,
+                        },
+                    },
+                    Clearance: {
+                        where: {
+                            active: true,
+                        },
+                        select: {
+                            ber: true,
+                        },
+                    },
+                    EntryAdministrativeRole: {
+                        select: {
+                            administrativeRole: true,
+                        },
+                    },
+                    SubtreeSpecification: {
+                        select: {
+                            ber: true,
+                        },
+                    },
+                    EntryCollectiveExclusion: {
+                        select: {
+                            collectiveExclusion: true,
+                        },
+                    },
                 },
             });
             /**
@@ -979,15 +1032,10 @@ async function findDSE (
                     getNamingMatcherGetter(ctx),
                 );
                 if (rdnMatched) {
-                    const child_dbe = await ctx.db.entry.findUnique({
-                        where: {
-                            id: subordinate.id
-                        },
-                    });
-                    if (!child_dbe) {
+                    const child = await getVertexById(ctx, dse_i, subordinate.id);
+                    if (!child) {
                         return; // The entry was deleted right after we matched.
                     }
-                    const child = await vertexFromDatabaseEntry(ctx, dse_i, child_dbe);
                     if (child.dse.admPoint?.accessControlScheme) {
                         accessControlScheme = child.dse.admPoint.accessControlScheme;
                     }

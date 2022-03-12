@@ -50,6 +50,9 @@ import {
 import {
     _decode_TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+import {
+    AttributeTypeAndValue,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import _ from "lodash";
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
@@ -83,20 +86,50 @@ let collectiveAttributeTypes: string[] = [];
 export
 async function dseFromDatabaseEntry (
     ctx: Context,
-    dbe: DatabaseEntry, // TODO: Extend with optional relation queries to improve performance. (e.g. "& { EntryObjectClass: ... }")
+    dbe: (DatabaseEntry & { // You can supply these relations ahead of time...
+        // which will save multiple queries to the database.
+        UniqueIdentifier?: {
+            uniqueIdentifier: Buffer;
+        }[];
+        ACIItem?: {
+            scope: ACIScope;
+            ber: Buffer;
+        }[];
+        Clearance?: {
+            ber: Buffer;
+        }[];
+        SubtreeSpecification?: {
+            ber: Buffer;
+        }[];
+        EntryObjectClass?: {
+            object_class: string;
+        }[];
+        EntryAdministrativeRole?: {
+            administrativeRole: string;
+        }[];
+        RDN?: {
+            type: string;
+            value: Buffer;
+        }[];
+        EntryCollectiveExclusion?: {
+            collectiveExclusion: string;
+        }[];
+    }),
 ): Promise<DSE> {
     const acis = ctx.config.bulkInsertMode
         ? []
-        : await ctx.db.aCIItem.findMany({
-            where: {
-                entry_id: dbe.id,
-                active: true,
-            },
-            select: {
-                scope: true,
-                ber: true,
-            },
-        });
+        : (dbe.ACIItem
+            ? dbe.ACIItem
+            : (await ctx.db.aCIItem.findMany({
+                where: {
+                    entry_id: dbe.id,
+                    active: true,
+                },
+                select: {
+                    scope: true,
+                    ber: true,
+                },
+            })));
     const entryACI = acis.filter((aci) => aci.scope === ACIScope.ENTRY).map(toACIItem);
     const prescriptiveACI = dbe.subentry
         ? acis.filter((aci) => aci.scope === ACIScope.PRESCRIPTIVE).map(toACIItem)
@@ -104,17 +137,24 @@ async function dseFromDatabaseEntry (
     const subentryACI = dbe.admPoint
         ? acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem)
         : [];
-    const rdn = await getRDNFromEntryId(ctx, dbe.id);
+    const rdn = dbe.RDN?.map((atav) => new AttributeTypeAndValue(
+        ObjectIdentifier.fromString(atav.type),
+        (() => {
+            const el = new BERElement();
+            el.fromBytes(atav.value);
+            return el;
+        })(),
+    )) ?? await getRDNFromEntryId(ctx, dbe.id);
     //
-    const objectClasses = await ctx.db.entryObjectClass.findMany({
+    const objectClasses = dbe.EntryObjectClass ?? (await ctx.db.entryObjectClass.findMany({
         where: {
             entry_id: dbe.id,
         },
         select: {
             object_class: true,
         },
-    });
-    const clearances = await ctx.db.clearance.findMany({
+    }));
+    const clearances = dbe.Clearance ?? (await ctx.db.clearance.findMany({
         where: {
             entry_id: dbe.id,
             active: true,
@@ -122,7 +162,30 @@ async function dseFromDatabaseEntry (
         select: {
             ber: true,
         },
-    });
+    }));
+    const administrativeRoles = dbe.EntryAdministrativeRole
+        ?? (await ctx.db.entryAdministrativeRole.findMany({
+            where: {
+                entry_id: dbe.id,
+            },
+            select: {
+                administrativeRole: true,
+            },
+        }));
+    const uniqueIdentifiers = (dbe.UniqueIdentifier
+        ?? (await ctx.db.uniqueIdentifier.findMany({
+            where: {
+                entry_id: dbe.id,
+            },
+            select: {
+                uniqueIdentifier: true,
+            },
+        })))
+        .map(({ uniqueIdentifier }) => {
+            const el = new BERElement();
+            el.value = uniqueIdentifier;
+            return el.bitString;
+        });
     const ret: DSE = {
         id: dbe.id,
         materializedPath: dbe.materialized_path,
@@ -135,19 +198,7 @@ async function dseFromDatabaseEntry (
             el.fromBytes(c.ber);
             return _decode_Clearance(el);
         }),
-        uniqueIdentifier: (await ctx.db.uniqueIdentifier.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                uniqueIdentifier: true,
-            },
-        }))
-            .map(({ uniqueIdentifier }) => {
-                const el = new BERElement();
-                el.value = uniqueIdentifier;
-                return el.bitString;
-            }),
+        uniqueIdentifier: uniqueIdentifiers,
         structuralObjectClass: dbe.structuralObjectClass
             ? ObjectIdentifier.fromString(dbe.structuralObjectClass)
             : undefined,
@@ -358,14 +409,6 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    const administrativeRoles = await ctx.db.entryAdministrativeRole.findMany({
-        where: {
-            entry_id: dbe.id,
-        },
-        select: {
-            administrativeRole: true,
-        },
-    });
     if (administrativeRoles.length > 0) {
         const accessControlScheme = await ctx.db.entryAccessControlScheme.findFirst({
             where: {
@@ -385,14 +428,14 @@ async function dseFromDatabaseEntry (
     }
 
     if (dbe.subentry) {
-        const subtreeRows = await ctx.db.subtreeSpecification.findMany({
+        const subtreeRows = dbe.SubtreeSpecification ?? (await ctx.db.subtreeSpecification.findMany({
             where: {
                 entry_id: dbe.id,
             },
             select: {
                 ber: true,
             },
-        });
+        }));
         const subtreeSpecification = subtreeRows
             .map((s) => {
                 const el = new BERElement();
@@ -405,20 +448,18 @@ async function dseFromDatabaseEntry (
         }
 
         const collectiveAttributes: Attribute[] = attributesFromValues(
-            await Promise.all(
-                (await ctx.db.attributeValue.findMany({
-                    where: {
-                        entry_id: dbe.id,
-                        type: {
-                            in: collectiveAttributeTypes,
-                        },
+            (await ctx.db.attributeValue.findMany({
+                where: {
+                    entry_id: dbe.id,
+                    type: {
+                        in: collectiveAttributeTypes,
                     },
-                    include: {
-                        ContextValue: true,
-                    },
-                }))
-                    .map((attr) => attributeFromDatabaseAttribute(ctx, attr)),
-            ),
+                },
+                include: {
+                    ContextValue: true,
+                },
+            }))
+                .map((attr) => attributeFromDatabaseAttribute(ctx, attr)),
         );
 
         const cads = await ctx.db.attributeValue.findMany({
@@ -505,14 +546,15 @@ async function dseFromDatabaseEntry (
     }
 
     if (!ret.alias && !ret.subentry) {
-        const collectiveExclusions = await ctx.db.entryCollectiveExclusion.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                collectiveExclusion: true,
-            },
-        });
+        const collectiveExclusions = dbe.EntryCollectiveExclusion
+            ?? (await ctx.db.entryCollectiveExclusion.findMany({
+                where: {
+                    entry_id: dbe.id,
+                },
+                select: {
+                    collectiveExclusion: true,
+                },
+            }));
         ret.entry = {
             collectiveExclusions: new Set(
                 collectiveExclusions.map((ce) => ce.collectiveExclusion),
