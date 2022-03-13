@@ -13,6 +13,7 @@ resources: {}
 nodeSelector: {}
 tolerations: []
 affinity: {}
+resetDatabase: false
 
 # This should be a secret of type "tls".
 # See: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets

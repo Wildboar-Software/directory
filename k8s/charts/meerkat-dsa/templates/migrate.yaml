@@ -34,5 +34,11 @@ spec:
         - npx
         - prisma
         - migrate
+        {{- if .Values.resetDatabase  }}
+        - reset
+        - --force
+        - --skip-generate
+        {{- else }}
         - deploy
+        {{- end }}
         - --schema=/srv/meerkat/prisma/schema.prisma
