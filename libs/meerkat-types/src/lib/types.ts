@@ -1610,8 +1610,7 @@ interface CredentialStatistics {
 export
 interface ServiceControlStatistics {
     priority?: number;
-    // timeLimit?: DateString;
-    timeLimits?: number;
+    timeLimit?: number;
     sizeLimit?: number;
     scopeOfReferral?: number;
     attributeSizeLimit?: number;

@@ -31,7 +31,7 @@ function getStatisticsFromServiceControls (sc: ServiceControls): ServiceControlS
         sizeLimit: (sc.sizeLimit !== undefined)
             ? Number(sc.sizeLimit)
             : undefined,
-        timeLimits: (sc.timeLimit !== undefined)
+        timeLimit: (sc.timeLimit !== undefined)
             ? Number(sc.timeLimit)
             : undefined,
         attributeSizeLimit: (sc.attributeSizeLimit !== undefined)
