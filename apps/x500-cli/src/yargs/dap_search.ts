@@ -40,7 +40,7 @@ function create (ctx: Context): CommandModule {
                     describe: "Whether to reverse the ordering of search results (descending)",
                 })
                 .option("unmerged", {
-                    alias: "u",
+                    // alias: "u",
                     type: "boolean",
                     describe: "Do not merge search results that came from other DSAs",
                 })
@@ -150,12 +150,18 @@ function create (ctx: Context): CommandModule {
                     describe: "Treat family members as separate for the purposes of filtering",
                     default: false,
                 })
-                // TODO: EIS options
+                .option("userAttribute", {
+                    alias: "u",
+                    type: "array",
+                    describe: "Dot-delimited object identifier of attribute type to select",
+                })
+                // TODO: EIS options: extraAttribute, familyReturn, etc.
                 .help()
                 ;
         },
         handler: async (argv) => {
             const connection = await bind(ctx, argv);
+            console.log(`Bound at ${new Date()}`);
             await search(ctx, connection, argv);
             await connection.close();
         },

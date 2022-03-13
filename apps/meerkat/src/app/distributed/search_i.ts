@@ -1549,7 +1549,9 @@ async function search_i (
             && filter.item.present.isEqualTo(objectClass["&id"])
         );
         // Entry ACI is checked above.
-        const family = await readFamily(ctx, target);
+        const family = (assn instanceof LDAPAssociation)
+            ? target // Saves us an unnecessary database query.
+            : await readFamily(ctx, target);
         const familySubsets = familySubsetGetter(family);
         let filterResult: ReturnType<typeof evaluateFilter> = {
             matched: false,
@@ -1818,7 +1820,9 @@ async function search_i (
     ) /* if ((subset === SearchArgumentData_subset_wholeSubtree) && !entryOnly) */ { // Condition is implied.
         // Entry ACI is checked above.
         // NOTE: This section of code is copy-pasted. There might be a way to de-duplicate
-        const family = await readFamily(ctx, target);
+        const family = (assn instanceof LDAPAssociation)
+            ? target // Saves us an unnecessary database query.
+            : await readFamily(ctx, target);
         const familySubsets = familySubsetGetter(family);
         let filterResult: ReturnType<typeof evaluateFilter> = {
             matched: false,

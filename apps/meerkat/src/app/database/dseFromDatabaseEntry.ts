@@ -25,9 +25,6 @@ import {
 import {
     _decode_MasterOrShadowAccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
-import type {
-    Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import attributesFromValues from "../x500/attributesFromValues";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 import { Knowledge } from "@prisma/client";
@@ -53,7 +50,26 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+// import {
+//     accessControlSubentry,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
+import {
+    collectiveAttributeSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
+import {
+    contextAssertionSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
+// import {
+//     pwdAdminSubentry,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+// import {
+//     serviceAdminSubentry,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
+import {
+    subschema,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import _ from "lodash";
+
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
     const el = new BERElement();
@@ -64,6 +80,13 @@ function toACIItem (dbaci: DatabaseACIItem): ACIItem {
 const ALIAS: string = alias["&id"].toString();
 const PARENT: string = parent["&id"].toString();
 const CHILD: string = child["&id"].toString();
+// const SUBENTRY_AC: string = accessControlSubentry["&id"].toString();
+const SUBENTRY_CA: string = collectiveAttributeSubentry["&id"].toString();
+const SUBENTRY_CAD: string = contextAssertionSubentry["&id"].toString();
+// const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
+// const SUBENTRY_SVC: string = serviceAdminSubentry["&id"].toString();
+const SUBSCHEMA: string = subschema["&id"].toString();
+
 let collectiveAttributeTypes: string[] = [];
 
 /**
@@ -443,46 +466,45 @@ async function dseFromDatabaseEntry (
                 return _decode_SubtreeSpecification(el);
             });
 
-        if (collectiveAttributeTypes.length === 0) {
-            collectiveAttributeTypes = Array.from(ctx.collectiveAttributes);
-        }
-
-        const collectiveAttributes: Attribute[] = attributesFromValues(
-            (await ctx.db.attributeValue.findMany({
-                where: {
-                    entry_id: dbe.id,
-                    type: {
-                        in: collectiveAttributeTypes,
-                    },
-                },
-                include: {
-                    ContextValue: true,
-                },
-            }))
-                .map((attr) => attributeFromDatabaseAttribute(ctx, attr)),
-        );
-
-        const cads = await ctx.db.attributeValue.findMany({
-            where: {
-                entry_id: dbe.id,
-                type: contextAssertionDefaults["&id"].toString(),
-            },
-            select: {
-                ber: true,
-            },
-        });
-
         ret.subentry = {
             subtreeSpecification,
             prescriptiveACI,
-            collectiveAttributes,
-            ditStructureRules: await readDITStructureRuleDescriptions(ctx, dbe.id),
-            ditContentRules: await readDITContentRuleDescriptions(ctx, dbe.id),
-            ditContextUse: await readDITContextUseDescriptions(ctx, dbe.id),
-            friendships: await readFriendsDescriptions(ctx, dbe.id),
-            matchingRuleUse: await readMatchingRuleUseDescriptions(ctx, dbe.id),
         };
-        if (cads.length) {
+        if (ret.objectClass.has(SUBENTRY_CA)) {
+            if (collectiveAttributeTypes.length === 0) {
+                collectiveAttributeTypes = Array.from(ctx.collectiveAttributes);
+            }
+            ret.subentry.collectiveAttributes = attributesFromValues(
+                (await ctx.db.attributeValue.findMany({
+                    where: {
+                        entry_id: dbe.id,
+                        type: {
+                            in: collectiveAttributeTypes,
+                        },
+                    },
+                    include: {
+                        ContextValue: true,
+                    },
+                }))
+                    .map((attr) => attributeFromDatabaseAttribute(ctx, attr)));
+        }
+        if (ret.objectClass.has(SUBSCHEMA)) {
+            ret.subentry.ditStructureRules = await readDITStructureRuleDescriptions(ctx, dbe.id);
+            ret.subentry.ditContentRules = await readDITContentRuleDescriptions(ctx, dbe.id);
+            ret.subentry.ditContextUse = await readDITContextUseDescriptions(ctx, dbe.id);
+            ret.subentry.friendships = await readFriendsDescriptions(ctx, dbe.id);
+            ret.subentry.matchingRuleUse = await readMatchingRuleUseDescriptions(ctx, dbe.id);
+        }
+        if (ret.objectClass.has(SUBENTRY_CAD)) {
+            const cads = await ctx.db.attributeValue.findMany({
+                where: {
+                    entry_id: dbe.id,
+                    type: contextAssertionDefaults["&id"].toString(),
+                },
+                select: {
+                    ber: true,
+                },
+            });
             if (!ret.subentry.contextAssertionDefaults) {
                 ret.subentry.contextAssertionDefaults = [];
             }
@@ -492,6 +514,7 @@ async function dseFromDatabaseEntry (
                 return _decode_TypeAndContextAssertion(el);
             }));
         }
+        // TODO: Load Service Administration Data.
     }
 
     if (dbe.shadow) {

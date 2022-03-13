@@ -1,5 +1,5 @@
 import type { Connection, Context } from "../../types";
-import { TRUE } from "asn1-ts";
+import { ObjectIdentifier, TRUE } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     search,
@@ -29,6 +29,9 @@ import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
 import printEntryInformation from "../../printers/EntryInformation";
 import selectAll from "../../utils/selectAll";
+import {
+    EntryInformationSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 
 function subsetFromString (str: string): SearchArgumentData_subset {
     const str_ = str.toLowerCase();
@@ -49,7 +52,13 @@ async function search_new (
     conn: Connection,
     argv: any,
 ): Promise<void> {
-    console.log(argv.object);
+    const eis = argv.userAttribute
+        ? new EntryInformationSelection(
+            {
+                select: argv.userAttribute?.map(ObjectIdentifier.fromString),
+            },
+        )
+        : selectAll;
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);
     const reqData: SearchArgumentData = new SearchArgumentData(
         {
@@ -58,7 +67,7 @@ async function search_new (
         subsetFromString(argv.subset),
         undefined,
         TRUE,
-        selectAll,
+        eis,
         undefined,
         undefined,
         undefined,
