@@ -1566,8 +1566,17 @@ async function addEntry (
                 continue;
             }
             const someAttributeMatched = values.some((attr) => (
-                (!attr.contexts || (attr.contexts.length === 0))
-                && attr.type.isEqualTo(afdn.type)
+                /**
+                 * According to ITU Recommendation X.501 (2019), Section 8.5:
+                 *
+                 * > A distinguished value may have contexts attached, but such
+                 * > context information is not part of a distinguished name.
+                 *
+                 * I have left this code here, but commented out so posterity
+                 * can see that distinguished values MAY have contexts.
+                 */
+                // (!attr.contexts || (attr.contexts.length === 0))
+                attr.type.isEqualTo(afdn.type)
                 && matcher(attr.value, afdn.value)
             ));
             if (!someAttributeMatched) {
