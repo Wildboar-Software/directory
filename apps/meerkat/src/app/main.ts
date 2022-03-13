@@ -8,7 +8,6 @@ import * as tls from "tls";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
-import { ObjectIdentifier } from "asn1-ts";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
 import {
     Abort_reasonNotSpecified,
@@ -34,6 +33,7 @@ import loadLDAPSyntaxes from "./init/loadLDAPSyntaxes";
 import loadMatchingRules from "./init/loadMatchingRules";
 import loadContextTypes from "./init/loadContextTypes";
 import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
+import loadNameForms from "./init/loadNameForms";
 import ctx from "./ctx";
 import terminate from "./dop/terminateByID";
 import { differenceInMilliseconds, differenceInMinutes } from "date-fns";
@@ -668,7 +668,7 @@ async function main (): Promise<void> {
 
     if (versionSlug) {
         ctx.log.info(ctx.i18n.t("log:starting_meerkat_version", {
-            version: "1.0.0-beta.17",
+            version: "1.0.0-beta.18",
         }));
     }
     process.title = PROCESS_NAME;
@@ -721,27 +721,12 @@ async function main (): Promise<void> {
     ctx.log.debug(ctx.i18n.t("log:loaded_matching_rules"));
     loadContextTypes(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_context_types"));
+    await loadNameForms(ctx);
+    ctx.log.debug(ctx.i18n.t("log:loaded_name_forms"));
     await loadObjectIdentifierNames(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_oid_names"));
 
-    const nameForms = await ctx.db.nameForm.findMany();
-    for (const nameForm of nameForms) {
-        ctx.nameForms.set(nameForm.identifier, {
-            id: ObjectIdentifier.fromString(nameForm.identifier),
-            name: nameForm.name
-                ? [ nameForm.name ]
-                : undefined,
-            description: nameForm.description ?? undefined,
-            obsolete: nameForm.obsolete,
-            namedObjectClass: ObjectIdentifier.fromString(nameForm.namedObjectClass),
-            mandatoryAttributes: nameForm.mandatoryAttributes
-                .split(" ")
-                .map(ObjectIdentifier.fromString),
-            optionalAttributes: nameForm.optionalAttributes
-                ?.split(" ")
-                .map(ObjectIdentifier.fromString) ?? [],
-        });
-    }
+
 
     if (process.env.MEERKAT_INIT_JS) {
         const importPath = (os.platform() === "win32")

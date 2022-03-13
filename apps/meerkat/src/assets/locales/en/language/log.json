@@ -5,6 +5,7 @@
     "loaded_oid_names": "Loaded object identifier names.",
     "loaded_matching_rules": "Loaded matching rules.",
     "loaded_context_types": "Loaded context types.",
+    "loaded_name_forms": "Loaded name forms.",
     "transport_established": "{{source}}: {{transport}} transport established.",
     "connection_bound_auth": "{{source}}: {{protocol}} connection bound.",
     "connection_bound_auth@with_dn": "{{source}}: {{protocol}} connection bound. Authenticated as {{dn}}.",

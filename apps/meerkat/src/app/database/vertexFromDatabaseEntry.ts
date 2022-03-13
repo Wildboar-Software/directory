@@ -24,7 +24,7 @@ export
 async function vertexFromDatabaseEntry (
     ctx: Context,
     superior: Vertex | undefined,
-    dbe: DatabaseEntry,
+    dbe: Parameters<typeof dseFromDatabaseEntry>[1],
 ): Promise<Vertex> {
     return {
         immediateSuperior: superior,

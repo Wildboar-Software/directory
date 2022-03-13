@@ -75,4 +75,5 @@ helm install meerkat meerkathelmtest/meerkat-dsa \
     --set service.type=LoadBalancer \
     --set adminService.type=LoadBalancer \
     --set logLevel=debug \
+    --set databaseReset=true \
     --set databaseSecretName=meerkat-dsa-database

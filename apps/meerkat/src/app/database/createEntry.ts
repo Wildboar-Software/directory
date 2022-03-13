@@ -1,5 +1,5 @@
 import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
-import { Prisma, Entry as DatabaseEntry } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import type {
     DistinguishedName,
@@ -79,23 +79,33 @@ async function createEntry (
             structuralObjectClass: entryInit.structuralObjectClass
                 ?? getStructuralObjectClass(ctx, objectClasses).toString(),
             governingStructureRule: entryInit.governingStructureRule,
+            RDN: {
+                createMany: {
+                    data: rdn.map((atav, i) => ({
+                        // entry_id: createdEntry.id,
+                        type: atav.type_.toString(),
+                        value: Buffer.from(atav.value.toBytes()),
+                        str: atav.value.toString(),
+                        order_index: i,
+                    })),
+                },
+            },
         },
-        select: {
-            id: true,
-            dseUUID: true,
+        include: {
+            RDN: true,
         },
     });
-    const vertex = await vertexFromDatabaseEntry(ctx, superior, createdEntry as DatabaseEntry);
+    const vertex = await vertexFromDatabaseEntry(ctx, superior, {
+        ...createdEntry,
+        EntryObjectClass: [],
+        UniqueIdentifier: [],
+        ACIItem: [],
+        Clearance: [],
+        SubtreeSpecification: [],
+        EntryAdministrativeRole: [],
+        EntryCollectiveExclusion: [],
+    });
     await ctx.db.$transaction([
-        ctx.db.distinguishedValue.createMany({
-            data: rdn.map((atav, i) => ({
-                entry_id: createdEntry.id,
-                type: atav.type_.toString(),
-                value: Buffer.from(atav.value.toBytes()),
-                str: atav.value.toString(),
-                order_index: i,
-            })),
-        }),
         ...await addValues(ctx, vertex, values, modifier),
         ctx.db.entry.update({
             where: {
