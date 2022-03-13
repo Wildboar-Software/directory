@@ -668,7 +668,7 @@ async function main (): Promise<void> {
 
     if (versionSlug) {
         ctx.log.info(ctx.i18n.t("log:starting_meerkat_version", {
-            version: "1.0.0-beta.16",
+            version: "1.0.0-beta.17",
         }));
     }
     process.title = PROCESS_NAME;
