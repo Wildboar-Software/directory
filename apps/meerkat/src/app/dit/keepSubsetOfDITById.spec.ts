@@ -4,7 +4,6 @@ import keepSubsetOfDITById from "./keepSubsetOfDITById";
 
 function dse (id: number, subordinates?: Vertex[]): Vertex {
     return {
-        materializedPath: "",
         dse: {
             id: id,
         } as DSE,
