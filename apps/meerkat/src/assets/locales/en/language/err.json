@@ -153,5 +153,6 @@
     "cannot_move_dse_below_itself": "Cannot move an object below itself.",
     "duplicate_sort_key": "Duplicate sort key {{oid}}.",
     "not_authz_delete_old_rdn": "Not authorized to delete the old RDN.",
-    "could_not_convert_ldap_to_dap": "Could not convert LDAP request to DAP request."
+    "could_not_convert_ldap_to_dap": "Could not convert LDAP request to DAP request.",
+    "error_converting_entry_to_ldap": "Error converting entry to an LDAP SearchResultEntry: {{e}}"
 }

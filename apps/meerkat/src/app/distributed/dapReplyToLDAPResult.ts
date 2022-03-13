@@ -87,13 +87,17 @@ async function getSearchResultEntries (
     const data = getOptionallyProtectedValue(searchResult);
     if ("searchInfo" in data) {
         for (const einfo of data.searchInfo.entries) {
-            const dn: LDAPDN = encodeLDAPDN(ctx, einfo.name.rdnSequence);
-            const attrs: PartialAttribute[] = getPartialAttributesFromEntryInformation(ctx, einfo.information ?? []);
-            const entry = new SearchResultEntry(
-                dn,
-                attrs,
-            );
-            onEntry(entry);
+            try {
+                const dn: LDAPDN = encodeLDAPDN(ctx, einfo.name.rdnSequence);
+                const attrs: PartialAttribute[] = getPartialAttributesFromEntryInformation(ctx, einfo.information ?? []);
+                const entry = new SearchResultEntry(
+                    dn,
+                    attrs,
+                );
+                onEntry(entry);
+            } catch (e) {
+                ctx.log.error(ctx.i18n.t("err:error_converting_entry_to_ldap", { e }));
+            }
         }
     } else if ("uncorrelatedSearchInfo" in data) {
         for (const resultSet of data.uncorrelatedSearchInfo) {

@@ -78,7 +78,17 @@ function getPartialAttributesFromEntryInformation (
                 // ctx.log.warn(`LDAP Syntax ${attrSpec.ldapSyntax} not understood or had no encoder.`);
                 return undefined;
             }
-            const encoder = ldapSyntax.encoder;
+
+            // Wrap the encoder in error handling so we can ignore attributes that don't encode successfully.
+            const encoder = (
+                ...args: Parameters<typeof ldapSyntax.encoder>
+            ): ReturnType<typeof ldapSyntax.encoder> | null => {
+                try {
+                    return ldapSyntax.encoder!(...args);
+                } catch {
+                    return null;
+                }
+            };
             // Note: some LDAP programs will not display the value if the attribute description is an OID.
             // ^Source? Details? I used Apache Directory Studio for testing. Was that it?
 
@@ -144,9 +154,11 @@ function getPartialAttributesFromEntryInformation (
                     descriptor,
                     [
                         ...einfo.attribute.values
-                            .map(encoder),
+                            .map(encoder)
+                            .filter((v): v is Uint8Array => !!v),
                         ...valuesWithoutOptions
-                            .map((vwc) => encoder(vwc.value)),
+                            .map((vwc) => encoder(vwc.value))
+                            .filter((v): v is Uint8Array => !!v),
                     ],
                 ),
                 ...Array.from(valuesByOptions.entries())
@@ -156,7 +168,7 @@ function getPartialAttributesFromEntryInformation (
                             Buffer.from(";", "utf-8"),
                             Buffer.from(options, "utf-8"),
                         ]),
-                        values.map(encoder),
+                        values.map(encoder).filter((v): v is Uint8Array => !!v),
                     )),
             ];
         } else {

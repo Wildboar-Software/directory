@@ -194,7 +194,7 @@ const getMatchingRulesEncoder: (ctx: Context) => LDAPSyntaxEncoder = (ctx: Conte
         ?? ctx.orderingMatchingRules.get(OID)
         ?? ctx.substringsMatchingRules.get(OID);
     if (!spec?.ldapAssertionSyntax) {
-        throw new Error();
+        throw new Error(`Could not convert matchingRules value ${OID} to LDAP equivalent.`);
     }
     const fields: string[] = [
         desc.identifier.toString(),
@@ -380,7 +380,7 @@ function refinementToString (ref: Refinement): string {
     } else if ("not" in ref) {
         return `not:${refinementToString(ref)}`;
     } else {
-        throw new Error();
+        return `and:{}`; // Not understood alternative shall just be treated as a NOOP.
     }
 }
 
@@ -413,9 +413,10 @@ function getSubtreeSpecificationEncoder (
                             .replace(/"/g, "\"\"");
                         return `chopAfter:"${escapedLocalName}"`;
                     } else {
-                        throw new Error();
+                        return null;
                     }
                 })
+                .filter((s): s is string => !!s)
                 .join(", ");
             fields.push(`specificExclusions { ${seStr} }`);
         }
