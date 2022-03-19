@@ -4,8 +4,9 @@ import osLocale from "os-locale";
 import isDebugging from "is-debugging";
 import * as path from "path";
 import main from "./app/main";
+import * as dotenv from "dotenv";
 
-require("dotenv").config({ debug: isDebugging }); // eslint-disable-line
+dotenv.config({ debug: isDebugging });
 
 i18n
     .use(I18FileSystemBackend)
