@@ -3,5 +3,6 @@
     "version": "0.0.1",
     "bin": {
         "x500": "assets/run.sh"
-    }
+    },
+    "license": "MIT"
 }
