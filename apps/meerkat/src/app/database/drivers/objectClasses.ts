@@ -43,7 +43,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
         return [];
     }
     return Array.from(ctx.objectClasses.entries())
-        .filter(([ k ]) => (k.indexOf(".") === -1)) // Dedupes entries by only using OIDs, not descriptors.
+        .filter(([ k ]) => (k.indexOf(".") > -1)) // Dedupes entries by only using OIDs, not descriptors.
         .map(([ , v ]) => v)
         .map((oc) => new ObjectClassDescription(
             oc.id,
