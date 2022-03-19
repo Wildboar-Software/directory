@@ -1,4 +1,5 @@
-import type { Context, ClientAssociation, OPCR } from "@wildboar/meerkat-types";
+import type { ClientAssociation, OPCR } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { BOOLEAN, TRUE } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -82,7 +83,7 @@ import {
  */
 export
 async function nrcrProcedure (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     state: OperationDispatcherState,

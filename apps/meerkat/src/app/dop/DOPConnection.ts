@@ -1,5 +1,4 @@
 import {
-    Context,
     ClientAssociation,
     OperationStatistics,
     AbandonError,
@@ -16,6 +15,7 @@ import {
     BindReturn,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { ASN1Element } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -105,6 +105,8 @@ import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
+import { flatten } from "flat";
+import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 
 /**
  * @summary The handles a request, but not errors
@@ -120,7 +122,7 @@ import { strict as assert } from "assert";
  * @async
  */
 async function handleRequest (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: DOPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
@@ -172,6 +174,9 @@ async function handleRequest (
  *
  * Handles a request as well as any errors that might be thrown in the process.
  *
+ * You will notice that this implementation does not keep track of invocations,
+ * because there is no abandon operation defined for the DOP.
+ *
  * @param ctx The context object
  * @param assn The client association
  * @param request The request
@@ -180,7 +185,7 @@ async function handleRequest (
  * @async
  */
 async function handleRequestAndErrors (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: DOPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
@@ -225,6 +230,7 @@ async function handleRequestAndErrors (
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
+    const startTime = Date.now();
     try {
         /**
          * We block DOP requests that do not meet some configured minimum of
@@ -258,7 +264,43 @@ async function handleRequestAndErrors (
             );
         }
         await handleRequest(ctx, assn, request);
+        ctx.telemetry.trackRequest({
+            name: codeToString(request.opcode),
+            url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+            duration: Date.now() - startTime,
+            resultCode: 200,
+            success: true,
+            properties: {
+                // ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
     } catch (e) {
+        ctx.telemetry.trackRequest({
+            name: codeToString(request.opcode),
+            url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+            duration: Date.now() - startTime,
+            resultCode: (e instanceof errors.DirectoryError || e instanceof errors.TransportError)
+                ? 400
+                : 500,
+            success: false,
+            properties: {
+                // ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
         if (isDebugging) {
             console.error(e);
         } else {
@@ -324,24 +366,32 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
             assn.idm.writeAbort(Abort_reasonNotSpecified);
         } else {
-            const stats: OperationStatistics = {
-                type: "op",
-                inbound: true,
-                server: getServerStatistics(),
-                connection: getConnectionStatistics(assn),
-                bind: {
-                    protocol: dop_ip["&id"]!.toString(),
-                },
-                request: {
-                    operationCode: codeToString(request.opcode),
-                },
-            };
-            ctx.telemetry.sendEvent({
-                ...stats,
-                unusualError: e,
-            });
             assn.idm.writeAbort(Abort_reasonNotSpecified);
         }
+        const stats: OperationStatistics = {
+            type: "op",
+            inbound: true,
+            server: getServerStatistics(ctx),
+            connection: getConnectionStatistics(assn),
+            bind: {
+                protocol: dop_ip["&id"]!.toString(),
+            },
+            request: {
+                operationCode: codeToString(request.opcode),
+            },
+        };
+        ctx.telemetry.trackException({
+            exception: e,
+            properties: {
+                ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
     }
 }
 
@@ -499,7 +549,7 @@ class DOPAssociation extends ClientAssociation {
      * @param idm The underlying IDM transport socket
      */
     constructor (
-        readonly ctx: Context,
+        readonly ctx: MeerkatContext,
         readonly idm: IDMConnection,
     ) {
         super();

@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import DOPAssociation from "../DOPConnection";
 import type { INTEGER } from "asn1-ts";
@@ -118,7 +118,7 @@ function codeToString (code?: Code): string | undefined {
  */
 export
 async function establishOperationalBinding (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: DOPAssociation,
     invokeId: INTEGER,
     arg: EstablishOperationalBindingArgument,

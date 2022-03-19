@@ -1046,6 +1046,8 @@ interface SigningInfo {
 export
 interface DSAInfo {
 
+    version?: string;
+
     /**
      * The access point of this DSA.
      *
@@ -1069,24 +1071,6 @@ interface DSAInfo {
      * DSA is hibernating.
      */
     sentinelTriggeredHibernation?: Date;
-
-}
-
-/**
- * Telemetry
- *
- * @interface
- */
-export
-interface Telemetry {
-
-    /**
-     * A function that will transmit a telemetry event to a possibly remote
-     * server.
-     *
-     * @function
-     */
-    sendEvent: (info: Record<string, any>) => void;
 
 }
 
@@ -2220,9 +2204,6 @@ interface Context {
 
     /** The Prisma client (for interacting with the database) */
     db: PrismaClient;
-
-    /** Telemetry-related stuff */
-    telemetry: Telemetry;
 
     /**
      * LDAP often uses human-friendly names object descriptors instead of object

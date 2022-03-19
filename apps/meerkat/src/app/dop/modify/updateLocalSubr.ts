@@ -1,4 +1,5 @@
-import { Context, ClientAssociation, OperationalBindingError } from "@wildboar/meerkat-types";
+import { ClientAssociation, OperationalBindingError } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../../ctx";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -65,7 +66,7 @@ import saveAccessPoint from "../../database/saveAccessPoint";
  */
 export
 async function updateLocalSubr (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     invokeId: InvokeId,
     oldAgreement: HierarchicalAgreement,

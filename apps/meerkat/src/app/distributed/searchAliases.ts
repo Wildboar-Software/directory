@@ -1,4 +1,5 @@
-import type { Context, Vertex, ClientAssociation } from "@wildboar/meerkat-types";
+import type { Vertex, ClientAssociation } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { BOOLEAN, TRUE } from "asn1-ts";
 import isPrefix from "../x500/isPrefix";
 import {
@@ -67,7 +68,7 @@ import {
  */
 export
 async function searchAliases (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     target: Vertex,
     argument: SearchArgument,

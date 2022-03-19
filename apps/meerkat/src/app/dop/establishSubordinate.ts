@@ -1,8 +1,5 @@
-import {
-    Context,
-    Vertex,
-    ServiceError,
-} from "@wildboar/meerkat-types";
+import { Vertex, ServiceError } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { DER } from "asn1-ts/dist/node/functional";
 import type {
     AccessPoint,
@@ -198,7 +195,7 @@ interface EstablishSubordinateOptions extends ConnectOptions, WriteOperationOpti
  */
 export
 async function establishSubordinate (
-    ctx: Context,
+    ctx: MeerkatContext,
     immediateSuperior: Vertex,
     immediateSuperiorInfo: Attribute[] | undefined,
     newEntryRDN: RelativeDistinguishedName,

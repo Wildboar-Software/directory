@@ -1,5 +1,6 @@
-import { Context, Vertex, ClientAssociation, OperationStatistics } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationStatistics } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import * as net from "net";
 import * as tls from "tls";
 import { BERElement, ASN1TruncationError } from "asn1-ts";
@@ -64,6 +65,10 @@ import {
     AuthenticationLevel_basicLevels_level_none as none,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import { EventEmitter } from "events";
+import { flatten } from "flat";
+import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
+import isDebugging from "is-debugging";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -84,7 +89,7 @@ function isRootSubschemaDN (dn: Uint8Array): boolean {
 }
 
 async function handleRequest (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: LDAPAssociation,
     message: LDAPMessage,
     stats: OperationStatistics,
@@ -194,7 +199,7 @@ async function handleRequest (
 }
 
 async function handleRequestAndErrors (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: LDAPAssociation,
     message: LDAPMessage,
 ): Promise<void> {
@@ -207,7 +212,7 @@ async function handleRequestAndErrors (
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
-        server: getServerStatistics(),
+        server: getServerStatistics(ctx),
         connection: getConnectionStatistics(assn),
         bind: {
             protocol: "ldap",
@@ -220,10 +225,49 @@ async function handleRequestAndErrors (
         ("extendedReq" in message.protocolOp)
         && decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(cancel)
     );
+    const startTime = Date.now();
     try {
         await handleRequest(ctx, assn, message, stats);
+        ctx.telemetry.trackRequest({
+            name: Object.keys(message.protocolOp)[0],
+            url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+            duration: Date.now() - startTime,
+            resultCode: 200,
+            success: true,
+            properties: {
+                ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+            },
+        });
     } catch (e) {
-        ctx.log.error(e.message);
+        ctx.telemetry.trackRequest({
+            name: Object.keys(message.protocolOp)[0],
+            url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+            duration: Date.now() - startTime,
+            resultCode: (e instanceof errors.DirectoryError || e instanceof errors.TransportError)
+                ? 400
+                : 500,
+            success: false,
+            properties: {
+                ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+            },
+        });
+        if (isDebugging) {
+            console.error(e);
+        } else {
+            ctx.log.error(e.message);
+        }
         if (!stats.outcome) {
             stats.outcome = {};
         }
@@ -296,6 +340,18 @@ async function handleRequestAndErrors (
             assn.socket.destroy();
             return;
         }
+        ctx.telemetry.trackException({
+            exception: e,
+            properties: {
+                ...flatten(stats),
+                ...flatten(getCommonResultsStatistics(e.data)),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+            },
+        });
     } finally {
         const invokeID = assn.messageIDToInvokeID.get(Number(message.messageID));
         if (invokeID) {
@@ -303,7 +359,6 @@ async function handleRequestAndErrors (
             assn.invocations.delete(invokeID);
         }
         assn.messageIDToInvokeID.delete(Number(message.messageID));
-        ctx.telemetry.sendEvent(stats);
     }
 }
 
@@ -381,7 +436,7 @@ class LDAPAssociation extends ClientAssociation {
      * @private
      * @function
      */
-    private handleData (ctx: Context, data: Buffer): void {
+    private handleData (ctx: MeerkatContext, data: Buffer): void {
         const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
         // #region Pre-flight check if the message will fit in the buffer, if possible.
         if ((this.buffer.length + data.length) > ctx.config.ldap.bufferSize) {
@@ -794,7 +849,7 @@ class LDAPAssociation extends ClientAssociation {
      * @param starttlsOptions TLS options
      */
     constructor (
-        readonly ctx: Context,
+        readonly ctx: MeerkatContext,
         readonly tcp: net.Socket,
         readonly starttlsOptions?: tls.TLSSocketOptions,
     ) {

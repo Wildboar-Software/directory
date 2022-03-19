@@ -1,5 +1,4 @@
 import type {
-    Context,
     Vertex,
     ClientAssociation,
     WithRequestStatistics,
@@ -8,6 +7,7 @@ import type {
     IndexableOID,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import * as crypto from "crypto";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -785,7 +785,7 @@ function getFamilyMembersToReturnById (
  */
 export
 async function search_i (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
     argument: SearchArgument,

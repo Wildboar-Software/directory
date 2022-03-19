@@ -1,5 +1,6 @@
 import { Context, IndexableOID, Value, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import {
     _decode_AddEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
@@ -254,7 +255,7 @@ function namingViolationErrorData (
  */
 export
 async function addEntry (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {

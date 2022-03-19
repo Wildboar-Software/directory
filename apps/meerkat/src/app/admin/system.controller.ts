@@ -1,8 +1,10 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { CONTEXT } from "../constants";
 import { Controller, Get, Post, Render, Inject, Res } from "@nestjs/common";
 import type { Response } from "express";
 import * as os from "os";
+import { flatten } from "flat";
+import { getServerStatistics } from "../telemetry/getServerStatistics";
 
 function canFail (cb: () => string): string {
     try {
@@ -12,12 +14,11 @@ function canFail (cb: () => string): string {
     }
 }
 
-
 @Controller()
 export class SystemController {
 
     constructor (
-        @Inject(CONTEXT) readonly ctx: Context,
+        @Inject(CONTEXT) readonly ctx: MeerkatContext,
     ) {}
 
     @Get("/updates")
@@ -68,7 +69,19 @@ export class SystemController {
     startHibernation (
         @Res() res: Response,
     ) {
-        this.ctx.dsa.hibernatingSince = new Date();
+        const startDate = new Date();
+        this.ctx.telemetry.trackEvent({
+            name: "Hibernation",
+            properties: {
+                ...flatten({
+                    server: getServerStatistics(this.ctx),
+                }),
+                since: startDate,
+                started: true,
+                administratorEmail: this.ctx.config.administratorEmail,
+            },
+        });
+        this.ctx.dsa.hibernatingSince = startDate;
         res.redirect("/hibernate");
     }
 
@@ -76,6 +89,17 @@ export class SystemController {
     endHibernation (
         @Res() res: Response,
     ) {
+        this.ctx.telemetry.trackEvent({
+            name: "Hibernation",
+            properties: {
+                ...flatten({
+                    server: getServerStatistics(this.ctx),
+                }),
+                since: this.ctx.dsa.hibernatingSince,
+                started: false,
+                administratorEmail: this.ctx.config.administratorEmail,
+            },
+        });
         this.ctx.dsa.hibernatingSince = undefined;
         res.redirect("/hibernate");
     }

@@ -1,4 +1,4 @@
-import type { ClientAssociation, Context } from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "@wildboar/meerkat-types";
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -34,13 +34,11 @@ import loadMatchingRules from "./init/loadMatchingRules";
 import loadContextTypes from "./init/loadContextTypes";
 import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
 import loadNameForms from "./init/loadNameForms";
-import ctx from "./ctx";
+import ctx, { MeerkatContext } from "./ctx";
 import terminate from "./dop/terminateByID";
 import { differenceInMilliseconds, differenceInMinutes } from "date-fns";
 import * as dns from "dns/promises";
-import axios from "axios";
 import {
-    emailSignupEndpoint,
     updatesDomain,
 } from "./constants";
 import createDatabaseReport from "./telemetry/createDatabaseReport";
@@ -49,6 +47,9 @@ import { createPrivateKey } from "crypto";
 import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import isDebugging from "is-debugging";
 import { setTimeout as safeSetTimeout } from "safe-timers";
+import { randomUUID } from "crypto";
+import { flatten } from "flat";
+import { getServerStatistics } from "./telemetry/getServerStatistics";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -65,7 +66,7 @@ import { setTimeout as safeSetTimeout } from "safe-timers";
  * @function
  * @async
  */
-async function checkForUpdates (ctx: Context, currentVersionString: string): Promise<void> {
+async function checkForUpdates (ctx: MeerkatContext, currentVersionString: string): Promise<void> {
     const currentVersion = semver.parse(currentVersionString);
     if (!currentVersion) {
         return;
@@ -142,7 +143,11 @@ async function checkForUpdates (ctx: Context, currentVersionString: string): Pro
  *
  * @function
  */
-const getIdmBufferLengthGate = (ctx: Context, idm: IDMConnection, source: string) => (addedBytes: number) => {
+const getIdmBufferLengthGate = (
+    ctx: MeerkatContext,
+    idm: IDMConnection,
+    source: string,
+) => (addedBytes: number) => {
     const currentBufferSize: number = (
         idm.getBufferSize()
         + addedBytes
@@ -176,7 +181,11 @@ const getIdmBufferLengthGate = (ctx: Context, idm: IDMConnection, source: string
  *
  * @function
  */
-const getIdmPduLengthGate = (ctx: Context, idm: IDMConnection, source: string) => (addedBytes: number) => {
+const getIdmPduLengthGate = (
+    ctx: MeerkatContext,
+    idm: IDMConnection,
+    source: string,
+) => (addedBytes: number) => {
     const currentPduSize: number = (
         idm.getAccumulatedPDUSize()
         + addedBytes
@@ -236,7 +245,7 @@ const PROCESS_NAME: string = "Meerkat DSA";
  * @function
  */
 function attachUnboundEventListenersToIDMConnection (
-    ctx: Context,
+    ctx: MeerkatContext,
     originalSocket: net.Socket | tls.TLSSocket, // Even if STARTTLS is used, you must use the original socket for "bookkeeping" in the associations index.
     source: string, // Just to avoid recalculating this.
     idm: IDMConnection,
@@ -396,7 +405,7 @@ function attachUnboundEventListenersToIDMConnection (
  * @function
  */
 function handleIDM (
-    ctx: Context,
+    ctx: MeerkatContext,
     startTimes: Map<net.Socket, Date>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c: net.Socket | tls.TLSSocket): void => {
@@ -530,7 +539,7 @@ function handleIDM (
  * @function
  */
 function handleLDAP (
-    ctx: Context,
+    ctx: MeerkatContext,
     startTimes: Map<net.Socket, Date>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c) => {
@@ -661,15 +670,32 @@ function handleLDAP (
  */
 export default
 async function main (): Promise<void> {
-    const packageJSON = await import("package.json").catch(() => {});
+    await ctx.telemetry.init();
+    const packageJSON = await import("../../package.json").catch(() => {});
     const versionSlug = packageJSON?.default
         ? packageJSON?.default.version
         : packageJSON?.version;
+    ctx.dsa.version = versionSlug ?? ctx.dsa.version;
+    const preconnectTimestamp = Date.now();
+    await ctx.db.$connect();
+    ctx.telemetry.trackAvailability({
+        name: "db",
+        duration: Date.now() - preconnectTimestamp,
+        success: true,
+        id: randomUUID(),
+        message: "Database connected.",
+        runLocation: __filename,
+        properties: {
+            administratorEmail: ctx.config.administratorEmail,
+        },
+    });
 
-    if (versionSlug) {
+    if (ctx.dsa.version) {
         ctx.log.info(ctx.i18n.t("log:starting_meerkat_version", {
-            version: "1.0.0-beta.18",
+            version: ctx.dsa.version,
         }));
+    } else {
+        ctx.log.info(ctx.i18n.t("log:starting_meerkat"));
     }
     process.title = PROCESS_NAME;
     ctx.log.info(ctx.i18n.t("log:process_info", {
@@ -725,8 +751,6 @@ async function main (): Promise<void> {
     ctx.log.debug(ctx.i18n.t("log:loaded_name_forms"));
     await loadObjectIdentifierNames(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_oid_names"));
-
-
 
     if (process.env.MEERKAT_INIT_JS) {
         const importPath = (os.platform() === "win32")
@@ -873,14 +897,6 @@ async function main (): Promise<void> {
         }, 300000);
     }
 
-    if (ctx.config.administratorEmail) {
-        try {
-            await axios.post(emailSignupEndpoint, {
-                administratorEmailAddress: ctx.config.administratorEmail,
-            }).catch();
-        } catch {} // eslint-disable-line
-    }
-
     if (versionSlug) {
         checkForUpdates(ctx, versionSlug).catch();
     }
@@ -891,7 +907,18 @@ async function main (): Promise<void> {
 
     setInterval(() => {
         createDatabaseReport(ctx)
-            .then(ctx.telemetry.sendEvent)
+            .then((report) => {
+                ctx.telemetry.trackEvent({
+                    name: "dbreport",
+                    properties: {
+                        ...flatten({
+                            server: getServerStatistics(this.ctx),
+                        }),
+                        ...report,
+                        administratorEmail: ctx.config.administratorEmail,
+                    },
+                });
+            })
             .catch();
     }, 604_800_000); // Weekly
 

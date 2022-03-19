@@ -1,5 +1,4 @@
 import {
-    Context,
     ClientAssociation,
     OperationStatistics,
     OperationInvocationInfo,
@@ -7,6 +6,7 @@ import {
     BindReturn,
     DirectoryBindError,
 } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import {
     IDMConnection,
@@ -66,9 +66,6 @@ import * as crypto from "crypto";
 import sleep from "../utils/sleep";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import {
-    addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import {
     administerPassword,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import {
@@ -81,6 +78,9 @@ import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
 import { strict as assert } from "assert";
+import { flatten } from "flat";
+import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 
 /**
  * @summary The handles a request, but not errors
@@ -97,7 +97,7 @@ import { strict as assert } from "assert";
  * @async
  */
 async function handleRequest (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: DAPAssociation, // eslint-disable-line
     request: Request,
     stats: OperationStatistics,
@@ -136,8 +136,8 @@ async function handleRequest (
  * @async
  */
 async function handleRequestAndErrors (
-    ctx: Context,
-    assn: DAPAssociation, // eslint-disable-line
+    ctx: MeerkatContext,
+    assn: DAPAssociation,
     request: Request,
 ): Promise<void> {
     if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
@@ -195,7 +195,7 @@ async function handleRequestAndErrors (
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
-        server: getServerStatistics(),
+        server: getServerStatistics(ctx),
         connection: getConnectionStatistics(assn),
         // idm?: IDMTransportStatistics;
         bind: {
@@ -212,9 +212,49 @@ async function handleRequestAndErrors (
         events: new EventEmitter(),
     };
     assn.invocations.set(Number(request.invokeID), info);
+    const isSensitiveOperation: boolean = (
+        compareCode(request.opcode, administerPassword["&operationCode"]!)
+        || compareCode(request.opcode, changePassword["&operationCode"]!)
+    );
     try {
         await handleRequest(ctx, assn, request, stats);
+        !isSensitiveOperation && ctx.telemetry.trackRequest({
+            name: codeToString(request.opcode),
+            url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+            duration: Date.now() - info.startTime.valueOf(),
+            resultCode: 200,
+            success: true,
+            properties: {
+                ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
     } catch (e) {
+        !isSensitiveOperation && ctx.telemetry.trackRequest({
+            name: codeToString(request.opcode),
+            url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+            duration: Date.now() - info.startTime.valueOf(),
+            resultCode: (e instanceof errors.DirectoryError || e instanceof errors.TransportError)
+                ? 400
+                : 500,
+            success: false,
+            properties: {
+                ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
         if (isDebugging) {
             console.error(e);
         } else {
@@ -310,24 +350,23 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
             assn.idm.writeAbort(Abort_reasonNotSpecified);
         } else {
-            ctx.telemetry.sendEvent({
-                ...stats,
-                unusualError: e,
-            });
             assn.idm.writeAbort(Abort_reasonNotSpecified);
         }
+        !isSensitiveOperation && ctx.telemetry.trackException({
+            exception: e,
+            properties: {
+                ...flatten(stats),
+                ...flatten(getCommonResultsStatistics(e.data)),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
     } finally {
         assn.invocations.delete(Number(request.invokeID));
-        if (!(
-            compareCode(request.opcode, administerPassword["&operationCode"]!)
-            || compareCode(request.opcode, changePassword["&operationCode"]!)
-            || (
-                compareCode(request.opcode, addEntry["&operationCode"]!)
-                && ctx.config.bulkInsertMode
-            )
-        )) {
-            ctx.telemetry.sendEvent(stats);
-        }
     }
 }
 
@@ -498,7 +537,7 @@ class DAPAssociation extends ClientAssociation {
      * @param idm The underlying IDM transport socket
      */
     constructor (
-        readonly ctx: Context,
+        readonly ctx: MeerkatContext,
         readonly idm: IDMConnection,
     ) {
         super();

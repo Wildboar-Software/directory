@@ -1,5 +1,6 @@
-import type { ClientAssociation, Context } from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
@@ -69,7 +70,7 @@ import { randomInt } from "crypto";
  */
 export
 async function relatedEntryProcedure (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
     search: SearchState,

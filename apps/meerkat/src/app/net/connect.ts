@@ -1,5 +1,6 @@
 import type { Context, OperationStatistics } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
@@ -91,6 +92,7 @@ import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import {
     TLSResponse_success,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
+import { flatten } from "flat";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -147,7 +149,7 @@ const networkAddressPreference = (a: url.URL, b: url.URL): number => {
  * @function
  */
 function getIDMOperationWriter (
-    ctx: Context,
+    ctx: MeerkatContext,
     idm: IDMConnection,
     targetSystem: AccessPoint,
 ): Connection["writeOperation"] {
@@ -155,7 +157,7 @@ function getIDMOperationWriter (
         const opstat: OperationStatistics = {
             type: "op",
             inbound: false,
-            server: getServerStatistics(),
+            server: getServerStatistics(ctx),
             connection: {
                 remoteAddress: idm.s.remoteAddress,
                 remoteFamily: idm.s.remoteFamily,
@@ -234,7 +236,16 @@ function getIDMOperationWriter (
                 sizeInBytes: ret.result?.value.length,
             };
         }
-        ctx.telemetry.sendEvent(opstat);
+        ctx.telemetry.trackEvent({
+            name: "DistributedOperation",
+            properties: {
+                ...flatten(opstat),
+            },
+            measurements: {
+                bytesRead: idm.socket.bytesRead,
+                bytesWritten: idm.socket.bytesWritten,
+            },
+        });
         return ret;
     };
 }
@@ -253,13 +264,28 @@ function getIDMOperationWriter (
  * @function
  */
 function getLDAPOperationWriter (
-    ctx: Context,
+    ctx: MeerkatContext,
     socket: LDAPSocket,
 ): Connection["writeOperation"] {
     return async (
         req: Omit<ChainedRequest, "invokeId">,
         options?: WriteOperationOptions,
     ): Promise<ChainedResultOrError> => {
+        const opstat: OperationStatistics = {
+            type: "op",
+            inbound: false,
+            server: getServerStatistics(ctx),
+            connection: {
+                remoteAddress: socket.socket.remoteAddress,
+                remoteFamily: socket.socket.remoteFamily,
+                remotePort: socket.socket.remotePort,
+                transport: "TCP",
+            },
+            request: {
+                operationCode: codeToString(req.opCode),
+            },
+            outcome: {},
+        };
         const connectionTimeout: number = (
             options?.timeLimitInMilliseconds
             ?? DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS
@@ -394,6 +420,16 @@ function getLDAPOperationWriter (
             }),
             new Promise<ASN1Element>((_, reject) => setTimeout(reject, connectionTimeout)),
         ]);
+        ctx.telemetry.trackEvent({
+            name: "DistributedOperation",
+            properties: {
+                ...flatten(opstat),
+            },
+            measurements: {
+                bytesRead: socket.socket.bytesRead,
+                bytesWritten: socket.socket.bytesWritten,
+            },
+        });
         return {
             invokeId,
             opCode: req.opCode,
@@ -480,7 +516,7 @@ function *createBindRequests (
  * @async
  */
 async function connectToLDAP (
-    ctx: Context,
+    ctx: MeerkatContext,
     uri: url.URL,
     credentials: DSACredentials[],
     timeoutTime: Date,
@@ -664,7 +700,7 @@ async function connectToLDAP (
  * @returns A connection, if one could be established, or `null` otherwise
  */
 async function connectToIdmNaddr (
-    ctx: Context,
+    ctx: MeerkatContext,
     uri: string,
     idmGetter: () => IDMConnection,
     targetSystem: AccessPoint,
@@ -824,7 +860,7 @@ async function connectToIdmNaddr (
  */
 export
 async function connect (
-    ctx: Context,
+    ctx: MeerkatContext,
     targetSystem: AccessPoint,
     protocolID: OBJECT_IDENTIFIER,
     options?: ConnectOptions,
@@ -841,6 +877,29 @@ async function connect (
         if ((new Date()) > timeoutTime) {
             return null;
         }
+        ctx.telemetry.trackEvent({
+            name: "DistributedOperation",
+            properties: {
+                ...flatten({
+                    server: getServerStatistics(this.ctx),
+                }),
+                ...flatten({
+                    nsap: {
+                        uri: uri.toString(),
+                        protocol: uri.protocol,
+                        host: uri.hostname,
+                        port: uri.port,
+                        path: uri.pathname,
+                        query: uri.search,
+                        fragment: uri.hash,
+                    },
+                }),
+                timeoutTime: timeoutTime.toString(),
+                inbound: false,
+                "bind.protocol": protocolID.toString(),
+                tlsOptional: options?.tlsOptional,
+            },
+        });
         const connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
         const credentials: DSACredentials[] = await getCredentialsForNSAP(ctx, uri.toString());
         if (uri.protocol.toLowerCase().startsWith("idm:")) { // TODO: Handle IDMS

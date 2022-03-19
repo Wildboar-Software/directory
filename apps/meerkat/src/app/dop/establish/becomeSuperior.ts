@@ -1,4 +1,5 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../../ctx";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -79,7 +80,7 @@ import saveAccessPoint from "../../database/saveAccessPoint";
  */
 export
 async function becomeSuperior (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     invokeId: INTEGER,
     agreement: HierarchicalAgreement,

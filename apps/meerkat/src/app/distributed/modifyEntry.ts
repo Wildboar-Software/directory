@@ -8,6 +8,7 @@ import {
     PendingUpdates,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import {
     _decode_ModifyEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
@@ -2207,7 +2208,7 @@ async function executeEntryModification (
  */
 export
 async function modifyEntry (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {

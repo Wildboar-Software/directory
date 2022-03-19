@@ -1,4 +1,12 @@
-import type { ClientAssociation, Context, Vertex, WithRequestStatistics, WithOutcomeStatistics, RequestStatistics, OPCR } from "@wildboar/meerkat-types";
+import type {
+    ClientAssociation,
+    Vertex,
+    WithRequestStatistics,
+    WithOutcomeStatistics,
+    RequestStatistics,
+    OPCR,
+} from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import type DSPAssociation from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import {
@@ -187,7 +195,7 @@ class OperationDispatcher {
      * @memberof OperationDispatcher
      */
     public static async operationEvaluation (
-        ctx: Context,
+        ctx: MeerkatContext,
         state: OperationDispatcherState,
         assn: ClientAssociation,
         req: Request,
@@ -570,7 +578,7 @@ class OperationDispatcher {
      * @memberof OperationDispatcher
      */
     private static async dispatchPreparedDSPRequest (
-        ctx: Context,
+        ctx: MeerkatContext,
         assn: ClientAssociation,
         req: Request,
         preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
@@ -725,7 +733,7 @@ class OperationDispatcher {
      * @memberof OperationDispatcher
      */
     public static async dispatchDAPRequest (
-        ctx: Context,
+        ctx: MeerkatContext,
         assn: ClientAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
@@ -764,7 +772,7 @@ class OperationDispatcher {
      * @memberof OperationDispatcher
      */
     public static async dispatchDSPRequest (
-        ctx: Context,
+        ctx: MeerkatContext,
         assn: DSPAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
@@ -806,7 +814,7 @@ class OperationDispatcher {
      * @async
      */
     private static async localSearchOperationEvaluation (
-        ctx: Context,
+        ctx: MeerkatContext,
         state: OperationDispatcherState,
         assn: ClientAssociation,
         invokeId: InvokeId,
@@ -901,7 +909,7 @@ class OperationDispatcher {
      * @async
      */
     public static async dispatchLocalSearchDSPRequest (
-        ctx: Context,
+        ctx: MeerkatContext,
         assn: ClientAssociation,
         invokeId: InvokeId,
         argument: SearchArgument,

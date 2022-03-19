@@ -1,5 +1,6 @@
-import { Context, OperationalBindingError } from "@wildboar/meerkat-types";
+import { OperationalBindingError } from "@wildboar/meerkat-types";
 import type DOPAssociation from "../DOPConnection";
+import type { MeerkatContext } from "../../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import type {
     ModifyOperationalBindingArgument,
@@ -136,7 +137,7 @@ function codeToString (code?: Code): string | undefined {
  */
 export
 async function modifyOperationalBinding (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: DOPAssociation,
     invokeId: InvokeId,
     arg: ModifyOperationalBindingArgument,

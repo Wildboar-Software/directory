@@ -51,6 +51,7 @@
     "bulk_insert_mode": "You are running Meerkat DSA in bulk insert mode. This means that almost no schema validation or access controls will apply.",
     "no_dsa_keypair": "Because the MEERKAT_SIGNING_CERT_CHAIN and MEERKAT_SIGNING_KEY environment variables were not set, Meerkat DSA will not digitally sign server responses, and its Application Entity (AE) Title will not be set.",
     "starting_meerkat_version": "Starting up Meerkat DSA, version {{version}}.",
+    "starting_meerkat": "Starting up Meerkat DSA.",
     "process_info": "Process Name {{name}}; Process ID {{pid}}; Parent Process ID {{ppid}}; Current Directory: {{cwd}}.",
     "aliased_does_not_exist": "Alias {{id}} does not point to a known entry.",
     "admin_role_not_present_first_level_dse": "The administrativeRole attribute was not present in an added first-level DSE. Meerkat DSA automatically added this, making this new entry an autonomous administrative point (AAP).",
@@ -98,5 +99,6 @@
     "admpoint_gsr_recalculated@hint": "Meerkat DSA does not automatically recursively recalculate the governing structure rules for subtrees of the subschema impacted by structure rule changes. Review the documentation on how to manually update the governing structure rule of the subschema.",
     "gsr_changed": "The governing structure rule for entry with dseUUID {{uuid}} changed due to a change in the relevant subschema.",
     "beta": "This is a beta version of Meerkat DSA, so it is likely that there are bugs, including security vulnerabilities. If you feel that you have discovered an issue, please report it here: https://github.com/Wildboar-Software/directory/issues. If you would like to ask a question, please create a GitHub issue, or (preferably) post a question to StackOverflow with the tag 'meerkat-dsa'.",
-    "too_many_sort_keys": "Association {{aid}} submitted a search or list request with {{num}} sort keys, which may have been malicious. Only the first few sort keys will be honored, if any."
+    "too_many_sort_keys": "Association {{aid}} submitted a search or list request with {{num}} sort keys, which may have been malicious. Only the first few sort keys will be honored, if any.",
+    "failed_init_telemetry": "Failed to initialize telemetry. {{e}}"
 }

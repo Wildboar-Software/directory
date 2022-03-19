@@ -1,4 +1,5 @@
-import { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { ObjectIdentifier } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -130,7 +131,7 @@ const CHILD: string = id_oc_child.toString();
  */
 export
 async function removeEntry (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {

@@ -1,5 +1,4 @@
 import {
-    Context,
     ClientAssociation,
     OperationStatistics,
     OperationInvocationInfo,
@@ -8,6 +7,7 @@ import {
     BindReturn,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { ASN1Element } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -71,6 +71,9 @@ import sleep from "../utils/sleep";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
+import { flatten } from "flat";
+import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 
 /**
  * @summary The handles a request, but not errors
@@ -87,7 +90,7 @@ import { strict as assert } from "assert";
  * @async
  */
 async function handleRequest (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: DSPAssociation, // eslint-disable-line
     request: Request,
     stats: OperationStatistics,
@@ -126,7 +129,7 @@ async function handleRequest (
  * @async
  */
 async function handleRequestAndErrors (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: DSPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
@@ -174,7 +177,7 @@ async function handleRequestAndErrors (
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
-        server: getServerStatistics(),
+        server: getServerStatistics(ctx),
         connection: getConnectionStatistics(assn),
         // idm?: IDMTransportStatistics;
         bind: {
@@ -193,7 +196,43 @@ async function handleRequestAndErrors (
     assn.invocations.set(Number(request.invokeID), info);
     try {
         await handleRequest(ctx, assn, request, stats);
+        ctx.telemetry.trackRequest({
+            name: codeToString(request.opcode),
+            url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+            duration: Date.now() - info.startTime.valueOf(),
+            resultCode: 200,
+            success: true,
+            properties: {
+                ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
     } catch (e) {
+        ctx.telemetry.trackRequest({
+            name: codeToString(request.opcode),
+            url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+            duration: Date.now() - info.startTime.valueOf(),
+            resultCode: (e instanceof errors.DirectoryError || e instanceof errors.TransportError)
+                ? 400
+                : 500,
+            success: false,
+            properties: {
+                ...flatten(stats),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
         if (isDebugging) {
             console.error(e);
         } else {
@@ -289,15 +328,23 @@ async function handleRequestAndErrors (
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
             assn.idm.writeAbort(Abort_reasonNotSpecified);
         } else {
-            ctx.telemetry.sendEvent({
-                ...stats,
-                unusualError: e,
-            });
             assn.idm.writeAbort(Abort_reasonNotSpecified);
         }
+        ctx.telemetry.trackException({
+            exception: e,
+            properties: {
+                ...flatten(stats),
+                ...flatten(getCommonResultsStatistics(e.data)),
+                administratorEmail: ctx.config.administratorEmail,
+            },
+            measurements: {
+                bytesRead: assn.socket.bytesRead,
+                bytesWritten: assn.socket.bytesWritten,
+                idmFramesReceived: assn.idm.getFramesReceived(),
+            },
+        });
     } finally {
         assn.invocations.delete(Number(request.invokeID));
-        ctx.telemetry.sendEvent(stats);
     }
 }
 
@@ -466,7 +513,7 @@ class DSPAssociation extends ClientAssociation {
      * @param idm The underlying IDM transport socket
      */
     constructor (
-        readonly ctx: Context,
+        readonly ctx: MeerkatContext,
         readonly idm: IDMConnection,
     ) {
         super();

@@ -22,6 +22,27 @@ import {
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
+import type { TelemetryClient } from "applicationinsights";
+import * as appInsights from "applicationinsights";
+import { telemetryDomain } from "./constants";
+import * as dns from "dns/promises";
+
+export
+interface MeerkatTelemetryClient {
+    init: () => Promise<void>;
+    trackAvailability: TelemetryClient["trackAvailability"];
+    trackEvent: TelemetryClient["trackEvent"];
+    trackMetric: TelemetryClient["trackMetric"];
+    trackRequest: TelemetryClient["trackRequest"];
+    trackException: TelemetryClient["trackException"];
+    trackDependency: TelemetryClient["trackDependency"];
+    trackTrace: TelemetryClient["trackTrace"];
+}
+
+export
+interface MeerkatContext extends Context {
+    telemetry: MeerkatTelemetryClient;
+}
 
 const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
     ? process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
@@ -128,7 +149,7 @@ if (logToHTTP) {
     winstonTransports.push(new winston.transports.Http(logToHTTP));
 }
 
-const ctx: Context = {
+const ctx: MeerkatContext = {
     i18n,
     config: {
         log: {
@@ -319,6 +340,7 @@ const ctx: Context = {
         },
     },
     dsa: {
+        version: process.env.npm_package_version,
         accessPoint: new AccessPoint(
             {
                 rdnSequence: [], // To be set later.
@@ -349,26 +371,63 @@ const ctx: Context = {
     }),
     db: new PrismaClient(),
     telemetry: {
-        sendEvent: (body: Record<string, any>) => {
-            if (bulkInsertMode || isDebugging) {
-                return;
+        init: async (): Promise<void> => {
+            try {
+                const records = await dns
+                    .resolveTxt(telemetryDomain);
+                for (const record of records) {
+                    const txt = record.join("");
+                    if (txt.startsWith("ikey=")) {
+                        const ikey = txt.slice("ikey=".length);
+                        appInsights.setup(ikey).start();
+                        appInsights.defaultClient.config.disableAppInsights = (
+                            (
+                                isDebugging
+                                || ctx.config.bulkInsertMode
+                            )
+                            && !process.env.MEERKAT_TEST_TELEMETRY
+                        );
+                        break;
+                    }
+                }
+            } catch (e) {
+                ctx.log.error(ctx.i18n.t("log:failed_init_telemetry", { e }));
             }
-            console.log(JSON.stringify(body, undefined, 4));
-            // if (process.env.NODE_ENV === "development") {
-            //     console.debug(body);
-            // }
-            // try {
-            //     axios.post(telemetryURL, body, {
-            //         headers: {
-            //             "Content-Type": "application/json",
-            //         },
-            //         auth: {
-            //             username: "859EA8D1-503C-4C0F-9B7F-28AD3AA1451D",
-            //             password: "399274DA-9CB1-471E-9C99-91A2D532DA8C",
-            //         },
-            //     })
-            //         .catch(() => {}); // eslint-disable-line
-            // } catch {} // eslint-disable-line
+        },
+        trackAvailability: (...args) => {
+            try {
+                return appInsights.defaultClient?.trackAvailability(...args);
+            } catch { /* NOOP */ }
+        },
+        trackDependency: (...args) => {
+            try {
+                return appInsights.defaultClient?.trackDependency(...args);
+            } catch { /* NOOP */ }
+        },
+        trackException: (...args) => {
+            try {
+                return appInsights.defaultClient?.trackException(...args);
+            } catch { /* NOOP */ }
+        },
+        trackRequest: (...args) => {
+            try {
+                return appInsights.defaultClient?.trackRequest(...args);
+            } catch { /* NOOP */ }
+        },
+        trackMetric: (...args) => {
+            try {
+                return appInsights.defaultClient?.trackMetric(...args);
+            } catch { /* NOOP */ }
+        },
+        trackEvent: (...args) => {
+            try {
+                return appInsights.defaultClient?.trackEvent(...args);
+            } catch { /* NOOP */ }
+        },
+        trackTrace: (...args) => {
+            try {
+                return appInsights.defaultClient?.trackTrace(...args);
+            } catch { /* NOOP */ }
         },
     },
     objectIdentifierToName: new Map(),

@@ -1,5 +1,6 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { BOOLEAN, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -83,7 +84,7 @@ import encodeLDAPDN from "../ldap/encodeLDAPDN";
  */
 export
 async function apinfoProcedure (
-    ctx: Context,
+    ctx: MeerkatContext,
     api: AccessPointInformation,
     req: ChainedRequest,
     assn: ClientAssociation,

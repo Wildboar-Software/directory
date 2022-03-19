@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { BERElement } from "asn1-ts";
 import dnToVertex from "../dit/dnToVertex";
 import getRelevantOperationalBindings from "./getRelevantOperationalBindings";
@@ -36,7 +36,7 @@ import type {
  */
 export
 async function updateAffectedSubordinateDSAs (
-    ctx: Context,
+    ctx: MeerkatContext,
     affectedPrefix: DistinguishedName,
 ): Promise<void> {
     const activeHOBs = await getRelevantOperationalBindings(ctx, true);

@@ -31,7 +31,10 @@ messages.
 
 ## MEERKAT_ADMINISTRATOR_EMAIL
 
-Currently unused.
+The email that you specify here will be submitted along with telemetry events.
+This will help Meerkat network administrators reach out to you to offer support,
+inform you of security vulnerabilities or active attacks, or contact you for
+other Meerkat DSA-related things.
 
 ## MEERKAT_BIND_MIN_SLEEP_MS
 
@@ -333,6 +336,12 @@ prevention of
 Whitespace-separated NSAP URLs that locate this DSA. This is important for
 enabling other DSAs to chain requests to this DSA. These NSAP URLs are used to
 populate the `myAccessPoint` attribute in the Root DSE.
+
+**WARNING:** Do NOT include usernames and passwords in any URL
+(e.g. `https://username:password@example.com`) you supply with this environment
+variable. These URLs will be disclosed freely to all users regardless of
+authentication or access control, so nothing sensitive should be included in
+them at all.
 
 ## MEERKAT_NO_COLOR
 

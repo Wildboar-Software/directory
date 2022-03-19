@@ -1,4 +1,4 @@
-import type { ServerStatistics } from "@wildboar/meerkat-types";
+import type { ServerStatistics, Context } from "@wildboar/meerkat-types";
 import * as os from "os";
 
 function canFail <T>(cb: () => T): T | undefined {
@@ -10,17 +10,16 @@ function canFail <T>(cb: () => T): T | undefined {
 }
 
 export
-function getServerStatistics (): ServerStatistics {
+function getServerStatistics (ctx: Context): ServerStatistics {
     return {
-        version: "1.0.0",
-        hash: "",
+        version: ctx.dsa.version,
         os_arch: canFail(() => os.arch()),
-        os_cpu_cores: canFail(() => os.cpus()),
+        // os_cpu_cores: canFail(() => os.cpus()),
         os_endianness: canFail(() => os.endianness()),
         os_freemem: canFail(() => os.freemem()),
         os_homedir: canFail(() => os.homedir()),
         os_hostname: canFail(() => os.hostname()),
-        os_networkInterfaces: canFail(() => os.networkInterfaces()),
+        // os_networkInterfaces: canFail(() => os.networkInterfaces()),
         os_platform: canFail(() => os.platform()),
         os_release: canFail(() => os.release()),
         os_totalmem: canFail(() => os.totalmem()),

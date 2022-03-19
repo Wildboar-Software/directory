@@ -1,9 +1,11 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { CONTEXT } from "../constants";
 import { Controller, Get, Post, Render, Inject, Param, Res, NotFoundException } from "@nestjs/common";
 import type { Response } from "express";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { flatten } from "flat";
+import { getServerStatistics } from "../telemetry/getServerStatistics";
 
 const conformancePath = path.join(__dirname, "assets", "static", "conformance.md");
 
@@ -11,7 +13,7 @@ const conformancePath = path.join(__dirname, "assets", "static", "conformance.md
 export class HomeController {
 
     constructor (
-        @Inject(CONTEXT) readonly ctx: Context,
+        @Inject(CONTEXT) readonly ctx: MeerkatContext,
     ) {
         /**
          * hbs (Handlebars templating engine) is an implicit dependency for
@@ -94,12 +96,49 @@ export class HomeController {
         @Param("id") id: string,
         @Res() res: Response,
     ) {
-        await this.ctx.db.operationalBinding.update({
+        const result = await this.ctx.db.operationalBinding.update({
             where: {
                 uuid: id,
             },
             data: {
                 accepted: true,
+            },
+        });
+        this.ctx.telemetry.trackEvent({
+            name: "OperationalBindingDecision",
+            properties: {
+                ...flatten({
+                    server: getServerStatistics(this.ctx),
+                }),
+                accepted: true,
+                administratorEmail: this.ctx.config.administratorEmail,
+                lastOBProblem: result.last_ob_problem,
+                lastShadowingProblem: result.last_shadow_problem,
+                lastUpdate: result.last_update,
+                bindingVersion: result.binding_version,
+                othertimes: result.othertimes,
+                knowledgeType: result.knowledge_type,
+                bindingType: result.binding_type,
+                initiator: result.initiator,
+                beginTime: result.periodic_beginTime,
+                updateInterval: result.periodic_updateInterval,
+                windowSize: result.periodic_windowSize,
+                requestedTime: result.requested_time,
+                respondedTime: result.responded_time,
+                secondaryShadows: result.secondary_shadows,
+                securityErrorCode: result.security_errorCode,
+                securityErrorProtection: result.security_errorProtection,
+                securityOperationCode: result.security_operationCode,
+                securityTarget: result.security_target,
+                securityTime: result.security_time,
+                sourceIP: result.source_ip,
+                sourceTCPPort: result.source_tcp_port,
+                subordinates: result.subordinates,
+                supplierInitiated: result.supplier_initiated,
+                supplyContexts: result.supply_contexts,
+                terminatedTime: result.terminated_time,
+                validityEnd: result.validity_end,
+                validityStart: result.validity_start,
             },
         });
         this.ctx.operationalBindingControlEvents.emit(id, true);
@@ -111,12 +150,49 @@ export class HomeController {
         @Param("id") id: string,
         @Res() res: Response,
     ) {
-        await this.ctx.db.operationalBinding.update({
+        const result = await this.ctx.db.operationalBinding.update({
             where: {
                 uuid: id,
             },
             data: {
                 accepted: false,
+            },
+        });
+        this.ctx.telemetry.trackEvent({
+            name: "OperationalBindingDecision",
+            properties: {
+                ...flatten({
+                    server: getServerStatistics(this.ctx),
+                }),
+                accepted: false,
+                administratorEmail: this.ctx.config.administratorEmail,
+                lastOBProblem: result.last_ob_problem,
+                lastShadowingProblem: result.last_shadow_problem,
+                lastUpdate: result.last_update,
+                bindingVersion: result.binding_version,
+                othertimes: result.othertimes,
+                knowledgeType: result.knowledge_type,
+                bindingType: result.binding_type,
+                initiator: result.initiator,
+                beginTime: result.periodic_beginTime,
+                updateInterval: result.periodic_updateInterval,
+                windowSize: result.periodic_windowSize,
+                requestedTime: result.requested_time,
+                respondedTime: result.responded_time,
+                secondaryShadows: result.secondary_shadows,
+                securityErrorCode: result.security_errorCode,
+                securityErrorProtection: result.security_errorProtection,
+                securityOperationCode: result.security_operationCode,
+                securityTarget: result.security_target,
+                securityTime: result.security_time,
+                sourceIP: result.source_ip,
+                sourceTCPPort: result.source_tcp_port,
+                subordinates: result.subordinates,
+                supplierInitiated: result.supplier_initiated,
+                supplyContexts: result.supply_contexts,
+                terminatedTime: result.terminated_time,
+                validityEnd: result.validity_end,
+                validityStart: result.validity_start,
             },
         });
         this.ctx.operationalBindingControlEvents.emit(id, false);

@@ -1,7 +1,5 @@
-import {
-    Context,
-    ServiceError,
-} from "@wildboar/meerkat-types";
+import { ServiceError } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     AccessPoint,
@@ -53,7 +51,7 @@ import {
  */
 export
 async function terminateByTypeAndBindingID (
-    ctx: Context,
+    ctx: MeerkatContext,
     targetSystem: AccessPoint,
     bindingType: OBJECT_IDENTIFIER,
     bindingID: OperationalBindingID,

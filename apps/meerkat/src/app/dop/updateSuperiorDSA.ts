@@ -1,9 +1,5 @@
-import {
-    Context,
-    Vertex,
-    ServiceError,
-    UpdateError,
-} from "@wildboar/meerkat-types";
+import { Vertex, ServiceError, UpdateError } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, BERElement, ObjectIdentifier } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import { connect, ConnectOptions } from "../net/connect";
@@ -123,7 +119,7 @@ interface UpdateSuperiorOptions extends ConnectOptions, WriteOperationOptions {
  */
 export
 async function updateSuperiorDSA (
-    ctx: Context,
+    ctx: MeerkatContext,
     affectedDN: DistinguishedName,
     newCP: Vertex,
     aliasDereferenced: boolean,
