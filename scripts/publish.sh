@@ -4,6 +4,8 @@
 # Authenticate to the Kubernetes cluster.
 # Set the AZURE_STORAGE_SAS_TOKEN environment variable.
 # Update the version numbers in: Chart.yaml, package.json.
+#
+# You will also want to ensure that IPv6 is disabled.
 
 # Delete the pre-install job, if it exists
 kubectl delete job meerkat || true
@@ -22,7 +24,7 @@ echo "Publishing Meerkat DSA version $PUBLISHING_MEERKAT_VERSION."
 rm -rf dist
 
 # Avoid caching just so we're sure we're getting the latest everything.
-nx run meerkat:build --skip-nx-cache
+nx run meerkat:build:production --skip-nx-cache
 
 # Build and tag the Docker image
 docker build \
