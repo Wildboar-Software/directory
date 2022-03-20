@@ -1,14 +1,13 @@
-# NOTE: The web admin service is deliberately excluded. Because it is security
-# sensitive, it will need to be manually deployed. The port is still exposed by
-# the pod.
 apiVersion: v1
 kind: Service
 metadata:
-  name: directory
+  name: "{{ include "meerkat-dsa.fullname" . }}-directory"
   labels:
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
+  selector:
+    {{- include "meerkat-dsa.selectorLabels" . | nindent 4 }}
   ports:
     {{- if .Values.idm.port }}
     - name: idm
@@ -34,5 +33,3 @@ spec:
       targetPort: 1636 # We use 1636 instead of 389 because ports under 1000 are privileged.
     {{- end }}
     {{- end }}
-  selector:
-    {{- include "meerkat-dsa.selectorLabels" . | nindent 4 }}

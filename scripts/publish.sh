@@ -1,18 +1,74 @@
-#!/bin/sh
+#!/bin/bash
 
 # Before you run this script, you need to:
 # Authenticate to the Kubernetes cluster.
 # Set the AZURE_STORAGE_SAS_TOKEN environment variable.
 # Update the version numbers in: Chart.yaml, package.json.
 #
-# You will also want to ensure that IPv6 is disabled.
+# You will also want to ensure that IPv6 is disabled on your workstation.
 
-# Delete the pre-install job, if it exists
-kubectl delete job meerkat || true
+namespace="test"
+chart_repo="meerkathelmtest"
+storage_account_name="meerkatdsahelmtest"
+chart_container="asdf"
+meerkat_chart="meerkat-dsa"
+azure_subscription_name="Azure subscription 1"
+azure_rg="production"
+zone="mkdemo.wildboar.software"
+
+instances=("root")
+# instances=("root" "gb" "ru" "ru-moscow")
+
+# Make sure we are on the right Azure subscription
+az account set --subscription "$azure_subscription_name" || true
+
+# Make sure the Kubernetes namespace exists
+kubectl create ns $namespace || true
+
+# Add the Bitnami Helm repo so we can install the databases
+helm repo add bitnami https://charts.bitnami.com/bitnami || true
 
 # Uninstall the Helm Chart. We do this at the start of the script because the
 # LoadBalancer must be deleted before we attempt to create a new one.
-helm uninstall meerkat || true
+for instance in ${instances[@]}; do
+
+    # Delete the pre-install job, if it exists
+    kubectl delete job meerkat-dsa-$instance-migrate -n $namespace || true
+    # Delete the Meerkat DSA instance, if it exists.
+    helm uninstall meerkat-dsa-$instance -n $namespace || true
+    # Delete the DSA's database, if it exists.
+    helm uninstall meerkat-db-$instance -n $namespace || true
+    # Delete the secret used for the database, if it exists.
+    kubectl delete secret mysql-db-$instance -n $namespace || true
+    # Delete the secret used for the DSA, if it exists.
+    kubectl delete secret meerkat-db-$instance -n $namespace || true
+
+    # Generate a new (somewhat) secure password.
+    # Yes, I know six characters is not enough for a secure password, but these
+    # MySQL instances are not even exposed publicly.
+    dbpassword=$(openssl rand 6 | base64)
+
+    # Create the database secrets as required by the bitnami/mysql chart.
+    # See: https://artifacthub.io/packages/helm/bitnami/mysql
+    kubectl create secret generic mysql-db-$instance \
+        --from-literal=mysql-root-password=$dbpassword \
+        --from-literal=mysql-replication-password=$dbpassword \
+        --namespace=$namespace
+
+    # Create the secrets for the DSA to use to authenticate to the database.
+    kubectl create secret generic meerkat-db-$instance \
+        --from-literal=databaseUrl=mysql://root:$dbpassword@meerkat-db-$instance-mysql.$namespace.svc.cluster.local:3306/directory \
+        --namespace=$namespace
+
+    # Create one separate MySQL database for each DSA to be deployed.
+    # See: https://artifacthub.io/packages/helm/bitnami/mysql
+    helm install meerkat-db-$instance bitnami/mysql \
+        --debug \
+        --set auth.existingSecret=mysql-db-$instance \
+        --set auth.database=directory \
+        --namespace=$namespace
+
+done
 
 # The extra sed at the end removes the carriage return.
 PUBLISHING_MEERKAT_VERSION=$(cat k8s/charts/meerkat-dsa/Chart.yaml | grep appVersion | sed 's/appVersion: //' | sed 's/\r$//')
@@ -40,42 +96,80 @@ docker push wildboarsoftware/meerkat-dsa:latest
 # Change into the Charts directory
 cd k8s/charts/meerkat-dsa
 
-# Package up the helm app files
+# Package up the Helm app files
 helm package .
 
-# Create the helm repo index. This is idempotent.
-helm repo index . --url https://meerkatdsahelmtest.blob.core.windows.net/asdf
+# Create the Helm repo index. This is idempotent.
+helm repo index . --url https://$storage_account_name.blob.core.windows.net/$chart_container
 
 # Change back to the root directory
 cd ../../..
 
 # Upload the chart index
 az storage blob upload \
-    --account-name=meerkatdsahelmtest \
-    --container-name=asdf \
+    --account-name=$storage_account_name \
+    --container-name=$chart_container \
     --overwrite \
     --file=k8s/charts/meerkat-dsa/index.yaml
 
 # Upload the charts
 for FILE in k8s/charts/meerkat-dsa/*.tgz; do
     az storage blob upload \
-        --account-name=meerkatdsahelmtest \
-        --container-name=asdf \
+        --account-name=$storage_account_name \
+        --container-name=$chart_container \
         --overwrite \
         --file=$FILE
 done
 
-# Add the helm repo
-helm repo add meerkathelmtest https://meerkatdsahelmtest.blob.core.windows.net/asdf
+# Add the Helm repo
+helm repo add $chart_repo https://$storage_account_name.blob.core.windows.net/$chart_container || true
 
 # Update the Helm repo
 helm repo update
 
 # Install the Helm chart
-helm install meerkat meerkathelmtest/meerkat-dsa \
-    --debug \
-    --set service.type=LoadBalancer \
-    --set adminService.type=LoadBalancer \
-    --set logLevel=debug \
-    --set databaseReset=true \
-    --set databaseSecretName=meerkat-dsa-database
+for instance in ${instances[@]}; do
+
+    # Delete existing DNS records
+    az network dns record-set a delete -g $azure_rg -z $zone -n dsa01.$instance -y || true
+    az network dns record-set a delete -g $azure_rg -z $zone -n webadm01.$instance -y || true
+
+    # Install the Meerkat DSA instance
+    # TODO: Enable TLS
+    helm install meerkat-dsa-$instance $chart_repo/$meerkat_chart \
+        --debug \
+        --set fullnameOverride=meerkat-$instance \
+        --set service.type=LoadBalancer \
+        --set adminService.type=LoadBalancer \
+        --set logLevel=debug \
+        --set "myAccessPointNSAPs={idm://dsa01.$instance.$zone:4632,ldap://dsa01.$instance.$zone:389}" \
+        --set chaining.minAuthLevel=0 \
+        --set chaining.minAuthLocalQualifier=0 \
+        --set databaseReset=true \
+        --set dangerouslyExposeWebAdmin=true \
+        --set databaseSecretName=meerkat-db-$instance \
+        --namespace=$namespace
+
+    # We wait one minute for the public IPs to be available.
+    sleep 60
+
+    DIRECTORY_SERVICE_IP=$(kubectl get svc --namespace $namespace meerkat-$instance-directory --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+    WEB_ADMIN_SERVICE_IP=$(kubectl get svc --namespace $namespace meerkat-$instance-web-admin --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+
+    # Create the new DNS records
+    az network dns record-set a add-record \
+        -g $azure_rg \
+        -z $zone \
+        -n dsa01.$instance \
+        -a $DIRECTORY_SERVICE_IP
+
+    # Create the new DNS records
+    az network dns record-set a add-record \
+        -g $azure_rg \
+        -z $zone \
+        -n webadm01.$instance \
+        -a $WEB_ADMIN_SERVICE_IP
+
+    echo "Meerkat DSA '$instance' deployed successfully."
+
+done

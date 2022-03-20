@@ -1,0 +1,21 @@
+# WARNING: Exposing the web admin console to outside world is INSECURE because
+# it enforces no authentication or access controls! If you absolutely need to
+# expose this service to the world, put it behind an HTTP proxy with TLS and
+# some form of authentication.
+{{- if .Values.dangerouslyExposeWebAdmin }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "meerkat-dsa.fullname" . }}-web-admin"
+  labels:
+    {{- include "meerkat-dsa.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.adminService.type }}
+  selector:
+    {{- include "meerkat-dsa.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: web-admin
+    protocol: TCP
+    port: {{ .Values.webAdmin.port | default 18080 | int }}
+    targetPort: 18080
+{{- end }}

@@ -14,6 +14,7 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 resetDatabase: false
+dangerouslyExposeWebAdmin: false
 
 # This should be a secret of type "tls".
 # See: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
@@ -115,11 +116,12 @@ bindMinSleepInMilliseconds: 100
 bindSleepRangeInMilliseconds: 500
 minAuthLevelForOperationalBinding: 1
 minAuthLocalQualifierForOperationalBinding: 32
-myAccessPointNSAPs:
-  - idm://dsa01.demo.meerkat.wildboar.software:4632
-  - idms://dsa01.demo.meerkat.wildboar.software:44632
-  - ldap://dsa01.demo.meerkat.wildboar.software:389
-  - ldaps://dsa01.demo.meerkat.wildboar.software:636
+myAccessPointNSAPs: []
+  # Example values:
+  # - idm://dsa01.demo.meerkat.wildboar.software:4632
+  # - idms://dsa01.demo.meerkat.wildboar.software:44632
+  # - ldap://dsa01.demo.meerkat.wildboar.software:389
+  # - ldaps://dsa01.demo.meerkat.wildboar.software:636
 useDatabaseWhenThereAreXSubordinates: 1000
 prohibitChaining: false
 entriesPerSubordinatesPage: 100
