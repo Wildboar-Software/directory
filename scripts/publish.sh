@@ -155,6 +155,8 @@ for instance in ${instances[@]}; do
         --set "myAccessPointNSAPs={idm://dsa01.$instance.$zone:4632,ldap://dsa01.$instance.$zone:389}" \
         --set chaining.minAuthLevel=0 \
         --set chaining.minAuthLocalQualifier=0 \
+        --set minAuthLevelForOperationalBinding=0 \
+        --set minAuthLocalQualifierForOperationalBinding=0 \
         --set databaseReset=true \
         --set dangerouslyExposeWebAdmin=true \
         --set databaseSecretName=meerkat-db-$instance \

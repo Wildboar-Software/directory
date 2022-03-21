@@ -211,6 +211,7 @@ async function establishSubordinate (
         : undefined;
     const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
+        tlsOptional: true, // FIXME:
     });
     if (!assn) {
         throw new ServiceError(

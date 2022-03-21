@@ -57,7 +57,9 @@ async function terminateByTypeAndBindingID (
     bindingID: OperationalBindingID,
     aliasDereferenced?: boolean,
 ): Promise<ResultOrError> {
-    const conn = await connect(ctx, targetSystem, dop_ip["&id"]!);
+    const conn = await connect(ctx, targetSystem, dop_ip["&id"]!, {
+        tlsOptional: true, // FIXME:
+    });
     if (!conn) {
         throw new ServiceError(
             ctx.i18n.t("err:could_not_connect"),

@@ -164,6 +164,7 @@ async function updateSuperiorDSA (
             assert(subr.immediateSuperior);
             const assn: Connection | null = await connect(ctx, accessPoint, dop_ip["&id"]!, {
                 timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
+                tlsOptional: true, // FIXME:
             });
             if (!assn) {
                 throw new ServiceError(

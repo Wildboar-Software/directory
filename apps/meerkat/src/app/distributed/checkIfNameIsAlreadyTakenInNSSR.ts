@@ -127,7 +127,10 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     ),
                 );
             }
-            const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, undefined);
+            const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, {
+                timeLimitInMilliseconds: 15000, // FIXME:
+                tlsOptional: true, // FIXME:
+            });
             if (!client) {
                 continue;
             }

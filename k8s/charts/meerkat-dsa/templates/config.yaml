@@ -2,7 +2,6 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: {{ include "meerkat-dsa.fullname" . }}-config
-  namespace: default
   labels:
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 data:

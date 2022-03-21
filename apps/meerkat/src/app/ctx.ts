@@ -340,6 +340,7 @@ const ctx: MeerkatContext = {
         },
     },
     dsa: {
+        // This may get overwritten, since `npm_package_version` is not always defined.
         version: process.env.npm_package_version,
         accessPoint: new AccessPoint(
             {

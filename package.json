@@ -59,6 +59,7 @@
         "pem-ts": "^3.0.0",
         "phone": "^3.1.14",
         "reflect-metadata": "^0.1.13",
+        "rxjs": "^7.5.5",
         "safe-timers": "1.1.0",
         "semver": "^7.3.5",
         "swagger-ui-express": "^4.3.0",

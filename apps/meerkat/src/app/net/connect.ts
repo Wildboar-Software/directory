@@ -153,7 +153,7 @@ function getIDMOperationWriter (
     idm: IDMConnection,
     targetSystem: AccessPoint,
 ): Connection["writeOperation"] {
-    return async function (req: ChainedRequest, options?: WriteOperationOptions): Promise<ChainedResultOrError> {
+    return async function (req, options): Promise<ResultOrError> {
         const opstat: OperationStatistics = {
             type: "op",
             inbound: false,
@@ -162,44 +162,35 @@ function getIDMOperationWriter (
                 remoteAddress: idm.s.remoteAddress,
                 remoteFamily: idm.s.remoteFamily,
                 remotePort: idm.s.remotePort,
-                transport: "IDMv2",
+                transport: "IDM",
             },
             request: {
-                operationCode: codeToString(req.opCode),
+                operationCode: req.opCode
+                    ? codeToString(req.opCode)
+                    : "ERROR_UNDEFINED",
             },
             outcome: {},
         };
         const invokeID: number = generateUnusedInvokeID(ctx);
-        const param: Chained = {
-            unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
-                req.chaining,
-                req.argument!,
-            ),
-        };
-        const encodedParam = chainedRead.encoderFor["&ArgumentType"]!(param, DER);
-        const ret = await Promise.race<ChainedResultOrError>([
-            new Promise<ChainedResultOrError>((resolve) => {
+        const ret = await Promise.race<ResultOrError>([
+            new Promise<ResultOrError>((resolve) => {
                 idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
                     if ("error" in roe) {
                         resolve(roe);
                     } else {
-                        const result = chainedRead.decoderFor["&ResultType"]!(roe.result!);
-                        // TODO: Verify signature.
-                        const resultData = getOptionallyProtectedValue(result);
                         resolve({
                             invokeId: {
                                 present: invokeID,
                             },
-                            opCode: req.opCode,
-                            chaining: resultData.chainedResult,
-                            result: resultData.result,
+                            opCode: req.opCode!,
+                            result: roe.result,
                         });
                     }
                 });
                 idm.writeRequest(
                     invokeID,
-                    req.opCode,
-                    encodedParam,
+                    req.opCode!,
+                    req.argument!,
                 );
             }),
             new Promise<never>((resolve, reject) => setTimeout(
@@ -267,10 +258,8 @@ function getLDAPOperationWriter (
     ctx: MeerkatContext,
     socket: LDAPSocket,
 ): Connection["writeOperation"] {
-    return async (
-        req: Omit<ChainedRequest, "invokeId">,
-        options?: WriteOperationOptions,
-    ): Promise<ChainedResultOrError> => {
+    return async (req, options): Promise<ResultOrError> => {
+        assert(req.opCode);
         const opstat: OperationStatistics = {
             type: "op",
             inbound: false,
@@ -282,7 +271,7 @@ function getLDAPOperationWriter (
                 transport: "TCP",
             },
             request: {
-                operationCode: codeToString(req.opCode),
+                operationCode: codeToString(req.opCode!),
             },
             outcome: {},
         };
@@ -304,6 +293,8 @@ function getLDAPOperationWriter (
                 // This listener cannot be .once(), because a message ID may be used multiple times
                 // to return results for a search request.
                 socket.on(ldapRequest.messageID.toString(), (message: LDAPMessage) => {
+                    assert(req.opCode);
+                    // assert(req.argument);
                     if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
                         if (!("addResponse" in message.protocolOp)) {
                             reject(new Error());
@@ -434,7 +425,6 @@ function getLDAPOperationWriter (
             invokeId,
             opCode: req.opCode,
             result,
-            chaining: emptyChainingResults(),
         };
     }
 }
@@ -881,7 +871,7 @@ async function connect (
             name: "DistributedOperation",
             properties: {
                 ...flatten({
-                    server: getServerStatistics(this.ctx),
+                    server: getServerStatistics(ctx),
                 }),
                 ...flatten({
                     nsap: {

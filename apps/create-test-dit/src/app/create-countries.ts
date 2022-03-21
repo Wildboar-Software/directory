@@ -831,7 +831,7 @@ const GB_ACCESS_POINT = new AccessPoint(
         undefined,
         undefined,
         [
-            uriToNSAP("idm://webadm01.gb.mkdemo.wildboar.software:4632", false),
+            uriToNSAP("idm://dsa01.gb.mkdemo.wildboar.software:4632", false),
         ],
     ),
     undefined,
