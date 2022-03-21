@@ -1,6 +1,52 @@
 {
     "version": 2,
     "projects": {
+        "create-test-dit": {
+            "root": "apps/create-test-dit",
+            "sourceRoot": "apps/create-test-dit/src",
+            "projectType": "application",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/node:build",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/apps/create-test-dit",
+                        "main": "apps/create-test-dit/src/main.ts",
+                        "tsConfig": "apps/create-test-dit/tsconfig.app.json",
+                        "assets": ["apps/create-test-dit/src/assets"]
+                    },
+                    "configurations": {
+                        "production": {
+                            "optimization": true,
+                            "extractLicenses": true,
+                            "inspect": false
+                        }
+                    }
+                },
+                "serve": {
+                    "executor": "@nrwl/node:execute",
+                    "options": {
+                        "buildTarget": "create-test-dit:build"
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "outputs": ["{options.outputFile}"],
+                    "options": {
+                        "lintFilePatterns": ["apps/create-test-dit/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/apps/create-test-dit"],
+                    "options": {
+                        "jestConfig": "apps/create-test-dit/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                }
+            },
+            "tags": []
+        },
         "idm": {
             "root": "libs/idm",
             "sourceRoot": "libs/idm/src",
