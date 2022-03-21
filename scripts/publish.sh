@@ -16,8 +16,9 @@ azure_subscription_name="Azure subscription 1"
 azure_rg="production"
 zone="mkdemo.wildboar.software"
 
-instances=("root")
+# instances=("root")
 # instances=("root" "gb" "ru" "ru-moscow")
+instances=("root" "gb")
 
 # Make sure we are on the right Azure subscription
 az account set --subscription "$azure_subscription_name" || true
@@ -27,6 +28,7 @@ kubectl create ns $namespace || true
 
 # Add the Bitnami Helm repo so we can install the databases
 helm repo add bitnami https://charts.bitnami.com/bitnami || true
+helm repo update
 
 # Uninstall the Helm Chart. We do this at the start of the script because the
 # LoadBalancer must be deleted before we attempt to create a new one.
@@ -42,17 +44,25 @@ for instance in ${instances[@]}; do
     kubectl delete secret mysql-db-$instance -n $namespace || true
     # Delete the secret used for the DSA, if it exists.
     kubectl delete secret meerkat-db-$instance -n $namespace || true
+    # Delete the persistent volume claim created by the database.
+    # (This is not deleted automatically by Helm.)
+    kubectl delete pvc data-meerkat-db-$instance-mysql-0 -n $namespace || true
 
-    # Generate a new (somewhat) secure password.
-    # Yes, I know six characters is not enough for a secure password, but these
-    # MySQL instances are not even exposed publicly.
-    dbpassword=$(openssl rand 6 | base64)
+    # I was having an issue getting a new instance to start. I think the issue
+    # is that the password settings for a given chart are only applied the first
+    # time it is deployed. When you delete a bitnami/mysql release, it does NOT
+    # delete the PVCs it created, which means that the OLD password will
+    # persist. Since this script deletes and re-installs under the same name
+    # every time, it must necessarily have a deterministic password.
+    # See this GitHub issue: https://github.com/bitnami/charts/issues/9083
+    dbpassword="asdf_$instance"
 
     # Create the database secrets as required by the bitnami/mysql chart.
     # See: https://artifacthub.io/packages/helm/bitnami/mysql
     kubectl create secret generic mysql-db-$instance \
         --from-literal=mysql-root-password=$dbpassword \
         --from-literal=mysql-replication-password=$dbpassword \
+        --from-literal=mysql-password=$dbpassword \
         --namespace=$namespace
 
     # Create the secrets for the DSA to use to authenticate to the database.
@@ -157,18 +167,21 @@ for instance in ${instances[@]}; do
     WEB_ADMIN_SERVICE_IP=$(kubectl get svc --namespace $namespace meerkat-$instance-web-admin --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
 
     # Create the new DNS records
+    # We use a very short TTL for now, since we're testing.
     az network dns record-set a add-record \
-        -g $azure_rg \
-        -z $zone \
-        -n dsa01.$instance \
-        -a $DIRECTORY_SERVICE_IP
+        --resource-group $azure_rg \
+        --zone-name $zone \
+        --ttl 60 \
+        --record-set-name dsa01.$instance \
+        --ipv4-address $DIRECTORY_SERVICE_IP
 
     # Create the new DNS records
     az network dns record-set a add-record \
-        -g $azure_rg \
-        -z $zone \
-        -n webadm01.$instance \
-        -a $WEB_ADMIN_SERVICE_IP
+        --resource-group $azure_rg \
+        --zone-name $zone \
+        --ttl 60 \
+        --record-set-name webadm01.$instance \
+        --ipv4-address $WEB_ADMIN_SERVICE_IP
 
     echo "Meerkat DSA '$instance' deployed successfully."
 
