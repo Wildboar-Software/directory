@@ -151,7 +151,7 @@ for instance in ${instances[@]}; do
         --set fullnameOverride=meerkat-$instance \
         --set service.type=LoadBalancer \
         --set adminService.type=LoadBalancer \
-        --set logLevel=debug \
+        --set log.level=debug \
         --set "myAccessPointNSAPs={idm://dsa01.$instance.$zone:4632,ldap://dsa01.$instance.$zone:389}" \
         --set chaining.minAuthLevel=0 \
         --set chaining.minAuthLocalQualifier=0 \
