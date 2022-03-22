@@ -113,9 +113,7 @@ async function updateContextPrefix (
     const oldCP = await dnToVertex(ctx, ctx.dit.root, oldDN);
     if (!oldCP) {
         throw new OperationalBindingError(
-            ctx.i18n.t("err:could_not_find_cp", {
-                uuid: uuid,
-            }),
+            ctx.i18n.t("err:could_not_find_cp", { uuid }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidBindingType,
@@ -141,9 +139,7 @@ async function updateContextPrefix (
     let currentOld: Vertex | undefined = oldImmediateSuperior;
     if (!currentOld) {
         throw new OperationalBindingError(
-            ctx.i18n.t("err:could_not_find_supr", {
-                uuid: uuid,
-            }),
+            ctx.i18n.t("err:could_not_find_supr", { uuid }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidBindingType,

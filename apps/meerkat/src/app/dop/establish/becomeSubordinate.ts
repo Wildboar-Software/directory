@@ -63,7 +63,7 @@ async function becomeSubordinate (
     for (let i = 0; i < sup2sub.contextPrefixInfo.length; i++) {
         const vertex = sup2sub.contextPrefixInfo[i];
         let immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = undefined;
-        const last: boolean =( sup2sub.contextPrefixInfo.length === (i + 1));
+        const last: boolean = (sup2sub.contextPrefixInfo.length === (i + 1));
         const existingEntry = await dnToVertex(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
             immSuprAccessPoints = vertex.accessPoints;
@@ -147,7 +147,7 @@ async function becomeSubordinate (
             }),
             ...await addValues(
                 ctx,
-                currentRoot.immediateSuperior!,
+                createdCP.immediateSuperior!,
                 sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
                 [],
             ),
@@ -169,7 +169,7 @@ async function becomeSubordinate (
         await ctx.db.$transaction(
             await addValues(
                 ctx,
-                currentRoot.immediateSuperior!,
+                createdCP.immediateSuperior!,
                 sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
                 [],
             ),
