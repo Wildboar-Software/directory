@@ -261,7 +261,7 @@ async function updateSubordinateDSA (
     const ditContext: X500Vertex[] = []; // To be reversed.
     let cpEncountered: boolean = false;
     let current: Vertex | undefined = immediateSuperior;
-    while (current) {
+    while (current && current.immediateSuperior) {
         const admPointAttributes: Attribute[] = [];
         const subentryInfos: SubentryInfo[] = [];
         const accessPoints: MasterAndShadowAccessPoints = [];
