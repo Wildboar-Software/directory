@@ -176,8 +176,19 @@ function getIDMOperationWriter (
         };
         const invokeID: number = generateUnusedInvokeID(ctx);
         const ret = await Promise.race<ResultOrError>([
-            new Promise<ResultOrError>((resolve) => {
-                idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
+            // FIXME: Handle multiple resolves / rejects.
+            new Promise<ResultOrError>((resolve, reject) => {
+                idm.events.once("socketError", reject);
+                // FIXME: Reject with a ChainedAbort error instead.
+                idm.events.once("abort", reject);
+                let rejected: boolean = false;
+                idm.events.on("reject", (rej) => {
+                    if (!rejected && (Number(rej.invokeID) === Number(invokeID))) {
+                        rejected = true;
+                        reject();
+                    }
+                });
+                idm.events.once(invokeID.toString(), (roe: ResultOrError) => {
                     if ("error" in roe) {
                         resolve(roe);
                     } else {
@@ -777,6 +788,11 @@ async function connectToIdmNaddr (
         try {
             await Promise.race([
                 await new Promise((resolve, reject) => {
+                    idm.events.once("socketError", reject);
+                    idm.events.once("abort", reject);
+                    idm.events.once("error", (err) => {
+                        reject(err);
+                    });
                     idm.events.once("bindError", (err) => {
                         reject(err.error);
                     });
@@ -821,21 +837,14 @@ async function connectToIdmNaddr (
         },
         events: new EventEmitter(),
     };
-    const HANDLE_ERROR = () => {
-        ret.events.emit("error", undefined);
-    };
-    idm.events.on("bindResult", () => {
-        ret.events.emit("connect", undefined);
-    });
-    idm.events.on("bindError", () => {
-        ret.events.emit("error", undefined);
-    });
+    // const HANDLE_ERROR = () => {
+    //     // ret.events.emit("error", undefined);
+    // };
     idm.events.on("result", (result) => {
         ret.events.emit("response", [ result.opcode, result.result ]);
     });
-    idm.events.on("error_", HANDLE_ERROR);
-    idm.events.on("reject", HANDLE_ERROR);
-    idm.events.on("abort", HANDLE_ERROR);
+    // idm.events.on("error_", HANDLE_ERROR);
+    // idm.events.on("reject", HANDLE_ERROR);
     return ret;
 }
 
