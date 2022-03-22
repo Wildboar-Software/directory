@@ -722,7 +722,7 @@ model OperationalBinding {
   // send the request or proxy the request could differ from the access point
   // of the originating DSA.
   source_ip               String? // @db.Inet
-  source_tcp_port         Int?    @db.SmallInt
+  source_tcp_port         Int?
   source_ae_title         Json?
   source_credentials_type Int?    @db.SmallInt // 0 = simple, 1 = strong, 2 = external, 3 = spkm
   source_certificate_path Bytes?
