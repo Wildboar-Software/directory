@@ -766,6 +766,7 @@ class IDMConnection {
     ) {
         this.socket = s;
         this.socket.on("data", (data: Buffer) => this.handleData(data));
+        this.socket.on("error", (e) => this.events.emit("socketError", e));
     }
 
 }
