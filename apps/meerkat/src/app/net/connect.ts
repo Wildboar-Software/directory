@@ -93,6 +93,9 @@ import {
     TLSResponse_success,
 } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
 import { flatten } from "flat";
+import { ExtendedRequest } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedRequest.ta";
+import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
+import { startTLS } from "@wildboar/ldap/src/lib/extensions";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -539,6 +542,70 @@ async function connectToLDAP (
         return ldapSocket;
     };
     let ldapSocket = await getLDAPSocket();
+
+    let messageID: number = 1;
+    let connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
+
+    ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
+        uri,
+    }), {
+        dest: uri,
+    });
+    try { // STARTTLS
+        const req = new LDAPMessage(
+            messageID,
+            {
+                extendedReq: new ExtendedRequest(
+                    encodeLDAPOID(startTLS),
+                    undefined,
+                ),
+            },
+            undefined,
+        );
+        await Promise.race<void>([
+            new Promise<void>((resolve, reject) => {
+                ldapSocket.once(messageID.toString(), (message: LDAPMessage) => {
+                    assert(message.messageID === messageID);
+                    if (
+                        !("extendedResp" in message.protocolOp)
+                        || (message.protocolOp.extendedResp.resultCode !== LDAPResult_resultCode_success)
+                    ) {
+                        reject();
+                        return;
+                    } else {
+                        const tlsSocket = new tls.TLSSocket(ldapSocket.socket);
+                        ldapSocket.startTLS(tlsSocket);
+                        tlsSocket.on("secureConnect", resolve);
+                    }
+                });
+                ldapSocket.writeMessage(req);
+            }),
+            new Promise<void>((_, reject) => setTimeout(reject, connectionTimeRemaining)),
+        ]);
+        ctx.log.debug(ctx.i18n.t("log:established_starttls", {
+            uri,
+        }), {
+            dest: uri,
+        });
+    } catch (e) {
+        if (tlsRequired) {
+            ctx.log.debug(ctx.i18n.t("log:starttls_error", {
+                uri,
+                context: "tls_required",
+                e,
+            }), {
+                dest: uri,
+            });
+            return null;
+        } else {
+            ctx.log.debug(ctx.i18n.t("log:starttls_error", {
+                uri,
+                context: "tls_optional",
+                e,
+            }));
+        }
+    }
+
     for (const cred of credentials) {
         if (!("simple" in cred)) {
             continue;
@@ -546,8 +613,6 @@ async function connectToLDAP (
         if (!ldapSocket || !ldapSocket.socket.readable) {
             ldapSocket = await getLDAPSocket();
         }
-        let connectionTimeRemaining = 0;
-        let messageID: number = 0;
         for (const bindRequest of createBindRequests(ctx, cred)) {
             if (Date.now().valueOf() > timeoutTime.valueOf()) {
                 ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
@@ -597,64 +662,7 @@ async function connectToLDAP (
             }), {
                 dest: uri,
             });
-            messageID++;
-            connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
-            ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
-                uri,
-            }), {
-                dest: uri,
-            });
-            try { // STARTTLS
-                const req = new LDAPMessage(
-                    messageID,
-                    {
-                        bindRequest,
-                    },
-                    undefined,
-                );
-                await Promise.race<void>([
-                    new Promise<void>((resolve, reject) => {
-                        ldapSocket.once(messageID.toString(), (message: LDAPMessage) => {
-                            assert(message.messageID === messageID);
-                            if (
-                                !("extendedResp" in message.protocolOp)
-                                || (message.protocolOp.extendedResp.resultCode !== LDAPResult_resultCode_success)
-                            ) {
-                                reject();
-                                return;
-                            } else {
-                                const tlsSocket = new tls.TLSSocket(ldapSocket.socket);
-                                ldapSocket.startTLS(tlsSocket);
-                                tlsSocket.on("secureConnect", resolve);
-                            }
-                        });
-                        ldapSocket.writeMessage(req);
-                    }),
-                    new Promise<void>((_, reject) => setTimeout(reject, connectionTimeRemaining)),
-                ]);
-                ctx.log.debug(ctx.i18n.t("log:established_starttls", {
-                    uri,
-                }), {
-                    dest: uri,
-                });
-            } catch (e) {
-                if (tlsRequired) {
-                    ctx.log.debug(ctx.i18n.t("log:starttls_error", {
-                        uri,
-                        context: "tls_required",
-                        e,
-                    }), {
-                        dest: uri,
-                    });
-                    continue;
-                } else {
-                    ctx.log.debug(ctx.i18n.t("log:starttls_error", {
-                        uri,
-                        context: "tls_optional",
-                        e,
-                    }));
-                }
-            }
+
             // If we made it here, one of our authentication attempts worked.
             const ret: Connection = {
                 writeOperation: getLDAPOperationWriter(ctx, ldapSocket),
@@ -720,44 +728,6 @@ async function connectToIdmNaddr (
         if (!idm.s.readable) {
             idm = idmGetter();
         }
-        try {
-            await Promise.race([
-                await new Promise((resolve, reject) => {
-                    idm.events.once("bindError", (err) => {
-                        reject(err.error);
-                    });
-                    idm.events.once("bindResult", (result) => {
-                        resolve(result);
-                    });
-                    idm.writeBind(
-                        protocolID,
-                        _encode_DSABindArgument(new DSABindArgument(
-                            cred,
-                            undefined, // v1
-                        ), DER),
-                        {
-                            directoryName: ctx.dsa.accessPoint.ae_title,
-                        },
-                        {
-                            directoryName: targetSystem.ae_title,
-                        },
-                    );
-                }),
-                new Promise<void>((_, reject) => setTimeout(reject, differenceInMilliseconds(timeoutTime, new Date()))),
-            ]);
-            ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
-                uri,
-            }), {
-                dest: uri,
-            });
-        } catch (e) {
-            ctx.log.warn(ctx.i18n.t("log:error_naddr", {
-                uri,
-            }), {
-                dest: uri,
-            });
-            continue;
-        }
 
         ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
             uri,
@@ -802,6 +772,45 @@ async function connectToIdmNaddr (
                     dest: uri,
                 });
             }
+        }
+
+        try {
+            await Promise.race([
+                await new Promise((resolve, reject) => {
+                    idm.events.once("bindError", (err) => {
+                        reject(err.error);
+                    });
+                    idm.events.once("bindResult", (result) => {
+                        resolve(result);
+                    });
+                    idm.writeBind(
+                        protocolID,
+                        _encode_DSABindArgument(new DSABindArgument(
+                            cred,
+                            undefined, // v1
+                        ), DER),
+                        {
+                            directoryName: ctx.dsa.accessPoint.ae_title,
+                        },
+                        {
+                            directoryName: targetSystem.ae_title,
+                        },
+                    );
+                }),
+                new Promise<void>((_, reject) => setTimeout(reject, differenceInMilliseconds(timeoutTime, new Date()))),
+            ]);
+            ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
+                uri,
+            }), {
+                dest: uri,
+            });
+        } catch (e) {
+            ctx.log.warn(ctx.i18n.t("log:error_naddr", {
+                uri,
+            }), {
+                dest: uri,
+            });
+            continue;
         }
     }
 
