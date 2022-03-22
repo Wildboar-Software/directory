@@ -102,8 +102,8 @@ data:
   localQualifierPointsFor.usingTLSv1_1: {{ .Values.localQualifierPointsFor.usingTLSv1_1 | default 32 | quote }}
   localQualifierPointsFor.usingTLSv1_2: {{ .Values.localQualifierPointsFor.usingTLSv1_2 | default 64 | quote }}
   localQualifierPointsFor.usingTLSv1_3: {{ .Values.localQualifierPointsFor.usingTLSv1_3 | default 128 | quote }}
-  chaining.minAuthLevel: {{ .Values.chaining.minAuthLevel | default 1 | quote }}
-  chaining.minAuthLocalQualifier: {{ .Values.chaining.minAuthLocalQualifier | default 32 | quote }}
+  chaining.minAuthLevel: {{ .Values.chaining.minAuthLevel | quote }}
+  chaining.minAuthLocalQualifier: {{ .Values.chaining.minAuthLocalQualifier | quote }}
   {{- if .Values.sentinelDomain }}
   sentinelDomain: {{ .Values.sentinelDomain }}
   {{- end }}
@@ -113,8 +113,8 @@ data:
   bulkInsertMode: {{ .Values.bulkInsertMode | ternary 1 0 | quote }}
   bindMinSleepInMilliseconds: {{ .Values.bindMinSleepInMilliseconds | default 1000 | quote }}
   bindSleepRangeInMilliseconds: {{ .Values.bindSleepRangeInMilliseconds | default 3000 | quote }}
-  minAuthLevelForOperationalBinding: {{ .Values.minAuthLevelForOperationalBinding | default 1 | quote }}
-  minAuthLocalQualifierForOperationalBinding: {{ .Values.minAuthLocalQualifierForOperationalBinding | default 32 | quote }}
+  minAuthLevelForOperationalBinding: {{ .Values.minAuthLevelForOperationalBinding | quote }}
+  minAuthLocalQualifierForOperationalBinding: {{ .Values.minAuthLocalQualifierForOperationalBinding | quote }}
   {{- if .Values.myAccessPointNSAPs }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
