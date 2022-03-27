@@ -83,7 +83,7 @@
     "idm_segment_limit": "COULD_BAN={{host}}; TCP connection from {{source}} did or would have exceeded the configured limit of {{limit}} IDM segments. The socket will be closed.",
     "non_ldap_data": "COULD_BAN={{host}}; TCP connection from {{source}} sent data that did not appear to be an LDAP message, judging by the first byte: 0x{{hexbyte}}.",
     "slow_loris": "COULD_BAN={{host}}; TCP connection from {{source}} sent data slower than {{bps}} bytes per second and was disconnected to prevent a Slow Loris attack.",
-    "tcp_timeout": "TCP connection from {{source}} timed out after {{seconds}} of inactivity and was disconnected.",
+    "tcp_timeout": "TCP connection from {{source}} timed out after {{seconds}} seconds of inactivity and was disconnected.",
     "double_starttls": "COULD_BAN={{host}}; TCP connection from {{source}} attempted a double-StartTLS. This may have been attempted hacking.",
     "unusual_message_id": "COULD_BAN={{host}}; LDAP message from {{source}} had an unusually large or negative message ID.",
     "unusual_invoke_id": "COULD_BAN={{host}}; IDM operation from connection {{cid}} from had an unusually large or negative invoke ID.",
@@ -100,5 +100,11 @@
     "gsr_changed": "The governing structure rule for entry with dseUUID {{uuid}} changed due to a change in the relevant subschema.",
     "beta": "This is a beta version of Meerkat DSA, so it is likely that there are bugs, including security vulnerabilities. If you feel that you have discovered an issue, please report it here: https://github.com/Wildboar-Software/directory/issues. If you would like to ask a question, please create a GitHub issue, or (preferably) post a question to StackOverflow with the tag 'meerkat-dsa'.",
     "too_many_sort_keys": "Association {{aid}} submitted a search or list request with {{num}} sort keys, which may have been malicious. Only the first few sort keys will be honored, if any.",
-    "failed_init_telemetry": "Failed to initialize telemetry. {{e}}"
+    "failed_init_telemetry": "Failed to initialize telemetry. {{e}}",
+    "terminating_ob@cp": "Terminating operational binding {{uuid}} because its context prefix is being deleted.",
+    "terminated_ob@cp": "Terminated operational binding {{uuid}} because its context prefix is being deleted.",
+    "removing_a_context_prefix": "Removing context prefix {{uuid}}.",
+    "updating_superior_dsa@subentry": "Updating superior DSA because one of the context prefix's subentries were deleted.",
+    "failed_to_update_superior_dsa": "Failed to update superior DSA with error {{e}}.",
+    "updated_superior_dsa": "Successfully updated superior DSA."
 }

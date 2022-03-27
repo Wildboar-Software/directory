@@ -60,13 +60,7 @@
                         <td>
                             <a href="/ob/{{this.uuid}}">Details</a>
                         </td>
-                        {{#if this.accepted}}
-                            <td style="color: green;">ACCEPTED</td>
-                        {{else if this.waiting}}
-                            <td style="color: grey;">WAITING</td>
-                        {{else}}
-                            <td style="color: red;">REJECTED</td>
-                        {{/if}}
+                        <td>{{this.status}}</td>
                         <td>{{this.binding_type}}</td>
                         <td>{{this.binding_identifier}}</td>
                         <td>{{this.binding_version}}</td>

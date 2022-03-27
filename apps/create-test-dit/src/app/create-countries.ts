@@ -914,6 +914,10 @@ async function seedCountries (
                 ctx.log.info(`Created country ${country}.`);
             }
         }
+        if (targetSystem) {
+            // You may not add subentries to other DSAs.
+            continue;
+        }
         const subentries: [ (base: RDNSequence, cc: string) => AddEntryArgument, string ][] = [
             [ addCollectiveAttributeSubentryArgument, "collective attributes" ],
             [ addAccessControlSubentryArgument, "access control" ],

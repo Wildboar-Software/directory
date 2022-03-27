@@ -154,5 +154,8 @@
     "duplicate_sort_key": "Duplicate sort key {{oid}}.",
     "not_authz_delete_old_rdn": "Not authorized to delete the old RDN.",
     "could_not_convert_ldap_to_dap": "Could not convert LDAP request to DAP request.",
-    "error_converting_entry_to_ldap": "Error converting entry to an LDAP SearchResultEntry: {{e}}"
+    "error_converting_entry_to_ldap": "Error converting entry to an LDAP SearchResultEntry: {{e}}",
+    "received_malformed_dop_response": "Received a malformed DOP response.",
+    "no_binding_id_assigned": "DOP responder returned no assigned binding ID.",
+    "could_not_find_new_subr": "Could not locate the subordinate reference DSE that was just created locally."
 }

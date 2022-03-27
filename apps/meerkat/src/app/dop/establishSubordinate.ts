@@ -23,9 +23,6 @@ import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
 import {
-    OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import {
     SuperiorToSubordinate,
     _encode_SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
@@ -58,7 +55,6 @@ import subentryEIS from "./subentryEIS";
 import readAttributes from "../database/entry/readAttributes";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import createSecurityParameters from "../x500/createSecurityParameters";
-import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
@@ -203,7 +199,7 @@ async function establishSubordinate (
     targetSystem: AccessPoint,
     aliasDereferenced?: boolean,
     options?: EstablishSubordinateOptions,
-): Promise<ResultOrError> {
+): Promise<{ arg: EstablishOperationalBindingArgument, response: ResultOrError }> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
     const timeoutTime: Date | undefined = connectionTimeout
@@ -293,7 +289,6 @@ async function establishSubordinate (
         ));
         current = current.immediateSuperior;
     }
-    const bindingIdentifier: number = generateUnusedInvokeID(ctx);
     const sup2sub = new SuperiorToSubordinate(
         ditContext.reverse(),
         newEntryInfo,
@@ -307,10 +302,7 @@ async function establishSubordinate (
     const arg: EstablishOperationalBindingArgument = {
         unsigned: new EstablishOperationalBindingArgumentData(
             id_op_binding_hierarchical,
-            new OperationalBindingID(
-                bindingIdentifier,
-                0,
-            ),
+            undefined, // Let the subordinate DSA determine the ID.
             ctx.dsa.accessPoint,
             {
                 roleA_initiates: _encode_SuperiorToSubordinate(sup2sub, DER),
@@ -338,12 +330,17 @@ async function establishSubordinate (
     const timeRemainingForOperation: number | undefined = timeoutTime
         ? differenceInMilliseconds(timeoutTime, new Date())
         : undefined;
-    return assn.writeOperation({
+    const response = await assn.writeOperation({
         opCode: establishOperationalBinding["&operationCode"]!,
         argument: _encode_EstablishOperationalBindingArgument(arg, DER),
     }, {
         timeLimitInMilliseconds: timeRemainingForOperation,
     });
+    assn.close();
+    return {
+        arg,
+        response,
+    };
 }
 
 export default establishSubordinate;

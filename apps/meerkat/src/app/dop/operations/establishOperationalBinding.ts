@@ -40,23 +40,19 @@ import {
 import {
     SuperiorToSubordinate,
     _decode_SuperiorToSubordinate,
-    _encode_SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
 import {
-    SubordinateToSuperior,
-    _decode_SubordinateToSuperior,
     _encode_SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import type {
-    Time,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/Time.ta";
-import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+import {
+    OperationalBindingID,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import { ASN1Element, packBits } from "asn1-ts";
 import becomeSubordinate from "../establish/becomeSubordinate";
-import becomeSuperior from "../establish/becomeSuperior";
 import { OperationalBindingInitiator, Knowledge } from "@prisma/client";
 import {
     _encode_CertificationPath,
@@ -80,14 +76,7 @@ import {
 import {
     _encode_Token,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
-
-function getDateFromOBTime (time: Time): Date {
-    if ("utcTime" in time) {
-        return time.utcTime;
-    } else {
-        return time.generalizedTime;
-    }
-}
+import { getDateFromOBTime } from "../getDateFromOBTime";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -131,7 +120,7 @@ async function establishOperationalBinding (
                 resolve(approved);
             });
         }),
-        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 300000)),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 300000)),
     ]);
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
@@ -242,7 +231,6 @@ async function establishOperationalBinding (
                     },
                 );
             }
-            const reply = await becomeSubordinate(ctx, data.accessPoint, agreement, init);
             const sp = data.securityParameters;
             const now = new Date();
             const alreadyTakenBindingIDs = new Set(
@@ -303,14 +291,16 @@ async function establishOperationalBinding (
             }
 
             const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
+            const bindingID = new OperationalBindingID(
+                newBindingIdentifier,
+                0,
+            );
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     outbound: false,
                     binding_type: data.bindingType.toString(),
-                    binding_identifier: newBindingIdentifier,
-                    binding_version: (data.bindingID?.version !== undefined)
-                        ? Number(data.bindingID.version)
-                        : 0,
+                    binding_identifier: Number(bindingID.identifier),
+                    binding_version: Number(bindingID.version),
                     agreement_ber: Buffer.from(data.agreement.toBytes()),
                     access_point: {
                         connect: {
@@ -419,10 +409,11 @@ async function establishOperationalBinding (
                     },
                 );
             }
+            const reply = await becomeSubordinate(ctx, data.accessPoint, agreement, init);
             return {
                 unsigned: new EstablishOperationalBindingResultData(
                     data.bindingType,
-                    data.bindingID,
+                    bindingID,
                     ctx.dsa.accessPoint,
                     {
                         roleB_replies: _encode_SubordinateToSuperior(reply, DER),
@@ -439,27 +430,29 @@ async function establishOperationalBinding (
                 ),
             };
         } else if ("roleB_initiates" in data.initiator) {
-            const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
-            const reply = await becomeSuperior(ctx, assn, invokeId, agreement, init);
-            return {
-                unsigned: new EstablishOperationalBindingResultData(
-                    data.bindingType,
-                    data.bindingID,
-                    ctx.dsa.accessPoint,
-                    {
-                        roleA_replies: _encode_SuperiorToSubordinate(reply, DER),
-                    },
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
-                        id_op_establishOperationalBinding,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            };
+            throw NOT_SUPPORTED_ERROR;
+            // TODO: Get approval.
+            // const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
+            // const reply = await becomeSuperior(ctx, assn, invokeId, agreement, init);
+            // return {
+            //     unsigned: new EstablishOperationalBindingResultData(
+            //         data.bindingType,
+            //         data.bindingID,
+            //         ctx.dsa.accessPoint,
+            //         {
+            //             roleA_replies: _encode_SuperiorToSubordinate(reply, DER),
+            //         },
+            //         [],
+            //         createSecurityParameters(
+            //             ctx,
+            //             undefined,
+            //             id_op_establishOperationalBinding,
+            //         ),
+            //         ctx.dsa.accessPoint.ae_title.rdnSequence,
+            //         undefined,
+            //         undefined,
+            //     ),
+            // };
         } else {
             throw new errors.OperationalBindingError(
                 ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),

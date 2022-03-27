@@ -154,7 +154,7 @@ async function handleRequest (
     }
     case (101): { // terminate
         const arg = _decode_TerminateOperationalBindingArgument(request.argument);
-        const result = await terminateOperationalBinding(ctx, this, arg);
+        const result = await terminateOperationalBinding(ctx, assn, arg);
         assn.idm.writeResult(
             request.invokeID,
             request.opcode,
@@ -230,6 +230,18 @@ async function handleRequestAndErrors (
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
+    const stats: OperationStatistics = {
+        type: "op",
+        inbound: true,
+        server: getServerStatistics(ctx),
+        connection: getConnectionStatistics(assn),
+        bind: {
+            protocol: dop_ip["&id"]!.toString(),
+        },
+        request: {
+            operationCode: codeToString(request.opcode),
+        },
+    };
     const startTime = Date.now();
     try {
         /**
@@ -272,7 +284,7 @@ async function handleRequestAndErrors (
             resultCode: 200,
             success: true,
             properties: {
-                // ...flatten(stats),
+                ...flatten(stats),
                 administratorEmail: ctx.config.administratorEmail,
             },
             measurements: {
@@ -292,7 +304,7 @@ async function handleRequestAndErrors (
                 : 500,
             success: false,
             properties: {
-                // ...flatten(stats),
+                ...flatten(stats),
                 administratorEmail: ctx.config.administratorEmail,
             },
             measurements: {
@@ -311,7 +323,27 @@ async function handleRequestAndErrors (
                 association_id: assn.id,
             });
         }
-        if (e instanceof AbandonError) {
+        if (!stats.outcome) {
+            stats.outcome = {};
+        }
+        if (!stats.outcome.error) {
+            stats.outcome.error = {};
+        }
+        if (e instanceof Error) {
+            stats.outcome.error.stack = e.stack;
+        }
+        if (e instanceof errors.ChainedError) {
+            if (!e.errcode || !e.error) {
+                assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+            } else {
+                stats.outcome.error.code = codeToString(e.errcode);
+                assn.idm.writeError(
+                    request.invokeID,
+                    _encode_Code(e.errcode, DER),
+                    e.error,
+                );
+            }
+        } else if (e instanceof AbandonError) {
             const code = _encode_Code(AbandonError.errcode, DER);
             const data = _encode_AbandonedData(e.data, DER);
             assn.idm.writeError(request.invokeID, code, data);
@@ -368,18 +400,6 @@ async function handleRequestAndErrors (
         } else {
             assn.idm.writeAbort(Abort_reasonNotSpecified);
         }
-        const stats: OperationStatistics = {
-            type: "op",
-            inbound: true,
-            server: getServerStatistics(ctx),
-            connection: getConnectionStatistics(assn),
-            bind: {
-                protocol: dop_ip["&id"]!.toString(),
-            },
-            request: {
-                operationCode: codeToString(request.opcode),
-            },
-        };
         ctx.telemetry.trackException({
             exception: e,
             properties: {

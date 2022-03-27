@@ -18,7 +18,13 @@ import {
 import {
     _encode_ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier, INTEGER } from "asn1-ts";
+import {
+    ASN1Construction,
+    ASN1TagClass,
+    ASN1UniversalType,
+    DERElement,
+    ObjectIdentifier,
+} from "asn1-ts";
 import dnToVertex from "../../dit/dnToVertex";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
@@ -55,6 +61,9 @@ import createEntry from "../../database/createEntry";
 import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
 import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import saveAccessPoint from "../../database/saveAccessPoint";
+import type {
+    InvokeId,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 
 /**
  * @summary Create a new subr reference, thereby becoming a superior DSA
@@ -82,7 +91,7 @@ export
 async function becomeSuperior (
     ctx: MeerkatContext,
     assn: ClientAssociation,
-    invokeId: INTEGER,
+    invokeId: InvokeId,
     agreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
 ): Promise<SuperiorToSubordinate> {
@@ -156,9 +165,7 @@ async function becomeSuperior (
         await checkIfNameIsAlreadyTakenInNSSR(
             ctx,
             assn,
-            {
-                present: invokeId,
-            },
+            invokeId,
             false,
             superior.dse.nssr.nonSpecificKnowledge,
             itinerantDN,

@@ -49,22 +49,49 @@ export class HomeController {
     @Render('ob')
     async ob () {
         const templateVariables = {
-            obs: (await this.ctx.db.operationalBinding.findMany())
-                .map((ob) => ({
-                    ...ob,
-                    status: (ob.accepted === true) ? "ACCEPTED" : "NO",
-
-                    // TODO: Active, Expired, Rejected, Requested, Impending
-                    active: (ob.accepted === true),
-                    waiting: (ob.accepted === undefined || ob.accepted === null),
-                    rejected: (ob.accepted === false),
-
-                    binding_type: ob.binding_type,
-                    validity_start: ob.validity_start.toISOString(),
-                    validity_end: ob.validity_end
-                        ? ob.validity_end.toISOString()
-                        : "Explicit_termination",
-                })),
+            obs: (await this.ctx.db.operationalBinding.findMany({
+                select: {
+                    uuid: true,
+                    binding_type: true,
+                    terminated_time: true,
+                    accepted: true,
+                    validity_start: true,
+                    validity_end: true,
+                },
+            }))
+                .map((ob) => {
+                    const status: string = (() => {
+                        if (ob.terminated_time) {
+                            return "TERMINATED";
+                        }
+                        if (ob.validity_start.valueOf() > Date.now()) {
+                            return "PENDING";
+                        }
+                        if (ob.validity_end && (ob.validity_end.valueOf() > Date.now())) {
+                            return "EXPIRED";
+                        }
+                        if (ob.accepted === null) {
+                            return "REQUESTED";
+                        }
+                        if (ob.accepted) {
+                            return "ACCEPTED";
+                        }
+                        if (ob.accepted === false) {
+                            return "REJECTED";
+                        }
+                        return "ASSERTION_ERROR";
+                    })();
+                    return {
+                        ...ob,
+                        status,
+                        waiting: (ob.accepted === undefined || ob.accepted === null),
+                        binding_type: ob.binding_type,
+                        validity_start: ob.validity_start.toISOString(),
+                        validity_end: ob.validity_end
+                            ? ob.validity_end.toISOString()
+                            : "EXPLICIT_TERMINATION",
+                    };
+                }),
         };
         return templateVariables;
     }
@@ -82,11 +109,16 @@ export class HomeController {
         if (!ob) {
             throw new NotFoundException();
         }
+        const status: string = (ob.accepted === null)
+            ? "WAITING DECISION"
+            : (ob.accepted ? "ACCEPTED" : "REJECTED");
         const templateVariables = {
             ...ob,
+            status,
             binding_type: ob.binding_type,
             validity_start: ob.validity_start.toISOString(),
             validity_end: ob.validity_end?.toISOString(),
+            actionable: (ob.accepted === null),
         };
         return templateVariables;
     }
@@ -156,6 +188,61 @@ export class HomeController {
             },
             data: {
                 accepted: false,
+            },
+        });
+        this.ctx.telemetry.trackEvent({
+            name: "OperationalBindingDecision",
+            properties: {
+                ...flatten({
+                    server: getServerStatistics(this.ctx),
+                }),
+                accepted: false,
+                administratorEmail: this.ctx.config.administratorEmail,
+                lastOBProblem: result.last_ob_problem,
+                lastShadowingProblem: result.last_shadow_problem,
+                lastUpdate: result.last_update,
+                bindingVersion: result.binding_version,
+                othertimes: result.othertimes,
+                knowledgeType: result.knowledge_type,
+                bindingType: result.binding_type,
+                initiator: result.initiator,
+                beginTime: result.periodic_beginTime,
+                updateInterval: result.periodic_updateInterval,
+                windowSize: result.periodic_windowSize,
+                requestedTime: result.requested_time,
+                respondedTime: result.responded_time,
+                secondaryShadows: result.secondary_shadows,
+                securityErrorCode: result.security_errorCode,
+                securityErrorProtection: result.security_errorProtection,
+                securityOperationCode: result.security_operationCode,
+                securityTarget: result.security_target,
+                securityTime: result.security_time,
+                sourceIP: result.source_ip,
+                sourceTCPPort: result.source_tcp_port,
+                subordinates: result.subordinates,
+                supplierInitiated: result.supplier_initiated,
+                supplyContexts: result.supply_contexts,
+                terminatedTime: result.terminated_time,
+                validityEnd: result.validity_end,
+                validityStart: result.validity_start,
+            },
+        });
+        this.ctx.operationalBindingControlEvents.emit(id, false);
+        res.redirect(`/ob/${id}`);
+    }
+
+    @Post("/ob/:id/cancel")
+    async cancel (
+        @Param("id") id: string,
+        @Res() res: Response,
+    ) {
+        const result = await this.ctx.db.operationalBinding.update({
+            where: {
+                uuid: id,
+            },
+            data: {
+                accepted: null,
+                terminated_time: new Date(),
             },
         });
         this.ctx.telemetry.trackEvent({

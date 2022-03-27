@@ -606,7 +606,10 @@ class OperationDispatcher {
                 },
             };
         }
-        const targetObject = getSoughtObjectFromRequest(req);
+        const targetObject = getSoughtObjectFromRequest({
+            ...req,
+            argument: reqData.argument,
+        }, reqData.chainedArgument);
         if (!targetObject) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:no_discernable_target_object"),

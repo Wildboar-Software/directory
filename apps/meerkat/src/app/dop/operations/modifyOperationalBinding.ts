@@ -29,9 +29,6 @@ import {
     _decode_PresentationAddress,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import type {
-    Time,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/Time.ta";
-import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { ASN1Element, BERElement, packBits } from "asn1-ts";
@@ -77,14 +74,7 @@ import {
 import {
     _encode_Token,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
-
-function getDateFromOBTime (time: Time): Date {
-    if ("utcTime" in time) {
-        return time.utcTime;
-    } else {
-        return time.generalizedTime;
-    }
-}
+import { getDateFromOBTime } from "../getDateFromOBTime";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -196,7 +186,7 @@ async function modifyOperationalBinding (
             if (!address) {
                 return false;
             }
-            const pa = _decode_PresentationAddress(address);
+            const pa = _decode_PresentationAddress(address.inner);
             return pa.nAddresses.some((naddr) => compareSocketToNSAP(assn.idm.s, naddr));
         })
         .map((ap) => ap.id);

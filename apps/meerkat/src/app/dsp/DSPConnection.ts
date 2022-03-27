@@ -255,7 +255,18 @@ async function handleRequestAndErrors (
         if (e instanceof errors.DirectoryError) {
             stats.outcome.error.code = codeToString(e.getErrCode());
         }
-        if (e instanceof errors.AbandonError) {
+        if (e instanceof errors.ChainedError) {
+            if (!e.errcode || !e.error) {
+                assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+            } else {
+                stats.outcome.error.code = codeToString(e.errcode);
+                assn.idm.writeError(
+                    request.invokeID,
+                    _encode_Code(e.errcode, DER),
+                    e.error,
+                );
+            }
+        } else if (e instanceof errors.AbandonError) {
             const code = _encode_Code(errors.AbandonError.errcode, BER);
             const data = _encode_AbandonedData(e.data, BER);
             assn.idm.writeError(request.invokeID, code, data);

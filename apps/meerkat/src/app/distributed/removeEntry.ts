@@ -294,6 +294,10 @@ async function removeEntry (
     if (target.dse.subentry) { // Go to step 5.
         // Steps moved to run _after_ the local deletion of the DSE.
         if (target.immediateSuperior?.dse.cp) {
+            ctx.log.info(ctx.i18n.t("log:updating_superior_dsa", {
+                context: "subentry",
+                uuid: target.dse.uuid,
+            }));
             // DEVIATION:
             // The specification does NOT say that you have to update the
             // superior's subentries for the new CP. Meerkat DSA does this
@@ -303,7 +307,13 @@ async function removeEntry (
                 targetDN.slice(0, -1),
                 target.immediateSuperior!,
                 state.chainingArguments.aliasDereferenced ?? false,
-            ); // INTENTIONAL_NO_AWAIT
+            ) // INTENTIONAL_NO_AWAIT
+                .then(() => {
+                    ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"));
+                })
+                .catch((e) => {
+                    ctx.log.error(ctx.i18n.t("log:failed_to_update_superior_dsa", { e }));
+                });
         }
     } else if (target.dse.cp) { // Go to step 6.
         // 1. Remove the naming context.
@@ -311,6 +321,9 @@ async function removeEntry (
         // - a. Query the database for all active HOBs where local DSA is subordinate
         //      and immediate_superior + rdn === this entry. Include the access point (ber).
         // - c. Issue a terminate OB operation to all relevant access points.
+        ctx.log.info(ctx.i18n.t("log:removing_a_context_prefix", {
+            uuid: target.dse.uuid,
+        }));
         const targetDN = getDistinguishedName(target);
         const relevantOperationalBindings = await getRelevantOperationalBindings(ctx, false);
         for (const ob of relevantOperationalBindings) {
@@ -335,6 +348,10 @@ async function removeEntry (
             const accessPointElement = new BERElement();
             accessPointElement.fromBytes(ob.access_point.ber);
             const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
+            ctx.log.info(ctx.i18n.t("log:terminating_ob", {
+                context: "cp",
+                uuid: ob.uuid,
+            }));
             try {
                 assert(target.immediateSuperior);
                 // We do not await the return value. This can run independently
@@ -346,7 +363,27 @@ async function removeEntry (
                     bindingID,
                     state.chainingArguments.aliasDereferenced,
                 )
+                    .then(() => {
+                        ctx.log.info(ctx.i18n.t("log:terminated_ob", {
+                            context: "cp",
+                            uuid: ob.uuid,
+                        }));
+                    })
                     .catch((e) => {
+                        ctx.telemetry.trackException({
+                            exception: e,
+                            properties: {
+                                obUUID: ob.uuid,
+                                obType: id_op_binding_hierarchical.toString(),
+                                obid: ob.binding_identifier,
+                                obver: ob.binding_version,
+                                administratorEmail: ctx.config.administratorEmail,
+                            },
+                            measurements: {
+                                bytesRead: assn.socket.bytesRead,
+                                bytesWritten: assn.socket.bytesWritten,
+                            },
+                        });
                         ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
                             obid: bindingID.identifier.toString(),
                             version: bindingID.version.toString(),

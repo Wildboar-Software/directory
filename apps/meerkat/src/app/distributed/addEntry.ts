@@ -47,7 +47,7 @@ import {
 import {
     AttributeErrorData_problems_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
-import { ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
+import { ASN1Element, ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import {
     SecurityErrorData,
@@ -63,7 +63,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
 import {
-    Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
+    Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult, Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     ChainingResults,
@@ -103,7 +103,6 @@ import {
     id_opcode_addEntry,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
 import establishSubordinate from "../dop/establishSubordinate";
-import { chainedAddEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAddEntry.oa";
 import { differenceInMilliseconds } from "date-fns";
 import {
     ServiceProblem_timeLimitExceeded
@@ -208,6 +207,21 @@ import {
     aliasedEntryName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import becomeSuperior from "../dop/establish/becomeSuperior";
+import {
+    establishOperationalBinding,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
+import {
+    hierarchicalOperationalBinding,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/hierarchicalOperationalBinding.oa";
+import {
+    HierarchicalAgreement,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+import getDistinguishedName from "../x500/getDistinguishedName";
+import saveAccessPoint from "../database/saveAccessPoint";
+import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
+import { rdnToJson } from "../x500/rdnToJson";
+import { getDateFromOBTime } from "../dop/getDateFromOBTime";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -852,6 +866,10 @@ async function addEntry (
     //         ),
     //     );
     // }
+    /**
+     * Adding subentries in other DSAs is expressly forbidden by ITU
+     * Recommendation X.518 (2019), Section 19.1.1, item 4.
+     */
     if (isSubentry && data.targetSystem) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:cannot_add_subentry_in_another_dsa"),
@@ -1042,9 +1060,13 @@ async function addEntry (
             ),
         );
     }
+    const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     // NOTE: This does not actually check if targetSystem is the current DSA.
+    // We also do not check if manageDSAIT is set. Even though that would seem
+    // to contradict the use of targetSystem, but there's not really any problem
+    // here using both.
     if (data.targetSystem) {
-        const obResponse = await establishSubordinate(
+        const { arg: obArg, response: obResponse } = await establishSubordinate(
             ctx,
             immediateSuperior,
             undefined,
@@ -1056,19 +1078,9 @@ async function addEntry (
                 timeLimitInMilliseconds: timeRemainingInMilliseconds,
             },
         );
-        if (("result" in obResponse) && obResponse.result) {
-            const chainedResult = chainedAddEntry.decoderFor["&ResultType"]!(obResponse.result);
-            return {
-                result: chainedResult,
-                stats: {},
-            };
-        } else if ("error" in obResponse && obResponse.error) {
-            throw new errors.ChainedError(
-                ctx.i18n.t("err:chained_error"),
-                obResponse.error,
-                obResponse.errcode,
-            );
-        } else {
+        if (!(("result" in obResponse) && obResponse.result)) {
+            // You have to throw a service error, because this is a DOP response
+            // which does not really share errors with DAP or DSP.
             throw new errors.ServiceError(
                 ctx.i18n.t("err:could_not_add_entry_to_remote_dsa"),
                 new ServiceErrorData(
@@ -1086,9 +1098,173 @@ async function addEntry (
                 ),
             );
         }
+        const result = establishOperationalBinding.decoderFor["&ResultType"]!(obResponse.result);
+        const resultData = getOptionallyProtectedValue(result);
+        // TODO: Validate signature.
+        if (!("roleB_replies" in resultData.initiator)) {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:received_malformed_dop_response"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        const sub2sup = hierarchicalOperationalBinding["&roleB"]!
+            .decoderFor["&EstablishParam"]!(resultData.initiator.roleB_replies);
+        if (resultData.bindingID?.identifier === undefined) {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:no_binding_id_assigned"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        const obArgData = getOptionallyProtectedValue(obArg);
+        assert("roleA_initiates" in obArgData.initiator);
+        const now = new Date();
+        const validFrom = (
+            obArgData.valid?.validFrom
+            && ("time" in obArgData.valid.validFrom)
+            && !(obArgData.valid.validFrom instanceof ASN1Element)
+        )
+            ? getDateFromOBTime(obArgData.valid.validFrom.time)
+            : now;
+        const validUntil = (
+            obArgData.valid?.validUntil
+            && ("time" in obArgData.valid.validUntil)
+            && !(obArgData.valid.validUntil instanceof ASN1Element)
+        )
+            ? getDateFromOBTime(obArgData.valid.validUntil.time)
+            : undefined;
+        const agreement = new HierarchicalAgreement(
+            rdn,
+            getDistinguishedName(immediateSuperior),
+        );
+        const accessPointId: number = await saveAccessPoint(
+            ctx,
+            resultData.accessPoint,
+            Knowledge.SPECIFIC,
+        );
+        const createdOB = await ctx.db.operationalBinding.create({
+            data: {
+                accepted: true,
+                outbound: true,
+                binding_type: hierarchicalOperationalBinding["&id"]!.toString(),
+                // FIXME: Can you really assert this is non-null?
+                binding_identifier: Number(resultData.bindingID.identifier),
+                binding_version: (resultData.bindingID.version !== undefined)
+                    ? Number(resultData.bindingID.version)
+                    : 0,
+                agreement_ber: Buffer.from(
+                    hierarchicalOperationalBinding.encoderFor["&Agreement"]!(agreement, DER).toBytes(),
+                ),
+                access_point: {
+                    connect: {
+                        id: accessPointId,
+                    },
+                },
+                initiator: OperationalBindingInitiator.ROLE_A,
+                initiator_ber: Buffer.from(obArgData.initiator.roleA_initiates.toBytes()),
+                validity_start: validFrom,
+                validity_end: validUntil,
+                new_context_prefix_rdn: rdnToJson(agreement.rdn),
+                immediate_superior: agreement.immediateSuperior.map(rdnToJson),
+                requested_time: new Date(),
+            },
+            select: {
+                uuid: true,
+            },
+        });
+        await becomeSuperior(
+            ctx,
+            assn,
+            obResponse.invokeId,
+            agreement,
+            sub2sup,
+        );
+        /**
+         * Yes, it is kind of wasteful to query for this entry by RDN
+         * instead of merely returning its ID from `becomeSuperior`, but
+         * doing so would (1) break consistency between `becomeSuperior()`
+         * and `becomeSubordinate()` and (2) it serves as a good smoke test
+         * to see if we can actually find the entry we just created by its
+         * RDN.
+         */
+        const createdSubrId = await rdnToID(ctx, immediateSuperior.dse.id, rdn);
+        if (createdSubrId === undefined) {
+            throw new errors.UnknownError(ctx.i18n.t("err:could_not_find_new_subr"));
+        }
+        await ctx.db.operationalBinding.update({
+            where: {
+                uuid: createdOB.uuid,
+            },
+            data: {
+                entry_id: createdSubrId,
+            },
+        });
+        await ctx.db.accessPoint.update({
+            where: {
+                id: accessPointId,
+            },
+            data: {
+                entry_id: createdSubrId,
+            },
+        });
+        return {
+            result: {
+                unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                    new ChainingResults(
+                        undefined,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            id_opcode_addEntry,
+                        ),
+                        undefined,
+                    ),
+                    _encode_AddEntryResult({
+                        null_: null,
+                    }, DER),
+                ),
+            },
+            stats: {
+                request: ctx.config.bulkInsertMode
+                    ? undefined
+                    : failover(() => ({
+                        operationCode: codeToString(id_opcode_addEntry),
+                        ...getStatisticsFromCommonArguments(data),
+                        targetNameLength: targetDN.length,
+                        targetSystemNSAPs: data.targetSystem
+                            ? data.targetSystem.address.nAddresses
+                                .map(naddrToURI)
+                                .filter((addr): addr is string => !!addr)
+                            : undefined,
+                    }), undefined),
+            }
+        };
     }
 
-    const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const missingMandatoryAttributes: Set<IndexableOID> = new Set();
     const optionalAttributes: Set<IndexableOID> = new Set(
         attributeTypesPermittedForEveryEntry.map((oid) => oid.toString()),
@@ -2186,13 +2362,6 @@ async function addEntry (
                     operationCode: codeToString(id_opcode_addEntry),
                     ...getStatisticsFromCommonArguments(data),
                     targetNameLength: targetDN.length,
-                    targetSystemNSAPs: data.targetSystem
-                        // ? Array.from(accessPointToNSAPStrings(data.targetSystem))
-                        // : undefined,
-                        ? data.targetSystem.address.nAddresses
-                            .map(naddrToURI)
-                            .filter((addr): addr is string => !!addr)
-                        : undefined,
                 }), undefined),
         },
     };

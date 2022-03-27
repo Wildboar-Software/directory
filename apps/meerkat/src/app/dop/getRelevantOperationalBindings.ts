@@ -23,21 +23,35 @@ function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boole
     return ctx.db.operationalBinding.findMany({
         where: {
             binding_type: id_op_binding_hierarchical.toString(),
+            accepted: true,
+            terminated_time: null,
             validity_start: {
-                gte: now,
-            },
-            validity_end: {
                 lte: now,
             },
-            accepted: true,
-            OR: [
-                { // Local DSA initiated role A (meaning local DSA is superior.)
-                    initiator: OperationalBindingInitiator.ROLE_A,
-                    outbound: localDSAIsSuperior,
+            AND: [
+                {
+                    OR: [
+                        { // Local DSA initiated role A (meaning local DSA is superior.)
+                            initiator: OperationalBindingInitiator.ROLE_A,
+                            outbound: localDSAIsSuperior,
+                        },
+                        { // Remote DSA initiated role B (meaning local DSA is superior again.)
+                            initiator: OperationalBindingInitiator.ROLE_B,
+                            outbound: !localDSAIsSuperior,
+                        },
+                    ],
                 },
-                { // Remote DSA initiated role B (meaning local DSA is superior again.)
-                    initiator: OperationalBindingInitiator.ROLE_B,
-                    outbound: !localDSAIsSuperior,
+                {
+                    OR: [
+                        {
+                            validity_end: null,
+                        },
+                        {
+                            validity_end: {
+                                gte: now,
+                            },
+                        },
+                    ],
                 },
             ],
         },

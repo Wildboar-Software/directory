@@ -272,13 +272,13 @@ export class DitController {
         @Inject(CONTEXT) readonly ctx: Context,
     ) {}
 
-    @Get("/dsait/tree")
-    @Render('tree')
-    async tree () {
-        return {
-            tree: await convertSubtreeToHTML(this.ctx, this.ctx.dit.root),
-        };
-    }
+    // @Get("/dsait/tree")
+    // @Render('tree')
+    // async tree () {
+    //     return {
+    //         tree: await convertSubtreeToHTML(this.ctx, this.ctx.dit.root),
+    //     };
+    // }
 
     @Get("/dsait/dse/:id")
     @Render("dsait_dse_id")
@@ -387,7 +387,7 @@ export class DitController {
     ) {
         const soughtEntry = await this.ctx.db.entry.findUnique({
             where: {
-                entryUUID: id,
+                dseUUID: id,
             },
         });
         if (!soughtEntry) {
@@ -408,6 +408,6 @@ export class DitController {
         if (entry) {
             await deleteEntry(this.ctx, entry);
         }
-        res.redirect("/dsait/tree");
+        res.redirect("/");
     }
 }

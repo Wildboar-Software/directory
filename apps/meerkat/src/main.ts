@@ -1,12 +1,13 @@
+import * as dotenv from "dotenv";
+
+dotenv.config({ debug: isDebugging });
+
 import i18n from "i18next";
 import I18FileSystemBackend from "i18next-fs-backend";
 import osLocale from "os-locale";
 import isDebugging from "is-debugging";
 import * as path from "path";
 import main from "./app/main";
-import * as dotenv from "dotenv";
-
-dotenv.config({ debug: isDebugging });
 
 i18n
     .use(I18FileSystemBackend)

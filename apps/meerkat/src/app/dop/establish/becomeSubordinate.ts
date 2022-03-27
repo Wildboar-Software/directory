@@ -102,6 +102,8 @@ async function becomeSubordinate (
             currentRoot = existingEntry;
         }
     }
+    const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
+    const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);
     const createdCP = await createEntry(
         ctx,
         currentRoot,
@@ -112,8 +114,6 @@ async function becomeSubordinate (
         },
         sup2sub.entryInfo?.flatMap(valuesFromAttribute) ?? [],
     );
-    const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
-    const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);
     /**
      * These steps below "swap out" an existing entry with the entry created by
      * the HOB, keeping the immediate superior and the subordinates the same in

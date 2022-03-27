@@ -33,6 +33,7 @@
         <hr />
         <nav><a href="/">Back to Home</a></nav>
         <hr />
+        {{#if actionable}}
         <h2>Actions</h2>
         <div>
             <form action="/ob/{{uuid}}/accept" method="POST" >
@@ -41,19 +42,13 @@
             <form action="/ob/{{uuid}}/reject" method="POST" >
                 <button type="submit">Reject</button>
             </form>
+            <form action="/ob/{{uuid}}/cancel" method="POST" >
+                <button type="submit">Cancel</button>
+            </form>
         </div>
         <hr />
+        {{/if}}
         <h2>Details</h2>
-        <div>
-            <span>Status: </span>
-            {{#if this.accepted}}
-                <span style="color: green;">ACCEPTED</span>
-            {{else if this.waiting}}
-                <span style="color: grey;">WAITING</span>
-            {{else}}
-                <span style="color: red;">REJECTED</span>
-            {{/if}}
-        </div>
         <table>
             <thead>
                 <tr>
@@ -62,6 +57,10 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>Status</td>
+                    <td>{{status}}</td>
+                </tr>
                 <tr>
                     <td>UUID</td>
                     <td>{{uuid}}</td>
