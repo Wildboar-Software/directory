@@ -21,6 +21,7 @@ program.version("1.0.0");
 program
   .requiredOption("--accessPoint <ap>", "The access point URL")
   .requiredOption("--profile <prof>", "The profile of the seed to use.")
+  .option("-t|--tolerateUnknownProfile", "Whether to return a failing return code if the profile is unknown")
   ;
 
 program.parse(process.argv);
@@ -55,7 +56,11 @@ async function main () {
         }
         default: {
             ctx.log.error(`Profile ${options["profile"]} not understood.`);
-            process.exit(1);
+            if (options["tolerateUnknownProfile"]) {
+                process.exit(0);
+            } else {
+                process.exit(1);
+            }
         }
     }
 }

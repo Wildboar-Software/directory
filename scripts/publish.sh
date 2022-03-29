@@ -137,6 +137,10 @@ helm repo add $chart_repo https://$storage_account_name.blob.core.windows.net/$c
 # Update the Helm repo
 helm repo update
 
+# Build tools to seed and use the directory
+nx run create-test-dit:build:production
+nx run x500-cli:build:production
+
 # Install the Helm chart
 for instance in ${instances[@]}; do
 
@@ -155,8 +159,10 @@ for instance in ${instances[@]}; do
         --set "myAccessPointNSAPs={idm://dsa01.$instance.$zone:4632,ldap://dsa01.$instance.$zone:389}" \
         --set chaining.minAuthLevel=0 \
         --set chaining.minAuthLocalQualifier=0 \
-        --set minAuthLevelForOperationalBinding=0 \
-        --set minAuthLocalQualifierForOperationalBinding=0 \
+        --set chaining.tlsOptional=true \
+        --set ob.minAuthLevel=0 \
+        --set ob.minAuthLocalQualifier=0 \
+        --set ob.autoAccept=true \
         --set databaseReset=true \
         --set dangerouslyExposeWebAdmin=true \
         --set databaseSecretName=meerkat-db-$instance \
@@ -186,5 +192,17 @@ for instance in ${instances[@]}; do
         --ipv4-address $WEB_ADMIN_SERVICE_IP
 
     echo "Meerkat DSA '$instance' deployed successfully."
+
+done
+
+# Seed the DIT
+for instance in ${instances[@]}; do
+
+    node ./dist/apps/create-test-dit/main.js \
+        --accessPoint="idm://dsa01.$instance.$zone:4632" \
+        --profile=$instance \
+        -t
+
+    echo "Seeded DIT for '$instance' DSA."
 
 done
