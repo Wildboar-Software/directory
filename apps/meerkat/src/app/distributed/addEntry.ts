@@ -222,6 +222,7 @@ import saveAccessPoint from "../database/saveAccessPoint";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import { rdnToJson } from "../x500/rdnToJson";
 import { getDateFromOBTime } from "../dop/getDateFromOBTime";
+import { printInvokeId } from "../utils/printInvokeId";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
@@ -438,6 +439,7 @@ async function addEntry (
                 remoteAddress: assn.socket.remoteAddress,
                 remotePort: assn.socket.remotePort,
                 association_id: assn.id,
+                invokeID: printInvokeId(state.invokeId),
             });
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_to_add_top_level"),
@@ -466,6 +468,7 @@ async function addEntry (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId(state.invokeId),
         });
         data.entry.push(new Attribute(
             administrativeRole["&id"],

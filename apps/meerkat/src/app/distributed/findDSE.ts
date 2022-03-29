@@ -118,6 +118,7 @@ import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import getVertexById from "../database/getVertexById";
+import { printInvokeId } from "../utils/printInvokeId";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -356,6 +357,7 @@ async function findDSE (
                     remoteAddress: assn.socket.remoteAddress,
                     remotePort: assn.socket.remotePort,
                     association_id: assn.id,
+                    invokeID: printInvokeId(state.invokeId),
                 });
                 return undefined;
             }
@@ -687,6 +689,7 @@ async function findDSE (
                     remoteAddress: assn.socket.remoteAddress,
                     remotePort: assn.socket.remotePort,
                     association_id: assn.id,
+                    invokeID: printInvokeId(state.invokeId),
                 });
                 throw new MistypedArgumentError();
             }

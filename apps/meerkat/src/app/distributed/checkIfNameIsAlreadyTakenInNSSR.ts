@@ -72,6 +72,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { addMilliseconds } from "date-fns";
 import { randomInt } from "crypto";
+import { printInvokeId } from "../utils/printInvokeId";
 
 /**
  * @summary Check if name is already taken among NSSR.
@@ -194,6 +195,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 remoteAddress: assn.socket.remoteAddress,
                 remotePort: assn.socket.remotePort,
                 association_id: assn.id,
+                invokeID: printInvokeId(invokeId),
             });
             const chained: ChainedArgument = new ChainedArgument(
                 new ChainingArguments(
@@ -264,6 +266,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     remoteAddress: assn.socket.remoteAddress,
                     remotePort: assn.socket.remotePort,
                     association_id: assn.id,
+                    invokeID: printInvokeId(invokeId),
                 });
                 continue;
             }

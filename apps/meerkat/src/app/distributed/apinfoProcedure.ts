@@ -64,6 +64,7 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import { printInvokeId } from "../utils/printInvokeId";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -253,6 +254,7 @@ async function apinfoProcedure (
                         remoteAddress: assn.socket.remoteAddress,
                         remotePort: assn.socket.remotePort,
                         association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
                     });
                     continue;
                 }
@@ -270,6 +272,7 @@ async function apinfoProcedure (
                 remoteAddress: assn.socket.remoteAddress,
                 remotePort: assn.socket.remotePort,
                 association_id: assn.id,
+                invokeID: printInvokeId(state.invokeId),
             });
             continue;
         }

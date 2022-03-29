@@ -59,6 +59,7 @@ import type {
 import {
     ReferenceType_nonSpecificSubordinate,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+import { printInvokeId } from "../utils/printInvokeId";
 
 // TODO: Really, this should have the same return type as the OperationDispatcher.
 // This also returns a value, but also mutates the OD state, which is sketchy.
@@ -236,7 +237,13 @@ async function nrcrProcedure (
                 try {
                     return chainedRead.decoderFor["&ResultType"]!(outcome.result);
                 } catch (e) {
-                    ctx.log.error(e.message);
+                    ctx.log.error(e.message, {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                        invokeID: printInvokeId(req.invokeId),
+                    });
                     continue;
                 }
             } else if ("error" in outcome) {

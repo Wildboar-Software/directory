@@ -53,7 +53,10 @@ import {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
-import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import {
+    id_ar_autonomousArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import { printInvokeId } from "../utils/printInvokeId";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -253,6 +256,7 @@ async function search_ii (
                         remoteAddress: assn.socket.remoteAddress,
                         remotePort: assn.socket.remotePort,
                         association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
                     });
                     nr.sortKeys.length = 3;
                 }

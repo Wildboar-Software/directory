@@ -110,6 +110,7 @@ import removeAttribute from "../database/entry/removeAttribute";
 import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
+import { printInvokeId } from "../utils/printInvokeId";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -196,17 +197,13 @@ async function removeEntry (
             isMemberOfGroup,
             NAMING_MATCHER,
         );
-        const {
-            authorized: authorizedToRemoveEntry,
-        } = bacACDF(
+        const { authorized: authorizedToRemoveEntry } = bacACDF(
             relevantTuples,
             user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
-            [
-                PERMISSION_CATEGORY_REMOVE,
-            ],
+            [ PERMISSION_CATEGORY_REMOVE ],
             bacSettings,
             true,
         );
@@ -297,7 +294,13 @@ async function removeEntry (
             ctx.log.info(ctx.i18n.t("log:updating_superior_dsa", {
                 context: "subentry",
                 uuid: target.dse.uuid,
-            }));
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+                invokeID: printInvokeId(state.invokeId),
+            });
             // DEVIATION:
             // The specification does NOT say that you have to update the
             // superior's subentries for the new CP. Meerkat DSA does this
@@ -309,10 +312,22 @@ async function removeEntry (
                 state.chainingArguments.aliasDereferenced ?? false,
             ) // INTENTIONAL_NO_AWAIT
                 .then(() => {
-                    ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"));
+                    ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
+                    });
                 })
                 .catch((e) => {
-                    ctx.log.error(ctx.i18n.t("log:failed_to_update_superior_dsa", { e }));
+                    ctx.log.error(ctx.i18n.t("log:failed_to_update_superior_dsa", { e }), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
+                    });
                 });
         }
     } else if (target.dse.cp) { // Go to step 6.
@@ -378,6 +393,7 @@ async function removeEntry (
                                 obid: ob.binding_identifier,
                                 obver: ob.binding_version,
                                 administratorEmail: ctx.config.administratorEmail,
+                                invokeID: printInvokeId(state.invokeId),
                             },
                             measurements: {
                                 bytesRead: assn.socket.bytesRead,
@@ -393,6 +409,7 @@ async function removeEntry (
                             remoteAddress: assn.socket.remoteAddress,
                             remotePort: assn.socket.remotePort,
                             association_id: assn.id,
+                            invokeID: printInvokeId(state.invokeId),
                         });
                     });
             } catch (e) {
@@ -405,6 +422,7 @@ async function removeEntry (
                     remoteAddress: assn.socket.remoteAddress,
                     remotePort: assn.socket.remotePort,
                     association_id: assn.id,
+                    invokeID: printInvokeId(state.invokeId),
                 });
                 continue;
             }

@@ -161,6 +161,7 @@ import {
 import isPrefix from "../x500/isPrefix";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
+import { printInvokeId } from "../utils/printInvokeId";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -1813,6 +1814,7 @@ async function modifyDN (
                     remoteAddress: assn.socket.remoteAddress,
                     remotePort: assn.socket.remotePort,
                     association_id: assn.id,
+                    invokeID: printInvokeId(state.invokeId),
                 });
             }
         }

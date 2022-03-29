@@ -57,6 +57,7 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import { printInvokeId } from "../utils/printInvokeId";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -228,6 +229,7 @@ async function changePassword (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId(state.invokeId),
         });
         throw new errors.SecurityError(
             ctx.i18n.t("err:old_password_incorrect"),

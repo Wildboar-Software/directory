@@ -256,6 +256,7 @@ import {
 import preprocessTuples from "../authz/preprocessTuples";
 import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import { printInvokeId } from "../utils/printInvokeId";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -1005,6 +1006,7 @@ async function search_i (
                         remoteAddress: assn.socket.remoteAddress,
                         remotePort: assn.socket.remotePort,
                         association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
                     });
                     nr.sortKeys.length = 3;
                 }
@@ -1565,6 +1567,7 @@ async function search_i (
                     remoteAddress: assn.socket.remoteAddress,
                     remotePort: assn.socket.remotePort,
                     association_id: assn.id,
+                    invokeID: printInvokeId(state.invokeId),
                 });
                 continue; // This should never happen, but just handling it in case it does.
             }

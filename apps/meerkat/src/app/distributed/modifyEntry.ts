@@ -243,6 +243,7 @@ import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import { printInvokeId } from "../utils/printInvokeId";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -2809,6 +2810,7 @@ async function modifyEntry (
                 remoteAddress: assn.socket.remoteAddress,
                 remotePort: assn.socket.remotePort,
                 association_id: assn.id,
+                invokeID: printInvokeId(state.invokeId),
             });
             continue;
         }
@@ -3171,6 +3173,7 @@ async function modifyEntry (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId(state.invokeId),
         });
     }
 
@@ -3186,6 +3189,7 @@ async function modifyEntry (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId(state.invokeId),
         });
     }
 
@@ -3233,6 +3237,7 @@ async function modifyEntry (
                 remoteAddress: assn.socket.remoteAddress,
                 remotePort: assn.socket.remotePort,
                 association_id: assn.id,
+                invokeID: printInvokeId(state.invokeId),
             });
         }
     }

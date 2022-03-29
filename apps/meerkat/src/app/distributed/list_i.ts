@@ -131,6 +131,7 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import { printInvokeId } from "../utils/printInvokeId";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -322,6 +323,7 @@ async function list_i (
                         remoteAddress: assn.socket.remoteAddress,
                         remotePort: assn.socket.remotePort,
                         association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
                     });
                     nr.sortKeys.length = 3;
                 }

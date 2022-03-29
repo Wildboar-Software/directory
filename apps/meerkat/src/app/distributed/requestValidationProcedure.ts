@@ -62,6 +62,7 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import { printInvokeId } from "../utils/printInvokeId";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -564,6 +565,7 @@ async function requestValidationProcedure (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId(req.invokeId),
         });
     }
     return hydratedArgument;
