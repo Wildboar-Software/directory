@@ -57,6 +57,16 @@ async function terminateOperationalBinding (
     arg: TerminateOperationalBindingArgument,
 ): Promise<TerminateOperationalBindingResult> {
     const data: TerminateOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
+    ctx.log.info(ctx.i18n.t("log:ob_terminating", {
+        type: data.bindingType.toString(),
+        bid: data.bindingID?.identifier.toString(),
+        aid: assn.id,
+    }), {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+    });
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,
         {

@@ -114,6 +114,16 @@ async function establishOperationalBinding (
 ): Promise<EstablishOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: EstablishOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
+    ctx.log.info(ctx.i18n.t("log:ob_requesting", {
+        type: data.bindingType.toString(),
+        bid: data.bindingID?.identifier.toString(),
+        aid: assn.id,
+    }), {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+    });
     const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
         new Promise<boolean>((resolve) => {
             ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {

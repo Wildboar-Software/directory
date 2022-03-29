@@ -205,6 +205,9 @@ async function establishSubordinate (
     const timeoutTime: Date | undefined = connectionTimeout
         ? addMilliseconds(startTime, connectionTimeout)
         : undefined;
+    ctx.log.info(ctx.i18n.t("log:establishing_hob_via_add_entry", {
+        uuid: immediateSuperior.dse.uuid,
+    }));
     const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
         tlsOptional: ctx.config.chaining.tlsOptional,
