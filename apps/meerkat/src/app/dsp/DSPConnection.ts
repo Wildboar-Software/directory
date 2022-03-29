@@ -74,6 +74,7 @@ import { strict as assert } from "assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
+import { printInvokeId } from "../utils/printInvokeId";
 
 /**
  * @summary The handles a request, but not errors
@@ -156,6 +157,7 @@ async function handleRequestAndErrors (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId({ present: request.invokeID }),
         });
         assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
@@ -170,6 +172,7 @@ async function handleRequestAndErrors (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId({ present: request.invokeID }),
         });
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
@@ -184,6 +187,7 @@ async function handleRequestAndErrors (
             protocol: dsp_ip["&id"]!.toString(),
         },
         request: {
+            invokeId: Number(request.invokeID),
             operationCode: codeToString(request.opcode),
         },
     };

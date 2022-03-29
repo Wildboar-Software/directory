@@ -75,6 +75,7 @@ import {
     _encode_Token,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
 import { getDateFromOBTime } from "../getDateFromOBTime";
+import { printInvokeId } from "../../utils/printInvokeId";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -143,6 +144,7 @@ async function modifyOperationalBinding (
         remoteAddress: assn.socket.remoteAddress,
         remotePort: assn.socket.remotePort,
         association_id: assn.id,
+        invokeID: printInvokeId(invokeId),
     });
     const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
         new Promise<boolean>((resolve) => {
@@ -150,7 +152,12 @@ async function modifyOperationalBinding (
                 resolve(approved);
             });
         }),
-        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 30000)),
+        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 300_000)),
+        new Promise<boolean>((resolve) => {
+            if (ctx.config.ob.autoAccept) {
+                resolve(true);
+            }
+        }),
     ]);
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(

@@ -299,21 +299,24 @@ const ctx: MeerkatContext = {
                 ? Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING, 10)
                 : 0,
             tlsOptional: (process.env.MEERKAT_CHAINING_TLS_OPTIONAL === "1"),
+            prohibited: process.env.MEERKAT_PROHIBIT_CHAINING
+                ? (process.env.MEERKAT_PROHIBIT_CHAINING === "1")
+                : false,
+        },
+        ob: {
+            minAuthLevel: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_OB ?? "1"),
+            minAuthLocalQualifier: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB ?? "128"),
+            autoAccept: (process.env.MEERKAT_OB_AUTO_ACCEPT === "1"),
         },
         sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
         administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
         bulkInsertMode,
         bindMinSleepInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_MIN_SLEEP_MS ?? "") || 1000,
         bindSleepRangeInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_SLEEP_RANGE_MS ?? "") || 1000,
-        minAuthLevelForOperationalBinding: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_OB ?? "1"),
-        minAuthLocalQualifierForOperationalBinding: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB ?? "128"),
         myAccessPointNSAPs: myNSAPs,
         useDatabaseWhenThereAreXSubordinates: process.env.MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES
             ? Number.parseInt(process.env.MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES)
             : 1000,
-        prohibitChaining: process.env.MEERKAT_PROHIBIT_CHAINING
-            ? (process.env.MEERKAT_PROHIBIT_CHAINING === "1")
-            : false,
         entriesPerSubordinatesPage: process.env.MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE
             ? Number.parseInt(process.env.MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE)
             : 100,

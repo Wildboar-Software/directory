@@ -367,6 +367,12 @@ If set to `1`, Meerkat DSA will not log to the console.
 
 If set to `1`, Meerkat DSA will not include the timestamp in log messages.
 
+## MEERKAT_OB_AUTO_ACCEPT
+
+If set to `1`, Meerkat DSA shall accept ALL requested operational bindings.
+Your DSA is INSECURE if this is enabled. This should ONLY be enabled
+for testing purposes.
+
 ## MEERKAT_OPEN_TOP_LEVEL
 
 If set to `1`, Meerkat DSA will not apply any access controls to adding new

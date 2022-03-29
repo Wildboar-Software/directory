@@ -143,7 +143,7 @@ async function nrcrProcedure (
         )
     )
     if (
-        ctx.config.prohibitChaining
+        ctx.config.chaining.prohibited
         || chainingProhibited
         || insufficientAuthForChaining
     ) {

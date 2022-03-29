@@ -34,6 +34,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 import { getDateFromOBTime } from "../getDateFromOBTime";
+import { printInvokeId } from "../../utils/printInvokeId";
+import {
+    InvokeId,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 
 /**
  * @summary Terminates an operational binding, as described in ITU Recommendation X.501.
@@ -54,6 +58,7 @@ export
 async function terminateOperationalBinding (
     ctx: Context,
     assn: DOPAssociation,
+    invokeId: InvokeId,
     arg: TerminateOperationalBindingArgument,
 ): Promise<TerminateOperationalBindingResult> {
     const data: TerminateOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
@@ -66,6 +71,7 @@ async function terminateOperationalBinding (
         remoteAddress: assn.socket.remoteAddress,
         remotePort: assn.socket.remotePort,
         association_id: assn.id,
+        invokeID: printInvokeId(invokeId),
     });
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,

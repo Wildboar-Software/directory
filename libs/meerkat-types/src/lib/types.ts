@@ -1344,6 +1344,9 @@ interface Configuration {
          */
         tlsOptional: boolean;
 
+        /** If true, Meerkat DSA will not chain any requests. */
+        prohibited: boolean;
+
     };
 
     /**
@@ -1386,24 +1389,35 @@ interface Configuration {
      */
     bindSleepRangeInMilliseconds: number;
 
-    /**
-     * The integer representation of the minimum authentication level required for
-     * Meerkat DSA to accept DOP requests.
-     *
-     * This defaults to true, which corresponds to simple authentication, meaning that,
-     * to use DOP, a DSA must have authenticated using simple authentication
-     * or something stronger.
-     */
-    minAuthLevelForOperationalBinding: number;
+    ob: {
 
-    /**
-     * The minimum `localQualifier` "points" required (on top of the minimum
-     * authentication level) for Meerkat DSA to accept DOP requests.
-     * If the minimum authentication level--as configured by the
-     * `MEERKAT_MIN_AUTH_LEVEL_FOR_OB` environment variable--is exceeded, this
-     * does not matter.
-     */
-    minAuthLocalQualifierForOperationalBinding: number;
+        /**
+         * The integer representation of the minimum authentication level required for
+         * Meerkat DSA to accept DOP requests.
+         *
+         * This defaults to true, which corresponds to simple authentication, meaning that,
+         * to use DOP, a DSA must have authenticated using simple authentication
+         * or something stronger.
+         */
+        minAuthLevel: number;
+
+        /**
+         * The minimum `localQualifier` "points" required (on top of the minimum
+         * authentication level) for Meerkat DSA to accept DOP requests.
+         * If the minimum authentication level--as configured by the
+         * `MEERKAT_MIN_AUTH_LEVEL_FOR_OB` environment variable--is exceeded, this
+         * does not matter.
+         */
+        minAuthLocalQualifier: number;
+
+        /**
+         * Whether Meerkat DSA shall accept ALL requested operational bindings.
+         * Your DSA is INSECURE if this is enabled. This should ONLY be enabled
+         * for testing purposes.
+         */
+        autoAccept: boolean;
+
+    };
 
     /**
      * Whitespace-separated NSAP URLs that locate this DSA. This is important for
@@ -1418,9 +1432,6 @@ interface Configuration {
      * in-memory entries when there are more than this many subordinates in memory.
      */
     useDatabaseWhenThereAreXSubordinates: number;
-
-    /** If true, Meerkat DSA will not chain any requests. */
-    prohibitChaining: boolean;
 
     /**
      * The number of entries that Meerkat DSA will load into memory at a time when
@@ -1967,6 +1978,7 @@ interface JoinArgumentStatistics {
 
 export
 interface RequestStatistics extends CommonArgumentsStatistics {
+    invokeId?: number;
     operationCode: string;
     targetNameLength?: number;
     targetSystemNSAPs?: string[];

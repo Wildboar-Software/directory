@@ -97,6 +97,7 @@ import { strict as assert } from "assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { printInvokeId } from "../utils/printInvokeId";
 
 /**
  * @summary The handles a request, but not errors
@@ -144,7 +145,9 @@ async function handleRequest (
     }
     case (101): { // terminate
         const arg = _decode_TerminateOperationalBindingArgument(request.argument);
-        const result = await terminateOperationalBinding(ctx, assn, arg);
+        const result = await terminateOperationalBinding(ctx, assn, {
+            present: request.invokeID,
+        }, arg);
         assn.idm.writeResult(
             request.invokeID,
             request.opcode,
@@ -202,6 +205,7 @@ async function handleRequestAndErrors (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId({ present: request.invokeID }),
         });
         assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
@@ -216,6 +220,7 @@ async function handleRequestAndErrors (
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
+            invokeID: printInvokeId({ present: request.invokeID }),
         });
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
@@ -229,6 +234,7 @@ async function handleRequestAndErrors (
             protocol: dop_ip["&id"]!.toString(),
         },
         request: {
+            invokeId: Number(request.invokeID),
             operationCode: codeToString(request.opcode),
         },
     };
@@ -243,8 +249,8 @@ async function handleRequestAndErrors (
          */
         if (
             !("basicLevels" in assn.authLevel)
-            || (assn.authLevel.basicLevels.level < ctx.config.minAuthLevelForOperationalBinding)
-            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.minAuthLocalQualifierForOperationalBinding)
+            || (assn.authLevel.basicLevels.level < ctx.config.ob.minAuthLevel)
+            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.ob.minAuthLocalQualifier)
         ) {
             throw new SecurityError(
                 ctx.i18n.t("err:not_authorized_ob"),
@@ -311,6 +317,7 @@ async function handleRequestAndErrors (
                 remoteAddress: assn.socket.remoteAddress,
                 remotePort: assn.socket.remotePort,
                 association_id: assn.id,
+                invokeID: printInvokeId({ present: request.invokeID }),
             });
         }
         if (!stats.outcome) {
