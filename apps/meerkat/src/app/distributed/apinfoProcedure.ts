@@ -195,7 +195,7 @@ async function apinfoProcedure (
             continue;
         }
         const connection = await connect(ctx, ap, dsp_ip["&id"]!, {
-            tlsOptional: true, // FIXME:
+            tlsOptional: ctx.config.chaining.tlsOptional,
         });
         if (!connection) {
             continue;

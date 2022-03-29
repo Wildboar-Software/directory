@@ -239,7 +239,7 @@ async function updateSubordinateDSA (
         : undefined;
     const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
-        tlsOptional: true, // FIXME:
+        tlsOptional: ctx.config.chaining.tlsOptional,
     });
     if (!assn) {
         throw new ServiceError(

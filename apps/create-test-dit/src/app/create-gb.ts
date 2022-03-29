@@ -18,8 +18,8 @@ import {
 import {
     AddEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
-import type {
-    DistinguishedName,
+import {
+    DistinguishedName, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import {
     Attribute,
@@ -29,21 +29,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import * as selat from "@wildboar/x500/src/lib/collections/attributes";
 import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
-import {
-    id_ar_collectiveAttributeSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
-import {
-    id_ar_accessControlSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
-import {
-    id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
-import {
-    id_ar_pwdAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
-import {
-    id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 import {
     subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
@@ -136,13 +121,6 @@ import {
     UpdateProblem_entryAlreadyExists,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
-import {
-    AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import {
-    PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 
 const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
     oc.integrityInfo["&id"],
@@ -204,53 +182,31 @@ function securityParameters (): SecurityParameters {
     );
 }
 
-function addCountryArgument (
+function addLocalityArgument (
     baseObject: DistinguishedName,
-    iso2c: string,
-    targetSystem: AddEntryArgumentData["targetSystem"],
+    lname: string,
 ): AddEntryArgument {
-    const c2 = _encodePrintableString(iso2c, DER);
+    const ln = _encodeUTF8String(lname, DER);
     const dn: DistinguishedName = [
         ...baseObject,
         [
             new AttributeTypeAndValue(
-                selat.countryName["&id"]!,
-                c2,
+                selat.localityName["&id"]!,
+                ln,
             ),
         ],
     ];
     const attributes: Attribute[] = [
         new Attribute(
-            selat.administrativeRole["&id"]!,
-            [
-                _encodeObjectIdentifier(id_ar_autonomousArea, DER),
-                _encodeObjectIdentifier(id_ar_collectiveAttributeSpecificArea, DER),
-                _encodeObjectIdentifier(id_ar_accessControlSpecificArea, DER),
-                _encodeObjectIdentifier(id_ar_pwdAdminSpecificArea, DER),
-                _encodeObjectIdentifier(id_ar_subschemaAdminSpecificArea, DER),
-            ],
-            undefined,
-        ),
-        new Attribute(
             selat.objectClass["&id"],
             [
-                _encodeObjectIdentifier(seloc.country["&id"]!, DER),
-                _encodeObjectIdentifier(seloc.userPwdClass["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.locality["&id"]!, DER),
             ],
             undefined,
         ),
         new Attribute(
-            selat.countryName["&id"]!,
-            [c2],
-            undefined,
-        ),
-        new Attribute(
-            selat.userPwd["&id"],
-            [
-                selat.userPwd.encoderFor["&Type"]!({
-                    clear: `password4${iso2c}`,
-                }, DER),
-            ],
+            selat.localityName["&id"]!,
+            [ln],
             undefined,
         ),
     ];
@@ -260,7 +216,35 @@ function addCountryArgument (
                 rdnSequence: dn,
             },
             attributes,
-            targetSystem,
+            undefined,
+            [],
+            serviceControls,
+            securityParameters(),
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        ),
+    };
+}
+
+function createAddEntryArgument (
+    dn: DistinguishedName,
+    attributes: Attribute[],
+): AddEntryArgument {
+    return {
+        unsigned: new AddEntryArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            attributes,
+            undefined,
             [],
             serviceControls,
             securityParameters(),
@@ -820,132 +804,351 @@ function addPasswordAdminSubentryArgument (
     };
 }
 
-const GB_ACCESS_POINT = new AccessPoint(
-    {
-        rdnSequence: [],
-    },
-    new PresentationAddress(
-        undefined,
-        undefined,
-        undefined,
-        [
-            uriToNSAP("idm://dsa01.gb.mkdemo.wildboar.software:4632", false),
-        ],
-    ),
-    undefined,
-);
-
-const RU_ACCESS_POINT = new AccessPoint(
-    {
-        rdnSequence: [],
-    },
-    new PresentationAddress(
-        undefined,
-        undefined,
-        undefined,
-        [
-            uriToNSAP("idm://webadm01.ru.mkdemo.wildboar.software:4632", false),
-        ],
-    ),
-    undefined,
-);
-
-// const MOSCOW_ACCESS_POINT = new AccessPoint(
-//     {
-//         rdnSequence: [],
-//     },
-//     new PresentationAddress(
-//         undefined,
-//         undefined,
-//         undefined,
-//         [
-//             uriToNSAP("idm://webadm01.ru-moscow.mkdemo.wildboar.software:4632", false),
-//         ],
-//     ),
-//     undefined,
-// );
-
-const countriesToCreate: [ string, AccessPoint | undefined ][] = [
-    [ "US", undefined ], // US will be inside of the root DSA.
-    [ "GB", GB_ACCESS_POINT ],
-    // [ "RU", RU_ACCESS_POINT ],
-];
-
-export
-async function seedCountries (
+async function idempotentAddEntry (
     ctx: Context,
     conn: Connection,
+    dnStr: string,
+    arg: AddEntryArgument,
 ): Promise<void> {
-    const baseObject: DistinguishedName = [];
-    for (const [ country, targetSystem ] of countriesToCreate) {
-        { // Create the country entry / administrative point.
-            const createCountry = addCountryArgument(
-                baseObject,
-                country,
-                targetSystem,
-            );
-            const outcome = await conn.writeOperation({
-                opCode: addEntry["&operationCode"],
-                argument: _encode_AddEntryArgument(createCountry, DER),
-            });
-            if ("error" in outcome) {
-                if (outcome.errcode) {
-                    if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
-                        ctx.log.error(print(outcome.errcode));
-                        process.exit(1);
-                    }
-                    const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
-                    const data = getOptionallyProtectedValue(param);
-                    if (data.problem === UpdateProblem_entryAlreadyExists) {
-                        ctx.log.warn(`Country ${country} already exists.`);
-                    } else {
-                        ctx.log.error(print(outcome.errcode));
-                        process.exit(1);
-                    }
-                } else {
-                    ctx.log.error("Uncoded error.");
-                    process.exit(1);
-                }
-            } else {
-                ctx.log.info(`Created country ${country}.`);
-            }
-        }
-        if (targetSystem) {
-            // You may not add subentries to other DSAs.
-            continue;
-        }
-        const subentries: [ (base: RDNSequence, cc: string) => AddEntryArgument, string ][] = [
-            [ addCollectiveAttributeSubentryArgument, "collective attributes" ],
-            [ addAccessControlSubentryArgument, "access control" ],
-            [ addPasswordAdminSubentryArgument, "password administration" ],
-            [ addSubschemaSubentryArgument, "subschema" ],
-        ];
-        for (const [ createSubentryArg, subentryType ] of subentries) {
-            const createSubentry = createSubentryArg(baseObject, country);
-            const outcome = await conn.writeOperation({
-                opCode: addEntry["&operationCode"],
-                argument: _encode_AddEntryArgument(createSubentry, DER),
-            });
-            if ("error" in outcome) {
-                if (outcome.errcode) {
-                    if (compareCode(outcome.errcode, updateError["&errorCode"]!)) {
-                        const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
-                        const data = getOptionallyProtectedValue(param);
-                        if (data.problem === UpdateProblem_entryAlreadyExists) {
-                            ctx.log.warn(`Country ${country} already has a ${subentryType} subentry.`);
-                            continue;
-                        }
-                    }
-                    ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
-                } else {
-                    ctx.log.error("Uncoded error.");
-                    process.exit(1);
+    const outcome = await conn.writeOperation({
+        opCode: addEntry["&operationCode"],
+        argument: _encode_AddEntryArgument(arg, DER),
+    });
+    if ("error" in outcome) {
+        if (outcome.errcode) {
+            if (compareCode(outcome.errcode, updateError["&errorCode"]!)) {
+                const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
+                const data = getOptionallyProtectedValue(param);
+                if (data.problem === UpdateProblem_entryAlreadyExists) {
+                    ctx.log.warn(`Entry ${dnStr} already exists.`);
+                    return;
                 }
             }
-            ctx.log.info(`Created ${subentryType} subentry for country ${country}.`);
+            ctx.log.error(print(outcome.errcode));
+            process.exit(1);
+        } else {
+            ctx.log.error("Uncoded error.");
+            process.exit(1);
         }
     }
 }
 
-export default seedCountries;
+const baseObject: DistinguishedName = [
+    [
+        new AttributeTypeAndValue(
+            selat.countryName["&id"],
+            _encodePrintableString("GB", DER),
+        ),
+    ],
+];
+
+export
+async function seedGB (
+    ctx: Context,
+    conn: Connection,
+): Promise<void> {
+    const subentries: [ (base: RDNSequence, cc: string) => AddEntryArgument, string ][] = [
+        [ addCollectiveAttributeSubentryArgument, "collective attributes" ],
+        [ addAccessControlSubentryArgument, "access control" ],
+        [ addPasswordAdminSubentryArgument, "password administration" ],
+        [ addSubschemaSubentryArgument, "subschema" ],
+    ];
+    for (const [ createSubentryArg, subentryType ] of subentries) {
+        const createSubentry = createSubentryArg(baseObject, "GB");
+        const outcome = await conn.writeOperation({
+            opCode: addEntry["&operationCode"],
+            argument: _encode_AddEntryArgument(createSubentry, DER),
+        });
+        if ("error" in outcome) {
+            if (outcome.errcode) {
+                if (compareCode(outcome.errcode, updateError["&errorCode"]!)) {
+                    const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
+                    const data = getOptionallyProtectedValue(param);
+                    if (data.problem === UpdateProblem_entryAlreadyExists) {
+                        ctx.log.warn(`Country GB already has a ${subentryType} subentry.`);
+                        continue;
+                    }
+                }
+                ctx.log.error(print(outcome.errcode));
+                process.exit(1);
+            } else {
+                ctx.log.error("Uncoded error.");
+                process.exit(1);
+            }
+        }
+        ctx.log.info(`Created ${subentryType} subentry for country GB.`);
+    }
+
+    const regions: string[] = [
+        "London",
+        "South East",
+        "North West",
+        "East of England",
+        "West Midlands",
+        "South West",
+        "Yorkshire and the Humber",
+        "East Midlands",
+        "North East",
+    ];
+    for (const region of regions) {
+        const arg = addLocalityArgument(baseObject, region);
+        const outcome = await conn.writeOperation({
+            opCode: addEntry["&operationCode"],
+            argument: _encode_AddEntryArgument(arg, DER),
+        });
+        if ("error" in outcome) {
+            if (outcome.errcode) {
+                if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
+                    ctx.log.error(print(outcome.errcode));
+                    process.exit(1);
+                }
+                const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
+                const data = getOptionallyProtectedValue(param);
+                if (data.problem === UpdateProblem_entryAlreadyExists) {
+                    ctx.log.warn(`cn=GB,l=${region} already exists.`);
+                } else {
+                    ctx.log.error(print(outcome.errcode));
+                    process.exit(1);
+                }
+            } else {
+                ctx.log.error("Uncoded error.");
+                process.exit(1);
+            }
+        } else {
+            ctx.log.info(`Created country cn=GB,l=${region}.`);
+        }
+    }
+
+    { // residentialPerson C=GB,CN=Margaret Thatcher
+        const arg = createAddEntryArgument([
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String("Margaret Thatcher", DER),
+                ),
+            ],
+        ], [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.person["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.residentialPerson["&id"]!, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                selat.commonName["&id"]!,
+                [_encodeUTF8String("Margaret Thatcher", DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.surname["&id"]!,
+                [_encodeUTF8String("Thatcher", DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.localityName["&id"]!,
+                [_encodeUTF8String("London", DER)],
+                undefined,
+            ),
+        ]);
+        await idempotentAddEntry(ctx, conn, "C=GB,CN=Margaret Thatcher", arg);
+    }
+
+    { // residentialPerson C=GB,CN=Prince Harry
+        const arg = createAddEntryArgument([
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String("Prince Harry", DER),
+                ),
+            ],
+        ], [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.person["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.residentialPerson["&id"]!, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                selat.commonName["&id"]!,
+                [_encodeUTF8String("Prince Harry", DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.surname["&id"]!,
+                [_encodeUTF8String("Harry", DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.localityName["&id"]!,
+                [_encodeUTF8String("Essex", DER)],
+                undefined,
+            ),
+        ]);
+        await idempotentAddEntry(ctx, conn, "C=GB,CN=Prince Harry", arg);
+    }
+
+    { // device C=GB,CN=Prince Harry,CN=Cracked Screen iPhone 3
+        const arg = createAddEntryArgument([
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String("Prince Harry", DER),
+                ),
+            ],
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String("Cracked Screen iPhone 3", DER),
+                ),
+            ],
+        ], [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.device["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.child["&id"]!, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                selat.commonName["&id"]!,
+                [_encodeUTF8String("Cracked Screen iPhone 3", DER)],
+                undefined,
+            ),
+        ]);
+        await idempotentAddEntry(ctx, conn, "C=GB,CN=Prince Harry,CN=Cracked Screen iPhone 3", arg);
+    }
+
+    { // device C=GB,CN=Prince Harry,CN=VCR in the kill room
+        const arg = createAddEntryArgument([
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String("Prince Harry", DER),
+                ),
+            ],
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String("VCR in the kill room", DER),
+                ),
+            ],
+        ], [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.device["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.child["&id"]!, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                selat.commonName["&id"]!,
+                [_encodeUTF8String("VCR in the kill room", DER)],
+                undefined,
+            ),
+        ]);
+        await idempotentAddEntry(ctx, conn, "C=GB,CN=Prince Harry,CN=VCR in the kill room", arg);
+    }
+
+    { // residentialPerson C=GB,CN=Megan Markle+SN=Markle
+        const arg = createAddEntryArgument([
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String("Megan Markle", DER),
+                ),
+                new AttributeTypeAndValue(
+                    selat.surname["&id"]!,
+                    _encodeUTF8String("Markle", DER),
+                ),
+            ],
+        ], [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.person["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.organizationalPerson["&id"]!, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                selat.commonName["&id"]!,
+                [_encodeUTF8String("Megan Markle", DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.surname["&id"]!,
+                [_encodeUTF8String("Markle", DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.localityName["&id"]!,
+                [_encodeUTF8String("Essex", DER)],
+                undefined,
+            ),
+        ]);
+        await idempotentAddEntry(ctx, conn, "C=GB,CN=Megan Markle+SN=Markle", arg);
+    }
+
+    { // person C=GB,L=London,CN=Sadiq Khan
+        const arg = createAddEntryArgument([
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.localityName["&id"]!,
+                    _encodeUTF8String("London", DER),
+                ),
+            ],
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String("Sadiq Khan", DER),
+                ),
+            ],
+        ], [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.person["&id"]!, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                selat.commonName["&id"]!,
+                [_encodeUTF8String("Sadiq Khan", DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.surname["&id"]!,
+                [_encodeUTF8String("Khan", DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.hierarchyParent["&id"]!,
+                [_encode_DistinguishedName([
+                    ...baseObject,
+                    [
+                        new AttributeTypeAndValue(
+                            selat.commonName["&id"]!,
+                            _encodeUTF8String("Margaret Thatcher", DER),
+                        ),
+                    ],
+                ], DER)],
+                undefined,
+            ),
+        ]);
+        await idempotentAddEntry(ctx, conn, "C=GB,L=London,CN=Sadiq Khan", arg);
+    }
+}
+
+export default seedGB;

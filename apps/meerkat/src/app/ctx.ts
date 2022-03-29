@@ -298,6 +298,7 @@ const ctx: MeerkatContext = {
             minAuthLocalQualifier: process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING
                 ? Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING, 10)
                 : 0,
+            tlsOptional: (process.env.MEERKAT_CHAINING_TLS_OPTIONAL === "1"),
         },
         sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
         administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,

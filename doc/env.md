@@ -65,6 +65,18 @@ still being set up.
 This is an open-ended string that specifies the client certificate engine that
 OpenSSL can use to obtain a client certificate.
 
+## MEERKAT_CHAINING_TLS_OPTIONAL
+
+If set to `1`, this permits the non-usage of TLS in chaining to other DSAs. In
+other words, if this is set to `1`, this DSA will still chain operations to
+other DSAs after attempting to use StartTLS, regardless of whether StartTLS
+succeeds.
+
+If this is enabled, transported operations, data, errors, responses,
+credentials, etc. are susceptible to inspection by intermediaries, which is a
+security problem. These operations may not be susceptible to tampering (other
+than by omission) if cryptographic signing is used.
+
 ## MEERKAT_DANGEROUSLY_ENABLE_DOP
 
 If set to `1`, this enables Directory Operational Binding Management Protocol

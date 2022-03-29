@@ -1331,6 +1331,19 @@ interface Configuration {
          */
         minAuthLocalQualifier: number;
 
+        /**
+         * Whether non-usage of TLS in chaining to other DSAs is permissible. In
+         * other words, if this is set to `true`, this DSA will still chain operations to
+         * other DSAs after attempting to use StartTLS, regardless of whether StartTLS
+         * succeeds.
+         *
+         * If this is enabled, transported operations, data, errors, responses,
+         * credentials, etc. are susceptible to inspection by intermediaries, which is a
+         * security problem. These operations may not be susceptible to tampering (other
+         * than by omission) if cryptographic signing is used.
+         */
+        tlsOptional: boolean;
+
     };
 
     /**
