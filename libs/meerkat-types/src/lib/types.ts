@@ -1748,6 +1748,9 @@ interface ErrorStatistics {
     matchedNameLength?: number;
     candidate?: ContinuationReferenceStatistics;
     attributeInfo?: IndexableOID[];
+    bindingType?: IndexableOID;
+    retryAt?: DateString;
+    newAgreementProposed?: boolean;
 }
 
 export

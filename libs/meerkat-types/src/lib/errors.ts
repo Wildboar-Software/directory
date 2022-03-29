@@ -99,6 +99,10 @@ abstract class DirectoryError extends Error {
     /** A function for retrieving the error code */
     public abstract getErrCode (): Code;
 
+    constructor(message: string) {
+        super(message);
+    }
+
 }
 
 /**
@@ -114,6 +118,10 @@ abstract class DirectoryError extends Error {
  */
 export
 abstract class TransportError extends Error {
+
+    constructor(message?: string) {
+        super(message);
+    }
 
 }
 
@@ -432,7 +440,10 @@ class OperationalBindingError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: typeof operationalBindingError["&ParameterType"]) {
+    constructor (
+        readonly message: string,
+        readonly data: typeof operationalBindingError["&ParameterType"],
+    ) {
         super(message);
         Object.setPrototypeOf(this, OperationalBindingError.prototype);
     }

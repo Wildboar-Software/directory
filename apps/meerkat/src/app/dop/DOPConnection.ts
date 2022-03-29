@@ -1,14 +1,7 @@
 import {
     ClientAssociation,
     OperationStatistics,
-    AbandonError,
-    AbandonFailedError,
-    AttributeError,
-    NameError,
-    ReferralError,
     SecurityError,
-    ServiceError,
-    UpdateError,
     UnknownOperationError,
     MistypedPDUError,
     DSABindError,
@@ -34,17 +27,13 @@ import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { _encode_AbandonedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
-import { _encode_AbandonFailedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonFailedData.ta";
-import { _encode_AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
-import { _encode_NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
-import { _encode_ReferralData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReferralData.ta";
 import {
     SecurityErrorData,
     _encode_SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import { _encode_ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import { _encode_UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import {
     IdmReject_reason_duplicateInvokeIDRequest,
     IdmReject_reason_unsupportedOperationRequest,
@@ -107,6 +96,7 @@ import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 /**
  * @summary The handles a request, but not errors
@@ -332,48 +322,18 @@ async function handleRequestAndErrors (
         if (e instanceof Error) {
             stats.outcome.error.stack = e.stack;
         }
-        if (e instanceof errors.ChainedError) {
-            if (!e.errcode || !e.error) {
-                assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
-            } else {
-                stats.outcome.error.code = codeToString(e.errcode);
-                assn.idm.writeError(
-                    request.invokeID,
-                    _encode_Code(e.errcode, DER),
-                    e.error,
-                );
-            }
-        } else if (e instanceof AbandonError) {
-            const code = _encode_Code(AbandonError.errcode, DER);
-            const data = _encode_AbandonedData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof AbandonFailedError) {
-            const code = _encode_Code(AbandonFailedError.errcode, DER);
-            const data = _encode_AbandonFailedData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof AttributeError) {
-            const code = _encode_Code(AttributeError.errcode, DER);
-            const data = _encode_AttributeErrorData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof NameError) {
-            const code = _encode_Code(NameError.errcode, DER);
-            const data = _encode_NameErrorData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof ReferralError) {
-            const code = _encode_Code(ReferralError.errcode, DER);
-            const data = _encode_ReferralData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
+        if (e instanceof errors.OperationalBindingError) {
+            const code = _encode_Code(SecurityError.errcode, DER);
+            const param = operationalBindingError.encoderFor["&ParameterType"]!(e.data, DER);
+            assn.idm.writeError(request.invokeID, code, param);
+            const data = getOptionallyProtectedValue(e.data);
+            stats.outcome.error.problem = data.problem;
+            stats.outcome.error.bindingType = data.bindingType?.toString();
+            stats.outcome.error.retryAt = data.retryAt?.toString();
+            stats.outcome.error.newAgreementProposed = Boolean(data.agreementProposal);
         } else if (e instanceof SecurityError) {
             const code = _encode_Code(SecurityError.errcode, DER);
             const data = _encode_SecurityErrorData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof ServiceError) {
-            const code = _encode_Code(ServiceError.errcode, DER);
-            const data = _encode_ServiceErrorData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
-        } else if (e instanceof UpdateError) {
-            const code = _encode_Code(UpdateError.errcode, DER);
-            const data = _encode_UpdateErrorData(e.data, DER);
             assn.idm.writeError(request.invokeID, code, data);
         } else if (e instanceof UnknownOperationError) {
             assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
