@@ -394,6 +394,9 @@ async function establishOperationalBinding (
                     supply_contexts: null,
                     requested_time: new Date(),
                 },
+                select: {
+                    uuid: true,
+                },
             });
             const approved: boolean = await getApproval(created.uuid);
             if (!approved) {
@@ -419,26 +422,50 @@ async function establishOperationalBinding (
                     },
                 );
             }
-            const reply = await becomeSubordinate(ctx, data.accessPoint, agreement, init);
-            return {
-                unsigned: new EstablishOperationalBindingResultData(
-                    data.bindingType,
-                    bindingID,
-                    ctx.dsa.accessPoint,
-                    {
-                        roleB_replies: _encode_SubordinateToSuperior(reply, DER),
-                    },
-                    [],
-                    createSecurityParameters(
-                        ctx,
+            try {
+                const reply = await becomeSubordinate(ctx, data.accessPoint, agreement, init);
+                return {
+                    unsigned: new EstablishOperationalBindingResultData(
+                        data.bindingType,
+                        bindingID,
+                        ctx.dsa.accessPoint,
+                        {
+                            roleB_replies: _encode_SubordinateToSuperior(reply, DER),
+                        },
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            undefined,
+                            id_op_establishOperationalBinding,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
                         undefined,
-                        id_op_establishOperationalBinding,
+                        undefined,
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            };
+                };
+            } catch (e) {
+                if (e instanceof errors.OperationalBindingError) {
+                    ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: created.uuid,
+                        },
+                        data: {
+                            accepted: false,
+                            last_ob_problem: getOptionallyProtectedValue(e.data).problem,
+                        },
+                    }).then().catch();
+                } else {
+                    ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: created.uuid,
+                        },
+                        data: {
+                            accepted: false,
+                        },
+                    }).then().catch();
+                }
+                throw e;
+            }
         } else if ("roleB_initiates" in data.initiator) {
             throw NOT_SUPPORTED_ERROR;
             // TODO: Get approval.

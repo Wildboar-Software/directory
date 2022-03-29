@@ -333,17 +333,39 @@ async function establishSubordinate (
     const timeRemainingForOperation: number | undefined = timeoutTime
         ? differenceInMilliseconds(timeoutTime, new Date())
         : undefined;
-    const response = await assn.writeOperation({
-        opCode: establishOperationalBinding["&operationCode"]!,
-        argument: _encode_EstablishOperationalBindingArgument(arg, DER),
-    }, {
-        timeLimitInMilliseconds: timeRemainingForOperation,
-    });
-    assn.close();
-    return {
-        arg,
-        response,
-    };
+
+    try {
+        const response = await assn.writeOperation({
+            opCode: establishOperationalBinding["&operationCode"]!,
+            argument: _encode_EstablishOperationalBindingArgument(arg, DER),
+        }, {
+            timeLimitInMilliseconds: timeRemainingForOperation,
+        });
+        assn.close(); // INTENTIONAL_NO_AWAIT
+        return {
+            arg,
+            response,
+        };
+    } catch (e) {
+        throw new ServiceError(
+            ctx.i18n.t("err:failed_to_establish_hob", {
+                etype: e?.prototype?.name,
+                e,
+            }),
+            new ServiceErrorData(
+                ServiceProblem_unavailable,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    serviceError["&errorCode"]
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+            ),
+        );
+    }
 }
 
 export default establishSubordinate;

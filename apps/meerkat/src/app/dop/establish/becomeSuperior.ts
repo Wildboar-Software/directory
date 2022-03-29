@@ -64,6 +64,16 @@ import saveAccessPoint from "../../database/saveAccessPoint";
 import type {
     InvokeId,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import DOPAssociation from "../DOPConnection";
+import {
+    ServiceProblem_unwillingToPerform,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import {
+    ServiceErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 
 /**
  * @summary Create a new subr reference, thereby becoming a superior DSA
@@ -117,27 +127,47 @@ async function becomeSuperior (
         );
     }
     if (superior.dse.shadow || superior.dse.subentry || superior.dse.alias) {
-        throw new errors.OperationalBindingError(
-            ctx.i18n.t("err:parent_dse_not_permissible"),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_roleAssignment,
-                    undefined,
-                    undefined,
-                    undefined,
+        if (assn instanceof DOPAssociation) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:parent_dse_not_permissible"),
+                {
+                    unsigned: new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_roleAssignment,
+                        undefined,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            operationalBindingError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                },
+            );
+        } else {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:parent_dse_not_permissible"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
                     [],
                     createSecurityParameters(
                         ctx,
                         assn.boundNameAndUID?.dn,
                         undefined,
-                        operationalBindingError["&errorCode"],
+                        serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
                 ),
-            },
-        );
+            );
+        }
+
     }
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
     const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);

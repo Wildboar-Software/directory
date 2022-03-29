@@ -157,5 +157,6 @@
     "error_converting_entry_to_ldap": "Error converting entry to an LDAP SearchResultEntry: {{e}}",
     "received_malformed_dop_response": "Received a malformed DOP response.",
     "no_binding_id_assigned": "DOP responder returned no assigned binding ID.",
-    "could_not_find_new_subr": "Could not locate the subordinate reference DSE that was just created locally."
+    "could_not_find_new_subr": "Could not locate the subordinate reference DSE that was just created locally.",
+    "failed_to_establish_hob": "Failed to establish HOB with {{etype}}: {{e}}"
 }

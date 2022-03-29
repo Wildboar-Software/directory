@@ -1170,7 +1170,6 @@ async function addEntry (
                 accepted: true,
                 outbound: true,
                 binding_type: hierarchicalOperationalBinding["&id"]!.toString(),
-                // FIXME: Can you really assert this is non-null?
                 binding_identifier: Number(resultData.bindingID.identifier),
                 binding_version: (resultData.bindingID.version !== undefined)
                     ? Number(resultData.bindingID.version)
@@ -1195,13 +1194,25 @@ async function addEntry (
                 uuid: true,
             },
         });
-        await becomeSuperior(
-            ctx,
-            assn,
-            obResponse.invokeId,
-            agreement,
-            sub2sup,
-        );
+        try {
+            await becomeSuperior(
+                ctx,
+                assn,
+                obResponse.invokeId,
+                agreement,
+                sub2sup,
+            );
+        } catch (e) {
+            ctx.db.operationalBinding.update({
+                where: {
+                    uuid: createdOB.uuid,
+                },
+                data: {
+                    accepted: false,
+                },
+            }).then().catch();
+            throw e;
+        }
         /**
          * Yes, it is kind of wasteful to query for this entry by RDN
          * instead of merely returning its ID from `becomeSuperior`, but
@@ -1212,6 +1223,14 @@ async function addEntry (
          */
         const createdSubrId = await rdnToID(ctx, immediateSuperior.dse.id, rdn);
         if (createdSubrId === undefined) {
+            ctx.db.operationalBinding.update({
+                where: {
+                    uuid: createdOB.uuid,
+                },
+                data: {
+                    accepted: false,
+                },
+            }).then().catch();
             throw new errors.UnknownError(ctx.i18n.t("err:could_not_find_new_subr"));
         }
         await ctx.db.operationalBinding.update({

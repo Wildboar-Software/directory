@@ -490,6 +490,10 @@ async function modifyOperationalBinding (
                 : undefined,
             requested_time: new Date(),
         },
+        select: {
+            id: true,
+            uuid: true,
+        },
     });
 
     if (data.bindingType.isEqualTo(id_op_binding_hierarchical)) {
