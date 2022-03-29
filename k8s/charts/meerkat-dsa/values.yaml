@@ -109,13 +109,17 @@ localQualifierPointsFor:
 chaining:
   minAuthLevel: 1
   minAuthLocalQualifier: 32
+  tlsOptional: false
+  prohibited: true
+ob:
+  minAuthLevel: 1
+  minAuthLocalQualifier: 32
+  autoAccept: false
 sentinelDomain: sentinel.meerkat.wildboar.software
 # administratorEmail: example@example.com
 bulkInsertMode: false
 bindMinSleepInMilliseconds: 100
 bindSleepRangeInMilliseconds: 500
-minAuthLevelForOperationalBinding: 1
-minAuthLocalQualifierForOperationalBinding: 32
 myAccessPointNSAPs: []
   # Example values:
   # - idm://dsa01.demo.meerkat.wildboar.software:4632
@@ -123,7 +127,6 @@ myAccessPointNSAPs: []
   # - ldap://dsa01.demo.meerkat.wildboar.software:389
   # - ldaps://dsa01.demo.meerkat.wildboar.software:636
 useDatabaseWhenThereAreXSubordinates: 1000
-prohibitChaining: false
 entriesPerSubordinatesPage: 100
 transcodeValuesToDER: true
 transcodeDistinguishedValuesToDER: true

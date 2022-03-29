@@ -99,6 +99,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: tls.clientCertEngine
                   optional: true
+            - name: MEERKAT_CHAINING_TLS_OPTIONAL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: chaining.tlsOptional
+                  optional: true
             - name: MEERKAT_DANGEROUSLY_ENABLE_DOP
               valueFrom:
                 configMapKeyRef:
@@ -297,7 +303,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: minAuthLevelForOperationalBinding
+                  key: ob.minAuthLevel
                   optional: true
             - name: MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING
               valueFrom:
@@ -309,7 +315,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: minAuthLocalQualifierForOperationalBinding
+                  key: ob.minAuthLocalQualifier
                   optional: true
             - name: MEERKAT_MIN_TRANSFER_SPEED_BYTES_PER_MINUTE
               valueFrom:
@@ -341,6 +347,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: log.noTimestamp
                   optional: true
+            - name: MEERKAT_OB_AUTO_ACCEPT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: ob.autoAccept
+                  optional: true
             - name: MEERKAT_OPEN_TOP_LEVEL
               valueFrom:
                 configMapKeyRef:
@@ -357,7 +369,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: prohibitChaining
+                  key: chaining.prohibited
                   optional: true
             - name: MEERKAT_SENTINEL_DOMAIN
               valueFrom:

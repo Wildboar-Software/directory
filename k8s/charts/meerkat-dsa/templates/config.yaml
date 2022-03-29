@@ -104,6 +104,8 @@ data:
   localQualifierPointsFor.usingTLSv1_3: {{ .Values.localQualifierPointsFor.usingTLSv1_3 | default 128 | quote }}
   chaining.minAuthLevel: {{ .Values.chaining.minAuthLevel | quote }}
   chaining.minAuthLocalQualifier: {{ .Values.chaining.minAuthLocalQualifier | quote }}
+  chaining.prohibited: {{ .Values.chaining.prohibited | ternary 1 0 | quote }}
+  chaining.tlsOptional: {{ .Values.chaining.tlsOptional | ternary 1 0 | quote }}
   {{- if .Values.sentinelDomain }}
   sentinelDomain: {{ .Values.sentinelDomain }}
   {{- end }}
@@ -113,15 +115,15 @@ data:
   bulkInsertMode: {{ .Values.bulkInsertMode | ternary 1 0 | quote }}
   bindMinSleepInMilliseconds: {{ .Values.bindMinSleepInMilliseconds | default 1000 | quote }}
   bindSleepRangeInMilliseconds: {{ .Values.bindSleepRangeInMilliseconds | default 3000 | quote }}
-  minAuthLevelForOperationalBinding: {{ .Values.minAuthLevelForOperationalBinding | quote }}
-  minAuthLocalQualifierForOperationalBinding: {{ .Values.minAuthLocalQualifierForOperationalBinding | quote }}
+  ob.minAuthLevel: {{ .Values.ob.minAuthLevel | quote }}
+  ob.minAuthLocalQualifier: {{ .Values.ob.minAuthLocalQualifier | quote }}
+  ob.autoAccept: {{ .Values.ob.autoAccept | ternary 1 0 | quote }}
   {{- if .Values.myAccessPointNSAPs }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
   myAccessPointNSAPs: {{ join " " .Values.myAccessPointNSAPs }}
   {{- end }}
   useDatabaseWhenThereAreXSubordinates: {{ .Values.useDatabaseWhenThereAreXSubordinates | default 1000 | quote }}
-  prohibitChaining: {{ .Values.prohibitChaining | ternary 1 0 | quote }}
   entriesPerSubordinatesPage: {{ .Values.entriesPerSubordinatesPage | default 100 | quote }}
   transcodeValuesToDER: {{ .Values.transcodeValuesToDER | ternary 1 0 | quote }}
   transcodeDistinguishedValuesToDER: {{ .Values.transcodeDistinguishedValuesToDER | ternary 1 0 | quote }}
