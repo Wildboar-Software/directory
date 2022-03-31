@@ -3261,7 +3261,25 @@ async function modifyEntry (
                 targetDN.slice(0, -1),
                 target.immediateSuperior,
                 state.chainingArguments.aliasDereferenced ?? false,
-            ); // INTENTIONAL_NO_AWAIT
+            ) // INTENTIONAL_NO_AWAIT
+                .then(() => {
+                    ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
+                    });
+                })
+                .catch((e) => {
+                    ctx.log.error(ctx.i18n.t("log:failed_to_update_superior_dsa", { e }), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
+                    });
+                });
         }
     }
 

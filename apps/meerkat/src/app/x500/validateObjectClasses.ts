@@ -60,7 +60,6 @@ function validateObjectClasses (
     }
     const chain = getAncestorObjectClasses(ctx, soc);
     const chainIndex: Set<IndexableOID> = new Set(chain);
-    chainIndex.add(soc);
     for (const structuralMember of chain) {
         const MEMBER: string = structuralMember.toString();
         if (!structural.has(MEMBER) && !abstract_.has(MEMBER)) {

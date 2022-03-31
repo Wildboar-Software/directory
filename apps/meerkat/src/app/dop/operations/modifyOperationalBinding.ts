@@ -135,7 +135,8 @@ async function modifyOperationalBinding (
 ): Promise<ModifyOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
-    ctx.log.info(ctx.i18n.t("log:ob_modifying", {
+    ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
+        context: "started",
         type: data.bindingType.toString(),
         bid: data.bindingID?.identifier.toString(),
         aid: assn.id,
@@ -182,67 +183,43 @@ async function modifyOperationalBinding (
         },
     );
 
-    /**
-     * We first identify all of the access points that correspond to the socket
-     * that originated this request. These access points are used to filter out
-     * the operational bindings that the remote DSA may modify, terminate, or
-     * even know about. (Otherwise, a rogue DSA would be able to modify the
-     * operational bindings of other DSAs.)
-     */
-    const permittedAPs = (await ctx.db.accessPoint.findMany({
-        where: {
-            knowledge_type: Knowledge.OB_REQUEST,
-            active: true,
-        },
-    }))
-        .filter((ap) => {
-            const el = new BERElement();
-            el.fromBytes(ap.ber);
-            // This is a simpler way to get the address out of the AP type.
-            const address = el.set.find((component) => (component.tagNumber === 1));
-            if (!address) {
-                return false;
-            }
-            const pa = _decode_PresentationAddress(address.inner);
-            return pa.nAddresses.some((naddr) => compareSocketToNSAP(assn.idm.s, naddr));
-        })
-        .map((ap) => ap.id);
-
-    if (permittedAPs.length === 0) {
-        throw new errors.OperationalBindingError(
-            ctx.i18n.t("err:no_ob_with_id", {
-                id: data.bindingID.identifier,
-            }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidID,
-                    data.bindingType,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            },
-        );
+    if (data.bindingID.identifier != data.newBindingID.identifier) {
+        // Throw OpBindingErrorParam_problem_invalidNewID
     }
 
-    const opBinding = await ctx.db.operationalBinding.findFirst({
+    const now = new Date();
+    const opBinding = (await ctx.db.operationalBinding.findMany({
+        // We only want the most recent operational binding.
+        // This should be taken care of by the `where.next_version` below, but
+        // this is extra assurance that we get the right one.
+        orderBy: {
+            requested_time: "desc",
+        },
         where: {
+            /**
+             * This is a hack for getting the latest version: we are selecting
+             * operational bindings that have no next version.
+             */
+            next_version: {
+                none: {},
+            },
+            accepted: true,
+            binding_type: data.bindingType.toString(),
             binding_identifier: Number(data.bindingID.identifier),
-            binding_type: {
-                equals: data.bindingType.toString(),
+            terminated_time: null,
+            validity_start: {
+                lte: now,
             },
-            access_point_id: {
-                in: permittedAPs,
-            },
+            OR: [
+                {
+                    validity_end: null,
+                },
+                {
+                    validity_end: {
+                        gte: now,
+                    },
+                },
+            ],
         },
         select: {
             id: true,
@@ -252,8 +229,27 @@ async function modifyOperationalBinding (
             initiator: true,
             initiator_ber: true,
             agreement_ber: true,
+            access_point: {
+                select: {
+                    ber: true,
+                },
+            },
         },
-    });
+    }))
+        .find((ob) => {
+            if (!ob.access_point) {
+                return false;
+            }
+            const el = new BERElement();
+            el.fromBytes(ob.access_point.ber);
+            // This is a simpler way to get the address out of the AP type.
+            const address = el.set.find((component) => (component.tagNumber === 1));
+            if (!address) {
+                return false;
+            }
+            const pa = _decode_PresentationAddress(address.inner);
+            return pa.nAddresses.some((naddr) => compareSocketToNSAP(assn.idm.s, naddr));
+        });
 
     if (!opBinding) {
         throw new errors.OperationalBindingError(
@@ -282,6 +278,14 @@ async function modifyOperationalBinding (
     }
 
     const approved: boolean = await getApproval(opBinding.uuid);
+    await ctx.db.operationalBinding.update({
+        where: {
+            uuid: opBinding.uuid,
+        },
+        data: {
+            accepted: approved,
+        },
+    });
     if (!approved) {
         throw new errors.OperationalBindingError(
             ctx.i18n.t("err:ob_rejected"),
@@ -306,7 +310,6 @@ async function modifyOperationalBinding (
         );
     }
 
-    const now = new Date();
     const alreadyTakenBindingID = !!(await ctx.db.operationalBinding.findFirst({
         where: {
             binding_type: id_op_binding_hierarchical.toString(),
@@ -348,9 +351,14 @@ async function modifyOperationalBinding (
         );
     }
 
-    if ((opBinding.binding_version ?? 1) >= data.newBindingID.version) {
+    const currentVersion = (opBinding.binding_version ?? -Infinity);
+    const proposedVersion = data.newBindingID.version;
+    if (currentVersion >= proposedVersion) {
         throw new OperationalBindingError(
-            ctx.i18n.t("err:ob_invalid_version"),
+            ctx.i18n.t("err:ob_invalid_version", {
+                proposed: proposedVersion,
+                current: currentVersion,
+            }),
             {
                 unsigned: new OpBindingErrorParam(
                     OpBindingErrorParam_problem_invalidNewID,
@@ -577,12 +585,36 @@ async function modifyOperationalBinding (
                 );
             }
             await updateContextPrefix(ctx, created.uuid, newAgreement, init);
+            ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
+                context: "succeeded",
+                type: data.bindingType.toString(),
+                bid: data.bindingID?.identifier.toString(),
+                aid: assn.id,
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+                invokeID: printInvokeId(invokeId),
+            });
             return {
                 null_: null,
             };
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
             await updateLocalSubr(ctx, assn, invokeId, oldAgreement, newAgreement, init);
+            ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
+                context: "succeeded",
+                type: data.bindingType.toString(),
+                bid: data.bindingID?.identifier.toString(),
+                aid: assn.id,
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+                invokeID: printInvokeId(invokeId),
+            });
             return {
                 null_: null,
             };

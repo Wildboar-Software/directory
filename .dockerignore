@@ -1,0 +1,17 @@
+.vscode/
+data/
+# dist/
+doc/
+k8s/
+node_modules/
+pkg/
+scripts/
+snap/
+tmp/
+tools/
+.env
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

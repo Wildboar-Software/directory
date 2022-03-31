@@ -1,6 +1,14 @@
 import { Vertex, ServiceError, UpdateError } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, BERElement, ObjectIdentifier } from "asn1-ts";
+import {
+    ASN1Construction,
+    ASN1TagClass,
+    ASN1UniversalType,
+    DERElement,
+    BERElement,
+    ObjectIdentifier,
+    packBits,
+} from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import { connect, ConnectOptions } from "../net/connect";
 import type {
@@ -93,12 +101,47 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    operationalBindingError,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+import {
+    OpBindingErrorParam_problem_invalidNewID,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
+import { OperationalBindingInitiator } from "@prisma/client";
+import {
+    _encode_CertificationPath,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import { rdnToJson } from "../x500/rdnToJson";
+import type {
+    Code,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+import type {
+    SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { sleep } from "../utils/sleep";
+
+// TODO: Use printCode()
+function codeToString (code?: Code): string | undefined {
+    return (code
+        ? ("global" in code)
+            ? code.global.toString()
+            : ("local" in code)
+                ? code.local.toString()
+                : undefined
+        : undefined);
+}
+
+const updateTimingBackoffInSeconds: number[] = [ 1, 2 ];
 
 export
 interface UpdateSuperiorOptions extends ConnectOptions, WriteOperationOptions {
     endTime?: Date;
 }
 
+// TODO: This whole function can go in a separate thread in some cases.
 /**
  * @summary Update a superior DSA of changes made to the context prefix or its subentries, if present.
  * @description
@@ -130,7 +173,9 @@ async function updateSuperiorDSA (
     const timeoutTime: Date | undefined = connectionTimeout
         ? addMilliseconds(startTime, connectionTimeout)
         : undefined;
+    let noHOBS: boolean = true;
     const activeHOBs = await getRelevantOperationalBindings(ctx, false);
+    // TODO: Make these all update in parallel.
     for (const hob of activeHOBs) {
         if (!hob.access_point) {
             continue;
@@ -149,9 +194,20 @@ async function updateSuperiorDSA (
             hob.binding_identifier,
             hob.binding_version,
         );
+        // Beyond this point, this operational binding is definitely relevant
+        // to the `affectedDN`.
+        noHOBS = false;
+
+        let bindingVersion: number = Number(bindingID.version) + 1;
+        const newAgreement: HierarchicalAgreement = new HierarchicalAgreement(
+            newCP.dse.rdn,
+            agreement.immediateSuperior,
+        );
+
         const accessPointElement = new BERElement();
         accessPointElement.fromBytes(hob.access_point.ber);
         const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
+
         try {
             const subr = await dnToVertex(ctx, ctx.dit.root, agreementDN);
             if (!subr) {
@@ -270,38 +326,141 @@ async function updateSuperiorDSA (
                     ? subentryInfos
                     : undefined,
             );
-            const newBindingID = new OperationalBindingID(
-                bindingID.identifier,
-                Number(bindingID.version) + 1,
-            );
-            const newAgreement: HierarchicalAgreement = new HierarchicalAgreement(
-                newCP.dse.rdn,
-                agreement.immediateSuperior,
-            );
-            const arg: ModifyOperationalBindingArgument = {
+            const encodedNewAgreement = _encode_HierarchicalAgreement(newAgreement, DER);
+            const encodedSub2Sup = _encode_SubordinateToSuperior(sub2sup, DER);
+            const newOB = await ctx.db.operationalBinding.create({
+                data: {
+                    accepted: false,
+                    outbound: true,
+                    binding_type: id_op_binding_hierarchical.toString(),
+                    binding_identifier: Number(bindingID.identifier),
+                    binding_version: Number(bindingID.version) + 1,
+                    agreement_ber: Buffer.from(encodedNewAgreement.toBytes()),
+                    access_point: {
+                        connect: {
+                            id: hob.access_point.id,
+                        },
+                    },
+                    initiator: OperationalBindingInitiator.ROLE_B,
+                    initiator_ber: Buffer.from(encodedSub2Sup.toBytes()),
+                    validity_start: hob.validity_start,
+                    validity_end: hob.validity_end,
+                    new_context_prefix_rdn: rdnToJson(newCP.dse.rdn),
+                    immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
+                    // TODO: Add more source info once signing is implemented.
+                    requested_time: new Date(),
+                },
+                select: {
+                    id: true,
+                    uuid: true,
+                },
+            });
+            const createArg = (securityParameters: SecurityParameters): ModifyOperationalBindingArgument => ({
                 unsigned: new ModifyOperationalBindingArgumentData(
                     id_op_binding_hierarchical,
-                    bindingID,
+                    new OperationalBindingID(
+                        bindingID.identifier,
+                        Number(bindingID.version) + 1,
+                    ),
                     ctx.dsa.accessPoint,
                     {
-                        roleB_initiates: _encode_SubordinateToSuperior(sub2sup, DER),
+                        roleB_initiates: encodedSub2Sup,
                     },
-                    newBindingID,
-                    _encode_HierarchicalAgreement(newAgreement, DER),
-                    undefined, // Validity remains the same.
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
-                        modifyOperationalBinding["&operationCode"]!,
+                    new OperationalBindingID(
+                        bindingID.identifier,
+                        bindingVersion,
                     ),
+                    encodedNewAgreement,
+                    undefined, // Validity remains the same.
+                    securityParameters,
                 ),
-            };
-            return assn.writeOperation({
-                opCode: modifyOperationalBinding["&operationCode"]!,
-                argument: _encode_ModifyOperationalBindingArgument(arg, DER),
-            }, {
-                timeLimitInMilliseconds: timeRemainingForOperation,
             });
+            // A binary exponential backoff loop for retrying failed updates.
+            for (const backoff of updateTimingBackoffInSeconds) {
+                const sp = createSecurityParameters(
+                    ctx,
+                    accessPoint.ae_title.rdnSequence,
+                    modifyOperationalBinding["&operationCode"]!,
+                );
+                const arg = createArg(sp);
+                const response = await assn.writeOperation({
+                    opCode: modifyOperationalBinding["&operationCode"]!,
+                    argument: _encode_ModifyOperationalBindingArgument(arg, DER),
+                }, {
+                    timeLimitInMilliseconds: timeRemainingForOperation,
+                });
+                if (("result" in response)) {
+                    await ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: newOB.uuid,
+                        },
+                        data: {
+                            accepted: true,
+                            binding_version: bindingVersion,
+                            /**
+                             * Previous is not set until the update succeeds,
+                             * because `getRelevantOperationalBindings`
+                             * determines which is the latest of all versions of
+                             * a given operational binding based on which
+                             * operational binding has no "previous"es that
+                             * point to it.
+                             */
+                            previous: {
+                                connect: {
+                                    id: hob.id,
+                                },
+                            },
+                            security_certification_path: sp?.certification_path
+                                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes())
+                                : undefined,
+                            security_name: accessPoint.ae_title.rdnSequence.map(rdnToJson),
+                            security_time: sp?.time
+                                ? getDateFromTime(sp.time)
+                                : undefined,
+                            security_random: sp?.random
+                                ? Buffer.from(packBits(sp.random))
+                                : undefined,
+                            security_target: (sp?.target !== undefined)
+                                ? Number(sp.target)
+                                : undefined,
+                            security_operationCode: codeToString(sp?.operationCode),
+                            security_errorProtection: (sp?.errorProtection !== undefined)
+                                ? Number(sp.errorProtection)
+                                : undefined,
+                        },
+                    });
+                    assn.close();
+                    return response;
+                } else if (("errcode" in response) && response.errcode) {
+                    if (compareCode(response.errcode, operationalBindingError["&errorCode"]!)) {
+                        const obError = operationalBindingError.decoderFor["&ParameterType"]!(response.error);
+                        const obErrorData = getOptionallyProtectedValue(obError);
+                        if (obErrorData.problem === OpBindingErrorParam_problem_invalidNewID) {
+                            ctx.log.warn(ctx.i18n.t("log:invalid_new_id"));
+                            bindingVersion++;
+                            await sleep(backoff * 1000);
+                            continue;
+                        } else {
+                            ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
+                                context: "oberror",
+                                problem: obErrorData.problem,
+                            }));
+                            break;
+                        }
+                    } else {
+                        ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
+                            context: "errcode",
+                            code: codeToString(response.errcode),
+                        }));
+                        break;
+                    }
+                } else {
+                    ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
+                        context: "nocode",
+                    }));
+                    break;
+                }
+            }
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
                 obid: bindingID.identifier.toString(),
@@ -309,10 +468,15 @@ async function updateSuperiorDSA (
                 e: e.message,
             }));
         }
-        break;
     }
     throw new UpdateError(
-        ctx.i18n.t("err:failed_to_update_superior_dsa"),
+        noHOBS
+            ? ctx.i18n.t("err:failed_to_update_superior_dsa", {
+                context: "no_hob",
+            })
+            : ctx.i18n.t("err:failed_to_update_superior_dsa", {
+                context: "failed",
+            }),
         new UpdateErrorData(
             UpdateProblem_affectsMultipleDSAs,
             undefined,

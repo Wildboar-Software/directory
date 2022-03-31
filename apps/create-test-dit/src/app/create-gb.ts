@@ -154,7 +154,7 @@ const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
     Array(9).fill(FALSE_BIT));
 // Necessary to make countries administrative points.
-serviceControlOptions[ServiceControlOptions_manageDSAIT] = TRUE_BIT;
+// serviceControlOptions[ServiceControlOptions_manageDSAIT] = TRUE_BIT;
 const serviceControls = new ServiceControls(
     serviceControlOptions,
     undefined,
@@ -477,7 +477,6 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     2,
                     nf.sOPNameForm["&id"],
-                    [1],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     3,
@@ -497,7 +496,7 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     6,
                     nf.deviceNameForm["&id"],
-                    [1, 2, 3, 4, 5, 8, 11],
+                    [1, 2, 3, 4, 5, 8, 9, 11, 12, 13],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     7,
@@ -831,6 +830,7 @@ async function idempotentAddEntry (
             process.exit(1);
         }
     }
+    ctx.log.info(`Added entry ${dnStr}.`);
 }
 
 const baseObject: DistinguishedName = [
@@ -848,13 +848,13 @@ async function seedGB (
     conn: Connection,
 ): Promise<void> {
     const subentries: [ (base: RDNSequence, cc: string) => AddEntryArgument, string ][] = [
-        [ addCollectiveAttributeSubentryArgument, "collective attributes" ],
-        [ addAccessControlSubentryArgument, "access control" ],
         [ addPasswordAdminSubentryArgument, "password administration" ],
+        [ addCollectiveAttributeSubentryArgument, "collective attributes" ],
         [ addSubschemaSubentryArgument, "subschema" ],
+        [ addAccessControlSubentryArgument, "access control" ],
     ];
     for (const [ createSubentryArg, subentryType ] of subentries) {
-        const createSubentry = createSubentryArg(baseObject, "GB");
+        const createSubentry = createSubentryArg([], "GB");
         const outcome = await conn.writeOperation({
             opCode: addEntry["&operationCode"],
             argument: _encode_AddEntryArgument(createSubentry, DER),
@@ -1067,10 +1067,6 @@ async function seedGB (
                     selat.commonName["&id"]!,
                     _encodeUTF8String("Megan Markle", DER),
                 ),
-                new AttributeTypeAndValue(
-                    selat.surname["&id"]!,
-                    _encodeUTF8String("Markle", DER),
-                ),
             ],
         ], [
             new Attribute(
@@ -1097,7 +1093,7 @@ async function seedGB (
                 undefined,
             ),
         ]);
-        await idempotentAddEntry(ctx, conn, "C=GB,CN=Megan Markle+SN=Markle", arg);
+        await idempotentAddEntry(ctx, conn, "C=GB,CN=Megan Markle", arg);
     }
 
     { // person C=GB,L=London,CN=Sadiq Khan

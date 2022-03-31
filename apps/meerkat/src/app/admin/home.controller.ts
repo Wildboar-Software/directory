@@ -53,6 +53,8 @@ export class HomeController {
                 select: {
                     uuid: true,
                     binding_type: true,
+                    binding_identifier: true,
+                    binding_version: true,
                     terminated_time: true,
                     accepted: true,
                     validity_start: true,
@@ -128,14 +130,14 @@ export class HomeController {
         @Param("id") id: string,
         @Res() res: Response,
     ) {
-        const result = await this.ctx.db.operationalBinding.update({
+        const result = await this.ctx.db.operationalBinding.findUnique({
             where: {
                 uuid: id,
             },
-            data: {
-                accepted: true,
-            },
         });
+        if (!result) {
+            throw new NotFoundException(id);
+        }
         this.ctx.telemetry.trackEvent({
             name: "OperationalBindingDecision",
             properties: {
@@ -182,14 +184,14 @@ export class HomeController {
         @Param("id") id: string,
         @Res() res: Response,
     ) {
-        const result = await this.ctx.db.operationalBinding.update({
+        const result = await this.ctx.db.operationalBinding.findUnique({
             where: {
                 uuid: id,
             },
-            data: {
-                accepted: false,
-            },
         });
+        if (!result) {
+            throw new NotFoundException(id);
+        }
         this.ctx.telemetry.trackEvent({
             name: "OperationalBindingDecision",
             properties: {
@@ -241,7 +243,6 @@ export class HomeController {
                 uuid: id,
             },
             data: {
-                accepted: null,
                 terminated_time: new Date(),
             },
         });

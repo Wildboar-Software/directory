@@ -22,7 +22,7 @@ async function do_modifyDN (
     conn: Connection,
     argv: any,
 ): Promise<void> {
-    const objectName: DistinguishedName = destringifyDN(ctx, argv.source);
+    const objectName: DistinguishedName = destringifyDN(ctx, argv.src);
     const newObjectName: DistinguishedName = destringifyDN(ctx, argv.dest);
     if (newObjectName.length === 0) {
         ctx.log.error("Root DSE (zero-length distinguished name) may not be a destination.");

@@ -22,6 +22,8 @@ import valuesFromAttribute from "../../x500/valuesFromAttribute";
  * @param entry The vertex to which attributes are to be added
  * @param attributes The attributes to be added to the entry
  * @param modifier The modifier of the entry
+ * @param checkForExisting Whether to check whether the values already exist and
+ *  throw an error if so
  * @returns An array of `PrismaPromise`s that will effectively add those
  *  attributes to the entry
  *
@@ -34,8 +36,9 @@ async function addAttributes (
     entry: Vertex,
     attributes: Attribute[],
     modifier?: DistinguishedName,
+    checkForExisting: boolean = true,
 ): Promise<PrismaPromise<any>[]> {
-    return addValues(ctx, entry, attributes.flatMap(valuesFromAttribute), modifier);
+    return addValues(ctx, entry, attributes.flatMap(valuesFromAttribute), modifier, checkForExisting);
 }
 
 export default addAttributes;

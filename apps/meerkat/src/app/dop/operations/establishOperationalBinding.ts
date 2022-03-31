@@ -115,7 +115,8 @@ async function establishOperationalBinding (
 ): Promise<EstablishOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: EstablishOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
-    ctx.log.info(ctx.i18n.t("log:ob_requesting", {
+    ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
+        context: "started",
         type: data.bindingType.toString(),
         bid: data.bindingID?.identifier.toString(),
         aid: assn.id,
@@ -406,6 +407,14 @@ async function establishOperationalBinding (
                 },
             });
             const approved: boolean = await getApproval(created.uuid);
+            await ctx.db.operationalBinding.update({
+                where: {
+                    uuid: created.uuid,
+                },
+                data: {
+                    accepted: approved,
+                },
+            });
             if (!approved) {
                 throw new errors.OperationalBindingError(
                     ctx.i18n.t("err:ob_rejected"),
@@ -431,6 +440,18 @@ async function establishOperationalBinding (
             }
             try {
                 const reply = await becomeSubordinate(ctx, data.accessPoint, agreement, init);
+                ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
+                    context: "succeeded",
+                    type: data.bindingType.toString(),
+                    bid: data.bindingID?.identifier.toString(),
+                    aid: assn.id,
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                    invokeID: printInvokeId({ present: invokeId }),
+                });
                 return {
                     unsigned: new EstablishOperationalBindingResultData(
                         data.bindingType,

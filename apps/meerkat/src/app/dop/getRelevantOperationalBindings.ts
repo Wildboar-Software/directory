@@ -22,6 +22,13 @@ function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boole
     const now = new Date();
     return ctx.db.operationalBinding.findMany({
         where: {
+            /**
+             * This is a hack for getting the latest version: we are selecting
+             * operational bindings that have no next version.
+             */
+            next_version: {
+                none: {},
+            },
             binding_type: id_op_binding_hierarchical.toString(),
             accepted: true,
             terminated_time: null,
@@ -56,11 +63,19 @@ function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boole
             ],
         },
         select: {
+            id: true,
             uuid: true,
             binding_identifier: true,
             binding_version: true,
-            access_point: true,
+            access_point: {
+                select: {
+                    id: true,
+                    ber: true,
+                },
+            },
             agreement_ber: true,
+            validity_start: true,
+            validity_end: true,
         },
     });
 }

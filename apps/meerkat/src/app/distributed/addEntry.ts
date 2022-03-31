@@ -1926,25 +1926,17 @@ async function addEntry (
     const schemaSubentry = isSubentry // Schema rules only apply to entries.
         ? undefined
         : await getSubschemaSubentry(ctx, immediateSuperior);
-    if (!isSubentry && schemaSubentry) { // Schema rules only apply to entries.
-        const newEntryIsANewSubschema = objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
+    if (!isExemptFromSubschema && schemaSubentry) { // Schema rules only apply to entries.
         assert(schemaSubentry.dse.subentry);
+        assert(immediateSuperior.dse.governingStructureRule !== undefined); // Checked above.
         const structuralRule = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
-            .filter((rule) => (
-                !rule.obsolete
-                && (
-                    (
-                        newEntryIsANewSubschema
-                        && (rule.superiorStructureRules === undefined)
-                    )
-                    || (
-                        !newEntryIsANewSubschema
-                        && (immediateSuperior.dse.governingStructureRule !== undefined)
-                        && rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule)
-                    )
-                )
-            ))
             .find((rule) => {
+                if (rule.obsolete) {
+                    return false;
+                }
+                if (!rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule!)) {
+                    return false;
+                }
                 const nf = ctx.nameForms.get(rule.nameForm.toString());
                 if (!nf) {
                     return false;
@@ -2349,12 +2341,30 @@ async function addEntry (
             // The specification does NOT say that you have to update the
             // superior's subentries for the new CP. Meerkat DSA does this
             // anyway, just without awaiting.
-            updateSuperiorDSA(
+            ctx.jobQueue.push(() => updateSuperiorDSA(
                 ctx,
                 targetDN.slice(0, -1),
                 immediateSuperior,
                 state.chainingArguments.aliasDereferenced ?? false,
-            ); // INTENTIONAL_NO_AWAIT
+            ) // INTENTIONAL_NO_AWAIT
+                .then(() => {
+                    ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
+                    });
+                })
+                .catch((e) => {
+                    ctx.log.error(ctx.i18n.t("log:failed_to_update_superior_dsa", { e }), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                        invokeID: printInvokeId(state.invokeId),
+                    });
+                }));
         }
     }
 

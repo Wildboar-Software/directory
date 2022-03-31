@@ -73,9 +73,9 @@ for instance in ${instances[@]}; do
     # Create one separate MySQL database for each DSA to be deployed.
     # See: https://artifacthub.io/packages/helm/bitnami/mysql
     helm install meerkat-db-$instance bitnami/mysql \
-        --debug \
         --set auth.existingSecret=mysql-db-$instance \
         --set auth.database=directory \
+        --atomic \
         --namespace=$namespace
 
 done
@@ -100,6 +100,7 @@ docker build \
     .
 
 # Publish the Docker image (requires being authenticated to Docker Hub)
+# See: https://stackoverflow.com/questions/48056365/error-get-https-registry-1-docker-io-v2-net-http-request-canceled-while-b
 docker push wildboarsoftware/meerkat-dsa:$PUBLISHING_MEERKAT_VERSION
 docker push wildboarsoftware/meerkat-dsa:latest
 
@@ -151,7 +152,6 @@ for instance in ${instances[@]}; do
     # Install the Meerkat DSA instance
     # TODO: Enable TLS
     helm install meerkat-dsa-$instance $chart_repo/$meerkat_chart \
-        --debug \
         --set fullnameOverride=meerkat-$instance \
         --set service.type=LoadBalancer \
         --set adminService.type=LoadBalancer \
@@ -160,16 +160,18 @@ for instance in ${instances[@]}; do
         --set chaining.minAuthLevel=0 \
         --set chaining.minAuthLocalQualifier=0 \
         --set chaining.tlsOptional=true \
+        --set chaining.prohibited=false \
         --set ob.minAuthLevel=0 \
         --set ob.minAuthLocalQualifier=0 \
         --set ob.autoAccept=true \
         --set databaseReset=true \
         --set dangerouslyExposeWebAdmin=true \
         --set databaseSecretName=meerkat-db-$instance \
+        --atomic \
         --namespace=$namespace
 
-    # We wait one minute for the public IPs to be available.
-    sleep 60
+    # We wait for the public IPs to be available.
+    sleep 30
 
     DIRECTORY_SERVICE_IP=$(kubectl get svc --namespace $namespace meerkat-$instance-directory --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
     WEB_ADMIN_SERVICE_IP=$(kubectl get svc --namespace $namespace meerkat-$instance-web-admin --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")

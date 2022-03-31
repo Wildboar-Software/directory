@@ -2343,6 +2343,21 @@ interface Context {
      * object identifier shall be used exclusively to identify it.
      */
     duplicatedLDAPNames: Set<IndexableOID>;
+
+    /**
+     * A set of operational binding UUIDs which are locked from modification by
+     * other operations. This exists so that only one operation modifies an
+     * operational binding at a time. This must be done because you cannot
+     * re-use version numbers, so concurrent "threads" need to coordinate to
+     * ensure they do not submit duplicate versions to the other DSA.
+     *
+     * Idea: instead this could be an EventEmitter. If there are no listeners
+     * for that UUID. Start with the operation. At the end of the operation,
+     * emit that UUID. If any listeners attached since then, they will execute.
+     */
+    // doneModifyingOperationalBinding: Map<UUID, null | ((lastVersion: number) => Promise<any>)>;
+
+    jobQueue: ((...args: any[]) => Promise<any>)[];
 }
 
 /**

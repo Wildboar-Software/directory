@@ -218,7 +218,7 @@ async function updateLocalSubr (
                 },
             }),
             ...deletions,
-            ...await addAttributes(ctx, oldSubordinate, sub2sup.entryInfo),
+            ...await addAttributes(ctx, oldSubordinate, sub2sup.entryInfo, undefined, false),
         ]);
     }
 
@@ -248,7 +248,7 @@ async function updateLocalSubr (
                     },
                 }),
                 ...deletions,
-                ...await addAttributes(ctx, existingSubentry, subentry.info),
+                ...await addAttributes(ctx, existingSubentry, subentry.info, undefined, false),
             ]);
         }
     }

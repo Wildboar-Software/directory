@@ -1,6 +1,6 @@
 import type { Context } from "./types";
 import * as winston from "winston";
-import isDebugging from "is-debugging";
+// import isDebugging from "is-debugging";
 
 const winstonLogFormats: winston.Logform.Format[] = [];
 if (!process.env["NO_COLOR"]) {
@@ -12,9 +12,7 @@ winstonLogFormats.push(winston.format.printf(info => `${info["timestamp"]} [${in
 
 const ctx: Context = {
     log: winston.createLogger({
-        level: isDebugging
-            ? "debug"
-            : "info",
+        level: "debug",
         format: winston.format.combine(...winstonLogFormats),
         transports: [
             new winston.transports.Console(),

@@ -62,7 +62,8 @@ async function terminateOperationalBinding (
     arg: TerminateOperationalBindingArgument,
 ): Promise<TerminateOperationalBindingResult> {
     const data: TerminateOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
-    ctx.log.info(ctx.i18n.t("log:ob_terminating", {
+    ctx.log.info(ctx.i18n.t("log:terminateOperationalBinding", {
+        context: "started",
         type: data.bindingType.toString(),
         bid: data.bindingID?.identifier.toString(),
         aid: assn.id,
@@ -188,6 +189,18 @@ async function terminateOperationalBinding (
                 data: {
                     terminated_time: terminationTime,
                 },
+            });
+            ctx.log.info(ctx.i18n.t("log:terminateOperationalBinding", {
+                context: "succeeded",
+                type: data.bindingType.toString(),
+                bid: data.bindingID?.identifier.toString(),
+                aid: assn.id,
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+                invokeID: printInvokeId(invokeId),
             });
             return {
                 null_: null,

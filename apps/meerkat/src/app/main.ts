@@ -946,4 +946,13 @@ async function main (): Promise<void> {
     });
 
     ctx.log.warn(ctx.i18n.t("log:beta"));
+
+    // This is done here to handle concurrency.
+    setInterval(async () => {
+        let job = ctx.jobQueue.shift();
+        while (job) {
+            await job();
+            job = ctx.jobQueue.shift();
+        }
+    }, 5000);
 }

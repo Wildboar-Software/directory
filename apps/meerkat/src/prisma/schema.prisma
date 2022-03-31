@@ -739,7 +739,7 @@ model OperationalBinding {
   last_ob_problem     Int?      @db.SmallInt
   last_shadow_problem Int?      @db.SmallInt
 
-  OperationalBinding OperationalBinding[] @relation("previous")
+  next_version OperationalBinding[] @relation("previous")
   @@unique([uuid])
   @@unique([binding_type, binding_identifier, binding_version, terminated_time])
   @@index([validity_end, validity_start])

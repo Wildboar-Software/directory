@@ -1,5 +1,5 @@
 import type { Connection, Context } from "../../types";
-import { ObjectIdentifier, TRUE } from "asn1-ts";
+import { BIT_STRING, ObjectIdentifier, TRUE, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     search,
@@ -32,6 +32,20 @@ import selectAll from "../../utils/selectAll";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+import {
+    SearchControlOptions_searchAliases,
+    SearchControlOptions_matchedValuesOnly,
+    SearchControlOptions_checkOverspecified,
+    SearchControlOptions_performExactly,
+    SearchControlOptions_includeAllAreas,
+    SearchControlOptions_noSystemRelaxation,
+    SearchControlOptions_dnAttribute,
+    SearchControlOptions_matchOnResidualName,
+    SearchControlOptions_entryCount,
+    SearchControlOptions_useSubset,
+    SearchControlOptions_separateFamilyMembers,
+    SearchControlOptions_searchFamily,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 
 function subsetFromString (str: string): SearchArgumentData_subset {
     const str_ = str.toLowerCase();
@@ -60,6 +74,10 @@ async function search_new (
         )
         : selectAll;
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);
+    const searchOptions: BIT_STRING = new Uint8ClampedArray(12);
+    if (argv.separateFamilyMembers) {
+        searchOptions[SearchControlOptions_separateFamilyMembers] = TRUE_BIT;
+    }
     const reqData: SearchArgumentData = new SearchArgumentData(
         {
             rdnSequence: objectName,
@@ -75,7 +93,7 @@ async function search_new (
         undefined,
         undefined,
         undefined,
-        undefined,
+        searchOptions,
         undefined,
         undefined,
         [],
