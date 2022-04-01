@@ -32,6 +32,7 @@ import {
     OpBindingErrorParam_problem_invalidStartTime,
     OpBindingErrorParam_problem_invalidEndTime,
     OpBindingErrorParam_problem_duplicateID,
+    OpBindingErrorParam_problem_currentlyNotDecidable,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
 import {
     HierarchicalAgreement,
@@ -127,13 +128,28 @@ async function establishOperationalBinding (
         association_id: assn.id,
         invokeID: printInvokeId({ present: invokeId }),
     });
-    const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
+    /**
+     * @summary Wait for approval of a proposed operational binding
+     * @description
+     *
+     * This function waits for the manual or automated approval of a proposed
+     * operational binding. It also times out if no decision is made within a
+     * defined time limit.
+     *
+     * @param uuid The UUID of the operation binding whose approval is sought.
+     * @returns A promise resolving a boolean indicating whether the operational
+     *  binding was accepted or rejected, or `undefined` if the decision timed
+     *  out.
+     *
+     * @function
+     */
+    const getApproval = (uuid: string): Promise<boolean | undefined> => Promise.race<boolean | undefined>([
         new Promise<boolean>((resolve) => {
             ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
                 resolve(approved);
             });
         }),
-        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 300_000)),
+        new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 300_000)),
         new Promise<boolean>((resolve) => {
             if (ctx.config.ob.autoAccept) {
                 resolve(true);
@@ -406,7 +422,7 @@ async function establishOperationalBinding (
                     uuid: true,
                 },
             });
-            const approved: boolean = await getApproval(created.uuid);
+            const approved: boolean | undefined = await getApproval(created.uuid);
             await ctx.db.operationalBinding.update({
                 where: {
                     uuid: created.uuid,
@@ -415,9 +431,36 @@ async function establishOperationalBinding (
                     accepted: approved,
                 },
             });
-            if (!approved) {
+            if (approved === undefined) {
                 throw new errors.OperationalBindingError(
-                    ctx.i18n.t("err:ob_rejected"),
+                    ctx.i18n.t("err:ob_rejected", {
+                        context: "timeout",
+                        uuid: created.uuid,
+                    }),
+                    {
+                        unsigned: new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_currentlyNotDecidable,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                );
+            } else if (approved === false) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        uuid: created.uuid,
+                    }),
                     {
                         unsigned: new OpBindingErrorParam(
                             OpBindingErrorParam_problem_invalidAgreement,
