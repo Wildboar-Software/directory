@@ -117,6 +117,11 @@ function codeToString (code?: Code): string | undefined {
  * This function implements the `modifyOperationalBinding` operation
  * described in ITU Recommendation X.501 (2016), Section 28.3.
  *
+ * Note that some operational binding modifications do not require manual
+ * approval, because some operational binding modifications merely inform the
+ * other cooperating DSA about changes to information within the other DSA,
+ * rather than mutating information that the cooperating DSA "owns."
+ *
  * @param ctx The context object
  * @param assn The client association
  * @param invokeId The InvokeId of the operation
@@ -147,19 +152,6 @@ async function modifyOperationalBinding (
         association_id: assn.id,
         invokeID: printInvokeId(invokeId),
     });
-    const getApproval = (uuid: string): Promise<boolean> => Promise.race<boolean>([
-        new Promise<boolean>((resolve) => {
-            ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
-                resolve(approved);
-            });
-        }),
-        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 300_000)),
-        new Promise<boolean>((resolve) => {
-            if (ctx.config.ob.autoAccept) {
-                resolve(true);
-            }
-        }),
-    ]);
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,
@@ -266,39 +258,6 @@ async function modifyOperationalBinding (
                     createSecurityParameters(
                         ctx,
                         assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            },
-        );
-    }
-
-    const approved: boolean = await getApproval(opBinding.uuid);
-    await ctx.db.operationalBinding.update({
-        where: {
-            uuid: opBinding.uuid,
-        },
-        data: {
-            accepted: approved,
-        },
-    });
-    if (!approved) {
-        throw new errors.OperationalBindingError(
-            ctx.i18n.t("err:ob_rejected"),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidAgreement,
-                    data.bindingType,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
                         undefined,
                         id_err_operationalBindingError,
                     ),
@@ -533,6 +492,7 @@ async function modifyOperationalBinding (
 
         if (!data.initiator) {
             throw new OperationalBindingError(
+                // REVIEW: How does this error message make sense?
                 ctx.i18n.t("err:cannot_reverse_roles_in_hob"),
                 {
                     unsigned: new OpBindingErrorParam(
