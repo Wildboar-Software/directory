@@ -230,7 +230,8 @@ async function updateLocalSubr (
                 oldSubordinate,
                 subentry.rdn,
                 {
-                    subr: true,
+                    subentry: true,
+                    rhob: true,
                 },
                 subentry.info.flatMap((attr) => valuesFromAttribute(attr)),
             );
