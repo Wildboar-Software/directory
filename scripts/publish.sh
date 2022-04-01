@@ -44,6 +44,10 @@ for instance in ${instances[@]}; do
     kubectl delete secret mysql-db-$instance -n $namespace || true
     # Delete the secret used for the DSA, if it exists.
     kubectl delete secret meerkat-db-$instance -n $namespace || true
+    # Delete the secret used for digital signature, if it exists.
+    kubectl delete secret meerkat-db-$instance-signing -n $namespace || true
+    # Delete the secret used for TLS, if it exists.
+    kubectl delete secret meerkat-db-$instance-tls -n $namespace || true
     # Delete the persistent volume claim created by the database.
     # (This is not deleted automatically by Helm.)
     kubectl delete pvc data-meerkat-db-$instance-mysql-0 -n $namespace || true
@@ -68,6 +72,21 @@ for instance in ${instances[@]}; do
     # Create the secrets for the DSA to use to authenticate to the database.
     kubectl create secret generic meerkat-db-$instance \
         --from-literal=databaseUrl=mysql://root:$dbpassword@meerkat-db-$instance-mysql.$namespace.svc.cluster.local:3306/directory \
+        --namespace=$namespace
+
+    mkdir -p ./tmp
+    openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
+        -keyout ./tmp/$instance.key -out ./tmp/$instance.crt -subj "/CN=dsa01.$instance.$zone" \
+        -addext "subjectAltName=DNS:dsa01.$instance.$zone"
+
+    kubectl create secret tls meerkat-db-$instance-signing \
+        --cert=./tmp/$instance.crt \
+        --key=./tmp/$instance.key \
+        --namespace=$namespace
+
+    kubectl create secret tls meerkat-db-$instance-tls \
+        --cert=./tmp/$instance.crt \
+        --key=./tmp/$instance.key \
         --namespace=$namespace
 
     # Create one separate MySQL database for each DSA to be deployed.
@@ -150,7 +169,6 @@ for instance in ${instances[@]}; do
     az network dns record-set a delete -g $azure_rg -z $zone -n webadm01.$instance -y || true
 
     # Install the Meerkat DSA instance
-    # TODO: Enable TLS
     helm install meerkat-dsa-$instance $chart_repo/$meerkat_chart \
         --set fullnameOverride=meerkat-$instance \
         --set service.type=LoadBalancer \
@@ -167,6 +185,8 @@ for instance in ${instances[@]}; do
         --set databaseReset=true \
         --set dangerouslyExposeWebAdmin=true \
         --set databaseSecretName=meerkat-db-$instance \
+        --set signingSecretName=meerkat-db-$instance-signing \
+        --set tlsSecretName=meerkat-db-$instance-tls \
         --atomic \
         --namespace=$namespace
 
