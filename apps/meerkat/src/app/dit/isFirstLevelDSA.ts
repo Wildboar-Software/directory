@@ -1,5 +1,6 @@
 import type { Context } from "@wildboar/meerkat-types";
 
+// TODO: Make sure this query is completely indexed.
 /**
  * @summary Indicates whether this DSA is a first-level DSA
  * @description
@@ -24,6 +25,7 @@ async function isFirstLevelDSA (ctx: Context): Promise<boolean> {
         where: {
             immediate_superior_id: ctx.dit.root.dse.id,
             entry: true,
+            cp: false,
             shadow: false,
             subr: false,
             subentry: false,

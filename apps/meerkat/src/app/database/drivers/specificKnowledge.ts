@@ -25,14 +25,31 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    return vertex.dse.subr?.specificKnowledge
-        ? [
+    if (vertex.dse.subr) {
+        return [
             {
                 type: specificKnowledge["&id"],
                 value: specificKnowledge.encoderFor["&Type"]!(vertex.dse.subr.specificKnowledge, DER),
             }
-        ]
-        : [];
+        ];
+    }
+    if (vertex.dse.immSupr) {
+        return [
+            {
+                type: specificKnowledge["&id"],
+                value: specificKnowledge.encoderFor["&Type"]!(vertex.dse.immSupr.specificKnowledge, DER),
+            }
+        ];
+    }
+    if (vertex.dse.xr) {
+        return [
+            {
+                type: specificKnowledge["&id"],
+                value: specificKnowledge.encoderFor["&Type"]!(vertex.dse.xr.specificKnowledge, DER),
+            }
+        ];
+    }
+    return [];
 };
 
 export
@@ -46,12 +63,19 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     if (vertex.dse.subr) {
         vertex.dse.subr.specificKnowledge = decoded;
     }
-    pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
-        where: {
-            entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
-        },
-    }));
+    if (vertex.dse.immSupr) {
+        vertex.dse.immSupr.specificKnowledge = decoded;
+    }
+    if (vertex.dse.xr) {
+        vertex.dse.xr.specificKnowledge = decoded;
+    }
+    // REVIEW: Why was this here?
+    // pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
+    //     where: {
+    //         entry_id: vertex.dse.id,
+    //         knowledge_type: Knowledge.SPECIFIC,
+    //     },
+    // }));
     // We create the access points now...
     const createdAccessPointIds = await Promise.all(
         decoded.map((mosap) => saveAccessPoint(ctx, mosap, Knowledge.SPECIFIC)));
@@ -75,10 +99,10 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    if (
-        !vertex.dse.subr?.specificKnowledge?.length
-        || (vertex.dse.subr.specificKnowledge.length !== value.value.set.length)
-    ) {
+    const sk = vertex.dse.subr?.specificKnowledge
+        ?? vertex.dse.immSupr?.specificKnowledge
+        ?? vertex.dse.xr?.specificKnowledge;
+    if (!sk || (sk.length !== value.value.set.length)) {
         return;
     }
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
@@ -96,10 +120,15 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    if (!vertex.dse.subr?.specificKnowledge?.length) {
-        return;
+    if (vertex.dse.subr) {
+        vertex.dse.subr.specificKnowledge = [];
     }
-    vertex.dse.subr.specificKnowledge = [];
+    if (vertex.dse.immSupr) {
+        vertex.dse.immSupr.specificKnowledge = [];
+    }
+    if (vertex.dse.xr) {
+        vertex.dse.xr.specificKnowledge = [];
+    }
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
@@ -150,6 +179,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     if (aps.length !== decoded.length) {
         return false;
     }
+    // REVIEW: This runs in O(n^2) time.
     return aps
         .every((a) => decoded
             .some((b) => compareRDNSequence(

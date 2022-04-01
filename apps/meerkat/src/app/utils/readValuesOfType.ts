@@ -22,6 +22,7 @@ import {
  * @function
  * @async
  */
+export
 async function readValuesOfType (
     ctx: Context,
     vertex: Vertex,

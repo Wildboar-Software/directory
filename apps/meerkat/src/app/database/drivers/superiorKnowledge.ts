@@ -28,11 +28,12 @@ const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
-    if (vertex.dse.root) {
-        const firstLevel: boolean = await isFirstLevelDSA(ctx);
-        if (firstLevel) {
-            return [];
-        }
+    if (!vertex.dse.root) {
+        return [];
+    }
+    const firstLevel: boolean = await isFirstLevelDSA(ctx);
+    if (firstLevel) {
+        return [];
     }
     return vertex.dse.supr?.superiorKnowledge.map((k) => ({
         type: superiorKnowledge["&id"],
@@ -47,6 +48,9 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    if (!vertex.dse.root) {
+        return;
+    }
     const decoded = superiorKnowledge.decoderFor["&Type"]!(value.value);
     if (vertex.dse.supr) {
         if (vertex.dse.supr.superiorKnowledge) {
@@ -54,6 +58,10 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         } else {
             vertex.dse.supr.superiorKnowledge = [ decoded ];
         }
+    } else {
+        vertex.dse.supr = {
+            superiorKnowledge: [ decoded ],
+        };
     }
     // We create the access point now...
     const apid = await saveAccessPoint(ctx, decoded, Knowledge.SUPERIOR);

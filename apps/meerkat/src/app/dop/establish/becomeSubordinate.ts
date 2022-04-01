@@ -32,6 +32,7 @@ import {
     _encode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import saveAccessPoint from "../../database/saveAccessPoint";
+import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 
 /**
  * @summary Create the necessary DSEs to establish a new context prefix
@@ -176,7 +177,8 @@ async function becomeSubordinate (
         );
     }
 
-    { // Update superiorKnowledge
+    const firstLevel: boolean = await isFirstLevelDSA(ctx);
+    if (!firstLevel) { // Update superiorKnowledge
         const pendingUpdates: PendingUpdates = {
             entryUpdate: {},
             otherWrites: [],

@@ -179,7 +179,9 @@ function createChainingArgumentsFromDUA (
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,
-            undefined,
+            {
+                rdnSequence: data.object.rdnSequence.slice(0, -1),
+            },
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
@@ -212,7 +214,9 @@ function createChainingArgumentsFromDUA (
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,
-            undefined,
+            {
+                rdnSequence: [ ...data.object.rdnSequence ],
+            },
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
@@ -243,7 +247,9 @@ function createChainingArgumentsFromDUA (
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,
-            undefined,
+            {
+                rdnSequence: [ ...data.object ],
+            },
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
@@ -274,7 +280,9 @@ function createChainingArgumentsFromDUA (
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,
-            undefined,
+            {
+                rdnSequence: [ ...data.object.rdnSequence ],
+            },
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
@@ -305,7 +313,9 @@ function createChainingArgumentsFromDUA (
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,
-            undefined,
+            {
+                rdnSequence: [ ...data.object.rdnSequence ],
+            },
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
@@ -336,7 +346,9 @@ function createChainingArgumentsFromDUA (
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,
-            undefined,
+            {
+                rdnSequence: [ ...data.object.rdnSequence ],
+            },
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
@@ -367,7 +379,9 @@ function createChainingArgumentsFromDUA (
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,
-            undefined,
+            {
+                rdnSequence: [ ...data.object.rdnSequence ],
+            },
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
@@ -398,7 +412,9 @@ function createChainingArgumentsFromDUA (
         }
         traceInformation.push(new TraceItem(
             ctx.dsa.accessPoint.ae_title,
-            undefined,
+            {
+                rdnSequence: [ ...data.baseObject.rdnSequence ],
+            },
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
@@ -538,6 +554,7 @@ async function requestValidationProcedure (
             chainedArgument.operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
+    console.log(chainedArgument.traceInformation);
     if (loopDetected(chainedArgument.traceInformation)) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:loop_detected"),
