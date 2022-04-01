@@ -377,20 +377,10 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: sentinelDomain
                   optional: true
-            {{- if .Values.signingSecretName}}
             - name: MEERKAT_SIGNING_CERT_CHAIN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.signingSecretName }}
-                  key: cert
-                  optional: true
+              value: /data/pki/signing/tls.crt
             - name: MEERKAT_SIGNING_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.signingSecretName }}
-                  key: key
-                  optional: true
-            {{- end }}
+              value: /data/pki/signing/tls.key
             - name: MEERKAT_TCP_NO_DELAY
               valueFrom:
                 configMapKeyRef:
@@ -526,27 +516,28 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            {{- if .Values.signingSecretName }}
-            - name: config
+            - name: signing-volume
               mountPath: "/data/pki/signing"
               readOnly: true
-            {{- end }}
             {{- if .Values.tlsSecretName }}
-            - name: config
+            - name: tls-secret-volume
               mountPath: "/data/pki/tls"
               readOnly: true
             {{- end }}
             {{- if .Values.init }}
-            - name: config
+            - name: init-volume
               mountPath: "/data/init"
               readOnly: true
             {{- end }}
-      {{- with .Values.nodeSelector }}
       volumes:
         {{- if .Values.signingSecretName }}
         - name: signing-volume
           secret:
             secretName: {{ .Values.signingSecretName | quote }}
+        {{- else }}
+        - name: signing-volume
+          secret:
+            secretName: "{{ include "meerkat-dsa.fullname" . }}-signing"
         {{- end }}
         {{- if .Values.tlsSecretName }}
         - name: tls-secret-volume
@@ -561,6 +552,7 @@ spec:
               - key: init
                 path: init.mjs
         {{- end }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
