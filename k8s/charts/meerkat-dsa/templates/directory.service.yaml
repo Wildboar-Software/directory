@@ -33,3 +33,6 @@ spec:
       targetPort: 1636 # We use 1636 instead of 389 because ports under 1000 are privileged.
     {{- end }}
     {{- end }}
+  {{- if eq (.Values.service.type | lower) "loadbalancer" }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy | default "Local" }}
+  {{- end }}

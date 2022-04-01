@@ -18,4 +18,7 @@ spec:
     protocol: TCP
     port: {{ .Values.webAdmin.port | default 18080 | int }}
     targetPort: 18080
+  {{- if eq (.Values.adminService.type | lower) "loadbalancer" }}
+  externalTrafficPolicy: {{ .Values.adminService.externalTrafficPolicy | default "Local" }}
+  {{- end }}
 {{- end }}

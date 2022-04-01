@@ -7,8 +7,14 @@ nameOverride: ""
 fullnameOverride: ""
 service:
   type: ClusterIP
+  # A value of "local" for `externalTrafficPolicy` will maintain the client's IP
+  # address in Azure and other cloud providers.
+  externalTrafficPolicy: Local
 adminService:
   type: ClusterIP
+  # A value of "local" for `externalTrafficPolicy` will maintain the client's IP
+  # address in Azure and other cloud providers.
+  externalTrafficPolicy: Local
 resources: {}
 nodeSelector: {}
 tolerations: []
