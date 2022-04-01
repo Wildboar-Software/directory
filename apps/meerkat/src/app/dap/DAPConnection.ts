@@ -459,6 +459,7 @@ class DAPAssociation extends ClientAssociation {
             ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
                 source: remoteHostIdentifier,
                 protocol: "DAP",
+                aid: this.id,
             }), {
                 remoteFamily: this.socket.remoteFamily,
                 remoteAddress: this.socket.remoteAddress,
@@ -469,6 +470,7 @@ class DAPAssociation extends ClientAssociation {
             ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
                 source: remoteHostIdentifier,
                 protocol: "DAP",
+                aid: this.id,
                 dn: this.boundNameAndUID?.dn
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",

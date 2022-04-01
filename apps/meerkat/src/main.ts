@@ -27,6 +27,14 @@ i18n
             addPath: path.join(__dirname, "./assets/locales/{{lng}}/language/{{ns}}.missing.json"),
         },
         initImmediate: false,
+        interpolation: {
+            /**
+             * This is not a web application, and the web admin console does not
+             * use internationalization, so there is no need to escape HTML
+             * characters here.
+             */
+            escapeValue: false,
+        },
     })
         .then(main)
         .catch((e) => {

@@ -456,6 +456,7 @@ class DOPAssociation extends ClientAssociation {
             ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
                 source: remoteHostIdentifier,
                 protocol: "DOP",
+                aid: this.id,
             }), {
                 remoteFamily: this.socket.remoteFamily,
                 remoteAddress: this.socket.remoteAddress,
@@ -466,6 +467,7 @@ class DOPAssociation extends ClientAssociation {
             ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
                 source: remoteHostIdentifier,
                 protocol: "DOP",
+                aid: this.id,
                 dn: this.boundNameAndUID?.dn
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",

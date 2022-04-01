@@ -435,6 +435,7 @@ class DSPAssociation extends ClientAssociation {
             ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
                 source: remoteHostIdentifier,
                 protocol: "DSP",
+                aid: this.id,
             }), {
                 remoteFamily: this.socket.remoteFamily,
                 remoteAddress: this.socket.remoteAddress,
@@ -445,6 +446,7 @@ class DSPAssociation extends ClientAssociation {
             ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
                 source: remoteHostIdentifier,
                 protocol: "DSP",
+                aid: this.id,
                 dn: this.boundNameAndUID?.dn
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",

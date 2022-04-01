@@ -554,7 +554,6 @@ async function requestValidationProcedure (
             chainedArgument.operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
-    console.log(chainedArgument.traceInformation);
     if (loopDetected(chainedArgument.traceInformation)) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:loop_detected"),
