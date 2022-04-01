@@ -351,6 +351,7 @@ export class DitController {
 
         return {
             ...entry,
+            uuid: entry.dseUUID,
             superiorUUID,
             rdn: (rdn.length === 0)
                 ? "(Empty RDN)"
