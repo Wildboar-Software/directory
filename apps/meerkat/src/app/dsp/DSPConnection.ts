@@ -75,6 +75,7 @@ import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 import { printInvokeId } from "../utils/printInvokeId";
+import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters";
 
 /**
  * @summary The handles a request, but not errors
@@ -399,6 +400,19 @@ class DSPAssociation extends ClientAssociation {
         const ctx = this.ctx;
         const idm = this.idm;
         const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
+        const telemetryProperties = {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            protocol: dsp_ip["&id"]!.toString(),
+            administratorEmail: ctx.config.administratorEmail,
+        };
+        const extraLogData = {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            association_id: this.id,
+        };
         const startBindTime = new Date();
         let outcome!: BindReturn;
         try {
@@ -417,12 +431,42 @@ class DSPAssociation extends ClientAssociation {
                 };
                 const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
                 idm.writeBindError(dsp_ip["&id"]!, error);
-                return;
+                const serviceProblem = ("serviceError" in e.data.error)
+                    ? e.data.error.serviceError
+                    : undefined;
+                const securityProblem = ("serviceError" in e.data.error)
+                    ? e.data.error.serviceError
+                    : undefined;
+                ctx.telemetry.trackException({
+                    exception: e,
+                    properties: {
+                        ...telemetryProperties,
+                        serviceProblem,
+                        securityProblem,
+                        ...(e.data.securityParameters
+                            ? getStatisticsFromSecurityParameters(e.data.securityParameters)
+                            : {}),
+                    },
+                    measurements: {
+                        bytesRead: this.socket.bytesRead,
+                        bytesWritten: this.socket.bytesWritten,
+                        idmFramesReceived: this.idm.getFramesReceived(),
+                    },
+                });
             } else {
                 ctx.log.warn(e?.message);
                 idm.writeAbort(Abort_reasonNotSpecified);
-                return;
+                ctx.telemetry.trackException({
+                    exception: e,
+                    properties: telemetryProperties,
+                    measurements: {
+                        bytesRead: this.socket.bytesRead,
+                        bytesWritten: this.socket.bytesWritten,
+                        idmFramesReceived: this.idm.getFramesReceived(),
+                    },
+                });
             }
+            return;
         }
         this.boundEntry = outcome.boundVertex;
         this.boundNameAndUID = outcome.boundNameAndUID;
@@ -436,12 +480,7 @@ class DSPAssociation extends ClientAssociation {
                 source: remoteHostIdentifier,
                 protocol: "DSP",
                 aid: this.id,
-            }), {
-                remoteFamily: this.socket.remoteFamily,
-                remoteAddress: this.socket.remoteAddress,
-                remotePort: this.socket.remotePort,
-                association_id: this.id,
-            });
+            }), extraLogData);
         } else {
             ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
                 source: remoteHostIdentifier,
@@ -450,12 +489,7 @@ class DSPAssociation extends ClientAssociation {
                 dn: this.boundNameAndUID?.dn
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",
-            }), {
-                remoteFamily: this.socket.remoteFamily,
-                remoteAddress: this.socket.remoteAddress,
-                remotePort: this.socket.remotePort,
-                association_id: this.id,
-            });
+            }), extraLogData);
         }
         const bindResult = new DSABindArgument(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.

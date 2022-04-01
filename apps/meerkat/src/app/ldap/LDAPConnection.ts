@@ -438,6 +438,20 @@ class LDAPAssociation extends ClientAssociation {
      */
     private handleData (ctx: MeerkatContext, data: Buffer): void {
         const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
+        const telemetryProperties = {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            protocol: "LDAP",
+            administratorEmail: ctx.config.administratorEmail,
+        };
+        const extraLogData = {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            association_id: this.id,
+            usingTLS: (this.socket instanceof tls.TLSSocket),
+        };
         // #region Pre-flight check if the message will fit in the buffer, if possible.
         if ((this.buffer.length + data.length) > ctx.config.ldap.bufferSize) {
             ctx.log.warn(ctx.i18n.t("log:buffer_limit", {
@@ -445,12 +459,7 @@ class LDAPAssociation extends ClientAssociation {
                 protocol: "LDAP",
                 source,
                 size: ctx.config.ldap.bufferSize.toString(),
-            }), {
-                remoteFamily: this.socket.remoteFamily,
-                remoteAddress: this.socket.remoteAddress,
-                remotePort: this.socket.remotePort,
-                association_id: this.id,
-            });
+            }), extraLogData);
             /**
              * IETF RFC 4511, Section 4.1.1 states that:
              *
@@ -486,12 +495,7 @@ class LDAPAssociation extends ClientAssociation {
                     protocol: "LDAP",
                     source,
                     size: ctx.config.ldap.bufferSize.toString(),
-                }), {
-                    remoteFamily: this.socket.remoteFamily,
-                    remoteAddress: this.socket.remoteAddress,
-                    remotePort: this.socket.remotePort,
-                    association_id: this.id,
-                });
+                }), extraLogData);
                 /**
                  * IETF RFC 4511, Section 4.1.1 states that:
                  *
@@ -517,12 +521,7 @@ class LDAPAssociation extends ClientAssociation {
                         protocol: "LDAP",
                         source,
                         size: ctx.config.ldap.bufferSize.toString(),
-                    }), {
-                        remoteFamily: this.socket.remoteFamily,
-                        remoteAddress: this.socket.remoteAddress,
-                        remotePort: this.socket.remotePort,
-                        association_id: this.id,
-                    });
+                    }), extraLogData);
                     /**
                      * IETF RFC 4511, Section 4.1.1 states that:
                      *
@@ -553,12 +552,7 @@ class LDAPAssociation extends ClientAssociation {
                     host: this.socket.remoteAddress,
                     source,
                     hexbyte: this.buffer[0].toString(16).padStart(2, "0"),
-                }), {
-                    remoteFamily: this.socket.remoteFamily,
-                    remoteAddress: this.socket.remoteAddress,
-                    remotePort: this.socket.remotePort,
-                    association_id: this.id,
-                });
+                }), extraLogData);
                 // We don't send a disconnection notice, because the traffic did not appear to be LDAP at all.
                 this.socket.destroy();
                 return;
@@ -571,15 +565,14 @@ class LDAPAssociation extends ClientAssociation {
                 if (e instanceof ASN1TruncationError) {
                     return;
                 }
+                ctx.telemetry.trackException({
+                    exception: e,
+                    properties: telemetryProperties,
+                });
                 ctx.log.error(ctx.i18n.t("log:encoding_error", {
                     host: this.socket.remoteAddress,
                     uuid: this.id,
-                }), {
-                    remoteFamily: this.socket.remoteFamily,
-                    remoteAddress: this.socket.remoteAddress,
-                    remotePort: this.socket.remotePort,
-                    association_id: this.id,
-                });
+                }), extraLogData);
                 const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                 this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                 this.socket.destroy();
@@ -592,15 +585,14 @@ class LDAPAssociation extends ClientAssociation {
                 if (e instanceof ASN1TruncationError) { // This can happen here with indefinite-length messages.
                     return;
                 }
+                ctx.telemetry.trackException({
+                    exception: e,
+                    properties: telemetryProperties,
+                });
                 ctx.log.error(ctx.i18n.t("log:malformed_ldapmessage", {
                     host: this.socket.remoteAddress,
                     uuid: this.id,
-                }), {
-                    remoteFamily: this.socket.remoteFamily,
-                    remoteAddress: this.socket.remoteAddress,
-                    remotePort: this.socket.remotePort,
-                    association_id: this.id,
-                });
+                }), extraLogData);
                 const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                 this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                 this.socket.destroy();
@@ -612,12 +604,7 @@ class LDAPAssociation extends ClientAssociation {
                 ctx.log.warn(ctx.i18n.t("log:unusual_message_id", {
                     host: this.socket.remoteAddress,
                     source,
-                }), {
-                    remoteFamily: this.socket.remoteFamily,
-                    remoteAddress: this.socket.remoteAddress,
-                    remotePort: this.socket.remotePort,
-                    association_id: this.id,
-                });
+                }), extraLogData);
                 this.socket.destroy();
                 return;
             }
@@ -627,15 +614,14 @@ class LDAPAssociation extends ClientAssociation {
                     ctx.log.warn(ctx.i18n.t("log:double_bind_attempted", {
                         source,
                         host: this.socket.remoteAddress,
-                    }), {
-                        remoteFamily: this.socket.remoteFamily,
-                        remoteAddress: this.socket.remoteAddress,
-                        remotePort: this.socket.remotePort,
-                        association_id: this.id,
-                    });
+                    }), extraLogData);
                     const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
                     this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     this.socket.destroy();
+                    ctx.telemetry.trackEvent({
+                        name: "IDM_WARN_MULTI_BIND",
+                        properties: telemetryProperties,
+                    });
                     return;
                 }
                 this.status = Status.BIND_IN_PROGRESS;
@@ -666,15 +652,14 @@ class LDAPAssociation extends ClientAssociation {
                         this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     })
                     .catch((e) => {
-                        ctx.log.error(e.message, {
-                            remoteFamily: this.socket.remoteFamily,
-                            remoteAddress: this.socket.remoteAddress,
-                            remotePort: this.socket.remotePort,
-                            association_id: this.id,
-                        });
+                        ctx.log.error(e.message, extraLogData);
                         if ("stack" in e) {
                             ctx.log.error(e.stack);
                         }
+                        ctx.telemetry.trackException({
+                            exception: e,
+                            properties: telemetryProperties,
+                        });
                         const res = new LDAPMessage(
                             message.messageID,
                             {
@@ -740,11 +725,10 @@ class LDAPAssociation extends ClientAssociation {
                         ctx.log.warn(ctx.i18n.t("log:double_starttls", {
                             host: this.socket.remoteAddress,
                             source,
-                        }), {
-                            remoteFamily: this.socket.remoteFamily,
-                            remoteAddress: this.socket.remoteAddress,
-                            remotePort: this.socket.remotePort,
-                            association_id: this.id,
+                        }), extraLogData);
+                        ctx.telemetry.trackEvent({
+                            name: "IDM_WARN_DOUBLE_START_TLS",
+                            properties: telemetryProperties,
                         });
                         const errorMessage: string = ctx.i18n.t("err:tls_already_in_use");
                         const res = new LDAPMessage(
@@ -772,12 +756,7 @@ class LDAPAssociation extends ClientAssociation {
                         ctx.log.debug(ctx.i18n.t("log:starttls_established", {
                             context: "association",
                             cid: this.id,
-                        }), {
-                            remoteFamily: this.socket.remoteFamily,
-                            remoteAddress: this.socket.remoteAddress,
-                            remotePort: this.socket.remotePort,
-                            association_id: this.id,
-                        });
+                        }), extraLogData);
                         const successMessage = ctx.i18n.t("main:starttls_established");
                         const res = new LDAPMessage(
                             message.messageID,
@@ -833,7 +812,7 @@ class LDAPAssociation extends ClientAssociation {
                     this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                 }
             } else {
-                // Intentional NO_AWAIT
+                // INTENTIONAL_NO_AWAIT
                 // If you await this, it will cause a race condition.
                 // Specifically, this.buffer will be indeterminate.
                 handleRequestAndErrors(ctx, this, message);
