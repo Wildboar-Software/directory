@@ -176,6 +176,26 @@
             },
             "tags": []
         },
+        "meerkat-docs": {
+            "root": "apps/meerkat-docs",
+            "projectType": "application",
+            "sourceRoot": "apps/meerkat-docs/src",
+            "targets": {
+                "build": {
+                    "executor": "@nx-plus/docusaurus:browser",
+                    "options": {
+                        "outputPath": "dist/apps/meerkat-docs"
+                    }
+                },
+                "serve": {
+                    "executor": "@nx-plus/docusaurus:dev-server",
+                    "options": {
+                        "port": 3000
+                    }
+                }
+            },
+            "tags": []
+        },
         "meerkat-types": {
             "root": "libs/meerkat-types",
             "sourceRoot": "libs/meerkat-types/src",

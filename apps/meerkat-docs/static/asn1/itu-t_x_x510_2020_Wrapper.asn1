@@ -1,0 +1,319 @@
+-- ASN module extracted from ITU-T X.510 (08/2020)
+
+Wrapper {joint-iso-itu-t ds(5) module(1) wrapper(43) 9}
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- EXPORTS All
+
+IMPORTS
+
+  AlgoInvoke{}, ALGORITHM, AlgorithmIdentifier{}, AlgorithmWithInvoke{}, AttributeCertificate, id-wrprot, PkiPath
+    FROM PKI-Stub
+      {joint-iso-itu-t ds(5) module(1) pki-stub(999) 9}
+
+  SupportedProtSet
+    FROM ProtProtocols
+      {joint-iso-itu-t ds(5) module(1) protProtocols(47) 9} WITH SUCCESSORS
+
+  -- from Rec. ITU-T X.510 | ISO/IEC 9594-11
+
+  AUTHEN-ENCRYPT{}, ENCIPHERED{}, ICV-Invoke{}, Signed{}
+    FROM CryptoTools
+      {joint-iso-itu-t ds(5) module(1) cryptoTools(42) 9 } WITH SUCCESSORS ;
+
+WRAPPED-PROT ::= TYPE-IDENTIFIER
+
+WrappedProt {WRAPPED-PROT:SupportedProtSet} ::= SEQUENCE {
+  id    WRAPPED-PROT.&id({SupportedProtSet}),
+  prot  WRAPPED-PROT.&Type({SupportedProtSet}{@id}),
+  ... }
+
+WrapperPDU ::= CHOICE {
+  handshakeReq       [0]  HandshakeReq,
+  handshakeAcc       [1]  HandshakeAcc,
+  handshakeWrpRej    [2]  HandshakeWrpRej,
+  handshakeProRej    [3]  HandshakeProRej,
+  handshakeSecAbort  [4]  HandshakeSecAbort,
+  handshakeProAbort  [5]  HandshakeProAbort,
+  dtSecAbort         [6]  DtSecAbort,
+  applAbort          [7]  ApplAbort,
+  releaseReq         [8]  ReleaseReq,
+  releaseRsp         [9]  ReleaseRsp,
+  dataTransferClient [10] DataTransferClient,
+  dataTransferServer [11] DataTransferServer,
+  ... }
+
+HandshakeReq ::= Signed{TbsHandshakeReq}
+
+TbsHandshakeReq ::= SEQUENCE {
+  version        Version DEFAULT {v1},
+  prProt         WRAPPED-PROT.&id ({SupportedProtSet}),
+  sigAlg         AlgorithmIdentifier {{SupportedSignatureAlgorithms}},
+  altSigAlg  [0] AlgorithmIdentifier {{SupportedAltSignatureAlgorithms}} OPTIONAL,
+  pkiPath        DER-PkiPath,
+  assoID         AssoID,
+  time           TimeStamp,
+  keyEst         AlgorithmWithInvoke{{SupportedKeyEstablishmentAlgos}},
+  altKeyEst  [1] AlgorithmWithInvoke{{SupportedAltKeyEstablishmentAlgos}} OPTIONAL,
+  encr-mode      CHOICE {
+    aead       [2] SEQUENCE SIZE (1..MAX) OF
+      algo           AlgorithmIdentifier{{SupportedAeadAlgorithms}},
+    non-aead   [3] SEQUENCE {
+      encr       [0] SEQUENCE SIZE (1..MAX) OF
+        algo           AlgorithmIdentifier{{SupportedSymmetricKeyAlgorithms}}
+                         OPTIONAL,
+      icvAlgID   [1] SEQUENCE SIZE (1..MAX) OF
+        algo           AlgorithmIdentifier{{SupportedIcvAlgorithms}} },
+    ... },
+  attCert        DER-AttributeCertificate OPTIONAL,
+  applData   [4] WrappedProt{{SupportedProtSet}} OPTIONAL,
+  ... }
+
+Version ::= BIT STRING {
+  v1 (0)  -- version 1
+  }
+
+DER-PkiPath ::= OCTET STRING
+  (CONTAINING PkiPath ENCODED BY der)
+
+DER-AttributeCertificate ::= OCTET STRING
+  (CONTAINING AttributeCertificate ENCODED BY der)
+
+der OBJECT IDENTIFIER ::=
+  {joint-iso-itu-t asn1(1) ber-derived(2) distinguished-encoding(1)}
+
+AssoID ::= INTEGER (0..32767)
+
+TimeStamp ::= GeneralizedTime
+
+SupportedSignatureAlgorithms ALGORITHM ::= {...}
+
+SupportedAltSignatureAlgorithms ALGORITHM ::= {...}
+
+SupportedKeyEstablishmentAlgos ALGORITHM ::= {...}
+
+SupportedAltKeyEstablishmentAlgos ALGORITHM ::= {...}
+
+SupportedAeadAlgorithms ALGORITHM ::= {...}
+
+SupportedSymmetricKeyAlgorithms ALGORITHM ::= {...}
+
+SupportedIcvAlgorithms ALGORITHM ::= {...}
+
+HandshakeAcc ::= Signed{TbsHandshakeAcc}
+
+TbsHandshakeAcc ::= SEQUENCE {
+  version        Version DEFAULT {v1},
+  sigSel         CHOICE {
+    sigAlg         AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+    altSigAlg  [0] AlgorithmIdentifier{{SupportedAltSignatureAlgorithms}} },
+  pkiPath        DER-PkiPath,
+  assoID         AssoID,
+  time           TimeStamp,
+  keyEstSel      CHOICE {
+    keyEst         AlgorithmWithInvoke{{SupportedKeyEstablishmentAlgos}},
+    altKeyEst  [1] AlgorithmWithInvoke{{SupportedAltKeyEstablishmentAlgos}} },
+  encr-mode      CHOICE {
+    aead       [2] AlgorithmIdentifier{{SupportedAeadAlgorithms}},
+    non-aead   [3] SEQUENCE {
+      encr       [0] AlgorithmIdentifier{{SupportedSymmetricKeyAlgorithms}} OPTIONAL,
+      icvAlgID   [1] AlgorithmIdentifier{{SupportedIcvAlgorithms}} },
+    ... },
+  attCert        DER-AttributeCertificate OPTIONAL,
+  applData   [4] WrappedProt{{SupportedProtSet}} OPTIONAL,
+  ... }
+
+HandshakeWrpRej ::= Signed{TbsHandshakeWrpRej}
+
+TbsHandshakeWrpRej ::= SEQUENCE {
+  version        Version DEFAULT {v1},
+  sigSel         CHOICE {
+    sigAlg         AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+    altSigAlg  [0] AlgorithmIdentifier{{SupportedAltSignatureAlgorithms}} },
+  assoID         AssoID,
+  time           TimeStamp,
+  pkiPath        DER-PkiPath,
+  diag           WrpError OPTIONAL,
+  ... }
+
+HandshakeProRej ::= Signed{TbsHandshakeProRej}
+
+TbsHandshakeProRej ::= SEQUENCE {
+  sigSel         CHOICE {
+    sigAlg         AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+    altSigAlg  [0] AlgorithmIdentifier{{SupportedAltSignatureAlgorithms}} },
+  assoID         AssoID,
+  time           TimeStamp,
+  pkiPath        DER-PkiPath,
+  applData       WrappedProt{{SupportedProtSet}},
+  ... }
+
+HandshakeSecAbort ::= Signed{TbsHandshakeSecAbort}
+
+TbsHandshakeSecAbort ::= SEQUENCE {
+  version      Version DEFAULT {v1},
+  sigAlg       AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+  assoID       AssoID,
+  time         TimeStamp,
+  pkiPath      DER-PkiPath,
+  diag         WrpError OPTIONAL,
+  ... }
+
+HandshakeProAbort ::= Signed{TbsHandshakeProAbort}
+
+TbsHandshakeProAbort ::= SEQUENCE {
+  sigAlg       AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+  assoID       AssoID,
+  time         TimeStamp,
+  pkiPath      DER-PkiPath,
+  applData     WrappedProt{{SupportedProtSet}},
+  ... }
+
+DtSecAbort ::= Signed{TbsDtSecAbort}
+
+TbsDtSecAbort ::= SEQUENCE {
+  sigAlg       AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+  assoID       AssoID,
+  time         TimeStamp,
+  pkiPath      DER-PkiPath,
+  seq          SequenceNumber,
+  diag         WrpError OPTIONAL,
+  ... }
+
+ApplAbort ::= Signed{TbsApplAbort}
+
+TbsApplAbort ::= SEQUENCE {
+  sigAlg       AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+  assoID       AssoID,
+  time         TimeStamp,
+  pkiPath      DER-PkiPath,
+  seq          SequenceNumber,
+  applData     WrappedProt{{SupportedProtSet}},
+  ... }
+
+ReleaseReq ::= Signed{TbsReleaseReq}
+
+TbsReleaseReq ::= SEQUENCE {
+  version      Version DEFAULT {v1},
+  sigAlg       AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+  assoID       AssoID,
+  time         TimeStamp,
+  pkiPath      DER-PkiPath,
+  ... }
+
+ReleaseRsp ::= Signed{TbsReleaseRsp}
+
+TbsReleaseRsp ::= SEQUENCE {
+  version      Version DEFAULT {v1},
+  sigAlg       AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+  assoID       AssoID,
+  time         TimeStamp,
+  pkiPath      DER-PkiPath,
+  ... }
+
+DataTransferClient ::= CHOICE {
+  aead     [0] DataTransferClientAE,
+  non-aead [1] DataTransferClientNEA,
+  ... }
+
+DataTransferClientAE ::= AUTHEN-ENCRYPT{AadClientAE, WRAPPED-PROT.&Type}
+
+AadClientAE ::= SEQUENCE {
+  COMPONENTS OF    AadClient,
+  encInvoke    [3] AlgoInvoke{{SupportedAeadAlgorithms}} OPTIONAL,
+  ... }
+
+DataTransferClientNEA ::= ICV-Invoke{TbpDataTransferClient}
+
+TbpDataTransferClient ::= SEQUENCE {
+  COMPONENTS OF    AadClient,
+  encEnvoke    [3] AlgoInvoke{{SupportedSymmetricKeyAlgorithms}} OPTIONAL,
+  conf             CHOICE {
+    clear        [4] WrappedProt{{SupportedProtSet}},
+    protected    [5] ENCIPHERED{WRAPPED-PROT.&Type},
+    ... },
+  ... }
+
+AadClient ::= SEQUENCE {
+  invokeID [0] InvokeID OPTIONAL,
+  assoID       AssoID,
+  time         TimeStamp,
+  seq          SequenceNumber,
+  keyEst   [2] AlgoInvoke{{SupportedKeyEstablishmentAlgos}} OPTIONAL }
+
+InvokeID ::= OCTET STRING (SIZE (6))
+
+SequenceNumber ::= INTEGER (0..2147483647)
+
+DataTransferServer ::= CHOICE {
+  aead     [0] DataTransferServerAE,
+  non-aead [1] DataTransferServerNEA,
+  ... }
+
+DataTransferServerAE ::= AUTHEN-ENCRYPT{AadServerAE, WRAPPED-PROT.&Type}
+
+AadServerAE ::= SEQUENCE {
+  COMPONENTS OF AadServer,
+  encInvoke [3] AlgoInvoke{{SupportedAeadAlgorithms}} OPTIONAL,
+  ... }
+
+DataTransferServerNEA ::= ICV-Invoke{TbpDataTransferServer}
+
+TbpDataTransferServer ::= SEQUENCE {
+  COMPONENTS OF     AadServer,
+  encInvoke     [3] AlgoInvoke{{SupportedSymmetricKeyAlgorithms}} OPTIONAL,
+  conf              CHOICE {
+    clear         [4] WrappedProt{{SupportedProtSet}},
+    protected     [5] ENCIPHERED{WRAPPED-PROT.&Type},
+    ... },
+  ... }
+
+AadServer ::= SEQUENCE {
+  invokeID   [0] InvokeID OPTIONAL,
+  assoID         AssoID,
+  time           TimeStamp,
+  seq            SequenceNumber,
+  reqRekey   [1] BOOLEAN DEFAULT FALSE,
+  changedKey [2] BOOLEAN DEFAULT FALSE }
+
+WrpError ::= ENUMERATED {
+  protocol-error                         (0),
+  invalid-signatureAlgorithm             (1),
+  unexpected-version                     (2),
+  protected-protocol-not-supported       (3),
+  duplicate-assoID                       (4),
+  invalid-time-value                     (5),
+  key-estab-algorithm-not-supported      (6),
+  encr-mode-aead-not-supported           (7),
+  encryption-not-supported               (8),
+  encryption-required                    (9),
+  aead-algorithms-not-supported          (10),
+  aead-is-required                       (11),
+  symmetricKey-algorithms-not-supported  (12),
+  icv-algorithms-not-supported           (13),
+  invalid-attribute-certificate          (14),
+  alt-signature-not-allowed              (15),
+  only-one-version                       (16),
+  invalid-key-estab-algorithm            (17),
+  invalid-alt-key-estab-algorithm        (18),
+  invalid-aead-algorithm                 (19),
+  aead-not-allowed                       (20),
+  invalid-symmetricKey-algorithm         (21),
+  invalid-icv-algorithm                  (22),
+  dynamic-aead-algo-parms-required       (23),
+  invalid-dynamic-aead-algo-parms        (24),
+  dynamic-aead-algo-parms-not-required   (25),
+  dynamic-symKey-algo-parms-required     (26),
+  invalid-dynamic-symKey-algo-parms      (27),
+  dynamic-symKey-algo-parms-not-required (28),
+  dynamic-icv-algo-parms-required        (29),
+  invalid-dynamic-icv-algo-parms         (30),
+  dynamic-icv-algo-parms-not-required    (31),
+  unexpected-invokeID-received           (32),
+  rekey-out-of-sequence                  (33),
+  invalid-dynamic-keyEst-algo-parms      (34),
+  changedKey-out-of-sequence             (35),
+  ... }
+
+END -- Wrapper

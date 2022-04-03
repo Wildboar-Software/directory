@@ -1,0 +1,50 @@
+-- ASN module extracted from ITU-T X.510 (08/2020)
+
+ProtProtocols {joint-iso-itu-t ds(5) module(1) protProtocols(47) 9}
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- EXPORTS All
+
+IMPORTS
+
+  id-wrprot
+    FROM
+      PKI-Stub {joint-iso-itu-t ds(5) module(1) pki-stub(999) 9} WITH SUCCESSORS
+
+  WRAPPED-PROT
+    FROM Wrapper
+      {joint-iso-itu-t ds(5) module(1) wrapper(43) 9} WITH SUCCESSORS
+
+  AvlProt
+    FROM AVL-management
+      {joint-iso-itu-t ds(5) module(1) avl-management(44) 9} WITH SUCCESSORS
+
+  CasubProt
+    FROM CaSubscription
+      {joint-iso-itu-t ds(5) module(1) caSubscription(45) 9} WITH SUCCESSORS
+
+  TBprot
+    FROM TrustBroker
+      {joint-iso-itu-t ds(5) module(1) trustBroker(46) 9} WITH SUCCESSORS;
+
+
+avlProt WRAPPED-PROT ::= {
+                 AvlProt
+  IDENTIFIED BY  id-avlprot }
+
+casubProt WRAPPED-PROT ::= {
+                 CasubProt
+  IDENTIFIED BY  id-casubprot }
+
+tbprot WRAPPED-PROT ::= {
+                 TBprot
+  IDENTIFIED BY  id-tbprot }
+
+SupportedProtSet WRAPPED-PROT ::= {avlProt | casubProt | tbprot }
+
+id-avlprot          OBJECT IDENTIFIER ::= {id-wrprot 0}
+id-casubprot        OBJECT IDENTIFIER ::= {id-wrprot 1}
+id-tbprot           OBJECT IDENTIFIER ::= {id-wrprot 2}
+
+END -- ProtProtocols

@@ -1,0 +1,138 @@
+-- ASN module extracted from ITU-T X.510 (08/2020)
+
+CryptoTools {joint-iso-itu-t ds(5) module(1) cryptoTools(42) 9}
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+/*
+Last component of object identifiers for X.510 modules
+42 - CryptoTools
+43 - Wrapper
+44 - AVL-management
+45 - CaSubscription
+46 - TrustBroker
+47 - ProtProtocols
+48 - GenAlgo
+*/
+
+-- EXPORTS All
+
+IMPORTS
+
+  AlgoInvoke{}, ALGORITHM, AlgorithmIdentifier{}, AlgorithmWithInvoke{}
+    FROM PKI-Stub
+      {joint-iso-itu-t ds(5) module(1) pki-stub(999) 9} WITH SUCCESSORS
+
+  id-algo-mca
+    FROM GenAlgo
+      {joint-iso-itu-t ds(5) module(1) genAlgo(48) 9} WITH SUCCESSORS ;
+
+
+multipleSignaturesAlgo ALGORITHM ::= {
+  PARMS         MultipleSignaturesAlgo
+  IDENTIFIED BY id-algo-multipleSignaturesAlgo }
+
+MultipleSignaturesAlgo ::= SEQUENCE SIZE (1..MAX) OF
+  algo  AlgorithmIdentifier{{SupportedSignatureAlgorithms}}
+
+SupportedSignatureAlgorithms ALGORITHM ::= {...}
+
+multipleSymmetricKeyAlgo ALGORITHM ::= {
+  PARMS         MultipleSymmetricKeyAlgo
+  IDENTIFIED BY id-algo-multipleSymmetricKeyAlgo }
+
+MultipleSymmetricKeyAlgo ::= SEQUENCE SIZE (1..MAX) OF
+  algo  AlgorithmIdentifier{{SupportedSymmetricKeyAlgorithms}}
+
+SupportedSymmetricKeyAlgorithms ALGORITHM ::= {...}
+
+multiplePublicKeyAlgo ALGORITHM ::= {
+  PARMS         MultiplePublicKeyAlgo
+  IDENTIFIED BY id-algo-multiplePublicKeyAlgo }
+
+MultiplePublicKeyAlgo ::= SEQUENCE SIZE (1..MAX) OF
+  algo  AlgorithmIdentifier{{SupportedPublicKeyAlgorithms}}
+
+SupportedPublicKeyAlgorithms ALGORITHM ::= {...}
+
+multipleHashAlgo ALGORITHM ::= {
+  PARMS         MultipleHashAlgo
+  IDENTIFIED BY id-algo-multipleHashAlgo }
+
+MultipleHashAlgo ::= SEQUENCE SIZE (1..MAX) OF
+  algo  AlgorithmIdentifier{{SupportedHashAlgorithms}}
+
+SupportedHashAlgorithms ALGORITHM ::= {...}
+
+multipleAuthenEncryptAlgo ALGORITHM ::= {
+  PARMS         MultipleAuthenEncryptAlgo
+  IDENTIFIED BY id-algo-multipleAuthenEncryptAlgo }
+
+MultipleAuthenEncryptAlgo ::= SEQUENCE SIZE (1..MAX) OF
+  algo       AlgorithmIdentifier{{SupportedAuthenEncryptAlgorithms}}
+
+SupportedAuthenEncryptAlgorithms ALGORITHM ::= {...}
+
+multipleIcvAlgo ALGORITHM ::= {
+  PARMS         MultipleIcvAlgo
+  IDENTIFIED BY id-algo-multipleIcvAlgo }
+
+MultipleIcvAlgo ::= SEQUENCE SIZE (1..MAX) OF
+  algo  AlgorithmIdentifier{{SupportedIcvAlgorithms}}
+
+SupportedIcvAlgorithms ALGORITHM ::= {...}
+
+
+-- Auxiliary data types
+
+MULTY-SIGNED{ToBeSigned} ::= SEQUENCE {
+  toBeSigned  ToBeSigned,
+  algorithm   ALGORITHM.&id({multipleSignaturesAlgo}),
+  parmeters     SEQUENCE SIZE (1..MAX) OF
+    sign          SEQUENCE {
+      algo          AlgorithmIdentifier{{SupportedSignatureAlgorithms}},
+      signature     BIT STRING,
+      ... },
+  ... }
+
+Signed{ToBeSigned} ::= SEQUENCE {
+  toBeSigned   ToBeSigned,
+  signature    BIT STRING,
+  altSignature BIT STRING OPTIONAL,
+  ... }
+
+ICV-Total{ToBeProtected} ::= SEQUENCE {
+  toBeProtected               ToBeProtected,
+  algorithmIdentifier         AlgorithmWithInvoke{{SupportedIcvAlgorithms}},
+  icv                         BIT STRING,
+  altAlgorithmIdentifier  [0] AlgorithmWithInvoke{{SupportedIcvAlgorithms}} OPTIONAL,
+  altIcv                  [1] BIT STRING OPTIONAL,
+  ... }
+   (WITH COMPONENTS {..., altAlgorithmIdentifier PRESENT, altIcv PRESENT } |
+    WITH COMPONENTS {..., altAlgorithmIdentifier ABSENT,  altIcv ABSENT } )
+
+ICV-Invoke{ToBeProtected} ::= SEQUENCE {
+  toBeProtected      ToBeProtected,
+  dynParms       [0] AlgoInvoke{{SupportedIcvAlgorithms}} OPTIONAL,
+  icv                BIT STRING,
+  ... }
+
+ENCIPHERED{ToBeEnciphered} ::= OCTET STRING (CONSTRAINED BY {
+   -- shall be the result of applying an encipherment procedure
+   -- to the BER-encoded octets of a value of -- ToBeEnciphered } )
+
+AUTHEN-ENCRYPT{ToBeAuth, ToBeEnciphered} ::= SEQUENCE {
+  aad  [0] ToBeAuth OPTIONAL,
+  encr [1] ToBeEnciphered,
+  ... }
+
+-- Algorithms
+
+id-algo-multipleSignaturesAlgo      OBJECT IDENTIFIER ::= {id-algo-mca 1}
+id-algo-multipleSymmetricKeyAlgo    OBJECT IDENTIFIER ::= {id-algo-mca 2}
+id-algo-multiplePublicKeyAlgo       OBJECT IDENTIFIER ::= {id-algo-mca 3}
+id-algo-multipleHashAlgo            OBJECT IDENTIFIER ::= {id-algo-mca 4}
+id-algo-multipleAuthenEncryptAlgo   OBJECT IDENTIFIER ::= {id-algo-mca 5}
+id-algo-multipleIcvAlgo             OBJECT IDENTIFIER ::= {id-algo-mca 6}
+
+END -- CryptoTools
