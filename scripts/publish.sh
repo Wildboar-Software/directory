@@ -43,11 +43,11 @@ for instance in ${instances[@]}; do
     # Delete the secret used for the database, if it exists.
     kubectl delete secret mysql-db-$instance -n $namespace || true
     # Delete the secret used for the DSA, if it exists.
-    kubectl delete secret meerkat-db-$instance -n $namespace || true
+    kubectl delete secret meerkat-$instance-db -n $namespace || true
     # Delete the secret used for digital signature, if it exists.
-    kubectl delete secret meerkat-db-$instance-signing -n $namespace || true
+    kubectl delete secret meerkat-$instance-signing -n $namespace || true
     # Delete the secret used for TLS, if it exists.
-    kubectl delete secret meerkat-db-$instance-tls -n $namespace || true
+    kubectl delete secret meerkat-$instance-tls -n $namespace || true
     # Delete the persistent volume claim created by the database.
     # (This is not deleted automatically by Helm.)
     kubectl delete pvc data-meerkat-db-$instance-mysql-0 -n $namespace || true
@@ -70,7 +70,7 @@ for instance in ${instances[@]}; do
         --namespace=$namespace
 
     # Create the secrets for the DSA to use to authenticate to the database.
-    kubectl create secret generic meerkat-db-$instance \
+    kubectl create secret generic meerkat-$instance-db \
         --from-literal=databaseUrl=mysql://root:$dbpassword@meerkat-db-$instance-mysql.$namespace.svc.cluster.local:3306/directory \
         --namespace=$namespace
 
@@ -79,12 +79,12 @@ for instance in ${instances[@]}; do
         -keyout ./tmp/$instance.key -out ./tmp/$instance.crt -subj "/CN=dsa01.$instance.$zone" \
         -addext "subjectAltName=DNS:dsa01.$instance.$zone"
 
-    kubectl create secret tls meerkat-db-$instance-signing \
+    kubectl create secret tls meerkat-$instance-signing \
         --cert=./tmp/$instance.crt \
         --key=./tmp/$instance.key \
         --namespace=$namespace
 
-    kubectl create secret tls meerkat-db-$instance-tls \
+    kubectl create secret tls meerkat-$instance-tls \
         --cert=./tmp/$instance.crt \
         --key=./tmp/$instance.key \
         --namespace=$namespace
@@ -184,9 +184,9 @@ for instance in ${instances[@]}; do
         --set ob.autoAccept=true \
         --set databaseReset=true \
         --set dangerouslyExposeWebAdmin=true \
-        --set databaseSecretName=meerkat-db-$instance \
-        --set signingSecretName=meerkat-db-$instance-signing \
-        --set tlsSecretName=meerkat-db-$instance-tls \
+        --set databaseSecretName=meerkat-$instance-db \
+        --set signingSecretName=meerkat-$instance-signing \
+        --set tlsSecretName=meerkat-$instance-tls \
         --atomic \
         --namespace=$namespace
 
