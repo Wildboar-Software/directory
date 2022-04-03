@@ -19,13 +19,13 @@ jobs:
   Deploy:
     runs-on: ubuntu-latest
     strategy:
-    fail-fast: false
-    matrix:
-      dmd:
-        - 'root'
-        - 'gb'
-        # - 'ru'
-        # - 'ru-moscow'
+      fail-fast: false
+      matrix:
+        dmd:
+          - 'root'
+          - 'gb'
+          # - 'ru'
+          # - 'ru-moscow'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
