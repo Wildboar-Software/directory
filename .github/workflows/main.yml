@@ -18,6 +18,7 @@ jobs:
   # TODO: Test
   Deploy:
     runs-on: ubuntu-latest
+    environment: production
     strategy:
       fail-fast: false
       matrix:
