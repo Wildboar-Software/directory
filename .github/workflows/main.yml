@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: '17'
       - name: Install NPM Packages
-        uses: npm ci
+        run: npm ci
       - name: Compile Meerkat DSA
         run: npx nx run meerkat:build:production --skip-nx-cache
       - name: Set up Docker Buildx
