@@ -33,7 +33,7 @@ jobs:
       - name: Install NPM Packages
         run: npm ci
       - name: Generate Prisma Client
-        run: npx -q prisma generate
+        run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
       - name: Compile Meerkat DSA
         run: npx nx run meerkat:build:production --skip-nx-cache
       - name: Set up Docker Buildx
