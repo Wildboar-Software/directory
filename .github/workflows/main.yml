@@ -315,7 +315,7 @@ jobs:
       - name: Install NPM Packages
         run: npm ci
       - name: Compile Documentation
-        run: npx nx run meerkat-docs:build:production --skip-nx-cache
+        run: npx nx run meerkat-docs:build --skip-nx-cache
 
       # Popular action to deploy to GitHub Pages:
       # Docs: https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-docusaurus
