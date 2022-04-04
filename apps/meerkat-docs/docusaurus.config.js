@@ -9,7 +9,7 @@ const config = {
     title: 'Meerkat DSA',
     tagline: 'An X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.',
     url: 'https://docs.meerkat.wildboar.software',
-    baseUrl: '/',
+    baseUrl: '/directory/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
     favicon: 'img/boar-head-rune-circle.svg',
