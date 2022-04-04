@@ -12,7 +12,7 @@ const config = {
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
-    favicon: 'img/favicon.ico',
+    favicon: 'img/boar-head-rune-circle.svg',
     organizationName: 'Wildboar-Software', // Usually your GitHub org/user name.
     projectName: 'directory', // Usually your repo name.
     presets: [
@@ -46,7 +46,7 @@ const config = {
                 title: 'Meerkat DSA',
                 logo: {
                     alt: 'Wildboar Software Logo',
-                    src: 'img/logo.svg',
+                    src: 'img/boar-head-rune-circle.svg',
                 },
                 items: [
                     {
@@ -54,6 +54,12 @@ const config = {
                         docId: 'setup',
                         position: 'left',
                         label: 'Get Started',
+                    },
+                    {
+                        type: 'doc',
+                        docId: 'docs',
+                        position: 'left',
+                        label: 'Documentation',
                     },
                     // {
                     //     type: 'doc',
@@ -115,8 +121,9 @@ const config = {
                 copyright: `Copyright © 2022 Wildboar Software. Built with Docusaurus.`,
             },
             prism: {
-                theme: lightCodeTheme,
+                theme: darkCodeTheme,
                 darkTheme: darkCodeTheme,
+                // additionalLanguages: ['asn']
             },
         }),
 };

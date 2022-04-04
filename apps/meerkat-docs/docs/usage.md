@@ -1,7 +1,3 @@
----
-title: Usage
-
----
 # Usage
 
 Meerkat DSA is an X.500 directory server that users can interact with via the

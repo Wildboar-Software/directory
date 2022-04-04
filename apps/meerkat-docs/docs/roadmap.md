@@ -28,8 +28,6 @@ Notable features to be excluded from this release are:
 - Strong Credentials
 - SASL Authentication
 
-Version 1.0.0 is expected to be released by late January of 2022.
-
 ## Feature Completeness
 
 After release of the minimally-viable product, the remaining features needed to

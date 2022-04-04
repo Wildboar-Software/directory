@@ -5,7 +5,7 @@ version: '3.7'
 
 services:
   meerkat:
-    image: wildboarsoftware/meerkat-dsa:latest
+    image: ghcr.io/wildboar-software/meerkat-dsa:latest
     # env_file:
     #   - .env
     environment:

@@ -26,22 +26,22 @@ given Access Control Specific Area (ACSA), the following must be in place:
     used for this administrative point may be the same as the entry used for the
     autonomous administrative point. (An administrative point may have multiple
     roles.)
-3.  There must be at least one attribute value for `subentryACI` in the access
+<!-- 3.  There must be at least one attribute value for `subentryACI` in the access
     access control administrative point to regulate who can modify access
     control subentries.
     - Rationale: if there is no access control defined for
       subentries, there is no point in even checking access control within the
       ACSA, because anybody could just change the subentries themselves to
-      change the access controls!
-4.  There must be either an `entryACI` attribute value on the administrative
+      change the access controls! -->
+<!-- 3.  There must be either an `entryACI` attribute value on the administrative
     point, or a `prescriptiveACI` attribute value that applies to the
     administrative point, that allows administrators to at least browse the
     administrative point and modify its `accessControlScheme` attribute and to
     browse its subentries.
     - Rationale: if this is not done, once access control
       is turned on, administrators will be locked out of the entire ACSA,
-      because there are no ACI items defined that grant them permission to it!
-5.  The access control administrative point must have an `accessControlScheme`
+      because there are no ACI items defined that grant them permission to it! -->
+3.  The access control administrative point must have an `accessControlScheme`
     attribute value of `basicAccessControlScheme` (2.5.28.1) or
     `simplifiedAccessControlScheme` (2.5.28.2), depending on what you want.
     - Note that, if you use the `rule-and-basic-access-control` or
@@ -52,8 +52,9 @@ given Access Control Specific Area (ACSA), the following must be in place:
       rule-based access control, and some access control is usually preferrable
       to none.
 
-Note that the steps above should be performed in the presented order to avoid
-getting locked out. It is possible for administrators to accidentally configure
+Note that the ACI items should be created before enabling access control. If
+there are no ACI items defined at all, then _nobody_ is permitted to do
+_anything_. It is possible for administrators to accidentally configure
 rules that prevent even themselves from accessing their own DSA!
 
 ## Getting Locked Out
@@ -72,6 +73,9 @@ and easier to just disable access control entirely, fix the problem, then
 re-enable access controls once it is fixed. If administrators know which ACI
 item is causing them to be locked out, the latter option may preferrable.
 
+One way you can "delete" an ACI item is by changing the `active` column in the
+`ACIItem` table in the database to `FALSE` for that ACI item.
+
 ### Disabling Access Controls
 
 The easiest way to do this with minimal loss of data is to delete the
@@ -88,8 +92,11 @@ since the access control scheme may still be cached in memory.
 
 ACI items may be deleted from the `ACIItem` table.
 
-Note that Meerkat DSA will have to be restarted for this change to take effect,
+Note that Meerkat DSA may have to be restarted for this change to take effect,
 since the ACI items may still be cached in memory.
+
+Another way you can "delete" an ACI item is by changing the `active` column in
+the `ACIItem` table in the database to `FALSE` for that ACI item.
 
 ## Access Controls in Hierarchical Operational Bindings
 
@@ -122,7 +129,7 @@ world-writeable, the DSA for `C=US,ST=FL` would still honor this configuration,
 and permit all writes to `C=US,ST=FL,L=Tampa` even though the rule permitting it
 is external and superior to your DSA. The creation of an
 Autonomous Administrative Point (AAP) that halts the propagation of access
-control rules (ACI items, for instance) from superior DSAs would preven this
+control rules (ACI items, for instance) from superior DSAs would prevent this
 behavior.
 
 ## Recommendation Access Control

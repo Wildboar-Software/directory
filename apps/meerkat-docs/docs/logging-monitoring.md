@@ -133,4 +133,5 @@ log, upon binding, all of this information one time alongside the UUID assigned
 to the association, so that from there out, the first message containing this
 UUID can be used to correlate the UUID to all of these data.
 
-Also, it makes it easier to redact PII, if IP addresses count as such.
+Also, it makes it easier to redact Personally-Identifiable Information (PII), if
+IP addresses count as such.
