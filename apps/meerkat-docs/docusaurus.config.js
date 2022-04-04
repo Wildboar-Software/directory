@@ -42,6 +42,20 @@ const config = {
     themeConfig:
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
+            metadata: [
+                {
+                    name: 'description',
+                    content: 'An X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.',
+                },
+                {
+                    name: 'keywords',
+                    content: 'directory, x500, x.500, ldap, database, meerkat, dsa, distributed',
+                },
+                {
+                    name: 'copyright',
+                    content: 'Copyright (c) 2021 Jonathan M. Wilbur <jonathan@wilbur.space>.',
+                },
+            ],
             colorMode: {
                 defaultMode: 'dark',
                 disableSwitch: false,
