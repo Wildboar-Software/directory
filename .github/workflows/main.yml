@@ -68,7 +68,7 @@ jobs:
         with:
           source_dir: ./k8s/charts/meerkat-dsa
           container_name: ${{ env.CHART_CONTAINER }}
-          connection_string: https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+          connection_string: ${{ secrets.AZURE_BLOB_CNXN_STRING }}
           extra_args: '--pattern index.yaml'
           overwrite: 'true'
       - name: Upload Helm Index
@@ -76,8 +76,8 @@ jobs:
         with:
           source_dir: ./k8s/charts/meerkat-dsa
           container_name: ${{ env.CHART_CONTAINER }}
-          connection_string: https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
-          extra_args: '--pattern index.yaml'
+          connection_string: ${{ secrets.AZURE_BLOB_CNXN_STRING }}
+          extra_args: '--pattern *.tgz'
           overwrite: 'true'
 
   # TODO: Publish Helm
