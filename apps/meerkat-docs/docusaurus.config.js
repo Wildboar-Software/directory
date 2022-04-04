@@ -42,6 +42,11 @@ const config = {
     themeConfig:
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
+            colorMode: {
+                defaultMode: 'dark',
+                disableSwitch: false,
+                respectPrefersColorScheme: false,
+            },
             navbar: {
                 title: 'Meerkat DSA',
                 logo: {
@@ -121,12 +126,11 @@ const config = {
                 copyright: `Copyright © 2022 Wildboar Software. Built with Docusaurus.`,
             },
             prism: {
-                theme: darkCodeTheme,
+                theme: lightCodeTheme,
                 darkTheme: darkCodeTheme,
+                // This would just make the app crash. Not viable.
                 // additionalLanguages: ['asn']
             },
-            defaultDarkTheme: true, // This seems like an older option that is no longer supported.
-            defaultMode: 'dark',
         }),
 };
 
