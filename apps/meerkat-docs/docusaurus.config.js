@@ -125,6 +125,7 @@ const config = {
                 darkTheme: darkCodeTheme,
                 // additionalLanguages: ['asn']
             },
+            defaultDarkTheme: true,
         }),
 };
 
