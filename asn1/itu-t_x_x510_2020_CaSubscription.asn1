@@ -1,0 +1,228 @@
+-- ASN module extracted from ITU-T X.510 (08/2020)
+
+CaSubscription {joint-iso-itu-t ds(5) module(1) caSubscription(45) 9}
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- EXPORTS All
+
+IMPORTS
+/*
+  -- from Rec. ITU-T X.501 | ISO/IEC 9594-2
+
+  Name
+    FROM InformationFramework
+      {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9} WITH SUCCESSORS
+
+  -- from Rec. ITU-T X.509 | ISO/IEC 9594-8
+
+  Certificate, CertificateSerialNumber
+    FROM AuthenticationFramework
+      {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+
+  CRLReason
+    FROM CertificateExtensions
+      {joint-iso-itu-t ds(5) module(1) certificateExtensions(26) 9}
+*/
+
+  Certificate, CertificateSerialNumber, CRLReason, Name
+    FROM PKI-Stub
+      {joint-iso-itu-t ds(5) module(1) pki-stub(999) 9}
+
+  -- from Rec. ITU-T X.510 | ISO/IEC 9594-11
+
+  Version
+    FROM Wrapper
+      {joint-iso-itu-t ds(5) module(1) wrapper(43) 9} WITH SUCCESSORS ;
+
+CasubProt ::= CHOICE {
+  initReq             [0]  InitializationRec,
+  initAcc             [1]  InitializationAcc,
+  initRej             [2]  InitializationRej,
+  initAbt             [3]  InitializationAbort,
+  certSubscribeReq    [4]  CertSubscribeReq,
+  certSubscribeRsp    [5]  CertSubscribeRsp,
+  certUnsubscribeReq  [6]  CertUnsubscribeReq,
+  certUnsubscribeRsp  [7]  CertUnsubscribeRsp,
+  certReplaceReq      [8]  CertReplaceReq,
+  certReplaceRsp      [9]  CertReplaceRsp,
+  certUpdateReq       [10] CertUpdateReq,
+  certUpdateRsp       [11] CertUpdateRsp,
+  cAsubscribeAbort    [12] CAsubscribeAbort,
+  ... }
+
+InitializationRec ::= SEQUENCE {
+  version    Version,
+  ... }
+
+InitializationAcc ::= SEQUENCE {
+  version    Version,
+  ... }
+
+InitializationRej ::= SEQUENCE {
+  diag        ENUMERATED {
+    unsupportedVersion     (0),
+    ... },
+  ... }
+
+InitializationAbort ::= SEQUENCE {
+  diag        ENUMERATED {
+    unsupportedVersion       (0),
+    onlySingleVersionAllowed (1),
+    ... },
+  ... }
+
+CertSubscribeReq ::= SEQUENCE {
+  invokeID     InvokeID,
+  certs        SEQUENCE (SIZE (1..MAX)) OF SEQUENCE {
+    subject      Name,
+    serialNumber CertificateSerialNumber,
+    ... },
+  ... }
+
+InvokeID ::= INTEGER (0..127)
+
+CertSubscribeRsp ::= SEQUENCE {
+  invokeID     InvokeID,
+  result       CHOICE {
+    success       [0]  CertSubscribeOK,
+    failure       [1]  CertSubscribeErr,
+    ... },
+  ... }
+
+CertSubscribeOK ::= SEQUENCE (SIZE (1..MAX)) OF CHOICE {
+  ok       [0] SEQUENCE {
+    cert         Certificate,
+    status       CertStatus,
+    revokeReason CRLReason OPTIONAL,
+    ... },
+  not-ok   [1] SEQUENCE {
+    status       CASP-CertStatusCode,
+    ... },
+  ... }
+
+CertStatus ::= ENUMERATED {
+  good    (0),
+  revoked (1),
+  on-hold (2),
+  expired (3),
+  ... }
+
+CASP-CertStatusCode ::= ENUMERATED {
+  noReason       (1),
+  unknownCert    (2),
+  ... }
+
+CertSubscribeErr ::= SEQUENCE {
+  code       CASP-error,
+  ... }
+
+CertUnsubscribeReq ::= SEQUENCE {
+  invokeID     InvokeID,
+  certs  SEQUENCE (SIZE (1..MAX)) OF SEQUENCE {
+    subject      Name,
+    serialNumber CertificateSerialNumber,
+    ... },
+  ... }
+
+CertUnsubscribeRsp ::= SEQUENCE {
+  invokeID     InvokeID,
+  result       CHOICE {
+    success       [0]  CertUnsubscribeOK,
+    failure       [1]  CertUnsubscribeErr,
+    ... },
+  ... }
+
+CertUnsubscribeOK ::= SEQUENCE (SIZE (1..MAX)) OF CHOICE {
+  ok       [0] SEQUENCE {
+    subject      Name,
+    serialNumber CertificateSerialNumber,
+    ... },
+  not-ok   [1] SEQUENCE {
+    status       CASP-CertStatusCode,
+    ... },
+  ... }
+
+CertUnsubscribeErr ::= SEQUENCE {
+  code         CASP-error,
+  ... }
+
+CertReplaceReq ::= SEQUENCE {
+  invokeID     InvokeID,
+  certs         SEQUENCE (SIZE (1..MAX)) OF SEQUENCE {
+    old           CertificateSerialNumber,
+    new           Certificate,
+    ... },
+  ... }
+
+CertReplaceRsp ::= SEQUENCE {
+  invokeID     InvokeID,
+  result        CHOICE {
+    success       [0]  CertReplaceOK,
+    failure       [1]  CertReplaceErr,
+    ... },
+  ... }
+
+CertReplaceOK ::= SEQUENCE (SIZE (1..MAX)) OF CHOICE {
+  ok        [0] SEQUENCE {
+    issuer        Name,
+    serialNumber  CertificateSerialNumber,
+    ... },
+  not-ok    [1] SEQUENCE {
+    status        CASP-CertStatusCode,
+    ... },
+  ... }
+
+CertReplaceErr ::= SEQUENCE {
+  code          CASP-error,
+  ... }
+
+CertUpdateReq ::= SEQUENCE {
+  invokeID     InvokeID,
+  certs  SEQUENCE (SIZE (1..MAX)) OF SEQUENCE {
+    subject      Name,
+    serialNumber CertificateSerialNumber,
+    certStatus   CertStatus,
+    ... },
+  ... }
+
+CertUpdateRsp ::= SEQUENCE {
+  invokeID      InvokeID,
+  result        CHOICE {
+    success       [0]  CertUpdateOK,
+    failure       [1]  CertUpdateErr,
+    ... },
+  ... }
+
+CertUpdateOK ::= SEQUENCE (SIZE (1..MAX)) OF CHOICE {
+  ok        [0] SEQUENCE {
+    subject       Name,
+    serialNumber  CertificateSerialNumber,
+    ... },
+  not-ok    [1] SEQUENCE {
+    status        CASP-CertStatusCode,
+    ... },
+  ... }
+
+CertUpdateErr ::= SEQUENCE {
+  code          CASP-error,
+  ... }
+
+CAsubscribeAbort ::= SEQUENCE {
+  invokeID     InvokeID,
+  reason       CASP-error,
+  ... }
+
+CASP-error ::= ENUMERATED {
+  noReason                      (0),
+  unknownContentType            (1),
+  unsupportedWLMPversion        (2),
+  missingContent                (3),
+  missingContentComponent       (4),
+  invalidContentComponent       (5),
+  sequenceError                 (6),
+  unknownSubject                (7),
+  unknownCert                   (8),
+  ... }
+
+END -- CaSubsription

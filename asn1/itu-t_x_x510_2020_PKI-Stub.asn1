@@ -1,0 +1,276 @@
+-- ASN module extracted from ITU-T X.510 (08/2020)
+
+PKI-Stub {joint-iso-itu-t ds(5) module(1) pki-stub(999) 9}
+DEFINITIONS ::=
+BEGIN
+
+id-wrprot            OBJECT IDENTIFIER ::= wrapperProtocolType
+wrapperProtocolType  OBJECT IDENTIFIER ::= {ds 43}
+ds                   OBJECT IDENTIFIER ::= {joint-iso-itu-t ds(5)}
+id-algo              OBJECT IDENTIFIER ::= algorithms
+algorithms           OBJECT IDENTIFIER ::= {ds 44}
+
+ALGORITHM ::= CLASS {
+  &Type          OPTIONAL,
+  &DynParms      OPTIONAL,
+  &id            OBJECT IDENTIFIER UNIQUE }
+WITH SYNTAX {
+  [PARMS         &Type]
+  [DYN-PARMS     &DynParms ]
+  IDENTIFIED BY  &id }
+
+AlgorithmWithInvoke{ALGORITHM:SupportedAlgorithms} ::= SEQUENCE {
+  algorithm       ALGORITHM.&id({SupportedAlgorithms}),
+  parameters  [0] ALGORITHM.&Type({SupportedAlgorithms}{@algorithm}) OPTIONAL,
+  dynamParms  [1] ALGORITHM.&DynParms({SupportedAlgorithms}{@algorithm}) OPTIONAL,
+  ... }
+
+AlgorithmIdentifier{ALGORITHM:SupportedAlgorithms} ::= SEQUENCE {
+  algorithm       ALGORITHM.&id({SupportedAlgorithms}),
+  parameters      ALGORITHM.&Type({SupportedAlgorithms}{@algorithm}) OPTIONAL,
+  ... }
+
+AlgoInvoke{ALGORITHM:SupportedAlgorithms} ::=
+    ALGORITHM.&DynParms({SupportedAlgorithms})
+
+HASH{ToBeHashed} ::= SEQUENCE {
+  algorithmIdentifier  AlgorithmIdentifier{{SupportedAlgorithms}},
+  hashValue            BIT STRING,
+  ... }
+
+sha224WithRSAEncryptionAlgorithm ALGORITHM ::= { -- IETF RFC 5754
+  PARMS         NULL
+  IDENTIFIED BY {1 2 840 113549 1 11} }
+
+SupportedAlgorithms ALGORITHM ::= {...}
+
+SIGNED{ToBeSigned} ::= SEQUENCE {
+  toBeSigned              ToBeSigned,
+  algorithmIdentifier     AlgorithmIdentifier{{SupportedAlgorithms}},
+  signature               BIT STRING,
+  ...,
+  altAlgorithmIdentifier  AlgorithmIdentifier{{SupportedAlgorithms}} OPTIONAL,
+  altSignature            BIT STRING OPTIONAL
+  } (WITH COMPONENTS {..., altAlgorithmIdentifier PRESENT, altSignature PRESENT } |
+     WITH COMPONENTS {..., altAlgorithmIdentifier ABSENT,  altSignature ABSENT } )
+
+FingerPrint {ToBeFingerprinted} ::= SEQUENCE {
+  algorithmIdentifier  AlgorithmIdentifier{{SupportedAlgorithms}},
+  fingerprint          BIT STRING,
+  ... }
+
+PkiPath ::= SEQUENCE SIZE (1..MAX) OF Certificate
+
+Certificate ::= SIGNED{TBSCertificate}
+
+TBSCertificate ::= SEQUENCE {
+  version                  [0]  Version DEFAULT v1,
+  serialNumber                  CertificateSerialNumber,
+  signature                     AlgorithmIdentifier{{SupportedAlgorithms}},
+  issuer                        Name,
+  validity                      Validity,
+  subject                       Name,
+  subjectPublicKeyInfo          SubjectPublicKeyInfo,
+  issuerUniqueIdentifier   [1] IMPLICIT UniqueIdentifier OPTIONAL,
+  ...,
+  --[[2:  if present, version shall be v2 or v3
+  subjectUniqueIdentifier  [2] IMPLICIT UniqueIdentifier OPTIONAL--]]--,
+  --[[3:  if present, version shall be v2 or v3
+  extensions               [3]  Extensions OPTIONAL --]]
+  -- If present, version shall be v3]]
+ } (CONSTRAINED BY { -- shall be DER encoded -- } )
+
+Version ::= INTEGER {v1(0), v2(1), v3(2)}
+
+CertificateSerialNumber ::= INTEGER
+
+Validity ::= SEQUENCE {
+  notBefore  Time,
+  notAfter   Time,
+  ... }
+
+SubjectPublicKeyInfo ::= SEQUENCE {
+  algorithm         AlgorithmIdentifier{{SupportedAlgorithms}},
+  subjectPublicKey  PublicKey,
+  ... }
+
+PublicKey ::= BIT STRING
+
+Time ::= CHOICE {
+  utcTime          UTCTime,
+  generalizedTime  GeneralizedTime }
+
+UniqueIdentifier ::= BIT STRING
+
+Extensions ::= SEQUENCE SIZE (1..MAX) OF Extension
+
+-- For those extensions where ordering of individual extensions within the SEQUENCE is
+-- significant, the specification of those individual extensions shall include the
+-- rules for the significance of the order therein
+
+Extension ::= SEQUENCE {
+  extnId     EXTENSION.&id({ExtensionSet}),
+  critical   BOOLEAN DEFAULT FALSE,
+  extnValue  OCTET STRING
+    (CONTAINING EXTENSION.&ExtnType({ExtensionSet}{@extnId})
+       ENCODED BY der),
+  ... }
+
+der OBJECT IDENTIFIER ::=
+  {joint-iso-itu-t asn1(1) ber-derived(2) distinguished-encoding(1)}
+
+ExtensionSet EXTENSION ::= {...}
+
+EXTENSION ::= CLASS {
+  &id           OBJECT IDENTIFIER UNIQUE,
+  &ExtnType }
+WITH SYNTAX {
+  SYNTAX        &ExtnType
+  IDENTIFIED BY &id }
+
+Name ::= CHOICE { -- only one possibility for now -- rdnSequence  RDNSequence }
+
+RDNSequence ::= SEQUENCE OF RelativeDistinguishedName
+
+RelativeDistinguishedName ::= SET SIZE (1..MAX) OF AttributeTypeAndValue
+
+DistinguishedName ::= RDNSequence
+
+AttributeTypeAndValue ::= SEQUENCE {
+  type                  ATTRIBUTE.&id, --({SupportedAttributes}),
+  value                 ATTRIBUTE.&type, --({SupportedAttributes}{@type}),
+  ... }
+
+SupportedAttributes ATTRIBUTE ::= {...}
+
+ATTRIBUTE ::= CLASS {
+  &type                     UTF8String,
+  &id                       OBJECT IDENTIFIER UNIQUE }
+WITH SYNTAX {
+  WITH SYNTAX               &type
+  ID                        &id }
+
+Attribute {ATTRIBUTE:SupportedAttributes} ::= SEQUENCE {
+  type                ATTRIBUTE.&id({SupportedAttributes}),
+  values              SET SIZE (0..MAX) OF ATTRIBUTE.&type({SupportedAttributes}{@type}),
+  ... }
+
+AttributeCertificate ::= SIGNED{TBSAttributeCertificate}
+
+TBSAttributeCertificate ::= SEQUENCE {
+  version                 AttCertVersion, -- version is v2
+  holder                  Holder,
+  issuer                  AttCertIssuer,
+  signature               AlgorithmIdentifier{{SupportedAlgorithms}},
+  serialNumber            CertificateSerialNumber,
+  attrCertValidityPeriod  AttCertValidityPeriod,
+  attributes              SEQUENCE OF Attribute{{SupportedAttributes}},
+  issuerUniqueID          UniqueIdentifier OPTIONAL,
+  ...,
+  ...,
+  extensions              Extensions OPTIONAL
+ }  (CONSTRAINED BY { -- shall be DER encoded -- } )
+
+AttCertVersion ::= INTEGER {v2(1)}
+
+Holder ::= SEQUENCE {
+  baseCertificateID  [0]  IssuerSerial OPTIONAL,
+  entityName         [1]  GeneralNames OPTIONAL,
+  objectDigestInfo   [2]  ObjectDigestInfo OPTIONAL }
+  (WITH COMPONENTS {..., baseCertificateID  PRESENT } |
+   WITH COMPONENTS {..., entityName  PRESENT } |
+   WITH COMPONENTS {..., objectDigestInfo  PRESENT } )
+
+IssuerSerial ::= SEQUENCE {
+  issuer     GeneralNames,
+  serial     CertificateSerialNumber,
+  issuerUID  UniqueIdentifier OPTIONAL,
+  ... }
+
+ObjectDigestInfo ::= SEQUENCE {
+  digestedObjectType   ENUMERATED {
+    publicKey        (0),
+    publicKeyCert    (1),
+    otherObjectTypes (2)},
+  otherObjectTypeID   OBJECT IDENTIFIER OPTIONAL,
+  digestAlgorithm     AlgorithmIdentifier{{SupportedAlgorithms}},
+  objectDigest        BIT STRING,
+  ... }
+
+AttCertIssuer ::= [0]  SEQUENCE {
+  issuerName              GeneralNames OPTIONAL,
+  baseCertificateID  [0]  IssuerSerial OPTIONAL,
+  objectDigestInfo   [1]  ObjectDigestInfo OPTIONAL,
+  ... }
+  (WITH COMPONENTS {..., issuerName  PRESENT } |
+   WITH COMPONENTS {..., baseCertificateID  PRESENT } |
+   WITH COMPONENTS {..., objectDigestInfo  PRESENT } )
+
+AttCertValidityPeriod ::= SEQUENCE {
+  notBeforeTime  GeneralizedTime,
+  notAfterTime   GeneralizedTime,
+  ... }
+
+GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
+
+GeneralName ::= CHOICE {
+  otherName                  [0]  INSTANCE OF OTHER-NAME,
+  rfc822Name                 [1]  IA5String,
+  dNSName                    [2]  IA5String,
+--x400Address                [3]  ORAddress,
+  directoryName              [4]  Name,
+--ediPartyName               [5]  EDIPartyName,
+  uniformResourceIdentifier  [6]  IA5String,
+  iPAddress                  [7]  OCTET STRING,
+  registeredID               [8]  OBJECT IDENTIFIER,
+  ... }
+
+OTHER-NAME ::= TYPE-IDENTIFIER
+
+CertAVL ::= SIGNED {TBSCertAVL}
+
+TBSCertAVL ::= SEQUENCE {
+  version               [0]  IMPLICIT Version DEFAULT v1,
+  serialNumber               AvlSerialNumber OPTIONAL,
+  signature                  AlgorithmIdentifier {{SupportedAlgorithms}},
+  issuer                     Name,
+  constrained                BOOLEAN,
+  entries                    SEQUENCE (SIZE (1..MAX)) OF SEQUENCE {
+    idType                     CHOICE {
+      certIdentifier        [0]  PKCertIdentifier,
+      entityGroup                DistinguishedName, -- only for constrained = FALSE
+      ... },
+    entryExtensions       [1]  IMPLICIT Extensions OPTIONAL,
+    ... },
+  ...,
+  ...,
+  avlExtensions              Extensions OPTIONAL }
+
+AvlSerialNumber ::= INTEGER (0..MAX)
+
+PKCertIdentifier ::= CHOICE {
+  issuerSerialNumber         IssuerSerialNumber,
+  fingerprintPKC        [0]  IMPLICIT FingerPrint {Certificate},
+  fingerprintPK         [1]  IMPLICIT FingerPrint {PublicKey},
+  ... }
+
+IssuerSerialNumber ::= SEQUENCE {
+  issuer        Name,
+  serialNumber  CertificateSerialNumber,
+  ... }
+
+CRLReason ::= ENUMERATED {
+  unspecified          (0),
+  keyCompromise        (1),
+  cACompromise         (2),
+  affiliationChanged   (3),
+  superseded           (4),
+  cessationOfOperation (5),
+  certificateHold      (6),
+  removeFromCRL        (8),
+  privilegeWithdrawn   (9),
+  aACompromise         (10),
+  ...,
+  weakAlgorithmOrKey   (11) }
+
+END
