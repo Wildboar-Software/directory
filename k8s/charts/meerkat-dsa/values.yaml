@@ -1,6 +1,6 @@
 replicaCount: 1
 image:
-  repository: wildboarsoftware/meerkat-dsa
+  repository: ghcr.io/wildboar-software/meerkat-dsa
   pullPolicy: Always # TODO: Change this to IfNotPresent after Beta is over.
 imagePullSecrets: []
 nameOverride: ""

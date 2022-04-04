@@ -9,12 +9,16 @@ env:
   CLUSTER_NAME: meerkat-helm-test
   # RESOURCE_GROUP: production
   RESOURCE_GROUP: meerkat-helm-test
+  DNS_RESOURCE_GROUP: production
   NAMESPACE: test
   ZONE: mkdemo.wildboar.software
   STORAGE_ACCOUNT_NAME: meerkatdsahelmtest
   CHART_CONTAINER: asdf
+  CHART_REPO: wildboar
+  CHART_NAME: meerkat-dsa
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     environment: production
@@ -38,7 +42,7 @@ jobs:
         run: npx nx run meerkat:build:production --skip-nx-cache
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Login to DockerHub
+      - name: Login to the Container Registry
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
@@ -83,9 +87,6 @@ jobs:
           extra_args: '--pattern index.yaml'
           overwrite: 'true'
 
-  # TODO: Create Test DIT
-  # TODO: Test
-  # TODO: Publish Docusaurus Docs
   deploy:
     runs-on: ubuntu-latest
     needs:
@@ -123,23 +124,48 @@ jobs:
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
       - name: Create Kubernetes Namespace
-        run: kubectl create ns ${{ env.NAMESPACE }} || true
+        run: kubectl create ns ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Delete Migration Job
-        run: kubectl delete job meerkat-dsa-${{ matrix.dmd }}-migrate -n ${{ env.NAMESPACE }} || true
+        run: kubectl delete job meerkat-dsa-${{ matrix.dmd }}-migrate -n ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Uninstall Previous Meerkat DSA Release
-        run: helm uninstall meerkat-dsa-${{ matrix.dmd }} -n ${{ env.NAMESPACE }} || true
+        run: helm uninstall meerkat-dsa-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Uninstall Previous MySQL Database
-        run: helm uninstall meerkat-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }} || true
+        run: helm uninstall meerkat-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Delete MySQL Secret
-        run: kubectl delete secret mysql-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }} || true
+        run: kubectl delete secret mysql-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Delete Meerkat Database Secret
-        run: kubectl delete secret meerkat-${{ matrix.dmd }}-db -n ${{ env.NAMESPACE }} || true
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-db -n ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Delete Meerkat Signing Secret
-        run: kubectl delete secret meerkat-${{ matrix.dmd }}-signing -n ${{ env.NAMESPACE }} || true
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-signing -n ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Delete Meerkat TLS Secret
-        run: kubectl delete secret meerkat-${{ matrix.dmd }}-tls -n ${{ env.NAMESPACE }} || true
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-tls -n ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Delete MySQL Database Data
-        run: kubectl delete pvc data-meerkat-db-${{ matrix.dmd }}-mysql-0 -n ${{ env.NAMESPACE }} || true
+        run: kubectl delete pvc data-meerkat-db-${{ matrix.dmd }}-mysql-0 -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete DSA DNS Record
+        run: |
+          az network dns record-set a delete \
+            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --name dsa01.${{ matrix.dmd }} \
+            --yes
+        continue-on-error: true
+      - name: Delete Web Admin DNS Record
+        run: |
+          az network dns record-set a delete \
+            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --name webadm01.${{ matrix.dmd }} \
+            --yes
+        continue-on-error: true
         # I was having an issue getting a new instance to start. I think the issue
         # is that the password settings for a given chart are only applied the first
         # time it is deployed. When you delete a bitnami/mysql release, it does NOT
@@ -181,7 +207,9 @@ jobs:
             --key=./tmp/${{ matrix.dmd }}.key \
             --namespace=${{ env.NAMESPACE }}
       - name: Add Bitnami Helm Repo
-        run: helm repo add bitnami https://charts.bitnami.com/bitnami || true
+        run: helm repo add bitnami https://charts.bitnami.com/bitnami
+      - name: Add Wildboar Helm Repo
+        run: helm repo add ${{ env.CHART_REPO }} https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
       - name: Update Helm Repo Index
         run: helm repo update
       - name: Install MySQL
@@ -191,3 +219,84 @@ jobs:
             --set auth.database=directory \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
+      - name: Deploy Meerkat DSA via Helm
+        run: |
+          helm install meerkat-dsa-${{ matrix.dmd }} ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+            --set fullnameOverride=meerkat-${{ matrix.dmd }} \
+            --set service.type=LoadBalancer \
+            --set adminService.type=LoadBalancer \
+            --set log.level=debug \
+            --set "myAccessPointNSAPs={idm://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:4632,ldap://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:389}" \
+            --set chaining.minAuthLevel=0 \
+            --set chaining.minAuthLocalQualifier=0 \
+            --set chaining.tlsOptional=true \
+            --set chaining.prohibited=false \
+            --set ob.minAuthLevel=0 \
+            --set ob.minAuthLocalQualifier=0 \
+            --set ob.autoAccept=true \
+            --set databaseReset=true \
+            --set dangerouslyExposeWebAdmin=true \
+            --set databaseSecretName=meerkat-${{ matrix.dmd }}-db \
+            --set signingSecretName=meerkat-${{ matrix.dmd }}-signing \
+            --set tlsSecretName=meerkat-${{ matrix.dmd }}-tls \
+            --atomic \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Wait 30 Seconds for Public IP to be Allocated
+        run: sleep 30
+      - name: Save Directory Service IP Address
+        run: |
+          echo 'DIRECTORY_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-${{ matrix.dmd }}-directory --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Save Web Admin Service IP Address
+        run: |
+          echo 'WEB_ADMIN_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-${{ matrix.dmd }}-web-admin --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Create DSA DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name dsa01.${{ matrix.dmd }} \
+            --ipv4-address ${{ env.DIRECTORY_SERVICE_IP }}
+      - name: Create WebAdmin DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name webadm01.${{ matrix.dmd }} \
+            --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
+
+  seed:
+    runs-on: ubuntu-latest
+    needs:
+      - deploy
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        dmd:
+          - 'root'
+          - 'gb'
+          # - 'ru'
+          # - 'ru-moscow'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Compile the Test DIT Creator
+        run: npx nx run create-test-dit:build:production --skip-nx-cache
+      - name: Run the Test DIT Creator
+        run: |
+          node ./dist/apps/create-test-dit/main.js \
+            --accessPoint="idm://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:4632" \
+            --profile=${{ matrix.dmd }} \
+            -t
+
+  # TODO: Create Test DIT
+  # TODO: Test
+  # TODO: Publish Docusaurus Docs
