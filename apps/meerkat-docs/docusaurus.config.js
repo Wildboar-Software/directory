@@ -125,7 +125,8 @@ const config = {
                 darkTheme: darkCodeTheme,
                 // additionalLanguages: ['asn']
             },
-            defaultDarkTheme: true,
+            defaultDarkTheme: true, // This seems like an older option that is no longer supported.
+            defaultMode: 'dark',
         }),
 };
 
