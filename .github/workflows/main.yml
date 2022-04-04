@@ -51,6 +51,8 @@ jobs:
         with:
           push: true
           tags: ghcr.io/wildboarsoftware/meerkat-dsa:latest,ghcr.io/wildboarsoftware/meerkat-dsa:${{ env.PUBLISHING_MEERKAT_VERSION }}
+          context: ./
+          file: ./meerkat.dockerfile
 
   helm:
     runs-on: ubuntu-latest
