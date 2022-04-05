@@ -26,7 +26,7 @@
     "start_url": "/directory/?source=pwa",
     "background_color": "#000000",
     "display": "standalone",
-    "scope": "/",
+    "scope": "/directory/",
     "theme_color": "#F44336",
     "shortcuts": [],
     "screenshots": []

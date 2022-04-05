@@ -59,7 +59,7 @@ const config = {
                     {
                         tagName: 'link',
                         rel: 'icon',
-                        href: '/img/docusaurus.png',
+                        href: '/directory/img/boar-head-rune-circle.svg',
                     },
                     {
                         tagName: 'link',
