@@ -469,7 +469,7 @@ jobs:
   functional_testing:
     runs-on: ubuntu-latest
     needs:
-      - deploy
+      - deploy_test
     environment: production
     env:
       MEERKAT_TEST_HOST: dsa01.test.mkdemo.wildboar.software
