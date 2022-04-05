@@ -8,17 +8,17 @@
     },
     "icons": [
       {
-        "src": "/img/boar-head-rune-circle.svg",
+        "src": "/directory/img/boar-head-rune-circle.svg",
         "type": "image/svg+xml",
         "sizes": "512x512"
       },
       {
-        "src": "/img/boar-head-rune-circle.svg",
+        "src": "/directory/img/boar-head-rune-circle.svg",
         "type": "image/png",
         "sizes": "192x192"
       },
       {
-        "src": "/img/boar-head-rune-circle.svg",
+        "src": "/directory/img/boar-head-rune-circle.svg",
         "type": "image/png",
         "sizes": "512x512"
       }
