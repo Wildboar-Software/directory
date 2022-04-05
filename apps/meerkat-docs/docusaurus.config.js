@@ -38,7 +38,39 @@ const config = {
             }),
         ],
     ],
-
+    // Disabled for now, because this failed to build when I enabled it.
+    // I got this error:
+    // Module not found: Error: Can't resolve './registerSw.js' in './directory/apps/meerkat-docs/.docusaurus'
+    // plugins: [
+    //     [
+    //         '@docusaurus/plugin-pwa',
+    //         {
+    //             debug: false,
+    //             offlineModeActivationStrategies: [
+    //                 'appInstalled',
+    //                 'standalone',
+    //                 'queryString',
+    //             ],
+    //             pwaHead: [
+    //                 {
+    //                     tagName: 'link',
+    //                     rel: 'icon',
+    //                     href: '/img/docusaurus.png',
+    //                 },
+    //                 {
+    //                     tagName: 'link',
+    //                     rel: 'manifest',
+    //                     href: '/manifest.json',
+    //                 },
+    //                 {
+    //                     tagName: 'meta',
+    //                     name: 'theme-color',
+    //                     content: 'rgb(37, 194, 160)',
+    //                 },
+    //             ],
+    //         },
+    //     ],
+    // ],
     themeConfig:
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({

@@ -14,13 +14,17 @@ used, authentication will always succeed, even if the bound distinguished name
 does not correspond to any real entry present and even if the entry _does_ exist
 and has a password. This behavior is to avoid information disclosure.
 
-> NOTE: If Meerkat DSA did not do this, it would be possible for a nefarious
-> actor to enumerate the entries in a DSA, despite access controls, by guessing
-> distinguished names in the bind operation and seeing which attempts come back
-> with errors saying "entry does not exist" and which come back with "invalid
-> password." This is the same reason that websites with logins must give you the
-> same error message, regardless of whether you got the username or password
-> wrong.
+:::note
+
+If Meerkat DSA did not do this, it would be possible for a nefarious
+actor to enumerate the entries in a DSA, despite access controls, by guessing
+distinguished names in the bind operation and seeing which attempts come back
+with errors saying "entry does not exist" and which come back with "invalid
+password." This is the same reason that websites with logins must give you the
+same error message, regardless of whether you got the username or password
+wrong.
+
+:::
 
 When users are bound anonymously, they may perform operations against Meerkat
 DSA. It is the responsibility of administrators to configure access controls to

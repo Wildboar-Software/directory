@@ -24,5 +24,26 @@
 }
 
 html[data-theme='dark'] .docusaurus-highlight-code-line {
-    background-color: rgba(0, 0.3, 0, 180);
+    background-color: rgba(0, 0.3, 0, 0);
+}
+
+/*
+    You might wonder: couldn't you just use `html footer` as your selector?
+    Apparently not. It didn't work when I used that.
+*/
+html[data-theme='dark'] footer {
+    background-color: black;
+}
+
+html[data-theme='light'] footer {
+    background-color: black;
+}
+
+:root {
+    --ifm-footer-background-color: black;
+}
+
+::selection {
+    color: black;
+    background-color: yellow;
 }

@@ -194,27 +194,10 @@ and in GitHub Actions YAML configuration
 When your DSA comes online, if there are no DITs, it creates a new default DIT.
 If there are no entries within this DIT, your DSA will create a single root DSE.
 
-In its initial state, you can only add entries that are:
+You can create first-level entries of your choice using a Directory User Agent
+of your choice. However, note that, when
 
-- Of type `glue`, or
-- Of types `entry` and `cp` (Context Prefix)
-
-Other restrictions apply. Notably, neither may be of type `shadow`.
-
-To use your DSA like normal, you will need an entry _somewhere_ in your DIT
-that is of type `entry` and `cp`. Any such entry present in your DSA will
-constitute a context prefix that your DSA considers local; in other words, this
-vertex says "this entry and everything under it (until subordinate naming
-contexts) is authoritatively held by this DSA." Once you have such an entry
-present in your DSA, you will be able to add entries of other types under it
-like normal.
-
-You are not required to create an autonomous administrative point (AAP) (an
-entry of type `admPoint` with an `administrativeRole` attribute having value
-`id-ar-id-ar-autonomousArea`) within a single particular DSA, but it MUST be
-present in at least one DSA that you own and control.
-
-:::warn
+:::caution
 
 If you do not define an autonomous administrative point that is superior to
 every naming context your DSAs serve, you will implicitly allow superior
@@ -247,7 +230,7 @@ things in this specific order (details to follow):
    - `rule-and-basic-access-control`
    - `rule-and-simple-access-control`
 
-:::warn
+:::caution
 
 If you create the administrative point with an ACSA role before creating the
 subentries, you might be locked out, unable to read or write anything including
@@ -257,7 +240,7 @@ a denial of access. Creating the ACSA administrative point is the switch that
 turns access control on. Ensure you configure your ACI items in your ACSA and
 ACIA subentries are configured to allow you to continue to set up your DSA!
 
-:::warn
+:::caution
 
 ### Creating the administrative user
 
@@ -319,7 +302,7 @@ with your autonomous administrative point. This is a DSE of type `admPoint` that
 has an `administrativeRole` attribute having value
 `id-ar-accessControlSpecificArea`.
 
-:::warn
+:::caution
 
 If you do not have access control administrative points defined, your DSA will
 be world-readable and world-writeable!
@@ -327,78 +310,3 @@ be world-readable and world-writeable!
 :::
 
 One this point exists, your access control will activate.
-
-## Password Policy
-
-## Subschema Administration
-
-## Collective Attributes
-
-## Default Context Assertions
-
-## Name Resolution through Hierarchical Operational Bindings
-
-### Subordinating to a Superior Naming Context
-
-### Adding a Subordinate Naming Context
-
-## Replication through Shadow Operational Bindings
-
-## Extending the Schema
-
-## Public Key Infrastructure
-
-### Certificate Authority (Enterprise Edition only)
-
-### Attribute Authority (Enterprise Edition only)
-
-## LDAP Support
-
-## Rate Limiting
-
-## Telemetry
-
-## Performance
-
-## Security
-
-### TLS
-
-#### Direct TLS
-
-#### TLS Reverse Proxy Configuration
-
-### Subscription to Security Alerts
-
-### Remote Circuit Breaker
-
-- Will only be activated if a vulnerability could result in unauthenticated
-  reads or writes.
-
-## Monitoring
-
-### Logging
-
-### SNMP (Enterprise Edition only)
-
-### CMIP (Enterprise Edition only)
-
-## Integration
-
-### Email LDIF (Enterprise Edition only)
-
-### Email MFA (Enterprise Edition only)
-
-### SMS MFA (Enterprise Edition only)
-
-## Hooks
-
-## Publication
-
-## Wildboar Schema
-
-## Troubleshooting
-
-### Diagnostic Information Page
-
-## Professional Support and Consulting
