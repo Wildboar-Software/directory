@@ -91,7 +91,7 @@ jobs:
       - name: Generate Prisma Client
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
       - name: Compile ${{ matrix.library }} Library
-        run: npx nx run ${{ matrix.library }}:build:production --skip-nx-cache
+        run: npx nx run ${{ matrix.library }}:build --skip-nx-cache
         # We use || true here because the version numbers will usually be the
         # same between pipeline runs, so most attempted publishing will fail due
         # to duplicate version numbers.
