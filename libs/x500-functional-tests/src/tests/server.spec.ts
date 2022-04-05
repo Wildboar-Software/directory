@@ -443,7 +443,9 @@ async function createTestRootNode(
     });
 }
 
-describe("Meerkat DSA", () => {
+// These tests are disabled because they are extremely flaky. These really
+// should be tested by themselves.
+describe.skip("Meerkat DSA", () => {
 
     it.todo("Memory leaks do not occur");
     it.todo("Requests are rejected when the DSA is hibernating");
