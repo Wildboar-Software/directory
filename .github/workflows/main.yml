@@ -19,7 +19,52 @@ env:
 
 jobs:
 
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+      - name: Run Linter
+        run: npx nx run-many --target=lint --all --skip-nx-cache
+        timeout-minutes: 2
+      - name: Lint Helm Charts
+        run: helm lint ./k8s/charts/meerkat-dsa/
+
+  unit_testing:
+    name: Unit Testing
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+      - name: Run Unit Tests
+        run: npx nx run-many --target=test --all --skip-nx-cache
+        timeout-minutes: 10
+
   build:
+    name: Build Meerkat DSA
     runs-on: ubuntu-latest
     environment: production
     strategy:
@@ -56,7 +101,11 @@ jobs:
           context: ./
           file: ./meerkat.dockerfile
 
+  # HOW DOES THIS EVEN WORK?
+  # There is no point in this job where it installs Helm, but yet, somehow, this
+  # job runs the `helm` command successfully!
   helm:
+    name: Publish Helm Chart
     runs-on: ubuntu-latest
     environment: production
     strategy:
@@ -88,6 +137,7 @@ jobs:
           overwrite: 'true'
 
   deploy_test:
+    name: Deploy Test Environment
     runs-on: ubuntu-latest
     needs:
       - build
@@ -192,6 +242,12 @@ jobs:
             --cert=./tmp/test.crt \
             --key=./tmp/test.key \
             --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat TLS Secret
+        run: |
+          kubectl create secret tls meerkat-test-tls \
+            --cert=./tmp/test.crt \
+            --key=./tmp/test.key \
+            --namespace=${{ env.NAMESPACE }}
       - name: Add Bitnami Helm Repo
         run: helm repo add bitnami https://charts.bitnami.com/bitnami
       - name: Add Wildboar Helm Repo
@@ -224,6 +280,7 @@ jobs:
             --set dangerouslyExposeWebAdmin=true \
             --set databaseSecretName=meerkat-test-db \
             --set signingSecretName=meerkat-test-signing \
+            --set tlsSecretName=meerkat-test-tls \
             --set openTopLevel=true \
             --set maxConnections=100 \
             --set maxConnectionsPerAddress=50 \
@@ -256,6 +313,7 @@ jobs:
             --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
 
   deploy_demo:
+    name: Deploy Demo Environment
     runs-on: ubuntu-latest
     needs:
       - build
@@ -435,6 +493,7 @@ jobs:
             --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
 
   seed_demo:
+    name: Seed Demo Data
     runs-on: ubuntu-latest
     needs:
       - deploy_demo
@@ -467,6 +526,7 @@ jobs:
             -t
 
   functional_testing:
+    name: Functional Testing
     runs-on: ubuntu-latest
     needs:
       - deploy_test

@@ -49,6 +49,7 @@ import {
     IDM_WARN_BAD_SEQUENCE,
     IDM_WARN_NEGATIVE_INVOKE_ID,
     IDM_WARN_VERSION_CHANGE,
+    IDM_WARN_BIG_INVOKE_ID,
 } from "./warnings";
 import IDMStatus from "./IDMStatus";
 
@@ -355,6 +356,11 @@ class IDMConnection {
             }
             if (pdu.request.invokeID < 0) {
                 this.events.emit("warning", IDM_WARN_NEGATIVE_INVOKE_ID);
+                this.writeAbort(Abort_invalidPDU);
+                return;
+            }
+            if (pdu.request.invokeID > Number.MAX_SAFE_INTEGER) {
+                this.events.emit("warning", IDM_WARN_BIG_INVOKE_ID);
                 this.writeAbort(Abort_invalidPDU);
                 return;
             }
