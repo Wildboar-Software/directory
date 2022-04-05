@@ -87,7 +87,175 @@ jobs:
           extra_args: '--pattern index.yaml'
           overwrite: 'true'
 
-  deploy:
+  deploy_test:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - helm
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+        # with:
+        #   version: 'v1.18.8'
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+        # with:
+        #   version: '<version>' # default is latest stable
+        # id: install
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Kubernetes Namespace
+        run: kubectl create ns ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Migration Job
+        run: kubectl delete job meerkat-dsa-test-migrate -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Uninstall Previous Meerkat DSA Release
+        run: helm uninstall meerkat-dsa-test -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Uninstall Previous MySQL Database
+        run: helm uninstall meerkat-db-test -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete MySQL Secret
+        run: kubectl delete secret mysql-db-test -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat Database Secret
+        run: kubectl delete secret meerkat-test-db -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat Signing Secret
+        run: kubectl delete secret meerkat-test-signing -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat TLS Secret
+        run: kubectl delete secret meerkat-test-tls -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete MySQL Database Data
+        run: kubectl delete pvc data-meerkat-db-test-mysql-0 -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete DSA DNS Record
+        run: |
+          az network dns record-set a delete \
+            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --name dsa01.test \
+            --yes
+        continue-on-error: true
+      - name: Delete Web Admin DNS Record
+        run: |
+          az network dns record-set a delete \
+            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --name webadm01.test \
+            --yes
+        continue-on-error: true
+        # I was having an issue getting a new instance to start. I think the issue
+        # is that the password settings for a given chart are only applied the first
+        # time it is deployed. When you delete a bitnami/mysql release, it does NOT
+        # delete the PVCs it created, which means that the OLD password will
+        # persist. Since this script deletes and re-installs under the same name
+        # every time, it must necessarily have a deterministic password.
+        # See this GitHub issue: https://github.com/bitnami/charts/issues/9083
+      - name: Create MySQL Secret
+        run: |
+          kubectl create secret generic mysql-db-test \
+            --from-literal=mysql-root-password=asdf_test \
+            --from-literal=mysql-replication-password=asdf_test \
+            --from-literal=mysql-password=asdf_test \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret
+        run: |
+          kubectl create secret generic meerkat-test-db \
+            --from-literal=databaseUrl=mysql://root:asdf_test@meerkat-db-test-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Temp Folder
+        run: mkdir -p ./tmp
+      - name: Create OpenSSL Keypair
+        run: |
+          openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
+            -keyout ./tmp/test.key \
+            -out ./tmp/test.crt \
+            -subj "/CN=dsa01.test.${{ env.ZONE }}" \
+            -addext "subjectAltName=DNS:dsa01.test.${{ env.ZONE }}"
+      - name: Create Meerkat Signing Secret
+        run: |
+          kubectl create secret tls meerkat-test-signing \
+            --cert=./tmp/test.crt \
+            --key=./tmp/test.key \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Add Bitnami Helm Repo
+        run: helm repo add bitnami https://charts.bitnami.com/bitnami
+      - name: Add Wildboar Helm Repo
+        run: helm repo add ${{ env.CHART_REPO }} https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+      - name: Update Helm Repo Index
+        run: helm repo update
+      - name: Install MySQL
+        run: |
+          helm install meerkat-db-test bitnami/mysql \
+            --set auth.existingSecret=mysql-db-test \
+            --set auth.database=directory \
+            --atomic \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Deploy Meerkat DSA via Helm
+        run: |
+          helm install meerkat-dsa-test ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+            --set fullnameOverride=meerkat-test \
+            --set service.type=LoadBalancer \
+            --set adminService.type=LoadBalancer \
+            --set log.level=debug \
+            --set "myAccessPointNSAPs={idm://dsa01.test.${{ env.ZONE }}:4632,ldap://dsa01.test.${{ env.ZONE }}:389}" \
+            --set chaining.minAuthLevel=0 \
+            --set chaining.minAuthLocalQualifier=0 \
+            --set chaining.tlsOptional=true \
+            --set chaining.prohibited=false \
+            --set ob.minAuthLevel=0 \
+            --set ob.minAuthLocalQualifier=0 \
+            --set ob.autoAccept=true \
+            --set databaseReset=true \
+            --set dangerouslyExposeWebAdmin=true \
+            --set databaseSecretName=meerkat-test-db \
+            --set signingSecretName=meerkat-test-signing \
+            --set openTopLevel=true \
+            --set maxConnections=100 \
+            --set maxConnectionsPerAddress=50 \
+            --set maxConcurrentOperationsPerConnection=50 \
+            --atomic \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Wait 30 Seconds for Public IP to be Allocated
+        run: sleep 30
+      - name: Save Directory Service IP Address
+        run: |
+          echo 'DIRECTORY_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-test-directory --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Save Web Admin Service IP Address
+        run: |
+          echo 'WEB_ADMIN_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-test-web-admin --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Create DSA DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name dsa01.test \
+            --ipv4-address ${{ env.DIRECTORY_SERVICE_IP }}
+      - name: Create WebAdmin DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name webadm01.test \
+            --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
+
+  deploy_demo:
     runs-on: ubuntu-latest
     needs:
       - build
@@ -266,10 +434,10 @@ jobs:
             --record-set-name webadm01.${{ matrix.dmd }} \
             --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
 
-  seed:
+  seed_demo:
     runs-on: ubuntu-latest
     needs:
-      - deploy
+      - deploy_demo
     environment: production
     strategy:
       fail-fast: false
@@ -298,11 +466,30 @@ jobs:
             --profile=${{ matrix.dmd }} \
             -t
 
-  # TODO: Test
-  # TODO: Publish Docusaurus Docs
+  functional_testing:
+    runs-on: ubuntu-latest
+    needs:
+      - deploy
+    environment: production
+    env:
+      MEERKAT_TEST_HOST: dsa01.test.mkdemo.wildboar.software
+      MEERKAT_TEST_PORT: "4632"
+      MEERKAT_TEST_LDAP_PORT: "389"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Run the functional tests
+        run: npx nx run x500-functional-tests:test --skip-nx-cache
+        timeout-minutes: 10
 
   # Pretty much copied from here: https://docusaurus.io/docs/deployment#deploying-to-github-pages
-  deploy-docs:
+  deploy_docs:
     name: Deploy Documentation
     runs-on: ubuntu-latest
     steps:

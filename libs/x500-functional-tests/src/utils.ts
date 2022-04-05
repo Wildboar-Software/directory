@@ -215,8 +215,10 @@ function frame(ber: ASN1Element): Buffer {
     ]);
 }
 
-export const HOST: string = "localhost";
-export const PORT: number = 4632;
+const HOST: string = process.env.MEERKAT_TEST_HOST ?? "localhost";
+const PORT: number = process.env.MEERKAT_TEST_PORT
+    ? Number.parseInt(process.env.MEERKAT_TEST_PORT)
+    : 4632;
 
 export
 const encodedDesc = utf8("testeroo");

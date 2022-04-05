@@ -334,8 +334,10 @@ function frame(ber: ASN1Element): Buffer {
     ]);
 }
 
-const HOST: string = "localhost";
-const PORT: number = 4632;
+const HOST: string = process.env.MEERKAT_TEST_HOST ?? "localhost";
+const PORT: number = process.env.MEERKAT_TEST_PORT
+    ? Number.parseInt(process.env.MEERKAT_TEST_PORT)
+    : 4632;
 
 async function connect(credentials?: Credentials): Promise<IDMConnection> {
     const dba = new DirectoryBindArgument(

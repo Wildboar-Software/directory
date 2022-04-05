@@ -240,9 +240,13 @@ function firehoseOfIdmRequests (size: number = 1000): Buffer {
     return Buffer.concat(individualPackets);
 }
 
-const HOST: string = "localhost";
-const PORT: number = 4632;
-const LDAP_PORT: number = 1389;
+const HOST: string = process.env.MEERKAT_TEST_HOST ?? "localhost";
+const PORT: number = process.env.MEERKAT_TEST_PORT
+    ? Number.parseInt(process.env.MEERKAT_TEST_PORT)
+    : 4632;
+const LDAP_PORT: number = process.env.MEERKAT_TEST_LDAP_PORT
+    ? Number.parseInt(process.env.MEERKAT_TEST_LDAP_PORT)
+    : 1389;
 
 function frame(ber: ASN1Element): Buffer {
     const data = ber.toBytes();
