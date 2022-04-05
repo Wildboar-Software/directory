@@ -21,3 +21,11 @@
     align-items: center;
     justify-content: center;
 }
+
+.paragraph {
+    margin: auto;
+    width: 50vw;
+    text-align: center;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}

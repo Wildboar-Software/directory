@@ -34,8 +34,11 @@ const sidebars = {
         },
         {
             type: 'category',
-            label: 'X.500 CLI',
-            items: [],
+            label: 'Clients',
+            items: [
+                'x500cli',
+                'studio',
+            ],
         },
         {
             type: 'category',

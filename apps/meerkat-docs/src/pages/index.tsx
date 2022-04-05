@@ -33,7 +33,7 @@ export default function Home(): JSX.Element {
         >
             <HomepageHeader />
             <main>
-                <p>
+                <p className={styles.paragraph}>
                     Meerkat DSA is a full-blown X.500 Directory System Agent (DSA),
                     as described in the International Telecommunication Union's
                     X.500-series of recommendations. It runs on Node.js and is
@@ -42,12 +42,12 @@ export default function Home(): JSX.Element {
                     Wildboar Software
                     </a>.
                 </p>
-                <p>
+                <p className={styles.paragraph}>
                     X.500 directory systems are general-purpose, distributed,
                     hierarchical databases that use human-friendly names to
                     identify entries. X.500 DSAs can cooperate to host a single
-                    hierarchical database, while still maintaining ownership and
-                    control over subtrees of the shared, hierarchical data
+                    hierarchical database, while still maintaining distributed
+                    ownership and control over subtrees of the shared, hierarchical data
                     structure. Though general-purpose, X.500 directory systems
                     were primarily designed for storing information about
                     people and organizations.

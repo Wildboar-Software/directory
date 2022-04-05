@@ -118,6 +118,12 @@ const config = {
                     },
                     {
                         type: 'doc',
+                        docId: 'specs',
+                        position: 'left',
+                        label: 'X.500 Specifications',
+                    },
+                    {
+                        type: 'doc',
                         docId: 'demo',
                         position: 'left',
                         label: 'Demo',
