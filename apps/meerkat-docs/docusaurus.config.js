@@ -116,6 +116,12 @@ const config = {
                         position: 'left',
                         label: 'Documentation',
                     },
+                    {
+                        type: 'doc',
+                        docId: 'demo',
+                        position: 'left',
+                        label: 'Demo',
+                    },
                     // {
                     //     type: 'doc',
                     //     docId: 'intro',
