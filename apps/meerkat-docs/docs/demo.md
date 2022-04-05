@@ -66,7 +66,7 @@ These will not be formal rules, per se, but please:
    requests. We already know about this. We are primarily interested in
    information disclosures and data corruption.
 2. Let Jonathan M. Wilbur know you are attempting to hack Meerkat DSA via
-   [email](jonathan.wilbur@wildboarsoftware.com).
+   [email](mailto:jonathan.wilbur@wildboarsoftware.com).
 
 If these rules are abused often enough, the demo environment will be removed, so
 play nice!
