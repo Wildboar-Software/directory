@@ -393,12 +393,6 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: tcp.timeoutInSeconds
                   optional: true
-            - name: MEERKAT_TLS_CA_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.ca
-                  optional: true
             {{- if .Values.tlsSecretName }}
             - name: MEERKAT_TLS_CERT_FILE
               value: /data/pki/tls/tls.crt
@@ -414,18 +408,6 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: tls.clientCertAuth
-                  optional: true
-            - name: MEERKAT_TLS_CRL_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.crl
-                  optional: true
-            - name: MEERKAT_TLS_DH_PARAM_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.dhparam
                   optional: true
             - name: MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
               valueFrom:

@@ -44,12 +44,6 @@ data:
   {{- if .Values.tls.key }}
   tls.key: {{ .Values.tls.key }}
   {{- end }}
-  {{- if .Values.tls.ca }}
-  tls.ca: {{ .Values.tls.ca }}
-  {{- end }}
-  {{- if .Values.tls.crl }}
-  tls.crl: {{ .Values.tls.crl }}
-  {{- end }}
   {{- if .Values.tls.pfx }}
   tls.pfx: {{ .Values.tls.pfx }}
   {{- end }}
@@ -61,9 +55,6 @@ data:
   {{- end }}
   {{- if .Values.tls.clientCertEngine }}
   tls.clientCertEngine: {{ .Values.tls.clientCertEngine }}
-  {{- end }}
-  {{- if .Values.tls.dhparam }}
-  tls.dhparam: {{ .Values.tls.dhparam }}
   {{- end }}
   {{- if .Values.tls.ecdhCurve }}
   tls.ecdhCurve: {{ .Values.tls.ecdhCurve }}
