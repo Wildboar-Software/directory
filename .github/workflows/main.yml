@@ -538,6 +538,13 @@ jobs:
         run: echo "${{ env.CA_CERT }}" > ca.crt
       - name: Create Certificate Authority Private Key
         run: echo "${{ secrets.CA_PRIVATE_KEY }}" > ca.key
+      - name: Setup Certificate Authority Files
+        run: |
+          mkdir ca \
+          && cd ca \
+          && mkdir ca.db.certs \
+          && mkdir ca.db.index \
+          && echo $((1000 + RANDOM % 9999)) > ca.db.serial
       - name: Create DSA's CSR
         run: |
           openssl req \
