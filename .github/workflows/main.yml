@@ -432,7 +432,7 @@ jobs:
         default_md = md5
         preserve = no
         policy = generic_policy
-        copy_extensions = yes
+        copy_extensions = copyall
         [ generic_policy ]
         countryName = optional
         stateOrProvinceName = optional
