@@ -750,6 +750,7 @@ async function connectToIdmNaddr (
         try { // STARTTLS
             await Promise.race([
                 await new Promise<void>((resolve, reject) => {
+                    idm.events.once("socketError", reject);
                     idm.events.once("tLSResponse", (response) => {
                         if (response !== TLSResponse_success) {
                             reject();
