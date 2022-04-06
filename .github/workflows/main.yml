@@ -431,7 +431,7 @@ jobs:
         continue-on-error: true
       - name: Create Demo Trust Anchor Secret
         run: |
-          kubectl create secret opaque ${{ env.DEMO_TRUST_ANCHOR_SECRET_NAME }} \
+          kubectl create secret generic ${{ env.DEMO_TRUST_ANCHOR_SECRET_NAME }} \
             --from-file=ca.pem=ca.crt \
             --namespace=${{ env.NAMESPACE }}
 
