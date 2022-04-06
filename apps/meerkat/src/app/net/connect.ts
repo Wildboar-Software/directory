@@ -207,7 +207,7 @@ function getIDMOperationWriter (
                     req.argument!,
                 );
             }),
-            new Promise<never>((resolve, reject) => setTimeout(
+            new Promise<never>((_, reject) => setTimeout(
                 () => {
                     const err = new errors.ServiceError(
                         `DSA-initiated invocation ${invokeID.toString()} timed out.`,
@@ -840,14 +840,6 @@ async function connectToIdmNaddr (
         },
         events: new EventEmitter(),
     };
-    // const HANDLE_ERROR = () => {
-    //     // ret.events.emit("error", undefined);
-    // };
-    idm.events.on("result", (result) => {
-        ret.events.emit("response", [ result.opcode, result.result ]);
-    });
-    // idm.events.on("error_", HANDLE_ERROR);
-    // idm.events.on("reject", HANDLE_ERROR);
     return ret;
 }
 
@@ -936,10 +928,9 @@ async function connect (
                 timeoutTime,
                 !options?.tlsOptional,
             );
-        // FIXME: I think these strings need to end with a colon.
-        } else if (uri.protocol.toLowerCase() === "ldap") {
+        } else if (uri.protocol.toLowerCase() === "ldap:") {
             return connectToLDAP(ctx, uri, credentials, timeoutTime, !options?.tlsOptional);
-        } if (uri.protocol.toLowerCase() === "ldaps") {
+        } if (uri.protocol.toLowerCase() === "ldaps:") {
             return null; // TODO: Support LDAPS
         }
         // No other address types are supported.

@@ -1,5 +1,3 @@
-import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import type { ASN1Element } from "asn1-ts";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 
@@ -7,7 +5,6 @@ import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 
 type EventMap = {
     "connect": undefined,
-    "response": [ Code, ASN1Element ],
     "close": undefined,
     "end"?: undefined,
     "timeout"?: undefined,

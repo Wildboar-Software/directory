@@ -16,7 +16,7 @@ env:
   CHART_CONTAINER: asdf
   CHART_REPO: wildboar
   CHART_NAME: meerkat-dsa
-  DEMO_TRUST_ANCHOR_SECRET_NAME: demo-trust-anchor
+  DEMO_TRUST_ANCHOR_CONFIG_NAME: demo-trust-anchor
 
 jobs:
 
@@ -398,12 +398,12 @@ jobs:
         run: mkdir -p ./tmp
       - name: Create Certificate Authority Certificate
         run: echo "${{ env.CA_CERT }}" > ca.crt
-      - name: Delete Demo Trust Anchor Secret
-        run: kubectl delete secret ${{ env.DEMO_TRUST_ANCHOR_SECRET_NAME }} -n ${{ env.NAMESPACE }}
+      - name: Delete Demo Trust Anchor ConfigMap
+        run: kubectl delete configmap ${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} -n ${{ env.NAMESPACE }}
         continue-on-error: true
-      - name: Create Demo Trust Anchor Secret
+      - name: Create Demo Trust Anchor ConfigMap
         run: |
-          kubectl create secret generic ${{ env.DEMO_TRUST_ANCHOR_SECRET_NAME }} \
+          kubectl create configmap ${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
             --from-file=ca.pem=ca.crt \
             --namespace=${{ env.NAMESPACE }}
 
@@ -421,14 +421,13 @@ jobs:
         [ ca ]
         default_ca = ca_default
         [ ca_default ]
-        dir = ./ca
-        certs = $dir
-        new_certs_dir = $dir/ca.db.certs
-        database = $dir/ca.db.index
-        serial = $dir/ca.db.serial
-        RANDFILE = $dir/ca.db.rand
-        certificate = $dir/ca.crt
-        private_key = $dir/ca.key
+        certs = .
+        new_certs_dir = ./ca.db.certs
+        database = ./ca.db.index
+        serial = ./ca.db.serial
+        RANDFILE = ./ca.db.rand
+        certificate = ./ca.crt
+        private_key = ./ca.key
         default_days = 730
         default_crl_days = 30
         default_md = md5
@@ -539,9 +538,7 @@ jobs:
         run: echo "${{ secrets.CA_PRIVATE_KEY }}" > ca.key
       - name: Setup Certificate Authority Files
         run: |
-          mkdir ca \
-          && cd ca \
-          && mkdir ca.db.certs \
+          mkdir ca.db.certs \
           && mkdir ca.db.index \
           && echo $((1000 + RANDOM % 9999)) > ca.db.serial
       - name: Create DSA's CSR
@@ -606,7 +603,7 @@ jobs:
             --set databaseSecretName=meerkat-${{ matrix.dmd }}-db \
             --set signingSecretName=meerkat-${{ matrix.dmd }}-signing \
             --set tlsSecretName=meerkat-${{ matrix.dmd }}-tls \
-            --set tlsCaConfigName=${{ env.DEMO_TRUST_ANCHOR_SECRET_NAME }} \
+            --set tlsCaConfigName=${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
       - name: Wait 30 Seconds for Public IP to be Allocated
