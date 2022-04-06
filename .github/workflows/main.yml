@@ -432,6 +432,7 @@ jobs:
         default_md = md5
         preserve = no
         policy = generic_policy
+        copy_extensions = yes
         [ generic_policy ]
         countryName = optional
         stateOrProvinceName = optional
@@ -547,6 +548,7 @@ jobs:
             -newkey rsa:1024 \
             -nodes \
             -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
+            -addext "subjectAltName=DNS:dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
             -keyout ./tmp/${{ matrix.dmd }}.key \
             -out ./tmp/${{ matrix.dmd }}.csr
       - name: Create DSA's Keypair
@@ -557,7 +559,6 @@ jobs:
             -out ./tmp/${{ matrix.dmd }}.crt \
             -rand_serial \
             -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
-            -addext "subjectAltName=DNS:dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
             -infiles ./tmp/${{ matrix.dmd }}.csr
       - name: Create Meerkat Signing Secret
         run: |
