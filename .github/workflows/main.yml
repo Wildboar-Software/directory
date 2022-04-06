@@ -552,6 +552,7 @@ jobs:
       - name: Create DSA's Keypair
         run: |
           openssl ca \
+            -batch \
             -config openssl.conf \
             -out ./tmp/${{ matrix.dmd }}.crt \
             -rand_serial \
