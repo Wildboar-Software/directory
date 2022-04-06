@@ -451,15 +451,19 @@ class IDMConnection {
             if (pdu.tLSResponse === TLSResponse_success) { // Success
                 this.socket.removeAllListeners("data");
                 this.socket.removeAllListeners("error");
-                const encryptedSocket = tls.connect({
-                    ...(this.starttlsOptions ?? {}),
-                    socket: this.socket,
-                });
-                encryptedSocket.on("secureConnect", () => {
+                try {
+                    const encryptedSocket = tls.connect({
+                        ...(this.starttlsOptions ?? {}),
+                        socket: this.socket,
+                    });
                     encryptedSocket.on("error", (e) => this.events.emit("socketError", e));
-                    encryptedSocket.on("data", (data: Buffer) => this.handleData(data));
-                    this.socket = encryptedSocket;
-                });
+                    encryptedSocket.on("secureConnect", () => {
+                        encryptedSocket.on("data", (data: Buffer) => this.handleData(data));
+                        this.socket = encryptedSocket;
+                    });
+                } catch (e) {
+                    this.socket.emit("socketError", e);
+                }
             }
         } else {
             this.writeAbort(Abort_invalidPDU);

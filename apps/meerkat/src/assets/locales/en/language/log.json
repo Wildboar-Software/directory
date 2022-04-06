@@ -64,7 +64,7 @@
     "timed_out_connecting_to_naddr": "Timed out binding to network address {{uri}}.",
     "trying_naddr": "Trying to bind to network address {{uri}}.",
     "bound_to_naddr": "Successfully bound to network address {{uri}}.",
-    "error_naddr": "Error binding to network address {{uri}}.",
+    "error_naddr": "Error binding to network address {{uri}}: {{e}}",
     "attempting_starttls": "Attempting STARTTLS with network address {{uri}}.",
     "established_starttls": "Established STARTTLS with network address {{uri}}.",
     "starttls_error@tls_optional": "Could not establish STARTTLS with network address {{uri}}. The connection will still be used, since TLS is optional. This was the error: {{e}}",

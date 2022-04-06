@@ -16,6 +16,7 @@ env:
   CHART_CONTAINER: asdf
   CHART_REPO: wildboar
   CHART_NAME: meerkat-dsa
+  DEMO_TRUST_ANCHOR_SECRET_NAME: demo-trust-anchor
 
 jobs:
 
@@ -351,12 +352,96 @@ jobs:
             --record-set-name webadm01.test \
             --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
 
+  create_demo_pki:
+    name: Create Demo PKI
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      # Credits: https://blogg.bekk.no/how-to-sign-a-certificate-request-with-openssl-e046c933d3ae
+      CA_CONFIG: |
+        [ ca ]
+        default_ca = ca_default
+        [ ca_default ]
+        dir = ./ca
+        certs = $dir
+        new_certs_dir = $dir/ca.db.certs
+        database = $dir/ca.db.index
+        serial = $dir/ca.db.serial
+        RANDFILE = $dir/ca.db.rand
+        certificate = $dir/ca.crt
+        private_key = $dir/ca.key
+        default_days = 730
+        default_crl_days = 30
+        default_md = md5
+        preserve = no
+        policy = generic_policy
+        [ generic_policy ]
+        countryName = optional
+        stateOrProvinceName = optional
+        localityName = optional
+        organizationName = optional
+        organizationalUnitName = optional
+        commonName = optional
+        emailAddress = optional
+      CA_CERT: |
+        -----BEGIN CERTIFICATE-----
+        MIIDbTCCAlWgAwIBAgIULVexlqqnsQ1/ezE1u8+lQW3iC/8wDQYJKoZIhvcNAQEL
+        BQAwRjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkZMMQ4wDAYDVQQHDAVUYW1wYTEa
+        MBgGA1UECgwRV2lsZGJvYXIgU29mdHdhcmUwHhcNMjIwNDA2MDAxODA5WhcNNDkw
+        ODIyMDAxODA5WjBGMQswCQYDVQQGEwJVUzELMAkGA1UECAwCRkwxDjAMBgNVBAcM
+        BVRhbXBhMRowGAYDVQQKDBFXaWxkYm9hciBTb2Z0d2FyZTCCASIwDQYJKoZIhvcN
+        AQEBBQADggEPADCCAQoCggEBANfoJHPvPB0PTbywZ/LJwYTN75d2rqaRo/0jf+f2
+        uviyVVLIeVMRsImjfhBCK32kDp4EUB3jwhjoMnb0LubuY63o40uCF9STb2pT9b/C
+        5QsBdH1UGAgfGykRFkGG8SDAx+prkafiy69ha/ZtLRZW78bfPmGWDq7ALwEMKdvz
+        xEF0+B7Nj5hmvVnt51+Tf2nUi8LXLn3uyK8Tu9HkZt3LkQgCAQENOGg97kpXU7aj
+        +Ime99pIQr9ehnioCt8tegHXJkQF42Yh6xnlfwqakLMYjPsulfM+1ZF3TGbabHA9
+        owt1w0aOtmoicNeLdZ31YSXGrAZTa9U9YlYh1cH0Y7Kr14UCAwEAAaNTMFEwHQYD
+        VR0OBBYEFNnD4JAJEcfK/62LwuKq8RQnrTmwMB8GA1UdIwQYMBaAFNnD4JAJEcfK
+        /62LwuKq8RQnrTmwMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
+        AAkWT0CbFTaUttuZJNDYX7vtdId2dS3BF3cPglaXuYag7IZmvMQ/XrOW2Wr3CcKU
+        Mg0rbIuCmn37fBFrggDg+NICOcOAuXs9wdufUvAQx9RFc4kv749uTmjWA2H4Oz+R
+        S8cyDlwXICD/QaEjo9I306umXZA1bkO8M2jHjIBDslLFsSWwQags08DrWZTwC9tU
+        W1rwqkOlabEpphV4snFuuYqyHXTmCVjUQVipPj4mLi9J5ydSyJSnhKy4neoOGYyC
+        lfpmMNCkvSpqT3Z2DXoYk38sH8SWfJfcX3ao6InIMq6v12mpnQwhvgTGuAmwDHLz
+        4omJCGN3ohmP9kr2tp3Cf6o=
+        -----END CERTIFICATE-----
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Temp Folder
+        run: mkdir -p ./tmp
+      - name: Create Certificate Authority Config
+        run: echo "${{ env.CA_CONFIG }}" > openssl.conf
+      - name: Create Certificate Authority Certificate
+        run: echo "${{ env.CA_CERT }}" > ca.crt
+      - name: Delete Demo Trust Anchor Secret
+        run: kubectl delete secret ${{ env.DEMO_TRUST_ANCHOR_SECRET_NAME }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Create Demo Trust Anchor Secret
+        run: |
+          kubectl create secret opaque ${{ env.DEMO_TRUST_ANCHOR_SECRET_NAME }} \
+            --from-file=ca.pem=ca.crt \
+            --namespace=${{ env.NAMESPACE }}
+
   deploy_demo:
     name: Deploy Demo Environment
     runs-on: ubuntu-latest
     needs:
       - build
       - helm
+      - create_demo_pki
     environment: production
     strategy:
       fail-fast: false
@@ -375,13 +460,8 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v2.0
-        # with:
-        #   version: 'v1.18.8'
       - name: Setup Helm
         uses: azure/setup-helm@v1
-        # with:
-        #   version: '<version>' # default is latest stable
-        # id: install
       - name: Set Kubernetes Context
         uses: azure/aks-set-context@v1
         with:
@@ -452,12 +532,27 @@ jobs:
             --namespace=${{ env.NAMESPACE }}
       - name: Create Temp Folder
         run: mkdir -p ./tmp
-      - name: Create OpenSSL Keypair
+      - name: Create Certificate Authority Config
+        run: echo "${{ env.CA_CONFIG }}" > openssl.conf
+      - name: Create Certificate Authority Certificate
+        run: echo "${{ env.CA_CERT }}" > ca.crt
+      - name: Create Certificate Authority Private Key
+        run: echo "${{ secrets.CA_PRIVATE_KEY }}" > ca.key
+      - name: Create DSA's CSR
         run: |
-          openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
+          openssl req \
+            -new \
+            -newkey rsa:1024 \
+            -nodes \
             -keyout ./tmp/${{ matrix.dmd }}.key \
+            -out ./tmp/${{ matrix.dmd }}.csr
+      - name: Create DSA's Keypair
+        run: |
+          openssl ca \
+            -config openssl.conf \
             -out ./tmp/${{ matrix.dmd }}.crt \
             -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
+            -infiles ./tmp/${{ matrix.dmd }}.csr \
             -addext "subjectAltName=DNS:dsa01.${{ matrix.dmd }}.${{ env.ZONE }}"
       - name: Create Meerkat Signing Secret
         run: |
@@ -504,6 +599,7 @@ jobs:
             --set databaseSecretName=meerkat-${{ matrix.dmd }}-db \
             --set signingSecretName=meerkat-${{ matrix.dmd }}-signing \
             --set tlsSecretName=meerkat-${{ matrix.dmd }}-tls \
+            --set tlsCaConfigName=${{ env.DEMO_TRUST_ANCHOR_SECRET_NAME }} \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
       - name: Wait 30 Seconds for Public IP to be Allocated
@@ -624,3 +720,4 @@ jobs:
 # TODO: Send Email to Subscribers?
 # TODO: Publish message to Matrix chat? (Looks unclear how to do this.)
 # TODO: Create a Debian Package
+# TODO: Upload artifacts

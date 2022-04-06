@@ -543,13 +543,14 @@ async function connectToLDAP (
         const ldapSocket = new LDAPSocket(socket);
         await Promise.race<void>([
             new Promise<void>((resolve, reject) => {
-                ldapSocket.on("connect", resolve);
-                ldapSocket.on("error", reject);
-                ldapSocket.on("timeout", reject);
-                ldapSocket.on("close", reject);
+                ldapSocket.once("connect", resolve);
+                ldapSocket.once("error", reject);
+                ldapSocket.once("timeout", reject);
+                ldapSocket.once("close", reject);
             }),
             new Promise<void>((_, reject) => setTimeout(reject, differenceInMilliseconds(timeoutTime, new Date()))),
         ]);
+        ldapSocket.removeAllListeners();
         return ldapSocket;
     };
     let ldapSocket = await getLDAPSocket();
@@ -584,7 +585,7 @@ async function connectToLDAP (
                         reject();
                         return;
                     } else {
-                        const tlsSocket = new tls.TLSSocket(ldapSocket.socket);
+                        const tlsSocket = new tls.TLSSocket(ldapSocket.socket, ctx.config.tls);
                         ldapSocket.startTLS(tlsSocket);
                         tlsSocket.on("secureConnect", resolve);
                     }
@@ -660,9 +661,10 @@ async function connectToLDAP (
                     }),
                     new Promise<void>((_, reject) => setTimeout(reject, connectionTimeRemaining)),
                 ]);
-            } catch {
+            } catch (e) {
                 ctx.log.warn(ctx.i18n.t("log:error_naddr", {
                     uri,
+                    e,
                 }), {
                     dest: uri,
                 });
@@ -788,17 +790,15 @@ async function connectToIdmNaddr (
         try {
             await Promise.race([
                 await new Promise((resolve, reject) => {
-                    idm.events.once("socketError", reject);
-                    idm.events.once("abort", reject);
-                    idm.events.once("error", (err) => {
-                        reject(err);
+                    idm.events.once("socketError", (e) => {
+                        reject(e);
                     });
+                    idm.events.once("abort", reject);
+                    idm.events.once("error", reject);
                     idm.events.once("bindError", (err) => {
                         reject(err.error);
                     });
-                    idm.events.once("bindResult", (result) => {
-                        resolve(result);
-                    });
+                    idm.events.once("bindResult", resolve);
                     idm.writeBind(
                         protocolID,
                         _encode_DSABindArgument(new DSABindArgument(
@@ -813,7 +813,7 @@ async function connectToIdmNaddr (
                         },
                     );
                 }),
-                new Promise<void>((_, reject) => setTimeout(reject, differenceInMilliseconds(timeoutTime, new Date()))),
+                new Promise<void>((_, reject) => setTimeout(() => reject(new Error("87270185-f001-4e26-bd5b-c9b0da826ca4")), differenceInMilliseconds(timeoutTime, new Date()))),
             ]);
             ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
                 uri,
@@ -823,10 +823,13 @@ async function connectToIdmNaddr (
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:error_naddr", {
                 uri,
+                e,
             }), {
                 dest: uri,
             });
             continue;
+        } finally {
+            idm.events.removeAllListeners();
         }
     }
 
@@ -933,6 +936,7 @@ async function connect (
                 timeoutTime,
                 !options?.tlsOptional,
             );
+        // FIXME: I think these strings need to end with a colon.
         } else if (uri.protocol.toLowerCase() === "ldap") {
             return connectToLDAP(ctx, uri, credentials, timeoutTime, !options?.tlsOptional);
         } if (uri.protocol.toLowerCase() === "ldaps") {

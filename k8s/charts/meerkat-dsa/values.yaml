@@ -39,6 +39,18 @@ dangerouslyExposeWebAdmin: false
 # password in it.
 databaseSecretName: meerkat-database-secret
 
+# This MUST contain the following keys:
+# - `ca.pem`: The certificate authority bundle as a concatenation of PEM-encoded X.509 certificates.
+# tlsCaConfigName: meerkat-ca-config
+
+# This MUST contain the following keys:
+# - `crl.pem`: All certificate revocation lists as a concatenation of PEM-encoded CRLs.
+# tlsCrlConfigName: meerkat-crl-config
+
+# This MUST contain the following keys:
+# - `dhparam.pem`: The PEM-encoded Diffie-Hellman Parameters
+# dhParamSecretName: meerkat-dhparam-secret
+
 # The structure of what follows is based on the `Context.config` interface defined in
 # `@wildboar/meerkat-types` and instantiated in `apps/meerkat/src/app/ctx.ts`.
 

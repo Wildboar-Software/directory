@@ -437,6 +437,18 @@ spec:
             - name: MEERKAT_TLS_KEY_FILE
               value: /data/pki/tls/tls.key
             {{- end }}
+            {{- if .Values.dhParamSecretName }}
+            - name: MEERKAT_TLS_DH_PARAM_FILE
+              value: /data/dhparam/dhparam.pem
+            {{- end }}
+            {{- if .Values.tlsCaConfigName }}
+            - name: MEERKAT_TLS_CA_FILE
+              value: /data/ca/ca.pem
+            {{- end }}
+            {{- if .Values.tlsCrlConfigName }}
+            - name: MEERKAT_TLS_CRL_FILE
+              value: /data/crl/crl.pem
+            {{- end }}
             - name: MEERKAT_TLS_KEY_PASSPHRASE
               valueFrom:
                 configMapKeyRef:
@@ -524,6 +536,21 @@ spec:
               mountPath: "/data/pki/tls"
               readOnly: true
             {{- end }}
+            {{- if .Values.dhParamSecretName }}
+            - name: dhparam-secret-volume
+              mountPath: "/data/dhparam"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.tlsCaConfigName }}
+            - name: ca-volume
+              mountPath: "/data/ca"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.tlsCrlConfigName }}
+            - name: crl-volume
+              mountPath: "/data/crl"
+              readOnly: true
+            {{- end }}
             {{- if .Values.init }}
             - name: init-volume
               mountPath: "/data/init"
@@ -543,6 +570,21 @@ spec:
         - name: tls-secret-volume
           secret:
             secretName: {{ .Values.tlsSecretName | quote }}
+        {{- end }}
+        {{- if .Values.dhParamSecretName }}
+        - name: dhparam-secret-volume
+          secret:
+            secretName: {{ .Values.dhParamSecretName | quote }}
+        {{- end }}
+        {{- if .Values.tlsCaConfigName }}
+        - name: ca-volume
+          configMap:
+            name: {{ .Values.tlsCaConfigName | quote }}
+        {{- end }}
+        {{- if .Values.tlsCrlConfigName }}
+        - name: crl-volume
+          configMap:
+            name: {{ .Values.tlsCrlConfigName | quote }}
         {{- end }}
         {{- if .Values.init }}
         - name: init-volume
