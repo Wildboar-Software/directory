@@ -536,10 +536,10 @@ jobs:
       - name: Create Certificate Authority Private Key
         run: echo "${{ secrets.CA_PRIVATE_KEY }}" > ca.key
       - name: Setup Certificate Authority Files
-        run: |
-          mkdir ca.db.certs \
-          && mkdir ca.db.index \
-          && echo $((1000 + RANDOM % 9999)) > ca.db.serial
+        run: mkdir ca.db.certs && mkdir ca.db.index
+      # This is not actually used, because we use the -rand_serial option below.
+      - name: Create Certificate Authority Serial Number File
+        run: openssl rand -hex 4 > ca.db.serial
       - name: Create DSA's CSR
         run: |
           openssl req \
@@ -554,6 +554,7 @@ jobs:
           openssl ca \
             -config openssl.conf \
             -out ./tmp/${{ matrix.dmd }}.crt \
+            -rand_serial \
             -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
             -infiles ./tmp/${{ matrix.dmd }}.csr \
             -addext "subjectAltName=DNS:dsa01.${{ matrix.dmd }}.${{ env.ZONE }}"
