@@ -571,6 +571,26 @@ class DAPAssociation extends ClientAssociation {
                 connection_uuid: this.id,
             },
         }).then().catch();
+        this.ctx.telemetry.trackRequest({
+            name: "UNBIND",
+            url: this.ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                ?? `idm://meerkat.invalid:${this.ctx.config.idm.port}`,
+            duration: 1,
+            resultCode: 200,
+            success: true,
+            properties: {
+                remoteFamily: this.idm.s.remoteFamily,
+                remoteAddress: this.idm.s.remoteAddress,
+                remotePort: this.idm.s.remotePort,
+                administratorEmail: this.ctx.config.administratorEmail,
+                association_id: this.id,
+            },
+            measurements: {
+                bytesRead: this.idm.socket.bytesRead,
+                bytesWritten: this.idm.socket.bytesWritten,
+                idmFramesReceived: this.idm.getFramesReceived(),
+            },
+        });
         this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
             ctype: DAPAssociation.name,
             cid: this.id,
