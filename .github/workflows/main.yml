@@ -644,8 +644,7 @@ jobs:
       matrix:
         dmd:
           - 'root'
-          # TODO: Re-enable gb once you fix the bugs stopping this from working.
-          # - 'gb'
+          - 'gb'
           # - 'ru'
           # - 'ru-moscow'
     steps:
