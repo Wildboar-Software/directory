@@ -545,7 +545,7 @@ jobs:
         run: |
           openssl req \
             -new \
-            -newkey rsa:1024 \
+            -newkey rsa:4096 \
             -nodes \
             -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
             -addext "subjectAltName=DNS:dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
