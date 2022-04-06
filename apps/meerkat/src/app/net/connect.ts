@@ -920,7 +920,7 @@ async function connect (
                     });
                     // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
                     socket.once("connect", () => socket.setTimeout(0));
-                    return new IDMConnection(socket);
+                    return new IDMConnection(socket, ctx.config.tls);
                 },
                 targetSystem,
                 protocolID,
