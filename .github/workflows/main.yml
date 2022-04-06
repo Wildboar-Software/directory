@@ -357,32 +357,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
-      # Credits: https://blogg.bekk.no/how-to-sign-a-certificate-request-with-openssl-e046c933d3ae
-      CA_CONFIG: |
-        [ ca ]
-        default_ca = ca_default
-        [ ca_default ]
-        dir = ./ca
-        certs = $dir
-        new_certs_dir = $dir/ca.db.certs
-        database = $dir/ca.db.index
-        serial = $dir/ca.db.serial
-        RANDFILE = $dir/ca.db.rand
-        certificate = $dir/ca.crt
-        private_key = $dir/ca.key
-        default_days = 730
-        default_crl_days = 30
-        default_md = md5
-        preserve = no
-        policy = generic_policy
-        [ generic_policy ]
-        countryName = optional
-        stateOrProvinceName = optional
-        localityName = optional
-        organizationName = optional
-        organizationalUnitName = optional
-        commonName = optional
-        emailAddress = optional
       CA_CERT: |
         -----BEGIN CERTIFICATE-----
         MIIDbTCCAlWgAwIBAgIULVexlqqnsQ1/ezE1u8+lQW3iC/8wDQYJKoZIhvcNAQEL
@@ -422,8 +396,6 @@ jobs:
           resource-group: ${{ env.RESOURCE_GROUP }}
       - name: Create Temp Folder
         run: mkdir -p ./tmp
-      - name: Create Certificate Authority Config
-        run: echo "${{ env.CA_CONFIG }}" > openssl.conf
       - name: Create Certificate Authority Certificate
         run: echo "${{ env.CA_CERT }}" > ca.crt
       - name: Delete Demo Trust Anchor Secret
@@ -443,6 +415,33 @@ jobs:
       - helm
       - create_demo_pki
     environment: production
+    env:
+      # Credits: https://blogg.bekk.no/how-to-sign-a-certificate-request-with-openssl-e046c933d3ae
+      CA_CONFIG: |
+        [ ca ]
+        default_ca = ca_default
+        [ ca_default ]
+        dir = ./ca
+        certs = $dir
+        new_certs_dir = $dir/ca.db.certs
+        database = $dir/ca.db.index
+        serial = $dir/ca.db.serial
+        RANDFILE = $dir/ca.db.rand
+        certificate = $dir/ca.crt
+        private_key = $dir/ca.key
+        default_days = 730
+        default_crl_days = 30
+        default_md = md5
+        preserve = no
+        policy = generic_policy
+        [ generic_policy ]
+        countryName = optional
+        stateOrProvinceName = optional
+        localityName = optional
+        organizationName = optional
+        organizationalUnitName = optional
+        commonName = optional
+        emailAddress = optional
     strategy:
       fail-fast: false
       matrix:
