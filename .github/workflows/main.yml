@@ -544,6 +544,7 @@ jobs:
             -new \
             -newkey rsa:1024 \
             -nodes \
+            -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
             -keyout ./tmp/${{ matrix.dmd }}.key \
             -out ./tmp/${{ matrix.dmd }}.csr
       - name: Create DSA's Keypair
