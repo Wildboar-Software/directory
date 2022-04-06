@@ -460,6 +460,7 @@ class IDMConnection {
                     encryptedSocket.on("secureConnect", () => {
                         encryptedSocket.on("data", (data: Buffer) => this.handleData(data));
                         this.socket = encryptedSocket;
+                        this.events.emit("tls");
                     });
                 } catch (e) {
                     this.socket.emit("socketError", e);

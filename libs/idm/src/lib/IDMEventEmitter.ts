@@ -29,6 +29,7 @@ interface EventMap {
     socketDataLength: number;
     segmentDataLength: number;
     warning: number;
+    tls: void;
     [other: number]: ResultOrError; // The opcode is the event type.
 };
 
