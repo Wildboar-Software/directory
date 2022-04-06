@@ -557,8 +557,8 @@ jobs:
             -out ./tmp/${{ matrix.dmd }}.crt \
             -rand_serial \
             -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
-            -infiles ./tmp/${{ matrix.dmd }}.csr \
-            -addext "subjectAltName=DNS:dsa01.${{ matrix.dmd }}.${{ env.ZONE }}"
+            -addext "subjectAltName=DNS:dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
+            -infiles ./tmp/${{ matrix.dmd }}.csr
       - name: Create Meerkat Signing Secret
         run: |
           kubectl create secret tls meerkat-${{ matrix.dmd }}-signing \
