@@ -641,12 +641,6 @@ jobs:
     environment: production
     strategy:
       fail-fast: false
-      matrix:
-        dmd:
-          - 'root'
-          - 'gb'
-          # - 'ru'
-          # - 'ru-moscow'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -658,11 +652,17 @@ jobs:
         run: npm ci
       - name: Compile the Test DIT Creator
         run: npx nx run create-test-dit:build:production --skip-nx-cache
-      - name: Run the Test DIT Creator
+      - name: Seed the Root DSA
         run: |
           node ./dist/apps/create-test-dit/main.js \
-            --accessPoint="idm://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:4632" \
-            --profile=${{ matrix.dmd }} \
+            --accessPoint="idm://dsa01.root.${{ env.ZONE }}:4632" \
+            --profile=root \
+            -t
+      - name: Seed the C=GB DSA
+        run: |
+          node ./dist/apps/create-test-dit/main.js \
+            --accessPoint="idm://dsa01.gb.${{ env.ZONE }}:4632" \
+            --profile=gb \
             -t
 
   functional_testing:
