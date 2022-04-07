@@ -829,7 +829,7 @@ const GB_ACCESS_POINT = new AccessPoint(
         undefined,
         undefined,
         [
-            uriToNSAP("idms://dsa01.gb.mkdemo.wildboar.software:44632", false),
+            uriToNSAP("ldap://dsa01.gb.mkdemo.wildboar.software:389", false),
         ],
     ),
     undefined,
