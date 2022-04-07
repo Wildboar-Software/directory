@@ -67,7 +67,6 @@ async function resultsMergingProcedureForList (
     if (SRcontinuationList.length) {
         await lcrProcedure(SRcontinuationList);
     }
-    assert(SRcontinuationList.length === 0);
     /**
      * The text of the specification seems to imply that NRCR procedure is only
      * called when results merging is being done for the search operation. The
