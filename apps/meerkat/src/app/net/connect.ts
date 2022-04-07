@@ -97,6 +97,7 @@ import { ExtendedRequest } from "@wildboar/ldap/src/lib/modules/Lightweight-Dire
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 import { startTLS } from "@wildboar/ldap/src/lib/extensions";
 import type { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject.ta";
+import { versions } from "../dsp/versions";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -768,14 +769,17 @@ async function connectToLDAP (
 async function connectToIdmNaddr (
     ctx: MeerkatContext,
     uri: string,
-    idmGetter: () => IDMConnection,
+    idmGetter: () => IDMConnection | null,
     targetSystem: AccessPoint,
     protocolID: OBJECT_IDENTIFIER,
     credentials: DSACredentials[],
     timeoutTime: Date,
     tlsRequired: boolean,
 ): Promise<Connection | null> {
-    let idm: IDMConnection = idmGetter();
+    let idm: IDMConnection | null = idmGetter();
+    if (!idm) {
+        return null;
+    }
     // By adding `undefined` to the end of this array, we try one time without authentication.
     for (const cred of [ ...credentials, undefined ]) {
         if (Date.now().valueOf() > timeoutTime.valueOf()) {
@@ -795,6 +799,9 @@ async function connectToIdmNaddr (
         // TODO: Make this configurable.
         if (!idm.s.readable) {
             idm = idmGetter();
+            if (!idm) {
+                return null;
+            }
         }
 
         ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
@@ -805,6 +812,7 @@ async function connectToIdmNaddr (
         try { // STARTTLS
             await Promise.race([
                 await new Promise<void>((resolve, reject) => {
+                    assert(idm);
                     idm.events.once("socketError", reject);
                     idm.events.once("tLSResponse", (response) => {
                         if (response !== TLSResponse_success) {
@@ -845,6 +853,7 @@ async function connectToIdmNaddr (
         try {
             await Promise.race([
                 await new Promise((resolve, reject) => {
+                    assert(idm);
                     idm.events.once("socketError", (e) => {
                         reject(e);
                     });
@@ -858,7 +867,7 @@ async function connectToIdmNaddr (
                         protocolID,
                         _encode_DSABindArgument(new DSABindArgument(
                             cred,
-                            undefined, // v1
+                            versions, // v1
                         ), DER),
                         {
                             directoryName: ctx.dsa.accessPoint.ae_title,
@@ -891,7 +900,118 @@ async function connectToIdmNaddr (
     const ret: Connection = {
         writeOperation: getIDMOperationWriter(ctx, idm),
         close: async (): Promise<void> => {
-            idm.close();
+            idm?.close();
+        },
+        events: new EventEmitter(),
+    };
+    return ret;
+}
+
+/**
+ * @summary Establish a connection to a remote IDMS socket
+ * @description
+ *
+ * This function attempts to establish a connection to a remote IDMS socket,
+ * possibly with multiple different credentials.
+ *
+ * @param ctx The context object
+ * @param uri The URI of the remote DSA
+ * @param idmGetter A function for getting a new IDM transport
+ * @param targetSystem The target DSA's `AccessPoint`
+ * @param protocolID The object identifier of the protocol with which to bind
+ * @param credentials The set of DSA credentials to attempt, in order of
+ *  decreasing preference
+ * @param timeoutTime The time by which the operation must complete or abort
+ * @returns A connection, if one could be established, or `null` otherwise
+ */
+ async function connectToIdmsNaddr (
+    ctx: MeerkatContext,
+    uri: string,
+    idmGetter: () => IDMConnection | null,
+    targetSystem: AccessPoint,
+    protocolID: OBJECT_IDENTIFIER,
+    credentials: DSACredentials[],
+    timeoutTime: Date,
+): Promise<Connection | null> {
+    let idm: IDMConnection | null = idmGetter();
+    if (!idm) {
+        return null;
+    }
+    // By adding `undefined` to the end of this array, we try one time without authentication.
+    for (const cred of [ ...credentials, undefined ]) {
+        if (Date.now().valueOf() > timeoutTime.valueOf()) {
+            ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
+                uri,
+            }), {
+                dest: uri,
+            });
+            return null;
+        }
+        ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
+            uri,
+        }), {
+            dest: uri,
+        });
+        // If we got disconnected because of a bad bind, reconnect.
+        // TODO: Make this configurable.
+        if (!idm.s.readable) {
+            idm = idmGetter();
+            if (!idm) {
+                return null;
+            }
+        }
+
+        try {
+            await Promise.race([
+                await new Promise((resolve, reject) => {
+                    assert(idm);
+                    idm.events.once("socketError", (e) => {
+                        reject(e);
+                    });
+                    idm.events.once("abort", reject);
+                    idm.events.once("error", reject);
+                    idm.events.once("bindError", (err) => {
+                        reject(err.error);
+                    });
+                    idm.events.once("bindResult", resolve);
+                    idm.writeBind(
+                        protocolID,
+                        _encode_DSABindArgument(new DSABindArgument(
+                            cred,
+                            versions, // v1
+                        ), DER),
+                        {
+                            directoryName: ctx.dsa.accessPoint.ae_title,
+                        },
+                        {
+                            directoryName: targetSystem.ae_title,
+                        },
+                    );
+                }),
+                new Promise<void>((_, reject) => setTimeout(() => reject(new Error("87270185-f001-4e26-bd5b-c9b0da826ca4")), differenceInMilliseconds(timeoutTime, new Date()))),
+            ]);
+            ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
+                uri,
+            }), {
+                dest: uri,
+            });
+        } catch (e) {
+            ctx.log.warn(ctx.i18n.t("log:error_naddr", {
+                uri,
+                e,
+            }), {
+                dest: uri,
+            });
+            continue;
+        } finally {
+            idm.events.removeAllListeners();
+        }
+    }
+
+    const ret: Connection = {
+        writeOperation: getIDMOperationWriter(ctx, idm),
+        close: async (): Promise<void> => {
+            idm?.close();
         },
         events: new EventEmitter(),
     };
@@ -960,7 +1080,7 @@ async function connect (
         });
         const connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
         const credentials: DSACredentials[] = await getCredentialsForNSAP(ctx, uri.toString());
-        if (uri.protocol.toLowerCase().startsWith("idm:")) { // TODO: Handle IDMS
+        if (uri.protocol.toLowerCase().startsWith("idm:")) {
             if (!uri.port) {
                 continue;
             }
@@ -968,20 +1088,52 @@ async function connect (
                 ctx,
                 uri.toString(),
                 () => {
-                    const socket = net.createConnection({
-                        host: uri.hostname,
-                        port: Number.parseInt(uri.port),
-                        timeout: connectionTimeRemaining,
-                    });
-                    // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
-                    socket.once("connect", () => socket.setTimeout(0));
-                    return new IDMConnection(socket, ctx.config.tls);
+                    try {
+                        const socket = net.createConnection({
+                            host: uri.hostname,
+                            port: Number.parseInt(uri.port),
+                            timeout: connectionTimeRemaining,
+                        });
+                        // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
+                        socket.once("connect", () => socket.setTimeout(0));
+                        return new IDMConnection(socket, ctx.config.tls);
+                    } catch {
+                        return null;
+                    }
                 },
                 targetSystem,
                 protocolID,
                 credentials,
                 timeoutTime,
                 !options?.tlsOptional,
+            );
+        } else if (uri.protocol.toLowerCase().startsWith("idms:")) {
+            if (!uri.port) {
+                continue;
+            }
+            return connectToIdmsNaddr(
+                ctx,
+                uri.toString(),
+                () => {
+                    try {
+                        const socket = tls.connect({
+                            ...ctx.config.tls,
+                            pskCallback: undefined, // This was the only type error for some reason.
+                            host: uri.hostname,
+                            port: Number.parseInt(uri.port),
+                            timeout: connectionTimeRemaining,
+                        });
+                        // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
+                        socket.once("connect", () => socket.setTimeout(0));
+                        return new IDMConnection(socket);
+                    } catch {
+                        return null;
+                    }
+                },
+                targetSystem,
+                protocolID,
+                credentials,
+                timeoutTime,
             );
         } else if (uri.protocol.toLowerCase() === "ldap:") {
             return connectToLDAP(ctx, uri, credentials, timeoutTime, !options?.tlsOptional);
