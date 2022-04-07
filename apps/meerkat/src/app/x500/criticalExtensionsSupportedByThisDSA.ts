@@ -36,7 +36,7 @@ export
 const criticalExtensionsSupportedByThisDSA: BIT_STRING = new Uint8ClampedArray(36);
 criticalExtensionsSupportedByThisDSA[EXT_BIT_SUBENTRIES] = TRUE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_COPY_SHALL_DO] = TRUE_BIT;
-criticalExtensionsSupportedByThisDSA[EXT_BIT_ATTRIBUTE_SIZE_LIMIT] = FALSE_BIT;
+criticalExtensionsSupportedByThisDSA[EXT_BIT_ATTRIBUTE_SIZE_LIMIT] = TRUE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_EXTRA_ATTRIBUTES] = TRUE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_MODIFY_RIGHTS_REQUEST] = TRUE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_PAGED_RESULTS_REQUEST] = TRUE_BIT;
@@ -57,12 +57,12 @@ criticalExtensionsSupportedByThisDSA[EXT_BIT_SERVICE_ADMINISTRATION] = FALSE_BIT
 criticalExtensionsSupportedByThisDSA[EXT_BIT_ENTRY_COUNT] = TRUE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_HIERARCHY_SELECTIONS] = FALSE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_RELAXATION] = FALSE_BIT;
-criticalExtensionsSupportedByThisDSA[EXT_BIT_FAMILY_GROUPING] = FALSE_BIT;
-criticalExtensionsSupportedByThisDSA[EXT_BIT_FAMILY_RETURN] = FALSE_BIT;
+criticalExtensionsSupportedByThisDSA[EXT_BIT_FAMILY_GROUPING] = TRUE_BIT;
+criticalExtensionsSupportedByThisDSA[EXT_BIT_FAMILY_RETURN] = TRUE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_DN_ATTRIBUTES] = TRUE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_FRIEND_ATTRIBUTES] = TRUE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_ABANDON_OF_PAGED_RESULTS] = TRUE_BIT;
-criticalExtensionsSupportedByThisDSA[EXT_BIT_PAGED_RESULTS_ON_THE_DSP] = TRUE_BIT;
+criticalExtensionsSupportedByThisDSA[EXT_BIT_PAGED_RESULTS_ON_THE_DSP] = FALSE_BIT;
 criticalExtensionsSupportedByThisDSA[EXT_BIT_REPLACE_VALUES] = TRUE_BIT;
 
 export default criticalExtensionsSupportedByThisDSA;

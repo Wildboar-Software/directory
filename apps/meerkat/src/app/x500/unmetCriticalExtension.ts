@@ -1,4 +1,4 @@
-import { BIT_STRING, TRUE_BIT } from "asn1-ts";
+import { BIT_STRING, FALSE_BIT, TRUE_BIT } from "asn1-ts";
 import unsupportedAndCriticalExtensions from "./unsupportedAndCriticalExtensions";
 
 const naughtyList: Set<number> = new Set(
@@ -22,6 +22,20 @@ const naughtyList: Set<number> = new Set(
  */
 export
 function unmetCriticalExtension (requested: BIT_STRING): number | undefined {
+    /**
+     * If the user sends us more than 64 critical extension bits, they are
+     * probably acting maliciously.
+     */
+    if (requested.length > 64) {
+        return -1;
+    }
+    // Currently, only up to bit 35 is defined. If any bit beyond this is set,
+    // Meerkat DSA definitely does not support it.
+    for (let i = 35; i < requested.length; i++) {
+        if (requested[i] === TRUE_BIT) {
+            return i;
+        }
+    }
     for (const naughtyBit of naughtyList.values()) {
         if (requested[naughtyBit] === TRUE_BIT) {
             return naughtyBit;
