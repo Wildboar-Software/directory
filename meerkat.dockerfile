@@ -7,6 +7,7 @@ LABEL app="meerkat"
 WORKDIR /srv/meerkat
 COPY ./dist/apps/meerkat ./
 RUN apk add --no-cache python3
+RUN apk add --no-cache make
 RUN npm install --only=production --no-audit --no-fund --no-save
 # We save the Prisma CLI at build time so we can perform migrations in this
 # container without worrying about NPM outages.
