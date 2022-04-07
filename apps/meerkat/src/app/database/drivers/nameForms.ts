@@ -45,7 +45,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
     }
     return Array.from(ctx.nameForms.values())
         .map((nf) => new NameFormDescription(
-            nf.namedObjectClass,
+            nf.id,
             nf.name?.map((name) => ({
                 uTF8String: name,
             })),
