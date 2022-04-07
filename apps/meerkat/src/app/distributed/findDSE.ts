@@ -1326,7 +1326,6 @@ async function findDSE (
                     await targetFoundSubprocedure();
                     return;
                 }
-                // if (true) {
                 if (manageDSAITPlaneRefElement || manageDSAIT) {
                     state.foundDSE = dse_i;
                     state.entrySuitable = true;

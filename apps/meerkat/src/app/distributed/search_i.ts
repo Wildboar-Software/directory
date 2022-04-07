@@ -1422,8 +1422,8 @@ async function search_i (
                             )),
                 );
                 state.SRcontinuationList.push(cr);
+                return;
             }
-            return;
         }
     }
 
