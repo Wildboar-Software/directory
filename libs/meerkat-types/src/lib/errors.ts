@@ -56,6 +56,15 @@ import { ASN1Element } from "asn1-ts";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+import type {
+    Abort,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+import type {
+    IdmReject_reason,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
+import type {
+    InvokeId,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 
 /**
  * @summary A superclass of all errors received from bind operations
@@ -482,6 +491,60 @@ class ChainedError extends Error {
         super(message);
         Object.setPrototypeOf(this, ChainedError.prototype);
     }
+
+}
+
+/**
+ * @summary Converts a reject received from a chained operation into a throwable error
+ * @description
+ *
+ * This error does not correspond to any particular error defined in the X.500
+ * specifications or elsewhere, but rather, exists as a container for a Reject
+ * PDU that is received from a chained operation.
+ *
+ * @class
+ * @augments Error
+ */
+ export
+ class ChainedReject extends Error {
+
+      /**
+       * @param invokeId The invokeId of the operation that was rejected
+       * @param reason The reason for the Reject
+       */
+      constructor (
+          readonly invokeId: Extract<InvokeId, { present }>["present"],
+          readonly reason: IdmReject_reason,
+      ) {
+          super();
+          Object.setPrototypeOf(this, ChainedReject.prototype);
+      }
+
+ }
+
+/**
+ * @summary Converts an abort received from a chained operation into a throwable error
+ * @description
+ *
+ * This error does not correspond to any particular error defined in the X.500
+ * specifications or elsewhere, but rather, exists as a container for an abort
+ * PDU that is received from a chained operation.
+ *
+ * @class
+ * @augments Error
+ */
+export
+class ChainedAbort extends Error {
+
+     /**
+      * @param reason The reason for the Abort
+      */
+     constructor (
+         readonly reason: Abort,
+     ) {
+         super();
+         Object.setPrototypeOf(this, ChainedAbort.prototype);
+     }
 
 }
 

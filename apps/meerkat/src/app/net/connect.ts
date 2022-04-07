@@ -96,6 +96,7 @@ import { flatten } from "flat";
 import { ExtendedRequest } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedRequest.ta";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 import { startTLS } from "@wildboar/ldap/src/lib/extensions";
+import type { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject.ta";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -146,7 +147,6 @@ const networkAddressPreference = (a: url.URL, b: url.URL): number => {
  *
  * @param ctx The context object
  * @param idm The underlying IDM transport connection
- * @param targetSystem The target DSA
  * @returns A `writeOperation` function
  *
  * @function
@@ -154,7 +154,6 @@ const networkAddressPreference = (a: url.URL, b: url.URL): number => {
 function getIDMOperationWriter (
     ctx: MeerkatContext,
     idm: IDMConnection,
-    targetSystem: AccessPoint,
 ): Connection["writeOperation"] {
     return async function (req, options): Promise<ResultOrError> {
         const opstat: OperationStatistics = {
@@ -174,84 +173,100 @@ function getIDMOperationWriter (
             },
             outcome: {},
         };
+        const operationTimeout: number = (
+            options?.timeLimitInMilliseconds
+            ?? DEFAULT_OPERATION_TIMEOUT_IN_SECONDS
+        );
         const invokeID: number = generateUnusedInvokeID(ctx);
-        const ret = await Promise.race<ResultOrError>([
-            // FIXME: Handle multiple resolves / rejects.
-            new Promise<ResultOrError>((resolve, reject) => {
-                idm.events.once("socketError", reject);
-                // FIXME: Reject with a ChainedAbort error instead.
-                idm.events.once("abort", reject);
-                let rejected: boolean = false;
-                idm.events.on("reject", (rej) => {
-                    if (!rejected && (Number(rej.invokeID) === Number(invokeID))) {
-                        rejected = true;
-                        reject();
-                    }
-                });
-                idm.events.once(invokeID.toString(), (roe: ResultOrError) => {
-                    if ("error" in roe) {
-                        resolve(roe);
-                    } else {
-                        resolve({
-                            invokeId: {
-                                present: invokeID,
-                            },
-                            opCode: req.opCode!,
-                            result: roe.result,
-                        });
-                    }
-                });
-                idm.writeRequest(
-                    invokeID,
-                    req.opCode!,
-                    req.argument!,
-                );
-            }),
-            new Promise<never>((_, reject) => setTimeout(
-                () => {
-                    const err = new errors.ServiceError(
-                        `DSA-initiated invocation ${invokeID.toString()} timed out.`,
-                        new ServiceErrorData(
-                            ServiceProblem_timeLimitExceeded,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                targetSystem.ae_title.rdnSequence,
-                                undefined,
-                                serviceError["&errorCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
-                        ),
+        // These references exist outside of the scope of the Promise so we can
+        // remove all event listeners once the request is done.
+        let socketErrorHandler!: (...args: unknown[]) => unknown;
+        let abortHandler!: (...args: unknown[]) => unknown;
+        let rejectHandler!: (...args: unknown[]) => unknown;
+        const EVENT_NAME: string = invokeID.toString();
+        try {
+            const ret = await Promise.race<ResultOrError>([
+                new Promise<ResultOrError>((resolve, reject) => {
+                    socketErrorHandler = reject;
+                    abortHandler = (reason: number) => reject(new errors.ChainedAbort(reason));
+                    rejectHandler = (rej: IdmReject) => {
+                        if ((Number(rej.invokeID) === Number(invokeID))) {
+                            reject(new errors.ChainedReject(rej.invokeID, rej.reason));
+                        }
+                    };
+                    idm.events.once("socketError", socketErrorHandler);
+                    idm.events.once("abort", abortHandler);
+                    idm.events.on("reject", rejectHandler);
+                    idm.events.once(EVENT_NAME, (roe: ResultOrError) => {
+                        if ("error" in roe) {
+                            resolve(roe);
+                        } else {
+                            resolve({
+                                invokeId: {
+                                    present: invokeID,
+                                },
+                                opCode: req.opCode!,
+                                result: roe.result,
+                            });
+                        }
+                    });
+                    idm.writeRequest(
+                        invokeID,
+                        req.opCode!,
+                        req.argument!,
                     );
-                    reject(err);
+                }),
+                new Promise<never>((_, reject) => setTimeout(
+                    () => {
+                        const err = new errors.ServiceError(
+                            `DSA-initiated invocation ${invokeID.toString()} timed out.`,
+                            new ServiceErrorData(
+                                ServiceProblem_timeLimitExceeded,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    undefined,
+                                    undefined,
+                                    serviceError["&errorCode"],
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                undefined,
+                                undefined,
+                            ),
+                        );
+                        reject(err);
+                    },
+                    operationTimeout,
+                )),
+            ]);
+            if ("error" in ret) {
+                opstat.outcome!.error = {
+                    code: ret.errcode
+                        ? codeToString(ret.errcode)
+                        : undefined,
+                };
+            } else {
+                opstat.outcome!.result = {
+                    sizeInBytes: ret.result?.value.length,
+                };
+            }
+            ctx.telemetry.trackEvent({
+                name: "DistributedOperation",
+                properties: {
+                    ...flatten(opstat),
                 },
-                (options?.timeLimitInMilliseconds ?? DEFAULT_OPERATION_TIMEOUT_IN_SECONDS),
-            )),
-        ]);
-        if ("error" in ret) {
-            opstat.outcome!.error = {
-                code: ret.errcode
-                    ? codeToString(ret.errcode)
-                    : undefined,
-            };
-        } else {
-            opstat.outcome!.result = {
-                sizeInBytes: ret.result?.value.length,
-            };
+                measurements: {
+                    bytesRead: idm.socket.bytesRead,
+                    bytesWritten: idm.socket.bytesWritten,
+                },
+            });
+            return ret;
+        } finally {
+            idm.events.removeListener("socketError", socketErrorHandler);
+            idm.events.removeListener("abort", abortHandler);
+            idm.events.removeListener("reject", rejectHandler);
+            idm.events.removeAllListeners(EVENT_NAME);
         }
-        ctx.telemetry.trackEvent({
-            name: "DistributedOperation",
-            properties: {
-                ...flatten(opstat),
-            },
-            measurements: {
-                bytesRead: idm.socket.bytesRead,
-                bytesWritten: idm.socket.bytesWritten,
-            },
-        });
-        return ret;
     };
 }
 
@@ -289,9 +304,9 @@ function getLDAPOperationWriter (
             },
             outcome: {},
         };
-        const connectionTimeout: number = (
+        const operationTimeout: number = (
             options?.timeLimitInMilliseconds
-            ?? DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS
+            ?? DEFAULT_OPERATION_TIMEOUT_IN_SECONDS
         );
         const invokeId = {
             present: 1, // This does not matter. It's just for type safety at this point.
@@ -300,146 +315,186 @@ function getLDAPOperationWriter (
             ...req,
             invokeId,
         });
-        const result: ASN1Element = await Promise.race<ASN1Element>([
-            new Promise<ASN1Element>((resolve, reject) => {
-                const searchResults: SearchResultEntry[] = [];
-                const searchRefs: SearchResultReference[] = [];
-                // This listener cannot be .once(), because a message ID may be used multiple times
-                // to return results for a search request.
-                socket.on(ldapRequest.messageID.toString(), (message: LDAPMessage) => {
-                    assert(req.opCode);
-                    // assert(req.argument);
-                    if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
-                        if (!("addResponse" in message.protocolOp)) {
-                            reject(new Error());
+        const EVENT_NAME: string = ldapRequest.messageID.toString();
+        // These references exist outside of the scope of the Promise so we can
+        // remove all event listeners once the request is done.
+        let malformedHandler!: (...args: unknown[]) => unknown;
+        let errorHandler!: (...args: unknown[]) => unknown;
+        let closeHandler!: (...args: unknown[]) => unknown;
+        try {
+            const result: ASN1Element = await Promise.race<ASN1Element>([
+                new Promise<ASN1Element>((resolve, reject) => {
+                    const searchResults: SearchResultEntry[] = [];
+                    const searchRefs: SearchResultReference[] = [];
+                    malformedHandler = () => reject();
+                    errorHandler = reject;
+                    closeHandler = reject;
+                    socket.once("malformed", malformedHandler);
+                    socket.once("error", errorHandler);
+                    socket.once("close", closeHandler);
+                    // This listener cannot be .once(), because a message ID may be used multiple times
+                    // to return results for a search request.
+                    socket.on(EVENT_NAME, (message: LDAPMessage) => {
+                        assert(req.opCode);
+                        // assert(req.argument);
+                        if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
+                            if (!("addResponse" in message.protocolOp)) {
+                                reject(new Error("f92eb5b9-3ceb-497f-be55-d81d5a3fc190"));
+                                return;
+                            }
+                            const result = ldapResponseToAddEntryResult(message.protocolOp.addResponse);
+                            resolve(addEntry.encoderFor["&ResultType"]!(result, DER));
                             return;
                         }
-                        const result = ldapResponseToAddEntryResult(message.protocolOp.addResponse);
-                        resolve(addEntry.encoderFor["&ResultType"]!(result, DER));
-                        return;
-                    }
-                    else if (compareCode(req.opCode, compare["&operationCode"]!)) {
-                        if (!("compareResponse" in message.protocolOp)) {
-                            reject(new Error());
+                        else if (compareCode(req.opCode, compare["&operationCode"]!)) {
+                            if (!("compareResponse" in message.protocolOp)) {
+                                reject(new Error("47392469-8078-4c85-bf11-97191244ca50"));
+                                return;
+                            }
+                            const result = ldapResponseToCompareResult(ctx, message.protocolOp.compareResponse);
+                            resolve(compare.encoderFor["&ResultType"]!(result, DER));
                             return;
                         }
-                        const result = ldapResponseToCompareResult(ctx, message.protocolOp.compareResponse);
-                        resolve(compare.encoderFor["&ResultType"]!(result, DER));
-                        return;
-                    }
-                    else if (compareCode(req.opCode, list["&operationCode"]!)) {
-                        if ("searchResEntry" in message.protocolOp) {
-                            searchResults.push(message.protocolOp.searchResEntry);
-                        } else if ("searchResRef" in message.protocolOp) {
-                            searchRefs.push(message.protocolOp.searchResRef);
-                        } else if ("searchResDone" in message.protocolOp) {
-                            const result = ldapResponseToListResult(
-                                ctx,
-                                message.protocolOp.searchResDone,
-                                searchResults,
-                                searchRefs,
-                            );
-                            resolve(list.encoderFor["&ResultType"]!(result, DER));
-                            return;
-                        } else {
-                            reject(new Error());
+                        else if (compareCode(req.opCode, list["&operationCode"]!)) {
+                            if ("searchResEntry" in message.protocolOp) {
+                                searchResults.push(message.protocolOp.searchResEntry);
+                            } else if ("searchResRef" in message.protocolOp) {
+                                searchRefs.push(message.protocolOp.searchResRef);
+                            } else if ("searchResDone" in message.protocolOp) {
+                                const result = ldapResponseToListResult(
+                                    ctx,
+                                    message.protocolOp.searchResDone,
+                                    searchResults,
+                                    searchRefs,
+                                );
+                                resolve(list.encoderFor["&ResultType"]!(result, DER));
+                                return;
+                            } else {
+                                reject(new Error("e87c476d-3171-4835-bb7a-3a39e6ee533e"));
+                                return;
+                            }
+                        }
+                        else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
+                            if (!("modDNResponse" in message.protocolOp)) {
+                                reject(new Error("509331c3-d5e8-41c0-b9e5-ffc040d8ccbc"));
+                                return;
+                            }
+                            const result = ldapResponseToModifyDNResult(message.protocolOp.modDNResponse);
+                            resolve(modifyDN.encoderFor["&ResultType"]!(result, DER));
                             return;
                         }
-                    }
-                    else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
-                        if (!("modDNResponse" in message.protocolOp)) {
-                            reject(new Error());
+                        else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
+                            if (!("modifyResponse" in message.protocolOp)) {
+                                reject(new Error("b5c6bfc3-45cd-4db6-a51b-697f65d23707"));
+                                return;
+                            }
+                            const result = ldapResponseToModifyEntryResult(message.protocolOp.modifyResponse);
+                            resolve(modifyEntry.encoderFor["&ResultType"]!(result, DER));
                             return;
                         }
-                        const result = ldapResponseToModifyDNResult(message.protocolOp.modDNResponse);
-                        resolve(modifyDN.encoderFor["&ResultType"]!(result, DER));
-                        return;
-                    }
-                    else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
-                        if (!("modifyResponse" in message.protocolOp)) {
-                            reject(new Error());
-                            return;
-                        }
-                        const result = ldapResponseToModifyEntryResult(message.protocolOp.modifyResponse);
-                        resolve(modifyEntry.encoderFor["&ResultType"]!(result, DER));
-                        return;
-                    }
-                    else if (compareCode(req.opCode, read["&operationCode"]!)) {
-                        if ("searchResEntry" in message.protocolOp) {
-                            searchResults.push(message.protocolOp.searchResEntry);
-                        } else if ("searchResRef" in message.protocolOp) {
-                            searchRefs.push(message.protocolOp.searchResRef);
-                        } else if ("searchResDone" in message.protocolOp) {
-                            if (searchResults.length !== 1) {
+                        else if (compareCode(req.opCode, read["&operationCode"]!)) {
+                            if ("searchResEntry" in message.protocolOp) {
+                                searchResults.push(message.protocolOp.searchResEntry);
+                            } else if ("searchResRef" in message.protocolOp) {
+                                searchRefs.push(message.protocolOp.searchResRef);
+                            } else if ("searchResDone" in message.protocolOp) {
+                                if (searchResults.length !== 1) {
+                                    reject(new Error("eaac9a0c-0fb3-4487-a795-f4f33cf3c53a"));
+                                    return;
+                                }
+                                const result = ldapResponseToReadResult(
+                                    ctx,
+                                    searchResults[0],
+                                    message.protocolOp.searchResDone,
+                                );
+                                resolve(read.encoderFor["&ResultType"]!(result, DER));
+                                return;
+                            } else {
                                 reject(new Error());
                                 return;
                             }
-                            const result = ldapResponseToReadResult(
-                                ctx,
-                                searchResults[0],
-                                message.protocolOp.searchResDone,
-                            );
-                            resolve(read.encoderFor["&ResultType"]!(result, DER));
+                        }
+                        else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
+                            if (!("delResponse" in message.protocolOp)) {
+                                reject(new Error());
+                                return;
+                            }
+                            const result = ldapResponseToRemoveEntryResult(message.protocolOp.delResponse);
+                            resolve(removeEntry.encoderFor["&ResultType"]!(result, DER));
                             return;
+                        }
+                        else if (compareCode(req.opCode, search["&operationCode"]!)) {
+                            const arg = search.decoderFor["&ArgumentType"]!(req.argument!);
+                            const data = getOptionallyProtectedValue(arg);
+                            if ("searchResEntry" in message.protocolOp) {
+                                searchResults.push(message.protocolOp.searchResEntry);
+                            } else if ("searchResRef" in message.protocolOp) {
+                                searchRefs.push(message.protocolOp.searchResRef);
+                            } else if ("searchResDone" in message.protocolOp) {
+                                const result = ldapResponseToSearchResult(
+                                    ctx,
+                                    (data.selection?.infoTypes === typesOnly),
+                                    message.protocolOp.searchResDone,
+                                    searchResults,
+                                    searchRefs,
+                                );
+                                resolve(search.encoderFor["&ResultType"]!(result, DER));
+                                return;
+                            } else {
+                                reject(new Error());
+                                return;
+                            }
                         } else {
                             reject(new Error());
                             return;
                         }
-                    }
-                    else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
-                        if (!("delResponse" in message.protocolOp)) {
-                            reject(new Error());
-                            return;
-                        }
-                        const result = ldapResponseToRemoveEntryResult(message.protocolOp.delResponse);
-                        resolve(removeEntry.encoderFor["&ResultType"]!(result, DER));
-                        return;
-                    }
-                    else if (compareCode(req.opCode, search["&operationCode"]!)) {
-                        const arg = search.decoderFor["&ArgumentType"]!(req.argument!);
-                        const data = getOptionallyProtectedValue(arg);
-                        if ("searchResEntry" in message.protocolOp) {
-                            searchResults.push(message.protocolOp.searchResEntry);
-                        } else if ("searchResRef" in message.protocolOp) {
-                            searchRefs.push(message.protocolOp.searchResRef);
-                        } else if ("searchResDone" in message.protocolOp) {
-                            const result = ldapResponseToSearchResult(
-                                ctx,
-                                (data.selection?.infoTypes === typesOnly),
-                                message.protocolOp.searchResDone,
-                                searchResults,
-                                searchRefs,
-                            );
-                            resolve(search.encoderFor["&ResultType"]!(result, DER));
-                            return;
-                        } else {
-                            reject(new Error());
-                            return;
-                        }
-                    } else {
-                        reject(new Error());
-                        return;
-                    }
-                });
-                socket.writeMessage(ldapRequest);
-            }),
-            new Promise<ASN1Element>((_, reject) => setTimeout(reject, connectionTimeout)),
-        ]);
-        ctx.telemetry.trackEvent({
-            name: "DistributedOperation",
-            properties: {
-                ...flatten(opstat),
-            },
-            measurements: {
-                bytesRead: socket.socket.bytesRead,
-                bytesWritten: socket.socket.bytesWritten,
-            },
-        });
-        return {
-            invokeId,
-            opCode: req.opCode,
-            result,
-        };
+                    });
+                    socket.writeMessage(ldapRequest);
+                }),
+                new Promise<never>((_, reject) => setTimeout(
+                    () => {
+                        const err = new errors.ServiceError(
+                            `DSA-initiated LDAP request ${EVENT_NAME} timed out.`,
+                            new ServiceErrorData(
+                                ServiceProblem_timeLimitExceeded,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    undefined,
+                                    undefined,
+                                    serviceError["&errorCode"],
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                undefined,
+                                undefined,
+                            ),
+                        );
+                        reject(err);
+                    },
+                    operationTimeout,
+                )),
+            ]);
+            ctx.telemetry.trackEvent({
+                name: "DistributedOperation",
+                properties: {
+                    ...flatten(opstat),
+                },
+                measurements: {
+                    bytesRead: socket.socket.bytesRead,
+                    bytesWritten: socket.socket.bytesWritten,
+                },
+            });
+            return {
+                invokeId,
+                opCode: req.opCode,
+                result,
+            };
+        } finally {
+            socket.removeAllListeners(EVENT_NAME);
+            socket.removeListener("malformed", malformedHandler);
+            socket.removeListener("error", errorHandler);
+            socket.removeListener("close", closeHandler);
+        }
     }
 }
 
@@ -834,7 +889,7 @@ async function connectToIdmNaddr (
     }
 
     const ret: Connection = {
-        writeOperation: getIDMOperationWriter(ctx, idm, targetSystem),
+        writeOperation: getIDMOperationWriter(ctx, idm),
         close: async (): Promise<void> => {
             idm.close();
         },
