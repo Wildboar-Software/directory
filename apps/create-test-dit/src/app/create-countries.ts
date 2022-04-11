@@ -833,7 +833,7 @@ const GB_ACCESS_POINT = new AccessPoint(
              * Even if you plan on using LDAP to read this entry, you MUST
              * specify an X.500 URL, because DOP cannot be translated into LDAP.
              */
-            uriToNSAP("idms://dsa01.gb.mkdemo.wildboar.software:389", false),
+            uriToNSAP("idms://dsa01.gb.mkdemo.wildboar.software:44632", false),
         ],
     ),
     undefined,
