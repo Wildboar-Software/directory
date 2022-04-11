@@ -98,6 +98,8 @@ import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 import { startTLS } from "@wildboar/ldap/src/lib/extensions";
 import type { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject.ta";
 import { versions } from "../dsp/versions";
+import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -287,6 +289,7 @@ function getIDMOperationWriter (
 function getLDAPOperationWriter (
     ctx: MeerkatContext,
     socket: LDAPSocket,
+    isDSP: boolean = false,
 ): Connection["writeOperation"] {
     return async (req, options): Promise<ResultOrError> => {
         assert(req.opCode);
@@ -315,7 +318,7 @@ function getLDAPOperationWriter (
         const ldapRequest = dapRequestToLDAPRequest(ctx, {
             ...req,
             invokeId,
-        });
+        }, isDSP);
         const EVENT_NAME: string = ldapRequest.messageID.toString();
         // These references exist outside of the scope of the Promise so we can
         // remove all event listeners once the request is done.
@@ -581,6 +584,7 @@ async function connectToLDAP (
     credentials: DSACredentials[],
     timeoutTime: Date,
     tlsRequired: boolean,
+    isDSP: boolean,
 ): Promise<Connection | null> {
     const port: number = uri.port?.length
         ? Number.parseInt(uri.port)
@@ -734,7 +738,7 @@ async function connectToLDAP (
 
             // If we made it here, one of our authentication attempts worked.
             const ret: Connection = {
-                writeOperation: getLDAPOperationWriter(ctx, ldapSocket),
+                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, isDSP),
                 close: async (): Promise<void> => {
                     ldapSocket.close();
                 },
@@ -1136,8 +1140,25 @@ async function connect (
                 timeoutTime,
             );
         } else if (uri.protocol.toLowerCase() === "ldap:") {
-            return connectToLDAP(ctx, uri, credentials, timeoutTime, !options?.tlsOptional);
+            const isDAP: boolean = protocolID.isEqualTo(dap_ip["&id"]!);
+            const isDSP: boolean = protocolID.isEqualTo(dsp_ip["&id"]!);
+            if (!isDAP && !isDSP) {
+                continue; // You can't convert anything other than DAP or DSP to LDAP.
+            }
+            return connectToLDAP(
+                ctx,
+                uri,
+                credentials,
+                timeoutTime,
+                !options?.tlsOptional,
+                isDSP,
+            );
         } if (uri.protocol.toLowerCase() === "ldaps:") {
+            const isDAP: boolean = protocolID.isEqualTo(dap_ip["&id"]!);
+            const isDSP: boolean = protocolID.isEqualTo(dsp_ip["&id"]!);
+            if (!isDAP && !isDSP) {
+                continue; // You can't convert anything other than DAP or DSP to LDAP.
+            }
             return null; // TODO: Support LDAPS
         }
         // No other address types are supported.

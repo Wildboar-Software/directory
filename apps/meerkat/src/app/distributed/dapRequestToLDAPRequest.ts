@@ -106,6 +106,17 @@ import {
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 import { strict as assert } from "assert";
 import getLDAPEncoder from "../ldap/getLDAPEncoder";
+import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+import { chainedCompare } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedCompare.oa";
+import { chainedList } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedList.oa";
+import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa";
+import { chainedAddEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAddEntry.oa";
+import { chainedRemoveEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRemoveEntry.oa";
+import { chainedModifyEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedModifyEntry.oa";
+import { chainedModifyDN } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedModifyDN.oa";
+import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
+import { differenceInSeconds } from "date-fns";
+import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 
 const DEFAULT_LDAP_FILTER: LDAPFilter = {
     present: encodeLDAPOID(objectClass["&id"]),
@@ -454,6 +465,8 @@ function convertDAPFilterToLDAPFilter (ctx: Context, filter: DAPFilter): LDAPFil
     }
 }
 
+// FIXME: This function needs to check if the operation can be translated
+// completely and throw an error if not.
 /**
  * @summary Converts an X.500 directory request to an LDAP request
  * @description
@@ -461,14 +474,21 @@ function convertDAPFilterToLDAPFilter (ctx: Context, filter: DAPFilter): LDAPFil
  * This procedure is not specified in the X.500 series, but can be inferred from
  * ITU X.518 (2016), Section 20.6.
  *
+ * This procedure also supports the conversion of DSP requests to LDAP requests.
+ *
  * @param ctx The context object
  * @param req The X.500 directory request that is to be converted to an LDAP request
+ * @param isDSP Whether the request is a DSP request instead of DAP
  * @returns An LDAP message equivalent of the X.500 directory request
  *
  * @function
  */
 export
-function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
+function dapRequestToLDAPRequest (
+    ctx: Context,
+    req: Request,
+    isDSP: boolean,
+): LDAPMessage {
     assert(req.opCode);
     const messageId: number = generateUnusedInvokeID(ctx);
     if (compareCode(req.opCode, administerPassword["&operationCode"]!)) {
@@ -491,13 +511,39 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
         assert(req.argument);
-        const arg = addEntry.decoderFor["&ArgumentType"]!(req.argument);
+        let arg!: ReturnType<NonNullable<typeof addEntry["decoderFor"]["&ArgumentType"]>>;
+        let carg: ChainingArguments | undefined;
+        if (isDSP) {
+            const chainedOp = getOptionallyProtectedValue(chainedAddEntry.decoderFor["&ArgumentType"]!(req.argument));
+            arg = addEntry.decoderFor["&ArgumentType"]!(chainedOp.argument);
+            carg = chainedOp.chainedArgument;
+        } else {
+            arg = addEntry.decoderFor["&ArgumentType"]!(req.argument);
+        }
         const data = getOptionallyProtectedValue(arg);
+        if (data.entry.some((attr) => attr.valuesWithContext?.length)) {
+            throw new ServiceError(
+                ctx.i18n.t("err:not_supported_by_ldap"),
+                new ServiceErrorData(
+                    ServiceProblem_notSupportedByLDAP,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        undefined,
+                        undefined,
+                        id_errcode_serviceError,
+                    ),
+                    undefined,
+                    undefined,
+                    undefined,
+                ),
+            );
+        }
         return new LDAPMessage(
             messageId,
             {
                 addRequest: new AddRequest(
-                    encodeLDAPDN(ctx, data.object.rdnSequence),
+                    encodeLDAPDN(ctx, carg?.targetObject ?? data.object.rdnSequence),
                     data.entry.map((attr) => {
                         const spec = ctx.attributeTypes.get(attr.type_.toString());
                         if (!spec?.ldapSyntax) {
@@ -572,7 +618,15 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, compare["&operationCode"]!)) {
         assert(req.argument);
-        const arg = compare.decoderFor["&ArgumentType"]!(req.argument);
+        let arg!: ReturnType<NonNullable<typeof compare["decoderFor"]["&ArgumentType"]>>;
+        let carg: ChainingArguments | undefined;
+        if (isDSP) {
+            const chainedOp = getOptionallyProtectedValue(chainedCompare.decoderFor["&ArgumentType"]!(req.argument));
+            arg = compare.decoderFor["&ArgumentType"]!(chainedOp.argument);
+            carg = chainedOp.chainedArgument;
+        } else {
+            arg = compare.decoderFor["&ArgumentType"]!(req.argument);
+        }
         const data = getOptionallyProtectedValue(arg);
         const spec = ctx.attributeTypes.get(data.purported.type_.toString());
         if (!spec?.ldapSyntax) {
@@ -617,7 +671,7 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
             messageId,
             {
                 compareRequest: new CompareRequest(
-                    encodeLDAPDN(ctx, data.object.rdnSequence),
+                    encodeLDAPDN(ctx, carg?.targetObject ?? data.object.rdnSequence),
                     new LDAPAttributeValueAssertion(
                         encodeLDAPOID(data.purported.type_),
                         encoder(data.purported.assertion),
@@ -629,25 +683,36 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, list["&operationCode"]!)) {
         assert(req.argument);
-        const arg = list.decoderFor["&ArgumentType"]!(req.argument);
+        let arg!: ReturnType<NonNullable<typeof list["decoderFor"]["&ArgumentType"]>>;
+        let carg: ChainingArguments | undefined;
+        if (isDSP) {
+            const chainedOp = getOptionallyProtectedValue(chainedList.decoderFor["&ArgumentType"]!(req.argument));
+            arg = list.decoderFor["&ArgumentType"]!(chainedOp.argument);
+            carg = chainedOp.chainedArgument;
+        } else {
+            arg = list.decoderFor["&ArgumentType"]!(req.argument);
+        }
         const data = getOptionallyProtectedValue(arg);
         const dontDereferenceAliases: boolean = (
             data.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
+        const timeLimit = carg?.timeLimit
+            ? Math.abs(differenceInSeconds(new Date(), getDateFromTime(carg.timeLimit)))
+            : (data.serviceControls?.timeLimit ?? 0);
         return new LDAPMessage(
             messageId,
             {
                 searchRequest: new SearchRequest(
-                    encodeLDAPDN(ctx, data.object.rdnSequence),
+                    encodeLDAPDN(ctx, carg?.targetObject ?? data.object.rdnSequence),
                     SearchRequest_scope_singleLevel,
                     dontDereferenceAliases
                         ? SearchRequest_derefAliases_neverDerefAliases
                         : SearchRequest_derefAliases_derefFindingBaseObj,
                     data?.serviceControls?.sizeLimit ?? 0,
-                    data.serviceControls?.timeLimit ?? 0,
+                    timeLimit,
                     FALSE,
                     DEFAULT_LDAP_FILTER,
                     [
-                        encodeLDAPOID(new ObjectIdentifier([ 1, 1 ])),
+                        encodeLDAPOID(new ObjectIdentifier([ 1, 1 ])), // Select no attributes.
                     ],
                 ),
             },
@@ -656,13 +721,21 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, modifyDN["&operationCode"]!)) {
         assert(req.argument);
-        const arg = modifyDN.decoderFor["&ArgumentType"]!(req.argument);
+        let arg!: ReturnType<NonNullable<typeof modifyDN["decoderFor"]["&ArgumentType"]>>;
+        let carg: ChainingArguments | undefined;
+        if (isDSP) {
+            const chainedOp = getOptionallyProtectedValue(chainedModifyDN.decoderFor["&ArgumentType"]!(req.argument));
+            arg = modifyDN.decoderFor["&ArgumentType"]!(chainedOp.argument);
+            carg = chainedOp.chainedArgument;
+        } else {
+            arg = modifyDN.decoderFor["&ArgumentType"]!(req.argument);
+        }
         const data = getOptionallyProtectedValue(arg);
         return new LDAPMessage(
             messageId,
             {
                 modDNRequest: new ModifyDNRequest(
-                    encodeLDAPDN(ctx, data.object),
+                    encodeLDAPDN(ctx, carg?.targetObject ?? data.object),
                     encodeLDAPDN(ctx, [ data.newRDN ]),
                     data.deleteOldRDN ?? false,
                     data.newSuperior
@@ -675,13 +748,21 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
         assert(req.argument);
-        const arg = modifyEntry.decoderFor["&ArgumentType"]!(req.argument);
+        let arg!: ReturnType<NonNullable<typeof modifyEntry["decoderFor"]["&ArgumentType"]>>;
+        let carg: ChainingArguments | undefined;
+        if (isDSP) {
+            const chainedOp = getOptionallyProtectedValue(chainedModifyEntry.decoderFor["&ArgumentType"]!(req.argument));
+            arg = modifyEntry.decoderFor["&ArgumentType"]!(chainedOp.argument);
+            carg = chainedOp.chainedArgument;
+        } else {
+            arg = modifyEntry.decoderFor["&ArgumentType"]!(req.argument);
+        }
         const data = getOptionallyProtectedValue(arg);
         return new LDAPMessage(
             messageId,
             {
                 modifyRequest: new ModifyRequest(
-                    encodeLDAPDN(ctx, data.object.rdnSequence),
+                    encodeLDAPDN(ctx, carg?.targetObject ?? data.object.rdnSequence),
                     data.changes.map((c) => convert_dap_mod_to_ldap_mod(ctx, c)),
                 ),
             },
@@ -690,7 +771,15 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, read["&operationCode"]!)) {
         assert(req.argument);
-        const arg = read.decoderFor["&ArgumentType"]!(req.argument);
+        let arg!: ReturnType<NonNullable<typeof read["decoderFor"]["&ArgumentType"]>>;
+        let carg: ChainingArguments | undefined;
+        if (isDSP) {
+            const chainedOp = getOptionallyProtectedValue(chainedRead.decoderFor["&ArgumentType"]!(req.argument));
+            arg = read.decoderFor["&ArgumentType"]!(chainedOp.argument);
+            carg = chainedOp.chainedArgument;
+        } else {
+            arg = read.decoderFor["&ArgumentType"]!(req.argument);
+        }
         const data = getOptionallyProtectedValue(arg);
         const dontDereferenceAliases: boolean = (
             data.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
@@ -705,17 +794,20 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
                 selection.push(...data.selection.extraAttributes.select.map((s) => encodeLDAPOID(s)));
             }
         }
+        const timeLimit = carg?.timeLimit
+            ? Math.abs(differenceInSeconds(new Date(), getDateFromTime(carg.timeLimit)))
+            : (data.serviceControls?.timeLimit ?? 0);
         return new LDAPMessage(
             messageId,
             {
                 searchRequest: new SearchRequest(
-                    encodeLDAPDN(ctx, data.object.rdnSequence),
+                    encodeLDAPDN(ctx, carg?.targetObject ?? data.object.rdnSequence),
                     SearchRequest_scope_baseObject,
                     dontDereferenceAliases
                         ? SearchRequest_derefAliases_neverDerefAliases
                         : SearchRequest_derefAliases_derefFindingBaseObj,
                     0, // Required by the specification.
-                    data.serviceControls?.timeLimit ?? 0,
+                    timeLimit,
                     (data.selection?.infoTypes === EntryInformationSelection_infoTypes_attributeTypesOnly),
                     DEFAULT_LDAP_FILTER,
                     selection,
@@ -726,19 +818,35 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
     }
     else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
         assert(req.argument);
-        const arg = removeEntry.decoderFor["&ArgumentType"]!(req.argument);
+        let arg!: ReturnType<NonNullable<typeof removeEntry["decoderFor"]["&ArgumentType"]>>;
+        let carg: ChainingArguments | undefined;
+        if (isDSP) {
+            const chainedOp = getOptionallyProtectedValue(chainedRemoveEntry.decoderFor["&ArgumentType"]!(req.argument));
+            arg = removeEntry.decoderFor["&ArgumentType"]!(chainedOp.argument);
+            carg = chainedOp.chainedArgument;
+        } else {
+            arg = removeEntry.decoderFor["&ArgumentType"]!(req.argument);
+        }
         const data = getOptionallyProtectedValue(arg);
         return new LDAPMessage(
             messageId,
             {
-                delRequest: encodeLDAPDN(ctx, data.object.rdnSequence),
+                delRequest: encodeLDAPDN(ctx, carg?.targetObject ?? data.object.rdnSequence),
             },
             undefined,
         );
     }
     else if (compareCode(req.opCode, search["&operationCode"]!)) {
         assert(req.argument);
-        const arg = search.decoderFor["&ArgumentType"]!(req.argument);
+        let arg!: ReturnType<NonNullable<typeof search["decoderFor"]["&ArgumentType"]>>;
+        let carg: ChainingArguments | undefined;
+        if (isDSP) {
+            const chainedOp = getOptionallyProtectedValue(chainedSearch.decoderFor["&ArgumentType"]!(req.argument));
+            arg = search.decoderFor["&ArgumentType"]!(chainedOp.argument);
+            carg = chainedOp.chainedArgument;
+        } else {
+            arg = search.decoderFor["&ArgumentType"]!(req.argument);
+        }
         const data = getOptionallyProtectedValue(arg);
         const dontDereferenceAliases: boolean = (
             data.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
@@ -753,17 +861,22 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
                 selection.push(...data.selection.extraAttributes.select.map((s) => encodeLDAPOID(s)));
             }
         }
+        const timeLimit = carg?.timeLimit
+            ? Math.abs(differenceInSeconds(new Date(), getDateFromTime(carg.timeLimit)))
+            : (data.serviceControls?.timeLimit ?? 0);
         return new LDAPMessage(
             messageId,
             {
                 searchRequest: new SearchRequest(
-                    encodeLDAPDN(ctx, data.baseObject.rdnSequence),
-                    Number(data.subset ?? SearchRequest_scope_baseObject),
+                    encodeLDAPDN(ctx, carg?.targetObject ?? data.baseObject.rdnSequence),
+                    carg?.entryOnly
+                        ? SearchRequest_scope_baseObject
+                        : Number(data.subset ?? SearchRequest_scope_baseObject),
                     dontDereferenceAliases
                         ? SearchRequest_derefAliases_neverDerefAliases
                         : SearchRequest_derefAliases_derefFindingBaseObj,
                     data?.serviceControls?.sizeLimit ?? 0,
-                    data.serviceControls?.timeLimit ?? 0,
+                    timeLimit,
                     (data.selection?.infoTypes === EntryInformationSelection_infoTypes_attributeTypesOnly),
                     data.filter
                         ? convertDAPFilterToLDAPFilter(ctx, data.filter)
@@ -779,3 +892,5 @@ function dapRequestToLDAPRequest (ctx: Context, req: Request): LDAPMessage {
 }
 
 export default dapRequestToLDAPRequest;
+// TODO: Make which operations can be converted to LDAP configurable.
+// E.g. MEERKAT_LDAP_CHAINABLE=searchRequest,removeEntry
