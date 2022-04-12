@@ -2213,7 +2213,7 @@ export
 interface Context {
 
     /** The Internationalization object from i18next */
-    i18n: i18n,
+    i18n: i18n;
 
     /** Information on the DIT from the perspective of this DSA */
     dit: DITInfo;

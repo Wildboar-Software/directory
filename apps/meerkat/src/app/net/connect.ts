@@ -750,7 +750,148 @@ async function connectToLDAP (
     return null;
 }
 
-// TODO: connectToLDAPS() (once connectToLDAP() has been tested)
+/**
+ * @summary Establish a connection to a remote LDAP server
+ * @description
+ *
+ * This function attempts to establish a connection to a remote LDAP server,
+ * possibly with multiple different credentials.
+ *
+ * @param ctx The context object
+ * @param uri The URI of the remote LDAP server
+ * @param credentials Array of DSA credentials to attempt, in order of
+ *  decreasing preference
+ * @param timeoutTime The time by which the operation must complete or abort
+ * @returns A connection, if one could be established, or `null` otherwise
+ *
+ * @function
+ * @async
+ */
+ async function connectToLDAPS (
+    ctx: MeerkatContext,
+    uri: url.URL,
+    credentials: DSACredentials[],
+    timeoutTime: Date,
+    isDSP: boolean,
+): Promise<Connection | null> {
+    const port: number = uri.port?.length
+        ? Number.parseInt(uri.port)
+        : 636;
+    ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
+        uri,
+    }), {
+        dest: uri,
+    });
+    const getLDAPSocket = async (): Promise<LDAPSocket | null> => {
+        try {
+            const socket = tls.connect({
+                ...ctx.config.tls,
+                pskCallback: undefined, // This was the only type error for some reason.
+                host: uri.hostname,
+                port,
+                timeout: differenceInMilliseconds(timeoutTime, new Date()),
+            });
+            // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
+            socket.once("connect", () => socket.setTimeout(0));
+            const ldapSocket = new LDAPSocket(socket);
+            await Promise.race<void>([
+                new Promise<void>((resolve, reject) => {
+                    ldapSocket.once("connect", resolve);
+                    ldapSocket.once("error", reject);
+                    ldapSocket.once("timeout", reject);
+                    ldapSocket.once("close", reject);
+                }),
+                new Promise<void>((_, reject) => setTimeout(reject, differenceInMilliseconds(timeoutTime, new Date()))),
+            ]);
+            ldapSocket.removeAllListeners();
+            return ldapSocket;
+        } catch {
+            return null;
+        }
+    };
+    let ldapSocket = await getLDAPSocket();
+    if (!ldapSocket) {
+        return null;
+    }
+
+    let messageID: number = 1;
+    let connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
+
+    for (const cred of credentials) {
+        if (!("simple" in cred)) {
+            continue;
+        }
+        if (!ldapSocket || !ldapSocket.socket.readable) {
+            ldapSocket = await getLDAPSocket();
+            if (!ldapSocket) {
+                return null;
+            }
+        }
+        for (const bindRequest of createBindRequests(ctx, cred)) {
+            if (Date.now().valueOf() > timeoutTime.valueOf()) {
+                ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
+                    uri,
+                }), {
+                    dest: uri,
+                });
+                return null;
+            }
+            messageID++;
+            connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
+            try { // Bind
+                await Promise.race<void>([
+                    new Promise<void>((resolve, reject) => {
+                        assert(ldapSocket);
+                        ldapSocket.once(messageID.toString(), (message: LDAPMessage) => {
+                            assert(message.messageID === messageID);
+                            if (
+                                !("bindResponse" in message.protocolOp)
+                                || (message.protocolOp.bindResponse.resultCode !== LDAPResult_resultCode_success)
+                            ) {
+                                reject();
+                                return;
+                            }
+                            resolve();
+                        });
+                        const req = new LDAPMessage(
+                            messageID,
+                            {
+                                bindRequest,
+                            },
+                            undefined,
+                        );
+                        ldapSocket.writeMessage(req);
+                    }),
+                    new Promise<void>((_, reject) => setTimeout(reject, connectionTimeRemaining)),
+                ]);
+            } catch (e) {
+                ctx.log.warn(ctx.i18n.t("log:error_naddr", {
+                    uri,
+                    e,
+                }), {
+                    dest: uri,
+                });
+                continue;
+            }
+            ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
+                uri,
+            }), {
+                dest: uri,
+            });
+
+            // If we made it here, one of our authentication attempts worked.
+            const ret: Connection = {
+                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, isDSP),
+                close: async (): Promise<void> => {
+                    ldapSocket?.close();
+                },
+                events: new EventEmitter(),
+            };
+            return ret;
+        }
+    }
+    return null;
+}
 
 /**
  * @summary Establish a connection to a remote IDM socket
@@ -1159,7 +1300,13 @@ async function connect (
             if (!isDAP && !isDSP) {
                 continue; // You can't convert anything other than DAP or DSP to LDAP.
             }
-            return null; // TODO: Support LDAPS
+            return connectToLDAPS(
+                ctx,
+                uri,
+                credentials,
+                timeoutTime,
+                isDSP,
+            );
         }
         // No other address types are supported.
     }
