@@ -30,8 +30,8 @@
     "alias_but_no_aen": "Alias entry {{id}} had no aliasedEntryName attribute.",
     "subr_for_hob_not_found": "Subordinate entry for agreement {{obid}} (version {{version}}) not found.",
     "failed_to_update_hob": "Failed to update HOB for agreement {{obid}} (version {{version}}): {{e}}",
-    "dsa_returned_no_opcode": "DSA '{{dsa}}' returned a result with no opCode, which might have been malicious.",
-    "could_not_write_operation_to_dsa": "Could not write operation to DSA '{{dsa}}'.",
+    "dsa_returned_no_opcode": "DSA '{{ae}}' returned a result with no opCode, which might have been malicious.",
+    "could_not_write_operation_to_dsa": "Could not write operation to DSA '{{ae}}' because of this error: {{e}}.",
     "failed_to_access_master": "Failed to access master access point {{dsa}}: {{e}}",
     "shadow_not_under_cp": "DIT invalid: shadow DSE {{id}} not under a context prefix.",
     "could_not_decode_ldap_attribute": "Could not decode LDAP attribute type {{desc}}: {{e}}",
@@ -118,5 +118,5 @@
     "establishOperationalBinding@succeeded": "Operational binding of type {{type}} and ID {{bid}} was established by association {{aid}}.",
     "modifyOperationalBinding@succeeded": "Operational binding of type {{type}} and ID {{bid}} was modified by association {{aid}}.",
     "terminateOperationalBinding@succeeded": "Operational binding of type {{type}} and ID {{bid}} was terminated by association {{aid}}.",
-    "could_not_establish_connection": "Could not establish connection with DSA '{{ae}}' to chain operation {{iid}}."
+    "could_not_establish_connection": "Could not establish connection with DSA '{{ae}}' to chain operation {{iid}} because of this error: {{e}}."
 }

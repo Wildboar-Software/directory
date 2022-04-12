@@ -256,7 +256,7 @@ async function apinfoProcedure (
             } else {
                 if (!result.opCode) {
                     ctx.log.warn(ctx.i18n.t("log:dsa_returned_no_opcode", {
-                        dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+                        ae: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
                     }), {
                         remoteFamily: assn.socket.remoteFamily,
                         remoteAddress: assn.socket.remoteAddress,
@@ -279,10 +279,12 @@ async function apinfoProcedure (
                     iid: "present" in req.invokeId
                         ? req.invokeId.present.toString()
                         : "ABSENT",
+                    e,
                 }));
             } else {
                 ctx.log.warn(ctx.i18n.t("log:could_not_write_operation_to_dsa", {
-                    dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+                    ae: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+                    e,
                 }), {
                     remoteFamily: assn.socket.remoteFamily,
                     remoteAddress: assn.socket.remoteAddress,
