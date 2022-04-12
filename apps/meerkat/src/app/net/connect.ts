@@ -782,37 +782,30 @@ async function connectToLDAP (
     }), {
         dest: uri,
     });
-    const getLDAPSocket = async (): Promise<LDAPSocket | null> => {
-        try {
-            const socket = tls.connect({
-                ...ctx.config.tls,
-                pskCallback: undefined, // This was the only type error for some reason.
-                host: uri.hostname,
-                port,
-                timeout: differenceInMilliseconds(timeoutTime, new Date()),
-            });
-            // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
-            socket.once("connect", () => socket.setTimeout(0));
-            const ldapSocket = new LDAPSocket(socket);
-            await Promise.race<void>([
-                new Promise<void>((resolve, reject) => {
-                    ldapSocket.once("connect", resolve);
-                    ldapSocket.once("error", reject);
-                    ldapSocket.once("timeout", reject);
-                    ldapSocket.once("close", reject);
-                }),
-                new Promise<void>((_, reject) => setTimeout(reject, differenceInMilliseconds(timeoutTime, new Date()))),
-            ]);
-            ldapSocket.removeAllListeners();
-            return ldapSocket;
-        } catch {
-            return null;
-        }
+    const getLDAPSocket = async (): Promise<LDAPSocket> => {
+        const socket = tls.connect({
+            ...ctx.config.tls,
+            pskCallback: undefined, // This was the only type error for some reason.
+            host: uri.hostname,
+            port,
+            timeout: differenceInMilliseconds(timeoutTime, new Date()),
+        });
+        // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
+        socket.once("connect", () => socket.setTimeout(0));
+        const ldapSocket = new LDAPSocket(socket);
+        await Promise.race<void>([
+            new Promise<void>((resolve, reject) => {
+                ldapSocket.once("connect", resolve);
+                ldapSocket.once("error", reject);
+                ldapSocket.once("timeout", reject);
+                ldapSocket.once("close", reject);
+            }),
+            new Promise<void>((_, reject) => setTimeout(reject, differenceInMilliseconds(timeoutTime, new Date()))),
+        ]);
+        ldapSocket.removeAllListeners();
+        return ldapSocket;
     };
     let ldapSocket = await getLDAPSocket();
-    if (!ldapSocket) {
-        return null;
-    }
 
     let messageID: number = 1;
     let connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
@@ -823,9 +816,6 @@ async function connectToLDAP (
         }
         if (!ldapSocket || !ldapSocket.socket.readable) {
             ldapSocket = await getLDAPSocket();
-            if (!ldapSocket) {
-                return null;
-            }
         }
         for (const bindRequest of createBindRequests(ctx, cred)) {
             if (Date.now().valueOf() > timeoutTime.valueOf()) {
