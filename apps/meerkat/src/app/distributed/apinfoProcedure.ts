@@ -195,19 +195,27 @@ async function apinfoProcedure (
         ) {
             continue;
         }
-        const connection = await connect(ctx, ap, dsp_ip["&id"]!, {
-            tlsOptional: ctx.config.chaining.tlsOptional,
-        });
-        if (!connection) {
-            continue;
-        }
-        const argument: Chained = {
-            unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
-                chainingArgs,
-                req.argument!,
-            ),
-        }
+        let connected: boolean = false;
         try {
+            const connection = await connect(ctx, ap, dsp_ip["&id"]!, {
+                tlsOptional: ctx.config.chaining.tlsOptional,
+            });
+            if (!connection) {
+                ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
+                    ae: encodeLDAPDN(ctx, ap.ae_title.rdnSequence),
+                    iid: "present" in req.invokeId
+                        ? req.invokeId.present.toString()
+                        : "ABSENT",
+                }));
+                continue;
+            }
+            connected = true;
+            const argument: Chained = {
+                unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                    chainingArgs,
+                    req.argument!,
+                ),
+            };
             const result = await connection.writeOperation({
                 opCode: req.opCode,
                 argument: chainedRead.encoderFor["&ArgumentType"]!(argument, DER),
@@ -265,15 +273,24 @@ async function apinfoProcedure (
                 };
             }
         } catch (e) {
-            ctx.log.warn(ctx.i18n.t("log:could_not_write_operation_to_dsa", {
-                dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
-            }), {
-                remoteFamily: assn.socket.remoteFamily,
-                remoteAddress: assn.socket.remoteAddress,
-                remotePort: assn.socket.remotePort,
-                association_id: assn.id,
-                invokeID: printInvokeId(state.invokeId),
-            });
+            if (connected) {
+                ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
+                    ae: encodeLDAPDN(ctx, ap.ae_title.rdnSequence),
+                    iid: "present" in req.invokeId
+                        ? req.invokeId.present.toString()
+                        : "ABSENT",
+                }));
+            } else {
+                ctx.log.warn(ctx.i18n.t("log:could_not_write_operation_to_dsa", {
+                    dsa: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                    invokeID: printInvokeId(state.invokeId),
+                });
+            }
             continue;
         }
     }
