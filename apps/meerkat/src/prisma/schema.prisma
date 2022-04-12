@@ -205,6 +205,17 @@ model PasswordEncryptionAlgorithm {
   @@unique([entry_id])
 }
 
+// This table defines what constitutes dictionary words, person names, and
+// geographic names per the `PwdVocabulary` production in the `PasswordPolicy`
+// ASN.1 module.
+model PasswordDictionaryItem {
+  id         Int    @id @default(autoincrement())
+  bit        Int    @db.SmallInt
+  item      String
+
+  @@unique([bit, item])
+}
+
 // AccessPoint ::= SET {
 //     ae-title             [0]  Name,
 //     address              [1]  PresentationAddress,
