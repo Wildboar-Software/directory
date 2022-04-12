@@ -521,7 +521,16 @@ function *createBindRequests (
     ctx: Context,
     credentials?: DSACredentials,
 ): IterableIterator<BindRequest> {
-    if (credentials && ("simple" in credentials)) {
+    if (!credentials) {
+        return new BindRequest(
+            LDAP_VERSION_3,
+            new Uint8Array(),
+            {
+                simple: new Uint8Array(),
+            },
+        );
+    }
+    if ("simple" in credentials) {
         if (!credentials.simple.password) {
             yield new BindRequest(
                 LDAP_VERSION_3,
@@ -551,13 +560,6 @@ function *createBindRequests (
             );
         }
     }
-    return new BindRequest(
-        LDAP_VERSION_3,
-        new Uint8Array(),
-        {
-            simple: new Uint8Array(),
-        },
-    );
 }
 
 /**
@@ -678,8 +680,9 @@ async function connectToLDAP (
         }
     }
 
-    for (const cred of credentials) {
-        if (!("simple" in cred)) {
+    // By adding `undefined` to the end of this array, we try one time without authentication.
+    for (const cred of [ ...credentials, undefined ]) {
+        if (cred && !("simple" in cred)) {
             continue;
         }
         if (!ldapSocket || !ldapSocket.socket.readable) {
@@ -810,8 +813,9 @@ async function connectToLDAP (
     let messageID: number = 1;
     let connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
 
-    for (const cred of credentials) {
-        if (!("simple" in cred)) {
+    // By adding `undefined` to the end of this array, we try one time without authentication.
+    for (const cred of [ ...credentials, undefined ]) {
+        if (cred && !("simple" in cred)) {
             continue;
         }
         if (!ldapSocket || !ldapSocket.socket.readable) {

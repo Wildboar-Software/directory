@@ -275,6 +275,7 @@ async function apinfoProcedure (
         } catch (e) {
             if (connected) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
+                    context: "with_error",
                     ae: encodeLDAPDN(ctx, ap.ae_title.rdnSequence),
                     iid: "present" in req.invokeId
                         ? req.invokeId.present.toString()
