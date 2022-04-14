@@ -118,5 +118,6 @@
     "establishOperationalBinding@succeeded": "Operational binding of type {{type}} and ID {{bid}} was established by association {{aid}}.",
     "modifyOperationalBinding@succeeded": "Operational binding of type {{type}} and ID {{bid}} was modified by association {{aid}}.",
     "terminateOperationalBinding@succeeded": "Operational binding of type {{type}} and ID {{bid}} was terminated by association {{aid}}.",
-    "could_not_establish_connection": "Could not establish connection with DSA '{{ae}}' to chain operation {{iid}} because of this error: {{e}}."
+    "could_not_establish_connection": "Could not establish connection with DSA '{{ae}}' to chain operation {{iid}}.",
+    "could_not_establish_connection@with_error": "Could not establish connection with DSA '{{ae}}' to chain operation {{iid}} because of this error: {{e}}."
 }
