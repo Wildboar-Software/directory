@@ -522,13 +522,14 @@ function *createBindRequests (
     credentials?: DSACredentials,
 ): IterableIterator<BindRequest> {
     if (!credentials) {
-        return new BindRequest(
+        yield new BindRequest(
             LDAP_VERSION_3,
             new Uint8Array(),
             {
                 simple: new Uint8Array(),
             },
         );
+        return;
     }
     if ("simple" in credentials) {
         if (!credentials.simple.password) {
