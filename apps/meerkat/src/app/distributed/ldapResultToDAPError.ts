@@ -238,7 +238,7 @@ function ldapResultToDAPError (res: LDAPResult): void {
         case (LDAPResult_resultCode_referral):
             if (!res.referral) {
                 // This status should not appear without a referral field.
-                throw new Error();
+                throw new Error("3ecdadf7-0aa0-4b89-8eaa-bb9f1ff3de0f");
             }
             throw new errors.ReferralError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
@@ -387,7 +387,7 @@ function ldapResultToDAPError (res: LDAPResult): void {
                 updateErrorData(UpdateProblem_affectsMultipleDSAs),
             );
         default:
-            throw new Error();
+            throw new Error("948540e3-6b8f-4da7-921d-c7a20d1ea0a9");
     }
 }
 

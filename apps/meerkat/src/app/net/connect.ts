@@ -11,24 +11,28 @@ import {
 import type {
     DSACredentials,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
-import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
-import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
-import type { ChainedResultOrError } from "@wildboar/x500/src/lib/types/ChainedResultOrError";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import type { OBJECT_IDENTIFIER, INTEGER, ASN1Element } from "asn1-ts";
 import * as net from "net";
 import * as tls from "tls";
 import type Connection from "./Connection";
-import type { WriteOperationOptions } from "./Connection";
 import { EventEmitter } from "stream";
 import { IDMConnection } from "@wildboar/idm";
 import * as url from "url";
+import type {
+    OPTIONALLY_PROTECTED,
+} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
 import {
-    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
-import {
-    chainedRead,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+    Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa"
+import { chainedCompare } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedCompare.oa"
+import { chainedList } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedList.oa"
+import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa"
+import { chainedAddEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAddEntry.oa"
+import { chainedRemoveEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRemoveEntry.oa"
+import { chainedModifyEntry } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedModifyEntry.oa"
+import { chainedModifyDN } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedModifyDN.oa"
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
     serviceError,
@@ -338,6 +342,7 @@ function getLDAPOperationWriter (
                     socket.once("close", closeHandler);
                     // This listener cannot be .once(), because a message ID may be used multiple times
                     // to return results for a search request.
+                    // FIXME: Wrap result in chained result if DSP.
                     socket.on(EVENT_NAME, (message: LDAPMessage) => {
                         assert(req.opCode);
                         // assert(req.argument);
@@ -347,7 +352,18 @@ function getLDAPOperationWriter (
                                 return;
                             }
                             const result = ldapResponseToAddEntryResult(message.protocolOp.addResponse);
-                            resolve(addEntry.encoderFor["&ResultType"]!(result, DER));
+                            const encodedNonChained = addEntry.encoderFor["&ResultType"]!(result, DER);
+                            if (isDSP) {
+                                const chainedResult: OPTIONALLY_PROTECTED<Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1> = {
+                                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                                        emptyChainingResults(),
+                                        encodedNonChained,
+                                    ),
+                                };
+                                resolve(chainedAddEntry.encoderFor["&ResultType"]!(chainedResult, DER));
+                            } else {
+                                resolve(encodedNonChained);
+                            }
                             return;
                         }
                         else if (compareCode(req.opCode, compare["&operationCode"]!)) {
@@ -356,7 +372,18 @@ function getLDAPOperationWriter (
                                 return;
                             }
                             const result = ldapResponseToCompareResult(ctx, message.protocolOp.compareResponse);
-                            resolve(compare.encoderFor["&ResultType"]!(result, DER));
+                            const encodedNonChained = compare.encoderFor["&ResultType"]!(result, DER);
+                            if (isDSP) {
+                                const chainedResult: OPTIONALLY_PROTECTED<Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1> = {
+                                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                                        emptyChainingResults(),
+                                        encodedNonChained,
+                                    ),
+                                };
+                                resolve(chainedCompare.encoderFor["&ResultType"]!(chainedResult, DER));
+                            } else {
+                                resolve(encodedNonChained);
+                            }
                             return;
                         }
                         else if (compareCode(req.opCode, list["&operationCode"]!)) {
@@ -371,7 +398,18 @@ function getLDAPOperationWriter (
                                     searchResults,
                                     searchRefs,
                                 );
-                                resolve(list.encoderFor["&ResultType"]!(result, DER));
+                                const encodedNonChained = list.encoderFor["&ResultType"]!(result, DER);
+                                if (isDSP) {
+                                    const chainedResult: OPTIONALLY_PROTECTED<Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1> = {
+                                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                                            emptyChainingResults(),
+                                            encodedNonChained,
+                                        ),
+                                    };
+                                    resolve(chainedList.encoderFor["&ResultType"]!(chainedResult, DER));
+                                } else {
+                                    resolve(encodedNonChained);
+                                }
                                 return;
                             } else {
                                 reject(new Error("e87c476d-3171-4835-bb7a-3a39e6ee533e"));
@@ -384,7 +422,18 @@ function getLDAPOperationWriter (
                                 return;
                             }
                             const result = ldapResponseToModifyDNResult(message.protocolOp.modDNResponse);
-                            resolve(modifyDN.encoderFor["&ResultType"]!(result, DER));
+                            const encodedNonChained = modifyDN.encoderFor["&ResultType"]!(result, DER);
+                            if (isDSP) {
+                                const chainedResult: OPTIONALLY_PROTECTED<Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1> = {
+                                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                                        emptyChainingResults(),
+                                        encodedNonChained,
+                                    ),
+                                };
+                                resolve(chainedModifyDN.encoderFor["&ResultType"]!(chainedResult, DER));
+                            } else {
+                                resolve(encodedNonChained);
+                            }
                             return;
                         }
                         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
@@ -393,7 +442,18 @@ function getLDAPOperationWriter (
                                 return;
                             }
                             const result = ldapResponseToModifyEntryResult(message.protocolOp.modifyResponse);
-                            resolve(modifyEntry.encoderFor["&ResultType"]!(result, DER));
+                            const encodedNonChained = modifyEntry.encoderFor["&ResultType"]!(result, DER);
+                            if (isDSP) {
+                                const chainedResult: OPTIONALLY_PROTECTED<Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1> = {
+                                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                                        emptyChainingResults(),
+                                        encodedNonChained,
+                                    ),
+                                };
+                                resolve(chainedModifyEntry.encoderFor["&ResultType"]!(chainedResult, DER));
+                            } else {
+                                resolve(encodedNonChained);
+                            }
                             return;
                         }
                         else if (compareCode(req.opCode, read["&operationCode"]!)) {
@@ -411,10 +471,21 @@ function getLDAPOperationWriter (
                                     searchResults[0],
                                     message.protocolOp.searchResDone,
                                 );
-                                resolve(read.encoderFor["&ResultType"]!(result, DER));
+                                const encodedNonChained = read.encoderFor["&ResultType"]!(result, DER);
+                                if (isDSP) {
+                                    const chainedResult: OPTIONALLY_PROTECTED<Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1> = {
+                                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                                            emptyChainingResults(),
+                                            encodedNonChained,
+                                        ),
+                                    };
+                                    resolve(chainedRead.encoderFor["&ResultType"]!(chainedResult, DER));
+                                } else {
+                                    resolve(encodedNonChained);
+                                }
                                 return;
                             } else {
-                                reject(new Error());
+                                reject(new Error("861ca8bf-b6d2-48e9-a357-6fd7ec8a88ce"));
                                 return;
                             }
                         }
@@ -424,7 +495,18 @@ function getLDAPOperationWriter (
                                 return;
                             }
                             const result = ldapResponseToRemoveEntryResult(message.protocolOp.delResponse);
-                            resolve(removeEntry.encoderFor["&ResultType"]!(result, DER));
+                            const encodedNonChained = removeEntry.encoderFor["&ResultType"]!(result, DER);
+                            if (isDSP) {
+                                const chainedResult: OPTIONALLY_PROTECTED<Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1> = {
+                                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                                        emptyChainingResults(),
+                                        encodedNonChained,
+                                    ),
+                                };
+                                resolve(chainedRemoveEntry.encoderFor["&ResultType"]!(chainedResult, DER));
+                            } else {
+                                resolve(encodedNonChained);
+                            }
                             return;
                         }
                         else if (compareCode(req.opCode, search["&operationCode"]!)) {
@@ -442,14 +524,25 @@ function getLDAPOperationWriter (
                                     searchResults,
                                     searchRefs,
                                 );
-                                resolve(search.encoderFor["&ResultType"]!(result, DER));
+                                const encodedNonChained = search.encoderFor["&ResultType"]!(result, DER);
+                                if (isDSP) {
+                                    const chainedResult: OPTIONALLY_PROTECTED<Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1> = {
+                                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                                            emptyChainingResults(),
+                                            encodedNonChained,
+                                        ),
+                                    };
+                                    resolve(chainedSearch.encoderFor["&ResultType"]!(chainedResult, DER));
+                                } else {
+                                    resolve(encodedNonChained);
+                                }
                                 return;
                             } else {
-                                reject(new Error());
+                                reject(new Error("2877bb39-4335-496e-84c8-31d3a23d95df"));
                                 return;
                             }
                         } else {
-                            reject(new Error());
+                            reject(new Error("ca61d143-88ef-4053-bc37-26dcc1e1115b"));
                             return;
                         }
                     });
