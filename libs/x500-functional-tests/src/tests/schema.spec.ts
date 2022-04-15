@@ -1208,8 +1208,8 @@ describe("Meerkat DSA", () => {
     it("enforces DIT content rules on entries in a subschema", async () => {
         const testId = `subschema.content-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
-        const personNameForm = new ObjectIdentifier([ 2, 5, 100, 1 ]);
-        const processNameForm = new ObjectIdentifier([ 2, 5, 100, 2 ]);
+        const personNameForm = new ObjectIdentifier([ 2, 5, 100, 6336 ]);
+        const processNameForm = new ObjectIdentifier([ 2, 5, 100, 8590 ]);
         { // Setup
             await createTestRootNode(connection!, testId, [
                 new Attribute(
@@ -1691,8 +1691,8 @@ describe("Meerkat DSA", () => {
     it("enforces DIT context use rules on entries in a subschema", async () => {
         const testId = `subschema.context-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
-        const personNameForm = new ObjectIdentifier([ 2, 5, 100, 1 ]);
-        const processNameForm = new ObjectIdentifier([ 2, 5, 100, 2 ]);
+        const personNameForm = new ObjectIdentifier([ 2, 5, 100, 26729 ]);
+        const processNameForm = new ObjectIdentifier([ 2, 5, 100, 6931 ]);
         { // Setup
             await createTestRootNode(connection!, testId, [
                 new Attribute(
