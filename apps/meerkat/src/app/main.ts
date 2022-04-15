@@ -368,7 +368,7 @@ function attachUnboundEventListenersToIDMConnection (
                 measurements: {
                     bytesRead: idm.s.bytesRead,
                     bytesWritten: idm.s.bytesWritten,
-                    idmFramesReceived: this.idm.getFramesReceived(),
+                    idmFramesReceived: idm.getFramesReceived(),
                 },
             });
         }
@@ -390,7 +390,7 @@ function attachUnboundEventListenersToIDMConnection (
         const measurements = {
             bytesRead: idm.s.bytesRead,
             bytesWritten: idm.s.bytesWritten,
-            idmFramesReceived: this.idm.getFramesReceived(),
+            idmFramesReceived: idm.getFramesReceived(),
         };
         switch (warningCode) {
         case (warnings.IDM_WARN_SLOW_LORIS): {
