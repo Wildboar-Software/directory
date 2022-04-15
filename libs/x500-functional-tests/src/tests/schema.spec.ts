@@ -997,8 +997,8 @@ describe("Meerkat DSA", () => {
     it("enforces DIT structure rules on entries in a subschema", async () => {
         const testId = `subschema.structure-${(new Date()).toISOString()}`;
         const dn = createTestRootDN(testId);
-        const personNameForm = new ObjectIdentifier([ 2, 5, 100, 1 ]);
-        const processNameForm = new ObjectIdentifier([ 2, 5, 100, 2 ]);
+        const personNameForm = new ObjectIdentifier([ 2, 5, 100, 2345 ]);
+        const processNameForm = new ObjectIdentifier([ 2, 5, 100, 6789 ]);
         { // Setup
             await createTestRootNode(connection!, testId, [
                 new Attribute(
