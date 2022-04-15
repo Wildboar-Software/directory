@@ -1,5 +1,3 @@
-
-
 import type { Context } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "asn1-ts";
 import * as x500nf from "@wildboar/x500/src/lib/collections/nameForms";
@@ -25,13 +23,15 @@ async function loadNameForms (ctx: Context): Promise<void> {
         .forEach((nf) => {
             ctx.nameForms.set(nf.id.toString(), nf);
         });
-    const nameForms = await ctx.db.nameForm.findMany();
+    const nameForms = await ctx.db.nameForm.findMany({
+        where: {
+            entry_id: null,
+        },
+    });
     for (const nameForm of nameForms) {
         ctx.nameForms.set(nameForm.identifier, {
             id: ObjectIdentifier.fromString(nameForm.identifier),
-            name: nameForm.name
-                ? [ nameForm.name ]
-                : undefined,
+            name: nameForm.name?.split("|"),
             description: nameForm.description ?? undefined,
             obsolete: nameForm.obsolete,
             namedObjectClass: ObjectIdentifier.fromString(nameForm.namedObjectClass),

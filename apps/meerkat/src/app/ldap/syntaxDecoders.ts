@@ -174,9 +174,9 @@ function getDITStructureRulesDecoder (
                     if (isDigit(tokens[t].charCodeAt(0))) {
                         form = ObjectIdentifier.fromString(tokens[t]);
                     } else {
-                        const spec = ctx.nameForms.get(tokens[t]);
+                        const spec = ctx.nameForms.get(tokens[t].trim().toLowerCase());
                         if (!spec) {
-                            throw new Error();
+                            throw new Error("96f6c1be-2a55-4ebf-b349-f21d85376cfd");
                         }
                         form = spec.id;
                     }

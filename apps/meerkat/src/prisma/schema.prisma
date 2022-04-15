@@ -84,8 +84,8 @@ model Entry {
   structuralObjectClass String? @db.VarChar(128) // OID
 
   // Shadowing flags. See ITU Recommendation X.525 (2019), Section 7.2.1.
-  subordinate_completeness    Boolean?
-  attribute_completeness      Boolean?
+  subordinate_completeness Boolean?
+  attribute_completeness   Boolean?
   // This is not a boolean. It is a set of attribute types whose values are incomplete.
   // attribute_values_incomplete
 
@@ -141,6 +141,9 @@ model Entry {
   EnqueuedSearchResult        EnqueuedSearchResult[]
   EnqueuedListResult          EnqueuedListResult[]
 
+  EntryAttributeValuesIncomplete EntryAttributeValuesIncomplete[]
+  AttributeTypeDescription       AttributeTypeDescription[]
+  ObjectClassDescription         ObjectClassDescription[]
   @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, subentry])
@@ -148,7 +151,8 @@ model Entry {
   @@index([hierarchyTop_id])
   @@index([hierarchyParent_id])
   @@index([hierarchyPath])
-  EntryAttributeValuesIncomplete EntryAttributeValuesIncomplete[]
+  NameForm           NameForm[]
+  ContextDescription ContextDescription[]
 }
 
 // Technically a userApplications attribute, but still has operational uses.
@@ -209,9 +213,9 @@ model PasswordEncryptionAlgorithm {
 // geographic names per the `PwdVocabulary` production in the `PasswordPolicy`
 // ASN.1 module.
 model PasswordDictionaryItem {
-  id         Int    @id @default(autoincrement())
-  bit        Int    @db.SmallInt
-  item      String
+  id   Int    @id @default(autoincrement())
+  bit  Int    @db.SmallInt
+  item String
 
   @@unique([bit, item])
 }
@@ -446,7 +450,12 @@ model NameForm {
   obsolete            Boolean  @default(false)
   created_at          DateTime @default(now())
 
-  @@unique([identifier])
+  // Why entry_id if name forms are universal? So schema shadowed from
+  // other DSAs does not overwrite this DSA's conception of the same schema objects.
+  entry_id Int?
+  entry    Entry? @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+
+  @@unique([entry_id, identifier])
   @@index([namedObjectClass])
 }
 
@@ -599,7 +608,12 @@ model AttributeTypeDescription {
   dummy           Boolean  @default(false)
   created_at      DateTime @default(now())
 
-  @@unique([identifier])
+  // Why entry_id if attribute types are universal? So schema shadowed from
+  // other DSAs does not overwrite this DSA's conception of the same schema objects.
+  entry_id Int?
+  entry    Entry? @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+
+  @@unique([entry_id, identifier])
 }
 
 model ObjectClassDescription {
@@ -616,7 +630,12 @@ model ObjectClassDescription {
   ldapDescription String?
   created_at      DateTime        @default(now())
 
-  @@unique([identifier])
+  // Why entry_id if object classes are universal? So schema shadowed from
+  // other DSAs does not overwrite this DSA's conception of the same schema objects.
+  entry_id Int?
+  entry    Entry? @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+
+  @@unique([entry_id, identifier])
 }
 
 model ContextDescription {
@@ -629,7 +648,17 @@ model ContextDescription {
   assertionSyntax String?
   created_at      DateTime @default(now())
 
-  @@unique([identifier])
+  // For some reason, these are not present in the ASN.1 definition for
+  // `ContextDescription`.
+  absentMatch     Boolean @default(true)
+  defaultValue    Bytes?
+
+  // Why entry_id if context types are universal? So schema shadowed from
+  // other DSAs does not overwrite this DSA's conception of the same schema objects.
+  entry_id Int?
+  entry    Entry? @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+
+  @@unique([entry_id, identifier])
 }
 
 // This also satisfies SearchRuleDescription

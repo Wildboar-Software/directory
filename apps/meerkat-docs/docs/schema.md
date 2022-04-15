@@ -3,6 +3,32 @@
 In general, schema in Meerkat DSA follows the X.500 directory schema
 administration model defined in the X.500 series of specifications.
 
+## Use of Schema
+
+The X.500 standards do not clearly require that all attribute types used within
+a subschema be defined within the subschema subentry. In fact, the LDAP
+specifications explicitly _do not_ require this. As such, certain
+subschema operational attributes that describe schema objects that are universal
+in nature (e.g. the attribute type with object identifier `2.5.4.3` is
+universally `commonName` and MUST have the same exact meaning everywhere) are
+purely informative. Meerkat DSA does not check that, say, an attribute type
+is defined in the relevant subschema before permitting it to be used in an
+entry.
+
+Meerkat DSA does, however, maintain an internal index of recognized schema
+objects, and it _does_ check that entry creations and modifications only make
+use of schema objects that are recognized within this index. This internal index
+is populated with schema objects as described in the following sections.
+
+:::note
+
+If you are looking at the code of Meerkat DSA, the "index" being talked about
+above is the aggregation of the `attributeTypes`, `objectClasses`, `nameForms`,
+`contextTypes`, and other schema-related properties of the context object, often
+named `ctx`.
+
+:::
+
 ## Pre-Installed Schema
 
 Meerkat DSA comes with schema pre-installed. At a minimum, this pre-installed
@@ -66,7 +92,7 @@ For instance, to implement a matching rule, somebody has to actually write code
 to perform the matching. Those subschema elements that require code are:
 
 - Attribute types
-- Context types
+- Context types\*
 - Matching rules
 - LDAP syntaxes
 
@@ -78,6 +104,31 @@ In context types, a function (a "context matcher") must be defined for matching
 a Basic Encoding Rules-encoded ASN.1 element representing a context value with
 a similarly-encoded context assertion value. Another function may need to be
 defined to produce a default value for the context type.
+
+:::note
+
+You _can_ define a context type in the database via the `ContextDescription`
+table, or by adding values to the `contextTypes` operational attribute of a
+subschema that resides within your DSA (not a shadow or RHOB subentry, however).
+A context type created in this manner will have a general-purpose matcher that
+compares two ASN.1 _values_ byte-for-byte (this differs from comparing the
+whole element byte-for-byte because it takes into consideration that the
+element may be constructed and deconstructs it before the byte-for-byte
+comparison).
+
+This means that you might not need to define a new context type
+in the init script if its syntax is a `BOOLEAN`, `INTEGER`, `OBJECT IDENTIFIER`,
+`ENUMERATED`, `NULL`, or any other primitive type that has one single
+byte representation when using the Basic Encoding Rules. All bets are off when
+the syntax is a constructed type or a type that could be constructed.
+
+You may also define a `DEFAULT-VALUE` for that context type in the database.
+This will be the raw bytes of a Basic Encoding Rules-encoded ASN.1 value.
+
+Still, it is _better_ to define a context type in the init script, because you
+can define more complex and strict comparators.
+
+:::
 
 In matching rules, a function (a "matcher") must be defined for evaluating
 whether a Basic Encoding Rules-encoded ASN.1 element representing an attribute
@@ -115,6 +166,17 @@ schema elements (attribute types, object classes, etc.) once they are defined.
 This is intentional: its purpose is to prevent administrators from redefining
 schema elements such that a given object identifier now ambiguously refers to
 multiple different versions of a schema element.
+
+Note that schema objects can only be added via subentries that are "internal"
+to your DSA. If you try to add schema objects to subentries of DSE type `rhob`
+or `shadow`, they will not be recognized by your DSA. If this were not the case,
+DSAs with which you have an outstanding operational binding could overwrite your
+DSA's internal conception of these schema elements. It is also worth noting that
+new schema objects are recognized by your DSA on a first-come-first-served
+basis. If you add, say, an attribute type with object identifier `2.5.4.3` to
+a subentry, then somebody else comes along to add the same attribute type to
+another subentry, the first definition of that attribute type will persist
+throughout the whole DSA.
 
 The benefit of using the database directly is merely that it is simpler and
 faster.
@@ -398,6 +460,11 @@ schema element, such as an attribute type or name form, is added to Meerkat
 DSA, it is recommended that the object identifier get added to the `Context`
 object's `objectIdentifierToName` and `nameToObjectIdentifier` maps. In each
 case, the object identifier is represented in dot-delimited form.
+
+You DO have to manually map object identifiers to names and vice versa for
+schema objects you define in the init script. You DO NOT have to do this for
+schema objects you define in the database or via the subschema operational
+attributes.
 
 Note that future versions of Meerkat DSA may expect object identifier names
 used in the `nameToObjectIdentifier` map to be normalized to lowercase or

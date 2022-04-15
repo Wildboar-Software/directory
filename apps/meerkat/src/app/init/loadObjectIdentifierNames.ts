@@ -86,6 +86,31 @@ async function loadObjectIdentifierNames (ctx: Context): Promise<void> {
         }
     }
 
+    for (const [ oid, nf ] of ctx.nameForms.entries()) {
+        if (oid.indexOf(".") === -1) {
+            continue;
+        }
+        for (const name of nf.name ?? []) {
+            const normalized: string = name.trim().toLowerCase();
+            if (
+                ctx.nameToObjectIdentifier.has(name)
+                || ctx.nameToObjectIdentifier.has(normalized)
+            ) {
+                ctx.log.warn(ctx.i18n.t("log:duplicate_name", {
+                    name,
+                }));
+                ctx.nameToObjectIdentifier.delete(name);
+                ctx.nameToObjectIdentifier.delete(normalized);
+                ctx.duplicatedLDAPNames.add(name);
+                ctx.duplicatedLDAPNames.add(normalized);
+                continue;
+            }
+            ctx.nameToObjectIdentifier.set(name, nf.id);
+            ctx.nameToObjectIdentifier.set(normalized, nf.id);
+            ctx.objectIdentifierToName.set(nf.id.toString(), name);
+        }
+    }
+
     for (const [ oid, ct ] of ctx.contextTypes.entries()) {
         if (oid.indexOf(".") === -1) {
             continue;

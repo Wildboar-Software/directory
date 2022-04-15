@@ -824,7 +824,7 @@ async function main (): Promise<void> {
     ctx.log.debug(ctx.i18n.t("log:loaded_attribute_types"));
     loadMatchingRules(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_matching_rules"));
-    loadContextTypes(ctx);
+    await loadContextTypes(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_context_types"));
     await loadNameForms(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_name_forms"));

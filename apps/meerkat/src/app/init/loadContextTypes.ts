@@ -1,4 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
+import { BERElement, ObjectIdentifier, TRUE } from "asn1-ts";
 import contextTypeFromInformationObject from "./contextTypeFromInformationObject";
 import * as x500c from "@wildboar/x500/src/lib/collections/contexts";
 import type {
@@ -17,6 +18,7 @@ import {
 import {
     evaluateTemporalContext,
 } from "@wildboar/x500/src/lib/matching/context/temporalContext";
+import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of known context types.
@@ -29,7 +31,7 @@ import {
  * @function
  */
 export
-function loadContextTypes (ctx: Context): void {
+async function loadContextTypes (ctx: Context): Promise<void> {
     const contextTypes: [ CONTEXT, ContextMatcher, string, string? ][] = [
         [ x500c.languageContext, evaluateLanguageContext, "LanguageContextSyntax" ],
         [ x500c.ldapAttributeOptionContext, evaluateLDAPAttributeOptionContext, "AttributeOptionList" ],
@@ -48,6 +50,39 @@ function loadContextTypes (ctx: Context): void {
                 ),
             );
         });
+
+    const cts = await ctx.db.contextDescription.findMany({
+        where: {
+            entry_id: null,
+        },
+    });
+    for (const ct of cts) {
+        ctx.contextTypes.set(ct.identifier, {
+            id: ObjectIdentifier.fromString(ct.identifier),
+            name: ct.name?.split("|"),
+            description: ct.description ?? undefined,
+            obsolete: ct.obsolete,
+            /**
+             * For some reason, you cannot specify ABSENT-MATCH in
+             * `ContextDescription`.
+             */
+            absentMatch: ct.absentMatch,
+            /**
+             * ...you also cannot specify a DEFAULT-VALUE.
+             */
+            defaultValue: ct.defaultValue
+                ? () => {
+                    const el = new BERElement();
+                    el.fromBytes(ct.defaultValue!);
+                    return el;
+                }
+                : undefined,
+            validator: undefined,
+            syntax: ct.syntax,
+            assertionSyntax: ct.assertionSyntax ?? undefined,
+            matcher: compareElements, // FIXME:
+        });
+    }
 }
 
 export default loadContextTypes;

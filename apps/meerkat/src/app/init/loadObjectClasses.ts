@@ -68,7 +68,11 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         .forEach((oc) => {
             ctx.objectClasses.set(oc.id.toString(), oc);
         });
-    const ocs = await ctx.db.objectClassDescription.findMany();
+    const ocs = await ctx.db.objectClassDescription.findMany({
+        where: {
+            entry_id: null,
+        },
+    });
     for (const oc of ocs) {
         ctx.objectClasses.set(oc.identifier, {
             id: ObjectIdentifier.fromString(oc.identifier),

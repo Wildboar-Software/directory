@@ -112,7 +112,11 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
             });
         });
 
-    const storedTypes = await ctx.db.attributeTypeDescription.findMany();
+    const storedTypes = await ctx.db.attributeTypeDescription.findMany({
+        where: {
+            entry_id: null,
+        },
+    });
     for (const storedType of storedTypes) {
         if (
             // Only attributes with a defined syntax may be loaded
