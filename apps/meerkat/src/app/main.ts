@@ -750,6 +750,22 @@ function handleLDAP (
 export default
 async function main (): Promise<void> {
     await ctx.telemetry.init();
+
+    process.on("uncaughtException", (e) => {
+        console.error("UNCAUGHT_EXCEPTION");
+        console.error(e);
+        console.error("This is a bug. Please report it to https://github.com/Wildboar-Software/directory/issues.");
+        process.exit(11);
+    });
+
+    process.on("unhandledRejection", (reason, promise) => {
+        console.error("UNHANDLED_REJECTION");
+        console.error("PROMISE: ", promise);
+        console.error("REASON: ", reason);
+        console.error("This is a bug. Please report it to https://github.com/Wildboar-Software/directory/issues.");
+        process.exit(13);
+    });
+
     const packageJSON = await import("../../package.json").catch(() => {});
     const versionSlug = packageJSON?.default
         ? packageJSON?.default.version
