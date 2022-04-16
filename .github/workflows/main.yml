@@ -447,8 +447,8 @@ jobs:
         dmd:
           - 'root'
           - 'gb'
-          # - 'ru'
-          # - 'ru-moscow'
+          - 'ru'
+          - 'ru-moscow'
     steps:
       # - name: Checkout
       #   uses: actions/checkout@v2
@@ -663,6 +663,18 @@ jobs:
           node ./dist/apps/create-test-dit/main.js \
             --accessPoint="idm://dsa01.gb.${{ env.ZONE }}:4632" \
             --profile=gb \
+            -t
+      - name: Seed the C=RU DSA
+        run: |
+          node ./dist/apps/create-test-dit/main.js \
+            --accessPoint="idm://dsa01.ru.${{ env.ZONE }}:4632" \
+            --profile=ru \
+            -t
+      - name: Seed the C=RU,L=Moscow DSA
+        run: |
+          node ./dist/apps/create-test-dit/main.js \
+            --accessPoint="idm://dsa01.ru-moscow.${{ env.ZONE }}:4632" \
+            --profile=ru-moscow \
             -t
 
   functional_testing:

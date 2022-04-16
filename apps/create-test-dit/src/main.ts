@@ -1,10 +1,12 @@
 import { program } from "commander";
 import ctx from "./app/ctx";
 import bind from "./app/bind";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _encodeUTF8String } from "asn1-ts/dist/node/functional";
 import createCountries from "./app/create-countries";
 import createAdmin from "./app/create-admin";
 import { seedGB } from "./app/create-gb";
+import { seedRU } from "./app/create-ru";
+import { seedMoscow } from "./app/create-moscow";
 import { adminDN } from "./app/constants";
 import {
     DistinguishedName,
@@ -51,6 +53,40 @@ async function main () {
             const password: string = "password4GB";
             const connection = await bind(ctx, options["accessPoint"], bindDN, password);
             await seedGB(ctx, connection);
+            await connection.close();
+            break;
+        }
+        case ("ru"): {
+            const bindDN: DistinguishedName = [
+                [
+                    new AttributeTypeAndValue(
+                        countryName["&id"],
+                        _encodePrintableString("RU", DER),
+                    ),
+                ],
+            ];
+            const password: string = "password4RU";
+            const connection = await bind(ctx, options["accessPoint"], bindDN, password);
+            await seedRU(ctx, connection);
+            await connection.close();
+            break;
+        }
+        case ("ru-moscow"): {
+            const bindDN: DistinguishedName = [
+                [
+                    new AttributeTypeAndValue(
+                        countryName["&id"],
+                        _encodePrintableString("RU", DER),
+                    ),
+                    new AttributeTypeAndValue(
+                        countryName["&id"],
+                        _encodeUTF8String("Moscow", DER),
+                    ),
+                ],
+            ];
+            const password: string = "password4Moscow";
+            const connection = await bind(ctx, options["accessPoint"], bindDN, password);
+            await seedMoscow(ctx, connection);
             await connection.close();
             break;
         }
