@@ -15,9 +15,9 @@ import nameFormFromInformationObject from "./nameFormFromInformationObject";
  */
 export
 async function loadNameForms (ctx: Context): Promise<void> {
-    const nameFormInfoObjects = [
-        ...Object.values(x500nf),
-    ];
+    const nameFormInfoObjects = {
+        ...x500nf,
+    };
     Object.entries(nameFormInfoObjects)
         .map(([ name, io ]) => nameFormFromInformationObject(io, io["&ldapName"] ?? [ name ]))
         .forEach((nf) => {
