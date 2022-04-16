@@ -188,16 +188,17 @@ const addValue: SpecialAttributeDatabaseEditor = async (
          * key is NULL. So we have to check if there is already exists such
          * a schema object in a separate query.
          */
-        const universallyDefinedAlready: boolean = !!(await ctx.db.objectClassDescription.findFirst({
-            where: {
-                entry_id: null,
-                identifier: OID,
-            },
-            select: {
-                id: true,
-            },
-        }));
-        if (!universallyDefinedAlready && !ctx.attributeTypes.has(OID)) {
+        const universallyDefinedAlready: boolean = ctx.objectClasses.has(OID)
+            || !!(await ctx.db.objectClassDescription.findFirst({
+                where: {
+                    entry_id: null,
+                    identifier: OID,
+                },
+                select: {
+                    id: true,
+                },
+            }));
+        if (!universallyDefinedAlready) {
             ctx.db.objectClassDescription.create({ // INTENTIONAL_NO_AWAIT
                 data: {
                     ...create,
@@ -205,31 +206,32 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             })
                 .then()
                 .catch(); // TODO: Log something.
-        }
-        const info: ObjectClassInfo = {
-            id: decoded.identifier,
-            name: decoded.name?.map(directoryStringToString),
-            description,
-            obsolete: decoded.obsolete,
-            superclasses: decoded.information.subclassOf
-                ? new Set(decoded.information.subclassOf.map((oid) => oid.toString()))
-                : new Set(),
-            kind: decoded.information.kind ?? ObjectClassKind_structural,
-            mandatoryAttributes: new Set(decoded.information.mandatories?.map((oid) => oid.toString())),
-            optionalAttributes: new Set(decoded.information.optionals?.map((oid) => oid.toString())),
-            ldapNames: [],
-            ldapDescription: description,
-        };
-        ctx.objectClasses.set(OID, info);
-        let longestName: number = 0;
-        for (const name of (names ?? [])) {
-            ctx.objectClasses.set(name, info);
-            ctx.objectClasses.set(name.trim().toLowerCase(), info);
-            ctx.nameToObjectIdentifier.set(name, info.id);
-            ctx.nameToObjectIdentifier.set(name.trim().toLowerCase(), info.id);
-            if (name.trim().length > longestName) {
-                ctx.objectIdentifierToName.set(info.id.toString(), name);
-                longestName = name.length;
+
+            const info: ObjectClassInfo = {
+                id: decoded.identifier,
+                name: decoded.name?.map(directoryStringToString),
+                description,
+                obsolete: decoded.obsolete,
+                superclasses: decoded.information.subclassOf
+                    ? new Set(decoded.information.subclassOf.map((oid) => oid.toString()))
+                    : new Set(),
+                kind: decoded.information.kind ?? ObjectClassKind_structural,
+                mandatoryAttributes: new Set(decoded.information.mandatories?.map((oid) => oid.toString())),
+                optionalAttributes: new Set(decoded.information.optionals?.map((oid) => oid.toString())),
+                ldapNames: [],
+                ldapDescription: description,
+            };
+            ctx.objectClasses.set(OID, info);
+            let longestName: number = 0;
+            for (const name of (names ?? [])) {
+                ctx.objectClasses.set(name, info);
+                ctx.objectClasses.set(name.trim().toLowerCase(), info);
+                ctx.nameToObjectIdentifier.set(name, info.id);
+                ctx.nameToObjectIdentifier.set(name.trim().toLowerCase(), info.id);
+                if (name.trim().length > longestName) {
+                    ctx.objectIdentifierToName.set(info.id.toString(), name);
+                    longestName = name.length;
+                }
             }
         }
     }

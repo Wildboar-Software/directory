@@ -168,16 +168,17 @@ const addValue: SpecialAttributeDatabaseEditor = async (
          * key is NULL. So we have to check if there is already exists such
          * a schema object in a separate query.
          */
-        const universallyDefinedAlready: boolean = !!(await ctx.db.contextDescription.findFirst({
-            where: {
-                entry_id: null,
-                identifier: OID,
-            },
-            select: {
-                id: true,
-            },
-        }));
-        if (!universallyDefinedAlready && !ctx.contextTypes.has(OID)) {
+        const universallyDefinedAlready: boolean = ctx.contextTypes.has(OID)
+            || !!(await ctx.db.contextDescription.findFirst({
+                where: {
+                    entry_id: null,
+                    identifier: OID,
+                },
+                select: {
+                    id: true,
+                },
+            }));
+        if (!universallyDefinedAlready) {
             ctx.db.contextDescription.create({ // INTENTIONAL_NO_AWAIT
                 data: {
                     ...create,
@@ -185,38 +186,38 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             })
                 .then()
                 .catch(); // TODO: Log something.
-        }
-        const info: ContextTypeInfo = {
-            id: decoded.identifier,
-            name: names,
-            description,
-            obsolete: decoded.obsolete,
-            /**
-             * For some reason, you cannot specify ABSENT-MATCH in
-             * `ContextDescription`. This defaults to TRUE.
-             */
-            absentMatch: TRUE,
-            /**
-             * ...you also cannot specify a DEFAULT-VALUE.
-             */
-            defaultValue: undefined,
-            validator: undefined,
-            syntax: directoryStringToString(decoded.information.syntax),
-            assertionSyntax: decoded.information.assertionSyntax
-                ? directoryStringToString(decoded.information.assertionSyntax)
-                : undefined,
-            matcher: compareElements, // FIXME:
-        };
-        ctx.contextTypes.set(OID, info);
-        let longestName: number = 0;
-        for (const name of (names ?? [])) {
-            ctx.contextTypes.set(name, info);
-            ctx.contextTypes.set(name.trim().toLowerCase(), info);
-            ctx.nameToObjectIdentifier.set(name, info.id);
-            ctx.nameToObjectIdentifier.set(name.trim().toLowerCase(), info.id);
-            if (name.trim().length > longestName) {
-                ctx.objectIdentifierToName.set(info.id.toString(), name);
-                longestName = name.length;
+            const info: ContextTypeInfo = {
+                id: decoded.identifier,
+                name: names,
+                description,
+                obsolete: decoded.obsolete,
+                /**
+                 * For some reason, you cannot specify ABSENT-MATCH in
+                 * `ContextDescription`. This defaults to TRUE.
+                 */
+                absentMatch: TRUE,
+                /**
+                 * ...you also cannot specify a DEFAULT-VALUE.
+                 */
+                defaultValue: undefined,
+                validator: undefined,
+                syntax: directoryStringToString(decoded.information.syntax),
+                assertionSyntax: decoded.information.assertionSyntax
+                    ? directoryStringToString(decoded.information.assertionSyntax)
+                    : undefined,
+                matcher: compareElements, // FIXME:
+            };
+            ctx.contextTypes.set(OID, info);
+            let longestName: number = 0;
+            for (const name of (names ?? [])) {
+                ctx.contextTypes.set(name, info);
+                ctx.contextTypes.set(name.trim().toLowerCase(), info);
+                ctx.nameToObjectIdentifier.set(name, info.id);
+                ctx.nameToObjectIdentifier.set(name.trim().toLowerCase(), info.id);
+                if (name.trim().length > longestName) {
+                    ctx.objectIdentifierToName.set(info.id.toString(), name);
+                    longestName = name.length;
+                }
             }
         }
     }
@@ -268,7 +269,7 @@ const countValues: SpecialAttributeCounter = async (
         });
     }
     const oids: Set<string> = new Set([
-        ...Array.from(ctx.attributeTypes.keys())
+        ...Array.from(ctx.contextTypes.keys())
             .filter((key) => (key.indexOf(".") > -1)),
         ...(await ctx.db.contextDescription.findMany({
             where: {

@@ -217,16 +217,17 @@ const addValue: SpecialAttributeDatabaseEditor = async (
          * key is NULL. So we have to check if there is already exists such
          * a schema object in a separate query.
          */
-        const universallyDefinedAlready: boolean = !!(await ctx.db.attributeTypeDescription.findFirst({
-            where: {
-                entry_id: null,
-                identifier: OID,
-            },
-            select: {
-                id: true,
-            },
-        }));
-        if (!universallyDefinedAlready && !ctx.attributeTypes.has(OID)) {
+        const universallyDefinedAlready: boolean = ctx.attributeTypes.has(OID)
+            || !!(await ctx.db.attributeTypeDescription.findFirst({
+                where: {
+                    entry_id: null,
+                    identifier: OID,
+                },
+                select: {
+                    id: true,
+                },
+            }));
+        if (!universallyDefinedAlready) {
             ctx.db.attributeTypeDescription.create({ // INTENTIONAL_NO_AWAIT
                 data: {
                     ...create,
@@ -234,47 +235,48 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             })
                 .then()
                 .catch(); // TODO: Log something.
-        }
-        /**
-         * You cannot specify an LDAP syntax or a validator, so we have to infer
-         * them, if possible.
-         */
-        const [ ldapSyntax, validator ] = asn1SyntaxInfo[syntax ?? ""] ?? [ undefined, undefined ];
-        const info: AttributeInfo = {
-            id: decoded.identifier,
-            name: names,
-            parent: decoded.information.derivation,
-            equalityMatchingRule: decoded.information.equalityMatch,
-            orderingMatchingRule: decoded.information.orderingMatch,
-            substringsMatchingRule: decoded.information.substringsMatch,
-            singleValued: !(decoded.information.multi_valued ?? true),
-            collective: decoded.information.collective ?? false,
-            ldapNames: names,
-            ldapDescription: description,
-            ldapSyntax,
-            validator,
-            usage: decoded.information.application ?? AttributeUsage_userApplications,
-            description,
+
             /**
-             * You can't add a dummy attribute, because the `attributeTypes` syntax
-             * is MISSING a `dummy` field! I will report this to the ITU.
+             * You cannot specify an LDAP syntax or a validator, so we have to infer
+             * them, if possible.
              */
-            dummy: FALSE,
-            noUserModification: (decoded.information.userModifiable === FALSE),
-            obsolete: decoded.obsolete,
-            syntax,
-            compatibleMatchingRules: new Set(),
-        };
-        ctx.attributeTypes.set(OID, info);
-        let longestName: number = 0;
-        for (const name of (names ?? [])) {
-            ctx.attributeTypes.set(name, info);
-            ctx.attributeTypes.set(name.trim().toLowerCase(), info);
-            ctx.nameToObjectIdentifier.set(name, info.id);
-            ctx.nameToObjectIdentifier.set(name.trim().toLowerCase(), info.id);
-            if (name.trim().length > longestName) {
-                ctx.objectIdentifierToName.set(info.id.toString(), name);
-                longestName = name.length;
+            const [ ldapSyntax, validator ] = asn1SyntaxInfo[syntax ?? ""] ?? [ undefined, undefined ];
+            const info: AttributeInfo = {
+                id: decoded.identifier,
+                name: names,
+                parent: decoded.information.derivation,
+                equalityMatchingRule: decoded.information.equalityMatch,
+                orderingMatchingRule: decoded.information.orderingMatch,
+                substringsMatchingRule: decoded.information.substringsMatch,
+                singleValued: !(decoded.information.multi_valued ?? true),
+                collective: decoded.information.collective ?? false,
+                ldapNames: names,
+                ldapDescription: description,
+                ldapSyntax,
+                validator,
+                usage: decoded.information.application ?? AttributeUsage_userApplications,
+                description,
+                /**
+                 * You can't add a dummy attribute, because the `attributeTypes` syntax
+                 * is MISSING a `dummy` field! I will report this to the ITU.
+                 */
+                dummy: FALSE,
+                noUserModification: (decoded.information.userModifiable === FALSE),
+                obsolete: decoded.obsolete,
+                syntax,
+                compatibleMatchingRules: new Set(),
+            };
+            ctx.attributeTypes.set(OID, info);
+            let longestName: number = 0;
+            for (const name of (names ?? [])) {
+                ctx.attributeTypes.set(name, info);
+                ctx.attributeTypes.set(name.trim().toLowerCase(), info);
+                ctx.nameToObjectIdentifier.set(name, info.id);
+                ctx.nameToObjectIdentifier.set(name.trim().toLowerCase(), info.id);
+                if (name.trim().length > longestName) {
+                    ctx.objectIdentifierToName.set(info.id.toString(), name);
+                    longestName = name.length;
+                }
             }
         }
     }

@@ -223,11 +223,15 @@ import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import { rdnToJson } from "../x500/rdnToJson";
 import { getDateFromOBTime } from "../dop/getDateFromOBTime";
 import { printInvokeId } from "../utils/printInvokeId";
+import {
+    id_ar_subschemaAdminSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
 const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
+const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
 
 function namingViolationErrorData (
     ctx: Context,
@@ -2329,6 +2333,60 @@ async function addEntry (
         structuralObjectClass: structuralObjectClass.toString(),
     }, values, assn.boundNameAndUID?.dn);
     immediateSuperior.subordinates?.push(newEntry);
+
+    /**
+     * Because the structure rules, name forms, etc. may have been specified all
+     * at once during the creation of the subschema subentry, schema objects may
+     * not become recognized by Meerkat DSA in an order that will allow a
+     * governing structure rule to be identified for the subschema
+     * administrative area's administrative point. (e.g. The DIT structure rules
+     * may get inserted in the database before the name forms are indexed.)
+     *
+     * This means that we cannot rely on attribute drivers to update the
+     * governing structure rule of the subschema administrative point. The
+     * following section performs this update.
+     */
+    if (
+        isSubschemaSubentry
+        && immediateSuperior.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA)
+        && immediateSuperior.dse.structuralObjectClass
+    ) { // The immediate superior needs an update to the GSR.
+        const structuralRuleThatAppliesToImmediateSuperior = (newEntry.dse.subentry?.ditStructureRules ?? [])
+            .find((rule) => {
+                if (rule.obsolete) {
+                    return false;
+                }
+                if (rule.superiorStructureRules?.length) {
+                    return false;
+                }
+                const nf = ctx.nameForms.get(rule.nameForm.toString());
+                if (!nf) {
+                    return false;
+                }
+                if (nf.obsolete) {
+                    return false;
+                }
+                if (
+                    immediateSuperior.dse.structuralObjectClass
+                    && !nf.namedObjectClass.isEqualTo(immediateSuperior.dse.structuralObjectClass)
+                ) {
+                    return false;
+                }
+                return checkNameForm(rdn, nf.mandatoryAttributes, nf.optionalAttributes);
+            });
+        if (structuralRuleThatAppliesToImmediateSuperior) {
+            ctx.db.entry.update({ // INTENTIONAL_NO_AWAIT
+                where: {
+                    id: immediateSuperior.dse.id,
+                },
+                data: {
+                    governingStructureRule: Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier),
+                },
+            })
+                .then()
+                .catch(); // TODO: Log something.
+        }
+    }
 
     // Update relevant hierarchical operational bindings
     if (!ctx.config.bulkInsertMode && (newEntry.dse.admPoint || newEntry.dse.subentry)) {
