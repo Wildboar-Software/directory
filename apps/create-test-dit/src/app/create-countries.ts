@@ -851,7 +851,7 @@ const RU_ACCESS_POINT = new AccessPoint(
         undefined,
         undefined,
         [
-            uriToNSAP("idms://webadm01.ru.mkdemo.wildboar.software:44632", false),
+            uriToNSAP("idms://dsa01.ru.mkdemo.wildboar.software:44632", false),
             uriToNSAP("idm://dsa01.ru.mkdemo.wildboar.software:4632", false),
             uriToNSAP("ldaps://dsa01.ru.mkdemo.wildboar.software:636", false),
             uriToNSAP("ldap://dsa01.ru.mkdemo.wildboar.software:389", false),
