@@ -81,6 +81,8 @@ async function main () {
                         countryName["&id"],
                         _encodePrintableString("RU", DER),
                     ),
+                ],
+                [
                     new AttributeTypeAndValue(
                         localityName["&id"],
                         _encodeUTF8String("Moscow", DER),
