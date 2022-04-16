@@ -860,25 +860,10 @@ const RU_ACCESS_POINT = new AccessPoint(
     undefined,
 );
 
-// const MOSCOW_ACCESS_POINT = new AccessPoint(
-//     {
-//         rdnSequence: [],
-//     },
-//     new PresentationAddress(
-//         undefined,
-//         undefined,
-//         undefined,
-//         [
-//             uriToNSAP("idm://webadm01.ru-moscow.mkdemo.wildboar.software:4632", false),
-//         ],
-//     ),
-//     undefined,
-// );
-
 const countriesToCreate: [ string, AccessPoint | undefined ][] = [
     [ "US", undefined ], // US will be inside of the root DSA.
     [ "GB", GB_ACCESS_POINT ],
-    // [ "RU", RU_ACCESS_POINT ],
+    [ "RU", RU_ACCESS_POINT ],
 ];
 
 export
