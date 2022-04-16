@@ -1,5 +1,28 @@
 # Setup
 
+## System Requirements
+
+Meerkat DSA requires NodeJS version 17 or higher. With heavy usage, you can
+expect Meerkat DSA's memory usage to get up to 300MB. It would be wise to
+anticipate the extreme and ensure that Meerkat DSA has at least 500MB of memory.
+
+In addition to this, Meerkat DSA needs a database (as detailed below), which may
+take a lot more memory. You may also wish to set up a reverse HTTP proxy such as
+Nginx, Caddy, or Apache, which will also consume some resources.
+
+Added together, you should probably have no less than 1 GB of memory free for
+Meerkat DSA, the database, and a reverse proxy (if used).
+
+Meerkat DSA has only been tested on x86-64 platforms, so no guarantees can be
+made about how it will run on other architectures. Meerkat DSA should run just
+fine on Windows, Mac OS, Linux, and possibly more operating systems, and it has
+been briefly tested on all three.
+
+X.500 directory traffic is typically not time-sensitive, so high latency is
+usually tolerable. However, the network may need to be able to afford high
+throughput, since certain operations, such as `search` and `list`, can
+potentially return a lot of data all at once.
+
 ## Installation / Deployment
 
 It is recommended that you install Meerkat DSA in a Kubernetes cluster using
