@@ -18,6 +18,9 @@ import {
     countryName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa";
 import { _encodePrintableString } from "asn1-ts/dist/node/functional";
+import {
+    localityName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
 program.version("1.0.0");
 
 program
@@ -79,7 +82,7 @@ async function main () {
                         _encodePrintableString("RU", DER),
                     ),
                     new AttributeTypeAndValue(
-                        countryName["&id"],
+                        localityName["&id"],
                         _encodeUTF8String("Moscow", DER),
                     ),
                 ],
