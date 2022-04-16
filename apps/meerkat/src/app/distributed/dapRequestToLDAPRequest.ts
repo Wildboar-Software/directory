@@ -784,12 +784,17 @@ function dapRequestToLDAPRequest (
         const dontDereferenceAliases: boolean = (
             data.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
         const selection: AttributeSelection = [];
-        if (data.selection?.attributes && ("select" in data.selection.attributes)) {
-            selection.push(...data.selection.attributes.select.map((s) => encodeLDAPOID(s)));
+        if (data.selection?.attributes) {
+            if ("allUserAttributes" in data.selection.attributes) {
+                selection.push(Buffer.from("*", "utf-8"));
+            } else if ("select" in data.selection.attributes) {
+                selection.push(...data.selection.attributes.select.map((s) => encodeLDAPOID(s)));
+            }
         }
         if (data.selection?.extraAttributes) {
             if ("allOperationalAttributes" in data.selection.extraAttributes) {
-                selection.push(Buffer.from("*", "utf-8"));
+                // "+" is defined in [IETF RFC 3673](https://datatracker.ietf.org/doc/html/rfc3673#section-2).
+                selection.push(Buffer.from("+", "utf-8"));
             } else if ("select" in data.selection.extraAttributes) {
                 selection.push(...data.selection.extraAttributes.select.map((s) => encodeLDAPOID(s)));
             }
@@ -851,12 +856,17 @@ function dapRequestToLDAPRequest (
         const dontDereferenceAliases: boolean = (
             data.serviceControls?.options?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
         const selection: AttributeSelection = [];
-        if (data.selection?.attributes && ("select" in data.selection.attributes)) {
-            selection.push(...data.selection.attributes.select.map((s) => encodeLDAPOID(s)));
+        if (data.selection?.attributes) {
+            if ("allUserAttributes" in data.selection.attributes) {
+                selection.push(Buffer.from("*", "utf-8"));
+            } else if ("select" in data.selection.attributes) {
+                selection.push(...data.selection.attributes.select.map((s) => encodeLDAPOID(s)));
+            }
         }
         if (data.selection?.extraAttributes) {
             if ("allOperationalAttributes" in data.selection.extraAttributes) {
-                selection.push(Buffer.from("*", "utf-8"));
+                // "+" is defined in [IETF RFC 3673](https://datatracker.ietf.org/doc/html/rfc3673#section-2).
+                selection.push(Buffer.from("+", "utf-8"));
             } else if ("select" in data.selection.extraAttributes) {
                 selection.push(...data.selection.extraAttributes.select.map((s) => encodeLDAPOID(s)));
             }
