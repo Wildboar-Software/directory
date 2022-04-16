@@ -62,7 +62,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     // If we are adding child object class, making the immediate superior of object class "parent."
     else if (oid.isEqualTo(child["&id"]) && vertex.immediateSuperior) {
         if (vertex.immediateSuperior.dse.root) {
-            throw new Error();
+            throw new Error("aac22db0-766f-4b5b-b98c-0cccebfd04a6");
         }
         pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.upsert({
             where: {

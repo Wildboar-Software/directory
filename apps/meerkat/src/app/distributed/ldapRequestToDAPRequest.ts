@@ -387,7 +387,7 @@ function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification):
     }
     case (3): { // increment
         if (mod.modification.vals.length !== 1) {
-            throw new Error();
+            throw new Error("e7fda66a-61d4-43b0-805c-72b4e2ce38d9");
         }
         return {
             alterValues: new AttributeTypeAndValue(
@@ -397,7 +397,7 @@ function convert_ldap_mod_to_dap_mod (ctx: Context, mod: LDAPEntryModification):
         };
     }
     default: {
-        throw new Error();
+        throw new Error("1dd6dfb1-27e7-4b3f-928a-298558c8c97d");
     }
     }
 }
@@ -526,7 +526,7 @@ function convert_ldap_filter_to_dap_filter (ctx: Context, filter: LDAPFilter): D
                                 final: decoder(str.final),
                             };
                         } else {
-                            throw new Error();
+                            throw new Error("dbe743ba-2333-4687-97a7-4e8189042a4a");
                         }
                     }),
                 ),
@@ -837,10 +837,10 @@ function ldapRequestToDAPRequest (
     }
 
     if ("bindRequest" in req.protocolOp) {
-        throw new Error();
+        throw new Error("3fa11fba-c223-45a0-b8da-6b39af173f40");
     }
     else if ("unbindRequest" in req.protocolOp) {
-        throw new Error();
+        throw new Error("bf323d5a-f1df-40a6-b4b7-308d1e985d11");
     }
     else if ("searchRequest" in req.protocolOp) {
         const attrs: AttributeSelection = req.protocolOp.searchRequest.attributes;
@@ -1358,7 +1358,7 @@ function ldapRequestToDAPRequest (
         const oid = ObjectIdentifier.fromString(Buffer.from(req.protocolOp.extendedReq.requestName).toString("utf-8"));
         if (oid.isEqualTo(modifyPassword)) {
             if (!req.protocolOp.extendedReq.requestValue) {
-                throw new Error();
+                throw new Error("82470c06-7333-414a-b6d9-6d2616f0f4c5");
             }
             const passwdModifyRequestElement = new DERElement();
             passwdModifyRequestElement.fromBytes(req.protocolOp.extendedReq.requestValue);
@@ -1370,10 +1370,11 @@ function ldapRequestToDAPRequest (
                 ? decodeLDAPDN(ctx, userIdentityElement.octetString)
                 : assn.boundNameAndUID?.dn;
             if (!dn) {
-                throw new Error();
+                throw new Error("e04d1bb4-facd-4095-8485-9a17d7446d4a");
             }
             if (!newPasswd) {
-                throw new Error(); // Not specified what to do if no new password is provided.
+                // Not specified what to do if no new password is provided.
+                throw new Error("1a90018e-4919-437f-84f1-7b7fbcaa9412");
             }
             if (oldPasswd) { // Create changePassword request
                 const dapReq: ChangePasswordArgument = {
@@ -1411,13 +1412,13 @@ function ldapRequestToDAPRequest (
             }
         } else if (oid.isEqualTo(cancel)) {
             if (!req.protocolOp.extendedReq.requestValue) {
-                throw new Error();
+                throw new Error("57b99a29-31e7-4dca-a7e7-7280aef4f930");
             }
             const el = new BERElement();
             el.fromBytes(req.protocolOp.extendedReq.requestValue);
             const cancelIDElement = el.sequence[0];
             if (!cancelIDElement) {
-                throw new Error();
+                throw new Error("97c38fbf-f71b-4f7e-8cf1-fb83b2e46e03");
             }
             const messageID: number = Number(cancelIDElement.integer);
             const abandonedOperationInvokeID: number | undefined = assn.messageIDToInvokeID.get(messageID);
@@ -1456,10 +1457,11 @@ function ldapRequestToDAPRequest (
                 argument: _encode_AbandonArgument(ar, DER),
             };
         } else {
-            throw new Error(); // We don't recognize the extended request.
+            // We don't recognize the extended request.
+            throw new Error("0d434ff3-d5db-44bd-88e3-867e6bd8980b");
         }
     } else {
-        throw new Error();
+        throw new Error("d5578e60-a47a-497e-8bef-f9c95f7383f7");
     }
 }
 

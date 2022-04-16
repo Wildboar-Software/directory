@@ -51,7 +51,7 @@ async function setEntryPassword (
         const clear = Buffer.from(pwd.clear, "utf-8");
         const encrypted = encryptPassword(algid, clear);
         if (!encrypted) {
-            throw new Error();
+            throw new Error("fc8872c3-067e-4d91-995a-28c94ed8ec08");
         }
         if (assn) {
             ctx.log.info(ctx.i18n.t("log:password_changed", {
@@ -181,7 +181,7 @@ async function setEntryPassword (
             }),
         ];
     } else {
-        throw new Error();
+        throw new Error("f69e3540-7629-478f-957d-c2957ee42655");
     }
 }
 

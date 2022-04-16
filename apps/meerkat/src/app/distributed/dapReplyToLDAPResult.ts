@@ -382,7 +382,7 @@ function dapReplyToLDAPResult (
             undefined,
         );
     } else {
-        throw new Error();
+        throw new Error("74ffb55d-f745-49df-9eea-0fc91227f562");
     }
 }
 

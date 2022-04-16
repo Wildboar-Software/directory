@@ -491,7 +491,7 @@ function getLDAPOperationWriter (
                         }
                         else if (compareCode(req.opCode, removeEntry["&operationCode"]!)) {
                             if (!("delResponse" in message.protocolOp)) {
-                                reject(new Error());
+                                reject(new Error("ca71241c-562e-4867-8c76-44c48af0ff51"));
                                 return;
                             }
                             const result = ldapResponseToRemoveEntryResult(message.protocolOp.delResponse);

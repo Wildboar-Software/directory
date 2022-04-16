@@ -19,7 +19,7 @@ import { LDAPSyntaxInfo } from "@wildboar/meerkat-types";
 export
 function ldapSyntaxFromInformationObject (io: SYNTAX_NAME): LDAPSyntaxInfo {
     if (!io["&id"]) {
-        throw new Error();
+        throw new Error("9174581e-739e-4a3c-8438-bdf900849831");
     }
     return {
         id: io["&id"],

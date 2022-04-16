@@ -286,7 +286,7 @@ function convert_dap_mod_to_ldap_mod (
         );
     }
     else {
-        throw new Error();
+        throw new Error("16d8d79e-2c3c-4e35-969e-a2c454867856");
     }
 }
 
@@ -305,7 +305,7 @@ function convert_dap_mod_to_ldap_mod (
 function convert_dap_ava_to_ldap_ava (ctx: Context, ava: AttributeValueAssertion): LDAPAttributeValueAssertion {
     const encoder = getLDAPEncoder(ctx, ava.type_);
     if (!encoder) {
-        throw new Error();
+        throw new Error("75a2feb3-b73e-4bb5-92fa-64911ea7d3bf");
     }
     return new LDAPAttributeValueAssertion(
         encodeLDAPOID(ava.type_),
@@ -887,7 +887,7 @@ function dapRequestToLDAPRequest (
             undefined,
         );
     } else {
-        throw new Error();
+        throw new Error("d23c24f4-49a2-445e-838b-2057532b8e41");
     }
 }
 

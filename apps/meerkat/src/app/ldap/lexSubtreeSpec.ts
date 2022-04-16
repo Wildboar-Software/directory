@@ -42,12 +42,12 @@ function lexRefinement (ctx: Context, input: string): RefinementLexingReturn {
         index += 3;
         skipOverWhitespace();
         if (input.charAt(index) !== ":") {
-            throw new Error();
+            throw new Error("d1daaa2c-ffea-40cb-913d-ea9f2e7e6482");
         }
         index++;
         skipOverWhitespace();
         if (input.charAt(index) !== "{") {
-            throw new Error();
+            throw new Error("25b66ea8-e65b-4b32-bb09-a16a3c0649b0");
         }
         index++;
         skipOverWhitespace();
@@ -73,12 +73,12 @@ function lexRefinement (ctx: Context, input: string): RefinementLexingReturn {
         index += 2;
         skipOverWhitespace();
         if (input.charAt(index) !== ":") {
-            throw new Error();
+            throw new Error("841ea31d-26ed-49b8-8a1f-f676b7adff68");
         }
         index++;
         skipOverWhitespace();
         if (input.charAt(index) !== "{") {
-            throw new Error();
+            throw new Error("05d5058f-f78c-4062-bc80-91665f376721");
         }
         index++;
         skipOverWhitespace();
@@ -104,7 +104,7 @@ function lexRefinement (ctx: Context, input: string): RefinementLexingReturn {
         index += 3;
         skipOverWhitespace();
         if (input.charAt(index) !== ":") {
-            throw new Error();
+            throw new Error("3caa9105-de88-4159-982b-b5077d42464a");
         }
         index++;
         skipOverWhitespace();
@@ -119,7 +119,7 @@ function lexRefinement (ctx: Context, input: string): RefinementLexingReturn {
         index += 4;
         skipOverWhitespace();
         if (input.charAt(index) !== ":") {
-            throw new Error();
+            throw new Error("4aa85dd0-b36d-48f2-bcbe-ba9518ce07a2");
         }
         index++;
         skipOverWhitespace();
@@ -139,7 +139,7 @@ function lexRefinement (ctx: Context, input: string): RefinementLexingReturn {
         } else {
             const oid = ctx.nameToObjectIdentifier.get(descriptor);
             if (!oid) {
-                throw new Error();
+                throw new Error("4b40a119-aa1d-4832-a240-6c2b57e025c8");
             }
             return {
                 refinement: {
@@ -149,7 +149,7 @@ function lexRefinement (ctx: Context, input: string): RefinementLexingReturn {
             };
         }
     } else {
-        throw new Error(); // Not understood alternative.
+        throw new Error("a8fd495f-ac10-4193-b3c7-f9b4aca9cb52"); // Not understood alternative.
     }
 }
 
@@ -173,7 +173,7 @@ export
 function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecification {
     return (text: string): SubtreeSpecification => {
         if (!text || text.length === 0) {
-            throw new Error();
+            throw new Error("d5649477-ac9d-465e-8507-b9fb243efccc");
         }
         const toParse = text.slice(1, -1).trim();
         let index: number = 0;
@@ -323,7 +323,7 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
                 ? spex.map((s): ChopSpecification_specificExclusions_Item => {
                     const indexOfColon: number = s.indexOf(":");
                     if (indexOfColon < 0) {
-                        throw new Error();
+                        throw new Error("35483894-7f3a-41c0-b7ca-784b5f1da870");
                     }
                     const name: string = s.slice(indexOfColon + 1).trim();
                     if (s.startsWith(CHOP_BEFORE)) {
@@ -335,7 +335,7 @@ function getSubtreeSpecLexer (ctx: Context): (text: string) => SubtreeSpecificat
                             chopAfter: decodeLDAPDN(ctx, name),
                         };
                     } else {
-                        throw new Error();
+                        throw new Error("a427ec8a-ef4a-4257-97ea-58a7b04ff538");
                     }
                 })
                 : undefined,

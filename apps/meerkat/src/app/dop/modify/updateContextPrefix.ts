@@ -169,7 +169,7 @@ async function updateContextPrefix (
     }
     const highestDseThatSuperiorDSAMayModify: Vertex | undefined = currentOld;
     if (!highestDseThatSuperiorDSAMayModify) {
-        throw new Error();
+        throw new Error("29d3463f-f151-4ded-a926-3381a43ac628");
     }
     const highestModifiableDN = getDistinguishedName(highestDseThatSuperiorDSAMayModify);
 

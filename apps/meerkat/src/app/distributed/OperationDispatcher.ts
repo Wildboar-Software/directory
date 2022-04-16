@@ -309,7 +309,7 @@ class OperationDispatcher {
             const data = getOptionallyProtectedValue(arg);
             const dapRequest = ldapRequestToDAPRequest(ctx, assn, data.ldapMessage);
             if (!dapRequest) {
-                throw new Error();
+                throw new Error("8b7e20f2-16b7-496f-b800-5a7a1e0b9db1");
             }
             return OperationDispatcher.dispatchDAPRequest(
                 ctx,

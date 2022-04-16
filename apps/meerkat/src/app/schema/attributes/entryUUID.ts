@@ -34,7 +34,7 @@ const entryUUID: AttributeInfo = {
             || (value.tagNumber !== ASN1UniversalType.octetString)
             || (value.octetString.length !== 16)
         ) {
-            throw new Error();
+            throw new Error("c64be9eb-8877-4ab3-99a1-91f4da8d1880");
         }
     },
 };
