@@ -1872,6 +1872,7 @@ describe("Meerkat DSA", () => {
             assert(response.errcode);
             if (!compareCode(response.errcode, attributeError["&errorCode"]!)) {
                 console.log("ERROR CODE: ", response.errcode);
+                console.log(response.error.toString());
             }
             expect(compareCode(response.errcode, attributeError["&errorCode"]!)).toBeTruthy();
             const param = attributeError.decoderFor["&ParameterType"]!(response.error);
