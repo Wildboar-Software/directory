@@ -2375,16 +2375,14 @@ async function addEntry (
                 return checkNameForm(rdn, nf.mandatoryAttributes, nf.optionalAttributes);
             });
         if (structuralRuleThatAppliesToImmediateSuperior) {
-            ctx.db.entry.update({ // INTENTIONAL_NO_AWAIT
+            await ctx.db.entry.update({ // INTENTIONAL_NO_AWAIT
                 where: {
                     id: immediateSuperior.dse.id,
                 },
                 data: {
                     governingStructureRule: Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier),
                 },
-            })
-                .then()
-                .catch(); // TODO: Log something.
+            }).catch(); // TODO: Log
         }
     }
 
