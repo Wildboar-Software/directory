@@ -17,13 +17,13 @@ import type { NameFormInfo } from "@wildboar/meerkat-types";
  * @function
  */
 export
-function nameFormFromInformationObject (io: NAME_FORM): NameFormInfo {
+function nameFormFromInformationObject (io: NAME_FORM, name?: string[]): NameFormInfo {
     return {
         id: io["&id"],
         namedObjectClass: io["&namedObjectClass"]["&id"],
         mandatoryAttributes: io["&MandatoryAttributes"].map((attr) => attr["&id"]),
         optionalAttributes: io["&OptionalAttributes"]?.map((attr) => attr["&id"]) ?? [],
-        name: io["&ldapName"],
+        name: name ?? io["&ldapName"],
         description: io["&ldapDesc"],
         obsolete: false,
     };

@@ -218,7 +218,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 kind: decoded.information.kind ?? ObjectClassKind_structural,
                 mandatoryAttributes: new Set(decoded.information.mandatories?.map((oid) => oid.toString())),
                 optionalAttributes: new Set(decoded.information.optionals?.map((oid) => oid.toString())),
-                ldapNames: [],
+                ldapNames: decoded.name?.map(directoryStringToString),
                 ldapDescription: description,
             };
             ctx.objectClasses.set(OID, info);

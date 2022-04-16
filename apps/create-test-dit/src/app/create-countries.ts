@@ -834,6 +834,9 @@ const GB_ACCESS_POINT = new AccessPoint(
              * specify an X.500 URL, because DOP cannot be translated into LDAP.
              */
             uriToNSAP("idms://dsa01.gb.mkdemo.wildboar.software:44632", false),
+            uriToNSAP("idm://dsa01.gb.mkdemo.wildboar.software:4632", false),
+            uriToNSAP("ldaps://dsa01.gb.mkdemo.wildboar.software:636", false),
+            uriToNSAP("ldap://dsa01.gb.mkdemo.wildboar.software:389", false),
         ],
     ),
     undefined,
@@ -849,6 +852,9 @@ const RU_ACCESS_POINT = new AccessPoint(
         undefined,
         [
             uriToNSAP("idms://webadm01.ru.mkdemo.wildboar.software:44632", false),
+            uriToNSAP("idm://dsa01.ru.mkdemo.wildboar.software:4632", false),
+            uriToNSAP("ldaps://dsa01.ru.mkdemo.wildboar.software:636", false),
+            uriToNSAP("ldap://dsa01.ru.mkdemo.wildboar.software:389", false),
         ],
     ),
     undefined,

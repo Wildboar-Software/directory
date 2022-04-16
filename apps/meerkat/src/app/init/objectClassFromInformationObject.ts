@@ -25,6 +25,7 @@ export
 function objectClassFromInformationObject (io: OBJECT_CLASS): ObjectClassInfo {
     return {
         id: io["&id"],
+        name: io["&ldapName"],
         superclasses: new Set(io["&Superclasses"]?.map((sc) => sc["&id"].toString()) ?? []),
         kind: io["&kind"] ?? ObjectClassKind_structural,
         mandatoryAttributes: new Set(io["&MandatoryAttributes"]?.map((attr) => attr["&id"]?.toString() ?? "") ?? []),

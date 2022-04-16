@@ -18,8 +18,8 @@ async function loadNameForms (ctx: Context): Promise<void> {
     const nameFormInfoObjects = [
         ...Object.values(x500nf),
     ];
-    nameFormInfoObjects
-        .map(nameFormFromInformationObject)
+    Object.entries(nameFormInfoObjects)
+        .map(([ name, io ]) => nameFormFromInformationObject(io, io["&ldapName"] ?? [ name ]))
         .forEach((nf) => {
             ctx.nameForms.set(nf.id.toString(), nf);
         });

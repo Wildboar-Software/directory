@@ -76,6 +76,7 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
     for (const oc of ocs) {
         ctx.objectClasses.set(oc.identifier, {
             id: ObjectIdentifier.fromString(oc.identifier),
+            name: oc.ldapNames?.split(" ") ?? undefined,
             superclasses: new Set(oc.subclassOf?.split(" ")),
             kind: prismaOCK2OCK(oc.kind),
             mandatoryAttributes: new Set(oc.mandatories?.split(" ")),

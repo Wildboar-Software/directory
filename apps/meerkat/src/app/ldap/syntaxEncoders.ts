@@ -104,7 +104,7 @@ const objectClasses: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
             fields.push(`SUP ( ${desc.information.subclassOf.map((oid) => oid.toString()).join(" $ ")} )`);
         }
     }
-    if (desc.information.kind) {
+    if (desc.information.kind !== undefined) {
         fields.push(ock2str(desc.information.kind));
     }
     if (desc.information.mandatories?.length) {

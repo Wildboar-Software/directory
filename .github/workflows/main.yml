@@ -592,7 +592,7 @@ jobs:
             --set service.type=LoadBalancer \
             --set adminService.type=LoadBalancer \
             --set log.level=debug \
-            --set "myAccessPointNSAPs={ldaps://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:636}" \
+            --set "myAccessPointNSAPs={idms://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:44632,idm://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:4632,ldaps://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:636,ldap://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:389}" \
             --set chaining.minAuthLevel=0 \
             --set chaining.minAuthLocalQualifier=0 \
             --set chaining.tlsOptional=true \
