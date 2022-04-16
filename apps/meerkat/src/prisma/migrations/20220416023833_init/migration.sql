@@ -96,6 +96,16 @@ CREATE TABLE `PasswordEncryptionAlgorithm` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `PasswordDictionaryItem` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `bit` SMALLINT NOT NULL,
+    `item` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `PasswordDictionaryItem_bit_item_key`(`bit`, `item`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `AttributeValue` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
@@ -258,9 +268,10 @@ CREATE TABLE `NameForm` (
     `description` VARCHAR(191) NULL,
     `obsolete` BOOLEAN NOT NULL DEFAULT false,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `entry_id` INTEGER NULL,
 
     INDEX `NameForm_namedObjectClass_idx`(`namedObjectClass`),
-    UNIQUE INDEX `NameForm_identifier_key`(`identifier`),
+    UNIQUE INDEX `NameForm_entry_id_identifier_key`(`entry_id`, `identifier`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -365,8 +376,9 @@ CREATE TABLE `AttributeTypeDescription` (
     `ldapDescription` VARCHAR(191) NULL,
     `dummy` BOOLEAN NOT NULL DEFAULT false,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `entry_id` INTEGER NULL,
 
-    UNIQUE INDEX `AttributeTypeDescription_identifier_key`(`identifier`),
+    UNIQUE INDEX `AttributeTypeDescription_entry_id_identifier_key`(`entry_id`, `identifier`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -384,8 +396,9 @@ CREATE TABLE `ObjectClassDescription` (
     `ldapNames` VARCHAR(191) NULL,
     `ldapDescription` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `entry_id` INTEGER NULL,
 
-    UNIQUE INDEX `ObjectClassDescription_identifier_key`(`identifier`),
+    UNIQUE INDEX `ObjectClassDescription_entry_id_identifier_key`(`entry_id`, `identifier`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -399,8 +412,11 @@ CREATE TABLE `ContextDescription` (
     `syntax` VARCHAR(191) NOT NULL,
     `assertionSyntax` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `absentMatch` BOOLEAN NOT NULL DEFAULT true,
+    `defaultValue` LONGBLOB NULL,
+    `entry_id` INTEGER NULL,
 
-    UNIQUE INDEX `ContextDescription_identifier_key`(`identifier`),
+    UNIQUE INDEX `ContextDescription_entry_id_identifier_key`(`entry_id`, `identifier`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -475,7 +491,7 @@ CREATE TABLE `OperationalBinding` (
     `master_access_point_id` INTEGER NULL,
     `secondary_shadows` BOOLEAN NULL,
     `source_ip` VARCHAR(191) NULL,
-    `source_tcp_port` SMALLINT NULL,
+    `source_tcp_port` INTEGER NULL,
     `source_ae_title` JSON NULL,
     `source_credentials_type` SMALLINT NULL,
     `source_certificate_path` LONGBLOB NULL,
@@ -707,6 +723,9 @@ ALTER TABLE `NetworkServiceAccessPoint` ADD CONSTRAINT `NetworkServiceAccessPoin
 ALTER TABLE `SubtreeSpecification` ADD CONSTRAINT `SubtreeSpecification_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `NameForm` ADD CONSTRAINT `NameForm_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `DITStructureRule` ADD CONSTRAINT `DITStructureRule_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -720,6 +739,15 @@ ALTER TABLE `Friendship` ADD CONSTRAINT `Friendship_entry_id_fkey` FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE `MatchingRuleUse` ADD CONSTRAINT `MatchingRuleUse_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `AttributeTypeDescription` ADD CONSTRAINT `AttributeTypeDescription_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ObjectClassDescription` ADD CONSTRAINT `ObjectClassDescription_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ContextDescription` ADD CONSTRAINT `ContextDescription_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `SearchRule` ADD CONSTRAINT `SearchRule_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
