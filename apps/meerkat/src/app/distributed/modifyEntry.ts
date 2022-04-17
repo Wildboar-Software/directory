@@ -2375,7 +2375,7 @@ async function modifyEntry (
                 id: target.dse.id,
             },
             data: {
-                modifiersName: assn.boundNameAndUID?.dn.map(rdnToJson),
+                modifiersName: user?.dn.map(rdnToJson),
                 modifyTimestamp: new Date(),
             },
         }),

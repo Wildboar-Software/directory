@@ -1104,7 +1104,7 @@ async function addEntry (
             ? Number(governingStructureRule)
             : undefined,
         structuralObjectClass: structuralObjectClass.toString(),
-    }, values, assn.boundNameAndUID?.dn);
+    }, values, user?.dn);
     immediateSuperior.subordinates?.push(newEntry);
 
     /**
