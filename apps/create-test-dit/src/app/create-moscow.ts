@@ -2,7 +2,6 @@ import type { Connection, Context } from "./types";
 import {
     TRUE,
     FALSE,
-    TRUE_BIT,
     FALSE_BIT,
     unpackBits,
     OBJECT_IDENTIFIER,
@@ -19,7 +18,7 @@ import {
     AddEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
 import {
-    DistinguishedName, _encode_DistinguishedName,
+    DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import {
     Attribute,
@@ -53,7 +52,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
 import {
     ServiceControlOptions,
-    ServiceControlOptions_manageDSAIT,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import {
@@ -182,58 +180,6 @@ function securityParameters (): SecurityParameters {
     );
 }
 
-function addLocalityArgument (
-    baseObject: DistinguishedName,
-    lname: string,
-): AddEntryArgument {
-    const ln = _encodeUTF8String(lname, DER);
-    const dn: DistinguishedName = [
-        ...baseObject,
-        [
-            new AttributeTypeAndValue(
-                selat.localityName["&id"]!,
-                ln,
-            ),
-        ],
-    ];
-    const attributes: Attribute[] = [
-        new Attribute(
-            selat.objectClass["&id"],
-            [
-                _encodeObjectIdentifier(seloc.locality["&id"]!, DER),
-            ],
-            undefined,
-        ),
-        new Attribute(
-            selat.localityName["&id"]!,
-            [ln],
-            undefined,
-        ),
-    ];
-    return {
-        unsigned: new AddEntryArgumentData(
-            {
-                rdnSequence: dn,
-            },
-            attributes,
-            undefined,
-            [],
-            serviceControls,
-            securityParameters(),
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        ),
-    };
-}
-
 function createAddEntryArgument (
     dn: DistinguishedName,
     attributes: Attribute[],
@@ -265,16 +211,21 @@ function createAddEntryArgument (
 // NOTE: There is no collectiveCountryName attribute.
 function addCollectiveAttributeSubentryArgument (
     baseObject: DistinguishedName,
-    iso2c: string,
 ): AddEntryArgument {
-    const c2 = _encodePrintableString(iso2c, DER);
-    const cn = _encodeUTF8String(`${iso2c} Country Collective Attributes`, DER);
+    const c2 = _encodePrintableString("RU", DER);
+    const cn = _encodeUTF8String(`Moscow Collective Attributes`, DER);
     const dn: DistinguishedName = [
         ...baseObject,
         [
             new AttributeTypeAndValue(
                 selat.countryName["&id"]!,
                 c2,
+            ),
+        ],
+        [
+            new AttributeTypeAndValue(
+                selat.localityName["&id"]!,
+                _encodeUTF8String("Moscow", DER),
             ),
         ],
         [
@@ -339,16 +290,21 @@ function addCollectiveAttributeSubentryArgument (
 
 function addAccessControlSubentryArgument (
     baseObject: DistinguishedName,
-    iso2c: string,
 ): AddEntryArgument {
-    const c2 = _encodePrintableString(iso2c, DER);
-    const cn = _encodeUTF8String(`${iso2c} Country Access Control`, DER);
+    const c2 = _encodePrintableString("RU", DER);
+    const cn = _encodeUTF8String(`Moscow Access Control`, DER);
     const dn: DistinguishedName = [
         ...baseObject,
         [
             new AttributeTypeAndValue(
                 selat.countryName["&id"]!,
                 c2,
+            ),
+        ],
+        [
+            new AttributeTypeAndValue(
+                selat.localityName["&id"]!,
+                _encodeUTF8String("Moscow", DER),
             ),
         ],
         [
@@ -424,16 +380,21 @@ function addAccessControlSubentryArgument (
 
 function addSubschemaSubentryArgument (
     baseObject: DistinguishedName,
-    iso2c: string,
 ): AddEntryArgument {
-    const c2 = _encodePrintableString(iso2c, DER);
-    const cn = _encodeUTF8String(`${iso2c} Subschema`, DER);
+    const c2 = _encodePrintableString("RU", DER);
+    const cn = _encodeUTF8String(`Moscow Subschema`, DER);
     const dn: DistinguishedName = [
         ...baseObject,
         [
             new AttributeTypeAndValue(
                 selat.countryName["&id"]!,
                 c2,
+            ),
+        ],
+        [
+            new AttributeTypeAndValue(
+                selat.localityName["&id"]!,
+                _encodeUTF8String("Moscow", DER),
             ),
         ],
         [
@@ -711,16 +672,21 @@ function addSubschemaSubentryArgument (
 
 function addPasswordAdminSubentryArgument (
     baseObject: DistinguishedName,
-    iso2c: string,
 ): AddEntryArgument {
-    const c2 = _encodePrintableString(iso2c, DER);
-    const cn = _encodeUTF8String(`${iso2c} Country Password Administration`, DER);
+    const c2 = _encodePrintableString("RU", DER);
+    const cn = _encodeUTF8String(`Moscow Password Administration`, DER);
     const dn: DistinguishedName = [
         ...baseObject,
         [
             new AttributeTypeAndValue(
                 selat.countryName["&id"]!,
                 c2,
+            ),
+        ],
+        [
+            new AttributeTypeAndValue(
+                selat.localityName["&id"]!,
+                _encodeUTF8String("Moscow", DER),
             ),
         ],
         [
@@ -853,14 +819,14 @@ async function seedMoscow (
     ctx: Context,
     conn: Connection,
 ): Promise<void> {
-    const subentries: [ (base: RDNSequence, cc: string) => AddEntryArgument, string ][] = [
+    const subentries: [ (base: RDNSequence) => AddEntryArgument, string ][] = [
         [ addPasswordAdminSubentryArgument, "password administration" ],
         [ addCollectiveAttributeSubentryArgument, "collective attributes" ],
         [ addSubschemaSubentryArgument, "subschema" ],
         [ addAccessControlSubentryArgument, "access control" ],
     ];
     for (const [ createSubentryArg, subentryType ] of subentries) {
-        const createSubentry = createSubentryArg([], "RU");
+        const createSubentry = createSubentryArg([]);
         const outcome = await conn.writeOperation({
             opCode: addEntry["&operationCode"],
             argument: _encode_AddEntryArgument(createSubentry, DER),
