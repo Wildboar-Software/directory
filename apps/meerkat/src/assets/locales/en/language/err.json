@@ -160,5 +160,7 @@
     "received_malformed_dop_response": "Received a malformed DOP response.",
     "no_binding_id_assigned": "DOP responder returned no assigned binding ID.",
     "could_not_find_new_subr": "Could not locate the subordinate reference DSE that was just created locally.",
-    "failed_to_establish_hob": "Failed to establish HOB with {{etype}}: {{e}}"
+    "failed_to_establish_hob": "Failed to establish HOB with {{etype}}: {{e}}",
+    "superior_must_specify_entryInfo": "Superior DSA must specify entryInfo to establish a new hierarchical operational binding.",
+    "hob_invalid_entryInfo": "The potential superior DSA supplied entryInfo that describes an entry that is invalid for this reason: {{e}}."
 }

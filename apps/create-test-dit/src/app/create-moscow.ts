@@ -851,7 +851,6 @@ async function seedMoscow (
         ctx.log.info(`Created ${subentryType} subentry for Moscow.`);
     }
 
-
     { // residentialPerson C=RU,CN=Nikolai Petrosky
         const arg = createAddEntryArgument([
             ...baseObject,

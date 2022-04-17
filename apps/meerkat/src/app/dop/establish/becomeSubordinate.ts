@@ -33,6 +33,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
+import type {
+    OBJECT_CLASS,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
+import { INTEGER } from "asn1-ts";
 
 /**
  * @summary Create the necessary DSEs to establish a new context prefix
@@ -59,6 +63,8 @@ async function becomeSubordinate (
     superiorAccessPoint: AccessPoint,
     agreement: HierarchicalAgreement,
     sup2sub: SuperiorToSubordinate,
+    structuralObjectClass: OBJECT_CLASS["&id"],
+    governingStructureRule: INTEGER | undefined,
 ): Promise<SubordinateToSuperior> {
     let currentRoot = ctx.dit.root;
     for (let i = 0; i < sup2sub.contextPrefixInfo.length; i++) {
@@ -105,6 +111,7 @@ async function becomeSubordinate (
     }
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
     const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);
+
     const createdCP = await createEntry(
         ctx,
         currentRoot,
@@ -112,6 +119,10 @@ async function becomeSubordinate (
         {
             cp: true,
             immSupr: false, // This is supposed to be on the superior of this entry.
+            structuralObjectClass: structuralObjectClass.toString(),
+            governingStructureRule: governingStructureRule
+                ? Number(governingStructureRule)
+                : undefined,
         },
         sup2sub.entryInfo?.flatMap(valuesFromAttribute) ?? [],
     );

@@ -1,7 +1,7 @@
 import type { MeerkatContext } from "../../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import DOPAssociation from "../DOPConnection";
-import type { INTEGER } from "asn1-ts";
+import { INTEGER, FALSE } from "asn1-ts";
 import type {
     EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
@@ -33,6 +33,7 @@ import {
     OpBindingErrorParam_problem_invalidEndTime,
     OpBindingErrorParam_problem_duplicateID,
     OpBindingErrorParam_problem_currentlyNotDecidable,
+    OpBindingErrorParam_problem_parametersMissing,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
 import {
     HierarchicalAgreement,
@@ -79,6 +80,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
 import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
+import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry";
+import dnToVertex from "../../dit/dnToVertex";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -238,6 +241,38 @@ async function establishOperationalBinding (
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(data.agreement);
         if ("roleA_initiates" in data.initiator) {
             const init: SuperiorToSubordinate = _decode_SuperiorToSubordinate(data.initiator.roleA_initiates);
+            if (!init.entryInfo?.length) {
+                /**
+                 * Technically, a HOB allows the subordinate DSA to establish
+                 * at creation time what the new context prefix DSE will be
+                 * entirely. This makes logical sense, since the subordinate DSA
+                 * "owns" this entry. However, it is not a good idea to do this
+                 * because the subordinate DSA basically has no information as
+                 * to what is to be created! So Meerkat DSA will simply reject
+                 * all "blank checks" received to create a new context prefix.
+                 */
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:superior_must_specify_entryInfo"),
+                    {
+                        unsigned: new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_parametersMissing,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                );
+            }
             if (!compareDistinguishedName(
                 agreement.immediateSuperior,
                 init.contextPrefixInfo.map((rdn) => rdn.rdn),
@@ -265,6 +300,57 @@ async function establishOperationalBinding (
                     },
                 );
             }
+
+            const immediateSuperior = await dnToVertex(ctx, ctx.dit.root, agreement.immediateSuperior);
+            if (!immediateSuperior) {
+                throw new Error("9fab040c-e2cf-407e-bcfa-9e7c82de6451");
+            }
+
+            let structuralObjectClass!: ValidateEntryReturn["structuralObjectClass"];
+            let governingStructureRule: ValidateEntryReturn["governingStructureRule"] | undefined;
+            try {
+                const {
+                    structuralObjectClass: soc,
+                    governingStructureRule: gsr,
+                } = await validateEntry(
+                    ctx,
+                    assn,
+                    immediateSuperior,
+                    agreement.rdn,
+                    init.entryInfo,
+                    FALSE,
+                    undefined,
+                    FALSE,
+                    {
+                        present: invokeId,
+                    },
+                );
+                structuralObjectClass = soc;
+                governingStructureRule = gsr;
+            } catch (e) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:hob_invalid_entryInfo"),
+                    {
+                        unsigned: new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_invalidAgreement,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                undefined,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                );
+            }
+
             const sp = data.securityParameters;
             const now = new Date();
             const alreadyTakenBindingIDs = new Set(
@@ -482,7 +568,14 @@ async function establishOperationalBinding (
                 );
             }
             try {
-                const reply = await becomeSubordinate(ctx, data.accessPoint, agreement, init);
+                const reply = await becomeSubordinate(
+                    ctx,
+                    data.accessPoint,
+                    agreement,
+                    init,
+                    structuralObjectClass,
+                    governingStructureRule,
+                );
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
                     type: data.bindingType.toString(),
