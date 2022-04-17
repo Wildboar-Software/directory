@@ -82,6 +82,7 @@ import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
 import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry";
 import dnToVertex from "../../dit/dnToVertex";
+import encodeLDAPDN from "../../ldap/encodeLDAPDN";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -303,7 +304,7 @@ async function establishOperationalBinding (
 
             const immediateSuperior = await dnToVertex(ctx, ctx.dit.root, agreement.immediateSuperior);
             if (!immediateSuperior) {
-                throw new Error("9fab040c-e2cf-407e-bcfa-9e7c82de6451");
+                throw new Error(`9fab040c-e2cf-407e-bcfa-9e7c82de6451: ${encodeLDAPDN(ctx, agreement.immediateSuperior)}`);
             }
 
             let structuralObjectClass!: ValidateEntryReturn["structuralObjectClass"];
@@ -319,11 +320,11 @@ async function establishOperationalBinding (
                     agreement.rdn,
                     init.entryInfo,
                     FALSE,
-                    undefined,
                     FALSE,
                     {
                         present: invokeId,
                     },
+                    false,
                 );
                 structuralObjectClass = soc;
                 governingStructureRule = gsr;

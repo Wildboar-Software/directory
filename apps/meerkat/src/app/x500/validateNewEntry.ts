@@ -3,10 +3,6 @@ import type { BOOLEAN, INTEGER } from "asn1-ts";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import type {
-    NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-
 import * as errors from "@wildboar/meerkat-types";
 import {
     id_at_objectClass,
@@ -174,9 +170,9 @@ async function validateEntry (
     rdn: RelativeDistinguishedName,
     entry: Attribute[],
     aliasDereferenced: BOOLEAN,
-    user: NameAndOptionalUID | undefined,
     manageDSAIT: BOOLEAN,
     invokeId: InvokeId,
+    tolerateUnknownSchema: boolean = false,
 ): Promise<ValidateEntryReturn> {
     const targetDN: DistinguishedName = [ ...getDistinguishedName(immediateSuperior), rdn ];
     const values: Value[] = entry.flatMap(valuesFromAttribute);
@@ -201,7 +197,11 @@ async function validateEntry (
         );
     }
     const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
-    if (!ctx.config.bulkInsertMode && !validateObjectClasses(ctx, objectClasses)) {
+    if (
+        !ctx.config.bulkInsertMode
+        && !tolerateUnknownSchema
+        && !validateObjectClasses(ctx, objectClasses)
+    ) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:invalid_object_classes"),
             new UpdateErrorData(
@@ -531,7 +531,7 @@ async function validateEntry (
         }
     }
     if (
-        (unrecognizedAttributes.length > 0)
+        ((unrecognizedAttributes.length > 0) && !tolerateUnknownSchema)
         || ((noUserModAttributes.length > 0) && !manageDSAIT)
         || (dummyAttributes.length > 0)
         || (!isSubentry && (collectiveAttributes.length > 0))
@@ -642,6 +642,9 @@ async function validateEntry (
             .forEach((oc, i) => {
                 const oid = objectClassValues[i].value.objectIdentifier;
                 if (!oc) {
+                    if (tolerateUnknownSchema) {
+                        return;
+                    }
                     throw new errors.UpdateError(
                         ctx.i18n.t("err:unrecognized_object_class", {
                             oid: oid.toString(),
@@ -849,7 +852,7 @@ async function validateEntry (
             );
         }
 
-        if (unrecognizedAFDNs.length > 0) {
+        if (!tolerateUnknownSchema && unrecognizedAFDNs.length > 0) {
             throw new errors.UpdateError(
                 ctx.i18n.t("err:rdn_types_unrecognized", {
                     oids: unrecognizedAFDNs.join(", "),

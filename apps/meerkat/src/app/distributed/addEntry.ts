@@ -153,6 +153,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 import { validateEntry } from "../x500/validateNewEntry";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
+import {
+    Context as X500Context,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -244,9 +247,11 @@ async function addEntry (
         rdn,
         data.entry,
         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
-        user,
         manageDSAIT,
         state.invokeId,
+        // If this entry is going to wind up in another DSA, it is up to that
+        // DSA to determine if any schema is unrecognized.
+        Boolean(data.targetSystem),
     );
 
     /**
@@ -725,7 +730,110 @@ async function addEntry (
             ),
         );
     }
-    // NOTE: This does not actually check if targetSystem is the current DSA.
+
+    if (
+        !ctx.config.bulkInsertMode
+        && accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+    ) {
+        const maxValueCountInUse: boolean = relevantTuples
+            .some((tuple) => (tuple[2].maxValueCount !== undefined));
+        const valueCountByAttribute: Map<IndexableOID, number> = maxValueCountInUse
+            ? new Map(
+                Object.entries(groupByOID(data.entry, (d) => d.type_))
+                    .map(([ key, attributes ]) => [
+                        key,
+                        attributes
+                            .map((attr) => (
+                                attr.values.length
+                                + (attr.valuesWithContext?.length ?? 0)
+                            ))
+                            .reduce((acc, curr) => acc + curr, 0)
+                    ]),
+            )
+            : new Map();
+        for (const attr of data.entry) {
+            const { authorized: authorizedToAddAttributeType } = bacACDF(
+                relevantTuples,
+                user,
+                {
+                    attributeType: attr.type_,
+                    valuesCount: valueCountByAttribute.get(attr.type_.toString()),
+                    operational: isOperationalAttributeType(ctx, attr.type_),
+                },
+                [ PERMISSION_CATEGORY_ADD ],
+                bacSettings,
+                true,
+            );
+            if (!authorizedToAddAttributeType) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_create_attr_type", {
+                        type: attr.type_.toString(),
+                    }),
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+        for (const value of values) {
+            const { authorized: authorizedToAddAttributeValue } = bacACDF(
+                relevantTuples,
+                user,
+                {
+                    value: new AttributeTypeAndValue(
+                        value.type,
+                        value.value,
+                    ),
+                    contexts: value.contexts?.map((context) => new X500Context(
+                        context.contextType,
+                        context.contextValues,
+                        context.fallback,
+                    )),
+                    operational: isOperationalAttributeType(ctx, value.type),
+                },
+                [PERMISSION_CATEGORY_ADD],
+                bacSettings,
+                true,
+            );
+            if (!authorizedToAddAttributeValue) {
+                throw new errors.SecurityError(
+                    ctx.i18n.t("err:not_authz_to_create_attr_value", {
+                        type: value.type.toString(),
+                    }),
+                    new SecurityErrorData(
+                        SecurityProblem_insufficientAccessRights,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                );
+            }
+        }
+    }
+
+        // NOTE: This does not actually check if targetSystem is the current DSA.
     // We also do not check if manageDSAIT is set. Even though that would seem
     // to contradict the use of targetSystem, but there's not really any problem
     // here using both.
@@ -947,67 +1055,6 @@ async function addEntry (
             }
         };
     }
-
-    if (!ctx.config.bulkInsertMode) {
-        if (
-            accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
-            const maxValueCountInUse: boolean = relevantTuples
-                .some((tuple) => (tuple[2].maxValueCount !== undefined));
-            const valueCountByAttribute: Map<IndexableOID, number> = maxValueCountInUse
-                ? new Map(
-                    Object.entries(groupByOID(data.entry, (d) => d.type_))
-                        .map(([ key, attributes ]) => [
-                            key,
-                            attributes
-                                .map((attr) => (
-                                    attr.values.length
-                                    + (attr.valuesWithContext?.length ?? 0)
-                                ))
-                                .reduce((acc, curr) => acc + curr, 0)
-                        ]),
-                )
-                : new Map();
-            for (const attr of data.entry) {
-                const { authorized: authorizedToAddAttributeType } = bacACDF(
-                    relevantTuples,
-                    user,
-                    {
-                        attributeType: attr.type_,
-                        valuesCount: valueCountByAttribute.get(attr.type_.toString()),
-                        operational: isOperationalAttributeType(ctx, attr.type_),
-                    },
-                    [ PERMISSION_CATEGORY_ADD ],
-                    bacSettings,
-                    true,
-                );
-                if (!authorizedToAddAttributeType) {
-                    throw new errors.SecurityError(
-                        ctx.i18n.t("err:not_authz_to_create_attr_type", {
-                            type: attr.type_.toString(),
-                        }),
-                        new SecurityErrorData(
-                            SecurityProblem_insufficientAccessRights,
-                            undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                assn.boundNameAndUID?.dn,
-                                undefined,
-                                securityError["&errorCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            state.chainingArguments.aliasDereferenced,
-                            undefined,
-                        ),
-                    );
-                }
-            }
-        }
-    }
-
 
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         throw new errors.ServiceError(

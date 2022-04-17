@@ -15,7 +15,7 @@
     "unhandled_exception": "COULD_BAN={{host}}; Unhandled exception from {{source}}: {{e}}",
     "socket_error": "COULD_BAN={{host}}; {{source}} socket error: {{e}}",
     "socket_closed": "{{source}} socked closed.",
-    "server_error": "{{protocol}} server error: {{e}}.",
+    "server_error": "{{protocol}} server error: {{e}}",
     "listening": "{{protocol}} server listening on port {{port}}.",
     "killed_by_sentinel": "Killed by sentinel. This likely means that there was a security vulnerability discovered in Meerkat DSA. Please check the Meerkat DSA website for information. To disable this killswitch (and start up Meerkat despite there possibly being a severe security vulnerability), please restart Meerkat DSA with the MEERKAT_SENTINEL_DOMAIN environment variable set to an empty string.",
     "hibernated_by_sentinel": "Hibernation triggered by sentinel. This likely means that there was a security vulnerability discovered in Meerkat DSA. Please check the Meerkat DSA website for information. To disable this killswitch (and start up Meerkat despite there possibly being a severe security vulnerability), please restart Meerkat DSA with the MEERKAT_SENTINEL_DOMAIN environment variable set to an empty string or open the Meerkat DSA administrative console in your web browser and un-hibernate this DSA.",
@@ -31,7 +31,7 @@
     "subr_for_hob_not_found": "Subordinate entry for agreement {{obid}} (version {{version}}) not found.",
     "failed_to_update_hob": "Failed to update HOB for agreement {{obid}} (version {{version}}): {{e}}",
     "dsa_returned_no_opcode": "DSA '{{ae}}' returned a result with no opCode, which might have been malicious.",
-    "could_not_write_operation_to_dsa": "Could not write operation to DSA '{{ae}}' because of this error: {{e}}.",
+    "could_not_write_operation_to_dsa": "Could not write operation to DSA '{{ae}}' because of this error: {{e}}",
     "failed_to_access_master": "Failed to access master access point {{dsa}}: {{e}}",
     "shadow_not_under_cp": "DIT invalid: shadow DSE {{id}} not under a context prefix.",
     "could_not_decode_ldap_attribute": "Could not decode LDAP attribute type {{desc}}: {{e}}",
@@ -105,7 +105,7 @@
     "terminated_ob@cp": "Terminated operational binding {{uuid}} because its context prefix is being deleted.",
     "removing_a_context_prefix": "Removing context prefix {{uuid}}.",
     "updating_superior_dsa@subentry": "Updating superior DSA because one of the context prefix's subentries were deleted.",
-    "failed_to_update_superior_dsa": "Failed to update superior DSA with error {{e}}.",
+    "failed_to_update_superior_dsa": "Failed to update superior DSA with error {{e}}",
     "updated_superior_dsa": "Successfully updated superior DSA.",
     "establishing_hob_via_add_entry": "AddEntry.targetSystem instigated an attempt to create a HOB beneath DSE {{uuid}}.",
     "invalid_new_id": "The superior DSA indicated that the operational binding ID was already in use. This DSA will increment it and attempt it again.",
@@ -119,5 +119,5 @@
     "modifyOperationalBinding@succeeded": "Operational binding of type {{type}} and ID {{bid}} was modified by association {{aid}}.",
     "terminateOperationalBinding@succeeded": "Operational binding of type {{type}} and ID {{bid}} was terminated by association {{aid}}.",
     "could_not_establish_connection": "Could not establish connection with DSA '{{ae}}' to chain operation {{iid}}.",
-    "could_not_establish_connection@with_error": "Could not establish connection with DSA '{{ae}}' to chain operation {{iid}} because of this error: {{e}}."
+    "could_not_establish_connection@with_error": "Could not establish connection with DSA '{{ae}}' to chain operation {{iid}} because of this error: {{e}}"
 }
