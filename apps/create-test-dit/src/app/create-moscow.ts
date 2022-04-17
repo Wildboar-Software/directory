@@ -432,8 +432,8 @@ function addSubschemaSubentryArgument (
             dITStructureRules["&id"],
             [
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
-                    1,
-                    nf.countryNameForm["&id"],
+                    0,
+                    nf.locNameForm["&id"],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     2,
@@ -442,12 +442,12 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     3,
                     nf.orgNameForm["&id"],
-                    [1, 2, 8],
+                    [0, 1, 2, 8],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     4,
                     nf.dMDNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [0, 1, 2, 3, 8, 11],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     5,
@@ -457,22 +457,22 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     6,
                     nf.deviceNameForm["&id"],
-                    [1, 2, 3, 4, 5, 8, 9, 11, 12, 13],
+                    [0, 1, 2, 3, 4, 5, 8, 9, 11, 12, 13],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     7,
                     nf.gONNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [0, 1, 2, 3, 8, 11],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     8,
                     nf.locNameForm["&id"],
-                    [1, 2, 8],
+                    [0, 1, 2, 8],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     9,
                     nf.orgPersonNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [0, 1, 2, 3, 8, 11],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     10,
@@ -482,32 +482,32 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     11,
                     nf.orgUnitNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [0, 1, 2, 3, 8, 11],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     12,
                     nf.personNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [0, 1, 2, 3, 8, 11],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     13,
                     nf.resPersonNameForm["&id"],
-                    [1, 2, 8],
+                    [0, 1, 2, 8],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     14,
                     nf.applProcessNameForm["&id"],
-                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     15,
                     nf.applEntityNameForm["&id"],
-                    [14],
+                    [0, 14],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     16,
                     nf.cRLDistPtNameForm["&id"],
-                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                 ), DER),
             ],
             undefined,
