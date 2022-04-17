@@ -118,7 +118,6 @@ import { strict as assert } from "assert";
 import {
     subentryNameForm,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentryNameForm.oa";
-import getDistinguishedName from "./getDistinguishedName";
 import { printInvokeId } from "../utils/printInvokeId";
 import type {
     RelativeDistinguishedName,
@@ -166,7 +165,8 @@ export
 async function validateEntry (
     ctx: Context,
     assn: ClientAssociation,
-    immediateSuperior: Vertex,
+    immediateSuperior: Vertex | undefined,
+    targetDN: DistinguishedName,
     rdn: RelativeDistinguishedName,
     entry: Attribute[],
     aliasDereferenced: BOOLEAN,
@@ -174,7 +174,6 @@ async function validateEntry (
     invokeId: InvokeId,
     tolerateUnknownSchema: boolean = false,
 ): Promise<ValidateEntryReturn> {
-    const targetDN: DistinguishedName = [ ...getDistinguishedName(immediateSuperior), rdn ];
     const values: Value[] = entry.flatMap(valuesFromAttribute);
     const objectClassValues = values.filter((attr) => attr.type.isEqualTo(id_at_objectClass));
     if (objectClassValues.length === 0) {
@@ -240,7 +239,7 @@ async function validateEntry (
     const isParent: boolean = objectClassesIndex.has(id_oc_parent.toString());
     const isChild: boolean = objectClassesIndex.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias);
-    const isFirstLevel: boolean = !!immediateSuperior.dse.root;
+    const isFirstLevel: boolean = (targetDN.length === 1);
     /**
      * It would be impossible to create anything other than first-level DSEs if
      * subentries were not exempt from subschema restrictions, because they must
@@ -262,7 +261,8 @@ async function validateEntry (
     const isExemptFromSubschema: boolean = (isSubentry || isFirstLevel);
 
     if (
-        (immediateSuperior.dse.governingStructureRule === undefined) // The immediate superior has no GSR, and...
+        immediateSuperior
+        && (immediateSuperior.dse.governingStructureRule === undefined) // The immediate superior has no GSR, and...
         && !isExemptFromSubschema
     ) {
         throw new errors.UpdateError(
@@ -880,7 +880,7 @@ async function validateEntry (
         }
     }
 
-    if (isSubschemaSubentry) {
+    if (immediateSuperior && isSubschemaSubentry) {
         const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
             where: {
                 immediate_superior_id: immediateSuperior.dse.id,
@@ -982,10 +982,10 @@ async function validateEntry (
 
     // Subschema validation
     let governingStructureRule: number | undefined;
-    const schemaSubentry = isSubentry // Schema rules only apply to entries.
+    const schemaSubentry = (isSubentry || !immediateSuperior) // Schema rules only apply to entries.
         ? undefined
         : await getSubschemaSubentry(ctx, immediateSuperior);
-    if (!isExemptFromSubschema && schemaSubentry) { // Schema rules only apply to entries.
+    if (!isExemptFromSubschema && schemaSubentry && immediateSuperior) { // Schema rules only apply to entries.
         assert(schemaSubentry.dse.subentry);
         assert(immediateSuperior.dse.governingStructureRule !== undefined); // Checked above.
         const structuralRule = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])

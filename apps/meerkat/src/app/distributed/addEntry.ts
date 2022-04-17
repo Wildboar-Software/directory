@@ -244,6 +244,7 @@ async function addEntry (
         ctx,
         assn,
         immediateSuperior,
+        targetDN,
         rdn,
         data.entry,
         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
