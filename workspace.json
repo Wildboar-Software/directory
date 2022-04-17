@@ -245,7 +245,9 @@
                         "assets": ["apps/x500-cli/src/assets"],
                         "memoryLimit": 1024,
                         "maxWorkers": 1,
-                        "generatePackageJson": true
+                        "generatePackageJson": true,
+                        "webpackConfig": "apps/x500-cli/webpack.config.js",
+                        "externalDependencies": "none"
                     },
                     "configurations": {
                         "production": {
