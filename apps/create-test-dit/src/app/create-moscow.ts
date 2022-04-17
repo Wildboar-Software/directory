@@ -839,6 +839,8 @@ const baseObject: DistinguishedName = [
             selat.countryName["&id"],
             _encodePrintableString("RU", DER),
         ),
+    ],
+    [
         new AttributeTypeAndValue(
             selat.localityName["&id"],
             _encodeUTF8String("Moscow", DER),
