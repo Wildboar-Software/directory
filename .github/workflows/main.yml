@@ -443,6 +443,9 @@ jobs:
         emailAddress = optional
     strategy:
       fail-fast: false
+      # It seems like things start failing to deploy if you try to deploy more
+      # than two apps to the Kubernetes cluster at a time.
+      max-parallel: 2
       matrix:
         dmd:
           - 'root'
