@@ -80,6 +80,23 @@ async function becomeSubordinate (
                 currentRoot,
                 vertex.rdn,
                 {
+                    /**
+                     * NOTE: This defaults to `true` in `createEntry()`.
+                     *
+                     * ITU Recommendation X.518 (2019), Section 24.3.1.1 states
+                     * that, during the establishment of a new HOB, the
+                     * superior DSA shall create entries...
+                     *
+                     * > and, as appropriate, a DSE of type rhob and entry to
+                     * > represent the immediateSuperiorInfo .
+                     *
+                     * It is not clear when the DSE becomes of type `entry`.
+                     * The hypothetical DIT provided in Annex P of ITU
+                     * Recommendation X.501 never shows any `immSupr` having
+                     * type `entry`. I think `entry` should never be used for
+                     * any entry created in a context prefix.
+                     */
+                    entry: false,
                     glue: (!vertex.admPointInfo && !vertex.accessPoints),
                     rhob: Boolean(vertex.admPointInfo),
                     immSupr,
@@ -117,6 +134,7 @@ async function becomeSubordinate (
         currentRoot,
         agreement.rdn,
         {
+            entry: true,
             cp: true,
             immSupr: false, // This is supposed to be on the superior of this entry.
             structuralObjectClass: structuralObjectClass.toString(),
