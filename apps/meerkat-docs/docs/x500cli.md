@@ -13,3 +13,7 @@ x500 dap read 'c=US,st=FL,cn=Jonathan M. Wilbur' \
 
 This tool has not been released yet, but you can find the source repository
 [here](https://github.com/Wildboar-Software/directory).
+
+The Wildboar X.500 command-line interface uses the standardized
+[X.500 client configuration file](./client-config.md) defined by Wildboar
+Software.

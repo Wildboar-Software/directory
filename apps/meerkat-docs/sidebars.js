@@ -46,6 +46,7 @@ const sidebars = {
             items: [
                 'asn1',
                 'specs',
+                'client-config',
             ],
         },
         {

@@ -33,9 +33,12 @@ const schema: JSONSchema6 = {
         "current-context": {
             type: "string",
         },
-        preferences: {
-            type: "object",
-            additionalProperties: true,
+        "preference-profiles": {
+            type: "array",
+            items: {
+                type: "object",
+                additionalProperties: true,
+            },
         },
         dsas: {
             type: "array",
@@ -96,12 +99,16 @@ const schema: JSONSchema6 = {
         ConfigAccessPoint: {
             type: "object",
             required: [
-                "url",
+                "urls",
             ],
             properties: {
-                url: {
-                    type: "string",
-                    minLength: 3,
+                urls: {
+                    type: "array",
+                    items: {
+                        type: "string",
+                        minLength: 3,
+                    },
+                    minItems: 1,
                 },
                 category: {
                     type: "string",
@@ -233,9 +240,14 @@ const schema: JSONSchema6 = {
         ConfigSimpleCredentials: {
             type: "object",
             required: [
+                "type",
                 "name",
             ],
             properties: {
+                type: {
+                    type: "string",
+                    enum: ["simple"],
+                },
                 name: {
                     $ref: "#/definitions/DistinguishedName",
                 },
@@ -247,9 +259,20 @@ const schema: JSONSchema6 = {
         },
         ConfigStrongCredentials: {
             type: "object",
+            required: [
+                "type",
+            ],
             properties: {
+                type: {
+                    type: "string",
+                    enum: ["strong"],
+                },
                 name: {
                     $ref: "#/definitions/DistinguishedName",
+                },
+                keyPath: {
+                    type: "string",
+                    minLength: 1,
                 },
                 certPath: {
                     type: "string",
@@ -264,6 +287,15 @@ const schema: JSONSchema6 = {
         },
         ConfigSASLCredentials: {
             type: "object",
+            required: [
+                "type",
+            ],
+            properties: {
+                type: {
+                    type: "string",
+                    enum: ["sasl"],
+                },
+            },
             additionalProperties: true,
         },
         ConfigContext: {
