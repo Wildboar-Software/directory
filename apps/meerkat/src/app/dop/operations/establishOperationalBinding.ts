@@ -81,6 +81,7 @@ import {
 import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
 import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry";
+import { randomInt } from "crypto";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -347,30 +348,44 @@ async function establishOperationalBinding (
             }
 
             const sp = data.securityParameters;
-            const now = new Date();
-            const alreadyTakenBindingIDs = new Set(
-                (await ctx.db.operationalBinding.findMany({
-                    where: {
-                        binding_type: id_op_binding_hierarchical.toString(),
-                        validity_start: {
-                            gte: now,
-                        },
-                        validity_end: {
-                            lte: now,
-                        },
-                    },
-                    select: {
-                        binding_identifier: true,
-                    },
-                }))
-                    .map((ob) => ob.binding_identifier),
-            );
             let newBindingIdentifier!: number;
             if (
                 typeof data.bindingID?.identifier === "number"
                 || (typeof data.bindingID?.identifier === "bigint")
             ) {
-                if (alreadyTakenBindingIDs.has(Number(data.bindingID.identifier))) {
+                const now = new Date();
+                const alreadyTakenBindingID = await ctx.db.operationalBinding.findFirst({
+                    where: {
+                        /**
+                         * This is a hack for getting the latest version: we are selecting
+                         * operational bindings that have no next version.
+                         */
+                        next_version: {
+                            none: {},
+                        },
+                        binding_type: id_op_binding_hierarchical.toString(),
+                        binding_identifier: Number(data.bindingID.identifier),
+                        accepted: true,
+                        terminated_time: null,
+                        validity_start: {
+                            lte: now,
+                        },
+                        OR: [
+                            {
+                                validity_end: null,
+                            },
+                            {
+                                validity_end: {
+                                    gte: now,
+                                },
+                            },
+                        ],
+                    },
+                    select: {
+                        uuid: true,
+                    },
+                });
+                if (alreadyTakenBindingID) {
                     throw new errors.OperationalBindingError(
                         ctx.i18n.t("err:ob_duplicate_identifier", {
                             id: data.bindingID.identifier,
@@ -398,11 +413,8 @@ async function establishOperationalBinding (
                     newBindingIdentifier = Number(data.bindingID.identifier);
                 }
             } else if (typeof data.bindingID?.identifier === "undefined") {
-                let attemptedID: number = 0;
-                while (alreadyTakenBindingIDs.has(attemptedID)) {
-                    attemptedID++;
-                }
-                newBindingIdentifier = attemptedID;
+                newBindingIdentifier = randomInt(2147483648);
+                // TODO: Loop until you find an available ID.
             }
 
             const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
