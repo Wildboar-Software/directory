@@ -29,7 +29,7 @@ function create (ctx: Context): CommandModule {
                     description: "The object",
                 })
                 .option("commonName", {
-                    alias: "c",
+                    alias: "cn",
                     type: "array",
                     description: "The common name",
                 })

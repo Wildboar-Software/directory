@@ -6,7 +6,7 @@ import addEntry from "../commands/dap/add/country";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "country <object>",
+        command: "country <object> <countryName>",
         describe: "Add a country",
         builder: (y) => {
             return y
@@ -14,13 +14,11 @@ function create (ctx: Context): CommandModule {
                     type: "string",
                     description: "The object",
                 })
-                .option("countryName", {
-                    alias: "c",
+                .positional("countryName", {
                     type: "string",
                     description: "The ISO-3166 2-letter country code",
                 })
                 .option("description", {
-                    alias: "d",
                     type: "string",
                     description: "An arbitrary description",
                 })

@@ -6,7 +6,7 @@ import addEntry from "../commands/dap/add/group";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "group <object> <cn> <member>",
+        command: "group <object>",
         describe: "Add a group of (possibly unique) names",
         builder: (y) => {
             return y
@@ -14,12 +14,13 @@ function create (ctx: Context): CommandModule {
                     type: "string",
                     description: "The object",
                 })
-                .positional("cn", {
-                    type: "string",
+                .option("commonName", {
+                    alias: "cn",
+                    type: "array",
                     description: "The common name of the group",
                 })
-                .positional("member", {
-                    type: "string",
+                .option("member", {
+                    type: "array",
                     description: "The first member to add to the group",
                 })
                 // TODO:
@@ -29,17 +30,14 @@ function create (ctx: Context): CommandModule {
                 //     description: "Check that the first member exists before creating the group.",
                 // })
                 .option("unique", {
-                    alias: "q",
                     type: "boolean",
                     description: "Make the group a groupOfUniqueNames",
                 })
                 .option("uniqueIdentifier", {
-                    alias: "i",
                     type: "string",
                     description: "The unique identifier of the first member as a binary string (e.g. '1101101')",
                 })
                 .option("owner", {
-                    alias: "w",
                     type: "array",
                     description: "The owner of the group",
                 })
@@ -49,26 +47,24 @@ function create (ctx: Context): CommandModule {
                     description: "The organization name",
                 })
                 .option("organizationUnitName", {
-                    alias: "u",
+                    alias: "ou",
                     type: "array",
                     description: "The organizational unit name",
                 })
                 .option("description", {
-                    alias: "d",
                     type: "array",
                     description: "An arbitrary description",
                 })
                 .option("seeAlso", {
-                    alias: "a",
                     type: "array",
                     description: "The distinguished name of another related entry",
                 })
                 .option("businessCategory", {
-                    alias: "b",
                     type: "array",
                     description: "A string identifying the category of the organization",
                 })
-                .demandOption("countryName")
+                .demandOption("commonName")
+                .demandOption("member")
                 .help()
                 .strict()
                 ;

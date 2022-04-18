@@ -16,7 +16,7 @@ import addEntry from "../commands/dap/add/applicationProcess";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "process <object> <cn>",
+        command: "process <object>",
         describe: "Add an application process",
         builder: (y) => {
             return y
@@ -24,7 +24,8 @@ function create (ctx: Context): CommandModule {
                     type: "string",
                     description: "The object",
                 })
-                .positional("cn", {
+                .option("commonName", {
+                    alias: "cn",
                     type: "string",
                     description: "The common name of the process",
                 })
@@ -34,20 +35,19 @@ function create (ctx: Context): CommandModule {
                     description: "The name of the locality"
                 })
                 .option("organizationUnitName", {
-                    alias: "o",
+                    alias: "ou",
                     type: "array",
                     description: "The organizational unit name",
                 })
                 .option("description", {
-                    alias: "d",
                     type: "array",
                     description: "An arbitrary description",
                 })
                 .option("seeAlso", {
-                    alias: "a",
                     type: "array",
                     description: "The distinguished name of another related entry",
                 })
+                .demandOption("commonName")
                 .help()
                 .strict()
                 ;

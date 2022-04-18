@@ -15,36 +15,33 @@ function create (ctx: Context): CommandModule {
                     description: "The object",
                 })
                 .option("commonName", {
-                    alias: "c",
+                    alias: "cn",
                     type: "array",
                     description: "The common name",
                 })
                 .option("surname", {
-                    alias: "s",
+                    alias: "sn",
                     type: "array",
                     description: "The last name of the person",
                 })
                 .option("telephoneNumber", {
-                    alias: "t",
                     type: "array",
                     description: "The telephone number",
                 })
                 .option("userPassword", {
-                    alias: "u",
                     type: "string",
                     description: "The password for the organization",
                 })
                 .option("description", {
-                    alias: "d",
                     type: "array",
                     description: "An arbitrary description",
                 })
                 .option("seeAlso", {
-                    alias: "a",
                     type: "array",
                     description: "The distinguished name of another related entry",
                 })
-                .demandOption("countryName")
+                .demandOption("commonName")
+                .demandOption("surname")
                 .help()
                 ;
         },

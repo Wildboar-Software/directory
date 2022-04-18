@@ -20,22 +20,19 @@ function create (ctx: Context): CommandModule {
                     description: "The name of the locality"
                 })
                 .option("stateOrProvinceName", {
-                    alias: "s",
+                    alias: "st",
                     type: "string",
                     description: "The name of the state or province",
                 })
                 .option("description", {
-                    alias: "d",
                     type: "string",
                     description: "An arbitrary description",
                 })
                 .option("seeAlso", {
-                    alias: "a",
                     type: "string",
                     description: "The distinguished name of another related entry",
                 })
                 .option("streetAddress", {
-                    alias: "a",
                     type: "string",
                     description: "The street address",
                 })

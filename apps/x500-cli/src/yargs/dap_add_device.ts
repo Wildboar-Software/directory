@@ -19,7 +19,7 @@ import addEntry from "../commands/dap/add/device";
 export
 function create (ctx: Context): CommandModule {
     return {
-        command: "device <object> <commonName>",
+        command: "device <object>",
         describe: "Add a device",
         builder: (yargs) => {
             return yargs
@@ -27,17 +27,16 @@ function create (ctx: Context): CommandModule {
                     type: "string",
                     description: "The object",
                 })
-                .positional("commonName", {
-                    type: "string",
+                .option("commonName", {
+                    alias: "cn",
+                    type: "array",
                     description: "The common name",
                 })
                 .option("description", {
-                    alias: "d",
                     type: "array",
                     description: "An arbitrary description",
                 })
                 .option("seeAlso", {
-                    alias: "a",
                     type: "array",
                     description: "The distinguished name of another related entry",
                 })
@@ -52,17 +51,15 @@ function create (ctx: Context): CommandModule {
                     description: "The organization name",
                 })
                 .option("organizationUnitName", {
-                    alias: "u",
+                    alias: "ou",
                     type: "array",
                     description: "The organizational unit name",
                 })
                 .option("owner", {
-                    alias: "w",
                     type: "array",
                     description: "The owner of the device",
                 })
                 .option("serialNumber", {
-                    alias: "s",
                     type: "array",
                     description: "The serial number of the device",
                 })
