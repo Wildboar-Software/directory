@@ -1,6 +1,7 @@
 import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
+import { do_modify_become_admpoint as command } from "../commands/dap/mod/become/admpoint";
 
 export
 function create (ctx: Context): CommandModule {
@@ -62,6 +63,8 @@ function create (ctx: Context): CommandModule {
         },
         handler: async (argv) => {
             const connection = await bind(ctx, argv);
+            await command(ctx, connection, argv);
+            await connection.close();
         },
     };
 }

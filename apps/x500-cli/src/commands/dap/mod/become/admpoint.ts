@@ -75,12 +75,6 @@ async function do_modify_become_admpoint (
         administrativeRoles.push(id_ar_pwdAdminSpecificArea);
     }
     const modifications: EntryModification[] = [
-            // TODO: Should you allow DSEType to even be set at all?
-            // {
-            //     replaceValues: new Attribute(
-
-            //     ),
-            // },
             {
                 replaceValues: new Attribute(
                     administrativeRole["&id"],
@@ -110,18 +104,6 @@ async function do_modify_become_admpoint (
         modifications,
         undefined,
         [],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
     );
     const arg: ModifyEntryArgument = {
         unsigned: reqData,
