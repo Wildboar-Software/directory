@@ -20,7 +20,7 @@ services:
     labels:
       author: Wildboar Software
       app: meerkat
-      version: 1.0.0-beta.30
+      version: "1.0.0"
     ports:
       - '1389:389/tcp' # LDAP TCP Port
       - '4632:4632/tcp' # IDM Socket

@@ -69,6 +69,7 @@ import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 import isDebugging from "is-debugging";
+import { strict as assert } from "assert";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -628,24 +629,46 @@ class LDAPAssociation extends ClientAssociation {
                 const req = message.protocolOp.bindRequest;
                 const startBindTime = new Date();
                 bind(ctx, this.socket, req)
-                    .then(async (bindReturn) => {
+                    .then(async (outcome) => {
                         const endBindTime = new Date();
                         const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                         const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
                             + crypto.randomInt(ctx.config.bindSleepRangeInMilliseconds);
                         const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
                         await sleep(sleepTime);
-                        if (bindReturn.result.resultCode === LDAPResult_resultCode_success) {
-                            this.boundEntry = bindReturn.boundVertex;
-                            this.authLevel = bindReturn.authLevel;
+                        if (outcome.result.resultCode === LDAPResult_resultCode_success) {
+                            this.boundEntry = outcome.boundVertex;
+                            this.authLevel = outcome.authLevel;
                             this.status = Status.BOUND;
+                            const remoteHostIdentifier = `${this.socket.remoteFamily}://${this.socket.remoteAddress}/${this.socket.remotePort}`;
+                            if (
+                                ("basicLevels" in outcome.authLevel)
+                                && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
+                            ) {
+                                assert(!ctx.config.forbidAnonymousBind, "Somehow a user bound anonymously when anonymous binds are forbidden.");
+                                ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
+                                    source: remoteHostIdentifier,
+                                    protocol: "DAP",
+                                    aid: this.id,
+                                }), extraLogData);
+                            } else {
+                                ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
+                                    source: remoteHostIdentifier,
+                                    protocol: "DAP",
+                                    aid: this.id,
+                                    dn: this.boundNameAndUID?.dn
+                                        ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                                        : "",
+                                }), extraLogData);
+                            }
                         } else {
                             this.status = Status.UNBOUND;
+                            // TODO: Log failure
                         }
                         const res = new LDAPMessage(
                             message.messageID,
                             {
-                                bindResponse: bindReturn.result,
+                                bindResponse: outcome.result,
                             },
                             undefined,
                         );

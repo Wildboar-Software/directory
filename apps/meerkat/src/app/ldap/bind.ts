@@ -107,6 +107,7 @@ async function bind (
             ),
         };
     }
+    const source: string = `${socket.remoteFamily}:${socket.remoteAddress}:${socket.remotePort}`;
     const successMessage = ctx.i18n.t("main:success");
     const dn = decodeLDAPDN(ctx, req.name);
     const entry = await dnToVertex(ctx, ctx.dit.root, dn);
@@ -137,6 +138,7 @@ async function bind (
         ),
         boundVertex: entry,
     };
+    const invalidCredentialsMessage: string = ctx.i18n.t("err:invalid_credentials", { host: source });
     const invalidCredentials: LDAPBindReturn = {
         ...ret,
         authLevel: notAuthed(localQualifierPoints),
@@ -145,6 +147,27 @@ async function bind (
     if ("simple" in req.authentication) {
         const suppliedPassword = Buffer.from(req.authentication.simple);
         if (suppliedPassword.length === 0) {
+            if (ctx.config.forbidAnonymousBind) {
+                const anonBindDisabledMessage: string = ctx.i18n.t("err:anon_bind_disabled", { host: source });
+                ctx.log.warn(anonBindDisabledMessage);
+                return {
+                    ...ret,
+                    authLevel: {
+                        basicLevels: new AuthenticationLevel_basicLevels(
+                            AuthenticationLevel_basicLevels_level_none,
+                            localQualifierPoints,
+                            undefined,
+                        ),
+                    },
+                    result: new BindResponse(
+                        LDAPResult_resultCode_authMethodNotSupported,
+                        req.name,
+                        Buffer.from(anonBindDisabledMessage, "utf-8"),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            }
             return {
                 ...ret,
                 authLevel: {
@@ -161,6 +184,7 @@ async function bind (
         // const pwd = await readEntryPassword(ctx, entry);
             // attrs.find((attr) => (attr.id.toString() === USER_PWD_OID));
         if (!pwd) {
+            ctx.log.warn(invalidCredentialsMessage);
             return invalidCredentials;
         }
         const authenticated = await attemptPassword(ctx, entry, {
@@ -179,6 +203,7 @@ async function bind (
                 result: simpleSuccess(successMessage, encodedDN),
             };
         } else {
+            ctx.log.warn(invalidCredentialsMessage);
             return invalidCredentials;
         }
     } else if ("sasl" in req.authentication) {
@@ -214,10 +239,12 @@ async function bind (
                         result: simpleSuccess(successMessage, encodedDN),
                     };
                 } else {
+                    ctx.log.warn(invalidCredentialsMessage);
                     return invalidCredentials;
                 }
             }
             default: {
+                ctx.log.warn(ctx.i18n.t("err:unsupported_auth_method"));
                 return {
                     ...ret,
                     authLevel: {
@@ -238,6 +265,7 @@ async function bind (
             }
         }
     } else {
+        ctx.log.warn(ctx.i18n.t("err:unsupported_auth_method"));
         return {
             ...ret,
             authLevel: {
