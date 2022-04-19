@@ -2,18 +2,19 @@ import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import addEntry from "../commands/dap/add/organization";
+import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts";
 
-export
-function create (ctx: Context): CommandModule {
+export // eslint-disable-next-line @typescript-eslint/ban-types
+function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
     return {
         command: "org <object>",
         describe: "Add an organization",
         builder: (yargs) => {
-            return yargs
+            return add_common_add_opts(yargs
                 .positional("object", {
                     type: "string",
                     description: "The object",
-                })
+                }))
                 .option("organizationName", {
                     alias: "o",
                     type: "array",

@@ -2,14 +2,15 @@ import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import addEntry from "../commands/dap/add/country";
+import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts";
 
-export
-function create (ctx: Context): CommandModule {
+export // eslint-disable-next-line @typescript-eslint/ban-types
+function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
     return {
         command: "country <object> <countryName>",
         describe: "Add a country",
         builder: (y) => {
-            return y
+            return add_common_add_opts(y
                 .positional("object", {
                     type: "string",
                     description: "The object",
@@ -17,7 +18,7 @@ function create (ctx: Context): CommandModule {
                 .positional("countryName", {
                     type: "string",
                     description: "The ISO-3166 2-letter country code",
-                })
+                }))
                 .option("description", {
                     type: "string",
                     description: "An arbitrary description",

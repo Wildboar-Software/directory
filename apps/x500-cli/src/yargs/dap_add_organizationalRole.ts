@@ -1,7 +1,8 @@
 import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
-import addEntry from "../commands/dap/add/country";
+import addEntry from "../commands/dap/add/organizationalRole";
+import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts";
 
 // organizationalRole OBJECT-CLASS ::= {
 //     SUBCLASS OF   {top}
@@ -17,17 +18,17 @@ import addEntry from "../commands/dap/add/country";
 //     LDAP-NAME      {"organizationalRole"}  -- RFC 4519
 //     ID            id-oc-organizationalRole }
 
-export
-function create (ctx: Context): CommandModule {
+export // eslint-disable-next-line @typescript-eslint/ban-types
+function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
     return {
         command: "orgrole <object>",
         describe: "Add an organizational role",
         builder: (yargs) => {
-            return yargs
+            return add_common_add_opts(yargs
                 .positional("object", {
                     type: "string",
                     description: "The object",
-                })
+                }))
                 .option("commonName", {
                     alias: "cn",
                     type: "array",

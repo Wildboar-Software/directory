@@ -16,6 +16,8 @@ import {
     _encode_RDNSequence,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
 import destringifyDN from "../../../utils/destringifyDN";
+import type { ArgumentsCamelCase } from "yargs";
+import type { CommonAddOptions } from "../../../yargs/add_common_add_opts";
 
 // person OBJECT-CLASS ::= {
 //     SUBCLASS OF   {top}
@@ -32,7 +34,7 @@ export
 async function do_addEntry_person (
     ctx: Context,
     conn: Connection,
-    argv: any,
+    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
 ): Promise<void> {
     const attributes: Attribute[] = [
         new Attribute(
@@ -42,8 +44,7 @@ async function do_addEntry_person (
             ],
             undefined,
         ),
-        ...[ argv.commonName ]
-            .flat()
+        ...argv.commonName
             .map((value: string) => new Attribute(
                 selat.commonName["&id"]!,
                 [
@@ -51,8 +52,7 @@ async function do_addEntry_person (
                 ],
                 undefined,
             )),
-        ...[ argv.surname ]
-            .flat()
+        ...argv.surname
             .map((value: string) => new Attribute(
                 selat.surname["&id"]!,
                 [

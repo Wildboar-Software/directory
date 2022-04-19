@@ -2,6 +2,7 @@ import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import addEntry from "../commands/dap/add/applicationProcess";
+import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts";
 
 // applicationProcess OBJECT-CLASS ::= {
 //     SUBCLASS OF   {top}
@@ -13,17 +14,17 @@ import addEntry from "../commands/dap/add/applicationProcess";
 //     LDAP-NAME     {"applicationProcess"}   -- RFC 4519
 //     ID            id-oc-applicationProcess }
 
-export
-function create (ctx: Context): CommandModule {
+export // eslint-disable-next-line @typescript-eslint/ban-types
+function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
     return {
         command: "process <object>",
         describe: "Add an application process",
         builder: (y) => {
-            return y
+            return add_common_add_opts(y
                 .positional("object", {
                     type: "string",
                     description: "The object",
-                })
+                }))
                 .option("commonName", {
                     alias: "cn",
                     type: "string",

@@ -11,12 +11,14 @@ import {
     _encodePrintableString,
 } from "asn1-ts/dist/node/functional";
 import do_addEntry from "../add";
+import type { ArgumentsCamelCase } from "yargs";
+import type { CommonAddOptions } from "../../../yargs/add_common_add_opts";
 
 export
 async function do_addEntry_country (
     ctx: Context,
     conn: Connection,
-    argv: any,
+    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
 ): Promise<void> {
     const attributes: Attribute[] = [
         new Attribute(

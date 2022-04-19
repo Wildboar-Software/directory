@@ -15,6 +15,8 @@ import {
     _encode_RDNSequence,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
 import destringifyDN from "../../../utils/destringifyDN";
+import type { ArgumentsCamelCase } from "yargs";
+import type { CommonAddOptions } from "../../../yargs/add_common_add_opts";
 
 // device OBJECT-CLASS ::= {
 //     SUBCLASS OF   {top}
@@ -33,7 +35,7 @@ export
 async function do_addEntry_device (
     ctx: Context,
     conn: Connection,
-    argv: any,
+    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
 ): Promise<void> {
     const attributes: Attribute[] = [
         new Attribute(

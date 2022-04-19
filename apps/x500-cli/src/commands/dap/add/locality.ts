@@ -14,12 +14,14 @@ import {
     _encode_RDNSequence,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
 import do_addEntry from "../add";
+import type { ArgumentsCamelCase } from "yargs";
+import type { CommonAddOptions } from "../../../yargs/add_common_add_opts";
 
 export
 async function do_addEntry_locality (
     ctx: Context,
     conn: Connection,
-    argv: any,
+    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
 ): Promise<void> {
     const attributes: Attribute[] = [
         new Attribute(

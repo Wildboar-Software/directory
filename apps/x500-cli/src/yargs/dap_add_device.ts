@@ -2,6 +2,7 @@ import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import addEntry from "../commands/dap/add/device";
+import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts";
 
 // device OBJECT-CLASS ::= {
 //     SUBCLASS OF   {top}
@@ -16,17 +17,17 @@ import addEntry from "../commands/dap/add/device";
 //     LDAP-NAME      {"device"}  -- RFC 4519
 //     ID            id-oc-device }
 
-export
-function create (ctx: Context): CommandModule {
+export // eslint-disable-next-line @typescript-eslint/ban-types
+function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
     return {
         command: "device <object>",
         describe: "Add a device",
         builder: (yargs) => {
-            return yargs
+            return add_common_add_opts(yargs
                 .positional("object", {
                     type: "string",
                     description: "The object",
-                })
+                }))
                 .option("commonName", {
                     alias: "cn",
                     type: "array",

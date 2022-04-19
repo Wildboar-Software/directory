@@ -24,6 +24,8 @@ import {
     _encode_FacsimileTelephoneNumber,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/FacsimileTelephoneNumber.ta";
 import do_addEntry from "../add";
+import type { ArgumentsCamelCase } from "yargs";
+import type { CommonAddOptions } from "../../../yargs/add_common_add_opts";
 
 // organizationalRole OBJECT-CLASS ::= {
 //     SUBCLASS OF   {top}
@@ -43,7 +45,7 @@ export
 async function do_addEntry_organizationalRole (
     ctx: Context,
     conn: Connection,
-    argv: any,
+    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
 ): Promise<void> {
     const attributes: Attribute[] = [
         new Attribute(
