@@ -12,6 +12,7 @@ import do_changePassword from "./commands/dap/cpw";
 import do_removeEntry from "./commands/dap/remove";
 import do_modifyDN from "./commands/dap/moddn";
 import do_search from "./commands/dap/search";
+import dap_add_subentry from "./yargs/dap_add_subentry";
 import dap_add_country from "./yargs/dap_add_country";
 import dap_add_organization from "./yargs/dap_add_organization";
 import dap_add_organizationalUnit from "./yargs/dap_add_organizationalUnit";
@@ -54,6 +55,7 @@ async function main () {
                 dapYargs
                     .command("add", "Add an entry", (addYargs) => {
                         addYargs
+                            .command(dap_add_subentry(ctx))
                             .command(dap_add_country(ctx))
                             .command(dap_add_locality(ctx))
                             .command(dap_add_person(ctx))

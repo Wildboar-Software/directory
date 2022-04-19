@@ -44,7 +44,8 @@ async function do_addEntry_person (
             ],
             undefined,
         ),
-        ...argv.commonName
+        ...[ argv.commonName ]
+            .flat()
             .map((value: string) => new Attribute(
                 selat.commonName["&id"]!,
                 [
@@ -52,7 +53,8 @@ async function do_addEntry_person (
                 ],
                 undefined,
             )),
-        ...argv.surname
+        ...[ argv.surname ]
+            .flat()
             .map((value: string) => new Attribute(
                 selat.surname["&id"]!,
                 [

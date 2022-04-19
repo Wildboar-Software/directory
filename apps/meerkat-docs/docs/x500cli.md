@@ -11,6 +11,18 @@ x500 dap read 'c=US,st=FL,cn=Jonathan M. Wilbur' \
   --accessPoint=idm://dsa01.root.mkdemo.wildboar.software:4632
 ```
 
+```bash
+x500 dap add subentry 'C=US,CN=Test subentry 2' \
+  --accessPoint=idm://dsa01.root.mkdemo.wildboar.software:4632 \
+  --commonName='Test subentry 2' \
+  -b 'st=CA' \
+  -n 1 \
+  -x 5 \
+  -c 'l=Los Angeles' \
+  -a 'l=Silicon Valley' \
+  -r '{ item:2.5.6.7 }'
+```
+
 This tool has not been released yet, but you can find the source repository
 [here](https://github.com/Wildboar-Software/directory).
 
