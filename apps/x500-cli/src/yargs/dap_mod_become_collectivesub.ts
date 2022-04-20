@@ -1,7 +1,7 @@
 import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
-import { do_modify_become_admpoint as command } from "../commands/dap/mod/become/admpoint";
+import { do_modify_become_collectivesub as command } from "../commands/dap/mod/become/collectivesub";
 
 export
 function create (ctx: Context): CommandModule {
@@ -12,7 +12,7 @@ function create (ctx: Context): CommandModule {
             return y
                 .positional("object", {
                     type: "string",
-                    description: "The object to be made an administrative point",
+                    description: "The object to be modified",
                 })
                 .option("collectiveValue", {
                     alias: "c",

@@ -30,7 +30,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
 
 export
-async function do_modify_become_admpoint (
+async function do_modify_become_collectivesub (
     ctx: Context,
     conn: Connection,
     argv: any,
@@ -97,4 +97,4 @@ async function do_modify_become_admpoint (
     }
 }
 
-export default do_modify_become_admpoint;
+export default do_modify_become_collectivesub;

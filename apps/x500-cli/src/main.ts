@@ -27,6 +27,7 @@ import dap_add_device from "./yargs/dap_add_device";
 import dap_add_dmd from "./yargs/dap_add_dmd";
 import dap_mod_become_admpoint from "./yargs/dap_mod_become_admpoint";
 import dap_add_become_collectivesub from "./yargs/dap_mod_become_collectivesub";
+import dap_add_become_pwdsub from "./yargs/dap_mod_become_pwdsub";
 import dap_search from "./yargs/dap_search";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
@@ -132,6 +133,7 @@ async function main () {
                         addYargs
                             .command(dap_mod_become_admpoint(ctx))
                             .command(dap_add_become_collectivesub(ctx))
+                            .command(dap_add_become_pwdsub(ctx))
                             .demandCommand()
                             ;
                     })
