@@ -422,6 +422,33 @@ class LDAPAssociation extends ClientAssociation {
         return;
     }
 
+    private reset (): void {
+        for (const invocation of this.invocations.values()) {
+            invocation.abandonTime = new Date();
+            this.invocations.clear();
+        }
+        this.status = Status.UNBOUND;
+        this.boundEntry = undefined;
+        this.boundNameAndUID = undefined;
+        this.authLevel = {
+            basicLevels: new AuthenticationLevel_basicLevels(
+                AuthenticationLevel_basicLevels_level_none,
+                0,
+                false,
+            ),
+        };
+        this.ctx.db.enqueuedSearchResult.deleteMany({
+            where: {
+                connection_uuid: this.id,
+            },
+        }).then().catch();
+        this.ctx.db.enqueuedListResult.deleteMany({
+            where: {
+                connection_uuid: this.id,
+            },
+        }).then().catch();
+    }
+
     /**
      * @summary Handle a raw chunk of data from the TCP or TLS socket
      * @description
@@ -612,18 +639,7 @@ class LDAPAssociation extends ClientAssociation {
 
             if ("bindRequest" in message.protocolOp) {
                 if (this.status !== Status.UNBOUND) {
-                    ctx.log.warn(ctx.i18n.t("log:double_bind_attempted", {
-                        source,
-                        host: this.socket.remoteAddress,
-                    }), extraLogData);
-                    const res = createNoticeOfDisconnection(LDAPResult_resultCode_protocolError, "");
-                    this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
-                    this.socket.destroy();
-                    ctx.telemetry.trackEvent({
-                        name: "IDM_WARN_MULTI_BIND",
-                        properties: telemetryProperties,
-                    });
-                    return;
+                    this.reset();
                 }
                 this.status = Status.BIND_IN_PROGRESS;
                 const req = message.protocolOp.bindRequest;
@@ -716,26 +732,7 @@ class LDAPAssociation extends ClientAssociation {
                 this.buffer = this.buffer.slice(bytesRead);
                 break;
             } else if ("unbindRequest" in message.protocolOp) {
-                this.status = Status.UNBOUND;
-                this.boundEntry = undefined;
-                this.boundNameAndUID = undefined;
-                this.authLevel = {
-                    basicLevels: new AuthenticationLevel_basicLevels(
-                        AuthenticationLevel_basicLevels_level_none,
-                        0,
-                        false,
-                    ),
-                };
-                ctx.db.enqueuedSearchResult.deleteMany({
-                    where: {
-                        connection_uuid: this.id,
-                    },
-                }).then().catch();
-                ctx.db.enqueuedListResult.deleteMany({
-                    where: {
-                        connection_uuid: this.id,
-                    },
-                }).then().catch();
+                this.reset();
             } else if (
                 ("extendedReq" in message.protocolOp)
                 && !decodeLDAPOID(message.protocolOp.extendedReq.requestName).isEqualTo(modifyPassword)

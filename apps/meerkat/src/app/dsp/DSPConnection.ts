@@ -468,6 +468,7 @@ class DSPAssociation extends ClientAssociation {
             }
             return;
         }
+        this.reset();
         this.boundEntry = outcome.boundVertex;
         this.boundNameAndUID = outcome.boundNameAndUID;
         this.authLevel = outcome.authLevel;
@@ -519,6 +520,23 @@ class DSPAssociation extends ClientAssociation {
         handleRequestAndErrors(this.ctx, this, request);
     }
 
+    private reset (): void {
+        for (const invocation of this.invocations.values()) {
+            invocation.abandonTime = new Date();
+            this.invocations.clear();
+        }
+        this.ctx.db.enqueuedListResult.deleteMany({ // INTENTIONAL_NO_AWAIT
+            where: {
+                connection_uuid: this.id,
+            },
+        }).then().catch();
+        this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
+            where: {
+                connection_uuid: this.id,
+            },
+        }).then().catch();
+    }
+
     /**
      * @summary Handle the unbind notification
      * @description
@@ -536,16 +554,7 @@ class DSPAssociation extends ClientAssociation {
         if (this.idm.remoteStatus !== IDMStatus.BOUND) {
             return; // We don't want users to be able to spam unbinds.
         }
-        this.ctx.db.enqueuedListResult.deleteMany({ // INTENTIONAL_NO_AWAIT
-            where: {
-                connection_uuid: this.id,
-            },
-        }).then().catch();
-        this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
-            where: {
-                connection_uuid: this.id,
-            },
-        }).then().catch();
+        this.reset();
         this.ctx.telemetry.trackRequest({
             name: "UNBIND",
             url: this.ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)

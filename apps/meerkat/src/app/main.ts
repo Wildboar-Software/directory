@@ -439,28 +439,6 @@ function attachUnboundEventListenersToIDMConnection (
             });
             return;
         }
-        case (warnings.IDM_WARN_MULTI_BIND): {
-            ctx.telemetry.trackEvent({
-                name: "IDM_WARN_MULTI_BIND",
-                properties,
-                measurements,
-            });
-            // This is almost always nefarious activity. A malicious user may
-            // attempt to circumvent the rate-limiting of bind requests by
-            // issuing multiple bind requests back-to-back.
-            // Meerkat DSA will require remote hosts to wait for a bind response
-            // before attempting another bind.
-            ctx.log.warn(ctx.i18n.t("log:double_bind_attempted", {
-                source,
-                host: idm.s.remoteAddress,
-            }), {
-                remoteAddress: idm.s.remoteAddress,
-            });
-            idm.writeAbort(Abort_reasonNotSpecified);
-            startTimes.delete(idm.s);
-            ctx.associations.delete(idm.s);
-            return;
-        }
         case (warnings.IDM_WARN_BAD_SEQUENCE): {
             ctx.telemetry.trackEvent({
                 name: "IDM_WARN_BAD_SEQUENCE",

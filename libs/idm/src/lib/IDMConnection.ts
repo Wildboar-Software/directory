@@ -45,7 +45,6 @@ import type {
 import {
     IDM_WARN_PADDING_AFTER_PDU,
     IDM_WARN_DOUBLE_START_TLS,
-    IDM_WARN_MULTI_BIND,
     IDM_WARN_BAD_SEQUENCE,
     IDM_WARN_NEGATIVE_INVOKE_ID,
     IDM_WARN_VERSION_CHANGE,
@@ -330,9 +329,6 @@ class IDMConnection {
      */
     private async handlePDU (pdu: IDM_PDU): Promise<void> {
         if ("bind" in pdu) {
-            if (this.remoteStatus !== IDMStatus.UNBOUND) {
-                this.events.emit("warning", IDM_WARN_MULTI_BIND);
-            }
             this.remoteStatus = IDMStatus.BIND_IN_PROGRESS;
             this.events.emit("bind", pdu.bind);
         } else if ("bindResult" in pdu) {

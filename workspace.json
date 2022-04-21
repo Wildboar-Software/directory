@@ -127,10 +127,10 @@
                         "outputPath": "dist/apps/meerkat",
                         "main": "apps/meerkat/src/main.ts",
                         "tsConfig": "apps/meerkat/tsconfig.app.json",
+                        "webpackConfig": "apps/meerkat/webpack.config.js",
                         "assets": [
                             "apps/meerkat/src/assets",
                             "apps/meerkat/src/prisma",
-                            "apps/meerkat/src/start-meerkat",
                             "apps/meerkat/src/README.md"
                         ],
                         "memoryLimit": 4096,

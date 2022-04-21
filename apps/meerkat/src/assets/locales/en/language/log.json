@@ -10,7 +10,6 @@
     "connection_bound_auth": "{{source}}: {{protocol}} association {{aid}} bound.",
     "connection_bound_auth@with_dn": "{{source}}: {{protocol}} association {{aid}} bound. Authenticated as {{dn}}.",
     "connection_bound_anon": "{{source}}: {{protocol}} association {{aid}} bound anonymously.",
-    "double_bind_attempted": "COULD_BAN={{host}}; {{source}} tried to double bind.",
     "unsupported_protocol": "COULD_BAN={{host}}; Unsupported protocol from {{source}}: {{protocol}}.",
     "unhandled_exception": "COULD_BAN={{host}}; Unhandled exception from {{source}}: {{e}}",
     "socket_error": "COULD_BAN={{host}}; {{source}} socket error: {{e}}",
