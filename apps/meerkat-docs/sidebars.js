@@ -8,10 +8,17 @@ const sidebars = {
         'docs',
         {
             type: 'category',
-            label: 'Meerkat DSA',
+            label: 'X.500',
             items: [
+                'intro',
                 'why-not-ldap',
                 'uses',
+            ],
+        },
+        {
+            type: 'category',
+            label: 'Meerkat DSA',
+            items: [
                 'setup',
                 'env',
                 'database',
