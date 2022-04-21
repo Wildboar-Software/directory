@@ -1,5 +1,7 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+demo/
+
 data
 *.snap
 k8s/charts/meerkat-dsa/*.tgz

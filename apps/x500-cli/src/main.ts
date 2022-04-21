@@ -11,7 +11,6 @@ import do_administerPassword from "./commands/dap/apw";
 import do_changePassword from "./commands/dap/cpw";
 import do_removeEntry from "./commands/dap/remove";
 import do_modifyDN from "./commands/dap/moddn";
-import do_search from "./commands/dap/search";
 import dap_add_subentry from "./yargs/dap_add_subentry";
 import dap_add_country from "./yargs/dap_add_country";
 import dap_add_organization from "./yargs/dap_add_organization";
@@ -131,11 +130,14 @@ async function main () {
                     })
                     .command("mod", "Modify an entry", (addYargs) => {
                         addYargs
-                            .command(dap_mod_become_admpoint(ctx))
-                            .command(dap_add_become_collectivesub(ctx))
-                            .command(dap_add_become_pwdsub(ctx))
-                            .demandCommand()
-                            ;
+                            .command("become", "Add an auxiliary object class or administrative role", (becomeYargs) => {
+                                becomeYargs
+                                    .command(dap_mod_become_admpoint(ctx))
+                                    .command(dap_add_become_collectivesub(ctx))
+                                    .command(dap_add_become_pwdsub(ctx))
+                                    .demandCommand();
+                            })
+                            .demandCommand();
                     })
                     .command("moddn <src> <dest>", "Move/Rename an entry", (modDNYargs) => {
                         return modDNYargs

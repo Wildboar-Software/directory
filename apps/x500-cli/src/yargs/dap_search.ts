@@ -160,6 +160,7 @@ function create (ctx: Context): CommandModule {
                     type: "boolean",
                     describe: "Whether to return contexts with values",
                 })
+                // TODO: Not used.
                 .option("familyReturn", {
                     type: "string",
                     choices: [
