@@ -24,6 +24,7 @@ import dap_add_residentialPerson from "./yargs/dap_add_residentialPerson";
 import dap_add_process from "./yargs/dap_add_process";
 import dap_add_device from "./yargs/dap_add_device";
 import dap_add_dmd from "./yargs/dap_add_dmd";
+import dap_mod_add_acs from "./yargs/dap_mod_add_acs";
 import dap_mod_become_admpoint from "./yargs/dap_mod_become_admpoint";
 import dap_mod_become_collectivesub from "./yargs/dap_mod_become_collectivesub";
 import dap_mod_become_pwdsub from "./yargs/dap_mod_become_pwdsub";
@@ -133,6 +134,11 @@ async function main () {
                     })
                     .command("mod", "Modify an entry", (addYargs) => {
                         addYargs
+                            .command("add", "Add attributes or values", (addYargs) => {
+                                addYargs
+                                    .command(dap_mod_add_acs(ctx))
+                                    .demandCommand();
+                            })
                             .command("become", "Add an auxiliary object class or administrative role", (becomeYargs) => {
                                 becomeYargs
                                     .command(dap_mod_become_acsub(ctx))
