@@ -135,4 +135,11 @@ interface Context {
     config?: X500ClientConfig | null;
 }
 
+export
+interface SchemaObjectArgs {
+    name?: string[];
+    description?: string;
+    obsolete?: boolean;
+}
+
 export default Context;
