@@ -10,6 +10,7 @@ winstonLogFormats.push(winston.format.timestamp());
 winstonLogFormats.push(winston.format.align());
 winstonLogFormats.push(winston.format.printf(info => `${info.timestamp} [${info.level}]: ${info.message}`));
 
+export
 const ctx: Context = {
     log: winston.createLogger({
         level: "info",

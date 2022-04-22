@@ -9,7 +9,7 @@ export
 function create (ctx: Context): CommandModule {
     return {
         command: "acs <object> <scheme>",
-        describe: "Make a DSE into an access control subentry",
+        describe: "Add an accessControlScheme to an entry",
         builder: (y) => {
             return y
                 .positional("object", {
