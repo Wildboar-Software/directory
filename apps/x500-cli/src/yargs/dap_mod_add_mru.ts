@@ -2,51 +2,39 @@ import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import {
-    do_modify_add_nf as command,
-} from "../commands/dap/mod/add/nf";
+    do_modify_add_mru as command,
+} from "../commands/dap/mod/add/mru";
 import type { SchemaObjectArgs } from "../types";
 
-// NameFormDescription ::= SEQUENCE {
-//     identifier        NAME-FORM.&id,
+// MatchingRuleUseDescription ::= SEQUENCE {
+//     identifier        MATCHING-RULE.&id,
 //     name              SET SIZE (1..MAX) OF UnboundedDirectoryString OPTIONAL,
 //     description       UnboundedDirectoryString                      OPTIONAL,
 //     obsolete          BOOLEAN                                       DEFAULT FALSE,
-//     information  [0]  NameFormInformation,
-//     ... }
-
-//   NameFormInformation ::= SEQUENCE {
-//     subordinate        OBJECT-CLASS.&id,
-//     namingMandatories  SET OF ATTRIBUTE.&id,
-//     namingOptionals    SET SIZE (1..MAX) OF ATTRIBUTE.&id OPTIONAL,
+//     information  [0]  SET OF ATTRIBUTE.&id,
 //     ... }
 
 export
-interface ModAddNameFormArgs extends SchemaObjectArgs {
+interface ModAddMatchingRuleUseArgs extends SchemaObjectArgs {
     object?: string;
-    id?: string;
-    subordinate?: string;
-    namingMandatories: string[];
-    namingOptionals?: string[];
+    identifier?: string;
+    attribute: string[];
 }
 
 export // eslint-disable-next-line @typescript-eslint/ban-types
-function create (ctx: Context): CommandModule<{}, ModAddNameFormArgs> {
+function create (ctx: Context): CommandModule<{}, ModAddMatchingRuleUseArgs> {
     return {
-        command: "sr <object> <id> <subordinate>",
-        describe: "Add a name form to a subschema subentry",
+        command: "mru <object> <identifier>",
+        describe: "Add a matching rule use to a subschema subentry",
         builder: (y) => {
             return y
                 .positional("object", {
                     type: "string",
                     description: "The object to be modified",
                 })
-                .positional("id", {
+                .positional("identifier", {
                     type: "string",
-                    description: "The dot-delimited object identifier of the name form",
-                })
-                .positional("subordinate", {
-                    type: "string",
-                    description: "The dot-delimited object identifier of regulated structural object class",
+                    description: "The dot-delimited object identifier of the matching rule",
                 })
                 .option("name", {
                     type: "array",
@@ -61,20 +49,14 @@ function create (ctx: Context): CommandModule<{}, ModAddNameFormArgs> {
                     type: "boolean",
                     description: "Whether this schema object cannot be used any longer",
                 })
-                .option("namingMandatories", {
-                    alias: "m",
+                .option("attribute", {
+                    alias: "a",
                     type: "array",
                     string: true,
-                    description: "The dot-delimited object identifier of an attribute type that MUST be present in the RDN for the regulated entry",
-                })
-                .option("namingOptionals", {
-                    alias: "o",
-                    type: "array",
-                    string: true,
-                    description: "The dot-delimited object identifier of an attribute type that MAY be present in the RDN for the regulated entry",
+                    description: "The dot-delimited object identifier of an attribute type that MAY be evaluated using the regulated matching rule",
                 })
                 // It is not entirely clear that there MUST be at least one mandatory, but I would strongly think so.
-                .demandOption("namingMandatories")
+                .demandOption("attribute")
                 .help()
                 .strict()
                 ;

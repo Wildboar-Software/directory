@@ -2,49 +2,39 @@ import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import {
-    do_modify_add_sr as command,
-} from "../commands/dap/mod/add/sr";
+    do_modify_add_friendship as command,
+} from "../commands/dap/mod/add/friendship";
 import type { SchemaObjectArgs } from "../types";
 
-// DITStructureRuleDescription ::= SEQUENCE {
-//     COMPONENTS OF DITStructureRule,
-//     name         [1]  SET SIZE (1..MAX) OF UnboundedDirectoryString OPTIONAL,
+// FriendsDescription ::= SEQUENCE {
+//     anchor            ATTRIBUTE.&id,
+//     name              SET SIZE (1..MAX) OF UnboundedDirectoryString OPTIONAL,
 //     description       UnboundedDirectoryString OPTIONAL,
 //     obsolete          BOOLEAN DEFAULT FALSE,
-//     ... }
-
-// DITStructureRule ::= SEQUENCE {
-//     ruleIdentifier          RuleIdentifier,
-//                    -- shall be unique within the scope of the subschema
-//     nameForm                NAME-FORM.&id,
-//     superiorStructureRules  SET SIZE (1..MAX) OF RuleIdentifier OPTIONAL,
+//     friends      [0]  SET SIZE (1..MAX) OF ATTRIBUTE.&id,
 //     ... }
 
 export
-interface ModAddStructureRuleArgs extends SchemaObjectArgs {
+interface ModAddFriendshipArgs extends SchemaObjectArgs {
     object?: string;
-    ruleid?: number;
-    nameform?: string;
-    superiorStructureRule?: number[];
+    anchor?: string;
+    friend: string[];
 }
 
 export // eslint-disable-next-line @typescript-eslint/ban-types
-function create (ctx: Context): CommandModule<{}, ModAddStructureRuleArgs> {
+function create (ctx: Context): CommandModule<{}, ModAddFriendshipArgs> {
     return {
-        command: "sr <object> <ruleid> <nameform>",
-        describe: "Add a DIT Structure Rule to a subschema subentry",
+        command: "friendship <object> <anchor>",
+        describe: "Add a friendship to a subschema subentry",
         builder: (y) => {
             return y
                 .positional("object", {
                     type: "string",
                     description: "The object to be modified",
                 })
-                .positional("ruleid", {
-                    type: "number",
-                })
-                .positional("nameform", {
+                .positional("anchor", {
                     type: "string",
-                    description: "The dot-delimited object identifier of the name form",
+                    description: "The dot-delimited object identifier of the anchor attribute type",
                 })
                 .option("name", {
                     type: "array",
@@ -59,12 +49,13 @@ function create (ctx: Context): CommandModule<{}, ModAddStructureRuleArgs> {
                     type: "boolean",
                     description: "Whether this schema object cannot be used any longer",
                 })
-                .option("superiorStructureRule", {
-                    alias: "s",
+                .option("friend", {
+                    alias: "f",
                     type: "array",
-                    number: true,
-                    description: "A superior structure rule this structure rule may have. If none are specified, this structure rule applies to the subschema administrative point.",
+                    string: true,
+                    description: "Dot-delimited object identifier of an attribute type that is a friend of the anchor",
                 })
+                .demandOption("friend")
                 .help()
                 .strict()
                 ;

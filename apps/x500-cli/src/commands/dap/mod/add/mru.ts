@@ -22,28 +22,25 @@ import type {
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
 import type {
-    ModAddNameFormArgs,
-} from "../../../../yargs/dap_mod_add_nf";
+    ModAddMatchingRuleUseArgs,
+} from "../../../../yargs/dap_mod_add_mru";
 import {
-    nameForms,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+    matchingRuleUse,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
 import {
-    NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
-import {
-    NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+    MatchingRuleUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
 import { ObjectIdentifier } from "asn1-ts";
 
 export
-async function do_modify_add_nf (
+async function do_modify_add_mru (
     ctx: Context,
     conn: Connection,
-    argv: ModAddNameFormArgs,
+    argv: ModAddMatchingRuleUseArgs,
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object!);
-    const nf = new NameFormDescription(
-        ObjectIdentifier.fromString(argv.id!),
+    const mru = new MatchingRuleUseDescription(
+        ObjectIdentifier.fromString(argv.identifier!),
         argv.name?.map((n) => ({
             uTF8String: n,
         })),
@@ -53,19 +50,15 @@ async function do_modify_add_nf (
             }
             : undefined,
         argv.obsolete,
-        new NameFormInformation(
-            ObjectIdentifier.fromString(argv.subordinate!),
-            argv?.namingMandatories?.map(ObjectIdentifier.fromString) ?? [],
-            argv?.namingOptionals?.map(ObjectIdentifier.fromString),
-        )
+        argv.attribute.map(ObjectIdentifier.fromString),
     );
 
     const modifications: EntryModification[] = [
         {
             addValues: new Attribute(
-                nameForms["&id"],
+                matchingRuleUse["&id"],
                 [
-                    nameForms.encoderFor["&Type"]!(nf, DER),
+                    matchingRuleUse.encoderFor["&Type"]!(mru, DER),
                 ],
                 undefined,
             ),
@@ -100,4 +93,4 @@ async function do_modify_add_nf (
     }
 }
 
-export default do_modify_add_nf;
+export default do_modify_add_mru;

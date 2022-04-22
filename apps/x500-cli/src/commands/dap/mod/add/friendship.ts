@@ -22,28 +22,25 @@ import type {
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
 import type {
-    ModAddNameFormArgs,
-} from "../../../../yargs/dap_mod_add_nf";
+    ModAddFriendshipArgs,
+} from "../../../../yargs/dap_mod_add_friendship";
 import {
-    nameForms,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+    friends,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
 import {
-    NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
-import {
-    NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+    FriendsDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
 import { ObjectIdentifier } from "asn1-ts";
 
 export
-async function do_modify_add_nf (
+async function do_modify_add_friendship (
     ctx: Context,
     conn: Connection,
-    argv: ModAddNameFormArgs,
+    argv: ModAddFriendshipArgs,
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object!);
-    const nf = new NameFormDescription(
-        ObjectIdentifier.fromString(argv.id!),
+    const f = new FriendsDescription(
+        ObjectIdentifier.fromString(argv.anchor!),
         argv.name?.map((n) => ({
             uTF8String: n,
         })),
@@ -53,19 +50,15 @@ async function do_modify_add_nf (
             }
             : undefined,
         argv.obsolete,
-        new NameFormInformation(
-            ObjectIdentifier.fromString(argv.subordinate!),
-            argv?.namingMandatories?.map(ObjectIdentifier.fromString) ?? [],
-            argv?.namingOptionals?.map(ObjectIdentifier.fromString),
-        )
+        argv.friend?.map(ObjectIdentifier.fromString) ?? [],
     );
 
     const modifications: EntryModification[] = [
         {
             addValues: new Attribute(
-                nameForms["&id"],
+                friends["&id"],
                 [
-                    nameForms.encoderFor["&Type"]!(nf, DER),
+                    friends.encoderFor["&Type"]!(f, DER),
                 ],
                 undefined,
             ),
@@ -100,4 +93,4 @@ async function do_modify_add_nf (
     }
 }
 
-export default do_modify_add_nf;
+export default do_modify_add_friendship;

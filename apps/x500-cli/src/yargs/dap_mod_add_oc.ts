@@ -2,37 +2,39 @@ import type { Context } from "../types";
 import type { CommandModule } from "yargs";
 import bind from "../net/bind";
 import {
-    do_modify_add_nf as command,
-} from "../commands/dap/mod/add/nf";
+    do_modify_add_oc as command,
+} from "../commands/dap/mod/add/oc";
 import type { SchemaObjectArgs } from "../types";
 
-// NameFormDescription ::= SEQUENCE {
-//     identifier        NAME-FORM.&id,
+// ObjectClassDescription ::= SEQUENCE {
+//     identifier        OBJECT-CLASS.&id,
 //     name              SET SIZE (1..MAX) OF UnboundedDirectoryString OPTIONAL,
 //     description       UnboundedDirectoryString                      OPTIONAL,
 //     obsolete          BOOLEAN                                       DEFAULT FALSE,
-//     information  [0]  NameFormInformation,
+//     information  [0]  ObjectClassInformation,
 //     ... }
 
-//   NameFormInformation ::= SEQUENCE {
-//     subordinate        OBJECT-CLASS.&id,
-//     namingMandatories  SET OF ATTRIBUTE.&id,
-//     namingOptionals    SET SIZE (1..MAX) OF ATTRIBUTE.&id OPTIONAL,
+// ObjectClassInformation ::= SEQUENCE {
+//     subclassOf        SET SIZE (1..MAX) OF OBJECT-CLASS.&id OPTIONAL,
+//     kind              ObjectClassKind                       DEFAULT structural,
+//     mandatories  [3]  SET SIZE (1..MAX) OF ATTRIBUTE.&id    OPTIONAL,
+//     optionals    [4]  SET SIZE (1..MAX) OF ATTRIBUTE.&id    OPTIONAL,
 //     ... }
 
 export
-interface ModAddNameFormArgs extends SchemaObjectArgs {
+interface ModAddObjectClassArgs extends SchemaObjectArgs {
     object?: string;
-    id?: string;
-    subordinate?: string;
-    namingMandatories: string[];
-    namingOptionals?: string[];
+    identifier?: string;
+    subclassOf?: string[];
+    kind?: string;
+    mandatories?: string[];
+    optionals?: string[];
 }
 
 export // eslint-disable-next-line @typescript-eslint/ban-types
-function create (ctx: Context): CommandModule<{}, ModAddNameFormArgs> {
+function create (ctx: Context): CommandModule<{}, ModAddObjectClassArgs> {
     return {
-        command: "sr <object> <id> <subordinate>",
+        command: "oc <object> <identifier>",
         describe: "Add a name form to a subschema subentry",
         builder: (y) => {
             return y
@@ -40,13 +42,9 @@ function create (ctx: Context): CommandModule<{}, ModAddNameFormArgs> {
                     type: "string",
                     description: "The object to be modified",
                 })
-                .positional("id", {
+                .positional("identifier", {
                     type: "string",
-                    description: "The dot-delimited object identifier of the name form",
-                })
-                .positional("subordinate", {
-                    type: "string",
-                    description: "The dot-delimited object identifier of regulated structural object class",
+                    description: "The dot-delimited object identifier of the object class",
                 })
                 .option("name", {
                     type: "array",
@@ -61,20 +59,25 @@ function create (ctx: Context): CommandModule<{}, ModAddNameFormArgs> {
                     type: "boolean",
                     description: "Whether this schema object cannot be used any longer",
                 })
-                .option("namingMandatories", {
+                .option("subclassOf", {
+                    alias: "s",
+                    type: "array",
+                    string: true,
+                })
+                .option("kind", {
+                    alias: "k",
+                    type: "string",
+                })
+                .option("mandatories", {
                     alias: "m",
                     type: "array",
                     string: true,
-                    description: "The dot-delimited object identifier of an attribute type that MUST be present in the RDN for the regulated entry",
                 })
-                .option("namingOptionals", {
+                .option("optionals", {
                     alias: "o",
                     type: "array",
                     string: true,
-                    description: "The dot-delimited object identifier of an attribute type that MAY be present in the RDN for the regulated entry",
                 })
-                // It is not entirely clear that there MUST be at least one mandatory, but I would strongly think so.
-                .demandOption("namingMandatories")
                 .help()
                 .strict()
                 ;

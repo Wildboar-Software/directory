@@ -22,50 +22,37 @@ import type {
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
 import type {
-    ModAddNameFormArgs,
-} from "../../../../yargs/dap_mod_add_nf";
+    ModAddContentRuleArgs,
+} from "../../../../yargs/dap_mod_add_cr";
 import {
-    nameForms,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+    dITContentRules,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
 import {
-    NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
-import {
-    NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+    DITContentRuleDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
 import { ObjectIdentifier } from "asn1-ts";
 
 export
-async function do_modify_add_nf (
+async function do_modify_add_cr (
     ctx: Context,
     conn: Connection,
-    argv: ModAddNameFormArgs,
+    argv: ModAddContentRuleArgs,
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object!);
-    const nf = new NameFormDescription(
-        ObjectIdentifier.fromString(argv.id!),
-        argv.name?.map((n) => ({
-            uTF8String: n,
-        })),
-        argv.description
-            ? {
-                uTF8String: argv.description,
-            }
-            : undefined,
-        argv.obsolete,
-        new NameFormInformation(
-            ObjectIdentifier.fromString(argv.subordinate!),
-            argv?.namingMandatories?.map(ObjectIdentifier.fromString) ?? [],
-            argv?.namingOptionals?.map(ObjectIdentifier.fromString),
-        )
+    const cr = new DITContentRuleDescription(
+        ObjectIdentifier.fromString(argv.structuralObjectClass!),
+        argv.auxiliaries?.map(ObjectIdentifier.fromString),
+        argv.mandatory?.map(ObjectIdentifier.fromString),
+        argv.optional?.map(ObjectIdentifier.fromString),
+        argv.precluded?.map(ObjectIdentifier.fromString),
     );
 
     const modifications: EntryModification[] = [
         {
             addValues: new Attribute(
-                nameForms["&id"],
+                dITContentRules["&id"],
                 [
-                    nameForms.encoderFor["&Type"]!(nf, DER),
+                    dITContentRules.encoderFor["&Type"]!(cr, DER),
                 ],
                 undefined,
             ),
@@ -100,4 +87,4 @@ async function do_modify_add_nf (
     }
 }
 
-export default do_modify_add_nf;
+export default do_modify_add_cr;

@@ -22,28 +22,28 @@ import type {
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
 import type {
-    ModAddNameFormArgs,
-} from "../../../../yargs/dap_mod_add_nf";
+    ModAddContextUseRuleArgs,
+} from "../../../../yargs/dap_mod_add_cur";
 import {
-    nameForms,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+    dITContextUse,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
 import {
-    NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+    DITContextUseDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
 import {
-    NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+    DITContextUseInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
 import { ObjectIdentifier } from "asn1-ts";
 
 export
-async function do_modify_add_nf (
+async function do_modify_add_cur (
     ctx: Context,
     conn: Connection,
-    argv: ModAddNameFormArgs,
+    argv: ModAddContextUseRuleArgs,
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object!);
-    const nf = new NameFormDescription(
-        ObjectIdentifier.fromString(argv.id!),
+    const cur = new DITContextUseDescription(
+        ObjectIdentifier.fromString(argv.identifier!),
         argv.name?.map((n) => ({
             uTF8String: n,
         })),
@@ -53,19 +53,17 @@ async function do_modify_add_nf (
             }
             : undefined,
         argv.obsolete,
-        new NameFormInformation(
-            ObjectIdentifier.fromString(argv.subordinate!),
-            argv?.namingMandatories?.map(ObjectIdentifier.fromString) ?? [],
-            argv?.namingOptionals?.map(ObjectIdentifier.fromString),
-        )
+        new DITContextUseInformation(
+            argv.mandatoryContexts?.map(ObjectIdentifier.fromString),
+            argv.optionalContexts?.map(ObjectIdentifier.fromString),
+        ),
     );
-
     const modifications: EntryModification[] = [
         {
             addValues: new Attribute(
-                nameForms["&id"],
+                dITContextUse["&id"],
                 [
-                    nameForms.encoderFor["&Type"]!(nf, DER),
+                    dITContextUse.encoderFor["&Type"]!(cur, DER),
                 ],
                 undefined,
             ),
@@ -100,4 +98,4 @@ async function do_modify_add_nf (
     }
 }
 
-export default do_modify_add_nf;
+export default do_modify_add_cur;

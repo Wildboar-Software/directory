@@ -22,28 +22,34 @@ import type {
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
 import type {
-    ModAddNameFormArgs,
-} from "../../../../yargs/dap_mod_add_nf";
+    ModAddObjectClassArgs,
+} from "../../../../yargs/dap_mod_add_oc";
 import {
-    nameForms,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+    objectClasses,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/objectClasses.oa";
 import {
-    NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+    ObjectClassDescription,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassDescription.ta";
 import {
-    NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+    ObjectClassInformation,
+} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassInformation.ta";
 import { ObjectIdentifier } from "asn1-ts";
+import {
+    ObjectClassKind_abstract,
+    ObjectClassKind_auxiliary,
+    ObjectClassKind_structural,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+
 
 export
-async function do_modify_add_nf (
+async function do_modify_add_oc (
     ctx: Context,
     conn: Connection,
-    argv: ModAddNameFormArgs,
+    argv: ModAddObjectClassArgs,
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object!);
-    const nf = new NameFormDescription(
-        ObjectIdentifier.fromString(argv.id!),
+    const oc = new ObjectClassDescription(
+        ObjectIdentifier.fromString(argv.identifier!),
         argv.name?.map((n) => ({
             uTF8String: n,
         })),
@@ -53,19 +59,23 @@ async function do_modify_add_nf (
             }
             : undefined,
         argv.obsolete,
-        new NameFormInformation(
-            ObjectIdentifier.fromString(argv.subordinate!),
-            argv?.namingMandatories?.map(ObjectIdentifier.fromString) ?? [],
-            argv?.namingOptionals?.map(ObjectIdentifier.fromString),
-        )
+        new ObjectClassInformation(
+            argv.subclassOf?.map(ObjectIdentifier.fromString),
+            ({
+                structural: ObjectClassKind_structural,
+                auxiliary: ObjectClassKind_auxiliary,
+                abstract: ObjectClassKind_abstract,
+            })[argv.kind ?? ""] ?? ObjectClassKind_structural,
+            argv.mandatories?.map(ObjectIdentifier.fromString),
+            argv.optionals?.map(ObjectIdentifier.fromString),
+        ),
     );
-
     const modifications: EntryModification[] = [
         {
             addValues: new Attribute(
-                nameForms["&id"],
+                objectClasses["&id"],
                 [
-                    nameForms.encoderFor["&Type"]!(nf, DER),
+                    objectClasses.encoderFor["&Type"]!(oc, DER),
                 ],
                 undefined,
             ),
@@ -100,4 +110,4 @@ async function do_modify_add_nf (
     }
 }
 
-export default do_modify_add_nf;
+export default do_modify_add_oc;

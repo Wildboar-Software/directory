@@ -26,7 +26,12 @@ import dap_add_device from "./yargs/dap_add_device";
 import dap_add_dmd from "./yargs/dap_add_dmd";
 import dap_mod_add_acs from "./yargs/dap_mod_add_acs";
 import dap_mod_add_aci from "./yargs/dap_mod_add_aci";
+import dap_mod_add_cr from "./yargs/dap_mod_add_cr";
+import dap_mod_add_cur from "./yargs/dap_mod_add_cur";
+import dap_mod_add_friendship from "./yargs/dap_mod_add_friendship";
+import dap_mod_add_mru from "./yargs/dap_mod_add_mru";
 import dap_mod_add_nf from "./yargs/dap_mod_add_nf";
+import dap_mod_add_oc from "./yargs/dap_mod_add_oc";
 import dap_mod_add_sr from "./yargs/dap_mod_add_sr";
 import dap_mod_become_admpoint from "./yargs/dap_mod_become_admpoint";
 import dap_mod_become_collectivesub from "./yargs/dap_mod_become_collectivesub";
@@ -141,7 +146,12 @@ async function main () {
                                 addYargs
                                     .command(dap_mod_add_aci(ctx))
                                     .command(dap_mod_add_acs(ctx))
+                                    .command(dap_mod_add_cr(ctx))
+                                    .command(dap_mod_add_cur(ctx))
+                                    .command(dap_mod_add_friendship(ctx))
+                                    .command(dap_mod_add_mru(ctx))
                                     .command(dap_mod_add_nf(ctx))
+                                    .command(dap_mod_add_oc(ctx))
                                     .command(dap_mod_add_sr(ctx))
                                     .demandCommand();
                             })
