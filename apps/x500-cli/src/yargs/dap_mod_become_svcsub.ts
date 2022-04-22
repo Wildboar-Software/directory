@@ -17,7 +17,12 @@ interface BecomeServiceSubentryArgs {
     resultAttribute?: string[];
     familyGrouping?: string;
     familyReturn?: string;
+    familySelect?: string[];
     additionalControl?: string[];
+    allowedSubset?: string[];
+    imposedSubset?: string;
+    entryLimitDefault?: number;
+    entryLimitMax?: number;
 }
 
 export // eslint-disable-next-line @typescript-eslint/ban-types
@@ -86,10 +91,43 @@ function create (ctx: Context): CommandModule<{}, BecomeServiceSubentryArgs> {
                     ],
                     description: "The type of familyReturn to use"
                 })
+                .option("familySelect", {
+                    type: "array",
+                    string: true,
+                })
                 .option("additionalControl", {
                     alias: "a",
                     type: "array",
                     string: true,
+                })
+                .option("allowedSubset", {
+                    type: "array",
+                    string: true,
+                    // These enum values come from LDAP URLs.
+                    choices: [
+                        "base",
+                        "one",
+                        "sub",
+                    ],
+                    description: "The search subsets the user is permitted to use"
+                })
+                .option("imposedSubset", {
+                    type: "string",
+                    // These enum values come from LDAP URLs.
+                    choices: [
+                        "base",
+                        "one",
+                        "sub",
+                    ],
+                    description: "The search subsets the user is forced to use"
+                })
+                .option("entryLimitDefault", {
+                    alias: "l",
+                    type: "number"
+                })
+                .option("entryLimitMax", {
+                    alias: "x",
+                    type: "number"
                 })
                 .help()
                 .strict()

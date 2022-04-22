@@ -1,5 +1,5 @@
 import type { Connection, Context } from "../../../../types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import {
     modifyEntry,
@@ -51,6 +51,30 @@ import {
 import {
     searchRules,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/searchRules.oa";
+import {
+    EntryLimit,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/EntryLimit.ta";
+import {
+    ImposedSubset,
+    ImposedSubset_baseObject,
+    ImposedSubset_oneLevel,
+    ImposedSubset_wholeSubtree,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/ImposedSubset.ta";
+import type {
+    Refinement,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+import type {
+    AttributeCombination,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/AttributeCombination.ta";
+import {
+    FamilyReturn_memberSelect,
+    FamilyReturn_memberSelect_contributingEntriesOnly,
+    FamilyReturn_memberSelect_participatingEntriesOnly,
+    FamilyReturn_memberSelect_compoundEntry,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
+import {
+    FamilyReturn,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
 
 function familyGroupingFromString (str: string): FamilyGrouping {
     switch (str.trim().toLowerCase()) {
@@ -62,6 +86,48 @@ function familyGroupingFromString (str: string): FamilyGrouping {
     }
 }
 
+function familyReturnFromString (str: string): FamilyReturn_memberSelect {
+    switch (str.trim().toLowerCase()) {
+        case ("contributing"): return FamilyReturn_memberSelect_contributingEntriesOnly;
+        case ("participating"): return FamilyReturn_memberSelect_participatingEntriesOnly;
+        case ("compound"): return FamilyReturn_memberSelect_compoundEntry;
+        default: return FamilyReturn_memberSelect_contributingEntriesOnly;
+    }
+}
+
+function subsetFromString (str: string): ImposedSubset | undefined {
+    switch (str.trim().toLowerCase()) {
+        case ("base"): return ImposedSubset_baseObject;
+        case ("one"): return ImposedSubset_oneLevel;
+        case ("sub"): return ImposedSubset_wholeSubtree;
+        default: return undefined;
+    }
+}
+
+function attrComboFromRefinement (ref: Refinement): AttributeCombination {
+    if ("item" in ref) {
+        return {
+            attribute: ref.item,
+        };
+    } else if ("and" in ref) {
+        return {
+            and: ref.and.map(attrComboFromRefinement),
+        };
+    } else if ("or" in ref) {
+        return {
+            or: ref.or.map(attrComboFromRefinement),
+        };
+    } else if ("not" in ref) {
+        return {
+            not: attrComboFromRefinement(ref.not),
+        };
+    } else { // Not understood alternative. Ignored.
+        return {
+            and: [],
+        };
+    }
+}
+
 export
 async function do_modify_become_svcsub (
     ctx: Context,
@@ -70,7 +136,7 @@ async function do_modify_become_svcsub (
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object!);
     const attributeCombination = argv.attributeCombination
-        ? lexRefinement(argv.attributeCombination).refinement
+        ? attrComboFromRefinement(lexRefinement(argv.attributeCombination).refinement)
         : undefined;
     const sr = new SearchRuleDescription(
         argv.id!,
@@ -88,7 +154,7 @@ async function do_modify_become_svcsub (
             undefined,
             undefined,
         )),
-        undefined, // attributeCombination, // FIXME:
+        attributeCombination,
         argv.resultAttribute?.map((attr) => new ResultAttribute(
             ObjectIdentifier.fromString(attr),
             undefined,
@@ -100,12 +166,36 @@ async function do_modify_become_svcsub (
         argv.familyGrouping
             ? familyGroupingFromString(argv.familyGrouping)
             : undefined,
-        undefined, // TODO: familyReturn
+        argv.familyReturn
+            ? new FamilyReturn(
+                familyReturnFromString(argv.familyReturn),
+                argv.familySelect?.map(ObjectIdentifier.fromString),
+            )
+            : undefined,
         undefined,
         argv.additionalControl?.map(ObjectIdentifier.fromString),
-        undefined,
-        undefined,
-        undefined,
+        argv.allowedSubset
+            ? (() => {
+                const ret = new Uint8ClampedArray(3);
+                argv.allowedSubset.forEach((subset) => {
+                    const bit = subsetFromString(subset);
+                    if (bit === undefined) {
+                        return;
+                    }
+                    ret[bit] = TRUE_BIT;
+                });
+                return ret;
+            })()
+            : undefined, // allowedSubset
+        argv.imposedSubset
+            ? subsetFromString(argv.imposedSubset)
+            : undefined,
+        argv.entryLimitDefault
+            ? new EntryLimit(
+                argv.entryLimitDefault,
+                argv.entryLimitMax ?? argv.entryLimitDefault,
+            )
+            : undefined,
         argv.name
             ? [
                 {
