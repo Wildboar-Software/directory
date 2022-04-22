@@ -29,6 +29,7 @@ import dap_mod_become_collectivesub from "./yargs/dap_mod_become_collectivesub";
 import dap_mod_become_pwdsub from "./yargs/dap_mod_become_pwdsub";
 import dap_mod_become_subschema from "./yargs/dap_mod_become_subschema";
 import dap_mod_become_svcsub from "./yargs/dap_mod_become_svcsub";
+import dap_mod_become_acsub from "./yargs/dap_mod_become_acsub";
 import dap_search from "./yargs/dap_search";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
@@ -134,6 +135,7 @@ async function main () {
                         addYargs
                             .command("become", "Add an auxiliary object class or administrative role", (becomeYargs) => {
                                 becomeYargs
+                                    .command(dap_mod_become_acsub(ctx))
                                     .command(dap_mod_become_admpoint(ctx))
                                     .command(dap_mod_become_collectivesub(ctx))
                                     .command(dap_mod_become_pwdsub(ctx))
