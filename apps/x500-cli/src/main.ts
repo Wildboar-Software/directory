@@ -26,6 +26,7 @@ import dap_add_device from "./yargs/dap_add_device";
 import dap_add_dmd from "./yargs/dap_add_dmd";
 import dap_mod_add_acs from "./yargs/dap_mod_add_acs";
 import dap_mod_add_aci from "./yargs/dap_mod_add_aci";
+import dap_mod_add_nf from "./yargs/dap_mod_add_nf";
 import dap_mod_add_sr from "./yargs/dap_mod_add_sr";
 import dap_mod_become_admpoint from "./yargs/dap_mod_become_admpoint";
 import dap_mod_become_collectivesub from "./yargs/dap_mod_become_collectivesub";
@@ -140,6 +141,7 @@ async function main () {
                                 addYargs
                                     .command(dap_mod_add_aci(ctx))
                                     .command(dap_mod_add_acs(ctx))
+                                    .command(dap_mod_add_nf(ctx))
                                     .command(dap_mod_add_sr(ctx))
                                     .demandCommand();
                             })
