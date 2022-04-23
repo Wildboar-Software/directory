@@ -65,6 +65,40 @@ After the database migration is complete, you can run Meerkat DSA with a
 database account having just create + read + update + delete permissions for
 the database.
 
+#### Bitnami Helm Chart
+
+One of the easiest ways to get a MySQL instance ready to go in a Kubernetes
+cluster is the
+[Bitnami Helm chart](https://artifacthub.io/packages/helm/bitnami/mysql).
+
+Here is one way to do this:
+
+Run this command to create a secret in Kubernetes:
+
+```bash
+kubectl create secret generic <your secret name> \
+  --from-literal=mysql-root-password=<your root password> \
+  --from-literal=mysql-replication-password=<your rep password> \
+  --from-literal=mysql-password=<your other password> \
+  --namespace=<your namespace>
+```
+
+Add the Bitnami Helm repo via this command:
+
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+
+Finally, install MySQL from the Bitnami Helm repo via this command:
+
+```bash
+helm install <your database name> bitnami/mysql \
+  --set auth.existingSecret=<your secret name> \
+  --set auth.database=directory \
+  --atomic \
+  --namespace=<your namespace>
+```
+
 ### Configuration
 
 Meerkat DSA is configured through environment variables. These environment
@@ -161,12 +195,14 @@ also have a Kubernetes cluster running.
 
 :::tip
 
-Note that you do not necessarily have to run the official Kubernetes control
+Note that you do not have to run the official Kubernetes control
 plane. There are plenty of other great alternatives such as K3s, Microk8s, and
 Minikube, all of which should work, and some of which are more suitable for
 lower-powered devices.
 
 :::
+
+If you haven't [set up the database](#database), by now, do so.
 
 When you have `helm` installed, a Kubernetes cluster up and running, and you
 have authenticated to the cluster, you need to define a Kubernetes secret that
@@ -205,7 +241,16 @@ run these commands to deploy Meerkat DSA:
    `<release-name>` with any name you choose for your Meerkat DSA deployment,
    and replace the `...` with any other command arguments you need to supply to
    Helm to customize your deployment. At a minimum, you may want to append
-   `--set databaseSecretName=<your database secret name>`.
+   `--set databaseSecretName=<your database secret name>`. If you want your
+   instance to be publicly accessible, add `--set service.type=LoadBalancer` to
+   that command.
+
+If you want access to the web admin console, add
+`--set dangerouslyExposeWebAdmin=true`
+to the command above, but beware that the admin console does not provide any
+authentication or security, and grants full administrative access. You will
+almost certainly want to put the admin console behind a reverse HTTP proxy that
+requires authentication and TLS.
 
 You can see example deployments to Kubernetes clusters in Bash scripts
 [here](https://github.com/Wildboar-Software/directory/blob/master/scripts/publish.sh)

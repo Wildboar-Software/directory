@@ -31,7 +31,7 @@ function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
                 })
                 .option("userPassword", {
                     type: "string",
-                    description: "The password for the organization",
+                    description: "The password for the person",
                 })
                 .option("description", {
                     type: "array",

@@ -21,7 +21,7 @@ import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts";
 export // eslint-disable-next-line @typescript-eslint/ban-types
 function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
     return {
-        command: "orgrole <object>",
+        command: "or <object>",
         describe: "Add an organizational role",
         builder: (yargs) => {
             return add_common_add_opts(yargs

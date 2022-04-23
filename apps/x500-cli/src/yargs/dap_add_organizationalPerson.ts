@@ -7,7 +7,7 @@ import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts";
 export // eslint-disable-next-line @typescript-eslint/ban-types
 function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
     return {
-        command: "orgperson <object>",
+        command: "op <object>",
         describe: "Add an organizational person",
         builder: (yargs) => {
             return add_common_add_opts(yargs
@@ -98,7 +98,8 @@ function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
                     type: "array",
                     description: "The title of the person within the organization",
                 })
-                .demandOption("countryName")
+                .demandOption("commonName")
+                .demandOption("surname")
                 .help()
                 ;
         },
