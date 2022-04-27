@@ -1,29 +1,24 @@
 import type { Context } from "./types";
 import * as fs from "fs/promises";
-import * as path from "path";
-import * as os from "os";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 import * as yml from "js-yaml";
 import validator from "./configValidator";
+import { CONFIG_FILE_LOCATIONS } from "./configFileLocations";
 
-const CONFIG_FILE_BASE_NAME: string = "directory";
-
-const CONFIG_FILE_LOCATIONS: string[] = [
-    path.join(os.homedir(), ".config", `${CONFIG_FILE_BASE_NAME}.yaml`),
-    path.join(os.homedir(), ".config", `${CONFIG_FILE_BASE_NAME}.yml`),
-    path.join(os.homedir(), ".config", `${CONFIG_FILE_BASE_NAME}.json`),
-    path.join(os.homedir(), ".config", `${CONFIG_FILE_BASE_NAME}.yaml`),
-];
-
-const platform = os.platform();
-if (
-    (platform === "darwin")
-    || (platform === "linux")
-) {
-    CONFIG_FILE_LOCATIONS.push(`/etc/${CONFIG_FILE_BASE_NAME}.yaml`);
-    CONFIG_FILE_LOCATIONS.push(`/etc/${CONFIG_FILE_BASE_NAME}.yml`);
-    CONFIG_FILE_LOCATIONS.push(`/etc/${CONFIG_FILE_BASE_NAME}.json`);
-}
+export
+const DEFAULT_CONFIGURATION_FILE: string = `apiVersion: v1.0.0
+kind: X500ClientConfig
+metadata:
+  name: main
+  labels:
+    client: x500-cli
+  annotations:
+    createTime: !!str ${new Date().toISOString()}
+preference-profiles: []
+dsas: []
+credentials: []
+contexts: []
+`;
 
 export
 async function getConfig (ctx: Context): Promise<X500ClientConfig | null> {

@@ -48,7 +48,9 @@ async function createConnection (
     const accessPoints: ConfigAccessPoint[] = (typeof argv.accessPoint === "string")
     ? [
         {
-            url: argv.accessPoint,
+            urls: [
+                argv.accessPoint,
+            ],
         },
     ]
     : dsa?.accessPoints ?? [];
@@ -60,7 +62,8 @@ async function createConnection (
     for (const accessPoint of accessPoints) {
         const bindDN = argv.bindDN ?? "";
         try {
-            const connection = await connect(ctx, accessPoint.url, bindDN, password);
+            // TODO: Iterate over URLs.
+            const connection = await connect(ctx, accessPoint.urls[0], bindDN, password);
             if (!connection) {
                 ctx.log.warn(`Could not create connection to this access point: ${accessPoint.url}.`);
                 continue;

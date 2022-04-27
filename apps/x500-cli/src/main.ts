@@ -1,4 +1,5 @@
 import yargs from "yargs/yargs";
+import type { Argv } from "yargs";
 import ctx from "./ctx";
 import loadAttributeTypes from "./utils/loadAttributeTypes";
 import loadObjectClasses from "./utils/loadObjectClasses";
@@ -42,7 +43,70 @@ import dap_mod_become_acsub from "./yargs/dap_mod_become_acsub";
 import dap_search from "./yargs/dap_search";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
-import getConfig from "./getConfig";
+import getConfig, { DEFAULT_CONFIGURATION_FILE } from "./getConfig";
+import { PREFERRED_CONFIG_FILE_LOCATION } from "./configFileLocations";
+import * as fs from "fs/promises";
+import { strict as assert } from "assert";
+import type { ConfigAccessPoint } from "@wildboar/x500-cli-config";
+import { saveConfig } from "./saveConfig";
+import MutableWriteable from "./utils/MutableWriteable";
+import * as readline from "readline";
+
+export
+interface ProtocolArgs {
+    bindDN?: string;
+    password?: string;
+    passwordFile?: string;
+    promptPassword?: boolean;
+    accessPoint?: string;
+    noTLS?: boolean;
+    verbose?: boolean;
+}
+
+function add_protocol_args (args: Argv): Argv<ProtocolArgs> {
+    return args
+        // TODO: Move these inside of DAP, DOP, DSP, DISP, MMP, and seed-countries
+        .option("bindDN", {
+            alias: "D",
+            type: "string",
+            description: "The distinguished name with which to bind.",
+        })
+        .option("password", {
+            alias: "W",
+            type: "string",
+            description: "The clear-text password. (Be careful. Your command history may be saved or logged.)",
+        })
+        .option("passwordFile", {
+            alias: "Y",
+            type: "string",
+            description: "The path to a file containing the clear-text bind password, which does not have to be UTF-8 encoded.",
+        })
+        .option("promptPassword", {
+            alias: "P",
+            type: "boolean",
+            description: "Whether to interactively prompt for the bind password.",
+        })
+        .option("accessPoint", {
+            alias: "H",
+            type: "string",
+            description: "The URL of the access point. (Must start with idm:// or idms://.)",
+        })
+        .option("noTLS", {
+            alias: "Z",
+            type: "boolean",
+            description: "If TRUE, fails if TLS URL is used and prevents automatic StartTLS.",
+            default: false,
+        })
+        .option("verbose", {
+            alias: "V",
+            type: "boolean",
+            description: "Verbose output",
+        });
+}
+
+function createConfigurationFile () {
+    return fs.writeFile(PREFERRED_CONFIG_FILE_LOCATION, DEFAULT_CONFIGURATION_FILE);
+}
 
 async function main () {
     loadLDAPSyntaxes(ctx);
@@ -53,19 +117,8 @@ async function main () {
     try {
         yargs(process.argv.slice(2))
             .scriptName("x500")
-            .command("seed-countries <base>", "seed directory with countries", (seedYargs) => {
-                return seedYargs
-                    .positional("base", {
-                        describe: "The base object under which to place the countries.",
-                    })
-                    ;
-            }, async (argv) => {
-                const connection = await bind(ctx, argv);
-                await do_seedCountries(ctx, connection, argv);
-                await connection.close();
-            })
             .command("dap", "Directory Access Protocol", (dapYargs) => {
-                dapYargs
+                add_protocol_args(dapYargs)
                     .command("add", "Add an entry", (addYargs) => {
                         addYargs
                             .command(dap_add_subentry(ctx))
@@ -204,58 +257,267 @@ async function main () {
                     .command(dap_search(ctx))
                     .demandCommand()
             })
-            .option("bindDN", {
-                alias: "D",
-                type: "string",
-                description: "The distinguished name with which to bind.",
+            .command("seed-countries <base>", "seed directory with countries", (seedYargs) => {
+                return seedYargs
+                    .positional("base", {
+                        describe: "The base object under which to place the countries.",
+                    })
+                    ;
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_seedCountries(ctx, connection, argv);
+                await connection.close();
             })
-            .option("password", {
-                alias: "W",
-                type: "string",
-                description: "The clear-text password. (Be careful. Your command history may be saved or logged.)",
-            })
-            .option("passwordFile", {
-                alias: "Y",
-                type: "string",
-                description: "The path to a file containing the clear-text bind password, which does not have to be UTF-8 encoded.",
-            })
-            .option("promptPassword", {
-                alias: "P",
-                type: "boolean",
-                description: "Whether to interactively prompt for the bind password.",
-            })
-            .option("accessPoint", {
-                alias: "H",
-                type: "string",
-                description: "The URL of the access point. (Must start with idm:// or idms://.)",
-            })
-            .option("noTLS", {
-                alias: "Z",
-                type: "boolean",
-                description: "If TRUE, fails if TLS URL is used and prevents automatic StartTLS.",
-                default: false,
-            })
-            .option("verbose", {
-                alias: "V",
-                type: "boolean",
-                description: "Verbose output",
+            .command("config", "Configuration", (configYargs) => {
+                configYargs
+                    .command(
+                        "init",
+                        "Initialize an X.500 configuration file (directory.yaml) on your system",
+                        () => {},
+                        createConfigurationFile,
+                    )
+                    .command("add", "Add something to the X.500 configuration file", (addYargs) => {
+                        return addYargs
+                            .command("dsa <name>", "Add a DSA to the X.500 configuration file", (dsaYargs) => {
+                                return dsaYargs
+                                    .positional("name", {
+                                        type: "string",
+                                        description: "A case-sensitive name for the DSA",
+                                    })
+                                    .option("accessPoint", {
+                                        alias: "a",
+                                        type: "array",
+                                        string: true,
+                                        description: "Comma-separated access point URLs, optionally preceded by 'master', 'shadow', or 'wcopy' and a colon to indicate the category. e.g. shadow:idms://dsa01.example.com:109,ldap://dsa01.example.com:389",
+                                    })
+                                    .demandOption("name")
+                                    .demandOption("accessPoint")
+                                    ;
+                            }, async (dsaYargs) => {
+                                if (!ctx.config) {
+                                    ctx.log.warn("There is no configuration file to be edited. Creating one.");
+                                    await createConfigurationFile();
+                                    ctx.config = await getConfig(ctx);
+                                }
+                                assert(ctx.config);
+                                ctx.config.dsas.push({
+                                    name: dsaYargs.name,
+                                    accessPoints: dsaYargs.accessPoint.map((a) => {
+                                        const category: string | undefined = Object.entries({
+                                            "master:": "master",
+                                            "shadow:": "shadow",
+                                            "wcopy:": "writeableCopy",
+                                        }).find(([ prefix, ]) => a.startsWith(prefix))?.[1];
+                                        const urlStrings = (category === undefined)
+                                            ? a.split(",")
+                                            : a.slice(a.indexOf(":") + 1).split(",");
+                                        const urls = urlStrings.map((str) => new URL(str));
+                                        for (const url of urls) {
+                                            if (url.username || url.password) {
+                                                console.warn("You supplied a username and password via a URL, but these will be ignored.");
+                                            }
+                                        }
+                                        return {
+                                            category,
+                                            urls: urlStrings,
+                                        };
+                                    }) as [ConfigAccessPoint, ...ConfigAccessPoint[]],
+                                });
+                                await saveConfig(ctx.config);
+                            })
+                            .command("pref <name>", "Add a preference profile to the X.500 configuration file", (prefYargs) => {
+                                return prefYargs
+                                    .positional("name", {
+                                        type: "string",
+                                        description: "A case-sensitive name for the preference profile",
+                                    })
+                                    .option("logLevel", {
+                                        alias: "l",
+                                        type: "string",
+                                        choices: [
+                                            "debug",
+                                            "info",
+                                            "warn",
+                                            "error",
+                                            "silent",
+                                        ],
+                                        description: "The logging level of the client",
+                                    })
+                                    .option("sizeLimit", {
+                                        alias: "s",
+                                        type: "number",
+                                        description: "A positive integer; the default sizeLimit supplied in search` or `list operations",
+                                    })
+                                    .option("timeLimit", {
+                                        alias: "t",
+                                        type: "number",
+                                        description: "A positive integer; the default timeLimit supplied in directory operations",
+                                    })
+                                    .option("attributeSizeLimit", {
+                                        alias: "a",
+                                        type: "number",
+                                        description: "A positive integer; the default attributeSizeLimit supplied in directory operations.",
+                                    })
+                                    .option("readOnly", {
+                                        alias: "r",
+                                        type: "boolean",
+                                        description: "A boolean indicating whether no write operations should be permitted",
+                                    })
+                                    .option("disable-start-tls", {
+                                        alias: "d",
+                                        type: "boolean",
+                                        description: "A boolean indicating whether the client should refrain from upgrading the connection security via StartTLS",
+                                    })
+                                    .option("callingAETitle", {
+                                        alias: "c",
+                                        type: "string",
+                                        description: "The distinguished name of the calling application entity (AE) title, as used by IDM and ISO transports",
+                                    })
+                                    .option("other", {
+                                        alias: "x",
+                                        type: "array",
+                                        string: true,
+                                        description: "Key=value pairs for other values that should appear in the configuration file. Value will always be a string."
+                                    })
+                                    .demandOption("name")
+                                    ;
+                            }, async (prefYargs) => {
+                                if (!ctx.config) {
+                                    ctx.log.warn("There is no configuration file to be edited. Creating one.");
+                                    await createConfigurationFile();
+                                    ctx.config = await getConfig(ctx);
+                                }
+                                assert(ctx.config);
+                                ctx.config["preference-profiles"] = ctx.config["preference-profiles"] ?? [];
+                                ctx.config["preference-profiles"].push({
+                                    name: prefYargs.name,
+                                    logLevel: prefYargs.logLevel,
+                                    sizeLimit: prefYargs.sizeLimit,
+                                    timeLimit: prefYargs.timeLimit,
+                                    attributeSizeLimit: prefYargs.attributeSizeLimit,
+                                    readOnly: prefYargs.readOnly,
+                                    ["disable-start-tls"]: prefYargs["disable-start-tls"],
+                                    callingAETitle: prefYargs.callingAETitle,
+                                    ...Object.fromEntries((prefYargs.other ?? [])
+                                        .map((o) => [ o.slice(0, o.indexOf("=")), o.slice(o.indexOf("=") + 1) ])),
+                                });
+                                await saveConfig(ctx.config);
+                            })
+                            .command("cred", "Add a credential to the X.500 configuration file", (credYargs) => {
+                                return credYargs
+                                    .command("simple <name> <binddn>", "Add a simple credential", (simpleYargs) => {
+                                        return simpleYargs
+                                            .positional("name", {
+                                                type: "string",
+                                                description: "A case-sensitive name for the credential",
+                                            })
+                                            .positional("binddn", {
+                                                type: "string",
+                                                description: "The bind distinguished name",
+                                            })
+                                            .option("password", {
+                                                alias: "p",
+                                                type: "boolean",
+                                                description: "Prompt for a password",
+                                            })
+                                            .demandOption("name")
+                                            .demandOption("binddn")
+                                            ;
+                                    }, async (simpleYargs) => {
+                                        if (!ctx.config) {
+                                            ctx.log.warn("There is no configuration file to be edited. Creating one.");
+                                            await createConfigurationFile();
+                                            ctx.config = await getConfig(ctx);
+                                        }
+                                        assert(ctx.config);
+                                        if (simpleYargs.password) {
+                                            const mutedOut = new MutableWriteable();
+                                            const rl = readline.createInterface({
+                                                input: process.stdin,
+                                                output: mutedOut,
+                                                terminal: true,
+                                            });
+                                            rl.question("Password: ", async (answer: string): Promise<void> => {
+                                                console.log();
+                                                ctx.config!.credentials.push({
+                                                    name: simpleYargs.name,
+                                                    credential: {
+                                                        type: "simple",
+                                                        name: simpleYargs.binddn,
+                                                        password: {
+                                                            unprotected: answer,
+                                                        },
+                                                    },
+                                                });
+                                                rl.close();
+                                                await saveConfig(ctx.config!);
+                                            });
+                                            mutedOut.muted = true;
+                                        } else {
+                                            ctx.config.credentials.push({
+                                                name: simpleYargs.name,
+                                                credential: {
+                                                    type: "simple",
+                                                    name: simpleYargs.binddn,
+                                                },
+                                            });
+                                            await saveConfig(ctx.config);
+                                        }
+                                    })
+                                    .demandCommand();
+                            })
+                            .command("context <name>", "Add a context to the X.500 configuration file", (ctxtYargs) => {
+                                return ctxtYargs
+                                    .positional("name", {
+                                        type: "string",
+                                        description: "A case-sensitive name for the context",
+                                    })
+                                    .option("pref", {
+                                        alias: "p",
+                                        type: "string",
+                                        description: "The case-sensitive name of the preference profile to use for this context",
+                                    })
+                                    .option("dsa", {
+                                        alias: "d",
+                                        type: "string",
+                                        description: "The case-sensitive name of the DSA to use for this context"
+                                    })
+                                    .option("cred", {
+                                        alias: "c",
+                                        type: "string",
+                                        description: "The case-sensitive name of the credential to use for this context"
+                                    })
+                                    .demandOption("name")
+                                    .demandOption("dsa")
+                                    ;
+                            }, async (ctxtYargs) => {
+                                if (!ctx.config) {
+                                    ctx.log.warn("There is no configuration file to be edited. Creating one.");
+                                    await createConfigurationFile();
+                                    ctx.config = await getConfig(ctx);
+                                }
+                                assert(ctx.config);
+                                ctx.config.contexts.push({
+                                    name: ctxtYargs.name,
+                                    context: {
+                                        dsa: ctxtYargs.dsa,
+                                        credential: ctxtYargs.cred,
+                                        preferences: ctxtYargs.pref,
+                                    },
+                                });
+                                await saveConfig(ctx.config);
+                            })
+                            .demandCommand();
+                    })
+                    // .command("rm", "Remove something from the configuration file", (rmYargs) => {
+
+                    // })
+                    .demandCommand()
+                    ;
             })
             .demandCommand()
             .help()
             .wrap(100)
-            // .completion("completion", (current: string, argv: any) => {
-            //     return [
-            //         "add",
-            //         "apw",
-            //         "cpw",
-            //         "compare",
-            //         "list",
-            //         "mod",
-            //         "moddn",
-            //         "read",
-            //         "search",
-            //     ];
-            // })
             .argv // This is a getter, and calling it is necessary to get yargs to run.
             ;
     } catch (e) {

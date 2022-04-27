@@ -32,12 +32,12 @@ export interface X500ClientConfig {
   kind: "X500ClientConfig";
   metadata: Metadata;
   "current-context"?: string;
-  preferences?: {
+  "preference-profiles"?: {
     [k: string]: unknown;
-  };
-  dsas: [ConfigDSA, ...ConfigDSA[]];
+  }[];
+  dsas: ConfigDSA[];
   credentials: ConfigCredential[];
-  contexts: [ConfigContext, ...ConfigContext[]];
+  contexts: ConfigContext[];
   [k: string]: unknown;
 }
 /**
@@ -69,7 +69,7 @@ export interface ConfigDSA {
  * via the `definition` "ConfigAccessPoint".
  */
 export interface ConfigAccessPoint {
-  url: string;
+  urls: [string, ...string[]];
   category?: "master" | "shadow" | "writeableCopy";
   "disable-start-tls"?: boolean;
   "insecure-skip-tls-verify"?: boolean;
@@ -90,6 +90,7 @@ export interface ConfigCredential {
  * via the `definition` "ConfigSimpleCredentials".
  */
 export interface ConfigSimpleCredentials {
+  type: "simple";
   name: DistinguishedName;
   password?: ConfigPassword;
   [k: string]: unknown;
@@ -119,7 +120,9 @@ export interface AlgorithmIdentifier {
  * via the `definition` "ConfigStrongCredentials".
  */
 export interface ConfigStrongCredentials {
+  type: "strong";
   name?: DistinguishedName;
+  keyPath?: string;
   certPath?: string;
   attrCertPath?: string;
   [k: string]: unknown;
@@ -129,6 +132,7 @@ export interface ConfigStrongCredentials {
  * via the `definition` "ConfigSASLCredentials".
  */
 export interface ConfigSASLCredentials {
+  type: "sasl";
   [k: string]: unknown;
 }
 /**
@@ -137,10 +141,10 @@ export interface ConfigSASLCredentials {
  */
 export interface ConfigContext {
   name: string;
-  context?: {
+  context: {
     dsa: string;
     credential?: string;
-    readOnly?: boolean;
+    preferences?: string;
     [k: string]: unknown;
   };
   [k: string]: unknown;

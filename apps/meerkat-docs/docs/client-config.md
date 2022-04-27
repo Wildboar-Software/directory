@@ -17,7 +17,9 @@ case-sensitive, the file names should be lowercased, including the extensions.
 
 The X.500 configuration file should be serialized as YAML if its file name ends
 with the extensions `.yaml` or `yml`, and it should be serialized as JSON if
-its file name ends with the extension `.json`.
+its file name ends with the extension `.json`. Unless stated otherwise, the
+ordering of elements within arrays MUST be preserved. The ordering of elements
+within objects SHOULD be preserved.
 
 ## Versioning
 
@@ -56,6 +58,12 @@ distinguished name for LDAP, no such reversal should take place. In other words,
 incorrect.
 
 :::
+
+### Unique Naming
+
+Clients that edit the X.500 configuration file MUST ensure that all entries in
+`.preference-profiles`, `.dsas`, `.credentials`, and `.contexts` have `name`
+fields that are unique (case-sensitive) for those objects within those arrays.
 
 ## Data Structure
 
@@ -153,12 +161,12 @@ Here is a breakdown of what each field means.
 | `kind`                           | Always `X500ClientConfig`.                                                                     |
 | `metadata`                       | An object containing metadata about the configuration file.                                    |
 | `current-context`                | The case-sensitive name of the currently-selected context.                                     |
-| `preference-profiles`            | An array of preference profiles.                                                               |
-| `dsas`                           | An array of known Directory System Agents (DSAs).                                              |
-| `credentials`                    | An array of credentials.                                                                       |
-| `contexts`                       | An array of configuration contexts.                                                            |
+| `preference-profiles`            | An array of preference profiles. Ordering is not significant.                                  |
+| `dsas`                           | An array of known Directory System Agents (DSAs). Ordering is not significant.                 |
+| `credentials`                    | An array of credentials. Ordering is not significant.                                          |
+| `contexts`                       | An array of configuration contexts. Ordering is not significant.                               |
 | `dsas.*.name`                    | A case-sensitive name for a DSA only used within this configuration file.                      |
-| `dsas.*.accessPoints`            | An array of access points by which the DSA can be reached.                                     |
+| `dsas.*.accessPoints`            | An array of access points by which the DSA can be reached, in order of descending preference.  |
 | `dsas.*.accessPoints.*.urls`     | An array of URLs for accessing a given access point, listed in order of descending preference. |
 | `dsas.*.accessPoints.*.category` | `master`, `shadow`, or `writeableCopy` depending on what the DSA is.                           |
 | `credentials.*.name`             | A case-sensitive name for a credential.                                                        |
@@ -184,6 +192,7 @@ added in future versions of this configuration.
 | `attributeSizeLimit` | A positive integer; the default `attributeSizeLimit` supplied in directory operations.                      |
 | `readOnly`           | A boolean indicating whether no write operations should be permitted.                                       |
 | `disable-start-tls`  | A boolean indicating whether the client should refrain from upgrading the connection security via StartTLS. |
+| `callingAETitle`     | The distinguished name of the calling application entity (AE) title, as used by IDM and ISO transports.     |
 
 Note that some preferences may be overridden by command-line arguments or other
 options specified in a user interface. For instance, if the command explicitly
@@ -238,14 +247,29 @@ trusted root.
 
 Credentials of type `sasl` currently have an undefined syntax.
 
-### Creating and Editing
+## Creating and Editing
 
 X.500 clients may update the `current-context` field of this file. Since there
 may be multiple X.500 clients installed and used (even concurrently) on a
 system, there shall be no requirement for clients to use this field to determine
-which client they should access; client's MAY store the name of their
+which context they should use; client's MAY store the name of their
 currently-selected context elsewhere.
 
-- Read operations may prefer shadow DSAs.
-- The ordering does not matter.
-- `x500 config init`
+Consumers of this configuration file MUST NOT expect comments and other markup
+to be preserved. Programs MAY edit this file in a manner that creates, alters,
+or deletes comments, markup, and whitespace.
+
+## Usage
+
+When performing a non-modification operation, clients MAY attempt these
+operations on shadow or writeable copy access points from the list of access
+points for a DSA, ignoring master access points entirely on a first pass, but
+clients SHOULD still prefer access points that appear prior in the array to
+those that appear later.
+
+Any other concern notwithstanding, clients SHOULD attempt to prevent
+transmission of security-sensitive operations, such as `changePassword`, over
+unencrypted transports, or to at least remind users that an insecure transport
+is in use.
+
+TODO: Document calling-AE-title configuration.
