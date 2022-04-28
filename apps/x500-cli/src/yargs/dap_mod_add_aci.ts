@@ -37,6 +37,11 @@ interface ModAddACIItemArgs {
     // contexts
     classes?: string;
 
+    // This is not defined in the X.500 specifications. It is defined here
+    // because the X.500 specifications require that access to operational
+    // attributes get granted one-by-one.
+    allOperationalAttributeTypesAndValues?: boolean;
+
     // From GrantsAndDenials
     grantAdd?: boolean;
     denyAdd?: boolean;
@@ -167,6 +172,13 @@ function create (ctx: Context): CommandModule<{}, ModAddACIItemArgs> {
                 })
                 .option("classes", {
                     type: "string",
+                })
+                // This is not defined in the X.500 specifications. It is defined here
+                // because the X.500 specifications require that access to operational
+                // attributes get granted one-by-one.
+                .option("allOperationalAttributeTypesAndValues", {
+                    type: "boolean",
+                    description: "This ACI pertains to any and all operational attributes.",
                 })
                 .option("grantAdd", {
                     type: "boolean",

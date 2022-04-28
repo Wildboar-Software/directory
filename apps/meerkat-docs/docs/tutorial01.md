@@ -78,13 +78,12 @@ Access Control Information (ACI) items, which define our access control rules.
 The first one we should add establishes that the organization user (the
 administrator) can do anything within the organzation.
 
-FIXME: Add command that adds all operational attributes
-
 ```bash
 x500 dap mod add aci 'o=Foobar,cn=Access Control' prescriptive 'Organization administrator' 250 simple \
   --userName='o=Foobar' \
   --entry \
   --allUserAttributeTypesAndValues \
+  --allOperationalAttributeTypesAndValues \
   --grantAdd \
   --grantDiscloseOnError \
   --grantRead \

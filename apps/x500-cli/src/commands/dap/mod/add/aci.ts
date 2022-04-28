@@ -21,7 +21,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
-import { FALSE_BIT, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import { FALSE_BIT, ObjectIdentifier, TRUE_BIT, OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     ModAddACIItemArgs,
 } from "../../../../yargs/dap_mod_add_aci";
@@ -101,6 +101,88 @@ import {
 import type {
     ATTRIBUTE,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
+import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
+
+const ALL_OPERATIONAL_ATTRIBUTE_TYPES: OBJECT_IDENTIFIER[] = [
+    x500at.accessControlScheme["&id"],
+    x500at.accessControlSubentryList["&id"],
+    x500at.administrativeRole["&id"],
+    x500at.altServer["&id"],
+    x500at.attributeTypes["&id"],
+    x500at.consumerKnowledge["&id"],
+    x500at.contextAssertionDefaults["&id"],
+    x500at.contextDefaultSubentryList["&id"],
+    x500at.contextTypes["&id"],
+    x500at.createTimestamp["&id"],
+    x500at.creatorsName["&id"],
+    x500at.ditBridgeKnowledge["&id"],
+    x500at.dITContentRules["&id"],
+    x500at.dITContextUse["&id"],
+    x500at.dITStructureRules["&id"],
+    x500at.dseType["&id"],
+    x500at.entryACI["&id"],
+    x500at.family_information["&id"],
+    x500at.friends["&id"],
+    x500at.governingStructureRule["&id"],
+    x500at.hasSubordinates["&id"],
+    x500at.hierarchyBelow["&id"],
+    x500at.hierarchyLevel["&id"],
+    x500at.hierarchyParent["&id"],
+    x500at.hierarchyTop["&id"],
+    x500at.ldapSyntaxes["&id"],
+    x500at.matchingRules["&id"],
+    x500at.matchingRuleUse["&id"],
+    x500at.modifiersName["&id"],
+    x500at.modifyTimestamp["&id"],
+    x500at.myAccessPoint["&id"],
+    x500at.nameForms["&id"],
+    x500at.namingContexts["&id"],
+    x500at.nonSpecificKnowledge["&id"],
+    x500at.objectClasses["&id"],
+    x500at.prescriptiveACI["&id"],
+    x500at.pwdAdminSubentryList["&id"],
+    x500at.pwdAlphabet["&id"],
+    x500at.pwdAttribute["&id"],
+    x500at.pwdChangeAllowed["&id"],
+    x500at.pwdDictionaries["&id"],
+    x500at.pwdEncAlg["&id"],
+    x500at.pwdEndTime["&id"],
+    x500at.pwdExpiryAge["&id"],
+    x500at.pwdExpiryTime["&id"],
+    x500at.pwdExpiryWarning["&id"],
+    x500at.pwdFails["&id"],
+    x500at.pwdFailureDuration["&id"],
+    x500at.pwdFailureTime["&id"],
+    x500at.pwdGraces["&id"],
+    x500at.pwdGracesUsed["&id"],
+    x500at.pwdHistorySlots["&id"],
+    x500at.pwdLockoutDuration["&id"],
+    x500at.pwdMaxAge["&id"],
+    x500at.pwdMaxFailures["&id"],
+    x500at.pwdMaxTimeInHistory["&id"],
+    x500at.pwdMinLength["&id"],
+    x500at.pwdMinTimeInHistory["&id"],
+    x500at.pwdModifyEntryAllowed["&id"],
+    x500at.pwdRecentlyExpiredDuration["&id"],
+    x500at.pwdStartTime["&id"],
+    x500at.pwdVocabulary["&id"],
+    x500at.searchRules["&id"],
+    x500at.secondaryShadows["&id"],
+    x500at.serviceAdminSubentryList["&id"],
+    x500at.specificKnowledge["&id"],
+    x500at.structuralObjectClass["&id"],
+    x500at.subentryACI["&id"],
+    x500at.subschemaSubentryList["&id"],
+    x500at.subschemaTimestamp["&id"],
+    x500at.subtreeSpecification["&id"],
+    x500at.superiorKnowledge["&id"],
+    x500at.supplierKnowledge["&id"],
+    x500at.supportedControl["&id"],
+    x500at.supportedExtension["&id"],
+    x500at.supportedFeatures["&id"],
+    x500at.supportedLDAPVersion["&id"],
+    x500at.supportedSASLMechanisms["&id"],
+];
 
 function levelFromString (str: string): AuthenticationLevel_basicLevels_level {
     switch (str.trim().toLowerCase()) {
@@ -274,8 +356,18 @@ async function do_modify_add_aci (
                         new ProtectedItems(
                             argv.entry ? null : undefined,
                             argv.allUserAttributeTypes ? null : undefined,
-                            argv.attributeType?.map(ObjectIdentifier.fromString),
-                            argv.allAttributeValues?.map(ObjectIdentifier.fromString),
+                            argv.allOperationalAttributeTypesAndValues
+                                ? [
+                                    ...argv.attributeType?.map(ObjectIdentifier.fromString) ?? [],
+                                    ...ALL_OPERATIONAL_ATTRIBUTE_TYPES,
+                                ]
+                                : argv.attributeType?.map(ObjectIdentifier.fromString),
+                            argv.allOperationalAttributeTypesAndValues
+                                ? [
+                                    ...argv.allAttributeValues?.map(ObjectIdentifier.fromString) ?? [],
+                                    ...ALL_OPERATIONAL_ATTRIBUTE_TYPES,
+                                ]
+                                : argv.allAttributeValues?.map(ObjectIdentifier.fromString),
                             argv.allUserAttributeTypesAndValues ? null : undefined,
                             argv.attributeValue?.flatMap((str) => destringifyDN(ctx, str).flat()),
                             argv.selfValue?.map(ObjectIdentifier.fromString),
