@@ -12,6 +12,14 @@ import do_administerPassword from "./commands/dap/apw";
 import do_changePassword from "./commands/dap/cpw";
 import do_removeEntry from "./commands/dap/remove";
 import do_modifyDN from "./commands/dap/moddn";
+import config_add_pref from "./yargs/config_add_pref";
+import config_add_cred_simple from "./yargs/config_add_cred_simple";
+import config_add_dsa from "./yargs/config_add_dsa";
+import config_add_context from "./yargs/config_add_context";
+import config_rm_pref from "./yargs/config_rm_pref";
+import config_rm_cred from "./yargs/config_rm_cred";
+import config_rm_dsa from "./yargs/config_rm_dsa";
+import config_rm_context from "./yargs/config_rm_context";
 import dap_add_subentry from "./yargs/dap_add_subentry";
 import dap_add_country from "./yargs/dap_add_country";
 import dap_add_organization from "./yargs/dap_add_organization";
@@ -43,14 +51,12 @@ import dap_mod_become_acsub from "./yargs/dap_mod_become_acsub";
 import dap_search from "./yargs/dap_search";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
-import getConfig, { DEFAULT_CONFIGURATION_FILE } from "./getConfig";
-import { PREFERRED_CONFIG_FILE_LOCATION } from "./configFileLocations";
-import * as fs from "fs/promises";
-import { strict as assert } from "assert";
-import type { ConfigAccessPoint } from "@wildboar/x500-cli-config";
-import { saveConfig } from "./saveConfig";
-import MutableWriteable from "./utils/MutableWriteable";
-import * as readline from "readline";
+import getConfig from "./getConfig";
+import config_path from "./yargs/config_path";
+import config_view from "./yargs/config_view";
+import config_init from "./yargs/config_init";
+import config_set_context from "./yargs/config_set_context";
+import config_current_context from "./yargs/config_current_context";
 
 export
 interface ProtocolArgs {
@@ -102,10 +108,6 @@ function add_protocol_args (args: Argv): Argv<ProtocolArgs> {
             type: "boolean",
             description: "Verbose output",
         });
-}
-
-function createConfigurationFile () {
-    return fs.writeFile(PREFERRED_CONFIG_FILE_LOCATION, DEFAULT_CONFIGURATION_FILE);
 }
 
 async function main () {
@@ -270,248 +272,27 @@ async function main () {
             })
             .command("config", "Configuration", (configYargs) => {
                 configYargs
-                    .command(
-                        "init",
-                        "Initialize an X.500 configuration file (directory.yaml) on your system",
-                        () => {},
-                        createConfigurationFile,
-                    )
+                    .command(config_init(ctx))
+                    .command(config_path(ctx))
+                    .command(config_view(ctx))
+                    .command(config_current_context(ctx))
+                    .command(config_set_context(ctx))
                     .command("add", "Add something to the X.500 configuration file", (addYargs) => {
                         return addYargs
-                            .command("dsa <name>", "Add a DSA to the X.500 configuration file", (dsaYargs) => {
-                                return dsaYargs
-                                    .positional("name", {
-                                        type: "string",
-                                        description: "A case-sensitive name for the DSA",
-                                    })
-                                    .option("accessPoint", {
-                                        alias: "a",
-                                        type: "array",
-                                        string: true,
-                                        description: "Comma-separated access point URLs, optionally preceded by 'master', 'shadow', or 'wcopy' and a colon to indicate the category. e.g. shadow:idms://dsa01.example.com:109,ldap://dsa01.example.com:389",
-                                    })
-                                    .demandOption("name")
-                                    .demandOption("accessPoint")
-                                    ;
-                            }, async (dsaYargs) => {
-                                if (!ctx.config) {
-                                    ctx.log.warn("There is no configuration file to be edited. Creating one.");
-                                    await createConfigurationFile();
-                                    ctx.config = await getConfig(ctx);
-                                }
-                                assert(ctx.config);
-                                ctx.config.dsas.push({
-                                    name: dsaYargs.name,
-                                    accessPoints: dsaYargs.accessPoint.map((a) => {
-                                        const category: string | undefined = Object.entries({
-                                            "master:": "master",
-                                            "shadow:": "shadow",
-                                            "wcopy:": "writeableCopy",
-                                        }).find(([ prefix, ]) => a.startsWith(prefix))?.[1];
-                                        const urlStrings = (category === undefined)
-                                            ? a.split(",")
-                                            : a.slice(a.indexOf(":") + 1).split(",");
-                                        const urls = urlStrings.map((str) => new URL(str));
-                                        for (const url of urls) {
-                                            if (url.username || url.password) {
-                                                console.warn("You supplied a username and password via a URL, but these will be ignored.");
-                                            }
-                                        }
-                                        return {
-                                            category,
-                                            urls: urlStrings,
-                                        };
-                                    }) as [ConfigAccessPoint, ...ConfigAccessPoint[]],
-                                });
-                                await saveConfig(ctx.config);
-                            })
-                            .command("pref <name>", "Add a preference profile to the X.500 configuration file", (prefYargs) => {
-                                return prefYargs
-                                    .positional("name", {
-                                        type: "string",
-                                        description: "A case-sensitive name for the preference profile",
-                                    })
-                                    .option("logLevel", {
-                                        alias: "l",
-                                        type: "string",
-                                        choices: [
-                                            "debug",
-                                            "info",
-                                            "warn",
-                                            "error",
-                                            "silent",
-                                        ],
-                                        description: "The logging level of the client",
-                                    })
-                                    .option("sizeLimit", {
-                                        alias: "s",
-                                        type: "number",
-                                        description: "A positive integer; the default sizeLimit supplied in search` or `list operations",
-                                    })
-                                    .option("timeLimit", {
-                                        alias: "t",
-                                        type: "number",
-                                        description: "A positive integer; the default timeLimit supplied in directory operations",
-                                    })
-                                    .option("attributeSizeLimit", {
-                                        alias: "a",
-                                        type: "number",
-                                        description: "A positive integer; the default attributeSizeLimit supplied in directory operations.",
-                                    })
-                                    .option("readOnly", {
-                                        alias: "r",
-                                        type: "boolean",
-                                        description: "A boolean indicating whether no write operations should be permitted",
-                                    })
-                                    .option("disable-start-tls", {
-                                        alias: "d",
-                                        type: "boolean",
-                                        description: "A boolean indicating whether the client should refrain from upgrading the connection security via StartTLS",
-                                    })
-                                    .option("callingAETitle", {
-                                        alias: "c",
-                                        type: "string",
-                                        description: "The distinguished name of the calling application entity (AE) title, as used by IDM and ISO transports",
-                                    })
-                                    .option("other", {
-                                        alias: "x",
-                                        type: "array",
-                                        string: true,
-                                        description: "Key=value pairs for other values that should appear in the configuration file. Value will always be a string."
-                                    })
-                                    .demandOption("name")
-                                    ;
-                            }, async (prefYargs) => {
-                                if (!ctx.config) {
-                                    ctx.log.warn("There is no configuration file to be edited. Creating one.");
-                                    await createConfigurationFile();
-                                    ctx.config = await getConfig(ctx);
-                                }
-                                assert(ctx.config);
-                                ctx.config["preference-profiles"] = ctx.config["preference-profiles"] ?? [];
-                                ctx.config["preference-profiles"].push({
-                                    name: prefYargs.name,
-                                    logLevel: prefYargs.logLevel,
-                                    sizeLimit: prefYargs.sizeLimit,
-                                    timeLimit: prefYargs.timeLimit,
-                                    attributeSizeLimit: prefYargs.attributeSizeLimit,
-                                    readOnly: prefYargs.readOnly,
-                                    ["disable-start-tls"]: prefYargs["disable-start-tls"],
-                                    callingAETitle: prefYargs.callingAETitle,
-                                    ...Object.fromEntries((prefYargs.other ?? [])
-                                        .map((o) => [ o.slice(0, o.indexOf("=")), o.slice(o.indexOf("=") + 1) ])),
-                                });
-                                await saveConfig(ctx.config);
-                            })
-                            .command("cred", "Add a credential to the X.500 configuration file", (credYargs) => {
-                                return credYargs
-                                    .command("simple <name> <binddn>", "Add a simple credential", (simpleYargs) => {
-                                        return simpleYargs
-                                            .positional("name", {
-                                                type: "string",
-                                                description: "A case-sensitive name for the credential",
-                                            })
-                                            .positional("binddn", {
-                                                type: "string",
-                                                description: "The bind distinguished name",
-                                            })
-                                            .option("password", {
-                                                alias: "p",
-                                                type: "boolean",
-                                                description: "Prompt for a password",
-                                            })
-                                            .demandOption("name")
-                                            .demandOption("binddn")
-                                            ;
-                                    }, async (simpleYargs) => {
-                                        if (!ctx.config) {
-                                            ctx.log.warn("There is no configuration file to be edited. Creating one.");
-                                            await createConfigurationFile();
-                                            ctx.config = await getConfig(ctx);
-                                        }
-                                        assert(ctx.config);
-                                        if (simpleYargs.password) {
-                                            const mutedOut = new MutableWriteable();
-                                            const rl = readline.createInterface({
-                                                input: process.stdin,
-                                                output: mutedOut,
-                                                terminal: true,
-                                            });
-                                            rl.question("Password: ", async (answer: string): Promise<void> => {
-                                                console.log();
-                                                ctx.config!.credentials.push({
-                                                    name: simpleYargs.name,
-                                                    credential: {
-                                                        type: "simple",
-                                                        name: simpleYargs.binddn,
-                                                        password: {
-                                                            unprotected: answer,
-                                                        },
-                                                    },
-                                                });
-                                                rl.close();
-                                                await saveConfig(ctx.config!);
-                                            });
-                                            mutedOut.muted = true;
-                                        } else {
-                                            ctx.config.credentials.push({
-                                                name: simpleYargs.name,
-                                                credential: {
-                                                    type: "simple",
-                                                    name: simpleYargs.binddn,
-                                                },
-                                            });
-                                            await saveConfig(ctx.config);
-                                        }
-                                    })
-                                    .demandCommand();
-                            })
-                            .command("context <name>", "Add a context to the X.500 configuration file", (ctxtYargs) => {
-                                return ctxtYargs
-                                    .positional("name", {
-                                        type: "string",
-                                        description: "A case-sensitive name for the context",
-                                    })
-                                    .option("pref", {
-                                        alias: "p",
-                                        type: "string",
-                                        description: "The case-sensitive name of the preference profile to use for this context",
-                                    })
-                                    .option("dsa", {
-                                        alias: "d",
-                                        type: "string",
-                                        description: "The case-sensitive name of the DSA to use for this context"
-                                    })
-                                    .option("cred", {
-                                        alias: "c",
-                                        type: "string",
-                                        description: "The case-sensitive name of the credential to use for this context"
-                                    })
-                                    .demandOption("name")
-                                    .demandOption("dsa")
-                                    ;
-                            }, async (ctxtYargs) => {
-                                if (!ctx.config) {
-                                    ctx.log.warn("There is no configuration file to be edited. Creating one.");
-                                    await createConfigurationFile();
-                                    ctx.config = await getConfig(ctx);
-                                }
-                                assert(ctx.config);
-                                ctx.config.contexts.push({
-                                    name: ctxtYargs.name,
-                                    context: {
-                                        dsa: ctxtYargs.dsa,
-                                        credential: ctxtYargs.cred,
-                                        preferences: ctxtYargs.pref,
-                                    },
-                                });
-                                await saveConfig(ctx.config);
-                            })
+                            .command(config_add_pref(ctx))
+                            .command(config_add_cred_simple(ctx))
+                            .command(config_add_dsa(ctx))
+                            .command(config_add_context(ctx))
                             .demandCommand();
                     })
-                    // .command("rm", "Remove something from the configuration file", (rmYargs) => {
-
-                    // })
+                    .command("rm", "Remove something from the configuration file", (rmYargs) => {
+                        return rmYargs
+                            .command(config_rm_pref(ctx))
+                            .command(config_rm_cred(ctx))
+                            .command(config_rm_dsa(ctx))
+                            .command(config_rm_context(ctx))
+                            .demandCommand();
+                    })
                     .demandCommand()
                     ;
             })
