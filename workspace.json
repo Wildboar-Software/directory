@@ -244,7 +244,7 @@
                         "tsConfig": "apps/x500-cli/tsconfig.app.json",
                         "assets": [
                             "apps/x500-cli/src/assets",
-                            "apps/meerkat/src/README.md"
+                            "apps/x500-cli/src/README.md"
                         ],
                         "memoryLimit": 1024,
                         "maxWorkers": 1,
