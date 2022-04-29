@@ -18,6 +18,17 @@ it is not found).
 This tutorial will also assume that you have installed and configured the
 [X.500 command-line interface](./x500cli.md) to connect anonymously to your DSA.
 
+## How It Works
+
+Gitea, as well as many other programs, support LDAP as a source of user
+information. Rather than storing user names and passwords in a program's
+database, a lot of applications can wire up to an LDAP server to fetch
+information about users, groups, roles, permissions, etc. Unfortunately, DAP
+is not widely supported, but we are going to change that; for now, you have to
+use LDAP. Still, for the sake of this tutorial, we can use DAP commands to set
+up Meerkat DSA, then we will configure Gitea to access our Meerkat DSA instance
+via LDAP to authenticate users.
+
 ## Creating the Organization's DSE
 
 Create an organization first-level DSE using the following command:
@@ -324,10 +335,34 @@ login page, Gitea will search for an entry with object class
 
 For the other settings:
 
-Username Attribute: `cn`
-First Name Attribute: `cn`
-Surname Attribute: `sn`
-Email Attribute: `title`
+- Username Attribute: `cn`
+- First Name Attribute: `cn`
+- Surname Attribute: `sn`
+- Email Attribute: `title`
+
+Finally, at the bottom, check "Fetch Attributes in Bind DN Context."
+
+:::info
+
+I don't fully understand what "Fetch Attributes in Bind DN Context" does (the
+documentation on Gitea's LDAP integration is a little sparse), but this is what
+I think it does:
+
+When you use "LDAP (via BindDN)" authentication, the username and password
+supplied at the configuration page are used to perform a search against the LDAP
+server (in this case, Meerkat DSA) for the existence of a user according to a
+search filter, and if that user appears in the results, Gitea permits that login
+as that user, but Gitea still has to query that user's attributes to get their
+name and email address. By default, Gitea will query the user's entry with the
+credentials given at the login page, but since we did not define any access
+controls that allow `o=Foobar,cn=cnorris` to query his own entry, Gitea
+unexpectedly fails to read the attributes it needs. Specifically, it receives a
+`noSuchObject` error, because, technically, `o=Foobar,cn=cnorris` is not even
+allowed to know about its own existence! However, when we check "Fetch
+Attributes in Bind DN Context," I believe it will use the Bind DN credentials to
+query the object's attributes, and `o=Foobar` _is_ permitted to read this entry.
+
+:::
 
 And that's it! Save the authentication source and log in using the username
 `cnorris` and the password you created in Meerkat DSA for this user. Congrats on
