@@ -11,4 +11,5 @@ TypeScript or JavaScript, you could
 in GitHub that fixes it.
 
 If you are interested in receiving support in creating and managing schema,
-replication, operational bindings, security, and other
+replication, operational bindings, security, and other, consider getting
+[professional support](mailto:jonathan.wilbur@wildboarsoftware.com).

@@ -176,7 +176,6 @@ export
                         ],
                     },
                 },
-                additionalProperties: true,
             },
             AlgorithmIdentifier: {
                 type: "object",

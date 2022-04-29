@@ -22,9 +22,12 @@ async function createConnection (
     const currentContext: ConfigContext | undefined = ctx.config?.contexts
         .find((c) => c.name === ctx.config?.["current-context"]);
     const dsa: ConfigDSA | undefined = ctx.config?.dsas.find((d) => d.name === currentContext?.context?.dsa);
-    // const credentials = ctx.config?.credentials.find((c) => c.name === currentContext?.context?.credential);
+    const credentials = ctx.config?.credentials.find((c) => c.name === currentContext?.context.credential);
 
-    let password: Buffer | undefined;
+    const passwordFromConfig = (credentials?.credential.password ?? {}) as Record<string, string>;
+    let password: Buffer | undefined = ("unprotected" in passwordFromConfig)
+        ? Buffer.from(passwordFromConfig.unprotected, "utf8")
+        : undefined;
     if (argv.password !== undefined) {
         password = Buffer.from(argv.password as string);
     } else if (argv.passwordFile?.length) {
@@ -60,7 +63,9 @@ async function createConnection (
     }
 
     for (const accessPoint of accessPoints) {
-        const bindDN = argv.bindDN ?? "";
+        const bindDN = argv.bindDN
+            ?? credentials?.credential.name
+            ?? "";
         try {
             // TODO: Iterate over URLs.
             const connection = await connect(ctx, accessPoint.urls[0], bindDN, password);
