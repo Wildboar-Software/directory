@@ -1,4 +1,5 @@
 import type { Connection, Context } from "../../types";
+import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     list,
@@ -24,10 +25,39 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import destringifyDN from "../../utils/destringifyDN";
 import stringifyDN from "../../utils/stringifyDN";
 import printError from "../../printers/Error_";
+import {
+    PagedResultsRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
+import {
+    PagedResultsRequest_newRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+import * as sco from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import {
+    ServiceControls_priority_low,
+    ServiceControls_priority_medium,
+    ServiceControls_priority_high,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
+import {
+    ServiceControls_scopeOfReferral_country,
+    ServiceControls_scopeOfReferral_dmd,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-scopeOfReferral.ta";
 
-const DEFAULT_TIME_LIMIT: number = 10;
-const DEFAULT_SIZE_LIMIT: number = 1000;
-const DEFAULT_ATTRIBUTE_SIZE_LIMIT: number = 1000;
+function priorityFromString (str: string): ServiceControls["priority"] {
+    switch (str.trim().toLowerCase()) {
+        case ("low"): return ServiceControls_priority_low;
+        case ("medium"): return ServiceControls_priority_medium;
+        case ("high"): return ServiceControls_priority_high;
+        default: return ServiceControls_priority_medium;
+    }
+}
+
+function scopeOfReferralFromString (str: string): ServiceControls["scopeOfReferral"] {
+    switch (str.trim().toLowerCase()) {
+        case ("dmd"): return ServiceControls_scopeOfReferral_dmd;
+        case ("country"): return ServiceControls_scopeOfReferral_country;
+        default: return undefined;
+    }
+}
 
 export
 async function do_list (
@@ -35,36 +65,73 @@ async function do_list (
     conn: Connection,
     argv: any,
 ): Promise<void> {
+    const bindDN = destringifyDN(ctx, argv.bindDN ?? "");
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);
+    const prr: PagedResultsRequest | undefined = argv.pageSize
+        ? {
+            newRequest: new PagedResultsRequest_newRequest(
+                argv.pageSize,
+                argv.sortKey
+                    ? argv.sortKey.map(ObjectIdentifier.fromString)
+                    : undefined,
+                argv.reverse,
+                argv.unmerged,
+                argv.pageNumber,
+            ),
+        }
+        : undefined;
+
+    const serviceControlOptions: sco.ServiceControlOptions = new Uint8ClampedArray(15);
+    if (argv.preferChaining) {
+        serviceControlOptions[sco.ServiceControlOptions_preferChaining] = TRUE_BIT;
+    }
+    if (argv.chainingProhibited) {
+        serviceControlOptions[sco.ServiceControlOptions_chainingProhibited] = TRUE_BIT;
+    }
+    if (argv.localScope) {
+        serviceControlOptions[sco.ServiceControlOptions_localScope] = TRUE_BIT;
+    }
+    if (argv.dontDereferenceAliases) {
+        serviceControlOptions[sco.ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
+    }
+    if (argv.subentries) {
+        serviceControlOptions[sco.ServiceControlOptions_subentries] = TRUE_BIT;
+    }
+    if (argv.copyShallDo) {
+        serviceControlOptions[sco.ServiceControlOptions_copyShallDo] = TRUE_BIT;
+    }
+    if (argv.partialNameResolution) {
+        serviceControlOptions[sco.ServiceControlOptions_partialNameResolution] = TRUE_BIT;
+    }
+    if (argv.manageDSAIT) {
+        serviceControlOptions[sco.ServiceControlOptions_manageDSAIT] = TRUE_BIT;
+    }
+    if (argv.countFamily) {
+        serviceControlOptions[sco.ServiceControlOptions_countFamily] = TRUE_BIT;
+    }
+
+    const serviceControls = new ServiceControls(
+        serviceControlOptions,
+        argv.priority
+            ? priorityFromString(argv.priority)
+            : undefined,
+        argv.timeLimit,
+        argv.sizeLimit,
+        argv.scopeOfReferral
+            ? scopeOfReferralFromString(argv.scopeOfReferral)
+            : undefined,
+    );
+
     const reqData: ListArgumentData = new ListArgumentData(
         {
             rdnSequence: objectName,
         },
-        undefined,
+        prr,
         argv.listFamily,
         [],
-        new ServiceControls(
-            undefined,
-            undefined,
-            DEFAULT_TIME_LIMIT,
-            DEFAULT_SIZE_LIMIT,
-            undefined,
-            DEFAULT_ATTRIBUTE_SIZE_LIMIT,
-            undefined,
-            undefined,
-            undefined,
-        ),
+        serviceControls,
         undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
+        bindDN,
     );
     const arg: ListArgument = {
         unsigned: reqData,

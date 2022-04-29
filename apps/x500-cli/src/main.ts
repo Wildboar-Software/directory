@@ -6,7 +6,6 @@ import loadObjectClasses from "./utils/loadObjectClasses";
 import loadLDAPSyntaxes from "./utils/loadLDAPSyntaxes";
 import loadContextTypes from "./utils/loadContextTypes";
 import do_read from "./commands/dap/read";
-import do_list from "./commands/dap/list";
 import do_compare from "./commands/dap/compare";
 import do_administerPassword from "./commands/dap/apw";
 import do_changePassword from "./commands/dap/cpw";
@@ -33,6 +32,7 @@ import dap_add_residentialPerson from "./yargs/dap_add_residentialPerson";
 import dap_add_process from "./yargs/dap_add_process";
 import dap_add_device from "./yargs/dap_add_device";
 import dap_add_dmd from "./yargs/dap_add_dmd";
+import dap_list from "./yargs/dap_list";
 import dap_mod_add_acs from "./yargs/dap_mod_add_acs";
 import dap_mod_add_aci from "./yargs/dap_mod_add_aci";
 import dap_mod_add_cr from "./yargs/dap_mod_add_cr";
@@ -181,20 +181,7 @@ async function main () {
                         await do_compare(ctx, connection, argv);
                         await connection.close();
                     })
-                    .command("list <object>", "List entries", (listYargs) => {
-                        listYargs
-                            .positional("object", {
-                                describe: "The object whose subordinates are to be read.",
-                            })
-                            // TODO: list new
-                            // TODO: list continue
-                            // TODO: list abandon
-                            ;
-                    }, async (argv) => {
-                        const connection = await bind(ctx, argv);
-                        await do_list(ctx, connection, argv);
-                        await connection.close();
-                    })
+                    .command(dap_list(ctx))
                     .command("mod", "Modify an entry", (addYargs) => {
                         addYargs
                             .command("add", "Add attributes or values", (addYargs) => {

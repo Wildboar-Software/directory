@@ -292,7 +292,6 @@ function create (ctx: Context): CommandModule {
         },
         handler: async (argv) => {
             const connection = await bind(ctx, argv);
-            console.log(`Bound at ${new Date()}`);
             await search(ctx, connection, argv);
             await connection.close();
         },
