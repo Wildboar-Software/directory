@@ -2,18 +2,17 @@ name: Main Workflow
 
 on:
   push:
-    tags:
-      - v**
+    branches:
+      - main
+      - master
 
 env:
-  CLUSTER_NAME: meerkat-helm-test
-  # RESOURCE_GROUP: production
-  RESOURCE_GROUP: meerkat-helm-test
-  DNS_RESOURCE_GROUP: production
-  NAMESPACE: test
+  CLUSTER_NAME: production
+  RESOURCE_GROUP: production
+  NAMESPACE: demo
   ZONE: mkdemo.wildboar.software
-  STORAGE_ACCOUNT_NAME: meerkatdsahelmtest
-  CHART_CONTAINER: asdf
+  STORAGE_ACCOUNT_NAME: wildboarprod
+  CHART_CONTAINER: helm-charts
   CHART_REPO: wildboar
   CHART_NAME: meerkat-dsa
   DEMO_TRUST_ANCHOR_CONFIG_NAME: demo-trust-anchor
@@ -257,7 +256,7 @@ jobs:
       - name: Delete DSA DNS Record
         run: |
           az network dns record-set a delete \
-            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --zone-name ${{ env.ZONE }} \
             --name dsa01.test \
             --yes
@@ -265,7 +264,7 @@ jobs:
       - name: Delete Web Admin DNS Record
         run: |
           az network dns record-set a delete \
-            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --zone-name ${{ env.ZONE }} \
             --name webadm01.test \
             --yes
@@ -360,7 +359,7 @@ jobs:
       - name: Create DSA DNS Record
         run: |
           az network dns record-set a add-record \
-            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --zone-name ${{ env.ZONE }} \
             --ttl 60 \
             --record-set-name dsa01.test \
@@ -368,7 +367,7 @@ jobs:
       - name: Create WebAdmin DNS Record
         run: |
           az network dns record-set a add-record \
-            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --zone-name ${{ env.ZONE }} \
             --ttl 60 \
             --record-set-name webadm01.test \
@@ -499,7 +498,7 @@ jobs:
       - name: Delete DSA DNS Record
         run: |
           az network dns record-set a delete \
-            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --zone-name ${{ env.ZONE }} \
             --name dsa01.${{ matrix.dmd }} \
             --yes
@@ -507,7 +506,7 @@ jobs:
       - name: Delete Web Admin DNS Record
         run: |
           az network dns record-set a delete \
-            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --zone-name ${{ env.ZONE }} \
             --name webadm01.${{ matrix.dmd }} \
             --yes
@@ -622,7 +621,7 @@ jobs:
       - name: Create DSA DNS Record
         run: |
           az network dns record-set a add-record \
-            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --zone-name ${{ env.ZONE }} \
             --ttl 60 \
             --record-set-name dsa01.${{ matrix.dmd }} \
@@ -630,7 +629,7 @@ jobs:
       - name: Create WebAdmin DNS Record
         run: |
           az network dns record-set a add-record \
-            --resource-group ${{ env.DNS_RESOURCE_GROUP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --zone-name ${{ env.ZONE }} \
             --ttl 60 \
             --record-set-name webadm01.${{ matrix.dmd }} \
