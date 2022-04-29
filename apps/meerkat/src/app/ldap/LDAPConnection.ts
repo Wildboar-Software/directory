@@ -24,6 +24,7 @@ import {
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
 import {
     LDAPResult_resultCode_success,
+    LDAPResult_resultCode_invalidCredentials,
     LDAPResult_resultCode_protocolError,
     LDAPResult_resultCode_operationsError,
     LDAPResult_resultCode_other,
@@ -653,6 +654,7 @@ class LDAPAssociation extends ClientAssociation {
                         const sleepTime: number = Math.abs(totalTimeInMilliseconds - bindTime);
                         await sleep(sleepTime);
                         if (outcome.result.resultCode === LDAPResult_resultCode_success) {
+                            this.boundNameAndUID = outcome.boundNameAndUID;
                             this.boundEntry = outcome.boundVertex;
                             this.authLevel = outcome.authLevel;
                             this.status = Status.BOUND;
@@ -678,8 +680,10 @@ class LDAPAssociation extends ClientAssociation {
                                 }), extraLogData);
                             }
                         } else {
+                            if (outcome.result.resultCode === LDAPResult_resultCode_invalidCredentials) {
+                                ctx.log.warn(ctx.i18n.t("err:invalid_credentials", { host: source }));
+                            }
                             this.status = Status.UNBOUND;
-                            // TODO: Log failure
                         }
                         const res = new LDAPMessage(
                             message.messageID,
