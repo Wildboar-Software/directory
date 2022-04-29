@@ -392,6 +392,9 @@ jobs:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Kubernetes Namespace
+        run: kubectl create ns ${{ env.NAMESPACE }}
+        continue-on-error: true
       - name: Create Temp Folder
         run: mkdir -p ./tmp
       - name: Create Certificate Authority Certificate
