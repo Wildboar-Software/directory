@@ -375,7 +375,13 @@ async function modifyDN (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
+    const relevantACIItems = getACIItems(
+        accessControlScheme,
+        target.immediateSuperior,
+        target,
+        relevantSubentries,
+        Boolean(target.dse.subentry),
+    );
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
@@ -601,7 +607,13 @@ async function modifyDN (
             newAccessControlScheme
             && accessControlSchemesThatUseACIItems.has(newAccessControlScheme.toString())
         ) {
-            const relevantACIItems = getACIItems(accessControlScheme, undefined, relevantSubentries);
+            const relevantACIItems = getACIItems(
+                accessControlScheme,
+                superior,
+                undefined,
+                relevantSubentries,
+                Boolean(target.dse.subentry),
+            );
             const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
                 .flatMap((aci) => getACDFTuplesFromACIItem(aci));
             const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
@@ -771,7 +783,8 @@ async function modifyDN (
         ) {
             const relevantACIItemsForSuperior = getACIItems(
                 accessControlScheme,
-                undefined,
+                superior.immediateSuperior,
+                superior,
                 relevantSubentries,
                 !!superior.dse.subentry,
             );

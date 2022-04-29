@@ -387,12 +387,11 @@ async function do_modify_add_aci (
         },
     );
 
-    const type: ATTRIBUTE<ACIItem> | undefined = [
-        entryACI,
-        subentryACI,
-        prescriptiveACI,
-    ]
-        .find((attr) => attr["&id"]!.isEqualTo(ObjectIdentifier.fromString(argv.type!)));
+    const type: ATTRIBUTE<ACIItem> | undefined = {
+        entry: entryACI,
+        subentry: subentryACI,
+        prescriptive: prescriptiveACI,
+    }[argv.type!];
     if (!type) {
         throw new Error(`Unrecognized ACI attribute type '${argv.type!}'`);
     }

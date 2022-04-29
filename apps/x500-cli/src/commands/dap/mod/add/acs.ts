@@ -39,7 +39,7 @@ async function do_modify_add_acs (
                 accessControlScheme["&id"],
                 [
                     _encodeObjectIdentifier(
-                        ObjectIdentifier.fromString(argv.accessControlScheme), DER),
+                        ObjectIdentifier.fromString(argv.scheme), DER),
                 ],
                 undefined,
             ),

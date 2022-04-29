@@ -911,7 +911,13 @@ async function findDSE (
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
                     )).flat();
-                    const targetACI = getACIItems(accessControlScheme, matchedVertex, relevantSubentries);
+                    const targetACI = getACIItems(
+                        accessControlScheme,
+                        matchedVertex.immediateSuperior,
+                        matchedVertex,
+                        relevantSubentries,
+                        Boolean(matchedVertex.dse.subentry),
+                    );
                     const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
                     const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
@@ -1055,7 +1061,13 @@ async function findDSE (
                         const relevantSubentries: Vertex[] = (await Promise.all(
                             relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
                         )).flat();
-                        const targetACI = getACIItems(accessControlScheme, child, relevantSubentries);
+                        const targetACI = getACIItems(
+                            accessControlScheme,
+                            dse_i,
+                            child,
+                            relevantSubentries,
+                            Boolean(child.dse.subentry),
+                        );
                         const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
                         const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
@@ -1162,7 +1174,13 @@ async function findDSE (
             const relevantSubentries: Vertex[] = (await Promise.all(
                 state.admPoints.map((ap) => getRelevantSubentries(ctx, dse_i, currentDN, ap)),
             )).flat();
-            const targetACI = getACIItems(accessControlScheme, dse_i, relevantSubentries);
+            const targetACI = getACIItems(
+                accessControlScheme,
+                dse_i.immediateSuperior,
+                dse_i,
+                relevantSubentries,
+                Boolean(dse_i.dse.subentry),
+            );
             const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                 .flatMap((aci) => getACDFTuplesFromACIItem(aci));
             const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(

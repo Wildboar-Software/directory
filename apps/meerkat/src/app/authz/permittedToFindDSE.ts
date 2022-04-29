@@ -102,7 +102,13 @@ async function permittedToFindDSE (
             const relevantSubentries: Vertex[] = (await Promise.all(
                 relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, dse_i, childDN, ap)),
             )).flat();
-            const targetACI = getACIItems(accessControlScheme, dse_i, relevantSubentries);
+            const targetACI = getACIItems(
+                accessControlScheme,
+                dse_i.immediateSuperior,
+                dse_i,
+                relevantSubentries,
+                Boolean(dse_i.dse.subentry),
+            );
             const acdfTuples: ACDFTuple[] = (targetACI ?? [])
                 .flatMap((aci) => getACDFTuplesFromACIItem(aci));
             const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(

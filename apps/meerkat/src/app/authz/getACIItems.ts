@@ -30,6 +30,8 @@ const AC_INNER: string = id_ar_accessControlInnerArea.toString();
  *
  * @param accessControlScheme The access control scheme in place for the
  *  applicable access control administrative area
+ * @param immediateSuperior The DSE that is immediately superior to `vertex`,
+ *  supplied as a separate argument for when `vertex` does not exist yet
  * @param vertex The DSE whose relevant ACI items are to be determined
  * @param relevantSubentries The subentries whose subtree select for this entry,
  *  in order of descending administrative point
@@ -41,6 +43,7 @@ const AC_INNER: string = id_ar_accessControlInnerArea.toString();
 export
 function getACIItems (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
+    immediateSuperior: Vertex | undefined,
     vertex: Vertex | undefined,
     relevantSubentries: Vertex[],
     isSubentry: boolean = false,
@@ -52,7 +55,7 @@ function getACIItems (
     if (isSubentry || vertex?.dse.subentry) {
         return [
             ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
-                ? (vertex?.immediateSuperior?.dse.admPoint?.subentryACI ?? [])
+                ? (immediateSuperior?.dse.admPoint?.subentryACI ?? [])
                 : []),
             ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
                 ? (vertex?.dse.entryACI ?? [])

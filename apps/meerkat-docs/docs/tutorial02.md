@@ -116,7 +116,38 @@ and `strong` authentication is not (currently) supported by Meerkat DSA.
 
 :::
 
-For now, we only need this single ACI item. In a real directory, you will
+In X.500 directories, subentries are controlled separately by subentry ACI
+items, which are stored in their respective administrative points. We need to
+create a separate ACI item for this so we can read and write to our subentry!
+
+```bash
+x500 dap mod add aci 'o=Foobar' subentry 'Organization administrator' 250 simple \
+  --userName='o=Foobar' \
+  --entry \
+  --allUserAttributeTypesAndValues \
+  --allOperationalAttributeTypesAndValues \
+  --grantAdd \
+  --grantDiscloseOnError \
+  --grantRead \
+  --grantRemove \
+  --grantBrowse \
+  --grantExport \
+  --grantImport \
+  --grantModify \
+  --grantRename \
+  --grantReturnDN \
+  --grantCompare \
+  --grantFilterMatch \
+  --grantInvoke
+```
+
+Note that the above command is _almost_ the exact same as the one that came
+before it. We just changed `prescriptive` to `subentry` and we changed the
+target object to `o=Foobar`. The idea is still the same: we are granting
+`o=Foobar` all permission to do everything to all subentries within this
+access control administrative area.
+
+For now, we only need these two ACI items. In a real directory, you will
 probably want to define many more before you "flip the switch" to turn on access
 controls. We are going to turn on access controls now, using the following
 commands:

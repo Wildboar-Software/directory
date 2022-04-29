@@ -276,7 +276,13 @@ async function addEntry (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(accessControlScheme, undefined, relevantSubentries, isSubentry);
+    const relevantACIItems = getACIItems(
+        accessControlScheme,
+        immediateSuperior,
+        undefined,
+        relevantSubentries,
+        isSubentry,
+    );
     const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
         ? []
         : (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));
@@ -363,7 +369,8 @@ async function addEntry (
         ) {
             const relevantACIItemsForSuperior = getACIItems(
                 accessControlScheme,
-                undefined,
+                immediateSuperior.immediateSuperior,
+                immediateSuperior,
                 relevantSubentries,
                 !!immediateSuperior.dse.subentry,
             );
@@ -625,7 +632,13 @@ async function addEntry (
             } else if (existing.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
                 effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, existing, targetDN, existing)));
             }
-            const subordinateACI = getACIItems(effectiveAccessControlScheme, existing, effectiveRelevantSubentries);
+            const subordinateACI = getACIItems(
+                effectiveAccessControlScheme,
+                existing.immediateSuperior,
+                existing,
+                effectiveRelevantSubentries,
+                Boolean(existing.dse.subentry),
+            );
             const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
                 .flatMap((aci) => getACDFTuplesFromACIItem(aci));
             const relevantSubordinateTuples: ACDFTupleExtended[] = await preprocessTuples(

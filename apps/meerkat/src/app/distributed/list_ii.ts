@@ -451,7 +451,13 @@ async function list_ii (
                 } else if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
                     effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
                 }
-                const subordinateACI = getACIItems(effectiveAccessControlScheme, subordinate, effectiveRelevantSubentries);
+                const subordinateACI = getACIItems(
+                    effectiveAccessControlScheme,
+                    subordinate.immediateSuperior,
+                    subordinate,
+                    effectiveRelevantSubentries,
+                    Boolean(subordinate.dse.subentry),
+                );
                 const subordinateACDFTuples: ACDFTuple[] = (subordinateACI ?? [])
                     .flatMap((aci) => getACDFTuplesFromACIItem(aci));
                 const relevantSubordinateTuples: ACDFTupleExtended[] = await preprocessTuples(

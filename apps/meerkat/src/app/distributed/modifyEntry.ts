@@ -2287,7 +2287,13 @@ async function modifyEntry (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
+    const relevantACIItems = getACIItems(
+        accessControlScheme,
+        target.immediateSuperior,
+        target,
+        relevantSubentries,
+        Boolean(target.dse.subentry),
+    );
     const acdfTuples: ACDFTuple[] = ctx.config.bulkInsertMode
         ? []
         : (relevantACIItems ?? []).flatMap((aci) => getACDFTuplesFromACIItem(aci));

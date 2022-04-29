@@ -136,7 +136,13 @@ async function changePassword (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const relevantACIItems = getACIItems(accessControlScheme, target, relevantSubentries);
+        const relevantACIItems = getACIItems(
+            accessControlScheme,
+            target.immediateSuperior,
+            target,
+            relevantSubentries,
+            Boolean(target.dse.subentry),
+        );
         const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
             .flatMap((aci) => getACDFTuplesFromACIItem(aci));
         const NAMING_MATCHER = getNamingMatcherGetter(ctx);
