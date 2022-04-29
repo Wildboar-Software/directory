@@ -1,5 +1,19 @@
 # The Wildboar X.500 Command-Line Interface
 
+## Installation
+
+Currently, this command can only be installed via [NPM](https://www.npmjs.com/),
+which you can get by installing [NodeJS](https://nodejs.org/en/).
+
+Run `npm install -g @wildboar/x500-cli`. If you get a permissions issue, you
+may need to prefix your command with `sudo` on Unix-like systems or run this
+command in a terminal that is "ran as administrator" on Windows.
+
+If you get an error saying that the command `x500` does not exist after you
+have done this, you may need to close out of the terminal and open a new one.
+
+## Notes
+
 It was far from obvious, but this was what it took to produce a cross-platform
 CLI:
 

@@ -10,7 +10,7 @@ import MutableWriteable from "../utils/MutableWriteable";
 export
 function create (ctx: Context): CommandModule<unknown, { name: string, binddn: string }> {
     return {
-        command: "simple <name>",
+        command: "simple <name> <binddn>",
         describe: "Add a simple credential to the configuration file",
         builder: (y) => {
             return y

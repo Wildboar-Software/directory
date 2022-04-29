@@ -2353,7 +2353,7 @@ async function modifyEntry (
     const permittedAuxiliaries: Set<IndexableOID> = new Set();
     const contextRulesIndex: ContextRulesIndex = new Map();
     const subschemaSubentry = await getSubschemaSubentry(ctx, target);
-    if (!ctx.config.bulkInsertMode && subschemaSubentry && !target.dse.subentry) {
+    if (!ctx.config.bulkInsertMode && subschemaSubentry && !isSubentry) {
         const contentRule = (subschemaSubentry.dse.subentry?.ditContentRules ?? [])
             // .find(), because there should only be one per SOC.
             .find((rule) => (
@@ -2419,7 +2419,7 @@ async function modifyEntry (
                 relevantTuples,
                 precludedAttributes,
                 contextRulesIndex,
-                Boolean(target.dse.subentry),
+                isSubentry,
                 manageDSAIT,
                 state.chainingArguments.aliasDereferenced,
             )),
@@ -2758,6 +2758,7 @@ async function modifyEntry (
         } else if (
             (spec.kind === ObjectClassKind_auxiliary)
             && !permittedAuxiliaries.has(spec.id.toString())
+            && !isSubentry // Subentries are not regulated by subschema.
         ) {
             throw new errors.UpdateError(
                 ctx.i18n.t("err:aux_oc_not_permitted_by_dit_content_rule", {
@@ -2871,11 +2872,16 @@ async function modifyEntry (
     }
     const addsExtensibleObjectClass: boolean = addedObjectClasses
         .some((oc) => oc.isEqualTo(extensibleObject));
-    if (!ctx.config.bulkInsertMode && !isExtensible && !addsExtensibleObjectClass) { // Check optional attributes
+    if (
+        !ctx.config.bulkInsertMode
+        && !isExtensible
+        && !addsExtensibleObjectClass
+        && !isSubentry
+    ) { // Check optional attributes
         const nonPermittedAttributeTypes: Set<IndexableOID> = new Set();
         for (const type_ of Array.from(patch.addedValues.keys())) {
             if (!optionalAttributes.has(type_.toString())) {
-                if (target.dse.subentry && ctx.attributeTypes.get(type_.toString())?.collective) {
+                if (isSubentry && ctx.attributeTypes.get(type_.toString())?.collective) {
                     continue; // You can write any collective attribute to a subentry.
                 }
                 nonPermittedAttributeTypes.add(type_);

@@ -52,6 +52,7 @@ const sidebars = {
             label: 'Tutorials',
             items: [
                 'tutorial01',
+                'tutorial02',
             ],
         },
         {

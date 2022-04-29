@@ -280,7 +280,7 @@ async function main () {
                     .command("add", "Add something to the X.500 configuration file", (addYargs) => {
                         return addYargs
                             .command(config_add_pref(ctx))
-                            .command(config_add_cred_simple(ctx))
+                            .command("cred", "Add a credential to the configuration file", (y) => y.command(config_add_cred_simple(ctx)))
                             .command(config_add_dsa(ctx))
                             .command(config_add_context(ctx))
                             .demandCommand();
