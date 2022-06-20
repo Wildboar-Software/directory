@@ -117,7 +117,7 @@ interface ValidPolicyTree {
 export
 interface VerifyCertPathArgs {
 
-    // trustAnchors?:
+    trustAnchors?: Certificate[]; // TODO: Make trust anchor list.
 
     /**
      * @summary A set of public-key certificates comprising a certification path
