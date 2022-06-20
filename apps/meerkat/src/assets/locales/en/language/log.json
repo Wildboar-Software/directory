@@ -97,7 +97,6 @@
     "admpoint_gsr_recalculated": "The governing structure rule for administrative point with dseUUID {{uuid}} was recalculated due to a change in the relevant subschema.",
     "admpoint_gsr_recalculated@hint": "Meerkat DSA does not automatically recursively recalculate the governing structure rules for subtrees of the subschema impacted by structure rule changes. Review the documentation on how to manually update the governing structure rule of the subschema.",
     "gsr_changed": "The governing structure rule for entry with dseUUID {{uuid}} changed due to a change in the relevant subschema.",
-    "beta": "This is a beta version of Meerkat DSA, so it is likely that there are bugs, including security vulnerabilities. If you feel that you have discovered an issue, please report it here: https://github.com/Wildboar-Software/directory/issues. If you would like to ask a question, please create a GitHub issue, or (preferably) post a question to StackOverflow with the tag 'meerkat-dsa'.",
     "too_many_sort_keys": "Association {{aid}} submitted a search or list request with {{num}} sort keys, which may have been malicious. Only the first few sort keys will be honored, if any.",
     "failed_init_telemetry": "Failed to initialize telemetry. {{e}}",
     "terminating_ob@cp": "Terminating operational binding {{uuid}} because its context prefix is being deleted.",

@@ -108,6 +108,7 @@ import type {
     Clearance,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 import type { TlsOptions } from "tls";
+import type { Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -1177,8 +1178,15 @@ interface Configuration {
     /**
      * Options for the TLS socket, which is all of the options for the
      * `TLSSocket` constructor in the NodeJS standard library.
+     *
+     * Even though the NodeJS `ca` option can take many forms, this should always
+     * be a string of the concatenated PEM-encoded trust anchor certificates.
      */
-    tls: TlsOptions;
+    tls: TlsOptions & { ca?: string } & {
+        trustAnchorsBy: {
+            base64Encoding: Map<string, Certificate>;
+        };
+    };
 
     /**
      * Options for IDM transport.

@@ -541,6 +541,10 @@ async function requestValidationProcedure (
         );
     }
     if ("signed" in hydratedArgument) {
+        const certPath = hydratedArgument.signed.toBeSigned.chainedArgument.securityParameters?.certification_path;
+        if (!certPath) {
+            throw new Error();
+        }
         // TODO: Validate signature.
     }
     if (alreadyChained) { // Satisfies all requirements of X.518 (2016), Section 17.3.3.3.
