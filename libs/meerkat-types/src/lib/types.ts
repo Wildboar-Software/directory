@@ -1182,11 +1182,7 @@ interface Configuration {
      * Even though the NodeJS `ca` option can take many forms, this should always
      * be a string of the concatenated PEM-encoded trust anchor certificates.
      */
-    tls: TlsOptions & { ca?: string } & {
-        trustAnchorsBy: {
-            base64Encoding: Map<string, Certificate>;
-        };
-    };
+    tls: TlsOptions & { ca?: string };
 
     /**
      * Options for IDM transport.

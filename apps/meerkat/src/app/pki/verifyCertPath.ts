@@ -1,5 +1,5 @@
 import type { Context, IndexableOID } from "@wildboar/meerkat-types";
-import { Certificate, _encode_Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+import { Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
 import {
     SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
@@ -38,6 +38,9 @@ import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-s
 import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
 import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
 import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
+import {
+    sha256WithRSAEncryption,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
 import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
 import type {
     NAME_FORM,
@@ -80,6 +83,9 @@ import groupByOID from "../utils/groupByOID";
 import { policyMappings } from "@wildboar/x500/src/lib/modules/CertificateExtensions/policyMappings.oa";
 import { strict as assert } from "assert";
 import generalNameToString from "@wildboar/x500/src/lib/stringifiers/generalNameToString";
+import type {
+    TrustAnchorList,
+} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
 
 interface ValidPolicyData {
     // flags
@@ -117,7 +123,26 @@ interface ValidPolicyTree {
 export
 interface VerifyCertPathArgs {
 
-    trustAnchors?: Certificate[]; // TODO: Make trust anchor list.
+    /**
+     * @summary The time at which the certification path's is checked for validity.
+     * @description
+     *
+     * This allows you to override the current time when certificate
+     * expiration is checked via the `Validity` field.
+     *
+     * @readonly
+     */
+    readonly validityTime: Date;
+
+    /**
+     * @summary The trust anchors for this validation.
+     * @description
+     *
+     * The trust anchors that will be used to verify the certification path.
+     *
+     * @readonly
+     */
+    readonly trustAnchors: TrustAnchorList;
 
     /**
      * @summary A set of public-key certificates comprising a certification path
@@ -130,8 +155,6 @@ interface VerifyCertPathArgs {
      * @readonly
      */
     readonly certPath: Certificate[];
-
-    // trust anchors are implicit
 
     /**
      * @summary one or more certificate policy identifiers, that would be
@@ -295,6 +318,17 @@ export
 interface VerifyCertPathState {
 
     /**
+     * @summary The time at which the certification path's is checked for validity.
+     * @description
+     *
+     * This allows you to override the current time when certificate
+     * expiration is checked via the `Validity` field.
+     *
+     * @readonly
+     */
+    readonly validityTime: Date;
+
+    /**
      * @summary 0 if verification was successful, otherwise, a code describing
      *  the error.
      */
@@ -388,12 +422,7 @@ interface VerifyCertPathState {
 
 const sigAlgOidToNodeJSDigest: Map<string, string> = new Map([
     [ "1.2.840.113549.1.1.5", "sha1" ], // sha1WithRSAEncryption
-    // [ "", [ "", "" ] ],
-    // [ "", [ "", "" ] ],
-    // [ "", [ "", "" ] ],
-    // [ "", [ "", "" ] ],
-    // [ "", [ "", "" ] ],
-    // [ "", [ "", "" ] ],
+    [ sha256WithRSAEncryption.toString(), "sha256" ],
 ]);
 
 
@@ -440,14 +469,13 @@ const sigAlgOidToNodeJSDigest: Map<string, string> = new Map([
 // We check validity time first just because we do not want to verify the
 // digital signature (it is computationally expensive) if we do not have to.
 export
-function certIsValidTime (cert: Certificate): boolean {
-    const now = new Date();
+function certIsValidTime (cert: Certificate, asOf: Date): boolean {
     const notBefore = getDateFromTime(cert.toBeSigned.validity.notBefore);
     const notAfter = getDateFromTime(cert.toBeSigned.validity.notAfter);
-    if (now < notBefore) {
+    if (asOf < notBefore) {
         return false;
     }
-    if (now > notAfter) {
+    if (asOf > notAfter) {
         return false;
     }
     return true;
@@ -563,7 +591,13 @@ function verifyAltSignature (subjectCert: Certificate, issuerCert: Certificate):
 export
 function verifyNativeSignature (subjectCert: Certificate, issuerCert: Certificate): boolean | undefined {
     const subjectDER = subjectCert.originalDER
-        ?? _encode_Certificate(subjectCert, DER).toBytes();
+        ? (() => {
+            const el = new DERElement();
+            el.fromBytes(subjectCert.originalDER);
+            const tbs = el.sequence[0];
+            return tbs.toBytes();
+        })()
+        : _encode_TBSCertificate(subjectCert.toBeSigned, DER).toBytes();
     if (!subjectCert.algorithmIdentifier.algorithm.isEqualTo(subjectCert.toBeSigned.signature.algorithm)) {
         return false; // Signature algorithm OID was altered.
     }
@@ -596,7 +630,7 @@ function verifyBasicPublicKeyCertificateChecks (
     issuerCert: Certificate,
     subjectIndex: number,
 ): number {
-    if (!certIsValidTime(subjectCert)) {
+    if (!certIsValidTime(subjectCert, state.validityTime)) {
         return -1;
     }
     const namingMatcher = getNamingMatcherGetter(ctx);
@@ -836,7 +870,7 @@ function verifyBasicPublicKeyCertificateChecks (
         for (const name of namesToValidate) {
             const permittedBySubtrees: boolean = state.permitted_subtrees
                 .some((subtree) => dnWithinGeneralSubtree(name, subtree, namingMatcher));
-            if (!permittedBySubtrees) {
+            if (state.permitted_subtrees.length && !permittedBySubtrees) {
                 return -4; // Not permitted name.
             }
             const excludedBySubtree: boolean = state.excluded_subtrees
@@ -1171,18 +1205,84 @@ function verifyIntermediateCertificate (
  * @returns
  */
 export
-function verifyCACertificate (ctx: Context, cert: Certificate): number {
-    const der = cert.originalDER
-        ?? _encode_Certificate(cert, DER).toBytes();
-    const derb64 = Buffer.from(der).toString("base64");
-    const trustAnchor = ctx.config.tls.trustAnchorsBy.base64Encoding.get(derb64);
+function verifyCACertificate (
+    ctx: Context,
+    cert: Certificate,
+    trustAnchors: TrustAnchorList,
+    asOf: Date,
+): number {
+    const trustAnchor = trustAnchors?.find((ta) => {
+        if ("certificate" in ta) {
+            const tatbs = ta.certificate.toBeSigned;
+            const tbs = cert.toBeSigned;
+            /**
+             * NOTE: Because we are comparing the digital signatures here,
+             * we don't have to be thorough with comparing the trust anchor
+             * with the asserted CA cert. All the checks before the digital
+             * signature are basically to avoid more computationally
+             * expensive comparisons afterward.
+             */
+            return (
+                (tatbs.serialNumber == tbs.serialNumber) // Could be bigint or number.
+                && (tatbs.issuer.rdnSequence.length === tbs.issuer.rdnSequence.length)
+                && (tatbs.subject.rdnSequence.length === tbs.subject.rdnSequence.length)
+                && (tatbs.extensions?.length === tbs.extensions?.length)
+                && (tatbs.subjectPublicKeyInfo.algorithm.algorithm
+                    .isEqualTo(tbs.subjectPublicKeyInfo.algorithm.algorithm))
+                && !Buffer.compare(
+                    Buffer.from(tatbs.subjectPublicKeyInfo.subjectPublicKey),
+                    Buffer.from(tbs.subjectPublicKeyInfo.subjectPublicKey)
+                )
+                && (ta.certificate.algorithmIdentifier.algorithm
+                    .isEqualTo(cert.algorithmIdentifier.algorithm))
+                && !Buffer.compare(
+                    Buffer.from(ta.certificate.signature),
+                    Buffer.from(cert.signature),
+                )
+            );
+        } else if ("tbsCert" in ta) {
+            const tatbs = ta.tbsCert;
+            const tbs = cert.toBeSigned;
+            /**
+             * NOTE: Unlike the `certificate` alternative of the trust
+             * anchor choice, there is no digital signature, so comparison
+             * is not quite as straightforward. However, we can say that,
+             * among trust anchors, the tuple of
+             * (subject, serialNumber, subjectPublicKeyInfo) SHOULD be
+             * globally unique, so we can just check those fields.
+             */
+            return (
+                (tatbs.serialNumber == cert.toBeSigned.serialNumber) // Could be bigint or number.
+                && (tatbs.issuer.rdnSequence.length === cert.toBeSigned.issuer.rdnSequence.length)
+                && (tatbs.subject.rdnSequence.length === cert.toBeSigned.subject.rdnSequence.length)
+                && (tatbs.extensions?.length === tbs.extensions?.length)
+                && (tatbs.subjectPublicKeyInfo.algorithm.algorithm
+                    .isEqualTo(tbs.subjectPublicKeyInfo.algorithm.algorithm))
+                && !Buffer.compare(
+                    Buffer.from(tatbs.subjectPublicKeyInfo.subjectPublicKey),
+                    Buffer.from(tbs.subjectPublicKeyInfo.subjectPublicKey)
+                )
+            );
+        } else if ("taInfo" in ta) {
+            // TODO: Respect the certPolicyFlags from taInfo.
+            return (
+                (ta.taInfo.exts?.length === cert.toBeSigned.extensions?.length)
+                && (ta.taInfo.pubKey.algorithm.algorithm.isEqualTo(cert.toBeSigned.subjectPublicKeyInfo.algorithm.algorithm))
+                && !Buffer.compare(
+                    Buffer.from(ta.taInfo.pubKey.subjectPublicKey),
+                    Buffer.from(cert.toBeSigned.subjectPublicKeyInfo.subjectPublicKey),
+                )
+            );
+        } else {
+            return false; // Unrecognized alternative.
+        }
+    });
     if (!trustAnchor) {
         return -1; // not trusted
     }
-    if (!certIsValidTime(trustAnchor)) {
+    if (!certIsValidTime(cert, asOf)) {
         return -1;
     }
-
     // TODO: Check if the trust anchor is in the CRLs
     // TODO: Check OCSP?
     // TODO: Check if the trust anchor is in the remote CRL?
@@ -1209,6 +1309,7 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
 
     // The initialization step, defined in ITU Recommendation X.509 (2019), Section 12.4.
     const initialState: VerifyCertPathState = {
+        validityTime: args.validityTime,
         certPath: [ ...args.certPath ],
         authorities_constrained_policy_set: [
             [ new PolicyInformation(anyPolicy, undefined), new PolicyInformation(anyPolicy, undefined) ],
@@ -1252,7 +1353,7 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
     if (!path.length) {
         return verifyCertPathFail(-1);
     }
-    const caResult = verifyCACertificate(ctx, caCert);
+    const caResult = verifyCACertificate(ctx, caCert, args.trustAnchors, args.validityTime);
     if (caResult) {
         return verifyCertPathFail(caResult);
     }
