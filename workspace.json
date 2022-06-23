@@ -81,6 +81,40 @@
             },
             "tags": []
         },
+        "itot": {
+            "root": "libs/itot",
+            "sourceRoot": "libs/itot/src",
+            "projectType": "library",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/node:package",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/libs/itot",
+                        "tsConfig": "libs/itot/tsconfig.lib.json",
+                        "packageJson": "libs/itot/package.json",
+                        "main": "libs/itot/src/index.ts",
+                        "assets": ["libs/itot/*.md"]
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "outputs": ["{options.outputFile}"],
+                    "options": {
+                        "lintFilePatterns": ["libs/itot/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/libs/itot"],
+                    "options": {
+                        "jestConfig": "libs/itot/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                }
+            },
+            "tags": []
+        },
         "ldap-socket": {
             "root": "libs/ldap-socket",
             "sourceRoot": "libs/ldap-socket/src",
