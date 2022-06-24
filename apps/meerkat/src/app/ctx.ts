@@ -26,6 +26,15 @@ import type { TelemetryClient } from "applicationinsights";
 import * as appInsights from "applicationinsights";
 import { telemetryDomain } from "./constants";
 import * as dns from "dns/promises";
+import { PEMObject } from "pem-ts";
+import { BERElement, DERElement } from "asn1-ts";
+import {
+    CertificateList,
+    _decode_CertificateList,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+import {
+    _decode_TrustAnchorList,
+} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
 
 export
 interface MeerkatTelemetryClient {
@@ -149,6 +158,27 @@ if (logToHTTP) {
     winstonTransports.push(new winston.transports.Http(logToHTTP));
 }
 
+const caFileContents: string | undefined = process.env.MEERKAT_TLS_CA_FILE
+    ? fs.readFileSync(process.env.MEERKAT_TLS_CA_FILE, { encoding: "utf-8" })
+    : undefined;
+
+const crlFileContents: string | undefined = process.env.MEERKAT_TLS_CRL_FILE
+    ? fs.readFileSync(process.env.MEERKAT_TLS_CRL_FILE, { encoding: "utf-8" })
+    : undefined;
+
+const talFileContents: Buffer | undefined = process.env.MEERKAT_TRUST_ANCHORS_FILE
+    ? fs.readFileSync(process.env.MEERKAT_TRUST_ANCHORS_FILE)
+    : undefined;
+
+const decodedCRLs: CertificateList[] = crlFileContents
+    ? PEMObject.parse(crlFileContents)
+        .map((p) => {
+            const el = new DERElement();
+            el.fromBytes(p.data);
+            return _decode_CertificateList(el);
+        })
+    : [];
+
 const ctx: MeerkatContext = {
     i18n,
     config: {
@@ -206,12 +236,8 @@ const ctx: MeerkatContext = {
             key: process.env.MEERKAT_TLS_KEY_FILE
                 ? fs.readFileSync(process.env.MEERKAT_TLS_KEY_FILE, { encoding: "utf-8" })
                 : undefined,
-            ca: process.env.MEERKAT_TLS_CA_FILE
-                ? fs.readFileSync(process.env.MEERKAT_TLS_CA_FILE, { encoding: "utf-8" })
-                : undefined,
-            crl: process.env.MEERKAT_TLS_CRL_FILE
-                ? fs.readFileSync(process.env.MEERKAT_TLS_CRL_FILE, { encoding: "utf-8" })
-                : undefined,
+            ca: caFileContents,
+            crl: crlFileContents,
             pfx: process.env.MEERKAT_TLS_PFX_FILE
                 ? fs.readFileSync(process.env.MEERKAT_TLS_PFX_FILE)
                 : undefined,
@@ -230,6 +256,26 @@ const ctx: MeerkatContext = {
             // ticketKeys?: Buffer | undefined;
             // pskCallback?(socket: TLSSocket, identity: string): DataView | NodeJS.TypedArray | null;
             // pskIdentityHint: process.env.MEERKAT_PSK_IDENTITY_HINT
+            certificateRevocationLists: crlFileContents
+                ? PEMObject.parse(crlFileContents)
+                    .map((p) => {
+                        const el = new DERElement();
+                        el.fromBytes(p.data);
+                        return _decode_CertificateList(el);
+                    })
+                : [],
+            revokedCertificateSerialNumbers: new Set(
+                decodedCRLs
+                    .flatMap((crl) => crl.toBeSigned.revokedCertificates
+                        ?.map((rc) => rc.serialNumber.toString()) ?? []),
+            ),
+            trustAnchorList: talFileContents
+                ? (() => {
+                    const el = new BERElement();
+                    el.fromBytes(talFileContents);
+                    return _decode_TrustAnchorList(el);
+                })()
+                : [],
         },
         idm: {
             port: process.env.MEERKAT_IDM_PORT

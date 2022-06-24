@@ -175,4 +175,22 @@ describe("verifyCertPath()", () => {
         expect(response.returnCode).not.toBe(0);
         expect(response.warnings).toHaveLength(0);
     });
+
+    it("rejects a certification path after it expires", () => {
+        const args: VerifyCertPathArgs = {
+            validityTime: new Date(2052, 6, 23, 12, 0, 0),
+            certPath: validCertPath,
+            trustAnchors: trustAnchorList,
+            initial_excluded_subtrees_set: [],
+            initial_explicit_policy: true,
+            initial_inhibit_policy: true,
+            initial_permitted_subtrees_set: [],
+            initial_policy_mapping_inhibit: true,
+            initial_policy_set: [],
+            initial_required_name_forms: [],
+        };
+        const response = verifyCertPath(ctx, args);
+        expect(response.returnCode).not.toBe(0);
+        expect(response.warnings).toHaveLength(0);
+    });
 });

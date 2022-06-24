@@ -108,7 +108,13 @@ import type {
     Clearance,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 import type { TlsOptions } from "tls";
-import type { Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+import type {
+    CertificateList,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+import type {
+    TrustAnchorList,
+} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -1179,10 +1185,38 @@ interface Configuration {
      * Options for the TLS socket, which is all of the options for the
      * `TLSSocket` constructor in the NodeJS standard library.
      *
-     * Even though the NodeJS `ca` option can take many forms, this should always
-     * be a string of the concatenated PEM-encoded trust anchor certificates.
+     * Even though the NodeJS `ca` and `crl` options can take many forms, they
+     * should always be a string of the concatenated PEM objects.
      */
-    tls: TlsOptions & { ca?: string };
+    tls: TlsOptions & {
+        ca?: string;
+        crl?: string;
+
+        /**
+         * The strongly-typed certificate revocation lists.
+         */
+        certificateRevocationLists: CertificateList[];
+
+        /**
+         * This is an index of serial numbers of revoked certificates, in
+         * decimal format, from all configured CRLs.
+         *
+         * If a certificate serial number appears in this set, it _does not_
+         * mean that it is revoked, because two different issuers may have used
+         * the same serial numbers. It _does_ tell you, cheaply, if the CRL list
+         * needs to be scanned for a particular certificate; if a particular
+         * serial number does not appear in this set, there is no need to do the
+         * more computationally expensive step of scanning through the CRLs for
+         * a match.
+         */
+        revokedCertificateSerialNumbers: Set<string>;
+
+        /**
+         * The strongly-typed list of trust anchors. If this is not supplied
+         * from the user, it should be instantiated from `tls.rootCertificates`.
+         */
+        trustAnchorList: TrustAnchorList;
+    };
 
     /**
      * Options for IDM transport.

@@ -32,15 +32,6 @@ import type {
     GeneralSubtree,
     GeneralSubtrees,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralSubtrees.ta";
-import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
-import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha224.va";
-import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
-import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
-import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
-import {  } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
-import {
-    sha256WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
 import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
 import type {
     NAME_FORM,
@@ -86,6 +77,51 @@ import generalNameToString from "@wildboar/x500/src/lib/stringifiers/generalName
 import type {
     TrustAnchorList,
 } from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+import {
+    sha1WithRSAEncryption,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha1WithRSAEncryption.va";
+import {
+    sha256WithRSAEncryption,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
+import {
+    sha384WithRSAEncryption,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha384WithRSAEncryption.va";
+import {
+    sha512WithRSAEncryption,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha512WithRSAEncryption.va";
+import {
+    sha224WithRSAEncryption,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha224WithRSAEncryption.va";
+import {
+    id_RSASSA_PSS,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-RSASSA-PSS.va";
+import {
+    id_dsa_with_sha1,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha1.va";
+import {
+    id_dsa_with_sha224,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha224.va";
+import {
+    id_dsa_with_sha256,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha256.va";
+import {
+    ecdsa_with_SHA224,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA224.va";
+import {
+    ecdsa_with_SHA256,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA256.va";
+import {
+    ecdsa_with_SHA384,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA384.va";
+import {
+    ecdsa_with_SHA512,
+} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA512.va";
+import {
+    id_Ed25519,
+} from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/id-Ed25519.va";
+import {
+    id_Ed448,
+} from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/id-Ed448.va";
 
 interface ValidPolicyData {
     // flags
@@ -391,38 +427,22 @@ interface VerifyCertPathState {
 
 }
 
-// sha1WithRSAEncryption   ID ::= { pkcs-1 sha1WithRSAEncryption(5) }
-// sha256WithRSAEncryption ID ::= { pkcs-1 sha256WithRSAEncryption(11) }
-// sha384WithRSAEncryption ID ::= { pkcs-1 sha384WithRSAEncryption(12) }
-// sha512WithRSAEncryption ID ::= { pkcs-1 sha512WithRSAEncryption(13) }
-// sha224WithRSAEncryption ID ::= { pkcs-1 sha224WithRSAEncryption(14) }
-
-// -- RSASSA-PSS signature algorithm object identifiers (From IETF RFC 4055)
-
-// id-RSASSA-PSS           ID ::= { pkcs-1 10 }
-// id-mgf1                 ID ::= { pkcs-1 8 }
-
-// -- DSA algorithms object idntifiers
-
-// id-dsa-with-sha1        ID ::= {iso(1) member-body(2) us(840) x9-57(10040) x9algorithm(4)
-//                                 dsa-with-sha1(3)}
-// id-dsa-with-sha224      ID ::= { sigAlgs 1 } -- CSOR
-// id-dsa-with-sha256      ID ::= { sigAlgs 2 } -- CSOR
-
-// -- From IETF RFC 5758
-// ecdsa-with-SHA224       ID ::= { ansi-x9-62 signatures(4)
-//                                                 ecdsa-with-SHA2(3) 1 }
-// ecdsa-with-SHA256       ID ::= { ansi-x9-62 signatures(4)
-//                                                 ecdsa-with-SHA2(3) 2 }
-// ecdsa-with-SHA384       ID ::= { ansi-x9-62 signatures(4)
-//                                                 ecdsa-with-SHA2(3) 3 }
-// ecdsa-with-SHA512       ID ::= { ansi-x9-62 signatures(4) ecdsa-with-SHA2(3) 4 }
-
-// TODO: Also Ed25519
-
-const sigAlgOidToNodeJSDigest: Map<string, string> = new Map([
-    [ "1.2.840.113549.1.1.5", "sha1" ], // sha1WithRSAEncryption
+const sigAlgOidToNodeJSDigest: Map<string, string | null> = new Map([
+    [ sha1WithRSAEncryption.toString(), "sha1" ],
+    [ sha224WithRSAEncryption.toString(), "sha224" ],
     [ sha256WithRSAEncryption.toString(), "sha256" ],
+    [ sha384WithRSAEncryption.toString(), "sha384" ],
+    [ sha512WithRSAEncryption.toString(), "sha512" ],
+    [ id_dsa_with_sha1.toString(), "sha1" ],
+    [ id_dsa_with_sha224.toString(), "sha224" ],
+    [ id_dsa_with_sha256.toString(), "sha256" ],
+    [ ecdsa_with_SHA224.toString(), "sha224" ],
+    [ ecdsa_with_SHA256.toString(), "sha256" ],
+    [ ecdsa_with_SHA384.toString(), "sha384" ],
+    [ ecdsa_with_SHA512.toString(), "sha512" ],
+    [ id_RSASSA_PSS.toString(), null ], // rsa-pss is a supported keytype in the NodeJS runtime.
+    [ id_Ed448.toString(), null ],
+    [ id_Ed25519.toString(), null ],
 ]);
 
 
@@ -621,6 +641,35 @@ function verifyNativeSignature (subjectCert: Certificate, issuerCert: Certificat
     );
 }
 
+export
+function isRevokedFromConfiguredCRLs (
+    ctx: Context,
+    cert: Certificate,
+    asOf: Date,
+): boolean {
+    // If the index of revoked certificate serial numbers has this cert's SN,
+    // it is worth scanning the CRLs for which cert revoked it.
+    if (!ctx.config.tls.revokedCertificateSerialNumbers.has(cert.toBeSigned.serialNumber.toString())) {
+        return false;
+    }
+    const namingMatcher = getNamingMatcherGetter(ctx);
+    return ctx.config.tls.certificateRevocationLists
+        .some((crl) => (
+            // We only care about CRLs that could have applied at the asserted time.
+            (getDateFromTime(crl.toBeSigned.thisUpdate) <= asOf)
+            && compareDistinguishedName(
+                crl.toBeSigned.issuer.rdnSequence,
+                cert.toBeSigned.issuer.rdnSequence,
+                namingMatcher,
+            )
+            && crl.toBeSigned.revokedCertificates
+                ?.some((rc) => (
+                    (rc.serialNumber == cert.toBeSigned.serialNumber)
+                    && (getDateFromTime(rc.revocationDate) <= asOf)
+                ))
+        ));
+}
+
 // Section 12.5.1
 export
 function verifyBasicPublicKeyCertificateChecks (
@@ -647,7 +696,9 @@ function verifyBasicPublicKeyCertificateChecks (
     if (!signatureIsValid) {
         return -2;
     }
-    // TODO: Check CRL
+    if (isRevokedFromConfiguredCRLs(ctx, subjectCert, state.validityTime)) {
+        return -5;
+    }
     // TODO: Check OCSP
     // TODO: Check remote CRL
 
@@ -804,16 +855,16 @@ function verifyBasicPublicKeyCertificateChecks (
             if (pol.policyIdentifier.isEqualTo(anyPolicy)) {
                 continue;
             }
-            // TODO: 12.5.1.d
+            // 12.5.1.d
             // Index the [path-depth] column by policy ID (Map<oid-string, row-number[]>)
         }
         if (
             !anyPolicyNode
             || (state.inhibit_any_policy_indicator && !selfIssuedIntermediate)
         ) {
-            // TODO: 12.5.1.e
+            // 12.5.1.e
         } else if (anyPolicyNode && !state.inhibit_any_policy_indicator) {
-            // TODO: 12.5.1.f
+            // 12.5.1.f
         }
     } else { // The certificatePolicies extension is not present.
         // 12.5.1.c
@@ -880,7 +931,7 @@ function verifyBasicPublicKeyCertificateChecks (
             }
         }
 
-        // TODO: Step 12.5.1.h
+        // Step 12.5.1.h
         // It is not clear to me how to use the name forms.
     }
 
@@ -1283,7 +1334,10 @@ function verifyCACertificate (
     if (!certIsValidTime(cert, asOf)) {
         return -1;
     }
-    // TODO: Check if the trust anchor is in the CRLs
+
+    if (isRevokedFromConfiguredCRLs(ctx, cert, asOf)) {
+        return -5;
+    }
     // TODO: Check OCSP?
     // TODO: Check if the trust anchor is in the remote CRL?
 

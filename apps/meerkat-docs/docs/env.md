@@ -502,6 +502,13 @@ Currently unused.
 
 Currently unused.
 
+## MEERKAT_TRUST_ANCHORS_FILE
+
+The filepath of the DER-encoded Trust Anchor List file. See
+[IETF RFC 5914](https://datatracker.ietf.org/doc/html/rfc5914). This file
+contains information on the trust anchors to be used for TLS and verifying
+signed operations.
+
 ## MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES
 
 Even if subordinates are cached in memory, Meerkat DSA will directly query the
