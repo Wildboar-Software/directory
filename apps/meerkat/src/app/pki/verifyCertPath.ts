@@ -1163,9 +1163,10 @@ function processExplicitPolicyIndicator (
         state.pending_constraints.explicit_policy.pending
         && !selfIssuedIntermediate
     ) {
+        const newSkipCerts = Math.max(0, state.pending_constraints.explicit_policy.skipCertificates - 1)
         state.pending_constraints.explicit_policy = {
-            pending: false, // TODO: Does this need to be unset if skipCerts == 0?
-            skipCertificates: Math.max(0, state.pending_constraints.explicit_policy.skipCertificates - 1),
+            pending: (newSkipCerts > 0),
+            skipCertificates: newSkipCerts,
         };
         if (state.pending_constraints.explicit_policy.skipCertificates === 0) {
             state.explicit_policy_indicator = true;
@@ -1177,10 +1178,17 @@ function processExplicitPolicyIndicator (
     const pc = policyConstraintsExt
         ? policyConstraints.decoderFor["&ExtnType"]!(policyConstraintsExt.valueElement())
         : undefined;
-    if (pc?.requireExplicitPolicy) {
+    if (pc?.requireExplicitPolicy !== undefined) {
         // Bullet #2
         if (pc.requireExplicitPolicy > 0) {
-            state.pending_constraints.explicit_policy.skipCertificates = Number(pc.requireExplicitPolicy);
+            if (state.pending_constraints.explicit_policy.pending) {
+                state.pending_constraints.explicit_policy.skipCertificates = Math.min(
+                    Number(pc.requireExplicitPolicy),
+                    state.pending_constraints.explicit_policy.skipCertificates,
+                );
+            } else {
+                state.pending_constraints.explicit_policy.skipCertificates = Number(pc.requireExplicitPolicy);
+            }
         } else if (pc.requireExplicitPolicy === 0) {
             state.explicit_policy_indicator = true;
         } else {
@@ -1189,7 +1197,7 @@ function processExplicitPolicyIndicator (
                 returnCode: -1, // SkipCerts cannot be negative. Invalid cert.
             };
         }
-        // TODO: Bullet #3 does not sound actionable.
+        // TODO: Bullet #3
     }
     return state;
 }
@@ -1410,8 +1418,26 @@ function finalProcessing (
         // Do nothing. Allow authority_set_policies to remain empty.
     }
 
+    const user_constrained_policies: PolicyInformation[] = args.initial_policy_set
+        .map((userPolicy) => authority_set_policies.get(userPolicy.toString()))
+        .filter((asp): asp is ValidPolicyNode => !!asp)
+        .map((asp) => new PolicyInformation(
+            asp.valid_policy,
+            asp.qualifier_set?.length // There is a SIZE constraint of (1..MAX)
+                ? asp.qualifier_set
+                : undefined,
+        ));
+
     return {
-        returnCode: state.returnCode ?? 0,
+        returnCode: ( // Section 12.5.4, bullet point 3.
+            state.explicit_policy_indicator
+            && (
+                (authority_set_policies.size === 0)
+                || (user_constrained_policies.length === 0)
+            )
+        )
+            ? -200
+            : (state.returnCode ?? 0),
         authorities_constrained_policies: Array
             .from(authority_set_policies.values())
             .map((node) => new PolicyInformation(
@@ -1422,8 +1448,8 @@ function finalProcessing (
             )),
         explicit_policy_indicator: state.explicit_policy_indicator,
         policy_mappings_that_occurred: [], // FIXME:
-        user_constrained_policies: [], // FIXME:
-        warnings: [], // FIXME:
+        user_constrained_policies,
+        warnings: [],
     };
 }
 

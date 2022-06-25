@@ -59,6 +59,19 @@ const DEFAULT_SETTINGS: VerifyCertPathArgs = {
     initial_required_name_forms: [],
 };
 
+// So we don't modify anything by reference.
+function getDefaultResult (result: Partial<VerifyCertPathResult>) {
+    return {
+        returnCode: 0,
+        authorities_constrained_policies: [],
+        explicit_policy_indicator: false,
+        policy_mappings_that_occurred: [],
+        user_constrained_policies: [],
+        warnings: [],
+        ...result,
+    };
+}
+
 async function loadCert (certName: string): Promise<Certificate> {
     const withExtension = certName.endsWith(".crt")
         ? certName
@@ -100,6 +113,26 @@ const ctx: Context = {
     // TODO:
 } as Context;
 
+function create_nist_pkits_test (
+    certPathFiles: string[],
+    args: Partial<VerifyCertPathArgs>,
+    expectedResult: Partial<VerifyCertPathResult>,
+) {
+    return async function () {
+        const certPath: Certificate[] = (await Promise.all(
+            certPathFiles.map(loadCert),
+        )).reverse();
+        const args_: VerifyCertPathArgs = {
+            ...DEFAULT_SETTINGS,
+            certPath,
+            ...args,
+        };
+        const result = verifyCertPath(ctx, args_);
+        const expectedResult_: VerifyCertPathResult = getDefaultResult(expectedResult);
+        return expect(result).toEqual(expectedResult_);
+    }
+}
+
 describe("NIST PKITS 4.10.1 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", async () => {
         const certPath: Certificate[] = (await Promise.all(
@@ -125,11 +158,39 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
                     undefined,
                 ),
             ],
-            explicit_policy_indicator: false,
+            explicit_policy_indicator: true,
             policy_mappings_that_occurred: [],
-            user_constrained_policies: [],
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
             warnings: [],
         };
         return expect(result).toEqual(expectedResult);
     });
+
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "Mapping1to2CACert.crt",
+            "ValidPolicyMappingTest1EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            returnCode: -200,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+        },
+    ));
 });
