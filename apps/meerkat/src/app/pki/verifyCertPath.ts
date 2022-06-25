@@ -734,6 +734,12 @@ function verifyBasicPublicKeyCertificateChecks (
         namingMatcher,
     );
     const selfIssuedIntermediate: boolean = (selfIssued && intermediate);
+    if (state.valid_policy_tree) {
+        state.valid_policy_tree.levels.push({
+            cert: subjectCert,
+            nodes: [],
+        });
+    }
     if (certificatePoliciesExt) {
         const certPolicies = certificatePolicies.decoderFor["&ExtnType"]!(certificatePoliciesExt.valueElement());
         const anyPolicyNode = certPolicies.find((cpol) => cpol.policyIdentifier.isEqualTo(anyPolicy));
@@ -741,11 +747,8 @@ function verifyBasicPublicKeyCertificateChecks (
         // IETF RFC 5280, Section 6.1.3.d
         if (state.valid_policy_tree) {
             const levels = state.valid_policy_tree.levels;
-            const levelN: ValidPolicyLevel = {
-                cert: subjectCert,
-                nodes: [],
-            };
-            const levelNMinus1: ValidPolicyLevel = levels[levels.length - 1];
+            const levelN = levels[levels.length - 1];
+            const levelNMinus1: ValidPolicyLevel = levels[levels.length - 2];
             const previousLevelNodes = levelNMinus1.nodes;
 
             let non_any_match: boolean = false;
@@ -877,14 +880,11 @@ function verifyBasicPublicKeyCertificateChecks (
     // IETF RFC 5280, Section 6.1.3.d.3
     if (state.valid_policy_tree) {
         const levels = state.valid_policy_tree.levels;
-        const levelN: ValidPolicyLevel = {
-            cert: subjectCert,
-            nodes: [],
-        };
-        const levelNMinus1: ValidPolicyLevel = levels[levels.length - 1];
+        const levelN = levels[levels.length - 1];
+        const levelNMinus1: ValidPolicyLevel = levels[levels.length - 2];
         let currentLevel = levelN;
         let pruningLevel = levelNMinus1;
-        let minus = 1;
+        let minus = 2;
         while (pruningLevel) {
             const previousLevelNodesWithChildren: Set<ValidPolicyNode> = new Set();
             for (const node of currentLevel.nodes) {
@@ -960,6 +960,31 @@ function processIntermediateCertificates (
     const inhibitAnyPolicyExt: Extension | undefined = extsGroupedByOID[inhibitAnyPolicy["&id"]!.toString()]?.[0];
     const policyMappingsExt: Extension | undefined = extsGroupedByOID[policyMappings["&id"]!.toString()]?.[0];
 
+    if (state.policy_mapping_inhibit_indicator) {
+        // TODO: Section 12.5.2.3
+    } else { // Section 12.5.2.4
+        const pc = policyConstraintsExt
+            ? policyConstraints.decoderFor["&ExtnType"]!(policyConstraintsExt.valueElement())
+            : undefined;
+        if (pc?.inhibitPolicyMapping !== undefined) {
+            if (pc.inhibitPolicyMapping === 0) {
+                state.policy_mapping_inhibit_indicator = true;
+            } else {
+                if (state.pending_constraints.policy_mapping_inhibit.pending) {
+                    state.pending_constraints.policy_mapping_inhibit.skipCertificates = Math.min(
+                        Number(pc.inhibitPolicyMapping),
+                        state.pending_constraints.policy_mapping_inhibit.skipCertificates,
+                    );
+                } else {
+                    // In this case, we assume that `state...skipCertificates`
+                    // is `0`.
+                    state.pending_constraints.policy_mapping_inhibit.skipCertificates = Number(pc.inhibitPolicyMapping);
+                }
+                state.pending_constraints.policy_mapping_inhibit.pending = true;
+            }
+        }
+    }
+
     if (policyMappingsExt && state.valid_policy_tree) {
         const pm = policyMappings.decoderFor["&ExtnType"]!(policyMappingsExt.valueElement());
         if (pm.length < 1) {
@@ -978,18 +1003,15 @@ function processIntermediateCertificates (
 
         // We index the policy mapping so we can translate level-N in a single pass.
         const policyMappingsMap = groupByOID(pm, (p) => p.issuerDomainPolicy);
-        // const policyMappingMap: Map<IndexableOID, IndexableOID> = new Map();
-        // for (const mapping of pm) {
-        //     policyMappingMap.set(mapping.issuerDomainPolicy.toString(), mapping.subjectDomainPolicy.toString());
-        // }
 
         // IETF RFC 5280, Section 6.1.4.b.1
-        const policy_mapping = state.pending_constraints.policy_mapping_inhibit.skipCertificates;
         const levels = state.valid_policy_tree.levels;
         const levelN = levels[levels.length - 1];
         const levelNMinus1 = levels[levels.length - 2];
-        if (policy_mapping > 0) { // IETF RFC 5280, Section 6.1.4.b.1
+        if (!state.policy_mapping_inhibit_indicator) { // IETF RFC 5280, Section 6.1.4.b.1
             const mapped_policies: Set<IndexableOID> = new Set();
+            // FIXME: Something about policy mapping is not working.
+            // The expected policy set in nodes of N-1 are not getting changed.
             for (const node of levelN.nodes) {
                 for (const ep of node.expected_policy_set) {
                     const pmsOfSameIssuerPolicy = policyMappingsMap[ep];
@@ -1029,7 +1051,7 @@ function processIntermediateCertificates (
                 // TODO: This code was copied and might be able to be refactored out into a separate function.
                 let currentLevel = levelN;
                 let pruningLevel = levelNMinus1;
-                let minus = 1;
+                let minus = 2;
                 while (pruningLevel) {
                     const previousLevelNodesWithChildren: Set<ValidPolicyNode> = new Set();
                     for (const node of currentLevel.nodes) {
@@ -1073,25 +1095,6 @@ function processIntermediateCertificates (
         if (names.excludedSubtrees) {
             // Union
             state.excluded_subtrees.push(...names.excludedSubtrees);
-        }
-    }
-
-    if (state.policy_mapping_inhibit_indicator) {
-        // TODO: Section 12.5.2.3
-    } else { // Section 12.5.2.4
-        const pc = policyConstraintsExt
-            ? policyConstraints.decoderFor["&ExtnType"]!(policyConstraintsExt.valueElement())
-            : undefined;
-        if (pc?.inhibitPolicyMapping !== undefined) {
-            if (pc.inhibitPolicyMapping === 0) {
-                state.policy_mapping_inhibit_indicator = true;
-            } else {
-                state.pending_constraints.policy_mapping_inhibit.pending = true;
-                state.pending_constraints.policy_mapping_inhibit.skipCertificates = Math.min(
-                    Number(pc.inhibitPolicyMapping),
-                    state.pending_constraints.policy_mapping_inhibit.skipCertificates,
-                );
-            }
         }
     }
 
@@ -1351,6 +1354,79 @@ function verifyCACertificate (
     return 0;
 }
 
+// From OpenSSL in `crypto/x509/pcy_tree.c`.
+export
+function tree_calculate_authority_set (tree: ValidPolicyTree): ValidPolicyNode[] {
+    const addnodes: ValidPolicyNode[] = [];
+    let curr_i: number = 0;
+    let curr = tree.levels[curr_i]; // curr = tree->levels;
+    for (let i = 1; i < tree.levels.length; i++) {
+        /**
+         * REVIEW: This implementation came from OpenSSL, but can there really
+         * only be one anyPolicy node in a given level? This seems like it might
+         * be a bug.
+         */
+        const anyptr = curr.nodes.find((n) => n.valid_policy.isEqualTo(anyPolicy));
+        /*
+         * If no anyPolicy node on this level it can't appear on lower
+         * levels so end search.
+         */
+        if (!anyptr)
+            break;
+        curr_i++;
+        curr = tree.levels[curr_i];
+        for (let j = 0; j < curr.nodes.length; j++) {
+            const node = curr.nodes[j];
+            if (node.parent === anyptr) {
+                addnodes.push(node);
+            }
+        }
+    }
+    return addnodes;
+}
+
+// ITU Recommendation X.509, Section 12.5.4.
+export
+function finalProcessing (
+    args: VerifyCertPathArgs,
+    state: VerifyCertPathState,
+): VerifyCertPathResult {
+    const authority_set_policies: Map<IndexableOID, ValidPolicyNode> = new Map();
+
+    if (state.valid_policy_tree) {
+        if (args.initial_policy_set.some((p) => p.isEqualTo(anyPolicy))) {
+            authority_set_policies.set(anyPolicy.toString(), {
+                valid_policy: anyPolicy,
+                expected_policy_set: new Set(),
+                nchild: 0,
+                qualifier_set: [],
+            });
+        } else {
+            for (const node of tree_calculate_authority_set(state.valid_policy_tree)) {
+                authority_set_policies.set(node.valid_policy.toString(), node);
+            }
+        }
+    } else {
+        // Do nothing. Allow authority_set_policies to remain empty.
+    }
+
+    return {
+        returnCode: state.returnCode ?? 0,
+        authorities_constrained_policies: Array
+            .from(authority_set_policies.values())
+            .map((node) => new PolicyInformation(
+                node.valid_policy,
+                node.qualifier_set?.length // There is a SIZE constraint of (1..MAX)
+                    ? node.qualifier_set
+                    : undefined,
+            )),
+        explicit_policy_indicator: state.explicit_policy_indicator,
+        policy_mappings_that_occurred: [], // FIXME:
+        user_constrained_policies: [], // FIXME:
+        warnings: [], // FIXME:
+    };
+}
+
 /**
  * @summary Verify an X.509 certification path
  * @description
@@ -1418,7 +1494,7 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
         return verifyCertPathFail(caResult);
     }
     let state: VerifyCertPathState = initialState;
-    for (let i = path.length - 2; i > 1; i--) {
+    for (let i = path.length - 2; i >= 1; i--) {
         const issuerCert = path[i + 1];
         const subjectCert = path[i];
         const intermediateResult = verifyIntermediateCertificate(ctx, state, subjectCert, issuerCert, i);
@@ -1446,13 +1522,6 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
         endEntityCertificate,
         endEntityIssuerCert,
     );
-    // TODO: Section 12.5.4 checks.
-    return {
-        returnCode: endEntityResult.returnCode ?? 0,
-        authorities_constrained_policies: [], // FIXME:
-        explicit_policy_indicator: state.explicit_policy_indicator,
-        policy_mappings_that_occurred: [], // FIXME:
-        user_constrained_policies: [], // FIXME:
-        warnings: [], // FIXME:
-    };
+    state.returnCode = endEntityResult.returnCode ?? 0;
+    return finalProcessing(args, state);
 }

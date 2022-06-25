@@ -17,6 +17,9 @@ import type {
 import {
     anyPolicy,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
+import {
+    PolicyInformation,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyInformation.ta";
 
 const PKITS_CERTS_PATH = path.join(__dirname, "data");
 const VALIDITY_TIME: Date = new Date();
@@ -116,7 +119,12 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
         const result = verifyCertPath(ctx, args);
         const expectedResult: VerifyCertPathResult = {
             returnCode: 0,
-            authorities_constrained_policies: [], // FIXME:
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
             explicit_policy_indicator: false,
             policy_mappings_that_occurred: [],
             user_constrained_policies: [],
