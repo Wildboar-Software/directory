@@ -226,7 +226,7 @@ interface VerifyCertPathArgs {
      *  certificate policy value in a constrained set
      * @readonly
      */
-    readonly initial_inhibit_policy: boolean;
+    readonly initial_inhibit_any_policy: boolean;
 
     // The current time can be trivially obtained.
 
@@ -1274,7 +1274,10 @@ function verifyCACertificate (
              * expensive comparisons afterward.
              */
             return (
-                (tatbs.serialNumber == tbs.serialNumber) // Could be bigint or number.
+                !Buffer.compare(
+                    Buffer.from(tatbs.serialNumber),
+                    Buffer.from(tbs.serialNumber),
+                )
                 && (tatbs.issuer.rdnSequence.length === tbs.issuer.rdnSequence.length)
                 && (tatbs.subject.rdnSequence.length === tbs.subject.rdnSequence.length)
                 && (tatbs.extensions?.length === tbs.extensions?.length)
@@ -1303,7 +1306,10 @@ function verifyCACertificate (
              * globally unique, so we can just check those fields.
              */
             return (
-                (tatbs.serialNumber == cert.toBeSigned.serialNumber) // Could be bigint or number.
+                !Buffer.compare(
+                    Buffer.from(tatbs.serialNumber),
+                    Buffer.from(tbs.serialNumber),
+                )
                 && (tatbs.issuer.rdnSequence.length === cert.toBeSigned.issuer.rdnSequence.length)
                 && (tatbs.subject.rdnSequence.length === cert.toBeSigned.subject.rdnSequence.length)
                 && (tatbs.extensions?.length === tbs.extensions?.length)
@@ -1329,10 +1335,10 @@ function verifyCACertificate (
         }
     });
     if (!trustAnchor) {
-        return -1; // not trusted
+        return -10; // not trusted
     }
     if (!certIsValidTime(cert, asOf)) {
-        return -1;
+        return -73;
     }
 
     if (isRevokedFromConfiguredCRLs(ctx, cert, asOf)) {
@@ -1387,7 +1393,7 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
         explicit_policy_indicator: args.initial_explicit_policy,
         path_depth: 1,
         policy_mapping_inhibit_indicator: args.initial_policy_mapping_inhibit,
-        inhibit_any_policy_indicator: args.initial_inhibit_policy,
+        inhibit_any_policy_indicator: args.initial_inhibit_any_policy,
         pending_constraints: {
             explicit_policy: {
                 pending: false,
@@ -1412,7 +1418,7 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
         return verifyCertPathFail(caResult);
     }
     let state: VerifyCertPathState = initialState;
-    for (let i = path.length - 1; i > 1; i--) {
+    for (let i = path.length - 2; i > 1; i--) {
         const issuerCert = path[i + 1];
         const subjectCert = path[i];
         const intermediateResult = verifyIntermediateCertificate(ctx, state, subjectCert, issuerCert, i);

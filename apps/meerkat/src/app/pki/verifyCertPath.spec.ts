@@ -34,6 +34,13 @@ const ctx: Context = {
     matchingRulesSuitableForNaming: {
         has: (key: string) => true,
     },
+    config: {
+        tls: {
+            revokedCertificateSerialNumbers: new Set(),
+            // certificateRevocationLists: [],
+            // trustAnchorList: [],
+        },
+    },
     // TODO:
 } as Context;
 
@@ -147,7 +154,7 @@ describe("verifyCertPath()", () => {
             trustAnchors: trustAnchorList,
             initial_excluded_subtrees_set: [],
             initial_explicit_policy: true,
-            initial_inhibit_policy: true,
+            initial_inhibit_any_policy: true,
             initial_permitted_subtrees_set: [],
             initial_policy_mapping_inhibit: true,
             initial_policy_set: [],
@@ -165,7 +172,7 @@ describe("verifyCertPath()", () => {
             trustAnchors: trustAnchorList,
             initial_excluded_subtrees_set: [],
             initial_explicit_policy: true,
-            initial_inhibit_policy: true,
+            initial_inhibit_any_policy: true,
             initial_permitted_subtrees_set: [],
             initial_policy_mapping_inhibit: true,
             initial_policy_set: [],
@@ -183,7 +190,7 @@ describe("verifyCertPath()", () => {
             trustAnchors: trustAnchorList,
             initial_excluded_subtrees_set: [],
             initial_explicit_policy: true,
-            initial_inhibit_policy: true,
+            initial_inhibit_any_policy: true,
             initial_permitted_subtrees_set: [],
             initial_policy_mapping_inhibit: true,
             initial_policy_set: [],
