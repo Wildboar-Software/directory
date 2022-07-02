@@ -13,6 +13,9 @@ import {
     _decode_ModifyEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
 import {
+    _encode_ModifyEntryArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
+import {
     ModifyEntryResult,
     _encode_ModifyEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
@@ -244,6 +247,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 import { printInvokeId } from "../utils/printInvokeId";
+import { verifyArgumentSignature } from "../pki/verifyArgumentSignature";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -2215,6 +2224,48 @@ async function modifyEntry (
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ModifyEntryArgument(state.operationArgument);
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     */
+     if ("signed" in argument) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
+        if (!certPath) {
+            throw new errors.MistypedArgumentError(
+                ctx.i18n.t("err:cert_path_required_signed", {
+                    context: "arg",
+                    host: remoteHostIdentifier,
+                    aid: assn.id,
+                    iid: printInvokeId(state.invokeId),
+                }),
+            );
+        }
+        for (const pair of certPath.theCACertificates ?? []) {
+            if (!pair.issuedToThisCA) {
+                throw new errors.MistypedArgumentError(
+                    ctx.i18n.t("err:cert_path_issuedToThisCA", {
+                        host: remoteHostIdentifier,
+                        aid: assn.id,
+                        iid: printInvokeId(state.invokeId),
+                    }),
+                );
+            }
+        }
+        verifyArgumentSignature(
+            ctx,
+            assn,
+            certPath,
+            state.invokeId,
+            state.chainingArguments.aliasDereferenced,
+            argument.signed,
+            _encode_ModifyEntryArgumentData,
+        );
+    }
+    // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))

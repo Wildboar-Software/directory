@@ -40,7 +40,7 @@ function createSecurityParameters (
                         .reverse() // The certificates are in order of descending authority.
                         .map((cert) => new CertificatePair(
                             undefined,
-                            cert,
+                            cert, // REVIEW: Should you use issuedToThisCA instead?
                         ))
                     : undefined,
             )

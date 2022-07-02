@@ -123,6 +123,9 @@ import {
     id_Ed448,
 } from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/id-Ed448.va";
 
+export const VCP_RETURN_CODE_OK: number = 0;
+export const VCP_RETURN_CODE_INVALID_SIG: number = -65537;
+
 interface ValidPolicyData {
     // flags
     valid_policy: OBJECT_IDENTIFIER;
@@ -694,7 +697,7 @@ function verifyBasicPublicKeyCertificateChecks (
     const signatureIsValid: boolean | undefined = verifyAltSignature(subjectCert, issuerCert)
         ?? verifyNativeSignature(subjectCert, issuerCert);
     if (!signatureIsValid) {
-        return -2;
+        return VCP_RETURN_CODE_INVALID_SIG;
     }
     if (isRevokedFromConfiguredCRLs(ctx, subjectCert, state.validityTime)) {
         return -5;

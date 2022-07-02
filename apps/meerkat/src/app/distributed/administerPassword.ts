@@ -1,5 +1,5 @@
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -10,6 +10,10 @@ import {
     AdministerPasswordResult,
     _encode_AdministerPasswordResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordResult.ta";
+import {
+    AdministerPasswordResultData,
+    _encode_AdministerPasswordResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordResultData.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -55,6 +59,8 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -115,6 +121,21 @@ async function administerPassword (
         );
     }
     const argument: AdministerPasswordArgument = _decode_AdministerPasswordArgument(state.operationArgument);
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     */
+     if ("signed" in argument) {
+        /*
+         No signature verification takes place for the administerPassword operation,
+         because it does not have a `SecurityParameters` field, and therefore
+         does not relay a certification-path.
+         */
+    }
+    // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
     const user = state.chainingArguments.originator
@@ -226,9 +247,50 @@ async function administerPassword (
     operational bindings, but really, no other DSA should have the passwords for
     entries in this DSA. Meerkat DSA will take a principled stance and refuse
     to update HOBs when a password changes. */
+    /**
+     * There are no security parameters in the request data, so a user cannot
+     * specify that they want the results to be signed. In the face of this
+     * ambiguity, Meerkat DSA opts to sign all `administerPassword` and
+     * `changePassword` results, since they are security-sensitive.
+     */
+     const resultData: AdministerPasswordResultData = new AdministerPasswordResultData(
+        [],
+        createSecurityParameters(
+            ctx,
+            assn.boundNameAndUID?.dn,
+            id_opcode_administerPassword,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
     const result: AdministerPasswordResult = {
-        null_: null,
-    };
+            information: (() => {
+                const resultDataBytes = _encode_AdministerPasswordResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            })(),
+        };
     return {
         result: {
             unsigned: new ChainedResult(

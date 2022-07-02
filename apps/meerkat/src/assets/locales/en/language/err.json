@@ -162,5 +162,9 @@
     "could_not_find_new_subr": "Could not locate the subordinate reference DSE that was just created locally.",
     "failed_to_establish_hob": "Failed to establish HOB with {{etype}}: {{e}}",
     "superior_must_specify_entryInfo": "Superior DSA must specify entryInfo to establish a new hierarchical operational binding.",
-    "hob_invalid_entryInfo": "The potential superior DSA supplied entryInfo that describes an entry that is invalid for this reason: {{e}}."
+    "hob_invalid_entryInfo": "The potential superior DSA supplied entryInfo that describes an entry that is invalid for this reason: {{e}}.",
+    "cert_path_invalid": "COULD_BAN={{host}}; Invalid certification path for association {{aid}} on invocation {{iid}}.",
+    "invalid_signature_on_arg": "COULD_BAN={{host}}; Invalid signature for invocation {{iid}} from association {{aid}}.",
+    "cert_path_required_signed@arg": "COULD_BAN={{host}}; Certification-path parameter is required when providing a signed argument, but was missing from invocation {{iid}} from association {{aid}}.",
+    "cert_path_issuedToThisCA": "COULD_BAN={{host}}; Certification-path CA certifications must use the issuedToThisCA field for CA certs--a constraint violated in invocation {{iid}} from association {{aid}}."
 }

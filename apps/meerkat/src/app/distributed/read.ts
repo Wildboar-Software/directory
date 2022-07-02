@@ -1,15 +1,19 @@
 import { Context, Vertex, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, TRUE_BIT, FALSE_BIT, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ObjectIdentifier, TRUE_BIT, FALSE_BIT, OBJECT_IDENTIFIER, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_ReadArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+import {
+    _encode_ReadArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
 import {
     ReadResult,
     _encode_ReadResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
 import {
     ReadResultData,
+    _encode_ReadResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResultData.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
@@ -108,6 +112,13 @@ import {
 import preprocessTuples from "../authz/preprocessTuples";
 import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import { printInvokeId } from "../utils/printInvokeId";
+import { verifyArgumentSignature } from "../pki/verifyArgumentSignature";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 /**
  * @summary The read operation, as specified in ITU Recommendation X.511.
@@ -132,6 +143,48 @@ async function read (
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ReadArgument(state.operationArgument);
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     */
+     if ("signed" in argument) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
+        if (!certPath) {
+            throw new errors.MistypedArgumentError(
+                ctx.i18n.t("err:cert_path_required_signed", {
+                    context: "arg",
+                    host: remoteHostIdentifier,
+                    aid: assn.id,
+                    iid: printInvokeId(state.invokeId),
+                }),
+            );
+        }
+        for (const pair of certPath.theCACertificates ?? []) {
+            if (!pair.issuedToThisCA) {
+                throw new errors.MistypedArgumentError(
+                    ctx.i18n.t("err:cert_path_issuedToThisCA", {
+                        host: remoteHostIdentifier,
+                        aid: assn.id,
+                        iid: printInvokeId(state.invokeId),
+                    }),
+                );
+            }
+        }
+        verifyArgumentSignature(
+            ctx,
+            assn,
+            certPath,
+            state.invokeId,
+            state.chainingArguments.aliasDereferenced,
+            argument.signed,
+            _encode_ReadArgumentData,
+        );
+    }
+    // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
@@ -432,38 +485,66 @@ async function read (
         }
     }
 
-    const result: ReadResult = {
-        unsigned: new ReadResultData(
-            new EntryInformation(
-                {
-                    rdnSequence: targetDN,
-                },
-                !target.dse.shadow,
-                permittedEntryInfo.information,
-                permittedEntryInfo.discloseIncompleteEntry
-                    ? permittedEntryInfo.incompleteEntry
-                    : false,
-                state.partialName,
-                false,
-            ),
-            (
-                data.modifyRightsRequest
-                && accessControlScheme
-                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-            )
-                ? modifyRights
-                : undefined,
-            [],
-            createSecurityParameters(
-                ctx,
-                assn.boundNameAndUID?.dn,
-                id_opcode_read,
-            ),
-            ctx.dsa.accessPoint.ae_title.rdnSequence,
-            state.chainingArguments.aliasDereferenced,
-            undefined,
+    const resultData: ReadResultData = new ReadResultData(
+        new EntryInformation(
+            {
+                rdnSequence: targetDN,
+            },
+            !target.dse.shadow,
+            permittedEntryInfo.information,
+            permittedEntryInfo.discloseIncompleteEntry
+                ? permittedEntryInfo.incompleteEntry
+                : false,
+            state.partialName,
+            false,
         ),
-    };
+        (
+            data.modifyRightsRequest
+            && accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        )
+            ? modifyRights
+            : undefined,
+        [],
+        createSecurityParameters(
+            ctx,
+            assn.boundNameAndUID?.dn,
+            id_opcode_read,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
+    const result: ReadResult = (data.securityParameters?.target === ProtectionRequest_signed)
+        ? (() => {
+            const resultDataBytes = _encode_ReadResultData(resultData, DER).toBytes();
+            const key = ctx.config.signing?.key;
+            if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const signingResult = generateSignature(key, resultDataBytes);
+            if (!signingResult) {
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const [ sigAlg, sigValue ] = signingResult;
+            return {
+                signed: new SIGNED(
+                    resultData,
+                    sigAlg,
+                    unpackBits(sigValue),
+                    undefined,
+                    undefined,
+                ),
+            };
+        })()
+        : {
+            unsigned: resultData,
+        };
+
     return {
         result: {
             unsigned: new ChainedResult(

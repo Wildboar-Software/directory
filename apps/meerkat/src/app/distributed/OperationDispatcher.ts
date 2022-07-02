@@ -23,7 +23,6 @@ import {
 import {
     SearchResult,
     _decode_SearchResult,
-    _encode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import * as errors from "@wildboar/meerkat-types";
 import requestValidationProcedure from "./requestValidationProcedure";
@@ -104,7 +103,6 @@ import getFilterStatistics from "../telemetry/getFilterStatistics";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
 import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
-import getSearchResultStatistics from "../telemetry/getSearchResultStatistics";
 import getListResultStatistics from "../telemetry/getListResultStatistics";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -523,27 +521,22 @@ class OperationDispatcher {
                 state.SRcontinuationList,
             );
             const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
-            const unprotectedResult = getOptionallyProtectedValue(result);
             return {
                 invokeId: req.invokeId,
                 opCode: search["&operationCode"]!,
+                // TODO: Sign, if requested.
                 result: {
                     unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
                         emptyChainingResults(),
-                        _encode_SearchResult(result, DER),
+                        result.encodedSearchResult,
                     ),
                 },
                 request: requestStats,
                 outcome: {
-                    result: failover(() => ({
-                        search: getSearchResultStatistics(result),
-                        poq: (
-                            ("searchInfo" in unprotectedResult)
-                            && unprotectedResult.searchInfo.partialOutcomeQualifier
-                        )
-                            ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
-                            : undefined,
-                    }), undefined),
+                    result: {
+                        search: result.resultStats,
+                        poq: result.poqStats
+                    },
                 },
                 foundDSE: state.foundDSE,
             };
@@ -883,7 +876,8 @@ class OperationDispatcher {
                     ],
                 },
             }
-            : await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
+            : _decode_SearchResult(
+                (await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data)).encodedSearchResult);
         return {
             invokeId,
             opCode: search["&operationCode"]!,

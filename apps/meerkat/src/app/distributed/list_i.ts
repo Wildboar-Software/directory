@@ -15,6 +15,9 @@ import {
     _decode_ListArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
 import {
+    _encode_ListArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
+import {
     ServiceControlOptions_subentries as subentriesBit,
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
@@ -132,6 +135,7 @@ import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import { printInvokeId } from "../utils/printInvokeId";
+import { verifyArgumentSignature } from "../pki/verifyArgumentSignature";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -171,8 +175,50 @@ async function list_i (
     state: OperationDispatcherState,
 ): Promise<ListState> {
     const target = state.foundDSE;
-    const arg: ListArgument = _decode_ListArgument(state.operationArgument);
-    const data = getOptionallyProtectedValue(arg);
+    const argument: ListArgument = _decode_ListArgument(state.operationArgument);
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     */
+     if ("signed" in argument) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
+        if (!certPath) {
+            throw new errors.MistypedArgumentError(
+                ctx.i18n.t("err:cert_path_required_signed", {
+                    context: "arg",
+                    host: remoteHostIdentifier,
+                    aid: assn.id,
+                    iid: printInvokeId(state.invokeId),
+                }),
+            );
+        }
+        for (const pair of certPath.theCACertificates ?? []) {
+            if (!pair.issuedToThisCA) {
+                throw new errors.MistypedArgumentError(
+                    ctx.i18n.t("err:cert_path_issuedToThisCA", {
+                        host: remoteHostIdentifier,
+                        aid: assn.id,
+                        iid: printInvokeId(state.invokeId),
+                    }),
+                );
+            }
+        }
+        verifyArgumentSignature(
+            ctx,
+            assn,
+            certPath,
+            state.invokeId,
+            state.chainingArguments.aliasDereferenced,
+            argument.signed,
+            _encode_ListArgumentData,
+        );
+    }
+    // #endregion Signature validation
+    const data = getOptionallyProtectedValue(argument);
     const chainingProhibited = (
         (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
         || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)

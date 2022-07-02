@@ -1,5 +1,5 @@
 import { Context, Vertex, Value, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER, unpackBits } from "asn1-ts";
 import type { MeerkatContext } from "../ctx";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
@@ -7,9 +7,16 @@ import {
     _decode_ModifyDNArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
 import {
+    _encode_ModifyDNArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
+import {
     ModifyDNResult,
     _encode_ModifyDNResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResult.ta";
+import {
+    ModifyDNResultData,
+    _encode_ModifyDNResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResultData.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -162,6 +169,12 @@ import isPrefix from "../x500/isPrefix";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
 import { printInvokeId } from "../utils/printInvokeId";
+import { verifyArgumentSignature } from "../pki/verifyArgumentSignature";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -309,6 +322,48 @@ async function modifyDN (
         );
     }
     const argument = _decode_ModifyDNArgument(state.operationArgument);
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     */
+     if ("signed" in argument) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
+        if (!certPath) {
+            throw new errors.MistypedArgumentError(
+                ctx.i18n.t("err:cert_path_required_signed", {
+                    context: "arg",
+                    host: remoteHostIdentifier,
+                    aid: assn.id,
+                    iid: printInvokeId(state.invokeId),
+                }),
+            );
+        }
+        for (const pair of certPath.theCACertificates ?? []) {
+            if (!pair.issuedToThisCA) {
+                throw new errors.MistypedArgumentError(
+                    ctx.i18n.t("err:cert_path_issuedToThisCA", {
+                        host: remoteHostIdentifier,
+                        aid: assn.id,
+                        iid: printInvokeId(state.invokeId),
+                    }),
+                );
+            }
+        }
+        verifyArgumentSignature(
+            ctx,
+            assn,
+            certPath,
+            state.invokeId,
+            state.chainingArguments.aliasDereferenced,
+            argument.signed,
+            _encode_ModifyDNArgumentData,
+        );
+    }
+    // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
@@ -1859,9 +1914,52 @@ async function modifyDN (
     }
 
     // TODO: Update shadows
-    const result: ModifyDNResult = {
-        null_: null,
-    };
+    const resultData: ModifyDNResultData = new ModifyDNResultData(
+        data.newRDN,
+        [],
+        createSecurityParameters(
+            ctx,
+            assn.boundNameAndUID?.dn,
+            id_opcode_modifyDN,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
+    const result: ModifyDNResult = (data.securityParameters?.target === ProtectionRequest_signed)
+        ? {
+            information: (() => {
+                const resultDataBytes = _encode_ModifyDNResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            })(),
+        }
+        : {
+            information: {
+                unsigned: resultData,
+            },
+        };
+
     return {
         result: {
             unsigned: new ChainedResult(

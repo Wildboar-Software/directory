@@ -1,13 +1,21 @@
 import { Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_RemoveEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
 import {
+    _encode_RemoveEntryArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
+import {
+    RemoveEntryResult,
     _encode_RemoveEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
+import {
+    RemoveEntryResultData,
+    _encode_RemoveEntryResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResultData.ta";
 import deleteEntry from "../database/deleteEntry";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
@@ -111,6 +119,12 @@ import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
 import { printInvokeId } from "../utils/printInvokeId";
+import { verifyArgumentSignature } from "../pki/verifyArgumentSignature";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -139,6 +153,48 @@ async function removeEntry (
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const target = state.foundDSE;
     const argument = _decode_RemoveEntryArgument(state.operationArgument);
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     */
+     if ("signed" in argument) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
+        if (!certPath) {
+            throw new errors.MistypedArgumentError(
+                ctx.i18n.t("err:cert_path_required_signed", {
+                    context: "arg",
+                    host: remoteHostIdentifier,
+                    aid: assn.id,
+                    iid: printInvokeId(state.invokeId),
+                }),
+            );
+        }
+        for (const pair of certPath.theCACertificates ?? []) {
+            if (!pair.issuedToThisCA) {
+                throw new errors.MistypedArgumentError(
+                    ctx.i18n.t("err:cert_path_issuedToThisCA", {
+                        host: remoteHostIdentifier,
+                        aid: assn.id,
+                        iid: printInvokeId(state.invokeId),
+                    }),
+                );
+            }
+        }
+        verifyArgumentSignature(
+            ctx,
+            assn,
+            certPath,
+            state.invokeId,
+            state.chainingArguments.aliasDereferenced,
+            argument.signed,
+            _encode_RemoveEntryArgumentData,
+        );
+    }
+    // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
@@ -478,6 +534,51 @@ async function removeEntry (
         updateAffectedSubordinateDSAs(ctx, targetDN.slice(0, -1)); // INTENTIONAL_NO_AWAIT
     }
 
+    const resultData: RemoveEntryResultData = new RemoveEntryResultData(
+        [],
+        createSecurityParameters(
+            ctx,
+            assn.boundNameAndUID?.dn,
+            id_opcode_removeEntry,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
+    const result: RemoveEntryResult = (data.securityParameters?.target === ProtectionRequest_signed)
+        ? {
+            information: (() => {
+                const resultDataBytes = _encode_RemoveEntryResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            })(),
+        }
+        : {
+            information: {
+                unsigned: resultData,
+            },
+        };
+
     return {
         result: {
             unsigned: new ChainedResult(
@@ -491,9 +592,7 @@ async function removeEntry (
                     ),
                     undefined,
                 ),
-                _encode_RemoveEntryResult({
-                    null_: null,
-                }, DER),
+                _encode_RemoveEntryResult(result, DER),
             ),
         },
         stats: {

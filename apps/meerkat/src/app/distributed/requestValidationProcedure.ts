@@ -1,10 +1,12 @@
 import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { addSeconds } from "date-fns";
+import { DER } from "asn1-ts/dist/node/functional";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+    _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import type {
     Code,
@@ -12,11 +14,22 @@ import type {
 import {
     ServiceControlOptions_manageDSAIT,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { ASN1Element, BOOLEAN, INTEGER, OPTIONAL, TRUE_BIT, FALSE } from "asn1-ts";
+import {
+    ASN1Element,
+    BOOLEAN,
+    INTEGER,
+    OPTIONAL,
+    TRUE_BIT,
+    FALSE,
+    packBits,
+    DERElement,
+} from "asn1-ts";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
+    SecurityProblem_invalidSignature,
     SecurityProblem_noInformation,
+    SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
     ServiceProblem_loopDetected,
@@ -63,6 +76,18 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { printInvokeId } from "../utils/printInvokeId";
+import {
+    verifyCertPath,
+    VerifyCertPathArgs,
+    VCP_RETURN_CODE_OK,
+    verifySignature,
+} from "../pki/verifyCertPath";
+import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
+import type {
+    Certificate,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+import { anyPolicy } from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
+import { hy } from "date-fns/locale";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -541,11 +566,94 @@ async function requestValidationProcedure (
         );
     }
     if ("signed" in hydratedArgument) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
         const certPath = hydratedArgument.signed.toBeSigned.chainedArgument.securityParameters?.certification_path;
         if (!certPath) {
-            throw new Error();
+            throw new errors.MistypedArgumentError(
+                ctx.i18n.t("err:cert_path_required_signed", {
+                    context: "arg",
+                    host: remoteHostIdentifier,
+                    aid: assn.id,
+                    iid: printInvokeId(req.invokeId),
+                }),
+            );
         }
-        // TODO: Validate signature.
+        for (const pair of certPath.theCACertificates ?? []) {
+            if (!pair.issuedToThisCA) {
+                throw new errors.MistypedArgumentError(
+                    ctx.i18n.t("err:cert_path_issuedToThisCA", {
+                        host: remoteHostIdentifier,
+                        aid: assn.id,
+                        iid: printInvokeId(req.invokeId),
+                    }),
+                );
+            }
+        }
+        const vcpResult = verifyAnyCertPath(ctx, certPath);
+        if (vcpResult.returnCode !== VCP_RETURN_CODE_OK) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:cert_path_invalid", {
+                    host: remoteHostIdentifier,
+                    aid: assn.id,
+                    iid: printInvokeId(req.invokeId),
+                }),
+                new SecurityErrorData(
+                    SecurityProblem_invalidCredentials,
+                    undefined,
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    chainedArgument.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
+        const signedData = hydratedArgument.signed.originalDER
+            ? (() => {
+                const el = new DERElement();
+                el.fromBytes(hydratedArgument.signed.originalDER);
+                const tbs = el.sequence[0];
+                return tbs.toBytes();
+            })()
+            : _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(hydratedArgument.signed.toBeSigned, DER).toBytes();
+        const signatureAlg = hydratedArgument.signed.algorithmIdentifier;
+        const signatureValue = packBits(hydratedArgument.signed.signature);
+        const signatureIsValid: boolean | undefined = verifySignature(
+            signedData,
+            signatureAlg,
+            signatureValue,
+            certPath.userCertificate.toBeSigned.subjectPublicKeyInfo,
+        );
+        if (!signatureIsValid) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:invalid_signature_on_arg", {
+                    host: remoteHostIdentifier,
+                    aid: assn.id,
+                    iid: printInvokeId(req.invokeId),
+                }),
+                new SecurityErrorData(
+                    SecurityProblem_invalidSignature,
+                    undefined,
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    chainedArgument.aliasDereferenced,
+                    undefined,
+                ),
+            );
+        }
     }
     if (alreadyChained) { // Satisfies all requirements of X.518 (2016), Section 17.3.3.3.
         chainedArgument.traceInformation.push(new TraceItem(
