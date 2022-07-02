@@ -19,6 +19,10 @@ import {
     ModifyEntryResult,
     _encode_ModifyEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
+import {
+    ModifyEntryResultData,
+    _encode_ModifyEntryResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
 import type {
     EntryModification,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
@@ -69,6 +73,7 @@ import {
     ObjectIdentifier,
     OBJECT_IDENTIFIER,
     TRUE_BIT,
+    unpackBits,
 } from "asn1-ts";
 import {
     DER,
@@ -143,9 +148,6 @@ import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
 import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
-import {
-    ModifyEntryResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResultData.ta";
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
@@ -3348,34 +3350,25 @@ async function modifyEntry (
 
     // TODO: Update Shadows
 
-    if (data.selection) {
-        if (
-            accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-            && !authorizedToEntry([ PERMISSION_CATEGORY_READ ])
-        ) {
-            const result: ModifyEntryResult = {
-                null_: null,
-            };
-            return {
-                result: {
-                    unsigned: new ChainedResult(
-                        new ChainingResults(
-                            undefined,
-                            undefined,
-                            createSecurityParameters(
-                                ctx,
-                                assn.boundNameAndUID?.dn,
-                                id_opcode_modifyEntry,
-                            ),
-                            undefined,
-                        ),
-                        _encode_ModifyEntryResult(result, DER),
-                    ),
-                },
-                stats: {},
-            };
-        }
+    let resultData: ModifyEntryResultData = new ModifyEntryResultData(
+        undefined,
+        [],
+        createSecurityParameters(
+            ctx,
+            assn.boundNameAndUID?.dn,
+            id_opcode_modifyEntry,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
+
+    if (
+        data.selection
+        && accessControlScheme
+        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        && !authorizedToEntry([ PERMISSION_CATEGORY_READ ])
+    ) {
         const permittedEntryInfo = await readPermittedEntryInformation(
             ctx,
             target,
@@ -3435,66 +3428,61 @@ async function modifyEntry (
                 attribute: familyInfoAttr,
             });
         }
-        const result: ModifyEntryResult = {
-            information: {
-                unsigned: new ModifyEntryResultData(
-                    new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(target),
-                        },
-                        !target.dse.shadow,
-                        permittedEntryInfo.information,
-                        permittedEntryInfo.discloseIncompleteEntry
-                            ? permittedEntryInfo.incompleteEntry
-                            : false,
-                        undefined,
-                        undefined,
-                    ),
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        id_opcode_modifyEntry,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            },
-        };
-        return {
-            result: {
-                unsigned: new ChainedResult(
-                    new ChainingResults(
-                        undefined,
-                        undefined,
-                        createSecurityParameters(
-                            ctx,
-                            assn.boundNameAndUID?.dn,
-                            id_opcode_modifyEntry,
-                        ),
-                        undefined,
-                    ),
-                    _encode_ModifyEntryResult(result, DER),
-                ),
-            },
-            stats: {
-                request: failover(() => ({
-                    operationCode: codeToString(id_opcode_modifyEntry),
-                    ...getStatisticsFromCommonArguments(data),
-                    targetNameLength: targetDN.length,
-                    modifications: data.changes.map(getEntryModificationStatistics),
-                    eis: data.selection
-                        ? getEntryInformationSelectionStatistics(data.selection)
-                        : undefined,
-                }), undefined),
-            },
-        };
+        resultData = new ModifyEntryResultData(
+            new EntryInformation(
+                {
+                    rdnSequence: getDistinguishedName(target),
+                },
+                !target.dse.shadow,
+                permittedEntryInfo.information,
+                permittedEntryInfo.discloseIncompleteEntry
+                    ? permittedEntryInfo.incompleteEntry
+                    : false,
+                undefined,
+                undefined,
+            ),
+            resultData._unrecognizedExtensionsList,
+            resultData.securityParameters,
+            resultData.performer,
+            resultData.aliasDereferenced,
+            resultData.notification,
+        );
     }
 
-    const result: ModifyEntryResult = {
-        null_: null,
-    };
+    const result: ModifyEntryResult = (data.securityParameters?.target === ProtectionRequest_signed)
+        ? {
+            information: (() => {
+                const resultDataBytes = _encode_ModifyEntryResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            })(),
+        }
+        : {
+            information: {
+                unsigned: resultData,
+            },
+        };
+
     return {
         result: {
             unsigned: new ChainedResult(
