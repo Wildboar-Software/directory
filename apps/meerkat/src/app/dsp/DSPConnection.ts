@@ -75,7 +75,34 @@ import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 import { printInvokeId } from "../utils/printInvokeId";
-import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters";
+import {
+    getStatisticsFromSecurityParameters,
+} from "../telemetry/getStatisticsFromSecurityParameters";
+import { signDirectoryError } from "../pki/signDirectoryError";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    abandonFailed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandonFailed.oa";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    nameError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import {
+    referral,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
 
 /**
  * @summary The handles a request, but not errors
@@ -273,46 +300,86 @@ async function handleRequestAndErrors (
             }
         } else if (e instanceof errors.AbandonError) {
             const code = _encode_Code(errors.AbandonError.errcode, BER);
-            const data = _encode_AbandonedData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const param: typeof abandoned["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_AbandonedData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = abandoned.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
         } else if (e instanceof errors.AbandonFailedError) {
             const code = _encode_Code(errors.AbandonFailedError.errcode, BER);
-            const data = _encode_AbandonFailedData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const param: typeof abandonFailed["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_AbandonFailedData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = abandonFailed.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.AttributeError) {
             const code = _encode_Code(errors.AttributeError.errcode, BER);
-            const data = _encode_AttributeErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const param: typeof attributeError["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_AttributeErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = attributeError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
                 type: ap.type_.toString(),
                 problem: Number(ap.problem),
             }));
         } else if (e instanceof errors.NameError) {
             const code = _encode_Code(errors.NameError.errcode, BER);
-            const data = _encode_NameErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const param: typeof nameError["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_NameErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = nameError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
         } else if (e instanceof errors.ReferralError) {
             const code = _encode_Code(errors.ReferralError.errcode, BER);
-            const data = _encode_ReferralData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const param: typeof referral["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_ReferralData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = referral.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.candidate = getContinuationReferenceStatistics(e.data.candidate);
         } else if (e instanceof errors.SecurityError) {
             const code = _encode_Code(errors.SecurityError.errcode, BER);
-            const data = _encode_SecurityErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const param: typeof securityError["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_SecurityErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = securityError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
-            const data = _encode_ServiceErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const param: typeof serviceError["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_ServiceErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = serviceError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.UpdateError) {
             const code = _encode_Code(errors.UpdateError.errcode, BER);
-            const data = _encode_UpdateErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const param: typeof updateError["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_UpdateErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = updateError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.problem = Number(e.data.problem);
             stats.outcome.error.attributeInfo = e.data.attributeInfo?.map((ai) => {
                 if ("attributeType" in ai) {

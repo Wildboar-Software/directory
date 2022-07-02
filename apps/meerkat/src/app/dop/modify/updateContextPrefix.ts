@@ -114,24 +114,22 @@ async function updateContextPrefix (
     if (!oldCP) {
         throw new OperationalBindingError(
             ctx.i18n.t("err:could_not_find_cp", { uuid }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidBindingType,
-                    id_op_binding_hierarchical,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidBindingType,
+                id_op_binding_hierarchical,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
                     undefined,
                     undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
-                        undefined,
-                        operationalBindingError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    false,
-                    undefined,
+                    operationalBindingError["&errorCode"],
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                false,
+                undefined,
+            ),
         );
     }
 
@@ -140,24 +138,22 @@ async function updateContextPrefix (
     if (!currentOld) {
         throw new OperationalBindingError(
             ctx.i18n.t("err:could_not_find_supr", { uuid }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidBindingType,
-                    id_op_binding_hierarchical,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidBindingType,
+                id_op_binding_hierarchical,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
                     undefined,
                     undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
-                        undefined,
-                        operationalBindingError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    false,
-                    undefined,
+                    operationalBindingError["&errorCode"],
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                false,
+                undefined,
+            ),
         );
     }
     while (

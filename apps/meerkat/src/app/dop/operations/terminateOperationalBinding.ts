@@ -76,24 +76,22 @@ async function terminateOperationalBinding (
     });
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,
-        {
-            unsigned: new OpBindingErrorParam(
-                OpBindingErrorParam_problem_unsupportedBindingType,
-                data.bindingType,
+        new OpBindingErrorParam(
+            OpBindingErrorParam_problem_unsupportedBindingType,
+            data.bindingType,
+            undefined,
+            undefined,
+            [],
+            createSecurityParameters(
+                ctx,
                 undefined,
                 undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    undefined,
-                    undefined,
-                    id_err_operationalBindingError,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
-                undefined,
+                id_err_operationalBindingError,
             ),
-        },
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            undefined,
+            undefined,
+        ),
     );
 
     const now = new Date();
@@ -147,24 +145,22 @@ async function terminateOperationalBinding (
             ctx.i18n.t("err:no_ob_with_id", {
                 id: data.bindingID.identifier,
             }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidID,
-                    data.bindingType,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidID,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
                     undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
+                    id_err_operationalBindingError,
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
         );
     }
 

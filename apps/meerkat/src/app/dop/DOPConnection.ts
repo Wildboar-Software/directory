@@ -35,6 +35,9 @@ import {
     operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import {
+    _encode_OpBindingErrorParam,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+import {
     IdmReject_reason_duplicateInvokeIDRequest,
     IdmReject_reason_unsupportedOperationRequest,
     IdmReject_reason_unknownOperationRequest,
@@ -96,9 +99,11 @@ import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { printInvokeId } from "../utils/printInvokeId";
-import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters";
+import {
+    getStatisticsFromSecurityParameters,
+} from "../telemetry/getStatisticsFromSecurityParameters";
+import { signDirectoryError } from "../pki/signDirectoryError";
 
 /**
  * @summary The handles a request, but not errors
@@ -332,17 +337,27 @@ async function handleRequestAndErrors (
         }
         if (e instanceof errors.OperationalBindingError) {
             const code = _encode_Code(SecurityError.errcode, DER);
-            const param = operationalBindingError.encoderFor["&ParameterType"]!(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, param);
-            const data = getOptionallyProtectedValue(e.data);
-            stats.outcome.error.problem = data.problem;
-            stats.outcome.error.bindingType = data.bindingType?.toString();
-            stats.outcome.error.retryAt = data.retryAt?.toString();
-            stats.outcome.error.newAgreementProposed = Boolean(data.agreementProposal);
+            const param: typeof operationalBindingError["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_OpBindingErrorParam)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = operationalBindingError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
+            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.bindingType = e.data.bindingType?.toString();
+            stats.outcome.error.retryAt = e.data.retryAt?.toString();
+            stats.outcome.error.newAgreementProposed = Boolean(e.data.agreementProposal);
         } else if (e instanceof SecurityError) {
-            const code = _encode_Code(SecurityError.errcode, DER);
-            const data = _encode_SecurityErrorData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const code = _encode_Code(errors.SecurityError.errcode, DER);
+            const param: typeof securityError["&ParameterType"] = e.shouldBeSigned
+                ? signDirectoryError(ctx, e.data, _encode_SecurityErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = securityError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof UnknownOperationError) {
             assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.DuplicateInvokeIdError) {

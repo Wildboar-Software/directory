@@ -155,24 +155,22 @@ async function modifyOperationalBinding (
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         `Operational binding type ${data.bindingType.toString()} not understood.`,
-        {
-            unsigned: new OpBindingErrorParam(
-                OpBindingErrorParam_problem_unsupportedBindingType,
-                data.bindingType,
+        new OpBindingErrorParam(
+            OpBindingErrorParam_problem_unsupportedBindingType,
+            data.bindingType,
+            undefined,
+            undefined,
+            [],
+            createSecurityParameters(
+                ctx,
                 undefined,
                 undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    undefined,
-                    undefined,
-                    id_err_operationalBindingError,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
-                undefined,
+                id_err_operationalBindingError,
             ),
-        },
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            undefined,
+            undefined,
+        ),
     );
 
     if (data.bindingID.identifier != data.newBindingID.identifier) {
@@ -248,24 +246,22 @@ async function modifyOperationalBinding (
             ctx.i18n.t("err:no_ob_with_id", {
                 id: data.bindingID.identifier,
             }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidID,
-                    data.bindingType,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidID,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
                     undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
+                    id_err_operationalBindingError,
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
         );
     }
 
@@ -289,24 +285,22 @@ async function modifyOperationalBinding (
             ctx.i18n.t("err:ob_duplicate_identifier", {
                 id: data.newBindingID.identifier,
             }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_duplicateID,
-                    id_op_binding_hierarchical,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_duplicateID,
+                id_op_binding_hierarchical,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
                     undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    false,
-                    undefined,
+                    id_err_operationalBindingError,
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                false,
+                undefined,
+            ),
         );
     }
 
@@ -318,24 +312,22 @@ async function modifyOperationalBinding (
                 proposed: proposedVersion,
                 current: currentVersion,
             }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidNewID,
-                    id_op_binding_hierarchical,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidNewID,
+                id_op_binding_hierarchical,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
                     undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    false,
-                    undefined,
+                    id_err_operationalBindingError,
                 ),
-            }
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                false,
+                undefined,
+            ),
         )
     }
 
@@ -494,24 +486,22 @@ async function modifyOperationalBinding (
             throw new OperationalBindingError(
                 // REVIEW: How does this error message make sense?
                 ctx.i18n.t("err:cannot_reverse_roles_in_hob"),
-                {
-                    unsigned: new OpBindingErrorParam(
-                        OpBindingErrorParam_problem_roleAssignment,
-                        id_op_binding_hierarchical,
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_roleAssignment,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
                         undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            assn.boundNameAndUID?.dn,
-                            undefined,
-                            id_err_operationalBindingError,
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        false,
-                        undefined,
+                        id_err_operationalBindingError,
                     ),
-                },
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
             );
         }
 
@@ -524,24 +514,22 @@ async function modifyOperationalBinding (
             )) {
                 throw new errors.OperationalBindingError(
                     ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_invalidAgreement,
-                            data.bindingType,
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
                             undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                assn.boundNameAndUID?.dn,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
+                            id_err_operationalBindingError,
                         ),
-                    },
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
                 );
             }
             await updateContextPrefix(ctx, created.uuid, newAgreement, init);
@@ -581,24 +569,22 @@ async function modifyOperationalBinding (
         } else {
             throw new errors.OperationalBindingError(
                 ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
-                {
-                    unsigned: new OpBindingErrorParam(
-                        OpBindingErrorParam_problem_invalidAgreement,
-                        data.bindingType,
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
                         undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            assn.boundNameAndUID?.dn,
-                            undefined,
-                            id_err_operationalBindingError,
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
+                        id_err_operationalBindingError,
                     ),
-                },
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
             );
         }
     } else {

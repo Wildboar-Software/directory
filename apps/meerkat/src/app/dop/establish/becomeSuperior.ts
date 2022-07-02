@@ -130,24 +130,22 @@ async function becomeSuperior (
         if (assn instanceof DOPAssociation) {
             throw new errors.OperationalBindingError(
                 ctx.i18n.t("err:parent_dse_not_permissible"),
-                {
-                    unsigned: new OpBindingErrorParam(
-                        OpBindingErrorParam_problem_roleAssignment,
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_roleAssignment,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        assn.boundNameAndUID?.dn,
                         undefined,
-                        undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            assn.boundNameAndUID?.dn,
-                            undefined,
-                            operationalBindingError["&errorCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
+                        operationalBindingError["&errorCode"],
                     ),
-                },
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
             );
         } else {
             throw new errors.ServiceError(

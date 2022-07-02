@@ -98,24 +98,22 @@ async function updateLocalSubr (
     if (superior.dse.shadow || superior.dse.subentry || superior.dse.alias) {
         throw new errors.OperationalBindingError(
             ctx.i18n.t("err:parent_dse_not_permissible"),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_roleAssignment,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_roleAssignment,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
                     undefined,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        operationalBindingError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
+                    operationalBindingError["&errorCode"],
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
         );
     }
     // const oldDN = [ ...oldAgreement.immediateSuperior, oldAgreement.rdn ];
@@ -140,24 +138,22 @@ async function updateLocalSubr (
             } catch (e) {
                 throw new OperationalBindingError(
                     ctx.i18n.t("err:entry_already_exists_in_nssr"),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_invalidAgreement,
-                            id_op_binding_non_specific_hierarchical,
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        id_op_binding_non_specific_hierarchical,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            assn.boundNameAndUID?.dn,
                             undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                assn.boundNameAndUID?.dn,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            false,
-                            undefined,
+                            id_err_operationalBindingError,
                         ),
-                    },
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        false,
+                        undefined,
+                    ),
                 );
             }
         }
