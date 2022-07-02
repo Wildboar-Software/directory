@@ -41,6 +41,12 @@ import {
     ServiceControls_scopeOfReferral_country,
     ServiceControls_scopeOfReferral_dmd,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-scopeOfReferral.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 
 function priorityFromString (str: string): ServiceControls["priority"] {
     switch (str.trim().toLowerCase()) {
@@ -130,7 +136,13 @@ async function do_list (
         argv.listFamily,
         [],
         serviceControls,
-        undefined,
+        new SecurityParameters(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            ProtectionRequest_signed,
+        ), // TODO: Options
         bindDN,
     );
     const arg: ListArgument = {

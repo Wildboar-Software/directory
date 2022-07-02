@@ -75,9 +75,6 @@ import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import {
-    _encode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { SearchState } from "./search_i";
 import { ChainingResults } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
@@ -103,8 +100,6 @@ import getFilterStatistics from "../telemetry/getFilterStatistics";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
 import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
-import getListResultStatistics from "../telemetry/getListResultStatistics";
-import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
 import { BER } from "asn1-ts/dist/node/functional";
@@ -366,14 +361,13 @@ class OperationDispatcher {
                     state.SRcontinuationList,
                 );
                 const result = await mergeSortAndPageList(ctx, assn, state, data, postMergeState);
-                const unprotectedResult = getOptionallyProtectedValue(result);
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
                     result: {
                         unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
                             emptyChainingResults(),
-                            _encode_ListResult(result, DER),
+                            result.encodedListResult,
                         ),
                     },
                     request: failover(() => ({
@@ -385,14 +379,12 @@ class OperationDispatcher {
                             ? getStatisticsFromPagedResultsRequest(data.pagedResults)
                             : undefined,
                     }), undefined),
-                    outcome: failover(() => ({
+                    outcome: {
                         result: {
-                            list: getListResultStatistics(result),
-                            poq: (("listInfo" in unprotectedResult) && unprotectedResult.listInfo.partialOutcomeQualifier)
-                                ? getPartialOutcomeQualifierStatistics(unprotectedResult.listInfo.partialOutcomeQualifier)
-                                : undefined,
+                            list: result.resultStats,
+                            poq: result.poqStats,
                         },
-                    }), undefined),
+                    },
                     foundDSE: state.foundDSE,
                 };
             }

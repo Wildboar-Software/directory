@@ -96,7 +96,11 @@ function makeSearchResultSignable (sr: SearchResult): SearchResult {
             unsigned: {
                 searchInfo: new SearchResultData_searchInfo(
                     data.searchInfo.name,
-                    data.searchInfo.entries, // FIXME: Actually sort these.
+                    // Sorted
+                    data.searchInfo.entries
+                        .map((e) => [ _encode_EntryInformation(e, DER).toBytes(), e ] as const)
+                        .sort(([ encodingA ], [ encodingB ]) => Buffer.compare(encodingA, encodingB))
+                        .map(([ , entry ]) => entry),
                     data.searchInfo.partialOutcomeQualifier,
                     data.searchInfo.altMatching,
                     data.searchInfo._unrecognizedExtensionsList,
