@@ -76,6 +76,7 @@ async function relatedEntryProcedure (
     search: SearchState,
     argument: SearchArgument,
     chaining?: ChainingArguments,
+    signErrors: boolean = false,
 ): Promise<void> {
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
@@ -100,6 +101,7 @@ async function relatedEntryProcedure (
                     chaining?.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -125,6 +127,7 @@ async function relatedEntryProcedure (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         checkTimeLimit();

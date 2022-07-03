@@ -231,6 +231,7 @@ async function updateSubordinateDSA (
     targetSystem: AccessPoint,
     aliasDereferenced?: boolean,
     options?: UpdateSubordinateOptions,
+    signErrors: boolean = false,
 ): Promise<ResultOrError> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
@@ -256,6 +257,7 @@ async function updateSubordinateDSA (
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
             ),
+            signErrors,
         );
     }
     const ditContext: X500Vertex[] = []; // To be reversed.

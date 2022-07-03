@@ -56,6 +56,7 @@ async function terminateByTypeAndBindingID (
     bindingType: OBJECT_IDENTIFIER,
     bindingID: OperationalBindingID,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<ResultOrError> {
     const conn = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         tlsOptional: ctx.config.chaining.tlsOptional,
@@ -75,6 +76,7 @@ async function terminateByTypeAndBindingID (
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
             ),
+            signErrors,
         );
     }
     const data = new TerminateOperationalBindingArgumentData(

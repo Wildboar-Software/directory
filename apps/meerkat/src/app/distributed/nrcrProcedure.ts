@@ -90,6 +90,7 @@ async function nrcrProcedure (
     state: OperationDispatcherState,
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
+    signErrors: boolean,
 ): Promise<OPCR | Error_> {
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
@@ -114,6 +115,7 @@ async function nrcrProcedure (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -162,6 +164,7 @@ async function nrcrProcedure (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const req = {
@@ -188,6 +191,7 @@ async function nrcrProcedure (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         assert(cref.accessPoints[0]);
@@ -222,6 +226,7 @@ async function nrcrProcedure (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             let outcome: ResultOrError | null = null;
@@ -281,6 +286,7 @@ async function nrcrProcedure (
                                 state.chainingArguments.aliasDereferenced,
                                 undefined,
                             ),
+                            signErrors,
                         );
                     } else {
                         return outcome;
@@ -329,6 +335,7 @@ async function nrcrProcedure (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -348,6 +355,7 @@ async function nrcrProcedure (
             state.chainingArguments.aliasDereferenced,
             undefined,
         ),
+        signErrors,
     );
 }
 

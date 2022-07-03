@@ -176,6 +176,9 @@ async function list_i (
 ): Promise<ListState> {
     const target = state.foundDSE;
     const argument: ListArgument = _decode_ListArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
+
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -215,10 +218,11 @@ async function list_i (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_ListArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
+
     const chainingProhibited = (
         (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
         || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
@@ -244,6 +248,7 @@ async function list_i (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const op = ("present" in state.invokeId)
@@ -315,6 +320,7 @@ async function list_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
@@ -336,6 +342,7 @@ async function list_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (nr.sortKeys?.length) {
@@ -358,6 +365,7 @@ async function list_i (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 if (nr.sortKeys.length > 3) {
@@ -406,6 +414,7 @@ async function list_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             pagingRequest = paging.request;
@@ -429,6 +438,7 @@ async function list_i (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             throw new errors.ServiceError(
@@ -446,6 +456,7 @@ async function list_i (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -485,6 +496,7 @@ async function list_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {

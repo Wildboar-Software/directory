@@ -38,6 +38,9 @@ import { printInvokeId } from "../../utils/printInvokeId";
 import {
     InvokeId,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 /**
  * @summary Terminates an operational binding, as described in ITU Recommendation X.501.
@@ -62,6 +65,7 @@ async function terminateOperationalBinding (
     arg: TerminateOperationalBindingArgument,
 ): Promise<TerminateOperationalBindingResult> {
     const data: TerminateOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     ctx.log.info(ctx.i18n.t("log:terminateOperationalBinding", {
         context: "started",
         type: data.bindingType.toString(),
@@ -92,6 +96,7 @@ async function terminateOperationalBinding (
             undefined,
             undefined,
         ),
+        signErrors,
     );
 
     const now = new Date();
@@ -161,6 +166,7 @@ async function terminateOperationalBinding (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 

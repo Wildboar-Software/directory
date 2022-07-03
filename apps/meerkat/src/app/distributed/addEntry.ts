@@ -228,6 +228,9 @@ async function addEntry (
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
+
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -267,16 +270,17 @@ async function addEntry (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_AddEntryArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
     const targetDN = data.object.rdnSequence;
     const rdn = getRDN(targetDN);
     if (!rdn) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:root_dse_may_not_be_added"),
             namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
+            signErrors,
         );
     }
     const user = state.chainingArguments.originator
@@ -315,6 +319,7 @@ async function addEntry (
         // If this entry is going to wind up in another DSA, it is up to that
         // DSA to determine if any schema is unrecognized.
         Boolean(data.targetSystem),
+        signErrors,
     );
 
     /**
@@ -403,6 +408,7 @@ async function addEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -482,6 +488,7 @@ async function addEntry (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
 
@@ -551,6 +558,7 @@ async function addEntry (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
 
@@ -573,6 +581,7 @@ async function addEntry (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
         }
@@ -581,7 +590,13 @@ async function addEntry (
         // just return the true error: namingViolation.
         throw new errors.UpdateError(
             ctx.i18n.t("err:not_authz_to_add_entry"),
-            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
+            namingViolationErrorData(
+                ctx,
+                assn,
+                [],
+                state.chainingArguments.aliasDereferenced,
+            ),
+            signErrors,
         );
     }
     // This check has been removed because there might be times when you want to
@@ -627,6 +642,7 @@ async function addEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -658,6 +674,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const existing = await vertexFromDatabaseEntry(ctx, immediateSuperior, existing_dbe);
@@ -683,6 +700,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const effectiveRelevantSubentries = existing.dse.admPoint?.administrativeRole.has(ID_AUTONOMOUS)
@@ -739,6 +757,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             } else {
                 /**
@@ -770,6 +789,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -804,6 +824,7 @@ async function addEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -861,6 +882,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -904,6 +926,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -921,6 +944,7 @@ async function addEntry (
             rdn,
             data.entry,
             data.targetSystem,
+            signErrors,
             state.chainingArguments.aliasDereferenced,
             {
                 timeLimitInMilliseconds: timeRemainingInMilliseconds,
@@ -944,6 +968,7 @@ async function addEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const result = establishOperationalBinding.decoderFor["&ResultType"]!(obResponse.result);
@@ -965,6 +990,7 @@ async function addEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const sub2sup = hierarchicalOperationalBinding["&roleB"]!
@@ -985,6 +1011,7 @@ async function addEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const obArgData = getOptionallyProtectedValue(obArg);
@@ -1049,6 +1076,7 @@ async function addEntry (
                 obResponse.invokeId,
                 agreement,
                 sub2sup,
+                signErrors,
             );
         } catch (e) {
             ctx.db.operationalBinding.update({
@@ -1148,6 +1176,7 @@ async function addEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -1168,6 +1197,7 @@ async function addEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op) {
@@ -1250,6 +1280,8 @@ async function addEntry (
                 targetDN.slice(0, -1),
                 immediateSuperior,
                 state.chainingArguments.aliasDereferenced ?? false,
+                undefined,
+                signErrors,
             ) // INTENTIONAL_NO_AWAIT
                 .then(() => {
                     ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {

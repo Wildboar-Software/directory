@@ -173,6 +173,7 @@ async function validateEntry (
     manageDSAIT: BOOLEAN,
     invokeId: InvokeId,
     tolerateUnknownSchema: boolean = false,
+    signErrors: boolean = false,
 ): Promise<ValidateEntryReturn> {
     const values: Value[] = entry.flatMap(valuesFromAttribute);
     const objectClassValues = values.filter((attr) => attr.type.isEqualTo(id_at_objectClass));
@@ -193,6 +194,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
@@ -217,6 +219,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const structuralObjectClass = getStructuralObjectClass(ctx, objectClasses);
@@ -281,6 +284,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -310,6 +314,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -339,6 +344,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -385,6 +391,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -416,6 +423,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (isAlias) {
@@ -446,6 +454,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -527,6 +536,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -633,6 +643,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -673,6 +684,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 if (oc.obsolete) {
@@ -704,6 +716,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 for (const at of oc.mandatoryAttributes) {
@@ -741,6 +754,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -765,6 +779,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
 
@@ -815,6 +830,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -849,6 +865,7 @@ async function validateEntry (
                     oids: duplicatedAFDNs.join(", "),
                 }),
                 namingViolationErrorData(ctx, assn, duplicatedAFDNs, aliasDereferenced),
+                signErrors,
             );
         }
 
@@ -858,6 +875,7 @@ async function validateEntry (
                     oids: unrecognizedAFDNs.join(", "),
                 }),
                 namingViolationErrorData(ctx, assn, unrecognizedAFDNs, aliasDereferenced),
+                signErrors,
             );
         }
 
@@ -867,6 +885,7 @@ async function validateEntry (
                     oids: cannotBeUsedInNameAFDNs.join(", "),
                 }),
                 namingViolationErrorData(ctx, assn, cannotBeUsedInNameAFDNs, aliasDereferenced),
+                signErrors,
             );
         }
 
@@ -876,6 +895,7 @@ async function validateEntry (
                     oids: unmatchedAFDNs.join(", "),
                 }),
                 namingViolationErrorData(ctx, assn, unmatchedAFDNs, aliasDereferenced),
+                signErrors,
             );
         }
     }
@@ -915,6 +935,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const subtreeSpec = entry
@@ -943,6 +964,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const invalidSubtreeForSubschema = subtreeSpec.values
@@ -975,6 +997,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1025,6 +1048,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         governingStructureRule = Number(structuralRule.ruleIdentifier);
@@ -1066,6 +1090,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1117,6 +1142,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1144,6 +1170,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         } else {
@@ -1190,6 +1217,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1237,6 +1265,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     continue;
@@ -1306,6 +1335,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1337,6 +1367,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }

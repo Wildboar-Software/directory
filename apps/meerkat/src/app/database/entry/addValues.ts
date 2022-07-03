@@ -51,6 +51,7 @@ async function validateValues(
     entry: Vertex,
     values: Value[],
     checkForExisting: boolean = true,
+    signErrors: boolean = false,
 ): Promise<void> {
     for (const value of values) {
         const TYPE_OID: string = value.type.toString();
@@ -85,6 +86,7 @@ async function validateValues(
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -125,6 +127,7 @@ async function validateValues(
                             undefined,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -194,6 +197,7 @@ async function validateValues(
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -231,6 +235,7 @@ async function validateValues(
                                 undefined,
                                 undefined,
                             ),
+                            signErrors,
                         );
                     }
                 }
@@ -266,9 +271,16 @@ async function addValues(
     values: Value[],
     modifier?: DistinguishedName,
     checkForExisting: boolean = true,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
-        await validateValues(ctx, entry, values, checkForExisting);
+        await validateValues(
+            ctx,
+            entry,
+            values,
+            checkForExisting,
+            signErrors,
+        );
     }
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {

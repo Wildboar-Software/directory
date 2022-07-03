@@ -91,6 +91,7 @@ async function apinfoProcedure (
     assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<ResultOrError | null> {
+    // TODO: Support signed errors.
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;

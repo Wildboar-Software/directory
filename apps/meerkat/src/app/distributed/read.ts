@@ -143,6 +143,8 @@ async function read (
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ReadArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -182,10 +184,10 @@ async function read (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_ReadArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -254,6 +256,7 @@ async function read (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -275,6 +278,7 @@ async function read (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op) {
@@ -402,6 +406,7 @@ async function read (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         // Otherwise, we must pretend that the selected attributes simply do not exist.
@@ -435,6 +440,7 @@ async function read (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 

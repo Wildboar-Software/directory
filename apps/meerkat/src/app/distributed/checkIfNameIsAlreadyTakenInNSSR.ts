@@ -102,7 +102,9 @@ async function checkIfNameIsAlreadyTakenInNSSR (
     nonSpecificKnowledges: MasterAndShadowAccessPoints[],
     destinationDN: DistinguishedName,
     timeLimitInMilliseconds?: INTEGER,
+    signErrors: boolean = false,
 ): Promise<void> {
+    // TODO: support signed errors.
     const op = ("present" in invokeId)
         ? assn.invocations.get(Number(invokeId.present))
         : undefined;
@@ -126,6 +128,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, {
@@ -253,6 +256,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                             undefined,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     break; // Breaks the inner for loop.

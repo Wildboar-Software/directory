@@ -333,6 +333,7 @@ function getValueAlterer (
     type_: OBJECT_IDENTIFIER,
     toBeAddedElement: ASN1Element,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): (value: Value) => Value {
     const toBeAdded = (toBeAddedElement.tagNumber === ASN1UniversalType.integer)
         ? Number(toBeAddedElement.integer)
@@ -366,12 +367,14 @@ function getValueAlterer (
             throw new errors.AttributeError(
                 ctx.i18n.t("err:invalid_type_for_alter_values"),
                 attributeErrorData(),
+                signErrors,
             );
         }
         if (value.value.tagNumber !== toBeAddedElement.tagNumber) {
             throw new errors.AttributeError(
                 ctx.i18n.t("err:invalid_type_for_alter_values"),
                 attributeErrorData(),
+                signErrors,
             );
         }
         const currentValue = (value.value.tagNumber === ASN1UniversalType.integer)
@@ -413,6 +416,7 @@ function checkAttributeArity (
     target: Vertex,
     attr: Attribute,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): void {
     const numberOfValues: number = (attr.values.length + (attr.valuesWithContext?.length ?? 0));
     if (numberOfValues <= 1) {
@@ -451,6 +455,7 @@ function checkAttributeArity (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 }
@@ -528,6 +533,7 @@ function checkPermissionToAddValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): void {
     if (
         !accessControlScheme
@@ -554,6 +560,7 @@ function checkPermissionToAddValues (
                 type: attribute.type_.toString(),
             }),
             notPermittedData(ctx, assn, aliasDereferenced),
+            signErrors,
         );
     }
     for (const value of values) {
@@ -583,6 +590,7 @@ function checkPermissionToAddValues (
                     type: attribute.type_.toString(),
                 }),
                 notPermittedData(ctx, assn, aliasDereferenced),
+                signErrors,
             );
         }
     }
@@ -619,6 +627,7 @@ function checkAbilityToModifyAttributeType (
     manageDSAIT: boolean,
     isRemoving: boolean, // For accomodating obsolete attribute types.
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): void {
     const TYPE_OID: string = attributeType.toString();
     const spec = ctx.attributeTypes.get(TYPE_OID);
@@ -649,6 +658,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (spec.noUserModification && !manageDSAIT) {
@@ -671,6 +681,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (spec.dummy) {
@@ -700,6 +711,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (spec.collective && !isSubentry) {
@@ -729,6 +741,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (spec.obsolete && !isRemoving) {
@@ -758,6 +771,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 }
@@ -902,8 +916,9 @@ async function executeAddAttribute (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
-    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     /**
      * This is done before checking if the attribute is already present to avoid
      * disclosing its presence. Once you've added the attribute, its presence is
@@ -918,6 +933,7 @@ async function executeAddAttribute (
         accessControlScheme,
         relevantACDFTuples,
         aliasDereferenced,
+        signErrors,
     );
     const isPresent: boolean = await checkAttributePresence(ctx, entry, mod.type_);
     if (isPresent) {
@@ -947,6 +963,7 @@ async function executeAddAttribute (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const values = valuesFromAttribute(mod);
@@ -996,6 +1013,7 @@ async function executeRemoveAttribute (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     if (entry.dse.rdn.some((atav) => atav.type_.isEqualTo(mod))) {
         throw new errors.UpdateError(
@@ -1018,7 +1036,8 @@ async function executeRemoveAttribute (
                 aliasDereferenced,
                 undefined,
             ),
-        )
+            signErrors,
+        );
     }
     /**
      * This is intentionally checked before even checking if the attribute is
@@ -1046,6 +1065,7 @@ async function executeRemoveAttribute (
                     type: mod.toString(),
                 }),
                 notPermittedData(ctx, assn, aliasDereferenced),
+                signErrors,
             );
         }
     }
@@ -1077,6 +1097,7 @@ async function executeRemoveAttribute (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const TYPE_OID: string = mod.toString();
@@ -1128,6 +1149,7 @@ async function executeAddValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     const equalityMatcher: boolean = !!bacSettings.getEqualityMatcher(mod.type_);
     if (!equalityMatcher) {
@@ -1157,9 +1179,10 @@ async function executeAddValues (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
-    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     checkPermissionToAddValues(
         "addValues",
         mod,
@@ -1169,6 +1192,7 @@ async function executeAddValues (
         accessControlScheme,
         relevantACDFTuples,
         aliasDereferenced,
+        signErrors,
     );
     const values = valuesFromAttribute(mod);
     addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
@@ -1217,6 +1241,7 @@ async function executeRemoveValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     const equalityMatcher: boolean = !!bacSettings.getEqualityMatcher(mod.type_);
     if (!equalityMatcher) {
@@ -1246,6 +1271,7 @@ async function executeRemoveValues (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const EQUALITY_MATCHER = getNamingMatcherGetter(ctx)(mod.type_);
@@ -1280,6 +1306,7 @@ async function executeRemoveValues (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         )
     }
     if (
@@ -1306,6 +1333,7 @@ async function executeRemoveValues (
                     type: mod.type_.toString(),
                 }),
                 notPermittedData(ctx, assn, aliasDereferenced),
+                signErrors,
             );
         }
         for (const value of values) {
@@ -1332,6 +1360,7 @@ async function executeRemoveValues (
                         type: mod.type_.toString(),
                     }),
                     notPermittedData(ctx, assn, aliasDereferenced),
+                    signErrors,
                 );
             }
         }
@@ -1385,6 +1414,7 @@ async function executeAlterValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     if (!isAcceptableTypeForAlterValues(mod.value)) {
         throw new errors.AttributeError(
@@ -1411,6 +1441,7 @@ async function executeAlterValues (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (
@@ -1438,10 +1469,18 @@ async function executeAlterValues (
                     type: mod.type_.toString(),
                 }),
                 notPermittedData(ctx, assn, aliasDereferenced),
+                signErrors,
             );
         }
     }
-    const alterer = getValueAlterer(ctx, entry, mod.type_, mod.value, aliasDereferenced);
+    const alterer = getValueAlterer(
+        ctx,
+        entry,
+        mod.type_,
+        mod.value,
+        aliasDereferenced,
+        signErrors,
+    );
     const values = await readValuesOfType(ctx, entry, mod.type_);
     if (
         accessControlScheme
@@ -1476,6 +1515,7 @@ async function executeAlterValues (
                         type: mod.type_.toString(),
                     }),
                     notPermittedData(ctx, assn, aliasDereferenced),
+                    signErrors,
                 );
             }
         }
@@ -1515,6 +1555,7 @@ async function executeAlterValues (
                         type: mod.type_.toString(),
                     }),
                     notPermittedData(ctx, assn, aliasDereferenced),
+                    signErrors,
                 );
             }
         }
@@ -1571,6 +1612,7 @@ async function executeResetValue (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     const where = {
         entry_id: entry.dse.id,
@@ -1621,6 +1663,7 @@ async function executeResetValue (
                         type: mod.toString(),
                     }),
                     notPermittedData(ctx, assn, aliasDereferenced),
+                    signErrors,
                 );
             }
         }
@@ -1689,8 +1732,9 @@ async function executeReplaceValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
-    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
     if (
@@ -1715,6 +1759,7 @@ async function executeReplaceValues (
                     type: mod.type_.toString(),
                 }),
                 notPermittedData(ctx, assn, aliasDereferenced),
+                signErrors,
             );
         }
         const existingValues = await readValuesOfType(ctx, entry, mod.type_);
@@ -1740,6 +1785,7 @@ async function executeReplaceValues (
                         type: mod.type_.toString(),
                     }),
                     notPermittedData(ctx, assn, aliasDereferenced),
+                    signErrors,
                 );
             }
         }
@@ -1789,6 +1835,7 @@ function handleContextRule (
     attribute: Attribute,
     contextRuleIndex: ContextRulesIndex,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Attribute {
     const rule = contextRuleIndex.get(attribute.type_.toString())
         ?? contextRuleIndex.get(ALL_ATTRIBUTE_TYPES);
@@ -1818,6 +1865,7 @@ function handleContextRule (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         return attribute;
@@ -1860,6 +1908,7 @@ function handleContextRule (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -1902,6 +1951,7 @@ function handleContextRule (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             mandatoryContextsRemaining.delete(TYPE_OID);
@@ -1934,6 +1984,7 @@ function handleContextRule (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -2069,6 +2120,7 @@ async function executeEntryModification (
     isSubentry: boolean,
     manageDSAIT: boolean,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
 
     const commonArguments = [
@@ -2080,6 +2132,7 @@ async function executeEntryModification (
         accessControlScheme,
         relevantACDFTuples,
         aliasDereferenced,
+        signErrors,
     ] as const;
 
     const check = (
@@ -2095,6 +2148,7 @@ async function executeEntryModification (
         manageDSAIT,
         isRemoving,
         aliasDereferenced,
+        signErrors,
     );
 
     const checkContextRule = (attribute: Attribute): Attribute => handleContextRule(
@@ -2104,6 +2158,7 @@ async function executeEntryModification (
         attribute,
         contextRuleIndex,
         aliasDereferenced,
+        signErrors,
     );
 
     const checkPreclusion = (attributeType: AttributeType) => {
@@ -2130,6 +2185,7 @@ async function executeEntryModification (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -2188,6 +2244,7 @@ async function executeEntryModification (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         return executeResetValue(mod.resetValue, ...commonArguments);
@@ -2226,6 +2283,8 @@ async function modifyEntry (
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ModifyEntryArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -2265,10 +2324,10 @@ async function modifyEntry (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_ModifyEntryArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -2292,6 +2351,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -2403,6 +2463,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -2462,6 +2523,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         checkTimeLimit();
@@ -2520,6 +2582,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (
@@ -2548,6 +2611,7 @@ async function modifyEntry (
                         type: type_,
                     }),
                     notPermittedData(ctx, assn, state.chainingArguments.aliasDereferenced),
+                    signErrors,
                 );
             }
         }
@@ -2638,6 +2702,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const subtreeSpecAdded = patch.addedValues.get(subtreeSpecification["&id"].toString());
@@ -2670,6 +2735,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const invalidSubtreeForSubschema = (subtreeSpecAdded ?? [])
@@ -2702,6 +2768,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -2740,6 +2807,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (spec.obsolete) {
@@ -2771,6 +2839,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         /**
@@ -2813,6 +2882,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else if (
             (spec.kind === ObjectClassKind_auxiliary)
@@ -2848,6 +2918,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
@@ -2909,6 +2980,7 @@ async function modifyEntry (
         if (missingRequiredAttributeTypes.size > 0) {
             const missing: string[] = Array.from(missingRequiredAttributeTypes);
             throw new errors.UpdateError(
+                // FIXME: i18n
                 `Missing required attribute types: ${missing.join(" ")}`,
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
@@ -2926,6 +2998,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -2968,6 +3041,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -2994,6 +3068,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
 
@@ -3034,6 +3109,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -3072,6 +3148,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             /**
@@ -3108,6 +3185,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -3139,6 +3217,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const inHierarchy = await ctx.attributeTypes
@@ -3176,6 +3255,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -3197,6 +3277,7 @@ async function modifyEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op) {
@@ -3326,6 +3407,8 @@ async function modifyEntry (
                 targetDN.slice(0, -1),
                 target.immediateSuperior,
                 state.chainingArguments.aliasDereferenced ?? false,
+                undefined,
+                signErrors,
             ) // INTENTIONAL_NO_AWAIT
                 .then(() => {
                     ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {

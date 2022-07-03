@@ -126,6 +126,7 @@ async function checkSuitabilityProcedure (
     excludeShadows: boolean,
     encodedArgument?: ASN1Element,
     searchArgument?: SearchArgument,
+    signErrors: boolean = false,
 ): Promise<boolean> {
     // DEVIATION: This is not required by the specification.
     if (vertex.dse.root && isModificationOperation(operationType)) {
@@ -150,7 +151,8 @@ async function checkSuitabilityProcedure (
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     aliasDereferenced,
                     undefined,
-                )
+                ),
+                signErrors,
             );
         }
         return true;
@@ -180,7 +182,8 @@ async function checkSuitabilityProcedure (
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     aliasDereferenced,
                     undefined,
-                )
+                ),
+                signErrors,
             );
         }
         return true;

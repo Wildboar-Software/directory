@@ -143,6 +143,8 @@ async function compare (
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_CompareArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -182,10 +184,10 @@ async function compare (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_CompareArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -265,6 +267,7 @@ async function compare (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         for (const type_ of typeAndSubtypes) {
@@ -285,6 +288,7 @@ async function compare (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const { authorized: authorizedToCompareAttributeType } = bacACDF(
@@ -333,6 +337,7 @@ async function compare (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 // Otherwise, we must pretend that the compared attribute simply does not exist.
@@ -360,6 +365,7 @@ async function compare (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -383,6 +389,7 @@ async function compare (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -408,6 +415,7 @@ async function compare (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         }
@@ -468,6 +476,7 @@ async function compare (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             try {

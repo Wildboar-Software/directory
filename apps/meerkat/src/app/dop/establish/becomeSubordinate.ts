@@ -65,6 +65,7 @@ async function becomeSubordinate (
     sup2sub: SuperiorToSubordinate,
     structuralObjectClass: OBJECT_CLASS["&id"],
     governingStructureRule: INTEGER | undefined,
+    signErrors: boolean,
 ): Promise<SubordinateToSuperior> {
     let currentRoot = ctx.dit.root;
     for (let i = 0; i < sup2sub.contextPrefixInfo.length; i++) {
@@ -180,6 +181,8 @@ async function becomeSubordinate (
                 createdCP.immediateSuperior!,
                 sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
                 [],
+                undefined,
+                signErrors,
             ),
         ]);
         // Take on the subordinates of the existing entry.

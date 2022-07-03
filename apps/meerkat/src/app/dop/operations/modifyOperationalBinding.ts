@@ -76,6 +76,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
 import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -140,6 +143,7 @@ async function modifyOperationalBinding (
 ): Promise<ModifyOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
         context: "started",
         type: data.bindingType.toString(),
@@ -171,6 +175,7 @@ async function modifyOperationalBinding (
             undefined,
             undefined,
         ),
+        signErrors,
     );
 
     if (data.bindingID.identifier != data.newBindingID.identifier) {
@@ -262,6 +267,7 @@ async function modifyOperationalBinding (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -301,6 +307,7 @@ async function modifyOperationalBinding (
                 false,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -328,7 +335,8 @@ async function modifyOperationalBinding (
                 false,
                 undefined,
             ),
-        )
+            signErrors,
+        );
     }
 
     const validFrom: Date = (
@@ -502,6 +510,7 @@ async function modifyOperationalBinding (
                     false,
                     undefined,
                 ),
+                signErrors,
             );
         }
 
@@ -530,9 +539,10 @@ async function modifyOperationalBinding (
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
-            await updateContextPrefix(ctx, created.uuid, newAgreement, init);
+            await updateContextPrefix(ctx, created.uuid, newAgreement, init, signErrors);
             ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
                 context: "succeeded",
                 type: data.bindingType.toString(),
@@ -550,7 +560,7 @@ async function modifyOperationalBinding (
             };
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
-            await updateLocalSubr(ctx, assn, invokeId, oldAgreement, newAgreement, init);
+            await updateLocalSubr(ctx, assn, invokeId, oldAgreement, newAgreement, init, signErrors);
             ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
                 context: "succeeded",
                 type: data.bindingType.toString(),
@@ -585,6 +595,7 @@ async function modifyOperationalBinding (
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         }
     } else {

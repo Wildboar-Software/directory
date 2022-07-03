@@ -71,6 +71,7 @@ async function abandon (
     }
     // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = false;
     if (!("present" in data.invokeID)) {
         throw new errors.AbandonFailedError(
             ctx.i18n.t("err:no_invoke_id_specified"),
@@ -88,6 +89,7 @@ async function abandon (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     const invokeID = data.invokeID.present;
@@ -111,6 +113,7 @@ async function abandon (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op.pointOfNoReturnTime || op.abandonTime) {
@@ -132,6 +135,7 @@ async function abandon (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -166,6 +170,7 @@ async function abandon (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 

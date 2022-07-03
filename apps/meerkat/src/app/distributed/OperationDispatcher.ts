@@ -109,6 +109,10 @@ import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
 import mergeSortAndPageList from "./mergeSortAndPageList";
 import { SearchResultData_searchInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
+import {
+    ProtectionRequest_signed,
+    _decode_ProtectionRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 export
 type SearchResultOrError = {
@@ -424,6 +428,7 @@ class OperationDispatcher {
         else if (compareCode(req.opCode, search["&operationCode"]!)) {
             const argument = _decode_SearchArgument(reqData.argument);
             const data = getOptionallyProtectedValue(argument);
+            const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
             const requestStats: RequestStatistics | undefined = failover(() => ({
                 operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
@@ -485,6 +490,7 @@ class OperationDispatcher {
                 searchResponse,
                 argument,
                 reqData.chainedArgument,
+                signErrors,
             );
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
@@ -572,6 +578,20 @@ class OperationDispatcher {
         assert(req.opCode);
         assert(req.argument);
         const reqData = getOptionallyProtectedValue(preparedRequest);
+        const securityParameters = reqData.argument.set
+            .find((el) => (
+                (el.tagClass === ASN1TagClass.context)
+                && (el.tagNumber === 29)
+            ))?.inner;
+        const errorProtectionElement = securityParameters?.set
+            .find((el) => (
+                (el.tagClass === ASN1TagClass.context)
+                && (el.tagNumber === 8)
+            ))?.inner;
+        const errorProtection = errorProtectionElement
+            ? _decode_ProtectionRequest(errorProtectionElement)
+            : undefined;
+        const signErrors: boolean = (errorProtection === ProtectionRequest_signed);
         if (compareCode(req.opCode, abandon["&operationCode"]!)) {
             const result = await doAbandon(ctx, assn, reqData);
             return {
@@ -613,6 +633,7 @@ class OperationDispatcher {
                     reqData.chainedArgument.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const chainingResults = emptyChainingResults();
@@ -664,6 +685,7 @@ class OperationDispatcher {
                 state,
                 chainingProhibited,
                 partialNameResolution,
+                signErrors,
             );
             if (!nrcrResult) {
                 return OperationDispatcher.operationEvaluation(
@@ -808,6 +830,7 @@ class OperationDispatcher {
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,
+        signErrors: boolean,
     ): Promise<SearchResultOrError> {
         const data = getOptionallyProtectedValue(argument);
         const searchResponse: SearchState = {
@@ -824,6 +847,7 @@ class OperationDispatcher {
             searchResponse,
             argument,
             chaining,
+            signErrors,
         );
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
@@ -908,6 +932,7 @@ class OperationDispatcher {
     ): Promise<SearchResultOrError> {
         // Request validation not needed.
         const data = getOptionallyProtectedValue(argument);
+        const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
         const encodedArgument = _encode_SearchArgument(argument, DER);
         const targetObject = chaining.relatedEntry // The specification is not clear of what to do for targetObject.
             ? data.joinArguments?.[Number(chaining.relatedEntry)]?.joinBaseObject.rdnSequence
@@ -930,6 +955,7 @@ class OperationDispatcher {
                     chaining.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const chainingResults = emptyChainingResults();
@@ -974,6 +1000,7 @@ class OperationDispatcher {
                 state,
                 chainingProhibited,
                 partialNameResolution,
+                signErrors,
             );
             if (!nrcrResult) {
                 return OperationDispatcher.localSearchOperationEvaluation(
@@ -983,6 +1010,7 @@ class OperationDispatcher {
                     invokeId,
                     argument,
                     chaining,
+                    signErrors,
                 );
             } else if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1008,6 +1036,7 @@ class OperationDispatcher {
             invokeId,
             argument,
             chaining,
+            signErrors,
         );
     }
 

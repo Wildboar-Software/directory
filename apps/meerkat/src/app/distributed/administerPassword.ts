@@ -87,6 +87,7 @@ async function administerPassword (
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
+    const signErrors: boolean = false; // TODO: Make this configurable.
     const passwordIsPermittedOnThisEntry: boolean = Array.from(target.dse.objectClass.values())
         .some((oid) => {
             const spec = ctx.objectClasses.get(oid);
@@ -118,6 +119,7 @@ async function administerPassword (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const argument: AdministerPasswordArgument = _decode_AdministerPasswordArgument(state.operationArgument);
@@ -238,6 +240,7 @@ async function administerPassword (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }

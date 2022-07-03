@@ -104,6 +104,7 @@ async function becomeSuperior (
     invokeId: InvokeId,
     agreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
+    signErrors: boolean,
 ): Promise<SuperiorToSubordinate> {
     const superior = await dnToVertex(ctx, ctx.dit.root, agreement.immediateSuperior);
     if (!superior) {
@@ -124,6 +125,7 @@ async function becomeSuperior (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (superior.dse.shadow || superior.dse.subentry || superior.dse.alias) {
@@ -146,6 +148,7 @@ async function becomeSuperior (
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             throw new errors.ServiceError(
@@ -163,6 +166,7 @@ async function becomeSuperior (
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         }
 
@@ -186,6 +190,7 @@ async function becomeSuperior (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 

@@ -90,6 +90,7 @@ async function changePassword (
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
+    const signErrors: boolean = false; // TODO: Make this configurable.
     const passwordIsPermittedOnThisEntry: boolean = Array.from(target.dse.objectClass.values())
         .some((oid) => {
             const spec = ctx.objectClasses.get(oid);
@@ -121,6 +122,7 @@ async function changePassword (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(state.operationArgument);
@@ -241,6 +243,7 @@ async function changePassword (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -275,6 +278,7 @@ async function changePassword (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const promises = await setEntryPassword(ctx, assn, target, data.newPwd);

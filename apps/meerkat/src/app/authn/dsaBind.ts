@@ -54,6 +54,7 @@ async function bind (
     socket: Socket | TLSSocket,
     arg: DSABindArgument,
 ): Promise<BindReturn> {
+    const signErrors: boolean = false; // TODO: Make this configurable.
     const tlsProtocol: string | null = ("getProtocol" in socket)
         ? socket.getProtocol()
         : null;
@@ -80,6 +81,7 @@ async function bind (
             throw new DSABindError(
                 ctx.i18n.t("err:anon_bind_disabled", { host: source }),
                 anonymousBindErrorData,
+                signErrors,
             );
         }
         return {
@@ -99,6 +101,7 @@ async function bind (
                 throw new DSABindError(
                     ctx.i18n.t("err:anon_bind_disabled", { host: source }),
                     anonymousBindErrorData,
+                    signErrors,
                 );
             }
             return {
@@ -127,6 +130,7 @@ async function bind (
             throw new DSABindError(
                 ctx.i18n.t("err:invalid_credentials", { host: source }),
                 invalidCredentialsData,
+                signErrors,
             );
         }
         if (arg.credentials.simple.validity) {
@@ -145,12 +149,14 @@ async function bind (
                 throw new DSABindError(
                     ctx.i18n.t("err:invalid_credentials", { host: source }),
                     invalidCredentialsData,
+                    signErrors,
                 );
             }
             if (maximumTime && (maximumTime.valueOf() < (now.valueOf() - 5000))) { // 5 seconds of tolerance.
                 throw new DSABindError(
                     ctx.i18n.t("err:invalid_credentials", { host: source }),
                     invalidCredentialsData,
+                    signErrors,
                 );
             }
         }
@@ -160,6 +166,7 @@ async function bind (
             throw new DSABindError(
                 ctx.i18n.t("err:invalid_credentials", { host: source }),
                 invalidCredentialsData,
+                signErrors,
             );
         }
         return {
@@ -186,6 +193,7 @@ async function bind (
                 },
                 // No security parameters will be provided for failed auth attempts.
             ),
+            signErrors,
         );
     }
 }

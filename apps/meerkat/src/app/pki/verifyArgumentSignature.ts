@@ -24,9 +24,6 @@ import { printInvokeId } from "../utils/printInvokeId";
 import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
 import { verifySignature, VCP_RETURN_CODE_OK } from "../pki/verifyCertPath";
 import type {
-    OPTIONALLY_PROTECTED,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
-import type {
     SIGNED,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 import {
@@ -44,6 +41,7 @@ function verifyArgumentSignature <T> (
     aliasDereferenced: OPTIONAL<BOOLEAN>,
     arg: SIGNED<T>,
     argDataEncoder: ASN1Encoder<T>,
+    signErrors: boolean,
 ): void {
     const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
     if (!certPath) {
@@ -90,6 +88,7 @@ function verifyArgumentSignature <T> (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const signedData = arg.originalDER
@@ -130,6 +129,7 @@ function verifyArgumentSignature <T> (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 }

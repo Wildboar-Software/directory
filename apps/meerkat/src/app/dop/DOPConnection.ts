@@ -275,6 +275,12 @@ async function handleRequestAndErrors (
                     false,
                     undefined,
                 ),
+                /**
+                 * It is difficult to extract the errorProtection from DOP
+                 * arguments, because security parameters has a different tag
+                 * based on the arguments.
+                 */
+                false,
             );
         }
         await handleRequest(ctx, assn, request);

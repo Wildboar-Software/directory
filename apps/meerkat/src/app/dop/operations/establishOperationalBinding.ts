@@ -82,6 +82,9 @@ import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
 import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry";
 import { randomInt } from "crypto";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -119,6 +122,7 @@ async function establishOperationalBinding (
 ): Promise<EstablishOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: EstablishOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
         context: "started",
         type: data.bindingType.toString(),
@@ -178,6 +182,7 @@ async function establishOperationalBinding (
             undefined,
             undefined,
         ),
+        signErrors,
     );
 
     if (data.valid?.validFrom instanceof ASN1Element) {
@@ -199,6 +204,7 @@ async function establishOperationalBinding (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (data.valid?.validUntil instanceof ASN1Element) {
@@ -220,6 +226,7 @@ async function establishOperationalBinding (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -263,6 +270,7 @@ async function establishOperationalBinding (
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (!compareDistinguishedName(
@@ -288,6 +296,7 @@ async function establishOperationalBinding (
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
 
@@ -310,6 +319,7 @@ async function establishOperationalBinding (
                         present: invokeId,
                     },
                     false,
+                    signErrors,
                 );
                 structuralObjectClass = soc;
                 governingStructureRule = gsr;
@@ -332,6 +342,7 @@ async function establishOperationalBinding (
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
 
@@ -394,6 +405,7 @@ async function establishOperationalBinding (
                             false,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     newBindingIdentifier = Number(data.bindingID.identifier);
@@ -532,6 +544,7 @@ async function establishOperationalBinding (
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             } else if (approved === false) {
                 throw new errors.OperationalBindingError(
@@ -554,6 +567,7 @@ async function establishOperationalBinding (
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             try {
@@ -564,6 +578,7 @@ async function establishOperationalBinding (
                     init,
                     structuralObjectClass,
                     governingStructureRule,
+                    signErrors,
                 );
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
@@ -662,6 +677,7 @@ async function establishOperationalBinding (
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         }
     } else if (data.bindingType.isEqualTo(id_op_binding_non_specific_hierarchical)) {

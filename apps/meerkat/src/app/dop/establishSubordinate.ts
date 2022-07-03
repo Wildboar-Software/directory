@@ -197,6 +197,7 @@ async function establishSubordinate (
     newEntryRDN: RelativeDistinguishedName,
     newEntryInfo: Attribute[] | undefined,
     targetSystem: AccessPoint,
+    signErrors: boolean,
     aliasDereferenced?: boolean,
     options?: EstablishSubordinateOptions,
 ): Promise<{ arg: EstablishOperationalBindingArgument, response: ResultOrError }> {
@@ -227,6 +228,7 @@ async function establishSubordinate (
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
             ),
+            signErrors,
         );
     }
     const ditContext: X500Vertex[] = []; // To be reversed.
@@ -364,6 +366,7 @@ async function establishSubordinate (
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
             ),
+            signErrors,
         );
     }
 }

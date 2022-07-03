@@ -59,8 +59,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import { printInvokeId } from "../utils/printInvokeId";
 import { verifyArgumentSignature } from "../pki/verifyArgumentSignature";
-import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -103,6 +101,8 @@ async function search_ii (
     searchState: SearchState,
 ): Promise<void> {
     const target = state.foundDSE;
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -142,10 +142,10 @@ async function search_ii (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_SearchArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
     const chainingProhibited = (
         (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
         || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
@@ -171,6 +171,7 @@ async function search_ii (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const op = ("present" in state.invokeId)
@@ -222,6 +223,7 @@ async function search_ii (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -248,6 +250,7 @@ async function search_ii (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
@@ -269,6 +272,7 @@ async function search_ii (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (nr.sortKeys?.length) {
@@ -291,6 +295,7 @@ async function search_ii (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 if (nr.sortKeys.length > 3) {
@@ -337,6 +342,7 @@ async function search_ii (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             searchState.paging = [ queryReference, paging ];
@@ -359,6 +365,7 @@ async function search_ii (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             throw new errors.ServiceError(
@@ -376,6 +383,7 @@ async function search_ii (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -407,6 +415,7 @@ async function search_ii (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (!subordinate.dse.cp) {
@@ -424,6 +433,7 @@ async function search_ii (
                 state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
                 undefined,
                 argument,
+                signErrors,
             );
             if (!suitable) {
                 continue;

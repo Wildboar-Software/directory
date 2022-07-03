@@ -259,8 +259,6 @@ import readPermittedEntryInformation from "../database/entry/readPermittedEntryI
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 import { printInvokeId } from "../utils/printInvokeId";
 import { verifyArgumentSignature } from "../pki/verifyArgumentSignature";
-import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -797,6 +795,8 @@ async function search_i (
     searchState: SearchState,
 ): Promise<void> {
     const target = state.foundDSE;
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -836,10 +836,10 @@ async function search_i (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_SearchArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -885,6 +885,7 @@ async function search_i (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -981,6 +982,7 @@ async function search_i (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if ("newRequest" in data.pagedResults) {
@@ -1004,6 +1006,7 @@ async function search_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
@@ -1025,6 +1028,7 @@ async function search_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (nr.sortKeys?.length) {
@@ -1047,6 +1051,7 @@ async function search_i (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 if (nr.sortKeys.length > 3) {
@@ -1093,6 +1098,7 @@ async function search_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             searchState.paging = [ queryReference, paging ];
@@ -1116,6 +1122,7 @@ async function search_i (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             throw new errors.ServiceError(
@@ -1133,6 +1140,7 @@ async function search_i (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -1211,6 +1219,7 @@ async function search_i (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     throw new errors.NameError(
@@ -1231,6 +1240,7 @@ async function search_i (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1435,6 +1445,7 @@ async function search_i (
                 state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
                 undefined,
                 argument,
+                signErrors,
             );
             if (suitable) {
                 if (searchState.chaining.alreadySearched) {
@@ -1559,6 +1570,7 @@ async function search_i (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         }
@@ -1645,6 +1657,7 @@ async function search_i (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     continue;
@@ -1849,6 +1862,7 @@ async function search_i (
                     ctx,
                     data.hierarchySelections,
                     data.serviceControls?.serviceType,
+                    signErrors,
                 );
             }
         }
@@ -1916,6 +1930,7 @@ async function search_i (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     continue;
@@ -2120,6 +2135,7 @@ async function search_i (
                     ctx,
                     data.hierarchySelections,
                     data.serviceControls?.serviceType,
+                    signErrors,
                 );
             }
         }
@@ -2218,6 +2234,7 @@ async function search_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {

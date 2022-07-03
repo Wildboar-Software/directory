@@ -44,6 +44,7 @@ function hierarchySelectionProcedure (
     ctx: Context,
     hierarchySelections: HierarchySelections,
     serviceControls_serviceType?: OBJECT_IDENTIFIER,
+    signErrors: boolean = false,
 ): never {
     const notificationAttributes: Attribute[] = [
         new Attribute(
@@ -75,6 +76,7 @@ function hierarchySelectionProcedure (
             undefined,
             notificationAttributes,
         ),
+        signErrors,
     );
 }
 

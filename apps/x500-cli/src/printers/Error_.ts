@@ -74,6 +74,7 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         ctx.log.error("Error with no error code.");
         return;
     }
+
     if (compareCode(e.errcode, securityError["&errorCode"]!)) {
         const param = securityError.decoderFor["&ParameterType"]!(e.error);
         const data = getOptionallyProtectedValue(param);
@@ -91,6 +92,10 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         // if (data.encPwdInfo?.algorithms?.length) {
 
         // }
+        if ("signed" in param) {
+            const alg = param.signed.algorithmIdentifier.algorithm.toString();
+            console.log(`This error was digitally signed with algorithm ${alg}.`);
+        }
         return;
     }
     if (compareCode(e.errcode, serviceError["&errorCode"]!)) {
@@ -105,6 +110,10 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         }
         if (data.performer) {
             console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
+        }
+        if ("signed" in param) {
+            const alg = param.signed.algorithmIdentifier.algorithm.toString();
+            console.log(`This error was digitally signed with algorithm ${alg}.`);
         }
         return;
     }
@@ -125,6 +134,10 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         }
         if (data.performer) {
             console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
+        }
+        if ("signed" in param) {
+            const alg = param.signed.algorithmIdentifier.algorithm.toString();
+            console.log(`This error was digitally signed with algorithm ${alg}.`);
         }
         return;
     }
@@ -161,6 +174,10 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         if (data.performer) {
             console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
+        if ("signed" in param) {
+            const alg = param.signed.algorithmIdentifier.algorithm.toString();
+            console.log(`This error was digitally signed with algorithm ${alg}.`);
+        }
         return;
     }
     if (compareCode(e.errcode, updateError["&errorCode"]!)) {
@@ -189,6 +206,10 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         }
         if (data.performer) {
             console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
+        }
+        if ("signed" in param) {
+            const alg = param.signed.algorithmIdentifier.algorithm.toString();
+            console.log(`This error was digitally signed with algorithm ${alg}.`);
         }
         return;
     }
@@ -246,6 +267,10 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         if (data.performer) {
             console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
+        if ("signed" in param) {
+            const alg = param.signed.algorithmIdentifier.algorithm.toString();
+            console.log(`This error was digitally signed with algorithm ${alg}.`);
+        }
         return;
     }
     if (compareCode(e.errcode, abandoned["&errorCode"]!)) {
@@ -262,6 +287,10 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         if (data.performer) {
             console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
         }
+        if ("signed" in param) {
+            const alg = param.signed.algorithmIdentifier.algorithm.toString();
+            console.log(`This error was digitally signed with algorithm ${alg}.`);
+        }
         return;
     }
     if (compareCode(e.errcode, abandonFailed["&errorCode"]!)) {
@@ -276,6 +305,10 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         }
         if (data.performer) {
             console.error(colorize("This error was produced by: " + stringifyDN(ctx, data.performer)));
+        }
+        if ("signed" in param) {
+            const alg = param.signed.algorithmIdentifier.algorithm.toString();
+            console.log(`This error was digitally signed with algorithm ${alg}.`);
         }
         return;
     }

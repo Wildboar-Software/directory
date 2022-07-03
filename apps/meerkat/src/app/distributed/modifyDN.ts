@@ -283,6 +283,9 @@ async function modifyDN (
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
+    const argument = _decode_ModifyDNArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     if (!withinThisDSA(target)) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:target_not_within_this_dsa"),
@@ -300,6 +303,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (!target.immediateSuperior || !withinThisDSA(target.immediateSuperior)) {
@@ -319,9 +323,9 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
-    const argument = _decode_ModifyDNArgument(state.operationArgument);
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -361,10 +365,10 @@ async function modifyDN (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_ModifyDNArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -388,6 +392,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -422,6 +427,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const relevantSubentries: Vertex[] = (await Promise.all(
@@ -503,6 +509,7 @@ async function modifyDN (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             /**
@@ -563,6 +570,7 @@ async function modifyDN (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -594,6 +602,7 @@ async function modifyDN (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -622,6 +631,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const newSuperior = data.newSuperior
@@ -644,6 +654,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const superior = newSuperior ?? target.immediateSuperior;
@@ -718,6 +729,7 @@ async function modifyDN (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -740,6 +752,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (data.newSuperior) { // Step 3.
@@ -760,6 +773,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -791,6 +805,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             throw new errors.SecurityError(
@@ -810,6 +825,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -889,6 +905,7 @@ async function modifyDN (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
 
@@ -958,6 +975,7 @@ async function modifyDN (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
 
@@ -980,6 +998,7 @@ async function modifyDN (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
         }
@@ -1002,6 +1021,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -1022,6 +1042,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -1067,6 +1088,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -1096,6 +1118,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -1137,6 +1160,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -1157,6 +1181,8 @@ async function modifyDN (
                 targetDN.slice(0, -1),
                 target.immediateSuperior!,
                 state.chainingArguments.aliasDereferenced ?? false,
+                undefined,
+                signErrors,
             ) // INTENTIONAL_NO_AWAIT
                 .then(() => {
                     ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {
@@ -1204,6 +1230,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     } else if (
@@ -1282,6 +1309,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         newGoverningStructureRule = structuralRules[0].ruleIdentifier;
@@ -1328,6 +1356,7 @@ async function modifyDN (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1376,6 +1405,7 @@ async function modifyDN (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1420,6 +1450,7 @@ async function modifyDN (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1461,6 +1492,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         attributesInRDN.add(TYPE_OID);
@@ -1488,6 +1520,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (attributeTypesForbidden.has(TYPE_OID)) {
@@ -1514,6 +1547,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (
@@ -1559,6 +1593,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const spec = ctx.attributeTypes.get(TYPE_OID);
@@ -1589,6 +1624,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (spec.validator) {
@@ -1615,6 +1651,7 @@ async function modifyDN (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1662,6 +1699,7 @@ async function modifyDN (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -1704,6 +1742,7 @@ async function modifyDN (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1762,6 +1801,7 @@ async function modifyDN (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1784,6 +1824,7 @@ async function modifyDN (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op) {

@@ -101,6 +101,7 @@ async function updateContextPrefix (
     uuid: string,
     oldAgreement: HierarchicalAgreement,
     mod: SuperiorToSubordinateModification,
+    signErrors: boolean,
 ): Promise<void> {
 
     // Because we use the agreement's RDN to find the entry, it's critical that
@@ -130,6 +131,7 @@ async function updateContextPrefix (
                 false,
                 undefined,
             ),
+            signErrors,
         );
     }
 

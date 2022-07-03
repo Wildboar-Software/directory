@@ -237,7 +237,11 @@ function getLDAPDecoderForEqualityMatcher (ctx: Context, descriptor: string): LD
     return ldapSyntax.decoder;
 }
 
-function createAttributeErrorData (ctx: Context, descriptor: string): [ string, AttributeErrorData ] {
+function createAttributeErrorData (ctx: Context, descriptor: string): [ string, AttributeErrorData, boolean ] {
+    /**
+     * LDAP users cannot use or benefit from signed errors.
+     */
+    const signErrors: boolean = false;
     return [
         `Attribute type ${descriptor} could not be decoded from LDAP.`,
         new AttributeErrorData(
@@ -256,6 +260,7 @@ function createAttributeErrorData (ctx: Context, descriptor: string): [ string, 
             undefined,
             undefined,
         ),
+        signErrors,
     ];
 }
 

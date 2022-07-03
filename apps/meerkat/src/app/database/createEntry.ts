@@ -41,6 +41,7 @@ async function createEntry (
     entryInit: Partial<Prisma.EntryCreateInput>,
     values: Value[] = [],
     modifier: DistinguishedName = [],
+    signErrors: boolean = false,
 ): Promise<Vertex> {
     const objectClasses = values
         .filter((value) => value.type.isEqualTo(objectClass["&id"]))
@@ -106,7 +107,14 @@ async function createEntry (
         EntryCollectiveExclusion: [],
     });
     await ctx.db.$transaction([
-        ...await addValues(ctx, vertex, values, modifier),
+        ...await addValues(
+            ctx,
+            vertex,
+            values,
+            modifier,
+            undefined,
+            signErrors,
+        ),
         ctx.db.entry.update({
             where: {
                 id: createdEntry.id,

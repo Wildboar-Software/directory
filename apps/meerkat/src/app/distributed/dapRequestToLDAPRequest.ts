@@ -122,7 +122,12 @@ const DEFAULT_LDAP_FILTER: LDAPFilter = {
     present: encodeLDAPOID(objectClass["&id"]),
 };
 
-function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string, AttributeErrorData ] {
+function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string, AttributeErrorData, boolean ] {
+    /**
+     * I don't think these errors are even relayed back to the DAP user, so
+     * there is no need to sign them.
+     */
+    const signErrors: boolean = false;
     return [
         ctx.i18n.t("err:attribute_type_cannot_be_encoded_to_ldap", {
             oid: type_.toString(),
@@ -149,6 +154,7 @@ function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string
             undefined,
             undefined,
         ),
+        signErrors,
     ];
 }
 

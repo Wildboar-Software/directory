@@ -72,6 +72,7 @@ async function updateLocalSubr (
     oldAgreement: HierarchicalAgreement,
     newAgreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
+    signErrors: boolean,
 ): Promise<void> {
     // oldAgreement.immediateSuperior === newAgreement.immediateSuperior
     const superior = await dnToVertex(ctx, ctx.dit.root, newAgreement.immediateSuperior);
@@ -93,6 +94,7 @@ async function updateLocalSubr (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (superior.dse.shadow || superior.dse.subentry || superior.dse.alias) {
@@ -114,6 +116,7 @@ async function updateLocalSubr (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     // const oldDN = [ ...oldAgreement.immediateSuperior, oldAgreement.rdn ];
@@ -154,6 +157,7 @@ async function updateLocalSubr (
                         false,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }

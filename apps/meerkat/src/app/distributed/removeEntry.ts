@@ -153,6 +153,8 @@ async function removeEntry (
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const target = state.foundDSE;
     const argument = _decode_RemoveEntryArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -192,10 +194,10 @@ async function removeEntry (
             state.chainingArguments.aliasDereferenced,
             argument.signed,
             _encode_RemoveEntryArgumentData,
+            signErrors,
         );
     }
     // #endregion Signature validation
-    const data = getOptionallyProtectedValue(argument);
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -219,6 +221,7 @@ async function removeEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -287,6 +290,7 @@ async function removeEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -322,6 +326,7 @@ async function removeEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -345,6 +350,7 @@ async function removeEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const alsoDeleteFamily: boolean = (isAncestor && (data.familyGrouping === FamilyGrouping_compoundEntry));
@@ -372,6 +378,8 @@ async function removeEntry (
                 targetDN.slice(0, -1),
                 target.immediateSuperior!,
                 state.chainingArguments.aliasDereferenced ?? false,
+                undefined,
+                signErrors,
             ) // INTENTIONAL_NO_AWAIT
                 .then(() => {
                     ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {
@@ -512,6 +520,7 @@ async function removeEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op) {

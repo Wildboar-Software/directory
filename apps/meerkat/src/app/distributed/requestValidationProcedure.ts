@@ -23,6 +23,7 @@ import {
     FALSE,
     packBits,
     DERElement,
+    ASN1TagClass,
 } from "asn1-ts";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
@@ -76,18 +77,12 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { printInvokeId } from "../utils/printInvokeId";
-import {
-    verifyCertPath,
-    VerifyCertPathArgs,
-    VCP_RETURN_CODE_OK,
-    verifySignature,
-} from "../pki/verifyCertPath";
+import { VCP_RETURN_CODE_OK, verifySignature } from "../pki/verifyCertPath";
 import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
-import type {
-    Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
-import { anyPolicy } from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
-import { hy } from "date-fns/locale";
+import {
+    ProtectionRequest_signed,
+    _decode_ProtectionRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -537,8 +532,23 @@ async function requestValidationProcedure (
     const unsigned = getOptionallyProtectedValue(hydratedArgument);
     const {
         chainedArgument,
-        // argument,
+        argument,
     } = unsigned;
+    const opArgElements = argument.set;
+        const securityParameters = opArgElements
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 29)
+        ))?.inner;
+    const errorProtectionElement = securityParameters?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 8)
+        ))?.inner;
+    const errorProtection = errorProtectionElement
+        ? _decode_ProtectionRequest(errorProtectionElement)
+        : undefined;
+    const signErrors: boolean = (errorProtection === ProtectionRequest_signed);
     if (
         chainedArgument.targetObject
         && (chainedArgument.operationProgress?.nextRDNToBeResolved !== undefined)
@@ -563,6 +573,7 @@ async function requestValidationProcedure (
                 chainedArgument.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if ("signed" in hydratedArgument) {
@@ -612,6 +623,7 @@ async function requestValidationProcedure (
                     chainedArgument.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const signedData = hydratedArgument.signed.originalDER
@@ -652,6 +664,7 @@ async function requestValidationProcedure (
                     chainedArgument.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -682,6 +695,7 @@ async function requestValidationProcedure (
                 chainedArgument.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (chainedArgument.operationIdentifier) {

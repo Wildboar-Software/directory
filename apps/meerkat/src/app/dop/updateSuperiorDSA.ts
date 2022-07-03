@@ -167,6 +167,7 @@ async function updateSuperiorDSA (
     newCP: Vertex,
     aliasDereferenced: boolean,
     options?: UpdateSuperiorOptions,
+    signErrors: boolean = false,
 ): Promise<ResultOrError> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
@@ -237,6 +238,7 @@ async function updateSuperiorDSA (
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
                         aliasDereferenced,
                     ),
+                    signErrors,
                 );
             }
             const timeRemainingForOperation: number | undefined = timeoutTime
@@ -491,6 +493,7 @@ async function updateSuperiorDSA (
             aliasDereferenced,
             undefined,
         ),
+        signErrors,
     );
 }
 

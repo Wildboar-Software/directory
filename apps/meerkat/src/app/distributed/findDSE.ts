@@ -119,6 +119,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import getVertexById from "../database/getVertexById";
 import { printInvokeId } from "../utils/printInvokeId";
+import {
+    ProtectionRequest_signed,
+    _decode_ProtectionRequest,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -268,6 +272,7 @@ async function findDSE (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -297,6 +302,11 @@ async function findDSE (
             (el.tagClass === ASN1TagClass.context)
             && (el.tagNumber === 25)
         ))?.inner.bitString;
+    const securityParameters = opArgElements
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 29)
+        ))?.inner;
     const serviceControls = opArgElements
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
@@ -313,6 +323,15 @@ async function findDSE (
             (el.tagClass === ASN1TagClass.context)
             && (el.tagNumber === 6)
         ));
+    const errorProtectionElement = securityParameters?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 8)
+        ))?.inner;
+    const errorProtection = errorProtectionElement
+        ? _decode_ProtectionRequest(errorProtectionElement)
+        : undefined;
+    const signErrors: boolean = (errorProtection === ProtectionRequest_signed);
 
     // Service controls
     const manageDSAIT: boolean = (
@@ -439,6 +458,7 @@ async function findDSE (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             state.entrySuitable = true;
@@ -539,6 +559,7 @@ async function findDSE (
                                 state.chainingArguments.aliasDereferenced,
                                 undefined,
                             ),
+                            signErrors,
                         );
                     }
                 } else { // m !== 0
@@ -628,6 +649,7 @@ async function findDSE (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     throw new errors.ServiceError(
@@ -645,6 +667,7 @@ async function findDSE (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -678,6 +701,7 @@ async function findDSE (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             default: {
@@ -708,6 +732,8 @@ async function findDSE (
             copyShallDo,
             state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
             state.operationArgument,
+            undefined,
+            signErrors,
         );
         if (suitable) {
             state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
@@ -970,6 +996,7 @@ async function findDSE (
                                     state.chainingArguments.aliasDereferenced,
                                     undefined,
                                 ),
+                                signErrors,
                             );
                         }
                         await targetNotFoundSubprocedure();
@@ -1024,6 +1051,7 @@ async function findDSE (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 checkTimeLimit();
@@ -1125,6 +1153,7 @@ async function findDSE (
                                         state.chainingArguments.aliasDereferenced,
                                         undefined,
                                     ),
+                                    signErrors,
                                 );
                             }
                             throw new errors.NameError(
@@ -1145,6 +1174,7 @@ async function findDSE (
                                     state.chainingArguments.aliasDereferenced,
                                     undefined,
                                 ),
+                                signErrors,
                             );
                         }
                     }
@@ -1237,6 +1267,7 @@ async function findDSE (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         /**
@@ -1381,6 +1412,7 @@ async function findDSE (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 state.foundDSE = dse_i;
@@ -1414,6 +1446,7 @@ async function findDSE (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1445,6 +1478,7 @@ async function findDSE (
                         TRUE,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             state.aliasesEncounteredById.add(dse_i.dse.id);
@@ -1477,6 +1511,7 @@ async function findDSE (
                             false,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             } else {
@@ -1553,6 +1588,7 @@ async function findDSE (
                             false,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 Object.assign(state, newState);
@@ -1575,6 +1611,7 @@ async function findDSE (
             state.chainingArguments.aliasDereferenced,
             undefined,
         ),
+        signErrors,
     );
 }
 
