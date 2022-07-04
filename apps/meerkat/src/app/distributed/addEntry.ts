@@ -170,7 +170,7 @@ import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOpe
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
-import { verifyArgumentSignature } from "../pki/verifyArgumentSignature";
+import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
@@ -239,30 +239,8 @@ async function addEntry (
      * requirement of the X.500 specifications--just my personal assessment.
      */
     if ("signed" in argument) {
-        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
         const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
-        if (!certPath) {
-            throw new errors.MistypedArgumentError(
-                ctx.i18n.t("err:cert_path_required_signed", {
-                    context: "arg",
-                    host: remoteHostIdentifier,
-                    aid: assn.id,
-                    iid: printInvokeId(state.invokeId),
-                }),
-            );
-        }
-        for (const pair of certPath.theCACertificates ?? []) {
-            if (!pair.issuedToThisCA) {
-                throw new errors.MistypedArgumentError(
-                    ctx.i18n.t("err:cert_path_issuedToThisCA", {
-                        host: remoteHostIdentifier,
-                        aid: assn.id,
-                        iid: printInvokeId(state.invokeId),
-                    }),
-                );
-            }
-        }
-        verifyArgumentSignature(
+        verifySIGNED(
             ctx,
             assn,
             certPath,

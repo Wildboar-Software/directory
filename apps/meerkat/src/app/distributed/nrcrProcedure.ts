@@ -198,7 +198,14 @@ async function nrcrProcedure (
         checkTimeLimit();
         const isNSSR = (cref.referenceType === ReferenceType_nonSpecificSubordinate);
         if (!isNSSR) {
-            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req, assn, state);
+            const outcome: ResultOrError | null = await apinfoProcedure(
+                ctx,
+                cref.accessPoints[0],
+                req,
+                assn,
+                state,
+                signErrors,
+            );
             if (!outcome) {
                 continue;
             } else if (("result" in outcome) && outcome.result) {
@@ -231,7 +238,14 @@ async function nrcrProcedure (
             }
             let outcome: ResultOrError | null = null;
             try {
-                outcome = await apinfoProcedure(ctx, ap, req, assn, state);
+                outcome = await apinfoProcedure(
+                    ctx,
+                    ap,
+                    req,
+                    assn,
+                    state,
+                    signErrors,
+                );
             } catch {
                 continue;
             }

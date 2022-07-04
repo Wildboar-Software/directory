@@ -10,6 +10,9 @@ import type {
 import connect from "../net/connect";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import {
+    chainedAbandon,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAbandon.oa";
+import {
     referral,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
 import {
@@ -27,7 +30,12 @@ import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -65,6 +73,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import { printInvokeId } from "../utils/printInvokeId";
+import { signChainedArgument } from "../pki/signChainedArgument";
+import { strict as assert } from "assert";
+import { verifySIGNED } from "../pki/verifySIGNED";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -90,8 +101,8 @@ async function apinfoProcedure (
     req: ChainedRequest,
     assn: ClientAssociation,
     state: OperationDispatcherState,
+    signErrors: boolean,
 ): Promise<ResultOrError | null> {
-    // TODO: Support signed errors.
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -152,6 +163,7 @@ async function apinfoProcedure (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const tenativeTrace: TraceItem[] = [
@@ -184,6 +196,7 @@ async function apinfoProcedure (
                     req.chaining.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         // TODO: Check if localScope.
@@ -217,9 +230,13 @@ async function apinfoProcedure (
                     req.argument!,
                 ),
             };
+            const signArguments: boolean = true; // TODO: Make configurable.
+            const payload: Chained = signArguments
+                ? signChainedArgument(ctx, argument)
+                : argument;
             const result = await connection.writeOperation({
                 opCode: req.opCode,
-                argument: chainedRead.encoderFor["&ArgumentType"]!(argument, DER),
+                argument: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
             });
             if ("error" in result) {
                 const errcode: Code = result.errcode ?? { local: -1 };
@@ -266,6 +283,32 @@ async function apinfoProcedure (
                         invokeID: printInvokeId(state.invokeId),
                     });
                     continue;
+                }
+                const checkChainedResultSignature: boolean = true; // TODO: Make configurable.
+                assert(chainedAbandon["&operationCode"]);
+                assert("local" in chainedAbandon["&operationCode"]);
+                if (
+                    checkChainedResultSignature
+                    && ("local" in result.opCode)
+                    && (result.opCode.local !== chainedAbandon["&operationCode"]!.local)
+                    && result.result
+                ) {
+                    const decoded = chainedRead.decoderFor["&ResultType"]!(result.result);
+                    const resultData = getOptionallyProtectedValue(decoded);
+                    if ("signed" in decoded) {
+                        const certPath = resultData.chainedResult.securityParameters?.certification_path;
+                        verifySIGNED(
+                            ctx,
+                            assn,
+                            certPath,
+                            state.invokeId,
+                            state.chainingArguments.aliasDereferenced,
+                            decoded.signed,
+                            _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+                            signErrors,
+                            "result",
+                        );
+                    }
                 }
                 return {
                     invokeId: result.invokeId,

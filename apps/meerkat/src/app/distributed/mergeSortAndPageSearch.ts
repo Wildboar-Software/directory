@@ -86,42 +86,6 @@ interface MergeSearchResultsReturn {
 
 type ISearchInfo = { -readonly [K in keyof SearchResultData_searchInfo]: SearchResultData_searchInfo[K] };
 
-function makeSearchResultSignable (sr: SearchResult): SearchResult {
-    if ("signed" in sr) {
-        return sr;
-    }
-    const data = getOptionallyProtectedValue(sr);
-    if ("searchInfo" in data) {
-        return {
-            unsigned: {
-                searchInfo: new SearchResultData_searchInfo(
-                    data.searchInfo.name,
-                    // Sorted
-                    data.searchInfo.entries
-                        .map((e) => [ _encode_EntryInformation(e, DER).toBytes(), e ] as const)
-                        .sort(([ encodingA ], [ encodingB ]) => Buffer.compare(encodingA, encodingB))
-                        .map(([ , entry ]) => entry),
-                    data.searchInfo.partialOutcomeQualifier,
-                    data.searchInfo.altMatching,
-                    data.searchInfo._unrecognizedExtensionsList,
-                    data.searchInfo.securityParameters,
-                    data.searchInfo.performer,
-                    data.searchInfo.aliasDereferenced,
-                    data.searchInfo.notification,
-                ),
-            },
-        };
-    } else if ("uncorrelatedSearchInfo" in data) {
-        return {
-            unsigned: {
-                uncorrelatedSearchInfo: data.uncorrelatedSearchInfo.map(makeSearchResultSignable),
-            },
-        };
-    } else {
-        return sr; // This should not happen.
-    }
-}
-
 /**
  * @summary Count the number of results in a `SearchResult`
  * @description
@@ -415,6 +379,12 @@ async function mergeSortAndPageSearch(
             uncorrelatedSearchInfo: [],
         };
 
+        /**
+         * Using DER encoding will NOT actually recursively DER-encode this element.
+         * This is a bug in my ASN.1 compiler, where the selected codec does not
+         * recurse completely. Fortunately, this is actually good, because it means
+         * that the entries will not get re-ordered.
+         */
         const unsignedReturnValue: MergeSearchResultsReturn = {
             encodedSearchResult: _encode_SearchResult(totalResult, DER),
             resultStats,
@@ -426,9 +396,7 @@ async function mergeSortAndPageSearch(
             return unsignedReturnValue;
         }
 
-        const signableSearchResult: SearchResult = makeSearchResultSignable(totalResult);
-        const signableBytes = Buffer.from(_encode_SearchResult(signableSearchResult, DER).toBytes().buffer);
-
+        const signableBytes = Buffer.from(_encode_SearchResult(totalResult, DER).toBytes().buffer);
         const key = ctx.config.signing?.key;
         if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
             return unsignedReturnValue;
@@ -602,12 +570,6 @@ async function mergeSortAndPageSearch(
         performance. Fortunately, we can manually construct a SearchResult
         from concatenated buffers to avoid decoding the `entries` just to
         re-encode them. This is pretty complicated, though.
-
-        To complicate things, the search results must appear in a particular
-        order--particularly if a sort was requested--but the signature must
-        apply over a DER-encoded SearchResultData, whose `entries` field MUST
-        be sorted in a _different_ way.
-        (See ITU Recommendation X.690 (2021), Section 11.6.)
     */
 
     const nameBuffer = (state.chainingArguments.aliasDereferenced && mergedResult.name)
@@ -723,27 +685,11 @@ async function mergeSortAndPageSearch(
         return unsignedReturnValue;
     }
 
-    /**
-     * The sorting of results is necessary for DER signature.
-     */
-    const signableBuffers: Uint8Array[] = [
-        searchInfoTLBytes,
-        nameBuffer,
-        resultsOuterTagAndLengthBytes,
-        resultsInnerTagAndLengthBytes,
-        ...results.map((r) => r.entry_info).sort(Buffer.compare),
-        poqBuffer,
-        altMatchingBuffer,
-        adBuffer,
-        performerBuffer,
-        spBuffer,
-    ];
-
     const key = ctx.config.signing?.key;
     if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
         return unsignedReturnValue;
     }
-    const signingResult = generateSignature(key, signableBuffers);
+    const signingResult = generateSignature(key, searchInfoBuffer);
     if (!signingResult) {
         return unsignedReturnValue;
     }

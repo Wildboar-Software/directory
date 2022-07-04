@@ -39,7 +39,6 @@ import {
 import type { ListState } from "./list_i";
 import {
     ListResultData_listInfo_subordinates_Item as ListItem,
-    _decode_ListResultData_listInfo_subordinates_Item,
     _encode_ListResultData_listInfo_subordinates_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
 import {
@@ -75,44 +74,6 @@ interface MergeListResultsReturn {
 }
 
 type IListInfo = { -readonly [K in keyof ListResultData_listInfo]: ListResultData_listInfo[K] };
-
-
-function makeListResultSignable (lr: ListResult): ListResult {
-    if ("signed" in lr) {
-        return lr;
-    }
-    const data = getOptionallyProtectedValue(lr);
-    if ("listInfo" in data) {
-        return {
-            unsigned: {
-                listInfo: new ListResultData_listInfo(
-                    data.listInfo.name,
-                    data.listInfo.subordinates
-                        .map((s) => [
-                            _encode_ListResultData_listInfo_subordinates_Item(s, DER).toBytes(),
-                            s,
-                        ] as const)
-                        .sort(([ encodingA ], [ encodingB ]) => Buffer.compare(encodingA, encodingB))
-                        .map(([ , subordinate ]) => subordinate),
-                    data.listInfo.partialOutcomeQualifier,
-                    data.listInfo._unrecognizedExtensionsList,
-                    data.listInfo.securityParameters,
-                    data.listInfo.performer,
-                    data.listInfo.aliasDereferenced,
-                    data.listInfo.notification,
-                ),
-            },
-        };
-    } else if ("uncorrelatedListInfo" in data) {
-        return {
-            unsigned: {
-                uncorrelatedListInfo: data.uncorrelatedListInfo.map(makeListResultSignable),
-            },
-        };
-    } else {
-        return lr; // This should not happen.
-    }
-}
 
 /**
  * @summary Count the number of results in a `ListResult`
@@ -394,9 +355,7 @@ async function mergeSortAndPageList(
             return unsignedReturnValue;
         }
 
-        const signableSearchResult: ListResult = makeListResultSignable(totalResult);
-        const signableBytes = Buffer.from(_encode_ListResult(signableSearchResult, DER).toBytes().buffer);
-
+        const signableBytes = Buffer.from(_encode_ListResult(totalResult, DER).toBytes().buffer);
         const key = ctx.config.signing?.key;
         if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
             return unsignedReturnValue;
@@ -569,12 +528,6 @@ async function mergeSortAndPageList(
         performance. Fortunately, we can manually construct a ListResult
         from concatenated buffers to avoid decoding the `subordinates` just to
         re-encode them. This is pretty complicated, though.
-
-        To complicate things, the search results must appear in a particular
-        order--particularly if a sort was requested--but the signature must
-        apply over a DER-encoded ListResultData, whose `subordinates` field MUST
-        be sorted in a _different_ way.
-        (See ITU Recommendation X.690 (2021), Section 11.6.)
     */
     const nameBuffer = (state.chainingArguments.aliasDereferenced && mergedResult.name)
         ? Buffer.from(_encode_Name(mergedResult.name, DER).toBytes().buffer)
@@ -666,6 +619,12 @@ async function mergeSortAndPageList(
         ? getPartialOutcomeQualifierStatistics(poq)
         : undefined;
 
+    /**
+     * Using DER encoding will NOT actually recursively DER-encode this element.
+     * This is a bug in my ASN.1 compiler, where the selected codec does not
+     * recurse completely. Fortunately, this is actually good, because it means
+     * that the entries will not get re-ordered.
+     */
     const unsignedReturnValue: MergeListResultsReturn = {
         encodedListResult: (() => {
             const el = new DERElement();
@@ -681,26 +640,11 @@ async function mergeSortAndPageList(
         return unsignedReturnValue;
     }
 
-    /**
-     * The sorting of results is necessary for DER signature.
-     */
-    const signableBuffers: Uint8Array[] = [
-        listInfoTLBytes,
-        nameBuffer,
-        resultsOuterTagAndLengthBytes,
-        resultsInnerTagAndLengthBytes,
-        ...results.map((r) => r.subordinate_info).sort(Buffer.compare),
-        poqBuffer,
-        adBuffer,
-        performerBuffer,
-        spBuffer,
-    ];
-
     const key = ctx.config.signing?.key;
     if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
         return unsignedReturnValue;
     }
-    const signingResult = generateSignature(key, signableBuffers);
+    const signingResult = generateSignature(key, listInfoBuffer);
     if (!signingResult) {
         return unsignedReturnValue;
     }

@@ -1,7 +1,6 @@
 import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import { addSeconds } from "date-fns";
-import { DER } from "asn1-ts/dist/node/functional";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
 import {
@@ -21,16 +20,12 @@ import {
     OPTIONAL,
     TRUE_BIT,
     FALSE,
-    packBits,
-    DERElement,
     ASN1TagClass,
 } from "asn1-ts";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
-    SecurityProblem_invalidSignature,
     SecurityProblem_noInformation,
-    SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
     ServiceProblem_loopDetected,
@@ -77,12 +72,11 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { printInvokeId } from "../utils/printInvokeId";
-import { VCP_RETURN_CODE_OK, verifySignature } from "../pki/verifyCertPath";
-import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
 import {
     ProtectionRequest_signed,
     _decode_ProtectionRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import { verifySIGNED } from "../pki/verifySIGNED";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -148,6 +142,11 @@ function createChainingArgumentsFromDUA (
     let referenceType: OPTIONAL<ReferenceType>;
     let info: OPTIONAL<DomainInfo>;
     let timeLimit: OPTIONAL<Time>;
+    /**
+     * Technically, the specification only says to copy the `target` and
+     * `errorProtection` parameters from the DAP argument's `securityParameters`.
+     * But I don't see any problem with just copying the whole thing.
+     */
     let securityParameters: OPTIONAL<SecurityParameters>;
     let entryOnly: OPTIONAL<BOOLEAN>;
     let exclusions: OPTIONAL<Exclusions>;
@@ -183,6 +182,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -221,6 +221,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -254,6 +255,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -287,6 +289,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -320,6 +323,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -353,6 +357,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -386,6 +391,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -419,6 +425,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -577,96 +584,22 @@ async function requestValidationProcedure (
         );
     }
     if ("signed" in hydratedArgument) {
-        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
-        const certPath = hydratedArgument.signed.toBeSigned.chainedArgument.securityParameters?.certification_path;
-        if (!certPath) {
-            throw new errors.MistypedArgumentError(
-                ctx.i18n.t("err:cert_path_required_signed", {
-                    context: "arg",
-                    host: remoteHostIdentifier,
-                    aid: assn.id,
-                    iid: printInvokeId(req.invokeId),
-                }),
-            );
-        }
-        for (const pair of certPath.theCACertificates ?? []) {
-            if (!pair.issuedToThisCA) {
-                throw new errors.MistypedArgumentError(
-                    ctx.i18n.t("err:cert_path_issuedToThisCA", {
-                        host: remoteHostIdentifier,
-                        aid: assn.id,
-                        iid: printInvokeId(req.invokeId),
-                    }),
-                );
-            }
-        }
-        const vcpResult = verifyAnyCertPath(ctx, certPath);
-        if (vcpResult.returnCode !== VCP_RETURN_CODE_OK) {
-            throw new errors.SecurityError(
-                ctx.i18n.t("err:cert_path_invalid", {
-                    host: remoteHostIdentifier,
-                    aid: assn.id,
-                    iid: printInvokeId(req.invokeId),
-                }),
-                new SecurityErrorData(
-                    SecurityProblem_invalidCredentials,
-                    undefined,
-                    undefined,
-                    undefined,
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        securityError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    chainedArgument.aliasDereferenced,
-                    undefined,
-                ),
-                signErrors,
-            );
-        }
-        const signedData = hydratedArgument.signed.originalDER
-            ? (() => {
-                const el = new DERElement();
-                el.fromBytes(hydratedArgument.signed.originalDER);
-                const tbs = el.sequence[0];
-                return tbs.toBytes();
-            })()
-            : _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(hydratedArgument.signed.toBeSigned, DER).toBytes();
-        const signatureAlg = hydratedArgument.signed.algorithmIdentifier;
-        const signatureValue = packBits(hydratedArgument.signed.signature);
-        const signatureIsValid: boolean | undefined = verifySignature(
-            signedData,
-            signatureAlg,
-            signatureValue,
-            certPath.userCertificate.toBeSigned.subjectPublicKeyInfo,
+        const certPath = hydratedArgument
+            .signed
+            .toBeSigned
+            .chainedArgument
+            .securityParameters
+            ?.certification_path;
+        verifySIGNED(
+            ctx,
+            assn,
+            certPath,
+            req.invokeId,
+            false,
+            hydratedArgument.signed,
+            _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+            signErrors,
         );
-        if (!signatureIsValid) {
-            throw new errors.SecurityError(
-                ctx.i18n.t("err:invalid_signature_on_arg", {
-                    host: remoteHostIdentifier,
-                    aid: assn.id,
-                    iid: printInvokeId(req.invokeId),
-                }),
-                new SecurityErrorData(
-                    SecurityProblem_invalidSignature,
-                    undefined,
-                    undefined,
-                    undefined,
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        securityError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    chainedArgument.aliasDereferenced,
-                    undefined,
-                ),
-                signErrors,
-            );
-        }
     }
     if (alreadyChained) { // Satisfies all requirements of X.518 (2016), Section 17.3.3.3.
         chainedArgument.traceInformation.push(new TraceItem(

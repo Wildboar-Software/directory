@@ -21,8 +21,8 @@ import {
     SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import { printInvokeId } from "../utils/printInvokeId";
-import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
-import { verifySignature, VCP_RETURN_CODE_OK } from "../pki/verifyCertPath";
+import { verifyAnyCertPath } from "./verifyAnyCertPath";
+import { verifySignature, VCP_RETURN_CODE_OK } from "./verifyCertPath";
 import type {
     SIGNED,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
@@ -31,26 +31,31 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import { RDNSequence } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RDNSequence.ta";
+import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
 export
-function verifyArgumentSignature <T> (
+function verifySIGNED <T> (
     ctx: Context,
     assn: ClientAssociation,
-    certPath: CertificationPath,
+    certPath: OPTIONAL<CertificationPath>,
     invokeId: InvokeId,
     aliasDereferenced: OPTIONAL<BOOLEAN>,
     arg: SIGNED<T>,
-    argDataEncoder: ASN1Encoder<T>,
+    paramDataEncoder: ASN1Encoder<T>,
     signErrors: boolean,
+    argOrResult: "arg" | "result" = "arg",
+    ae_title_rdnSequence?: RDNSequence,
 ): void {
     const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
     if (!certPath) {
         throw new MistypedArgumentError(
             ctx.i18n.t("err:cert_path_required_signed", {
-                context: "arg",
+                context: argOrResult,
                 host: remoteHostIdentifier,
                 aid: assn.id,
                 iid: printInvokeId(invokeId),
+                ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
             }),
         );
     }
@@ -58,9 +63,11 @@ function verifyArgumentSignature <T> (
         if (!pair.issuedToThisCA) {
             throw new MistypedArgumentError(
                 ctx.i18n.t("err:cert_path_issuedToThisCA", {
+                    context: argOrResult,
                     host: remoteHostIdentifier,
                     aid: assn.id,
                     iid: printInvokeId(invokeId),
+                    ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
                 }),
             );
         }
@@ -69,9 +76,11 @@ function verifyArgumentSignature <T> (
     if (vacpResult.returnCode !== VCP_RETURN_CODE_OK) {
         throw new SecurityError(
             ctx.i18n.t("err:cert_path_invalid", {
+                context: argOrResult,
                 host: remoteHostIdentifier,
                 aid: assn.id,
                 iid: printInvokeId(invokeId),
+                ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
             }),
             new SecurityErrorData(
                 SecurityProblem_invalidCredentials,
@@ -98,7 +107,7 @@ function verifyArgumentSignature <T> (
             const tbs = el.sequence[0];
             return tbs.toBytes();
         })()
-        : argDataEncoder(arg.toBeSigned, DER).toBytes();
+        : paramDataEncoder(arg.toBeSigned, DER).toBytes();
     const signatureAlg = arg.algorithmIdentifier;
     const signatureValue = packBits(arg.signature);
     const signatureIsValid: boolean | undefined = verifySignature(
@@ -109,10 +118,12 @@ function verifyArgumentSignature <T> (
     );
     if (!signatureIsValid) {
         throw new SecurityError(
-            ctx.i18n.t("err:invalid_signature_on_arg", {
+            ctx.i18n.t("err:invalid_signature", {
+                context: argOrResult,
                 host: remoteHostIdentifier,
                 aid: assn.id,
                 iid: printInvokeId(invokeId),
+                ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
             }),
             new SecurityErrorData(
                 SecurityProblem_invalidSignature,
