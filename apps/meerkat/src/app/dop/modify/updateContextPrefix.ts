@@ -91,6 +91,7 @@ import { strict as assert } from "assert";
  * @param uuid The UUID of the operational binding
  * @param oldAgreement The old hierarchical agreement
  * @param mod The update to the context prefix
+ * @param signErrors Whether to cryptographically sign errors
  *
  * @function
  * @async

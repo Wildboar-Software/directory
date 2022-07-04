@@ -11,6 +11,13 @@ import type {
 import type {
     ModifyOperationalBindingResult,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingResult.ta";
+import {
+    ModifyOperationalBindingResultData,
+    _encode_ModifyOperationalBindingResultData,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingResultData.ta";
+import {
+    Validity,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/Validity.ta";
 import type {
     ModifyOperationalBindingArgumentData_initiator as Initiator,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData-initiator.ta";
@@ -31,7 +38,7 @@ import {
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { ASN1Element, BERElement, packBits } from "asn1-ts";
+import { ASN1Element, BERElement, packBits, unpackBits } from "asn1-ts";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
@@ -79,6 +86,12 @@ import { printInvokeId } from "../../utils/printInvokeId";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+import { generateSignature } from "../../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { id_op_modifyOperationalBinding } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-modifyOperationalBinding.va";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -143,7 +156,8 @@ async function modifyOperationalBinding (
 ): Promise<ModifyOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
-    const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
+    const signResult: boolean = (data.securityParameters?.target === ProtectionRequest_signed);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
     ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
         context: "started",
         type: data.bindingType.toString(),
@@ -158,7 +172,9 @@ async function modifyOperationalBinding (
     });
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
-        `Operational binding type ${data.bindingType.toString()} not understood.`,
+        ctx.i18n.t("err:ob_type_unrecognized", {
+            obtype: data.bindingType.toString(),
+        }),
         new OpBindingErrorParam(
             OpBindingErrorParam_problem_unsupportedBindingType,
             data.bindingType,
@@ -179,7 +195,28 @@ async function modifyOperationalBinding (
     );
 
     if (data.bindingID.identifier != data.newBindingID.identifier) {
-        // Throw OpBindingErrorParam_problem_invalidNewID
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:ob_binding_id_identifier_changed", {
+                uuid: data.bindingType.toString(),
+            }),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidNewID,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    undefined,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
+        );
     }
 
     const now = new Date();
@@ -470,12 +507,13 @@ async function modifyOperationalBinding (
         },
     });
 
+    const oldAgreementElement = (() => {
+        const el = new BERElement();
+        el.fromBytes(opBinding.agreement_ber);
+        return el;
+    })();
     if (data.bindingType.isEqualTo(id_op_binding_hierarchical)) {
-        const oldAgreement: HierarchicalAgreement = (() => {
-            const el = new BERElement();
-            el.fromBytes(opBinding.agreement_ber);
-            return _decode_HierarchicalAgreement(el);
-        })();
+        const oldAgreement: HierarchicalAgreement = _decode_HierarchicalAgreement(oldAgreementElement);
         const newAgreement: HierarchicalAgreement = data.newAgreement
             ? _decode_HierarchicalAgreement(data.newAgreement)
             : oldAgreement;
@@ -514,6 +552,77 @@ async function modifyOperationalBinding (
             );
         }
 
+        const resultData = new ModifyOperationalBindingResultData(
+            data.newBindingID,
+            data.bindingType,
+            data.newAgreement ?? oldAgreementElement,
+            new Validity(
+                validFrom
+                    ? {
+                        time: {
+                            generalizedTime: validFrom,
+                        },
+                    }
+                    : {
+                        now: null,
+                    },
+                validUntil
+                    ? {
+                        time: {
+                            generalizedTime: validUntil,
+                        },
+                    }
+                    : {
+                        explicitTermination: null,
+                    },
+            ),
+            [],
+            createSecurityParameters(
+                ctx,
+                assn.boundNameAndUID?.dn,
+                id_op_modifyOperationalBinding,
+            ),
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            false,
+            undefined,
+        );
+        const result: ModifyOperationalBindingResult = signResult
+            ? (() => {
+                const resultDataBytes = _encode_ModifyOperationalBindingResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        protected_: {
+                            unsigned: resultData,
+                        },
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        protected_: {
+                            unsigned: resultData,
+                        },
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    protected_: {
+                        signed: new SIGNED(
+                            resultData,
+                            sigAlg,
+                            unpackBits(sigValue),
+                            undefined,
+                            undefined,
+                        ),
+                    },
+                };
+            })()
+            : {
+                protected_: {
+                    unsigned: resultData,
+                },
+            };
         if ("roleA_initiates" in data.initiator) {
             const init: SuperiorToSubordinateModification = _decode_SuperiorToSubordinateModification(data.initiator.roleA_initiates);
             if (!compareDistinguishedName(
@@ -555,9 +664,7 @@ async function modifyOperationalBinding (
                 association_id: assn.id,
                 invokeID: printInvokeId(invokeId),
             });
-            return {
-                null_: null,
-            };
+            return result;
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
             await updateLocalSubr(ctx, assn, invokeId, oldAgreement, newAgreement, init, signErrors);
@@ -573,9 +680,7 @@ async function modifyOperationalBinding (
                 association_id: assn.id,
                 invokeID: printInvokeId(invokeId),
             });
-            return {
-                null_: null,
-            };
+            return result;
         } else {
             throw new errors.OperationalBindingError(
                 ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),

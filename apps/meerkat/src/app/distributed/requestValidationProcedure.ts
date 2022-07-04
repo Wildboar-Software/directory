@@ -73,9 +73,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { printInvokeId } from "../utils/printInvokeId";
 import {
-    ProtectionRequest_signed,
-    _decode_ProtectionRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+    _decode_ErrorProtectionRequest,
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { verifySIGNED } from "../pki/verifySIGNED";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
@@ -553,9 +553,9 @@ async function requestValidationProcedure (
             && (el.tagNumber === 8)
         ))?.inner;
     const errorProtection = errorProtectionElement
-        ? _decode_ProtectionRequest(errorProtectionElement)
+        ? _decode_ErrorProtectionRequest(errorProtectionElement)
         : undefined;
-    const signErrors: boolean = (errorProtection === ProtectionRequest_signed);
+    const signErrors: boolean = (errorProtection === ErrorProtectionRequest_signed);
     if (
         chainedArgument.targetObject
         && (chainedArgument.operationProgress?.nextRDNToBeResolved !== undefined)

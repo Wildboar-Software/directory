@@ -34,6 +34,26 @@ import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractS
 import { RDNSequence } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RDNSequence.ta";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 
+/**
+ * @summary Verify something that is cryptographically signed with X.509 SIGNED{}
+ * @description
+ *
+ * Verify the digital signatures on `param`, and validate the certification path
+ * that asserts the trustworthiness of the signer according to the procedures
+ * defined in ITU Recommendation X.509 (2019).
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param certPath The `CertificationPath` of the argument or result
+ * @param invokeId The InvokeId of the current operation
+ * @param aliasDereferenced A boolean indicating whether an alias has been dereferenced
+ * @param param The thing to be signed
+ * @param paramDataEncoder A function that encodes `param` into an ASN.1 element
+ * @param signErrors Whether to cryptographically sign errors
+ * @param argOrResult Whether what is being signed is an argument or a result
+ * @param ae_title_rdnSequence If applicable, the AE-Title of the application
+ *  that signed the `param`.
+ */
 export
 function verifySIGNED <T> (
     ctx: Context,
@@ -41,7 +61,7 @@ function verifySIGNED <T> (
     certPath: OPTIONAL<CertificationPath>,
     invokeId: InvokeId,
     aliasDereferenced: OPTIONAL<BOOLEAN>,
-    arg: SIGNED<T>,
+    param: SIGNED<T>,
     paramDataEncoder: ASN1Encoder<T>,
     signErrors: boolean,
     argOrResult: "arg" | "result" = "arg",
@@ -100,16 +120,16 @@ function verifySIGNED <T> (
             signErrors,
         );
     }
-    const signedData = arg.originalDER
+    const signedData = param.originalDER
         ? (() => {
             const el = new DERElement();
-            el.fromBytes(arg.originalDER);
+            el.fromBytes(param.originalDER);
             const tbs = el.sequence[0];
             return tbs.toBytes();
         })()
-        : paramDataEncoder(arg.toBeSigned, DER).toBytes();
-    const signatureAlg = arg.algorithmIdentifier;
-    const signatureValue = packBits(arg.signature);
+        : paramDataEncoder(param.toBeSigned, DER).toBytes();
+    const signatureAlg = param.algorithmIdentifier;
+    const signatureValue = packBits(param.signature);
     const signatureIsValid: boolean | undefined = verifySignature(
         signedData,
         signatureAlg,

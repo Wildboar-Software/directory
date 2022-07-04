@@ -182,6 +182,7 @@ interface EstablishSubordinateOptions extends ConnectOptions, WriteOperationOpti
  * @param newEntryRDN The newly created context prefix's relative distinguished name (RDN)
  * @param newEntryInfo The attributes of the newly created context prefix
  * @param targetSystem The access point of the potential subordinate DSA
+ * @param signErrors Whether to cryptographically sign errors
  * @param aliasDereferenced Whether an alias was dereferenced in the operation leading up to this
  * @param options Options
  * @returns A result or an error

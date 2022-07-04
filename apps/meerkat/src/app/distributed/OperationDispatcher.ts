@@ -462,7 +462,7 @@ class OperationDispatcher {
         else if (compareCode(req.opCode, search["&operationCode"]!)) {
             const argument = _decode_SearchArgument(reqData.argument);
             const data = getOptionallyProtectedValue(argument);
-            const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
+            const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
             const requestStats: RequestStatistics | undefined = failover(() => ({
                 operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
@@ -597,7 +597,7 @@ class OperationDispatcher {
      * @param preparedRequest The chaining arguments and original argument
      * @param local Whether this request was generated internally by Meerkat DSA
      * @param signDSPResult Whether the DSP result should be signed
-     * @param signErrors Whether any directory errors should be signed
+     * @param signErrors Whether to cryptographically sign errors
      *
      * @public
      * @static
@@ -870,6 +870,7 @@ class OperationDispatcher {
      * @param invokeId The invoke ID of the operation
      * @param argument The search operation argument
      * @param chaining The chaining arguments
+     * @param signErrors Whether to cryptographically sign errors
      *
      * @private
      * @static
@@ -985,7 +986,7 @@ class OperationDispatcher {
     ): Promise<SearchResultOrError> {
         // Request validation not needed.
         const data = getOptionallyProtectedValue(argument);
-        const signErrors: boolean = (data.securityParameters?.errorProtection === ProtectionRequest_signed);
+        const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
         const encodedArgument = _encode_SearchArgument(argument, DER);
         const targetObject = chaining.relatedEntry // The specification is not clear of what to do for targetObject.
             ? data.joinArguments?.[Number(chaining.relatedEntry)]?.joinBaseObject.rdnSequence

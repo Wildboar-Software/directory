@@ -120,9 +120,11 @@ import {
 import getVertexById from "../database/getVertexById";
 import { printInvokeId } from "../utils/printInvokeId";
 import {
-    ProtectionRequest_signed,
     _decode_ProtectionRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -331,7 +333,7 @@ async function findDSE (
     const errorProtection = errorProtectionElement
         ? _decode_ProtectionRequest(errorProtectionElement)
         : undefined;
-    const signErrors: boolean = (errorProtection === ProtectionRequest_signed);
+    const signErrors: boolean = (errorProtection === ErrorProtectionRequest_signed);
 
     // Service controls
     const manageDSAIT: boolean = (

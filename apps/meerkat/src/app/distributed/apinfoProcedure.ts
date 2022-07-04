@@ -89,6 +89,7 @@ import { verifySIGNED } from "../pki/verifySIGNED";
  * @param req The chained request
  * @param assn The client association
  * @param state The operation dispatcher state
+ * @param signErrors Whether to cryptographically sign errors
  * @returns A result or error
  *
  * @function

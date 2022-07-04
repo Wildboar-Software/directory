@@ -77,6 +77,7 @@ import { printInvokeId } from "../utils/printInvokeId";
  * @param state The operation dispatcher state
  * @param chainingProhibited Whether chaining was prohibited
  * @param partialNameResolution Whether partial name resolution is permitted
+ * @param signErrors Whether to cryptographically sign errors
  * @returns An optionally-protected chained result or an error
  *
  * @function

@@ -91,6 +91,7 @@ import {
  *  operational binding
  * @param agreement The hierarchical agreement
  * @param sub2sup The `SubordinateToSuperior` argument of the HOB
+ * @param signErrors Whether to cryptographically sign errors
  * @returns A `SuperiorToSubordinate` that can be returned to the superior DSA
  *  in a Directory Operational Binding Management Protocol (DOP) result
  *

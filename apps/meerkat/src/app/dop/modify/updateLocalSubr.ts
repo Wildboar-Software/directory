@@ -60,6 +60,7 @@ import saveAccessPoint from "../../database/saveAccessPoint";
  * @param oldAgreement The old hierarchical agreement
  * @param newAgreement The new hierarchical agreement
  * @param sub2sup The `SubordinateToSuperior` argument
+ * @param signErrors Whether to cryptographically sign errors
  *
  * @function
  * @async
