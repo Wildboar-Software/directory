@@ -17,7 +17,6 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
-    // AuthenticationLevel_basicLevels_level_strong,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import attemptPassword from "../authn/attemptPassword";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -31,6 +30,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import versions from "./versions";
 import dnToVertex from "../dit/dnToVertex";
+import { attemptStrongAuth } from "../authn/attemptStrongAuth";
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
@@ -98,6 +98,13 @@ async function bind (
             },
         };
     }
+    const invalidCredentialsData = new DirectoryBindErrorData(
+        versions,
+        {
+            securityError: SecurityProblem_invalidCredentials,
+        },
+        // No security parameters will be provided for failed auth attempts.
+    );
     if ("simple" in arg.credentials) {
         const foundEntry = await dnToVertex(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {
@@ -123,13 +130,6 @@ async function bind (
                 },
             };
         }
-        const invalidCredentialsData = new DirectoryBindErrorData(
-            versions,
-            {
-                securityError: SecurityProblem_invalidCredentials,
-            },
-            // No security parameters will be provided for failed auth attempts.
-        );
         if (!foundEntry) {
             throw new DirectoryBindError(
                 ctx.i18n.t("err:invalid_credentials", { host: source }),
@@ -187,6 +187,15 @@ async function bind (
                 ),
             },
         };
+    } else if ("strong" in arg.credentials) {
+        return attemptStrongAuth(
+            ctx,
+            DirectoryBindError,
+            arg.credentials.strong,
+            signErrors,
+            localQualifierPoints,
+            source,
+        );
     } else {
         throw new DirectoryBindError(
             ctx.i18n.t("err:unsupported_auth_method"),
