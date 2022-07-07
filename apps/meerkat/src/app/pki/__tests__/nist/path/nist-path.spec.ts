@@ -110,7 +110,6 @@ const ctx: Context = {
             // trustAnchorList: [],
         },
     },
-    // TODO:
 } as Context;
 
 function create_nist_pkits_test (
@@ -127,7 +126,7 @@ function create_nist_pkits_test (
             certPath,
             ...args,
         };
-        const result = verifyCertPath(ctx, args_);
+        const result = await verifyCertPath(ctx, args_);
         const expectedResult_: VerifyCertPathResult = getDefaultResult(expectedResult);
         return expect(result).toEqual(expectedResult_);
     }
@@ -149,7 +148,7 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
                 NIST_TEST_POLICY_1,
             ],
         };
-        const result = verifyCertPath(ctx, args);
+        const result = await verifyCertPath(ctx, args);
         const expectedResult: VerifyCertPathResult = {
             returnCode: 0,
             authorities_constrained_policies: [

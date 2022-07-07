@@ -590,7 +590,7 @@ async function requestValidationProcedure (
             .chainedArgument
             .securityParameters
             ?.certification_path;
-        verifySIGNED(
+        await verifySIGNED(
             ctx,
             assn,
             certPath,

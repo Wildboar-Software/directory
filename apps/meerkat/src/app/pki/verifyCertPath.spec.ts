@@ -147,7 +147,7 @@ const trustAnchorList: TrustAnchorList = [
 ];
 
 describe("verifyCertPath()", () => {
-    it("accepts a valid certification path", () => {
+    it("accepts a valid certification path", async () => {
         const args: VerifyCertPathArgs = {
             validityTime: new Date(2022, 6, 23, 12, 0, 0),
             certPath: validCertPath,
@@ -160,12 +160,12 @@ describe("verifyCertPath()", () => {
             initial_policy_set: [],
             initial_required_name_forms: [],
         };
-        const response = verifyCertPath(ctx, args);
+        const response = await verifyCertPath(ctx, args);
         expect(response.returnCode).toBe(0);
         expect(response.warnings).toHaveLength(0);
     });
 
-    it("rejects a certification path with an altered signature", () => {
+    it("rejects a certification path with an altered signature", async () => {
         const args: VerifyCertPathArgs = {
             validityTime: new Date(2022, 6, 23, 12, 0, 0),
             certPath: invalidCertPathAlteredSignature,
@@ -178,12 +178,12 @@ describe("verifyCertPath()", () => {
             initial_policy_set: [],
             initial_required_name_forms: [],
         };
-        const response = verifyCertPath(ctx, args);
+        const response = await verifyCertPath(ctx, args);
         expect(response.returnCode).not.toBe(0);
         expect(response.warnings).toHaveLength(0);
     });
 
-    it("rejects a certification path after it expires", () => {
+    it("rejects a certification path after it expires", async () => {
         const args: VerifyCertPathArgs = {
             validityTime: new Date(2052, 6, 23, 12, 0, 0),
             certPath: validCertPath,
@@ -196,7 +196,7 @@ describe("verifyCertPath()", () => {
             initial_policy_set: [],
             initial_required_name_forms: [],
         };
-        const response = verifyCertPath(ctx, args);
+        const response = await verifyCertPath(ctx, args);
         expect(response.returnCode).not.toBe(0);
         expect(response.warnings).toHaveLength(0);
     });

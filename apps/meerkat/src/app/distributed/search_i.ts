@@ -809,7 +809,7 @@ async function search_i (
      */
      if (("signed" in argument) && (searchState.depth === 0)) {
         const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
-        verifySIGNED(
+        await verifySIGNED(
             ctx,
             assn,
             certPath,

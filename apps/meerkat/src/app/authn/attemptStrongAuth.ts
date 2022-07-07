@@ -134,7 +134,7 @@ async function attemptStrongAuth (
         }
 
         const effectiveName = name ?? certification_path.userCertificate.toBeSigned.subject.rdnSequence;
-        const tokenResult = verifyToken(ctx, certification_path, bind_token);
+        const tokenResult = await verifyToken(ctx, certification_path, bind_token);
         const logMessageContext = ({
             [VT_RETURN_CODE_MALFORMED]: "malformed",
             [VT_RETURN_CODE_INVALID_SIG]: "invalid_sig",
@@ -216,7 +216,7 @@ async function attemptStrongAuth (
                         undefined,
                     )),
             );
-            const tokenResult = verifyToken(ctx, certPath, bind_token);
+            const tokenResult = await verifyToken(ctx, certPath, bind_token);
             if (tokenResult === VT_RETURN_CODE_OK) {
                 return {
                     boundVertex: attemptedVertex,

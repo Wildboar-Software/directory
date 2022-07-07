@@ -2297,7 +2297,7 @@ async function modifyEntry (
      */
      if ("signed" in argument) {
         const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
-        verifySIGNED(
+        await verifySIGNED(
             ctx,
             assn,
             certPath,

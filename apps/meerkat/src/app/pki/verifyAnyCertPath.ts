@@ -18,6 +18,9 @@ import {
  * @param ctx
  * @param certPath
  * @returns
+ *
+ * @async
+ * @function
  */
 export
 function verifyAnyCertPath (

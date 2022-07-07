@@ -298,7 +298,7 @@ async function apinfoProcedure (
                     const resultData = getOptionallyProtectedValue(decoded);
                     if ("signed" in decoded) {
                         const certPath = resultData.chainedResult.securityParameters?.certification_path;
-                        verifySIGNED(
+                        await verifySIGNED(
                             ctx,
                             assn,
                             certPath,

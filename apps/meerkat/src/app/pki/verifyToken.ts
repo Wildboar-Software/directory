@@ -32,19 +32,22 @@ export const VT_RETURN_CODE_MALFORMED: number = 3;
  * @param token The signed token
  * @returns A boolean indicating whether the token had valid signatures and came
  *  from a trusted certification path.
+ *
+ * @async
+ * @function
  */
 export
-function verifyToken (
+async function verifyToken (
     ctx: Context,
     certPath: CertificationPath,
     token: Token,
-): number {
+): Promise<number> {
     for (const pair of certPath.theCACertificates ?? []) {
         if (!pair.issuedToThisCA) {
             return VT_RETURN_CODE_MALFORMED;
         }
     }
-    const vacpResult = verifyAnyCertPath(ctx, certPath);
+    const vacpResult = await verifyAnyCertPath(ctx, certPath);
     if (vacpResult.returnCode !== VCP_RETURN_CODE_OK) {
         return VT_RETURN_CODE_UNTRUSTED;
     }

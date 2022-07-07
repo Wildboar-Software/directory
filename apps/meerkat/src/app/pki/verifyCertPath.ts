@@ -122,9 +122,28 @@ import {
 import {
     id_Ed448,
 } from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/id-Ed448.va";
+import {
+    authorityInfoAccess,
+} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/authorityInfoAccess.oa";
+import {
+    id_ad_ocsp,
+} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/id-ad-ocsp.va";
+import {
+    cRLDistributionPoints,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/cRLDistributionPoints.oa";
+import {
+    OCSPResponseStatus_successful,
+} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponseStatus.ta";
+import { URL } from "url";
+import { check } from "@wildboar/ocsp-client";
 
 export const VCP_RETURN_CODE_OK: number = 0;
 export const VCP_RETURN_CODE_INVALID_SIG: number = -65537;
+export const VCP_RETURN_CODE_OCSP_REVOKED: number = -536;
+export const VCP_RETURN_CODE_OCSP_OTHER: number = -540; // Unreachable, Unauthorized, etc.
+export const VCP_RETURN_CODE_CRL_REVOKED: number = -123;
+export const VCP_RETURN_CODE_CRL_UNREACHABLE: number = -456;
+export const VCP_RETURN_CODE_MALFORMED: number = -66;
 
 interface ValidPolicyData {
     // flags
@@ -489,6 +508,35 @@ const sigAlgOidToNodeJSDigest: Map<string, string | null> = new Map([
 //     // [ "", [ "", "" ] ],
 // ]);
 
+export
+async function checkOCSP (ext: Extension, cert: Certificate): Promise<number> {
+    assert(ext.extnId.isEqualTo(authorityInfoAccess["&id"]!));
+    const aiaEl = new DERElement();
+    aiaEl.fromBytes(ext.extnValue);
+    const aiaValue = authorityInfoAccess.decoderFor["&ExtnType"]!(aiaEl);
+    const ocspEndpoints: GeneralName[] = aiaValue
+        .filter((ad) => ad.accessMethod.isEqualTo(id_ad_ocsp))
+        .map((ad) => ad.accessLocation);
+
+    for (const gn of ocspEndpoints) {
+        if (!("uniformResourceIdentifier" in gn)) {
+            continue;
+        }
+        const url = new URL(gn.uniformResourceIdentifier);
+        const { res, singleRes } = await check(url, cert, undefined, 5000);
+        if (res.responseStatus !== OCSPResponseStatus_successful) {
+            return VCP_RETURN_CODE_OCSP_OTHER;
+        }
+        // TODO: If status == sigRequired, sign and re-transmit?
+        if (singleRes) {
+            if ("revoked" in singleRes.certStatus) {
+                return VCP_RETURN_CODE_OCSP_REVOKED;
+            }
+        }
+    }
+    return VCP_RETURN_CODE_OK;
+}
+
 // We check validity time first just because we do not want to verify the
 // digital signature (it is computationally expensive) if we do not have to.
 export
@@ -675,13 +723,13 @@ function isRevokedFromConfiguredCRLs (
 
 // Section 12.5.1
 export
-function verifyBasicPublicKeyCertificateChecks (
+async function verifyBasicPublicKeyCertificateChecks (
     ctx: Context,
     state: VerifyCertPathState,
     subjectCert: Certificate,
     issuerCert: Certificate,
     subjectIndex: number,
-): number {
+): Promise<number> {
     if (!certIsValidTime(subjectCert, state.validityTime)) {
         return -1;
     }
@@ -702,9 +750,6 @@ function verifyBasicPublicKeyCertificateChecks (
     if (isRevokedFromConfiguredCRLs(ctx, subjectCert, state.validityTime)) {
         return -5;
     }
-    // TODO: Check OCSP
-    // TODO: Check remote CRL
-
     const extsGroupedByOID = groupByOID(subjectCert.toBeSigned.extensions ?? [], (ext) => ext.extnId);
     for (const ext of Object.values(extsGroupedByOID)) {
         if (ext.length > 1) {
@@ -879,6 +924,15 @@ function verifyBasicPublicKeyCertificateChecks (
         // IETF RFC 5280, Section 6.1.3.e
         state.valid_policy_tree = null;
     }
+
+    const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
+    if (aiaExt) {
+        const ocspResult = await checkOCSP(aiaExt, subjectCert);
+        if (ocspResult) {
+            return ocspResult;
+        }
+    }
+    // TODO: Check remote CRL
 
     // IETF RFC 5280, Section 6.1.3.d.3
     if (state.valid_policy_tree) {
@@ -1206,13 +1260,13 @@ function processExplicitPolicyIndicator (
 }
 
 export
-function verifyEndEntityCertificate (
+async function verifyEndEntityCertificate (
     ctx: Context,
     state: VerifyCertPathState,
     subjectCert: Certificate,
     issuerCert: Certificate,
-): VerifyCertPathState {
-    const basicChecksResult = verifyBasicPublicKeyCertificateChecks(
+): Promise<VerifyCertPathState> {
+    const basicChecksResult = await verifyBasicPublicKeyCertificateChecks(
         ctx,
         state,
         subjectCert,
@@ -1230,14 +1284,14 @@ function verifyEndEntityCertificate (
 }
 
 export
-function verifyIntermediateCertificate (
+async function verifyIntermediateCertificate (
     ctx: Context,
     state: VerifyCertPathState,
     subjectCert: Certificate,
     issuerCert: Certificate,
     subjectIndex: number,
-): VerifyCertPathState {
-    const basicChecksResult = verifyBasicPublicKeyCertificateChecks(
+): Promise<VerifyCertPathState> {
+    const basicChecksResult = await verifyBasicPublicKeyCertificateChecks(
         ctx,
         state,
         subjectCert,
@@ -1270,12 +1324,12 @@ function verifyIntermediateCertificate (
  * @returns
  */
 export
-function verifyCACertificate (
+async function verifyCACertificate (
     ctx: Context,
     cert: Certificate,
     trustAnchors: TrustAnchorList,
     asOf: Date,
-): number {
+): Promise<number> {
     const trustAnchor = trustAnchors?.find((ta) => {
         if ("certificate" in ta) {
             const tatbs = ta.certificate.toBeSigned;
@@ -1354,12 +1408,35 @@ function verifyCACertificate (
     if (!certIsValidTime(cert, asOf)) {
         return -73;
     }
-
     if (isRevokedFromConfiguredCRLs(ctx, cert, asOf)) {
         return -5;
     }
-    // TODO: Check OCSP?
+
+    const extsGroupedByOID = groupByOID(cert.toBeSigned.extensions ?? [], (ext) => ext.extnId);
+    for (const ext of Object.values(extsGroupedByOID)) {
+        if (ext.length > 1) {
+            return -3; // Duplicate extensions.
+        }
+    }
+
+    const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
+    if (aiaExt) {
+        const ocspResult = await checkOCSP(aiaExt, cert);
+        if (ocspResult) {
+            return ocspResult;
+        }
+    }
+
     // TODO: Check if the trust anchor is in the remote CRL?
+    const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
+    if (crldpExt) {
+        const crlEl = new DERElement();
+        crlEl.fromBytes(crldpExt.extnValue);
+        const crldpValue = cRLDistributionPoints.decoderFor["&ExtnType"]!(crlEl);
+        // crldpValue
+        // NOTE: if the extension is marked as critical, the remote CRL MUST be checked.
+        // It _sounds like_ only one CRL dist point needs to be accessed.
+    }
 
     // We don't check anything else in the trust anchor intentionally.
     return 0;
@@ -1466,9 +1543,12 @@ function finalProcessing (
  * @param ctx
  * @param args
  * @returns
+ *
+ * @async
+ * @function
  */
 export
-function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPathResult {
+async function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): Promise<VerifyCertPathResult> {
     const path = args.certPath;
     const caCert = path[path.length - 1];
 
@@ -1518,7 +1598,7 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
     if (!path.length) {
         return verifyCertPathFail(-1);
     }
-    const caResult = verifyCACertificate(ctx, caCert, args.trustAnchors, args.validityTime);
+    const caResult = await verifyCACertificate(ctx, caCert, args.trustAnchors, args.validityTime);
     if (caResult) {
         return verifyCertPathFail(caResult);
     }
@@ -1526,7 +1606,7 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
     for (let i = path.length - 2; i >= 1; i--) {
         const issuerCert = path[i + 1];
         const subjectCert = path[i];
-        const intermediateResult = verifyIntermediateCertificate(ctx, state, subjectCert, issuerCert, i);
+        const intermediateResult = await verifyIntermediateCertificate(ctx, state, subjectCert, issuerCert, i);
         if (intermediateResult.returnCode) {
             return verifyCertPathFail(intermediateResult.returnCode);
         }
@@ -1545,7 +1625,7 @@ function verifyCertPath (ctx: Context, args: VerifyCertPathArgs): VerifyCertPath
             warnings: [], // FIXME:
         };
     }
-    const endEntityResult = verifyEndEntityCertificate(
+    const endEntityResult = await verifyEndEntityCertificate(
         ctx,
         state,
         endEntityCertificate,

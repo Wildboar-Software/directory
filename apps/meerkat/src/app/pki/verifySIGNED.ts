@@ -53,9 +53,12 @@ import encodeLDAPDN from "../ldap/encodeLDAPDN";
  * @param argOrResult Whether what is being signed is an argument or a result
  * @param ae_title_rdnSequence If applicable, the AE-Title of the application
  *  that signed the `param`.
+ *
+ * @async
+ * @function
  */
 export
-function verifySIGNED <T> (
+async function verifySIGNED <T> (
     ctx: Context,
     assn: ClientAssociation,
     certPath: OPTIONAL<CertificationPath>,
@@ -66,7 +69,7 @@ function verifySIGNED <T> (
     signErrors: boolean,
     argOrResult: "arg" | "result" = "arg",
     ae_title_rdnSequence?: RDNSequence,
-): void {
+): Promise<void> {
     const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
     if (!certPath) {
         throw new MistypedArgumentError(
@@ -92,7 +95,7 @@ function verifySIGNED <T> (
             );
         }
     }
-    const vacpResult = verifyAnyCertPath(ctx, certPath);
+    const vacpResult = await verifyAnyCertPath(ctx, certPath);
     if (vacpResult.returnCode !== VCP_RETURN_CODE_OK) {
         throw new SecurityError(
             ctx.i18n.t("err:cert_path_invalid", {
