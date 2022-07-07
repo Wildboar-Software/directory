@@ -1,4 +1,3 @@
-import type { Context } from "@wildboar/meerkat-types";
 import {
     verifyCertPath,
     VerifyCertPathArgs,
@@ -9,6 +8,7 @@ import type {
 import {
     anyPolicy,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
+import { MeerkatContext } from "../ctx";
 
 /**
  * @description
@@ -24,7 +24,7 @@ import {
  */
 export
 function verifyAnyCertPath (
-    ctx: Context,
+    ctx: MeerkatContext,
     certPath: CertificationPath,
 ): ReturnType<typeof verifyCertPath> {
     /**

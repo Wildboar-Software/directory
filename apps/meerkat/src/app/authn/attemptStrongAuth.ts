@@ -1,10 +1,10 @@
 import {
-    Context,
     DirectoryBindError,
     DSABindError,
     BindReturn,
     MistypedArgumentError,
 } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
@@ -54,7 +54,7 @@ const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
 
 export
 async function attemptStrongAuth (
-    ctx: Context,
+    ctx: MeerkatContext,
     BindErrorClass: (typeof DirectoryBindError) | (typeof DSABindError),
     credentials: StrongCredentials,
     signErrors: boolean,

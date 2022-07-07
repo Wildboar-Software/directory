@@ -86,7 +86,7 @@ import { printInvokeId } from "../utils/printInvokeId";
 export
 async function nrcrProcedure (
     ctx: MeerkatContext,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     state: OperationDispatcherState,
     chainingProhibited: BOOLEAN,
@@ -94,7 +94,7 @@ async function nrcrProcedure (
     signErrors: boolean,
 ): Promise<OPCR | Error_> {
     const op = ("present" in state.invokeId)
-        ? assn.invocations.get(Number(state.invokeId.present))
+        ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -108,7 +108,7 @@ async function nrcrProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -138,13 +138,13 @@ async function nrcrProcedure (
      * exists to distinguish between different generations of an object having
      * the same name.
      */
-    const insufficientAuthForChaining = (
+    const insufficientAuthForChaining = assn && (
         ("basicLevels" in assn.authLevel)
         && (
-            (assn.authLevel.basicLevels.level < ctx.config.chaining.minAuthLevel)
-            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.chaining.minAuthLocalQualifier)
+            (assn?.authLevel.basicLevels.level < ctx.config.chaining.minAuthLevel)
+            || ((assn?.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.chaining.minAuthLocalQualifier)
         )
-    )
+    );
     if (
         ctx.config.chaining.prohibited
         || chainingProhibited
@@ -157,7 +157,7 @@ async function nrcrProcedure (
                 [],
                 createSecurityParameters(
                     ctx,
-                    assn.boundNameAndUID?.dn,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     referral["&errorCode"],
                 ),
@@ -184,7 +184,7 @@ async function nrcrProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -226,7 +226,7 @@ async function nrcrProcedure (
                         [],
                         createSecurityParameters(
                             ctx,
-                            assn.boundNameAndUID?.dn,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -258,10 +258,10 @@ async function nrcrProcedure (
                     return chainedRead.decoderFor["&ResultType"]!(outcome.result);
                 } catch (e) {
                     ctx.log.error(e.message, {
-                        remoteFamily: assn.socket.remoteFamily,
-                        remoteAddress: assn.socket.remoteAddress,
-                        remotePort: assn.socket.remotePort,
-                        association_id: assn.id,
+                        remoteFamily: assn?.socket.remoteFamily,
+                        remoteAddress: assn?.socket.remoteAddress,
+                        remotePort: assn?.socket.remotePort,
+                        association_id: assn?.id,
                         invokeID: printInvokeId(req.invokeId),
                     });
                     continue;
@@ -293,7 +293,7 @@ async function nrcrProcedure (
                                 [],
                                 createSecurityParameters(
                                     ctx,
-                                    assn.boundNameAndUID?.dn,
+                                    assn?.boundNameAndUID?.dn,
                                     undefined,
                                     serviceError["&errorCode"],
                                 ),
@@ -313,7 +313,10 @@ async function nrcrProcedure (
             }
         } // End of NSSR access point loop.
         if (allServiceErrors) {
-            if (partialNameResolution) {
+            // partialNameResolution simply will not be available for
+            // internally-generated requests so that operationEvaluation() does
+            // not have to be re-written to tolerate an undefined association.
+            if (partialNameResolution && assn) {
                 state.partialName = TRUE;
                 state.entrySuitable = TRUE;
                 state.chainingArguments = cloneChainingArguments(state.chainingArguments, {
@@ -342,7 +345,7 @@ async function nrcrProcedure (
                         [],
                         createSecurityParameters(
                             ctx,
-                            assn.boundNameAndUID?.dn,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             nameError["&errorCode"],
                         ),
@@ -362,7 +365,7 @@ async function nrcrProcedure (
             [],
             createSecurityParameters(
                 ctx,
-                assn.boundNameAndUID?.dn,
+                assn?.boundNameAndUID?.dn,
                 undefined,
                 serviceError["&errorCode"],
             ),

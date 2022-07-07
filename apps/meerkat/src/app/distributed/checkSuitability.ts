@@ -116,7 +116,7 @@ async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promis
 export
 async function checkSuitabilityProcedure (
     ctx: Context,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     vertex: Vertex,
     operationType: Code,
     aliasDereferenced: boolean,
@@ -144,7 +144,7 @@ async function checkSuitabilityProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -175,7 +175,7 @@ async function checkSuitabilityProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),

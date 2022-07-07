@@ -1,4 +1,5 @@
-import { Context, ClientAssociation } from "@wildboar/meerkat-types";
+import { ClientAssociation } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import {
     MistypedArgumentError,
     SecurityError,
@@ -33,6 +34,7 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import { RDNSequence } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RDNSequence.ta";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import { INTERNAL_ASSOCIATON_ID } from "../constants";
 
 /**
  * @summary Verify something that is cryptographically signed with X.509 SIGNED{}
@@ -43,7 +45,7 @@ import encodeLDAPDN from "../ldap/encodeLDAPDN";
  * defined in ITU Recommendation X.509 (2019).
  *
  * @param ctx The context object
- * @param assn The client association
+ * @param assn The client association, if there is one.
  * @param certPath The `CertificationPath` of the argument or result
  * @param invokeId The InvokeId of the current operation
  * @param aliasDereferenced A boolean indicating whether an alias has been dereferenced
@@ -59,8 +61,8 @@ import encodeLDAPDN from "../ldap/encodeLDAPDN";
  */
 export
 async function verifySIGNED <T> (
-    ctx: Context,
-    assn: ClientAssociation,
+    ctx: MeerkatContext,
+    assn: ClientAssociation | undefined,
     certPath: OPTIONAL<CertificationPath>,
     invokeId: InvokeId,
     aliasDereferenced: OPTIONAL<BOOLEAN>,
@@ -70,13 +72,15 @@ async function verifySIGNED <T> (
     argOrResult: "arg" | "result" = "arg",
     ae_title_rdnSequence?: RDNSequence,
 ): Promise<void> {
-    const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+    const remoteHostIdentifier = assn
+        ? `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`
+        : "";
     if (!certPath) {
         throw new MistypedArgumentError(
             ctx.i18n.t("err:cert_path_required_signed", {
                 context: argOrResult,
                 host: remoteHostIdentifier,
-                aid: assn.id,
+                aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
                 iid: printInvokeId(invokeId),
                 ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
             }),
@@ -88,7 +92,7 @@ async function verifySIGNED <T> (
                 ctx.i18n.t("err:cert_path_issuedToThisCA", {
                     context: argOrResult,
                     host: remoteHostIdentifier,
-                    aid: assn.id,
+                    aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
                     iid: printInvokeId(invokeId),
                     ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
                 }),
@@ -101,7 +105,7 @@ async function verifySIGNED <T> (
             ctx.i18n.t("err:cert_path_invalid", {
                 context: argOrResult,
                 host: remoteHostIdentifier,
-                aid: assn.id,
+                aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
                 iid: printInvokeId(invokeId),
                 ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
             }),
@@ -112,7 +116,7 @@ async function verifySIGNED <T> (
                 undefined,
                 createSecurityParameters(
                     ctx,
-                    assn.boundNameAndUID?.dn,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
                 ),
@@ -144,7 +148,7 @@ async function verifySIGNED <T> (
             ctx.i18n.t("err:invalid_signature", {
                 context: argOrResult,
                 host: remoteHostIdentifier,
-                aid: assn.id,
+                aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
                 iid: printInvokeId(invokeId),
                 ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
             }),
@@ -155,7 +159,7 @@ async function verifySIGNED <T> (
                 undefined,
                 createSecurityParameters(
                     ctx,
-                    assn.boundNameAndUID?.dn,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
                 ),

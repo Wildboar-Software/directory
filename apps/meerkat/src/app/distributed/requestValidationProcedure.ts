@@ -1,4 +1,5 @@
 import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import { addSeconds } from "date-fns";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
@@ -496,7 +497,7 @@ function createChainingArgumentsFromDUA (
  */
 export
 async function requestValidationProcedure (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     req: Request,
     alreadyChained: boolean,

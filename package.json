@@ -49,6 +49,7 @@
         "applicationinsights": "^2.2.2",
         "applicationinsights-native-metrics": "^0.0.7",
         "asn1-ts": "^7.0.3",
+        "basic-ftp": "^4.6.6",
         "chalk": "^4.1.2",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.13.2",

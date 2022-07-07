@@ -1,3 +1,20 @@
+import type {
+    AuthenticationLevel,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import {
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import {
+    AuthenticationLevel_basicLevels_level_none,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import {
+    ContextAssertion,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import {
+    temporalContext,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/temporalContext.oa";
+import { DER } from "asn1-ts/dist/node/functional";
+
 export const updatesDomain: string = "updates.meerkat.wildboar.software";
 export const telemetryDomain: string = "telemetry.meerkat.wildboar.software";
 export const CONTEXT: string = "CONTEXT";
@@ -21,3 +38,23 @@ export const IP_BL_REASON_NON_EXISTENT_OB: string = "NON_EXISTENT_OB";
 export const IP_BL_REASON_UNREC_LDAP_OP: string = "UNREC_LDAP_OP";
 export const IP_BL_REASON_UNREC_IDM_PDU_TYPE: string = "UNREC_IDM_PDU_TYPE";
 export const IP_BL_REASON_UNREC_OP: string = "UNREC_OP";
+
+export
+const UNTRUSTED_REQ_AUTH_LEVEL: AuthenticationLevel = {
+    basicLevels: new AuthenticationLevel_basicLevels(
+        AuthenticationLevel_basicLevels_level_none,
+        undefined,
+        undefined,
+    ),
+};
+
+export const INTERNAL_ASSOCIATON_ID: string = "INTERNAL";
+
+export const NOW_CONTEXT_ASSERTION = new ContextAssertion(
+    temporalContext["&id"],
+    [
+        temporalContext.encoderFor["&Assertion"]!({
+            now: null,
+        }, DER),
+    ],
+);

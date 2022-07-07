@@ -22,6 +22,9 @@ import {
     _encode_SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import {
+    ReadArgument, _encode_ReadArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+import {
     SearchResult,
     _decode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
@@ -117,6 +120,8 @@ import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { signChainedResult } from "../pki/signChainedResult";
+import { addSeconds } from "date-fns";
+import { randomInt } from "crypto";
 
 export
 type SearchResultOrError = {
@@ -715,16 +720,6 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if (!nrcrResult) {
-                return OperationDispatcher.operationEvaluation(
-                    ctx,
-                    state,
-                    assn,
-                    req,
-                    reqData,
-                    local,
-                );
-            }
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
@@ -981,8 +976,6 @@ class OperationDispatcher {
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,
-        // authLevel: AuthenticationLevel,
-        // uniqueIdentifier?: UniqueIdentifier,
     ): Promise<SearchResultOrError> {
         // Request validation not needed.
         const data = getOptionallyProtectedValue(argument);
@@ -1056,17 +1049,7 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if (!nrcrResult) {
-                return OperationDispatcher.localSearchOperationEvaluation(
-                    ctx,
-                    state,
-                    assn,
-                    invokeId,
-                    argument,
-                    chaining,
-                    signErrors,
-                );
-            } else if ("error" in nrcrResult) {
+            if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
                     nrcrResult.error,
@@ -1092,6 +1075,111 @@ class OperationDispatcher {
             chaining,
             signErrors,
         );
+    }
+
+    /**
+     * @summary Dispatch a local read operation
+     * @description
+     *
+     * This function exists for the DSA to universally find an entry--when
+     * merely searching for a local DSE would be insufficient.
+     *
+     * @param ctx The context object
+     * @param argument The read argument
+     * @param timeLimit The number of seconds the request is permitted to take.
+     *
+     * @public
+     * @static
+     * @function
+     * @async
+     */
+     public static async dispatchLocalReadRequest (
+        ctx: MeerkatContext,
+        argument: ReadArgument,
+    ): ReturnType<typeof doRead> {
+        const invokeId: InvokeId = { // TODO: Refactor.
+            present: randomInt(1, 10_000_000),
+        };
+        // Request validation not needed.
+        const data = getOptionallyProtectedValue(argument);
+        const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+        const encodedArgument = _encode_ReadArgument(argument, BER);
+        const targetObject = data.object.rdnSequence;
+        const timeLimitDate = addSeconds(new Date(), data.serviceControls?.timeLimit
+            ? Number(data.serviceControls.timeLimit)
+            : 5000);
+        // TODO: Log iid, target, timeLimit
+        const chainingResults = emptyChainingResults();
+        const state: OperationDispatcherState = {
+            NRcontinuationList: [],
+            SRcontinuationList: [],
+            admPoints: [],
+            referralRequests: [],
+            emptyHierarchySelect: false,
+            invokeId: invokeId,
+            operationCode: read["&operationCode"]!,
+            operationArgument: encodedArgument, // Why is this needed?
+            chainingArguments: new ChainingArguments(
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                data.object.rdnSequence,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                {
+                    generalizedTime: timeLimitDate,
+                },
+            ),
+            chainingResults,
+            foundDSE: ctx.dit.root,
+            entrySuitable: false,
+            partialName: false,
+            rdnsResolved: 0,
+            aliasesEncounteredById: new Set(),
+        };
+        await findDSE(
+            ctx,
+            undefined,
+            ctx.dit.root,
+            targetObject,
+            state,
+        );
+        if (!state.entrySuitable) {
+            const serviceControlOptions = data.serviceControls?.options;
+            const chainingProhibited = (
+                (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT)
+                || (serviceControlOptions?.[manageDSAITBit] === TRUE_BIT)
+            );
+            const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
+            const nrcrResult = await nrcrProcedure(
+                ctx,
+                undefined,
+                new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                    state.chainingArguments,
+                    encodedArgument,
+                ),
+                state,
+                chainingProhibited,
+                partialNameResolution,
+                signErrors,
+            );
+            if ("error" in nrcrResult) {
+                throw new errors.ChainedError(
+                    ctx.i18n.t("err:chained_error"),
+                    nrcrResult.error,
+                    nrcrResult.errcode,
+                );
+            } else {
+                return {
+                    result: nrcrResult,
+                    stats: {},
+                };
+            }
+        }
+        return doRead(ctx, undefined, state);
     }
 
 }

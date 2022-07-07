@@ -1,4 +1,5 @@
-import { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { ObjectIdentifier, TRUE_BIT, FALSE } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
@@ -161,7 +162,7 @@ const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
  */
 export
 async function list_ii (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
     fromDAP: boolean,

@@ -1,11 +1,11 @@
 import {
-    Context,
     Vertex,
     ClientAssociation,
     WithRequestStatistics,
     WithOutcomeStatistics,
     PagedResultsRequestState,
 } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { ObjectIdentifier, TRUE_BIT, FALSE } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
@@ -173,7 +173,7 @@ interface ListState extends Partial<WithRequestStatistics>, Partial<WithOutcomeS
  */
 export
 async function list_i (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<ListState> {

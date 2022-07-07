@@ -1,4 +1,5 @@
-import { Context, Vertex, ClientAssociation, OperationReturn, Value } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationReturn, Value } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -139,7 +140,7 @@ import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/S
  */
 export
 async function compare (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {

@@ -1,5 +1,6 @@
-import { Context, Vertex, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
 import { ObjectIdentifier, TRUE_BIT, FALSE_BIT, OBJECT_IDENTIFIER, unpackBits } from "asn1-ts";
+import type { MeerkatContext } from "../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_ReadArgument,
@@ -99,7 +100,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
-import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
+import { MINIMUM_MAX_ATTR_SIZE, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import {
     ServiceControlOptions_noSubtypeSelection,
     ServiceControlOptions_dontSelectFriends,
@@ -139,8 +140,8 @@ import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/S
  */
 export
 async function read (
-    ctx: Context,
-    assn: ClientAssociation,
+    ctx: MeerkatContext,
+    assn: ClientAssociation | undefined,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
@@ -169,7 +170,7 @@ async function read (
     }
     // #endregion Signature validation
     const op = ("present" in state.invokeId)
-        ? assn.invocations.get(Number(state.invokeId.present))
+        ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
@@ -202,7 +203,9 @@ async function read (
         accessControlScheme,
         acdfTuples,
         user,
-        state.chainingArguments.authenticationLevel ?? assn.authLevel,
+        state.chainingArguments.authenticationLevel
+            ?? assn?.authLevel
+            ?? UNTRUSTED_REQ_AUTH_LEVEL,
         targetDN,
         isMemberOfGroup,
         NAMING_MATCHER,
@@ -228,7 +231,7 @@ async function read (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -250,7 +253,7 @@ async function read (
                 [],
                 createSecurityParameters(
                     ctx,
-                    assn.boundNameAndUID?.dn,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
                 ),
@@ -378,7 +381,7 @@ async function read (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -412,7 +415,7 @@ async function read (
                 [],
                 createSecurityParameters(
                     ctx,
-                    assn.boundNameAndUID?.dn,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -426,7 +429,8 @@ async function read (
 
     const modifyRights: ModifyRights = [];
     if (
-        data.modifyRightsRequest
+        assn
+        && data.modifyRightsRequest
         // We only return these rights to the user if they are authenticated.
         // TODO: Make this behavior configurable.
         && (("basicLevels" in assn.authLevel) && (assn.authLevel.basicLevels.level > 0))
@@ -494,7 +498,7 @@ async function read (
         [],
         createSecurityParameters(
             ctx,
-            assn.boundNameAndUID?.dn,
+            assn?.boundNameAndUID?.dn,
             id_opcode_read,
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -539,7 +543,7 @@ async function read (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         id_opcode_read,
                     ),
                     undefined,

@@ -1,8 +1,8 @@
 import {
-    Context,
     BindReturn,
     DirectoryBindError,
 } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {
@@ -54,7 +54,7 @@ import { attemptStrongAuth } from "../authn/attemptStrongAuth";
  */
 export
 async function bind (
-    ctx: Context,
+    ctx: MeerkatContext,
     socket: Socket | TLSSocket,
     arg: DirectoryBindArgument,
 ): Promise<BindReturn> {

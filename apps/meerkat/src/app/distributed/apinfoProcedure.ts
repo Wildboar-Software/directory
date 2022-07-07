@@ -100,12 +100,12 @@ async function apinfoProcedure (
     ctx: MeerkatContext,
     api: AccessPointInformation,
     req: ChainedRequest,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     state: OperationDispatcherState,
     signErrors: boolean,
 ): Promise<ResultOrError | null> {
     const op = ("present" in state.invokeId)
-        ? assn.invocations.get(Number(state.invokeId.present))
+        ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
     // Loop avoidance is handled below.
     const serviceControls = req.argument?.set
@@ -156,7 +156,7 @@ async function apinfoProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -277,10 +277,10 @@ async function apinfoProcedure (
                     ctx.log.warn(ctx.i18n.t("log:dsa_returned_no_opcode", {
                         ae: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
                     }), {
-                        remoteFamily: assn.socket.remoteFamily,
-                        remoteAddress: assn.socket.remoteAddress,
-                        remotePort: assn.socket.remotePort,
-                        association_id: assn.id,
+                        remoteFamily: assn?.socket.remoteFamily,
+                        remoteAddress: assn?.socket.remoteAddress,
+                        remotePort: assn?.socket.remotePort,
+                        association_id: assn?.id,
                         invokeID: printInvokeId(state.invokeId),
                     });
                     continue;
@@ -332,10 +332,10 @@ async function apinfoProcedure (
                     ae: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
                     e,
                 }), {
-                    remoteFamily: assn.socket.remoteFamily,
-                    remoteAddress: assn.socket.remoteAddress,
-                    remotePort: assn.socket.remotePort,
-                    association_id: assn.id,
+                    remoteFamily: assn?.socket.remoteFamily,
+                    remoteAddress: assn?.socket.remoteAddress,
+                    remotePort: assn?.socket.remotePort,
+                    association_id: assn?.id,
                     invokeID: printInvokeId(state.invokeId),
                 });
             }

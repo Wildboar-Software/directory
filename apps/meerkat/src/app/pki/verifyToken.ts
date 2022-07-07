@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { DERElement, packBits } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type {
@@ -38,7 +38,7 @@ export const VT_RETURN_CODE_MALFORMED: number = 3;
  */
 export
 async function verifyToken (
-    ctx: Context,
+    ctx: MeerkatContext,
     certPath: CertificationPath,
     token: Token,
 ): Promise<number> {
