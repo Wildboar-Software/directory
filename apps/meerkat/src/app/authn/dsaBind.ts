@@ -1,7 +1,4 @@
-import {
-    DSABindError,
-    BindReturn,
-} from "@wildboar/meerkat-types";
+import { DSABindError, BindReturn } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";

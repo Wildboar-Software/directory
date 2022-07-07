@@ -80,8 +80,13 @@ import * as ftp from "basic-ftp";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
+import { differenceInSeconds } from "date-fns";
 
 const MAX_LDAP_RESPONSE_SIZE: number = 100_000;
+const CRL_CACHE_TTL_SECONDS: number = 3600;
+const CACHE_SIZE_LIMIT: number = 1000;
+
+const crlCache: Map<string, [ Date, CertificateList[] ]> = new Map();
 
 export type ReadDispatcherFunction = (readArg: ReadArgument) => Promise<ReadResult>;
 
@@ -380,22 +385,59 @@ async function crlCurl (
                 readDispatcher,
             );
         } else if ("uniformResourceIdentifier" in generalName) {
+            /**
+             * NOTE: You MUST NOT lowercase the URL, because there are some LDAP
+             * attributes that are case-sensitive that may appear in LDAP DNs.
+             *
+             * The only normalization that can be done is to trim it, and maybe
+             * lowercase the protocol.
+             */
+            const urlStr: string = generalName.uniformResourceIdentifier.trim();
+            const cachedResult = crlCache.get(urlStr);
+            const now = new Date();
+            if (
+                cachedResult
+                && (Math.abs(differenceInSeconds(cachedResult[0], now)) <= CRL_CACHE_TTL_SECONDS)
+            ) { // If there is a cached result and the result is not expired.
+                return cachedResult[1];
+            }
             try {
-                const url: URL = new URL(generalName.uniformResourceIdentifier);
+                const url: URL = new URL(urlStr);
                 switch (url.protocol.toLowerCase()) {
                     case ("http:"):
                     case ("https:"): {
                         const res = await crlCurlHTTP(url);
-                        return res ? [ res ] : res;
+                        const ret = res ? [ res ] : res;
+                        if (ret) {
+                            if (crlCache.size > CACHE_SIZE_LIMIT) {
+                                crlCache.clear();
+                            }
+                            crlCache.set(urlStr, [ new Date(), ret ]);
+                        }
+                        return ret;
                     }
                     case ("ftp:"):
                     case ("ftps:"): {
                         const res = await crlCurlFTP(url);
-                        return res ? [ res ] : res;
+                        const ret = res ? [ res ] : res;
+                        if (ret) {
+                            if (crlCache.size > CACHE_SIZE_LIMIT) {
+                                crlCache.clear();
+                            }
+                            crlCache.set(urlStr, [ new Date(), ret ]);
+                        }
+                        return ret;
                     }
                     case ("ldap:"):
                     case ("ldaps:"): {
-                        return crlCurlLDAP(url);
+                        const ret = await crlCurlLDAP(url);
+                        if (ret) {
+                            if (crlCache.size > CACHE_SIZE_LIMIT) {
+                                crlCache.clear();
+                            }
+                            crlCache.set(urlStr, [ new Date(), ret ]);
+                        }
+                        return ret;
                     }
                     default: {
                         continue;
