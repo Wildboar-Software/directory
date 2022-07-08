@@ -22,6 +22,7 @@ const signedAltTagNumberByOpCode: Map<number, number> = new Map([
     [ 13, 0 ], // linkedLDAP
 ]);
 
+// TODO: Unit testing
 export
 function isArgumentSigned (
     opCode: Code,

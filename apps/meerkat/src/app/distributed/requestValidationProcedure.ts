@@ -83,6 +83,7 @@ import { isArgumentSigned } from "../x500/isArgumentSigned";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
+// TODO: Unit testing
 /**
  * @summary Determine whether error signing was requested without decoding the
  *  entire argument.
