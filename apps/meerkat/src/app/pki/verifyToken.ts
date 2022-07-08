@@ -5,7 +5,7 @@ import type {
     CertificationPath,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
 import { verifyAnyCertPath } from "./verifyAnyCertPath";
-import { verifySignature, VCP_RETURN_CODE_OK } from "./verifyCertPath";
+import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath";
 import {
     Token,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
@@ -48,7 +48,7 @@ async function verifyToken (
         }
     }
     const vacpResult = await verifyAnyCertPath(ctx, certPath);
-    if (vacpResult.returnCode !== VCP_RETURN_CODE_OK) {
+    if (vacpResult.returnCode !== VCP_RETURN_OK) {
         return VT_RETURN_CODE_UNTRUSTED;
     }
     const signedData = token.originalDER

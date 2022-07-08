@@ -1,8 +1,8 @@
 import * as fsync from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
-import type { Context } from "@wildboar/meerkat-types";
-import { DERElement, ObjectIdentifier } from "asn1-ts";
+import type { MeerkatContext } from "../../../../ctx";
+import { DERElement, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import {
     Certificate,
     _decode_Certificate,
@@ -82,7 +82,7 @@ async function loadCert (certName: string): Promise<Certificate> {
     return _decode_Certificate(el);
 }
 
-const ctx: Context = {
+const ctx: MeerkatContext = {
     attributeTypes: {
         get: (key: string) => {
             return {
@@ -110,7 +110,7 @@ const ctx: Context = {
             // trustAnchorList: [],
         },
     },
-} as Context;
+} as MeerkatContext;
 
 function create_nist_pkits_test (
     certPathFiles: string[],
@@ -166,6 +166,8 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
                 ),
             ],
             warnings: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
         };
         return expect(result).toEqual(expectedResult);
     });
@@ -190,6 +192,8 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
                     undefined,
                 ),
             ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
         },
     ));
 });

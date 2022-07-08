@@ -5,15 +5,20 @@ import {
     _encode_SubjectPublicKeyInfo,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
 import { Extension } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extension.ta";
-import { DERElement, packBits, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import {
+    DERElement,
+    packBits,
+    OBJECT_IDENTIFIER,
+    ObjectIdentifier,
+    TRUE_BIT,
+    GeneralizedTime,
+    BOOLEAN,
+} from "asn1-ts";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { DER } from "asn1-ts/dist/node/functional";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import { createVerify, createPublicKey } from "crypto";
-import { subjectAltPublicKeyInfo } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltPublicKeyInfo.oa";
-import { altSignatureAlgorithm } from "@wildboar/x500/src/lib/modules/CertificateExtensions/altSignatureAlgorithm.oa";
-import { altSignatureValue } from "@wildboar/x500/src/lib/modules/CertificateExtensions/altSignatureValue.oa";
 import {
     AlgorithmIdentifier, _encode_AlgorithmIdentifier,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta"
@@ -42,24 +47,6 @@ import {
 import type {
     PolicyMappingsSyntax_Item,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyMappingsSyntax-Item.ta";
-import {
-    basicConstraints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/basicConstraints.oa";
-import {
-    certificatePolicies,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/certificatePolicies.oa";
-import {
-    subjectAltName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
-import {
-    nameConstraints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/nameConstraints.oa";
-import {
-    inhibitAnyPolicy,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/inhibitAnyPolicy.oa";
-import {
-    policyConstraints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/policyConstraints.oa";
 import type {
     GeneralName,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
@@ -71,7 +58,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyQualifierInfo.ta";
 import dnWithinGeneralSubtree from "@wildboar/x500/src/lib/utils/dnWithinGeneralSubtree";
 import groupByOID from "../utils/groupByOID";
-import { policyMappings } from "@wildboar/x500/src/lib/modules/CertificateExtensions/policyMappings.oa";
 import { strict as assert } from "assert";
 import generalNameToString from "@wildboar/x500/src/lib/stringifiers/generalNameToString";
 import type {
@@ -129,9 +115,6 @@ import {
     id_ad_ocsp,
 } from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/id-ad-ocsp.va";
 import {
-    cRLDistributionPoints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/cRLDistributionPoints.oa";
-import {
     OCSPResponseStatus_successful,
 } from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponseStatus.ta";
 import { URL } from "url";
@@ -149,20 +132,123 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import {
     CertificateList, _encode_CertificateList,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+import {
+    KeyUsage,
+    KeyUsage_keyCertSign,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta";
+import type {
+    KeyPurposeId,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyPurposeId.ta";
+import { subjectDirectoryAttributes } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectDirectoryAttributes.oa";
+import { subjectKeyIdentifier } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectKeyIdentifier.oa";
+import {
+    keyUsage,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/keyUsage.oa";
+import {
+    privateKeyUsagePeriod,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/privateKeyUsagePeriod.oa";
+import {
+    subjectAltName,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
+import {
+    issuerAltName,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/issuerAltName.oa";
+import {
+    basicConstraints,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/basicConstraints.oa";
+import {
+    nameConstraints,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/nameConstraints.oa";
+import {
+    cRLDistributionPoints,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/cRLDistributionPoints.oa";
+import {
+    certificatePolicies,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/certificatePolicies.oa";
+import {
+    policyMappings,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/policyMappings.oa";
+import {
+    authorityKeyIdentifier,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/authorityKeyIdentifier.oa";
+import {
+    policyConstraints,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/policyConstraints.oa";
+import {
+    extKeyUsage,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/extKeyUsage.oa";
+import {
+    inhibitAnyPolicy,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/inhibitAnyPolicy.oa";
+import {
+    subjectAltPublicKeyInfo,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltPublicKeyInfo.oa";
+import {
+    altSignatureAlgorithm,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/altSignatureAlgorithm.oa";
+import {
+    altSignatureValue,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/altSignatureValue.oa";
+import {
+    associatedInformation,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/associatedInformation.oa";
+import {
+    authorizationValidation,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/authorizationValidation.oa";
 
-export const VCP_RETURN_CODE_OK: number = 0;
-export const VCP_RETURN_CODE_INVALID_SIG: number = -65537;
-export const VCP_RETURN_CODE_OCSP_REVOKED: number = -536;
-export const VCP_RETURN_CODE_OCSP_OTHER: number = -540; // Unreachable, Unauthorized, etc.
-export const VCP_RETURN_CODE_CRL_REVOKED: number = -123;
-export const VCP_RETURN_CODE_CRL_UNREACHABLE: number = -456;
-export const VCP_RETURN_CODE_MALFORMED: number = -66;
-export const VCP_RETURN_BAD_KEY_USAGE: number = -77;
-export const VCP_RETURN_BAD_EXT_KEY_USAGE: number = -88;
-export const VCP_RETURN_UNKNOWN_CRIT_EXT: number = -99;
-export const VCP_RETURN_AKI_SKI_MISMATCH: number = -101;
-export const VCP_RETURN_PKU_PERIOD: number = -150;
-export const VCP_RETURN_BASIC_CONSTRAINTS: number = -8;
+export const VCP_RETURN_OK: number = 0;
+export const VCP_RETURN_INVALID_SIG: number = -1;
+export const VCP_RETURN_OCSP_REVOKED: number = -2;
+export const VCP_RETURN_OCSP_OTHER: number = -3; // Unreachable, Unauthorized, etc.
+export const VCP_RETURN_CRL_REVOKED: number = -4;
+export const VCP_RETURN_CRL_UNREACHABLE: number = -5;
+export const VCP_RETURN_MALFORMED: number = -6;
+export const VCP_RETURN_BAD_KEY_USAGE: number = -7;
+export const VCP_RETURN_BAD_EXT_KEY_USAGE: number = -8;
+export const VCP_RETURN_UNKNOWN_CRIT_EXT: number = -9;
+export const VCP_RETURN_DUPLICATE_EXT: number = -10;
+export const VCP_RETURN_AKI_SKI_MISMATCH: number = -11;
+export const VCP_RETURN_PKU_PERIOD: number = -12;
+export const VCP_RETURN_BASIC_CONSTRAINTS_CA: number = -13;
+export const VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN: number = -14;
+export const VCP_RETURN_INVALID_EXT_CRIT: number = -15;
+export const VCP_RETURN_UNTRUSTED_ANCHOR: number = -16;
+export const VCP_RETURN_INVALID_TIME: number = -17;
+export const VCP_RETURN_ISSUER_SUBJECT_MISMATCH: number = -18;
+export const VCP_RETURN_NAME_NOT_PERMITTED: number = -19;
+export const VCP_RETURN_NAME_EXCLUDED: number = -20;
+
+export
+const supportedExtensions: Set<IndexableOID> = new Set([
+    subjectDirectoryAttributes["&id"]!.toString(), // TODO: If critical, at least one attr must be understood.
+    subjectKeyIdentifier["&id"]!.toString(), // Always non-critical.
+    keyUsage["&id"]!.toString(), // If NOT critical, don't set this on the state, because it is not enforced.
+    privateKeyUsagePeriod["&id"]!.toString(), // Always non-critical.
+    subjectAltName["&id"]!.toString(), // TODO: If critical, one of the name forms must be recognized.
+    issuerAltName["&id"]!.toString(), // TODO: If critical, one of the name forms must be recognized.
+    basicConstraints["&id"]!.toString(), // Always critical in a CA.
+    nameConstraints["&id"]!.toString(), // Not checked if not critical.
+    cRLDistributionPoints["&id"]!.toString(), // MUST be checked if critical.
+    certificatePolicies["&id"]!.toString(), // TODO: If not critical, cert policy constraints can be "disobeyed".
+    policyMappings["&id"]!.toString(), // No meaning imputed to critical/non-critical.
+    authorityKeyIdentifier["&id"]!.toString(), // Always non-critical.
+    policyConstraints["&id"]!.toString(), // No meaning imputed to critical/non-critical.
+    extKeyUsage["&id"]!.toString(), // If NOT critical, don't set this on the state, because it is not enforced.
+    inhibitAnyPolicy["&id"]!.toString(), // No meaning imputed to critical/non-critical.
+    subjectAltPublicKeyInfo["&id"]!.toString(), // No meaning imputed to critical/non-critical.
+    altSignatureAlgorithm["&id"]!.toString(), // No meaning imputed to critical/non-critical.
+    altSignatureValue["&id"]!.toString(), // No meaning imputed to critical/non-critical.
+    associatedInformation["&id"]!.toString(), // TODO: If critical, at least one attr must be understood.
+    authorizationValidation["&id"]!.toString(), // Always critical
+]);
+
+export
+const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
+    [ subjectKeyIdentifier["&id"]!.toString(), false ], // Always non-critical.
+    [ privateKeyUsagePeriod["&id"]!.toString(), false ], // Always non-critical.
+    [ authorityKeyIdentifier["&id"]!.toString(), false ], // Always non-critical.
+    [ authorizationValidation["&id"]!.toString(), true ], // Always critical.
+]);
 
 interface ValidPolicyData {
     // flags
@@ -341,6 +427,8 @@ function verifyCertPathFail (returnCode: number): VerifyCertPathResult {
         policy_mappings_that_occurred: [],
         user_constrained_policies: [],
         warnings: [],
+        endEntityKeyUsage: new Uint8ClampedArray(),
+        endEntityExtKeyUsage: [],
     };
 }
 
@@ -386,6 +474,16 @@ interface VerifyCertPathResult {
      * @readonly
      */
     readonly warnings: number[];
+
+    /**
+     * @readonly
+     */
+    readonly endEntityKeyUsage?: KeyUsage;
+
+    /**
+     * @readonly
+     */
+    readonly endEntityExtKeyUsage?: KeyPurposeId[];
 }
 
 export
@@ -477,6 +575,14 @@ interface VerifyCertPathState {
 
     };
 
+    endEntityKeyUsage?: KeyUsage;
+
+    endEntityExtKeyUsage?: KeyPurposeId[];
+
+    endEntityPrivateKeyNotBefore?: GeneralizedTime;
+
+    endEntityPrivateKeyNotAfter?: GeneralizedTime;
+
 }
 
 const sigAlgOidToNodeJSDigest: Map<string, string | null> = new Map([
@@ -555,16 +661,16 @@ async function checkOCSP (ext: Extension, cert: Certificate): Promise<number> {
         const url = new URL(gn.uniformResourceIdentifier);
         const { res, singleRes } = await check(url, cert, undefined, 5000);
         if (res.responseStatus !== OCSPResponseStatus_successful) {
-            return VCP_RETURN_CODE_OCSP_OTHER;
+            return VCP_RETURN_OCSP_OTHER;
         }
         // TODO: If status == sigRequired, sign and re-transmit?
         if (singleRes) {
             if ("revoked" in singleRes.certStatus) {
-                return VCP_RETURN_CODE_OCSP_REVOKED;
+                return VCP_RETURN_OCSP_REVOKED;
             }
         }
     }
-    return VCP_RETURN_CODE_OK;
+    return VCP_RETURN_OK;
 }
 
 export
@@ -604,10 +710,10 @@ async function checkRemoteCRLs (
                 // If sig invalid, skip to next CRL entirely.
                 break;
             }
-            return VCP_RETURN_CODE_CRL_REVOKED;
+            return VCP_RETURN_CRL_REVOKED;
         }
     }
-    return VCP_RETURN_CODE_OK;
+    return VCP_RETURN_OK;
 }
 
 // We check validity time first just because we do not want to verify the
@@ -805,7 +911,7 @@ async function verifyBasicPublicKeyCertificateChecks (
     readDispatcher: ReadDispatcherFunction,
 ): Promise<number> {
     if (!certIsValidTime(subjectCert, state.validityTime)) {
-        return -1;
+        return VCP_RETURN_INVALID_TIME;
     }
     const namingMatcher = getNamingMatcherGetter(ctx);
     const namesMatch = compareDistinguishedName(
@@ -814,38 +920,90 @@ async function verifyBasicPublicKeyCertificateChecks (
         namingMatcher,
     );
     if (!namesMatch) {
-        return -1;
+        return VCP_RETURN_ISSUER_SUBJECT_MISMATCH;
     }
     const signatureIsValid: boolean | undefined = verifyAltSignature(subjectCert, issuerCert)
         ?? verifyNativeSignature(subjectCert, issuerCert);
     if (!signatureIsValid) {
-        return VCP_RETURN_CODE_INVALID_SIG;
+        return VCP_RETURN_INVALID_SIG;
     }
     if (isRevokedFromConfiguredCRLs(ctx, subjectCert, state.validityTime)) {
-        return -5;
+        return VCP_RETURN_CRL_REVOKED;
     }
     const extsGroupedByOID = groupByOID(subjectCert.toBeSigned.extensions ?? [], (ext) => ext.extnId);
-    for (const ext of Object.values(extsGroupedByOID)) {
-        if (ext.length > 1) {
-            return -3; // Duplicate extensions.
+    for (const [ extId, exts ] of Object.entries(extsGroupedByOID)) {
+        if (exts.length > 1) {
+            return VCP_RETURN_DUPLICATE_EXT;
+        }
+        const ext = exts[0];
+        if (ext.critical && !supportedExtensions.has(extId)) {
+            return VCP_RETURN_UNKNOWN_CRIT_EXT;
+        }
+        const criticalityMandate = extensionMandatoryCriticality.get(extId);
+        if (
+            (criticalityMandate !== undefined)
+            && (criticalityMandate !== ext.critical)
+        ) {
+            return VCP_RETURN_INVALID_EXT_CRIT;
         }
     }
 
-    const basicConstraintsExt: Extension | undefined = extsGroupedByOID[basicConstraints["&id"]!.toString()]?.[0];
-    const certificatePoliciesExt: Extension | undefined = extsGroupedByOID[certificatePolicies["&id"]!.toString()]?.[0];
-    const subjectAltNamesExt: Extension | undefined = extsGroupedByOID[subjectAltName["&id"]!.toString()]?.[0];
+
+    const basicConstraintsExt: Extension | undefined
+        = extsGroupedByOID[basicConstraints["&id"]!.toString()]?.[0];
+    const certificatePoliciesExt: Extension | undefined
+        = extsGroupedByOID[certificatePolicies["&id"]!.toString()]?.[0];
+    const subjectAltNamesExt: Extension | undefined
+        = extsGroupedByOID[subjectAltName["&id"]!.toString()]?.[0];
+    const authorityKeyIdentifierExt: Extension | undefined
+        = extsGroupedByOID[authorityKeyIdentifier["&id"]!.toString()]?.[0];
+    const keyUsageExt: Extension | undefined
+        = extsGroupedByOID[keyUsage["&id"]!.toString()]?.[0];
+    const extKeyUsageExt: Extension | undefined
+        = extsGroupedByOID[extKeyUsage["&id"]!.toString()]?.[0];
+    const privateKeyUsagePeriodExt: Extension | undefined
+        = extsGroupedByOID[privateKeyUsagePeriod["&id"]!.toString()]?.[0];
+
+    const authoritySKIExt = issuerCert.toBeSigned.extensions
+        ?.find((ext) => ext.extnId.isEqualTo(subjectKeyIdentifier["&id"]!));
+    if (authorityKeyIdentifierExt && authoritySKIExt) {
+        const issuerKI = subjectKeyIdentifier
+            .decoderFor["&ExtnType"]!(authoritySKIExt.valueElement());
+        const authorityKI = authorityKeyIdentifier
+            .decoderFor["&ExtnType"]!(authorityKeyIdentifierExt.valueElement());
+
+        if (
+            ( // If the keyIdentifier does not match
+                authorityKI.keyIdentifier
+                && Buffer.compare(authorityKI.keyIdentifier, issuerKI)
+            )
+            || ( // ...or the serial number does not match
+                authorityKI.authorityCertSerialNumber
+                && Buffer.compare(
+                    authorityKI.authorityCertSerialNumber,
+                    issuerCert.toBeSigned.serialNumber,
+                )
+            )
+        ) {
+            return VCP_RETURN_AKI_SKI_MISMATCH;
+        }
+    }
 
     // Step 12.5.1.b
     const intermediate: boolean = ((subjectIndex > 0) && (subjectIndex < (state.certPath.length - 1)));
     if (intermediate && basicConstraintsExt) {
+        if (!basicConstraintsExt.critical) {
+            // BasicConstraints must always be critical for a CA.
+            return VCP_RETURN_INVALID_EXT_CRIT;
+        }
         const bc = basicConstraints.decoderFor["&ExtnType"]!(basicConstraintsExt.valueElement());
         if (!bc.cA) {
-            return -1; // Not permitted to be a CA.
+            return VCP_RETURN_BASIC_CONSTRAINTS_CA; // Not permitted to be a CA.
         }
         if (bc.pathLenConstraint !== undefined) {
             const pathLenUsed = subjectIndex - 1;
             if (pathLenUsed > bc.pathLenConstraint) {
-                return -1; // Exceeded PLC.
+                return VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN; // Exceeded PLC.
             }
         }
     }
@@ -999,6 +1157,52 @@ async function verifyBasicPublicKeyCertificateChecks (
         state.valid_policy_tree = null;
     }
 
+    if (keyUsageExt && keyUsageExt.critical) {
+        const ku = keyUsage.decoderFor["&ExtnType"]!(keyUsageExt.valueElement());
+        /**
+         * NOTE: The end-entity key usage is not checked in this function, but
+         * rather, returned in the result object so that the caller can use the
+         * key usages correctly. CA certificates must have `keyCertSign` usage.
+         */
+        if (intermediate && (ku[KeyUsage_keyCertSign] !== TRUE_BIT)) {
+            return VCP_RETURN_BAD_KEY_USAGE;
+        }
+        if (!intermediate) {
+            state.endEntityKeyUsage = ku;
+        }
+    }
+
+    /**
+     * From [IETF RFC 5280, Section 4.2.1.12](https://datatracker.ietf.org/doc/html/rfc5280.html#section-4.2.1.12):
+     *
+     * > If a certificate contains both a key usage extension and an extended
+     * > key usage extension, then both extensions MUST be processed
+     * > independently and the certificate MUST only be used for a purpose
+     * > consistent with both extensions. If there is no purpose consistent with
+     * > both extensions, then the certificate MUST NOT be used for any purpose.
+     *
+     * However, there is no defined EKU OID that corresponds to general-purpose
+     * data signatures, so this section is commented out.
+     */
+    if (extKeyUsageExt && extKeyUsageExt.critical) {
+        const eku = extKeyUsage
+            .decoderFor["&ExtnType"]!(extKeyUsageExt.valueElement());
+        if (!intermediate) {
+            state.endEntityExtKeyUsage = eku;
+        }
+    }
+
+    /**
+     * This extension is only checked if the cert path is used to verify a
+     * recently-generated signature.
+     */
+    if (!intermediate && privateKeyUsagePeriodExt) {
+        const pkup = privateKeyUsagePeriod
+            .decoderFor["&ExtnType"]!(privateKeyUsagePeriodExt.valueElement());
+        state.endEntityPrivateKeyNotBefore = pkup.notBefore;
+        state.endEntityPrivateKeyNotAfter = pkup.notAfter;
+    }
+
     const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
     if (aiaExt) {
         const ocspResult = await checkOCSP(aiaExt, subjectCert);
@@ -1009,7 +1213,7 @@ async function verifyBasicPublicKeyCertificateChecks (
 
     // NOTE: if the extension is marked as critical, the remote CRL MUST be checked.
     const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
-    if (crldpExt) {
+    if (crldpExt && crldpExt.critical) { // TODO: Make config options: ignore_critical or always_check.
         const crlResult = await checkRemoteCRLs(
             crldpExt,
             subjectCert,
@@ -1066,12 +1270,12 @@ async function verifyBasicPublicKeyCertificateChecks (
             const permittedBySubtrees: boolean = state.permitted_subtrees
                 .some((subtree) => dnWithinGeneralSubtree(name, subtree, namingMatcher));
             if (state.permitted_subtrees.length && !permittedBySubtrees) {
-                return -4; // Not permitted name.
+                return VCP_RETURN_NAME_NOT_PERMITTED; // Not permitted name.
             }
             const excludedBySubtree: boolean = state.excluded_subtrees
                 .some((subtree) => dnWithinGeneralSubtree(name, subtree, namingMatcher));
             if (excludedBySubtree) {
-                return -5; // Explicitly excluded name.
+                return VCP_RETURN_NAME_EXCLUDED; // Explicitly excluded name.
             }
         }
 
@@ -1079,7 +1283,7 @@ async function verifyBasicPublicKeyCertificateChecks (
         // It is not clear to me how to use the name forms.
     }
 
-    return 0;
+    return VCP_RETURN_OK;
 }
 
 // Section 12.5.2
@@ -1094,7 +1298,7 @@ function processIntermediateCertificates (
         if (ext.length > 1) {
             return {
                 ...state,
-                returnCode: -1,
+                returnCode: VCP_RETURN_DUPLICATE_EXT,
             };
         }
     }
@@ -1134,14 +1338,14 @@ function processIntermediateCertificates (
         if (pm.length < 1) {
             return {
                 ...state,
-                returnCode: -1,
+                returnCode: VCP_RETURN_MALFORMED,
             };
         }
         // IETF RFC 5280, Section 6.1.4.a
         if (pm.some((p) => p.issuerDomainPolicy.isEqualTo(anyPolicy) || p.subjectDomainPolicy.isEqualTo(anyPolicy))) {
             return {
                 ...state,
-                returnCode: -1,
+                returnCode: VCP_RETURN_MALFORMED,
             };
         }
 
@@ -1218,7 +1422,7 @@ function processIntermediateCertificates (
         }
     }
 
-    if (nameConstraintsExt) {
+    if (nameConstraintsExt && nameConstraintsExt.critical) {
         const names = nameConstraints.decoderFor["&ExtnType"]!(nameConstraintsExt.valueElement());
 
         // Section 12.5.2.1
@@ -1307,7 +1511,7 @@ function processExplicitPolicyIndicator (
         state.pending_constraints.explicit_policy.pending
         && !selfIssuedIntermediate
     ) {
-        const newSkipCerts = Math.max(0, state.pending_constraints.explicit_policy.skipCertificates - 1)
+        const newSkipCerts = Math.max(0, state.pending_constraints.explicit_policy.skipCertificates - 1);
         state.pending_constraints.explicit_policy = {
             pending: (newSkipCerts > 0),
             skipCertificates: newSkipCerts,
@@ -1338,7 +1542,7 @@ function processExplicitPolicyIndicator (
         } else {
             return {
                 ...state,
-                returnCode: -1, // SkipCerts cannot be negative. Invalid cert.
+                returnCode: VCP_RETURN_MALFORMED, // SkipCerts cannot be negative. Invalid cert.
             };
         }
         // TODO: Bullet #3
@@ -1495,19 +1699,30 @@ async function verifyCACertificate (
         }
     });
     if (!trustAnchor) {
-        return -10; // not trusted
+        return VCP_RETURN_UNTRUSTED_ANCHOR; // not trusted
     }
     if (!certIsValidTime(cert, asOf)) {
-        return -73;
+        return VCP_RETURN_INVALID_TIME;
     }
     if (isRevokedFromConfiguredCRLs(ctx, cert, asOf)) {
-        return -5;
+        return VCP_RETURN_CRL_REVOKED;
     }
 
     const extsGroupedByOID = groupByOID(cert.toBeSigned.extensions ?? [], (ext) => ext.extnId);
-    for (const ext of Object.values(extsGroupedByOID)) {
-        if (ext.length > 1) {
-            return -3; // Duplicate extensions.
+    for (const [ extId, exts ] of Object.entries(extsGroupedByOID)) {
+        if (exts.length > 1) {
+            return VCP_RETURN_DUPLICATE_EXT;
+        }
+        const ext = exts[0];
+        if (exts[0].critical && !supportedExtensions.has(extId)) {
+            return VCP_RETURN_UNKNOWN_CRIT_EXT;
+        }
+        const criticalityMandate = extensionMandatoryCriticality.get(extId);
+        if (
+            (criticalityMandate !== undefined)
+            && (criticalityMandate !== ext.critical)
+        ) {
+            return VCP_RETURN_INVALID_EXT_CRIT;
         }
     }
 
@@ -1521,7 +1736,7 @@ async function verifyCACertificate (
 
     // NOTE: if the extension is marked as critical, the remote CRL MUST be checked.
     const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
-    if (crldpExt) {
+    if (crldpExt && crldpExt.critical) { // TODO: Make config options: ignore_critical or always_check.
         const crlResult = await checkRemoteCRLs(
             crldpExt,
             cert,
@@ -1625,6 +1840,8 @@ function finalProcessing (
         policy_mappings_that_occurred: [], // FIXME:
         user_constrained_policies,
         warnings: [],
+        endEntityKeyUsage: state.endEntityKeyUsage,
+        endEntityExtKeyUsage: state.endEntityExtKeyUsage,
     };
 }
 
@@ -1735,6 +1952,8 @@ async function verifyCertPath (
             policy_mappings_that_occurred: [], // FIXME:
             user_constrained_policies: [], // FIXME:
             warnings: [], // FIXME:
+            endEntityKeyUsage: new Uint8ClampedArray(),
+            endEntityExtKeyUsage: [],
         };
     }
     const endEntityResult = await verifyEndEntityCertificate(

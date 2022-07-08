@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { verifyCertPath, VerifyCertPathArgs } from "./verifyCertPath";
 import {
     Certificate,
@@ -13,7 +13,7 @@ import {
     caseIgnoreMatch,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreMatch.oa";
 
-const ctx: Context = {
+const ctx: MeerkatContext = {
     attributeTypes: {
         get: (key: string) => {
             return {
@@ -42,7 +42,7 @@ const ctx: Context = {
         },
     },
     // TODO:
-} as Context;
+} as MeerkatContext;
 
 const trustAnchorPEM: string = `-----BEGIN CERTIFICATE-----
 MIIDbTCCAlWgAwIBAgIULVexlqqnsQ1/ezE1u8+lQW3iC/8wDQYJKoZIhvcNAQEL
@@ -153,7 +153,7 @@ describe("verifyCertPath()", () => {
             certPath: validCertPath,
             trustAnchors: trustAnchorList,
             initial_excluded_subtrees_set: [],
-            initial_explicit_policy: true,
+            initial_explicit_policy: false,
             initial_inhibit_any_policy: true,
             initial_permitted_subtrees_set: [],
             initial_policy_mapping_inhibit: true,

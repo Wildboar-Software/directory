@@ -23,7 +23,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import { printInvokeId } from "../utils/printInvokeId";
 import { verifyAnyCertPath } from "./verifyAnyCertPath";
-import { verifySignature, VCP_RETURN_CODE_OK } from "./verifyCertPath";
+import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath";
 import type {
     SIGNED,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
@@ -100,7 +100,7 @@ async function verifySIGNED <T> (
         }
     }
     const vacpResult = await verifyAnyCertPath(ctx, certPath);
-    if (vacpResult.returnCode !== VCP_RETURN_CODE_OK) {
+    if (vacpResult.returnCode !== VCP_RETURN_OK) {
         throw new SecurityError(
             ctx.i18n.t("err:cert_path_invalid", {
                 context: argOrResult,
