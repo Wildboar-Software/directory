@@ -35,10 +35,10 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-// import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
-// import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
+import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-// import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
@@ -48,7 +48,7 @@ import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSer
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
-import { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import { AuthenticationLevel, AuthenticationLevel_basicLevels } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import { DomainInfo } from "@wildboar/x500/src/lib/modules/DistributedOperations/DomainInfo.ta";
 import { Exclusions } from "@wildboar/x500/src/lib/modules/DistributedOperations/Exclusions.ta";
@@ -161,16 +161,30 @@ function createChainingArgumentsFromDUA (
     let excludeWriteableCopies: OPTIONAL<BOOLEAN>;
 
     /**
+     * Whether the request was signed or not really needs to be determined here,
+     * because it influences the authentication level used for making access
+     * control decisions in the Find DSE operation and other non-operation
+     * evaluation procedures.
+     */
+    let signed: boolean = false;
+
+    /**
      * Abandon procedures are supposed to start here, but we do them within the
      * connection classes instead.
      */
-    // if (compareCode(operationCode, abandon["&operationCode"]!)) {
-    // }
-    // else if (compareCode(operationCode, administerPassword["&operationCode"]!)) {
-    // }
-    // else
-    if (compareCode(operationCode, addEntry["&operationCode"]!)) {
+    if (compareCode(operationCode, abandon["&operationCode"]!)) {
+        // Hack for avoiding unnecessary decoding.
+        signed = (operationArgument.tagNumber === 0);
+    }
+    else if (compareCode(operationCode, administerPassword["&operationCode"]!)) {
+        // Hack for avoiding unnecessary decoding.
+        signed = (operationArgument.tagNumber === 0);
+    }
+    else if (compareCode(operationCode, addEntry["&operationCode"]!)) {
         const arg = addEntry.decoderFor["&ArgumentType"]!(operationArgument);
+        if ("signed" in arg) {
+            signed = true;
+        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -206,10 +220,15 @@ function createChainingArgumentsFromDUA (
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
-    // else if (compareCode(operationCode, changePassword["&operationCode"]!)) {
-    // }
+    else if (compareCode(operationCode, changePassword["&operationCode"]!)) {
+        // Hack for avoiding unnecessary decoding.
+        signed = (operationArgument.tagNumber === 0);
+    }
     else if (compareCode(operationCode, compare["&operationCode"]!)) {
         const arg = compare.decoderFor["&ArgumentType"]!(operationArgument);
+        if ("signed" in arg) {
+            signed = true;
+        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -244,6 +263,9 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, modifyDN["&operationCode"]!)) {
         const arg = modifyDN.decoderFor["&ArgumentType"]!(operationArgument);
+        if ("signed" in arg) {
+            signed = true;
+        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -278,6 +300,9 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, modifyEntry["&operationCode"]!)) {
         const arg = modifyEntry.decoderFor["&ArgumentType"]!(operationArgument);
+        if ("signed" in arg) {
+            signed = true;
+        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -312,6 +337,9 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, list["&operationCode"]!)) {
         const arg = list.decoderFor["&ArgumentType"]!(operationArgument);
+        if ("signed" in arg) {
+            signed = true;
+        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -346,6 +374,9 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, read["&operationCode"]!)) {
         const arg = read.decoderFor["&ArgumentType"]!(operationArgument);
+        if ("signed" in arg) {
+            signed = true;
+        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -380,6 +411,9 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, removeEntry["&operationCode"]!)) {
         const arg = removeEntry.decoderFor["&ArgumentType"]!(operationArgument);
+        if ("signed" in arg) {
+            signed = true;
+        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -414,6 +448,9 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, search["&operationCode"]!)) {
         const arg = search.decoderFor["&ArgumentType"]!(operationArgument);
+        if ("signed" in arg) {
+            signed = true;
+        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -460,7 +497,15 @@ function createChainingArgumentsFromDUA (
         securityParameters,
         entryOnly,
         uniqueIdentifier,
-        authenticationLevel,
+        ("basicLevels" in authenticationLevel)
+            ? {
+                basicLevels: new AuthenticationLevel_basicLevels(
+                    authenticationLevel.basicLevels.level,
+                    authenticationLevel.basicLevels.localQualifier,
+                    signed,
+                ),
+            }
+            : authenticationLevel,
         exclusions,
         excludeShadows,
         nameResolveOnMaster,
@@ -483,6 +528,10 @@ function createChainingArgumentsFromDUA (
  *
  * Note: this is only used for DAP, LDAP, and DSP requests. DOP and DISP bypass
  * this procedure.
+ *
+ * NOTE: That the authenticationLevel provided by the bound DSA is trusted by
+ * fiat. There is no way for this DSA to verify that, say, strong authentication
+ * was used in the original DAP association.
  *
  * @param ctx The context object
  * @param assn The client association
@@ -530,7 +579,7 @@ async function requestValidationProcedure (
                 authenticationLevel,
                 uniqueIdentifier,
             );
-            return {
+            return { // NOTE: This MUST be unsigned. See a0ada54c-95ad-41f0-9676-4427426e897a.
                 unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                     chainingArguments,
                     req.argument!,
@@ -543,7 +592,7 @@ async function requestValidationProcedure (
         argument,
     } = unsigned;
     const opArgElements = argument.set;
-        const securityParameters = opArgElements
+    const securityParameters = opArgElements
         .find((el) => (
             (el.tagClass === ASN1TagClass.context)
             && (el.tagNumber === 29)
@@ -584,6 +633,9 @@ async function requestValidationProcedure (
             signErrors,
         );
     }
+    // This code path will only be taken via DSP, since converting the DAP
+    // request to its chained equivalent will not produce a signed DSP request.
+    // a0ada54c-95ad-41f0-9676-4427426e897a
     if ("signed" in hydratedArgument) {
         const certPath = hydratedArgument
             .signed
