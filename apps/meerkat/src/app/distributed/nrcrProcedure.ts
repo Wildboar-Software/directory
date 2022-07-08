@@ -206,6 +206,7 @@ async function nrcrProcedure (
                 assn,
                 state,
                 signErrors,
+                chainingProhibited,
             );
             if (!outcome) {
                 continue;
@@ -246,6 +247,7 @@ async function nrcrProcedure (
                     assn,
                     state,
                     signErrors,
+                    chainingProhibited,
                 );
             } catch {
                 continue;

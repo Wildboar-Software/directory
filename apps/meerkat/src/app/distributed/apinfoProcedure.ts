@@ -1,7 +1,7 @@
 import type { ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { BOOLEAN, ASN1TagClass, TRUE_BIT } from "asn1-ts";
+import { BOOLEAN } from "asn1-ts";
 import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import type {
@@ -44,10 +44,6 @@ import {
 import {
     MasterOrShadowAccessPoint_category_shadow,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
-import {
-    ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
-    ServiceControlOptions_manageDSAIT as manageDSAITBit,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
 import {
     OperationProgress_nameResolutionPhase_proceeding as proceeding,
@@ -90,6 +86,7 @@ import { verifySIGNED } from "../pki/verifySIGNED";
  * @param assn The client association
  * @param state The operation dispatcher state
  * @param signErrors Whether to cryptographically sign errors
+ * @param chainingProhibited Whether chaining was prohibited
  * @returns A result or error
  *
  * @function
@@ -103,26 +100,11 @@ async function apinfoProcedure (
     assn: ClientAssociation | undefined,
     state: OperationDispatcherState,
     signErrors: boolean,
+    chainingProhibited: boolean,
 ): Promise<ResultOrError | null> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
-    // Loop avoidance is handled below.
-    const serviceControls = req.argument?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 30)
-        ))?.inner;
-    const serviceControlOptions = serviceControls?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 0)
-        ))?.inner;
-    const scoBitField = serviceControlOptions?.bitString;
-    const chainingProhibited = (
-        (scoBitField?.[chainingProhibitedBit] === TRUE_BIT)
-        || (scoBitField?.[manageDSAITBit] === TRUE_BIT)
-    );
     if (chainingProhibited) {
         return null;
     }

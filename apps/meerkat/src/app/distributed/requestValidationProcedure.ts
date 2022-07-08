@@ -22,6 +22,7 @@ import {
     TRUE_BIT,
     FALSE,
     ASN1TagClass,
+    BERElement,
 } from "asn1-ts";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
@@ -78,8 +79,56 @@ import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { verifySIGNED } from "../pki/verifySIGNED";
+import { isArgumentSigned } from "../x500/isArgumentSigned";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
+
+/**
+ * @summary Determine whether error signing was requested without decoding the
+ *  entire argument.
+ * @description
+ *
+ * This is a performance hack to avoid decoding the whole DAP argument just to
+ * determine if signing was requested. Note that this ONLY works for DAP
+ * requests--not DSP.
+ *
+ * @param opCode The operation code
+ * @param arg The ASN.1 value of the non-chained argument
+ * @returns Whether signing was requested, or `undefined` if it cannot be
+ *  determined.
+ *
+ * @function
+ */
+function errorSigningRequestedInDAPArgument (
+    opCode: Code,
+    arg: ASN1Element,
+): boolean | undefined {
+    if (!("local" in opCode)) {
+        return undefined;
+    }
+    const signed: boolean | undefined = isArgumentSigned(opCode, arg);
+    const argElements = signed
+        ? (() => {
+            const firstElement = new BERElement()
+            firstElement.fromBytes(arg.value);
+            return firstElement.set;
+        })()
+        : arg.set; // NOTE: This path will be taken for _unrecognized_ operations, too.
+    const securityParameters = argElements
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 29)
+        ))?.inner;
+    const errorProtectionElement = securityParameters?.set
+        .find((el) => (
+            (el.tagClass === ASN1TagClass.context)
+            && (el.tagNumber === 8)
+        ))?.inner;
+    const errorProtection = errorProtectionElement
+        ? _decode_ErrorProtectionRequest(errorProtectionElement)
+        : undefined;
+    return (errorProtection === ErrorProtectionRequest_signed);
+}
 
 // ChainingArguments ::= SET {
 //     originator                 [0]  DistinguishedName OPTIONAL,
@@ -591,21 +640,7 @@ async function requestValidationProcedure (
         chainedArgument,
         argument,
     } = unsigned;
-    const opArgElements = argument.set;
-    const securityParameters = opArgElements
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 29)
-        ))?.inner;
-    const errorProtectionElement = securityParameters?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 8)
-        ))?.inner;
-    const errorProtection = errorProtectionElement
-        ? _decode_ErrorProtectionRequest(errorProtectionElement)
-        : undefined;
-    const signErrors: boolean = (errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = errorSigningRequestedInDAPArgument(req.opCode, argument) ?? false;
     if (
         chainedArgument.targetObject
         && (chainedArgument.operationProgress?.nextRDNToBeResolved !== undefined)
