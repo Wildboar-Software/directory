@@ -147,7 +147,10 @@ async function compare (
     const target = state.foundDSE;
     const argument = _decode_CompareArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -601,7 +604,11 @@ async function compare (
         state.chainingArguments.aliasDereferenced,
         undefined,
     );
-    const result: CompareResult = (data.securityParameters?.target === ProtectionRequest_signed)
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
+    const result: CompareResult = signResults
         ? (() => {
             const resultDataBytes = _encode_CompareResultData(resultData, DER).toBytes();
             const key = ctx.config.signing?.key;

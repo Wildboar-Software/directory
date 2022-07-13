@@ -128,6 +128,7 @@ async function establishOperationalBinding (
 ): Promise<EstablishOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: EstablishOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
+    // DOP associations are ALWAYS authorized to receive signed responses.
     const signResult: boolean = (data.securityParameters?.target === ProtectionRequest_signed);
     const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
     ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {

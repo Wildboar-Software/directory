@@ -60,6 +60,9 @@ import {
     ReferenceType_nonSpecificSubordinate,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import { printInvokeId } from "../utils/printInvokeId";
+import {
+    compareAuthenticationLevel,
+} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
 
 // TODO: Really, this should have the same return type as the OperationDispatcher.
 // This also returns a value, but also mutates the OD state, which is sketchy.
@@ -139,11 +142,14 @@ async function nrcrProcedure (
      * the same name.
      */
     const insufficientAuthForChaining = assn && (
-        ("basicLevels" in assn.authLevel)
-        && (
-            (assn?.authLevel.basicLevels.level < ctx.config.chaining.minAuthLevel)
-            || ((assn?.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.chaining.minAuthLocalQualifier)
+        (
+            ("basicLevels" in assn.authLevel)
+            && (compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.chaining.minAuthRequired,
+                assn.authLevel.basicLevels,
+            ))
         )
+        || !("basicLevels" in assn.authLevel)
     );
     if (
         ctx.config.chaining.prohibited

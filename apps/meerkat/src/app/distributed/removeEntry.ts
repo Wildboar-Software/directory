@@ -157,7 +157,10 @@ async function removeEntry (
     const target = state.foundDSE;
     const argument = _decode_RemoveEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -535,7 +538,11 @@ async function removeEntry (
         state.chainingArguments.aliasDereferenced,
         undefined,
     );
-    const result: RemoveEntryResult = (data.securityParameters?.target === ProtectionRequest_signed)
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
+    const result: RemoveEntryResult = signResults
         ? {
             information: (() => {
                 const resultDataBytes = _encode_RemoveEntryResultData(resultData, DER).toBytes();

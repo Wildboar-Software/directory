@@ -5,7 +5,6 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as net from "net";
 import * as tls from "tls";
-import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
@@ -43,14 +42,13 @@ import {
 } from "./constants";
 import createDatabaseReport from "./telemetry/createDatabaseReport";
 import semver from "semver";
-import { createPrivateKey } from "crypto";
-import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import isDebugging from "is-debugging";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 import { randomUUID } from "crypto";
 import { flatten } from "flat";
 import { getServerStatistics } from "./telemetry/getServerStatistics";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -569,7 +567,10 @@ function handleIDM (
         });
 
         try {
-            const idm = new IDMConnection(c, ctx.config.tls);
+            const idm = new IDMConnection(c, {
+                ...ctx.config.tls,
+                rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
+            });
             attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, startTimes);
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
@@ -781,30 +782,23 @@ async function main (): Promise<void> {
     ctx.db.enqueuedListResult.deleteMany().then().catch();
     ctx.db.enqueuedSearchResult.deleteMany().then().catch();
 
-    if (
-        process.env.MEERKAT_SIGNING_CERT_CHAIN
-        && process.env.MEERKAT_SIGNING_KEY
-    ) {
-        const chainFile = await fs.readFile(process.env.MEERKAT_SIGNING_CERT_CHAIN, { encoding: "utf-8" });
-        const keyFile = await fs.readFile(process.env.MEERKAT_SIGNING_KEY, { encoding: "utf-8" });
-        const pkiPath = decodePkiPathFromPEM(chainFile);
-        const dsaCert = pkiPath[pkiPath.length - 1];
-        if (!dsaCert) {
-            ctx.log.warn(ctx.i18n.t("log:cert_chain_no_certificates", {
-                envvar: process.env.MEERKAT_SIGNING_CERT_CHAIN,
-            }));
-            process.exit(1);
-        }
-        ctx.config.signing = {
-            key: createPrivateKey({
-                key: keyFile,
-                format: "pem",
-            }),
-            certPath: pkiPath,
-        };
-        ctx.dsa.accessPoint.ae_title.rdnSequence.push(...dsaCert.toBeSigned.subject.rdnSequence);
-    } else {
+    const signingCertPath = ctx.config.signing.certPath;
+
+    if (signingCertPath?.length === 0) {
+        ctx.log.warn(ctx.i18n.t("log:cert_chain_no_certificates", {
+            envvar: process.env.MEERKAT_SIGNING_CERT_CHAIN,
+        }));
+        process.exit(1);
+    }
+
+    if (!signingCertPath || !ctx.config.signing?.key) {
         ctx.log.warn(ctx.i18n.t("log:no_dsa_keypair"));
+    } else {
+        const dsaCert = signingCertPath[signingCertPath.length - 1];
+        // Yes, this is where the DSA's AE-Title is set.
+        ctx.dsa.accessPoint.ae_title.rdnSequence = [
+            ...dsaCert.toBeSigned.subject.rdnSequence,
+        ];
     }
 
     await loadDIT(ctx);
@@ -856,6 +850,7 @@ async function main (): Promise<void> {
 
     const tlsOptions: tls.TlsOptions = {
         ...ctx.config.tls,
+        rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
         enableTrace: isDebugging,
     };
 
@@ -890,6 +885,7 @@ async function main (): Promise<void> {
                 e: err.message,
             }));
         });
+        idmsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));
         idmsServer.listen(ctx.config.idms.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "IDMS",
@@ -914,6 +910,7 @@ async function main (): Promise<void> {
         )
     ) {
         const ldapsServer = tls.createServer(tlsOptions, handleLDAP(ctx, startTimes));
+        ldapsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));
         ldapsServer.listen(ctx.config.ldaps.port, async () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "LDAPS",

@@ -268,6 +268,7 @@ class OperationDispatcher {
         const signDSPResult: boolean = (
             (assn instanceof DSPAssociation) // The outer signature will only be used for DSP, not DAP.
             && (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+            && assn.authorizedForSignedResults
         );
         if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
             const outcome = await doAddEntry(ctx, assn, state);
@@ -522,7 +523,10 @@ class OperationDispatcher {
         else if (compareCode(req.opCode, search["&operationCode"]!)) {
             const argument = _decode_SearchArgument(reqData.argument);
             const data = getOptionallyProtectedValue(argument);
-            const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+            const signErrors: boolean = (
+                (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+                && (assn.authorizedForSignedErrors)
+            );
             const requestStats: RequestStatistics | undefined = failover(() => ({
                 operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
@@ -881,8 +885,14 @@ class OperationDispatcher {
             assn.boundNameAndUID?.uid,
         );
         const reqData = getOptionallyProtectedValue(preparedRequest);
-        const signDSPResult: boolean = (reqData.chainedArgument.securityParameters?.target === ProtectionRequest_signed);
-        const signErrors: boolean = (reqData.chainedArgument.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+        const signDSPResult: boolean = (
+            (reqData.chainedArgument.securityParameters?.target === ProtectionRequest_signed)
+            && assn.authorizedForSignedResults
+        );
+        const signErrors: boolean = (
+            (reqData.chainedArgument.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+            && assn.authorizedForSignedErrors
+        );
         return this.dispatchPreparedDSPRequest(
             ctx,
             assn,
@@ -1022,7 +1032,10 @@ class OperationDispatcher {
     ): Promise<SearchResultOrError> {
         // Request validation not needed.
         const data = getOptionallyProtectedValue(argument);
-        const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+        const signErrors: boolean = (
+            (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+            && (assn.authorizedForSignedErrors)
+        );
         const encodedArgument = _encode_SearchArgument(argument, DER);
         const targetObject = chaining.relatedEntry // The specification is not clear of what to do for targetObject.
             ? data.joinArguments?.[Number(chaining.relatedEntry)]?.joinBaseObject.rdnSequence

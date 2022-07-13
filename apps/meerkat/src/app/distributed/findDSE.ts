@@ -334,7 +334,10 @@ async function findDSE (
     const errorProtection = errorProtectionElement
         ? _decode_ProtectionRequest(errorProtectionElement)
         : undefined;
-    const signErrors: boolean = (errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = (
+        (errorProtection === ErrorProtectionRequest_signed)
+        && (!assn || (assn.authorizedForSignedErrors))
+    );
 
     // Service controls
     const manageDSAIT: boolean = (

@@ -147,7 +147,10 @@ async function read (
     const target = state.foundDSE;
     const argument = _decode_ReadArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (!assn || assn.authorizedForSignedErrors)
+    );
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -505,7 +508,11 @@ async function read (
         state.chainingArguments.aliasDereferenced,
         undefined,
     );
-    const result: ReadResult = (data.securityParameters?.target === ProtectionRequest_signed)
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && (!assn || assn.authorizedForSignedResults)
+    );
+    const result: ReadResult = signResults
         ? (() => {
             const resultDataBytes = _encode_ReadResultData(resultData, DER).toBytes();
             const key = ctx.config.signing?.key;

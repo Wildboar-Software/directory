@@ -971,7 +971,7 @@ async function executeAddAttribute (
     }
     const values = valuesFromAttribute(mod);
     addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
-    return addValues(ctx, entry, values);
+    return addValues(ctx, entry, values, undefined, true, signErrors);
 }
 
 /**
@@ -1199,7 +1199,7 @@ async function executeAddValues (
     );
     const values = valuesFromAttribute(mod);
     addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
-    return addValues(ctx, entry, values);
+    return addValues(ctx, entry, values, undefined, true, signErrors);
 }
 
 /**
@@ -1569,7 +1569,7 @@ async function executeAlterValues (
     }
     return [
         ...(await removeValues(ctx, entry, values)),
-        ...(await addValues(ctx, entry, newValues)),
+        ...(await addValues(ctx, entry, newValues, undefined, true, signErrors)),
     ];
 }
 
@@ -1798,10 +1798,10 @@ async function executeReplaceValues (
     addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
     return [
         ...(await removeAttribute(ctx, entry, mod.type_)),
-        // Last argument to addValues() is false, because we don't want to check
+        // Second to last argument to addValues() is false, because we don't want to check
         // if the potentially added values already exist, because we are just
         // going to wipe out all that exist and replace them.
-        ...(await addValues(ctx, entry, values, undefined, false)),
+        ...(await addValues(ctx, entry, values, undefined, false, signErrors)),
     ];
 }
 
@@ -2287,7 +2287,10 @@ async function modifyEntry (
     const target = state.foundDSE;
     const argument = _decode_ModifyEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -2524,6 +2527,7 @@ async function modifyEntry (
                 isSubentry,
                 manageDSAIT,
                 state.chainingArguments.aliasDereferenced,
+                signErrors,
             )),
         );
     }
@@ -3513,7 +3517,11 @@ async function modifyEntry (
         );
     }
 
-    const result: ModifyEntryResult = (data.securityParameters?.target === ProtectionRequest_signed)
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
+    const result: ModifyEntryResult = signResults
         ? {
             information: (() => {
                 const resultDataBytes = _encode_ModifyEntryResultData(resultData, DER).toBytes();

@@ -180,7 +180,10 @@ async function list_i (
     const target = state.foundDSE;
     const argument: ListArgument = _decode_ListArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
 
     // #region Signature validation
     /**

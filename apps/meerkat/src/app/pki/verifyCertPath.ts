@@ -1,4 +1,8 @@
-import type { Context, IndexableOID } from "@wildboar/meerkat-types";
+import {
+    Context,
+    IndexableOID,
+    OCSPOptions,
+} from "@wildboar/meerkat-types";
 import { Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
 import {
     SubjectPublicKeyInfo,
@@ -109,16 +113,10 @@ import {
     id_Ed448,
 } from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/id-Ed448.va";
 import {
-    authorityInfoAccess,
-} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/authorityInfoAccess.oa";
-import {
     id_ad_ocsp,
 } from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/id-ad-ocsp.va";
-import {
-    OCSPResponseStatus_successful,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponseStatus.ta";
 import { URL } from "url";
-import { check } from "@wildboar/ocsp-client";
+import { getOCSPResponse, SignFunction } from "@wildboar/ocsp-client";
 import { crlCurl, ReadDispatcherFunction } from "./crlCurl";
 import type {
     ReadArgument,
@@ -195,28 +193,43 @@ import {
 import {
     authorizationValidation,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/authorizationValidation.oa";
+import {
+    authorityInfoAccess,
+} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/authorityInfoAccess.oa";
+import {
+    subjectInfoAccess,
+} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/subjectInfoAccess.oa";
+import { generateSignature } from "./generateSignature";
+import {
+    verifyOCSPResponse,
+    VOR_RETURN_OK,
+    VOR_RETURN_REVOKED,
+    VOR_RETURN_UNKNOWN_INTOLERABLE,
+} from "./verifyOCSPResponse";
 
-export const VCP_RETURN_OK: number = 0;
-export const VCP_RETURN_INVALID_SIG: number = -1;
-export const VCP_RETURN_OCSP_REVOKED: number = -2;
-export const VCP_RETURN_OCSP_OTHER: number = -3; // Unreachable, Unauthorized, etc.
-export const VCP_RETURN_CRL_REVOKED: number = -4;
-export const VCP_RETURN_CRL_UNREACHABLE: number = -5;
-export const VCP_RETURN_MALFORMED: number = -6;
-export const VCP_RETURN_BAD_KEY_USAGE: number = -7;
-export const VCP_RETURN_BAD_EXT_KEY_USAGE: number = -8;
-export const VCP_RETURN_UNKNOWN_CRIT_EXT: number = -9;
-export const VCP_RETURN_DUPLICATE_EXT: number = -10;
-export const VCP_RETURN_AKI_SKI_MISMATCH: number = -11;
-export const VCP_RETURN_PKU_PERIOD: number = -12;
-export const VCP_RETURN_BASIC_CONSTRAINTS_CA: number = -13;
-export const VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN: number = -14;
-export const VCP_RETURN_INVALID_EXT_CRIT: number = -15;
-export const VCP_RETURN_UNTRUSTED_ANCHOR: number = -16;
-export const VCP_RETURN_INVALID_TIME: number = -17;
-export const VCP_RETURN_ISSUER_SUBJECT_MISMATCH: number = -18;
-export const VCP_RETURN_NAME_NOT_PERMITTED: number = -19;
-export const VCP_RETURN_NAME_EXCLUDED: number = -20;
+export type VCPReturnCode = number;
+export const VCP_RETURN_OK: VCPReturnCode = 0;
+export const VCP_RETURN_INVALID_SIG: VCPReturnCode = -1;
+export const VCP_RETURN_OCSP_REVOKED: VCPReturnCode = -2;
+export const VCP_RETURN_OCSP_OTHER: VCPReturnCode = -3; // Unreachable, Unauthorized, etc.
+export const VCP_RETURN_CRL_REVOKED: VCPReturnCode = -4;
+export const VCP_RETURN_CRL_UNREACHABLE: VCPReturnCode = -5;
+export const VCP_RETURN_MALFORMED: VCPReturnCode = -6;
+export const VCP_RETURN_BAD_KEY_USAGE: VCPReturnCode = -7;
+export const VCP_RETURN_BAD_EXT_KEY_USAGE: VCPReturnCode = -8;
+export const VCP_RETURN_UNKNOWN_CRIT_EXT: VCPReturnCode = -9;
+export const VCP_RETURN_DUPLICATE_EXT: VCPReturnCode = -10;
+export const VCP_RETURN_AKI_SKI_MISMATCH: VCPReturnCode = -11;
+export const VCP_RETURN_PKU_PERIOD: VCPReturnCode = -12;
+export const VCP_RETURN_BASIC_CONSTRAINTS_CA: VCPReturnCode = -13;
+export const VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN: VCPReturnCode = -14;
+export const VCP_RETURN_INVALID_EXT_CRIT: VCPReturnCode = -15;
+export const VCP_RETURN_UNTRUSTED_ANCHOR: VCPReturnCode = -16;
+export const VCP_RETURN_INVALID_TIME: VCPReturnCode = -17;
+export const VCP_RETURN_ISSUER_SUBJECT_MISMATCH: VCPReturnCode = -18;
+export const VCP_RETURN_NAME_NOT_PERMITTED: VCPReturnCode = -19;
+export const VCP_RETURN_NAME_EXCLUDED: VCPReturnCode = -20;
+export const VCP_RETURN_PROHIBITED_SIG_ALG: VCPReturnCode = -21;
 
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
@@ -240,6 +253,8 @@ const supportedExtensions: Set<IndexableOID> = new Set([
     altSignatureValue["&id"]!.toString(), // No meaning imputed to critical/non-critical.
     associatedInformation["&id"]!.toString(), // TODO: If critical, at least one attr must be understood.
     authorizationValidation["&id"]!.toString(), // Always critical
+    authorityInfoAccess["&id"]!.toString(), // Always non-critical
+    subjectInfoAccess["&id"]!.toString(), // Always non-critical
 ]);
 
 export
@@ -248,6 +263,8 @@ const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
     [ privateKeyUsagePeriod["&id"]!.toString(), false ], // Always non-critical.
     [ authorityKeyIdentifier["&id"]!.toString(), false ], // Always non-critical.
     [ authorizationValidation["&id"]!.toString(), true ], // Always critical.
+    [ authorityInfoAccess["&id"]!.toString(), false ], // Always non-critical.
+    [ subjectInfoAccess["&id"]!.toString(), false ], // Always non-critical.
 ]);
 
 interface ValidPolicyData {
@@ -484,6 +501,16 @@ interface VerifyCertPathResult {
      * @readonly
      */
     readonly endEntityExtKeyUsage?: KeyPurposeId[];
+
+    /**
+     * @readonly
+     */
+    readonly endEntityPrivateKeyNotBefore?: GeneralizedTime;
+
+    /**
+     * @readonly
+     */
+    readonly endEntityPrivateKeyNotAfter?: GeneralizedTime;
 }
 
 export
@@ -603,49 +630,13 @@ const sigAlgOidToNodeJSDigest: Map<string, string | null> = new Map([
     [ id_Ed25519.toString(), null ],
 ]);
 
-
-// rsaEncryption           ID ::= { pkcs-1 rsaEncryption(1)} -- IETF RFC 4055
-// id-keyExchangeAlgorithm ID ::= { dodAlgorithms id-keyExchangeAlgorithm(22)}
-//                                  -- IETF RFC 3279
-// id-dsa                  ID ::= { ansi-x9-57 x9algorithm(4) 1 }   -- IETF RFC 5480
-// id-ecPublicKey          ID ::= { ansi-x9-62 keyType(2) 1 }       -- IETF RFC 5480
-// id-ecDH                 ID ::= { certicom schemes(1) ecdh(12) }  -- IETF RFC 5480
-// id-ecMQV                ID ::= { certicom schemes(1) ecmqv(13) } -- IETF RFC 5480
-// dh-public-number        ID ::= { ansi-x9-42 number-type(2) dh-public-number(1) } --IETF RFC 2631
-// type KeyObjectGetter = (bytes: Uint8Array) => KeyObject;
-
-// /**
-//  * @summary Get a PKCS #1 RSA Public Key from the X.509 SubjectPublicKeyInfo
-//  * @description
-//  *
-//  * From [IETF RFC 4055](https://datatracker.ietf.org/doc/html/rfc4055):
-//  *
-//  * > The DER encoded RSAPublicKey is carried in the subjectPublicKey BIT STRING
-//  * > within the subject public key information.
-//  *
-//  * @param bytes
-//  */
-// const getRSAPublicKey: KeyObjectGetter = (bytes: Uint8Array): KeyObject => {
-//     createPublicKey({
-//         key: Buffer.from(bytes),
-//         format: "der",
-//         type: "pkcs1",
-
-//     });
-// };
-
-// const publicKeyAlgToKeyObjectGetter: Map<string, KeyObjectGetter> = new Map([
-//     [ "1.2.840.113549.1.1.1", getRSAPublicKey ], // rsaEncryption
-//     // [ "", [ "", "" ] ],
-//     // [ "", [ "", "" ] ],
-//     // [ "", [ "", "" ] ],
-//     // [ "", [ "", "" ] ],
-//     // [ "", [ "", "" ] ],
-//     // [ "", [ "", "" ] ],
-// ]);
-
 export
-async function checkOCSP (ext: Extension, cert: Certificate): Promise<number> {
+async function checkOCSP (
+    ctx: MeerkatContext,
+    ext: Extension,
+    cert: Certificate,
+    options: OCSPOptions,
+): Promise<number> {
     assert(ext.extnId.isEqualTo(authorityInfoAccess["&id"]!));
     const aiaEl = new DERElement();
     aiaEl.fromBytes(ext.extnValue);
@@ -653,40 +644,82 @@ async function checkOCSP (ext: Extension, cert: Certificate): Promise<number> {
     const ocspEndpoints: GeneralName[] = aiaValue
         .filter((ad) => ad.accessMethod.isEqualTo(id_ad_ocsp))
         .map((ad) => ad.accessLocation);
-
+    const signFunction: SignFunction | undefined = options.ocspSignRequests
+        ? (data: Uint8Array) => {
+            const key = ctx.config.signing.key;
+            const certPath = ctx.config.signing.certPath;
+            if (!key || !certPath?.length) {
+                return null;
+            }
+            const sig = generateSignature(key, data);
+            if (!sig) {
+                return null;
+            }
+            const [ algid, sigValue ] = sig;
+            return [ certPath, algid, sigValue ];
+        }
+        : undefined;
+    let requestBudget: number = options.maxOCSPRequestsPerCertificate;
     for (const gn of ocspEndpoints) {
         if (!("uniformResourceIdentifier" in gn)) {
             continue;
         }
         const url = new URL(gn.uniformResourceIdentifier);
-        const { res, singleRes } = await check(url, cert, undefined, 5000);
-        if (res.responseStatus !== OCSPResponseStatus_successful) {
-            return VCP_RETURN_OCSP_OTHER;
+        if (!url.protocol.toLowerCase().startsWith("http")) {
+            continue;
         }
-        // TODO: If status == sigRequired, sign and re-transmit?
-        if (singleRes) {
-            if ("revoked" in singleRes.certStatus) {
-                return VCP_RETURN_OCSP_REVOKED;
-            }
+        if (requestBudget === 0) {
+            break;
+        }
+        requestBudget--;
+        const { res } = await getOCSPResponse(
+            url,
+            cert,
+            undefined,
+            (options.ocspTimeout * 1000),
+            signFunction,
+            options.ocspResponseSizeLimit,
+        );
+        const verifyResult = await verifyOCSPResponse(ctx, res);
+        if (verifyResult === VOR_RETURN_OK) {
+            return VCP_RETURN_OK;
+        } else if (verifyResult === VOR_RETURN_REVOKED) {
+            return VCP_RETURN_OCSP_REVOKED;
+        } else if (verifyResult === VOR_RETURN_UNKNOWN_INTOLERABLE) {
+            return VCP_RETURN_OCSP_OTHER;
+        } else {
+            continue; // Just to be explicit.
         }
     }
+    /**
+     * Even if we exhaust all endpoints, we return an "OK" so that outages of
+     * OCSP endpoints do not make TLS impossible.
+     */
     return VCP_RETURN_OK;
 }
 
 export
 async function checkRemoteCRLs (
+    ctx: MeerkatContext,
     ext: Extension,
     subjectCert: Certificate,
     issuerCert: Certificate,
     readDispatcher: ReadDispatcherFunction,
 ): Promise<number> {
     assert(ext.extnId.isEqualTo(cRLDistributionPoints["&id"]!));
-    // TODO: Check if the number of CRL endpoints is too long.
     const crlEl = new DERElement();
     crlEl.fromBytes(ext.extnValue);
     const crldpValue = cRLDistributionPoints.decoderFor["&ExtnType"]!(crlEl);
     const crls = (await Promise.all(
-        crldpValue.map((dp) => crlCurl(dp, issuerCert.toBeSigned.subject, readDispatcher))
+        crldpValue
+            .slice(0, ctx.config.signing.distributionPointAttemptsPerCertificate)
+            .map((dp) => crlCurl(
+                ctx,
+                dp,
+                issuerCert.toBeSigned.subject,
+                readDispatcher,
+                ctx.config.signing,
+            ))
     ))
         .filter((result): result is CertificateList[] => !!result)
         .flat();
@@ -879,11 +912,11 @@ function isRevokedFromConfiguredCRLs (
 ): boolean {
     // If the index of revoked certificate serial numbers has this cert's SN,
     // it is worth scanning the CRLs for which cert revoked it.
-    if (!ctx.config.tls.revokedCertificateSerialNumbers.has(cert.toBeSigned.serialNumber.toString())) {
+    if (!ctx.config.signing.revokedCertificateSerialNumbers.has(cert.toBeSigned.serialNumber.toString())) {
         return false;
     }
     const namingMatcher = getNamingMatcherGetter(ctx);
-    return ctx.config.tls.certificateRevocationLists
+    return ctx.config.signing.certificateRevocationLists
         .some((crl) => (
             // We only care about CRLs that could have applied at the asserted time.
             (getDateFromTime(crl.toBeSigned.thisUpdate) <= asOf)
@@ -903,7 +936,7 @@ function isRevokedFromConfiguredCRLs (
 // Section 12.5.1
 export
 async function verifyBasicPublicKeyCertificateChecks (
-    ctx: Context,
+    ctx: MeerkatContext,
     state: VerifyCertPathState,
     subjectCert: Certificate,
     issuerCert: Certificate,
@@ -1204,10 +1237,13 @@ async function verifyBasicPublicKeyCertificateChecks (
     }
 
     const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
-    if (aiaExt) {
-        const ocspResult = await checkOCSP(aiaExt, subjectCert);
-        if (ocspResult) {
-            return ocspResult;
+    if (aiaExt && !state.validityTime) { // We can't
+        const ocspCheckiness = ctx.config.signing.ocspCheckiness;
+        if (ocspCheckiness >= 0) {
+            const ocspResult = await checkOCSP(ctx, aiaExt, subjectCert, ctx.config.tls);
+            if (ocspResult) {
+                return ocspResult;
+            }
         }
     }
 
@@ -1215,6 +1251,7 @@ async function verifyBasicPublicKeyCertificateChecks (
     const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
     if (crldpExt && crldpExt.critical) { // TODO: Make config options: ignore_critical or always_check.
         const crlResult = await checkRemoteCRLs(
+            ctx,
             crldpExt,
             subjectCert,
             issuerCert,
@@ -1358,7 +1395,6 @@ function processIntermediateCertificates (
         const levelNMinus1 = levels[levels.length - 2];
         if (!state.policy_mapping_inhibit_indicator) { // IETF RFC 5280, Section 6.1.4.b.1
             const mapped_policies: Set<IndexableOID> = new Set();
-            // FIXME: Something about policy mapping is not working.
             // The expected policy set in nodes of N-1 are not getting changed.
             for (const node of levelN.nodes) {
                 for (const ep of node.expected_policy_set) {
@@ -1552,7 +1588,7 @@ function processExplicitPolicyIndicator (
 
 export
 async function verifyEndEntityCertificate (
-    ctx: Context,
+    ctx: MeerkatContext,
     state: VerifyCertPathState,
     subjectCert: Certificate,
     issuerCert: Certificate,
@@ -1578,7 +1614,7 @@ async function verifyEndEntityCertificate (
 
 export
 async function verifyIntermediateCertificate (
-    ctx: Context,
+    ctx: MeerkatContext,
     state: VerifyCertPathState,
     subjectCert: Certificate,
     issuerCert: Certificate,
@@ -1728,7 +1764,7 @@ async function verifyCACertificate (
 
     const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
     if (aiaExt) {
-        const ocspResult = await checkOCSP(aiaExt, cert);
+        const ocspResult = await checkOCSP(ctx, aiaExt, cert, ctx.config.signing);
         if (ocspResult) {
             return ocspResult;
         }
@@ -1738,6 +1774,7 @@ async function verifyCACertificate (
     const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
     if (crldpExt && crldpExt.critical) { // TODO: Make config options: ignore_critical or always_check.
         const crlResult = await checkRemoteCRLs(
+            ctx,
             crldpExt,
             cert,
             cert,
@@ -1842,9 +1879,12 @@ function finalProcessing (
         warnings: [],
         endEntityKeyUsage: state.endEntityKeyUsage,
         endEntityExtKeyUsage: state.endEntityExtKeyUsage,
+        endEntityPrivateKeyNotBefore: state.endEntityPrivateKeyNotBefore,
+        endEntityPrivateKeyNotAfter: state.endEntityPrivateKeyNotAfter,
     };
 }
 
+// TODO: Refactor so you can pass in ctx.config.tls so OCSP responses can be verified.
 /**
  * @summary Verify an X.509 certification path
  * @description
@@ -1866,6 +1906,24 @@ async function verifyCertPath (
 ): Promise<VerifyCertPathResult> {
     const path = args.certPath;
     const caCert = path[path.length - 1];
+
+    if (
+        ctx.config.signing.permittedSignatureAlgorithms?.size
+    ) {
+        const permittedAlgs = ctx.config.signing.permittedSignatureAlgorithms;
+        for (const cert of path) {
+            if (!permittedAlgs.has(cert.algorithmIdentifier.algorithm.toString())) {
+                return {
+                    returnCode: VCP_RETURN_PROHIBITED_SIG_ALG,
+                    authorities_constrained_policies: [],
+                    explicit_policy_indicator: args.initial_explicit_policy,
+                    policy_mappings_that_occurred: [],
+                    user_constrained_policies: [],
+                    warnings: [],
+                };
+            }
+        }
+    }
 
     // The initialization step, defined in ITU Recommendation X.509 (2019), Section 12.4.
     const initialState: VerifyCertPathState = {
@@ -1954,6 +2012,8 @@ async function verifyCertPath (
             warnings: [], // FIXME:
             endEntityKeyUsage: new Uint8ClampedArray(),
             endEntityExtKeyUsage: [],
+            endEntityPrivateKeyNotBefore: state.endEntityPrivateKeyNotBefore,
+            endEntityPrivateKeyNotAfter: state.endEntityPrivateKeyNotAfter,
         };
     }
     const endEntityResult = await verifyEndEntityCertificate(

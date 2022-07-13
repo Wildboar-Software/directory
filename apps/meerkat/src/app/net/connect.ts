@@ -104,6 +104,7 @@ import type { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecif
 import { versions } from "../dsp/versions";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
+import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -696,7 +697,7 @@ async function connectToLDAP (
             port,
             timeout: differenceInMilliseconds(timeoutTime, new Date()),
         });
-        const ldapSocket = new LDAPSocket(socket);
+        const ldapSocket = new LDAPSocket(socket, ctx.config.tls);
         await Promise.race<void>([
             new Promise<void>((resolve, reject) => {
                 ldapSocket.once("connect", resolve);
@@ -741,9 +742,23 @@ async function connectToLDAP (
                         reject();
                         return;
                     } else {
-                        const tlsSocket = new tls.TLSSocket(ldapSocket.socket, ctx.config.tls);
+                        const tlsSocket = new tls.TLSSocket(ldapSocket.socket, {
+                            ...ctx.config.tls,
+                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+                        });
                         ldapSocket.startTLS(tlsSocket);
-                        tlsSocket.on("secureConnect", resolve);
+                        tlsSocket.on("secureConnect", () => {
+                            if (tlsSocket.authorized) {
+                                resolve();
+                            } else {
+                                reject();
+                            }
+                        });
+                        tlsSocket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid: boolean) => {
+                            if (!valid) {
+                                reject();
+                            }
+                        }));
                     }
                 });
                 ldapSocket.writeMessage(req);
@@ -882,6 +897,7 @@ async function connectToLDAP (
     const getLDAPSocket = async (): Promise<LDAPSocket> => {
         const socket = tls.connect({
             ...ctx.config.tls,
+            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
             pskCallback: undefined, // This was the only type error for some reason.
             host: uri.hostname,
             port,
@@ -889,9 +905,15 @@ async function connectToLDAP (
         });
         // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
         socket.once("connect", () => socket.setTimeout(0));
-        const ldapSocket = new LDAPSocket(socket);
+        socket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid) => {
+            if (!valid) {
+                socket.end();
+            }
+        }));
+        const ldapSocket = new LDAPSocket(socket, ctx.config.tls);
         await Promise.race<void>([
             new Promise<void>((resolve, reject) => {
+                // REVIEW: Shouldn't these close the socket, too?
                 ldapSocket.once("connect", resolve);
                 ldapSocket.once("error", reject);
                 ldapSocket.once("timeout", reject);
@@ -1329,7 +1351,10 @@ async function connect (
                         });
                         // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
                         socket.once("connect", () => socket.setTimeout(0));
-                        return new IDMConnection(socket, ctx.config.tls);
+                        return new IDMConnection(socket, {
+                            ...ctx.config.tls,
+                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+                        });
                     } catch {
                         return null;
                     }
@@ -1351,6 +1376,7 @@ async function connect (
                     try {
                         const socket = tls.connect({
                             ...ctx.config.tls,
+                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
                             pskCallback: undefined, // This was the only type error for some reason.
                             host: uri.hostname,
                             port: Number.parseInt(uri.port),
@@ -1358,6 +1384,11 @@ async function connect (
                         });
                         // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
                         socket.once("connect", () => socket.setTimeout(0));
+                        socket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid) => {
+                            if (!valid) {
+                                socket.end();
+                            }
+                        }));
                         return new IDMConnection(socket);
                     } catch {
                         return null;

@@ -3,7 +3,6 @@ import { ContinuationReference } from "@wildboar/x500/src/lib/modules/Distribute
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import { strict as assert } from "assert";
 import lcrProcedure from "./lcrProcedure";
 import type { ListState } from "./list_i";
 

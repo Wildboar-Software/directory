@@ -288,7 +288,10 @@ async function modifyDN (
     const target = state.foundDSE;
     const argument = _decode_ModifyDNArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
     if (!withinThisDSA(target)) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:target_not_within_this_dsa"),
@@ -1948,7 +1951,11 @@ async function modifyDN (
         state.chainingArguments.aliasDereferenced,
         undefined,
     );
-    const result: ModifyDNResult = (data.securityParameters?.target === ProtectionRequest_signed)
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
+    const result: ModifyDNResult = signResults
         ? {
             information: (() => {
                 const resultDataBytes = _encode_ModifyDNResultData(resultData, DER).toBytes();

@@ -232,7 +232,10 @@ async function addEntry (
 ): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
-    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
 
     // #region Signature validation
     /**
@@ -1297,7 +1300,11 @@ async function addEntry (
         state.chainingArguments.aliasDereferenced,
         undefined,
     );
-    const result: AddEntryResult = (data.securityParameters?.target === ProtectionRequest_signed)
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
+    const result: AddEntryResult = signResults
         ? {
             information: (() => {
                 const resultDataBytes = _encode_AddEntryResultData(resultData, DER).toBytes();

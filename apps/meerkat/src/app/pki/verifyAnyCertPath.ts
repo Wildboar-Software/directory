@@ -9,6 +9,7 @@ import {
     anyPolicy,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
 import { MeerkatContext } from "../ctx";
+import { OBJECT_IDENTIFIER } from "asn1-ts";
 
 /**
  * @description
@@ -26,6 +27,7 @@ export
 function verifyAnyCertPath (
     ctx: MeerkatContext,
     certPath: CertificationPath,
+    acceptableCertificatePolicies?: OBJECT_IDENTIFIER[],
 ): ReturnType<typeof verifyCertPath> {
     /**
      * This set of parameters was suggested by ITU Recommendation X.509
@@ -41,14 +43,12 @@ function verifyAnyCertPath (
         ],
         initial_permitted_subtrees_set: [],
         initial_excluded_subtrees_set: [],
-        initial_explicit_policy: true,
+        initial_explicit_policy: !!acceptableCertificatePolicies,
         initial_inhibit_any_policy: false,
         initial_policy_mapping_inhibit: false,
-        initial_policy_set: [
-            anyPolicy,
-        ],
+        initial_policy_set: acceptableCertificatePolicies ?? [ anyPolicy ],
         initial_required_name_forms: [],
-        trustAnchors: ctx.config.tls.trustAnchorList,
+        trustAnchors: ctx.config.signing.trustAnchorList,
     };
     return verifyCertPath(ctx, vcpArgs);
 }

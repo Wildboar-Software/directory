@@ -108,6 +108,9 @@ import {
 import {
     updateError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    compareAuthenticationLevel,
+} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
 
 /**
  * @summary The handles a request, but not errors
@@ -321,7 +324,8 @@ async function handleRequestAndErrors (
             }
         } else if (e instanceof errors.AbandonError) {
             const code = _encode_Code(errors.AbandonError.errcode, BER);
-            const param: typeof abandoned["&ParameterType"] = e.shouldBeSigned
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof abandoned["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_AbandonedData)
                 : {
                     unsigned: e.data,
@@ -331,7 +335,8 @@ async function handleRequestAndErrors (
             stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
         } else if (e instanceof errors.AbandonFailedError) {
             const code = _encode_Code(errors.AbandonFailedError.errcode, BER);
-            const param: typeof abandonFailed["&ParameterType"] = e.shouldBeSigned
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof abandonFailed["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_AbandonFailedData)
                 : {
                     unsigned: e.data,
@@ -341,7 +346,8 @@ async function handleRequestAndErrors (
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.AttributeError) {
             const code = _encode_Code(errors.AttributeError.errcode, BER);
-            const param: typeof attributeError["&ParameterType"] = e.shouldBeSigned
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof attributeError["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_AttributeErrorData)
                 : {
                     unsigned: e.data,
@@ -354,7 +360,8 @@ async function handleRequestAndErrors (
             }));
         } else if (e instanceof errors.NameError) {
             const code = _encode_Code(errors.NameError.errcode, BER);
-            const param: typeof nameError["&ParameterType"] = e.shouldBeSigned
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof nameError["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_NameErrorData)
                 : {
                     unsigned: e.data,
@@ -364,7 +371,8 @@ async function handleRequestAndErrors (
             stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
         } else if (e instanceof errors.ReferralError) {
             const code = _encode_Code(errors.ReferralError.errcode, BER);
-            const param: typeof referral["&ParameterType"] = e.shouldBeSigned
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof referral["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_ReferralData)
                 : {
                     unsigned: e.data,
@@ -374,7 +382,8 @@ async function handleRequestAndErrors (
             stats.outcome.error.candidate = getContinuationReferenceStatistics(e.data.candidate);
         } else if (e instanceof errors.SecurityError) {
             const code = _encode_Code(errors.SecurityError.errcode, BER);
-            const param: typeof securityError["&ParameterType"] = e.shouldBeSigned
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof securityError["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_SecurityErrorData)
                 : {
                     unsigned: e.data,
@@ -384,7 +393,8 @@ async function handleRequestAndErrors (
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
-            const param: typeof serviceError["&ParameterType"] = e.shouldBeSigned
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof serviceError["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_ServiceErrorData)
                 : {
                     unsigned: e.data,
@@ -394,7 +404,8 @@ async function handleRequestAndErrors (
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.UpdateError) {
             const code = _encode_Code(errors.UpdateError.errcode, BER);
-            const param: typeof updateError["&ParameterType"] = e.shouldBeSigned
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof updateError["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_UpdateErrorData)
                 : {
                     unsigned: e.data,
@@ -502,10 +513,25 @@ class DAPAssociation extends ClientAssociation {
             remotePort: this.socket.remotePort,
             association_id: this.id,
         };
+        /**
+         * ITU Recommendation X.511 (2019), Section 9.1.4 states that:
+         *
+         * > If the Bind request was using strong authentication or if SPKM
+         * > credentials were supplied, then the Bind responder may sign the
+         * > error parameters.
+         */
+        const signErrors: boolean = !!(
+            this.authorizedForSignedErrors
+            && arg_.credentials
+            && (
+                ("strong" in arg_.credentials)
+                || ("spkm" in arg_.credentials)
+            )
+        );
         const startBindTime = new Date();
         let outcome!: BindReturn;
         try {
-            outcome = await doBind(ctx, this.idm.socket, arg_);
+            outcome = await doBind(ctx, this.idm.socket, arg_, signErrors);
         } catch (e) {
             if (e instanceof DirectoryBindError) {
                 ctx.log.warn(e.message);
@@ -580,6 +606,24 @@ class DAPAssociation extends ClientAssociation {
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",
             }), extraLogData);
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.minAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedResults = true;
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
         }
         const bindResult = new DirectoryBindResult(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
@@ -719,5 +763,14 @@ class DAPAssociation extends ClientAssociation {
             }
             this.prebindRequests.push(request);
         });
+        if ( // This allows bind errors to be signed.
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
+        }
     }
 }

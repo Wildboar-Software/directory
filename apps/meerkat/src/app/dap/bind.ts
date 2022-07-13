@@ -57,8 +57,8 @@ async function bind (
     ctx: MeerkatContext,
     socket: Socket | TLSSocket,
     arg: DirectoryBindArgument,
+    signErrors: boolean,
 ): Promise<BindReturn> {
-    const signErrors: boolean = false; // TODO: Make this configurable.
     const tlsProtocol: string | null = ("getProtocol" in socket)
         ? socket.getProtocol()
         : null;

@@ -635,8 +635,11 @@ async function mergeSortAndPageList(
         poqStats,
     };
 
-    // if (signing not requested) return unsigned;
-    if (listArgument.securityParameters?.target !== ProtectionRequest_signed) {
+    const signResults: boolean = (
+        (listArgument.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
+    if (!signResults) {
         return unsignedReturnValue;
     }
 

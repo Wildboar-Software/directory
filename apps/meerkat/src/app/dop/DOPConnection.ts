@@ -104,6 +104,9 @@ import {
     getStatisticsFromSecurityParameters,
 } from "../telemetry/getStatisticsFromSecurityParameters";
 import { signDirectoryError } from "../pki/signDirectoryError";
+import {
+    compareAuthenticationLevel,
+} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
 
 /**
  * @summary The handles a request, but not errors
@@ -255,8 +258,10 @@ async function handleRequestAndErrors (
          */
         if (
             !("basicLevels" in assn.authLevel)
-            || (assn.authLevel.basicLevels.level < ctx.config.ob.minAuthLevel)
-            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.ob.minAuthLocalQualifier)
+            || compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.ob.minAuthRequired,
+                assn.authLevel.basicLevels,
+            )
         ) {
             throw new SecurityError(
                 ctx.i18n.t("err:not_authorized_ob"),
@@ -343,7 +348,9 @@ async function handleRequestAndErrors (
         }
         if (e instanceof errors.OperationalBindingError) {
             const code = _encode_Code(SecurityError.errcode, DER);
-            const param: typeof operationalBindingError["&ParameterType"] = e.shouldBeSigned
+            // DOP associations are ALWAYS authorized to receive signed responses.
+            const signError: boolean = e.shouldBeSigned;
+            const param: typeof operationalBindingError["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_OpBindingErrorParam)
                 : {
                     unsigned: e.data,
@@ -356,7 +363,9 @@ async function handleRequestAndErrors (
             stats.outcome.error.newAgreementProposed = Boolean(e.data.agreementProposal);
         } else if (e instanceof SecurityError) {
             const code = _encode_Code(errors.SecurityError.errcode, DER);
-            const param: typeof securityError["&ParameterType"] = e.shouldBeSigned
+            // DOP associations are ALWAYS authorized to receive signed responses.
+            const signError: boolean = e.shouldBeSigned;
+            const param: typeof securityError["&ParameterType"] = signError
                 ? signDirectoryError(ctx, e.data, _encode_SecurityErrorData)
                 : {
                     unsigned: e.data,
@@ -454,10 +463,25 @@ class DOPAssociation extends ClientAssociation {
             remotePort: this.socket.remotePort,
             association_id: this.id,
         };
+        /**
+         * ITU Recommendation X.518 (2019), Section 11.1.4 states that:
+         *
+         * > If the Bind request was using strong authentication or if SPKM
+         * > credentials were supplied, then the Bind responder may sign the
+         * > error parameters.
+         */
+        const signErrors: boolean = !!(
+            this.authorizedForSignedErrors
+            && arg_.credentials
+            && (
+                ("strong" in arg_.credentials)
+                || ("spkm" in arg_.credentials)
+            )
+        );
         const startBindTime = new Date();
         let outcome!: BindReturn;
         try {
-            outcome = await doBind(ctx, this.idm.socket, arg_);
+            outcome = await doBind(ctx, this.idm.socket, arg_, signErrors);
         } catch (e) {
             if (e instanceof DSABindError) {
                 ctx.log.warn(e.message);
@@ -533,6 +557,24 @@ class DOPAssociation extends ClientAssociation {
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",
             }), extraLogData);
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.minAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedResults = true;
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
         }
         const bindResult = new DSABindArgument(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
@@ -656,5 +698,14 @@ class DOPAssociation extends ClientAssociation {
             }
             this.prebindRequests.push(request);
         });
+        if ( // This allows bind errors to be signed.
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
+        }
     }
 }
