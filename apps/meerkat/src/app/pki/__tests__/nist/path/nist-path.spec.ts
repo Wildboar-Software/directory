@@ -172,7 +172,7 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
         return expect(result).toEqual(expectedResult);
     });
 
-    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+    it("Fails validation with the path in subtest #2", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
             "Mapping1to2CACert.crt",
