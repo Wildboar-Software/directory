@@ -39,8 +39,14 @@ other Meerkat DSA-related things.
 ## MEERKAT_BIND_MIN_SLEEP_MS
 
 This is the amount of time in milliseconds (at minimum) that Meerkat DSA will
-take to respond to a failed authentication attempt. This exists to stifle
+take to respond to a failed authentication attempt.
+
+:::note
+
+This exists to stifle
 [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
+
+:::
 
 ## MEERKAT_BIND_SLEEP_RANGE_MS
 
@@ -50,8 +56,12 @@ the minimum as configured by the `MEERKAT_BIND_MIN_SLEEP_MS` environment
 variable. The additional time taken in milliseconds is selected uniformly and
 at random from 0 to this number.
 
+:::note
+
 This exists to stifle
 [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
+
+:::
 
 ## MEERKAT_BULK_INSERT_MODE
 
@@ -59,6 +69,25 @@ If set to `1`, this enables bulk-insert mode, where all access control checks
 are disabled, some schema checks are disabled, and other validation is
 disabled. This exists to speed up a bulk insertion of data when a directory is
 still being set up.
+
+:::caution
+
+Enabling this _disables_ access controls. This should NOT be enabled if your
+directory is accessible over a network to users that should not have
+unrestricted access.
+
+This SHOULD be turned off and Meerkat DSA SHOULD be restarted as soon as the
+initial bulk loading is complete.
+
+:::
+
+:::note
+
+The bulk loading of data does not have to be done in one session. It is possible
+to load some data, exit bulk insert mode, use the directory normally, and later
+re-enable bulk insert mode.
+
+:::
 
 ## MEERKAT_CLIENT_CERT_ENGINE
 
@@ -306,6 +335,14 @@ This defaults to `1`, which corresponds to simple authentication, meaning that,
 to utilize chaining, a user must have authenticated using simple authentication
 or something stronger.
 
+Possible values are:
+
+- `0` for no authentication / anonymous.
+- `1` for simple authentication, which corresponds to any authentication
+  mechanism using a password, regardless of whether that password is presented
+  in plain text or with some form of hashing or encryption.
+- `2` for strong authentication, which corresponds to Strong or SPKM authentication.
+
 ## MEERKAT_MIN_AUTH_LEVEL_FOR_OB
 
 The integer representation of the minimum authentication level required for
@@ -314,6 +351,14 @@ Meerkat DSA to accept DOP requests.
 This defaults to `1`, which corresponds to simple authentication, meaning that,
 to use DOP, a DSA must have authenticated using simple authentication
 or something stronger.
+
+Possible values are:
+
+- `0` for no authentication / anonymous.
+- `1` for simple authentication, which corresponds to any authentication
+  mechanism using a password, regardless of whether that password is presented
+  in plain text or with some form of hashing or encryption.
+- `2` for strong authentication, which corresponds to Strong or SPKM authentication.
 
 ## MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING
 
@@ -339,9 +384,14 @@ does not matter.
 
 This specifies the minimum number of bytes a TCP connection is expected to
 transfer within one minute. If the average number of bytes per minute falls
-below this number, the TCP socket is closed. This is important for the
-prevention of
+below this number, the TCP socket is closed.
+
+:::note
+
+This is important for the prevention of
 [Slow Loris attacks](https://en.wikipedia.org/wiki/Slowloris_(computer_security)).
+
+:::
 
 ## MEERKAT_MY_ACCESS_POINT_NSAPS
 
@@ -371,17 +421,55 @@ If set to `1`, Meerkat DSA will not log to the console.
 
 If set to `1`, Meerkat DSA will not include the timestamp in log messages.
 
+
+:::caution
+
+Enabling this (thereby turning off timestamps in log messages) can make your
+logs unusable, since you might not know when a particular concerning log event
+was recorded. Unless you record log timestamps in some other manner, it is
+strongly recommended that you do not enable this option.
+
+:::
+
 ## MEERKAT_OB_AUTO_ACCEPT
 
 If set to `1`, Meerkat DSA shall accept ALL requested operational bindings.
-Your DSA is INSECURE if this is enabled. This should ONLY be enabled
-for testing purposes.
+ <!-- This should ONLY be enabled
+for testing purposes. -->
+
+:::caution
+
+Your DSA is **INSECURE** if this is enabled. It means that your DSA will
+automatically agree to:
+
+- Replicate an arbitrarily large amount of data
+- Defer to any other DSA for chained operations
+- Create any requested subtree within the DIT
+
+:::
 
 ## MEERKAT_OPEN_TOP_LEVEL
 
 If set to `1`, Meerkat DSA will not apply any access controls to adding new
 entries to the top level. Note that this does not negate access controls for
 already-existing first-level DSEs.
+
+:::caution
+
+This option being enabled reduces security of the system, because users can
+arbitarily create new entries at the top level. Only enable this option if you
+would not mind any connected user creating an arbitrarily large number of top
+level entries.
+
+:::
+
+:::info
+
+This is useful for testing purposes, because you can create "test subtrees"
+within a single DSA for the purposes of testing functionality in isolation from
+other tests.
+
+:::
 
 ## MEERKAT_PRIVATE_KEY_ENGINE
 
@@ -390,7 +478,111 @@ OpenSSL can use to obtain a private key.
 
 ## MEERKAT_PROHIBIT_CHAINING
 
-If set to `1`, Meerkat DSA will not chain any requests.
+If set to `1`, Meerkat DSA will not chain any requests. If you expect to operate
+your DSA instance in isolation from all other DSAs, it is recommended to enable
+this (meaning that chaining would be disabled).
+
+## MEERKAT_SCVP_ATTR_CERT_CHECKS
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_ATTR_CERT_WANT_BACKS
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_CACHED_RESPONSE
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_DISCLOSE_AE_TITLE
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_FULL_REQUEST_IN_RESPONSE
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_HASH_ALGORITHM
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_INHIBIT_ANY_POLICY
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_INHIBIT_POLICY_MAPPING
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_PUBLIC_KEY_CERT_CHECKS
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_PUBLIC_KEY_CERT_WANT_BACKS
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_REQUESTOR_TEXT
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_REQUIRE_EXPLICIT_POLICY
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_RESPONSE_VALIDATION_POLICY_BY_REF
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_SIGNATURE_ALGORITHM
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_URL
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_VALIDATION_ALGORITHM_ID
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
+## MEERKAT_SCVP_VALIDATION_POLICY_REF_ID
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
 
 ## MEERKAT_SENTINEL_DOMAIN
 
@@ -402,17 +594,425 @@ soon as it detects this.
 This exists so that Meerkat DSA may be remotely shut down in the event that
 a severe security vulnerability is discovered. It is a "remote killswitch."
 
+## MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES
+
+A list of object identifiers of certificate policies that are acceptable for a
+X.509 certification path processing for certification paths used for signed arguments, results, or errors.
+
+The value of this environment variable, if set, should be a comma-delimited list
+of period-delimited object identifiers of the acceptable certification
+policies (e.g. `1.2.3.4, 5.6.7.8`). Whitespace between object identifiers and
+commas is tolerated.
+
+If not set, any policy or no explicit policy will be considered acceptable for
+the purposes of X.509 certification path processing.
+
+## MEERKAT_SIGNING_BIND_ACCEPTABLE_CERT_POLICIES
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_CRL_DP_ATTEMPTS_PER_CERT
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_MAX_ENDPOINTS_PER_CRL_DP
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_OCSP_CHECKINESS
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_OCSP_CHECKINESS`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_OCSP_MAX_REQUESTS_PER_CERT
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_OCSP_SIGN_REQUESTS
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_OCSP_SIGN_REQUESTS`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_OCSP_TIMEOUT
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_OCSP_TIMEOUT`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_OCSP_UNKNOWN_IS_FAILURE
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_REMOTE_CRL_CACHE_TTL
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_REMOTE_CRL_CACHE_TTL`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_REMOTE_CRL_CHECKINESS
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_REMOTE_CRL_CHECKINESS`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_REMOTE_CRL_SUPPORTED_PROTOCOLS
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_REMOTE_CRL_SUPPORTED_PROTOCOLS`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_REMOTE_CRL_TIMEOUT
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_REMOTE_CRL_TIMEOUT`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_BIND_TOLERATE_UNAVAILABLE_REMOTE_CRL
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_TOLERATE_UNAVAILABLE_REMOTE_CRL`
+for the bind operation for all application contexts / protocols.
+
+## MEERKAT_SIGNING_CA_FILE
+
+The filepath of the certificate authority certificates file to use for
+verifying signed arguments, results, and errors. This is NOT used for TLS; the
+TLS equivalent of this variable is [`MEERKAT_TLS_CA_FILE`](#meerkattlscafile).
+
+The format of this file is the same as `MEERKAT_SIGNING_CERT_CHAIN`, but there
+is no meaning imputed to the ordering of certificates in this file.
+
+If this is unspecified, a default bundle of trust anchors that are built into
+the NodeJS runtime (curated by Mozilla) are trusted. This is usually good
+enough for most use cases.
+
+If this option _is_ specified, it does not _add_ to the default trust anchors
+mentioned above: it _overwrites_ them. That means that, if you want to add your
+own trust anchor, but still trust Mozilla's curated default trust anchors, you
+MUST obtain this bundle of certificates and add it to this file.
+
+This option does _add_ to the trust anchors trusted with the
+[`MEERKAT_TRUST_ANCHORS_FILE`](#meerkattrustanchorsfile) file.
+
+:::info
+
+The reason that two configuration options exist for setting trust anchors is
+so that the more commonly used PEM format can be used, but the more extensible
+Trust Anchor List format can be used, if that is desired.
+
+:::
+
 ## MEERKAT_SIGNING_CERT_CHAIN
 
 The filepath to a certificate chain to use for signing requests and responses
 from the DSA. This does not affect TLS and may be a totally different chain
 than that used for TLS.
 
+## MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT
+
+The maximum number of CRL distribution points from which to attempt to fetch a
+remote CRL per a given X.509 certificate.
+
+To limit the number of endpoints within a distribution point that get checked,
+see
+[`MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP`](#meerkatsigningmaxendpointspercrldp).
+
+:::info
+
+To clarify, a given X.509 certificate may have multiple CRL distribution points
+listed. Each CRL distribution point may, in turn, have multiple endpoints.
+
+:::
+
+:::info
+
+This exists to prevent denial-of-service attacks by clients that present X.509
+certificates that have an outrageously large number of CRL distribution points.
+
+:::
+
+## MEERKAT_SIGNING_CRL_FILE
+
+The filepath to the PEM-encoded certificate revocation list (CRL) file to use
+for evaluating the status of certificates used for signed arguments, results,
+and errors.
+
+There may be multiple CRLs concatenated together. There is no meaning imputed to
+the ordering of CRLs in this file.
+
+The file contents should look like this if you open them up in a text editor:
+
+```
+-----BEGIN X509 CRL-----
+<Some base64-encoded data starting with "MII">
+-----END X509 CRL-----
+-----BEGIN X509 CRL-----
+<Some base64-encoded data starting with "MII">
+-----END X509 CRL-----
+-----BEGIN X509 CRL-----
+<Some base64-encoded data starting with "MII">
+-----END X509 CRL-----
+```
+
+## MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL
+
+This overrides the value of
+[`MEERKAT_SIGNING_MIN_AUTH_LEVEL`](#meerkatsigningminauthlevel),
+but only for signed errors.
+
+## MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER
+
+This overrides the value of
+[`MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER`](#meerkatsigningminauthlocalqualifier),
+but only for signed errors.
+
+## MEERKAT_SIGNING_ERRORS_MIN_AUTH_SIGNED
+
+This overrides the value of
+[`MEERKAT_SIGNING_MIN_AUTH_SIGNED`](#meerkatsigningminauthsigned),
+but only for signed errors.
+
 ## MEERKAT_SIGNING_KEY
 
-The filepath to a private key to use for signing requests and responses
-from the DSA. This does not affect TLS and may be a totally different key
-than that used for TLS.
+The filepath to the PEM-encoded PKCS #8-formatted private key to use for signing
+arguments, results, and errors from this DSA. This does not affect TLS and may
+be a totally different key than that used for TLS (which is configured via the
+[`MEERKAT_TLS_KEY_FILE`](#meerkattlskeyfile) environment variable).
+
+The file contents should look like this if you open them up in a text editor:
+
+```
+-----BEGIN PRIVATE KEY-----
+<Some base64-encoded data starting with "MII">
+-----END PRIVATE KEY-----
+```
+
+:::caution
+
+This file is a secret key. Do not give it to anybody unless you are sure that
+they should be able to impersonate / act on behalf of this Meerkat DSA instance.
+
+:::
+
+## MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP
+
+The maximum number of endpoints (URLs, directory names, etc.) to check within a
+given CRL distribution point listed on an X.509 certificate. This MUST be unset
+or an unsigned decimal integer.
+
+To limit the number of distribution points checked, see
+[`MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT`](#meerkatsigningcrldpattemptspercert).
+
+:::info
+
+To clarify, a given X.509 certificate may have multiple CRL distribution points
+listed. Each CRL distribution point may, in turn, have multiple endpoints.
+
+:::
+
+:::info
+
+This exists to prevent denial-of-service attacks by clients present X.509
+certificates that have an outrageously large number of endpoints listed in a
+given CRL distribution point.
+
+:::
+
+## MEERKAT_SIGNING_MIN_AUTH_LEVEL
+
+The integer representation of the minimum authentication level required for
+Meerkat DSA to sign results or errors to a client. If a client does not meet
+this level of authentication, requests for signed results or errors will not
+be honored; it will not result in an error if the client requests signed results
+or errors.
+
+This is important, because digital signing can be computationally expensive, so
+it may be desirable to prevent anonymous users from overwhelming the directory
+with unnecessary signing.
+
+This defaults to `1`, which corresponds to simple authentication, meaning that,
+to receive signed results or errors, a user must have authenticated using simple
+authentication or something stronger.
+
+Possible values are:
+
+- `0` for no authentication / anonymous.
+- `1` for simple authentication, which corresponds to any authentication
+  mechanism using a password, regardless of whether that password is presented
+  in plain text or with some form of hashing or encryption.
+- `2` for strong authentication, which corresponds to Strong or SPKM authentication.
+
+If a different setting is desired for errors only, consider setting the
+[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL`](#meerkatsigningerrorsminauthlevel)
+environment variable to override this for errors.
+
+## MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER
+
+The minimum `localQualifier` "points" required (on top of the minimum
+authentication level) for Meerkat DSA to sign results or errors for a given
+client / association. This shall be a positive integer.
+
+If the minimum authentication level--as configured by the
+`MEERKAT_SIGNING_MIN_AUTH_LEVEL` environment variable--is exceeded, this value
+does not matter.
+
+If a different setting is desired for errors only, consider setting the
+[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER`](#meerkatsigningerrorsminauthlocalqualifier)
+environment variable to override this for errors.
+
+## MEERKAT_SIGNING_MIN_AUTH_SIGNED
+
+If set to `1` a client association shall have signed arguments for a given
+operation in order to receive signed results or errors.
+
+If a different setting is desired for errors only, consider setting the
+[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_SIGNED`](#meerkatsigningerrorsminauthsigned)
+environment variable to override this for errors.
+
+## MEERKAT_SIGNING_OCSP_CHECKINESS
+
+If set to `0` or unset, this DSA will not check with OCSP responders for the
+status of an asserted certificate used in producing signed arguments, results,
+or errors. If greater than zero, this DSA will check
+with OCSP responders for the status of an asserted certificate (if an OCSP
+responder is defined for that certificate)
+~~and cache the result for this value's number of seconds~~.
+
+## MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT
+
+The maximum number of OCSP responders to check with before giving up for a given certificate. This MUST be an unsigned integer, or unset. If unset, this defaults
+to `3`.
+
+## MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT
+
+The maximum size in bytes of OCSP responses. If an OCSP response is fetched and
+it exceeds this size, Meerkat DSA will cancel fetching it, and/or refuse to
+decode it. This limit should NOT be considered exact.
+
+:::info
+
+This is important because OCSP requests can be configured to be submitted
+automatically by Meerkat DSA to any endpoint listed on an X.509 certificate
+presented by a client / association. This prevents a malicious user from
+presenting Meerkat DSA with a malicious X.509 certificate that defers to a
+maliciously-designed OCSP responder that responds with an exhaustively large
+payload that inundates this Meerkat DSA instance.
+
+:::
+
+## MEERKAT_SIGNING_OCSP_SIGN_REQUESTS
+
+If set to `1`, Meerkat DSA will use its signing key to digitally sign OCSP
+requests issued to verify signed arguments, results, or errors, and present its
+signing certificate chain to the OCSP responder.
+
+## MEERKAT_SIGNING_OCSP_TIMEOUT
+
+The number of seconds for a given OCSP responder to respond before Meerkat DSA
+abandons the request. If set, this MUST be an unsigned decimal integer.
+
+## MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE
+
+If set to `1`, Meerkat DSA will treat OCSP responses that indicate that a
+certificate's status is `unknown` as a failure, as though the certificate was
+`revoked`. This only applies to verification of signed arguments, results, or
+errors--not OCSP responses received via TLS.
+
+## MEERKAT_SIGNING_PERMITTED_ALGORITHMS
+
+A comma-delimited list of dot-formatted object identifiers of signing algorithms
+that are permitted for verifying signed arguments, results, and errors.
+Whitespace is tolerated between object identifiers and commas.
+
+If specified, only the intersection of this list and Meerkat DSA's innately
+supported signature algorithms will be tolerated in digital signatures. If not
+specified, Meerkat will tolerate the use of any of its supported signature
+algorithms.
+
+## MEERKAT_SIGNING_REMOTE_CRL_CACHE_TTL
+
+The number of seconds during which a fetched remote CRL shall remain in the
+cache of remote CRLs. If set, this MUST be an unsigned decimal integer. If not
+set, this defaults to 300 (five minutes).
+
+:::info
+
+This is important, because CRLs can be quite large, and downloading a CRL for
+every single request can inundate Meerkat DSA (or any program, for that matter).
+
+:::
+
+## MEERKAT_SIGNING_REMOTE_CRL_CHECKINESS
+
+Determines how aggressively this DSA demands to check remote CRLs.
+
+Possible values are:
+
+- `0`, meaning _never_ check remote CRLs.
+- `1`, meaning _only_ check remote CRLs when the `cRLDistributionPoints` X.509v3
+  extension is marked as "critical."
+- `2`, meaning _always_ check remote CRLs, even if the `cRLDistributionPoints`
+  X.509v3 extension is _not_ marked as "critical."
+
+## MEERKAT_SIGNING_REMOTE_CRL_SIZE_LIMIT
+
+The maximum size in bytes of remote CRLs. If a remote CRL is fetched and it
+exceeds this size, Meerkat DSA will cancel fetching it. This limit should NOT be considered exact. When used by LDAP, which can return multiple objects in
+a single "fetch," the size limit applies to the entire response packet. When
+used by DAP, this applies per-attribute, but remote DSAs may ignore this.
+
+## MEERKAT_SIGNING_REMOTE_CRL_SUPPORTED_PROTOCOLS
+
+The protcols to be supported by remote CRL fetching, identified by their URL
+scheme equivalents, e.g. "http", "ftp", "ldaps", etc. If `undefined`, all
+supported fetching protocols will be allowed. Protocols MUST be separated by
+commas and optional whitespace.
+
+## MEERKAT_SIGNING_REMOTE_CRL_TIMEOUT
+
+The number of seconds for a given CRL distribution point to respond before
+Meerkat DSA abandons the request. If specified, this MUST be an unsigned decimal
+integer. If unspecified, this defaults to `5` (five seconds).
+
+## MEERKAT_SIGNING_REQUIRED_FOR_CHAINING
+
+If set to `1`, Meerkat DSA will NOT chain DAP operations that have not been
+signed.
+
+## MEERKAT_SIGNING_REQUIRED_FOR_OB
+
+If set to `1`, Meerkat DSA will reject Directory Operational Binding Management
+Protocol (DOP) requests that are not signed.
+
+:::info
+
+This exists because operational binding management is an extremely
+security-sensitive aspect of directory management. Requiring signing is a great
+way to prevent hacking attempts via malicious DOP requests.
+
+:::
+
+## MEERKAT_SIGNING_TOLERATE_UNAVAILABLE_REMOTE_CRL
+
+If set to `1`, unavailable remote CRLs will not be treated as a failure for the
+purposes of certification path validation.
+
+## MEERKAT_TLS_ANSWER_OCSP_REQUESTS
+
+If set to `1`, Meerkat DSA will answer OCSP requests submitted as a part of the
+TLS handshake.
 
 ## MEERKAT_TCP_NO_DELAY
 
@@ -427,11 +1027,44 @@ after which the TCP connection will be reset.
 
 ## MEERKAT_TLS_CA_FILE
 
-The filepath of the certificate authority certs file to use for mTLS.
+The filepath of the certificate authority certificates file to use for TLS. This
+is used both for validating TLS clients that connect to Meerkat DSA and TLS
+servers to which Meerkat DSA connects as a client (such as in chained
+operations).
+
+The format of this file is the same as `MEERKAT_TLS_CERT_FILE`, but there is no
+meaning imputed to the ordering of certificates in this file.
+
+If this is unspecified, a default bundle of trust anchors that are built into
+the NodeJS runtime (curated by Mozilla) are trusted. This is usually good
+enough for most use cases.
+
+If this option _is_ specified, it does not _add_ to the default trust anchors
+mentioned above: it _overwrites_ them. That means that, if you want to add your
+own trust anchor, but still trust Mozilla's curated default trust anchors, you
+MUST obtain this bundle of certificates and add it to this file.
 
 ## MEERKAT_TLS_CERT_FILE
 
-The filepath of the PEM-encoded X.509 certificate chain to use for TLS.
+The filepath of the PEM-encoded X.509 certificate chain to use for TLS. The
+certs should be ordered by ascending authority: in other words, the certificate
+authority / trust anchor certificate should be closest to the _bottom_ of the
+file and the end-entity certificate (used directly by Meerkat DSA) should be
+closest to the _top_ of the file.
+
+The file contents should look like this if you open them up in a text editor:
+
+```
+-----BEGIN CERTIFICATE-----
+<Some base64-encoded data starting with "MII">
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+<Some base64-encoded data starting with "MII">
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+<Some base64-encoded data starting with "MII">
+-----END CERTIFICATE-----
+```
 
 ## MEERKAT_TLS_CIPHERS
 
@@ -448,7 +1081,23 @@ directory protocols are enabled.
 ## MEERKAT_TLS_CRL_FILE
 
 The filepath to the PEM-encoded certificate revocation list (CRL) file to use
-for evaluating the status of TLS client certificates.
+for evaluating the status of TLS client certificates. There may be multiple
+CRLs concatenated together. There is no meaning imputed to the ordering of CRLs
+in this file.
+
+The file contents should look like this if you open them up in a text editor:
+
+```
+-----BEGIN X509 CRL-----
+<Some base64-encoded data starting with "MII">
+-----END X509 CRL-----
+-----BEGIN X509 CRL-----
+<Some base64-encoded data starting with "MII">
+-----END X509 CRL-----
+-----BEGIN X509 CRL-----
+<Some base64-encoded data starting with "MII">
+-----END X509 CRL-----
+```
 
 ## MEERKAT_TLS_DH_PARAM_FILE
 
@@ -462,23 +1111,129 @@ will be closed.
 
 ## MEERKAT_TLS_KEY_FILE
 
-The filepath to the private key to use for TLS.
+The filepath to the PEM-encoded PKCS #8-formatted private key to use for TLS.
+
+The file contents should look like this if you open them up in a text editor:
+
+```
+-----BEGIN PRIVATE KEY-----
+<Some base64-encoded data starting with "MII">
+-----END PRIVATE KEY-----
+```
+
+:::caution
+
+This file is a secret key. Do not give it to anybody unless you are sure that
+they should be able to impersonate / act on behalf of this Meerkat DSA instance.
+
+:::
 
 ## MEERKAT_TLS_KEY_PASSPHRASE
 
 The password to use to decrypt the private key to use for TLS.
 
+:::caution
+
+This value is a secret. Do not give it to anybody unless you are sure that
+they should be able to impersonate / act on behalf of this Meerkat DSA instance.
+
+:::
+
 ## MEERKAT_TLS_MAX_VERSION
 
-The maximum TLS version supported.
+The maximum TLS version supported as a string. Possible values are:
+
+- `TLSv1.3`
+- `TLSv1.2`
+- `TLSv1.1`
+- `TLSv1`
 
 ## MEERKAT_TLS_MIN_VERSION
 
-The minimum TLS version supported.
+The minimum TLS version supported. Possible values are:
+
+- `TLSv1.3`
+- `TLSv1.2`
+- `TLSv1.1`
+- `TLSv1`
+
+:::caution
+
+Avoid setting this value to `TLSv1.1` or `TLSv1` unless absolutely necessary.
+These versions of TLS are much less secure. (Though, still better than no
+TLS at all.)
+
+:::
+
+## MEERKAT_TLS_OCSP_CHECKINESS
+
+If set to `0` or unset, this DSA will not check with OCSP responders for the
+status of an asserted certificate used in TLS. If greater than zero, this DSA
+will check with OCSP responders for the status of an asserted certificate (if an
+OCSP responder is defined for that certificate)
+~~and cache the result for this value's number of seconds~~.
+
+## MEERKAT_TLS_OCSP_SIGN_REQUESTS
+
+If set to `1`, Meerkat DSA will use its signing key to digitally sign OCSP
+requests issued in relation to TLS, and present its
+signing certificate chain to the OCSP responder.
+
+## MEERKAT_TLS_OCSP_UNKNOWN_IS_FAILURE
+
+If set to `1`, Meerkat DSA will treat OCSP responses that indicate that a
+certificate's status is `unknown` as a failure, as though the certificate was
+`revoked`. This only applies to verification OCSP responses received via TLS and
+does not affect the verification of signed arguments, results, or errors.
 
 ## MEERKAT_TLS_PFX_FILE
 
 The filepath to a PFX / PKCS #12 file to use for TLS.
+
+:::caution
+
+This is a security-sensitive file that contains both your X.509 certificate
+chain as well as your private key. Do NOT give this file to anybody that should
+not be able to impersonate / act on behalf of this Meerkat DSA instance.
+
+:::
+
+## MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS
+
+If set to `0`, Meerkat DSA will NOT refuse to establish a TLS session with a
+client that does not present a valid X.509 certification path that can be trusted
+according to the trust anchors defined in the `MEERKAT_TLS_CA_FILE` file. This
+is used to enable TLS client certificate authentication, otherwise known as
+Mutual TLS (mTLS). This defaults to `1`, meaning that it will be enabled
+**if and only if** `MEERKAT_TLS_CLIENT_CERT_AUTH` is set to `1` as well.
+
+:::caution
+
+This setting only has an effect if `MEERKAT_TLS_CLIENT_CERT_AUTH` is set to `1`
+as well.
+
+:::
+
+## MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS
+
+If set to `0`, Meerkat DSA will NOT refuse to establish a TLS session with a
+server that does not present a valid X.509 certification path that can be trusted
+according to the trust anchors defined in the `MEERKAT_TLS_CA_FILE` file. This
+defaults to enabled, meaning that the identities of TLS servers will be checked
+as is usually expected from TLS.
+
+:::caution
+
+It is a security vulnerability to set this to `0`, because Meerkat DSA will not
+check the identities of peers that it connects to over TLS!
+
+:::
+
+## MEERKAT_TLS_REQUEST_OCSP
+
+If set to `1`, Meerkat DSA will request OCSP stapling from TLS peers to which
+it acts as a client and validate the stapled OCSP responses, if present. This
+applies to both TLS clients and TLS servers.
 
 ## MEERKAT_TLS_SESSION_TIMEOUT_IN_SECONDS
 
@@ -492,7 +1247,11 @@ digest algorithms (SHA256, MD5 etc.), public key algorithms (RSA-PSS, ECDSA
 etc.), combination of both (e.g 'RSA+SHA384') or TLS v1.3 scheme names (e.g.
 rsa_pss_pss_sha512).
 
-> I copied the above from the NodeJS documentation.
+:::info
+
+I copied the above from the NodeJS documentation.
+
+:::
 
 ## MEERKAT_TRANSCODE_DISTINGUISHED_VALUES_TO_DER
 
@@ -504,10 +1263,24 @@ Currently unused.
 
 ## MEERKAT_TRUST_ANCHORS_FILE
 
-The filepath of the DER-encoded Trust Anchor List file. See
+The filepath of the Trust Anchor List file. See
 [IETF RFC 5914](https://datatracker.ietf.org/doc/html/rfc5914). This file
-contains information on the trust anchors to be used for TLS and verifying
-signed operations.
+contains information on the trust anchors to be used for verifying
+signed arguments, results, and errors.
+
+The trust anchor list shall be encapsulated in a Cryptographic Message Syntax
+(CMS) message. It does not need to be the top-level object, however. It can be
+nested within authenticated data, signed data, or digested data objects, as
+defined in [IETF RFC 5652](https://datatracker.ietf.org/doc/html/rfc5652).
+
+This file may also be PEM-encoded. The PEM label must be `TRUST ANCHOR LIST`,
+such that the file looks like this when opened in a text editor:
+
+```
+-----BEGIN TRUST ANCHOR LIST-----
+<Some base64-encoded data>
+-----END TRUST ANCHOR LIST-----
+```
 
 ## MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES
 
