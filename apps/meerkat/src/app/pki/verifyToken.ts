@@ -1,5 +1,5 @@
 import type { MeerkatContext } from "../ctx";
-import { DERElement, packBits } from "asn1-ts";
+import { DERElement, packBits, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type {
     CertificationPath,
@@ -12,11 +12,17 @@ import {
 import {
     _encode_TokenContent,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TokenContent.ta";
+import {
+    KeyUsage_digitalSignature,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta";
+import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants";
 
 export const VT_RETURN_CODE_OK: number = 0;
 export const VT_RETURN_CODE_UNTRUSTED: number = 1;
 export const VT_RETURN_CODE_INVALID_SIG: number = 2;
 export const VT_RETURN_CODE_MALFORMED: number = 3;
+export const VT_RETURN_CODE_KEY_USAGE: number = 4;
+export const VT_RETURN_CODE_PKUP: number = 5;
 
 /**
  * @summary Verify something that is cryptographically signed with X.509 SIGNED{}
@@ -47,9 +53,42 @@ async function verifyToken (
             return VT_RETURN_CODE_MALFORMED;
         }
     }
-    const vacpResult = await verifyAnyCertPath(ctx, certPath);
+    const vacpResult = await verifyAnyCertPath(
+        ctx,
+        certPath,
+        ctx.config.signing.bindOverrides?.acceptableCertificatePolicies,
+    );
     if (vacpResult.returnCode !== VCP_RETURN_OK) {
         return VT_RETURN_CODE_UNTRUSTED;
+    }
+    if (
+        vacpResult.endEntityKeyUsage
+        && (vacpResult.endEntityKeyUsage[KeyUsage_digitalSignature] !== TRUE_BIT)
+    ) {
+        return VT_RETURN_CODE_KEY_USAGE;
+    }
+    if (
+        vacpResult.endEntityExtKeyUsage
+        && !vacpResult.endEntityExtKeyUsage
+            .some((eku) => (
+                eku.isEqualTo(id_anyExtendedKeyUsage)
+                || eku.isEqualTo(id_kp_clientAuth)
+            ))
+    ) {
+        return VT_RETURN_CODE_KEY_USAGE;
+    }
+    const now = new Date();
+    if (
+        (
+            vacpResult.endEntityPrivateKeyNotBefore
+            && (now < vacpResult.endEntityPrivateKeyNotBefore)
+        )
+        || (
+            vacpResult.endEntityPrivateKeyNotAfter
+            && (now > vacpResult.endEntityPrivateKeyNotAfter)
+        )
+    ) {
+        return VT_RETURN_CODE_PKUP;
     }
     const signedData = token.originalDER
         ? (() => {

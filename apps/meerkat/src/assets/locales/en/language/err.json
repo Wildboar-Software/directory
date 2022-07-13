@@ -165,6 +165,8 @@
     "hob_invalid_entryInfo": "The potential superior DSA supplied entryInfo that describes an entry that is invalid for this reason: {{e}}.",
     "cert_path_invalid@arg": "COULD_BAN={{host}}; Invalid certification path for association {{aid}} on invocation {{iid}}.",
     "cert_path_invalid@result": "Invalid certification path in result of invocation {{iid}} from access point {{ap}}.",
+    "invalid_key_usage": "Invalid key usage on the end-entity certificate used for cryptographic signature.",
+    "invalid_pkup": "End-entity private key not permitted by the certificate's private key usage period.",
     "invalid_signature@arg": "COULD_BAN={{host}}; Invalid signature for invocation {{iid}} from association {{aid}}.",
     "invalid_signature@result": "Invalid signature on result for invocation {{iid}} from access point {{ap}}.",
     "cert_path_required_signed@arg": "COULD_BAN={{host}}; Certification-path parameter is required when providing a signed argument, but was missing from invocation {{iid}} from association {{aid}}.",

@@ -1,5 +1,12 @@
-import { Context, Vertex, LogLevel } from "@wildboar/meerkat-types";
+import {
+    Context,
+    SigningInfo,
+    Vertex,
+    LogLevel,
+    RemoteCRLCheckiness,
+} from "@wildboar/meerkat-types";
 import { v4 as uuid } from "uuid";
+import { DER } from "asn1-ts/dist/node/functional";
 import {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
@@ -16,10 +23,11 @@ import {
 } from "@wildboar/x500/src/lib/distributed/uri";
 import * as path from "path";
 import { URL } from "url";
-import { DEFAULT_IDM_BUFFER_SIZE, DEFAULT_LDAP_BUFFER_SIZE } from "./constants";
 import {
-    AuthenticationLevel_basicLevels_level_simple,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+    DEFAULT_IDM_BUFFER_SIZE,
+    DEFAULT_LDAP_BUFFER_SIZE,
+    DEFAULT_REMOTE_CRL_CACHE_TTL,
+} from "./constants";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
 import type { TelemetryClient } from "applicationinsights";
@@ -27,14 +35,70 @@ import * as appInsights from "applicationinsights";
 import { telemetryDomain } from "./constants";
 import * as dns from "dns/promises";
 import { PEMObject } from "pem-ts";
-import { BERElement, DERElement } from "asn1-ts";
+import { BERElement, DERElement, ObjectIdentifier } from "asn1-ts";
 import {
     CertificateList,
     _decode_CertificateList,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
 import {
+    TrustAnchorList,
     _decode_TrustAnchorList,
 } from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+import {
+    id_ct_trustAnchorList,
+} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/id-ct-trustAnchorList.va";
+import {
+    id_stc_build_valid_pkc_path,
+} from "@wildboar/scvp/src/lib/modules/SCVP-2009/id-stc-build-valid-pkc-path.va";
+import {
+    id_stc_build_aa_path,
+} from "@wildboar/scvp/src/lib/modules/SCVP-2009/id-stc-build-aa-path.va";
+import {
+    id_ct_contentInfo,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-ct-contentInfo.va";
+import {
+    id_ct_authData,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-ct-authData.va";
+import {
+    id_signedData,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-signedData.va";
+import {
+    id_digestedData,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-digestedData.va";
+import {
+    ContentInfo,
+    _decode_ContentInfo,
+    _encode_ContentInfo,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/ContentInfo.ta";
+import {
+    _decode_AuthenticatedData,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/AuthenticatedData.ta";
+import {
+    _decode_SignedData,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/SignedData.ta";
+import type {
+    EncapsulatedContentInfo,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/EncapsulatedContentInfo.ta";
+import {
+    _decode_DigestedData,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/DigestedData.ta";
+import {
+    Certificate,
+    _decode_Certificate,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+import { KeyObject, createPrivateKey } from "crypto";
+import {
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import {
+    AuthenticationLevel_basicLevels_level_none,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM";
+import type {
+    PkiPath,
+} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
+import { rootCertificates } from "tls";
+import { strict as assert } from "assert";
 
 export
 interface MeerkatTelemetryClient {
@@ -51,6 +115,123 @@ interface MeerkatTelemetryClient {
 export
 interface MeerkatContext extends Context {
     telemetry: MeerkatTelemetryClient;
+}
+
+function unencapsulateContentInfo (
+    encap: EncapsulatedContentInfo,
+): ContentInfo | null {
+    const innerContent = new BERElement();
+    if (!encap.eContent) {
+        return null;
+    }
+    innerContent.fromBytes(encap.eContent);
+    const innerCinfo = new ContentInfo(
+        encap.eContentType,
+        innerContent,
+    );
+    return innerCinfo;
+}
+
+function parseTrustAnchorListBlob (blob: Uint8Array): TrustAnchorList {
+    const el = new BERElement();
+    el.fromBytes(blob);
+    const cinfo = _decode_ContentInfo(el);
+    if (cinfo.contentType.isEqualTo(id_ct_trustAnchorList)) {
+        const tal = _decode_TrustAnchorList(cinfo.content);
+        return tal;
+    }
+    else if (cinfo.contentType.isEqualTo(id_ct_contentInfo)) {
+        return parseTrustAnchorListBlob(Buffer.from(cinfo.content.toBytes()));
+    }
+    else if (cinfo.contentType.isEqualTo(id_ct_authData)) {
+        const adata = _decode_AuthenticatedData(cinfo.content);
+        const innerCinfo = unencapsulateContentInfo(adata.encapContentInfo);
+        if (!innerCinfo) {
+            return [];
+        }
+        return parseTrustAnchorListBlob(_encode_ContentInfo(innerCinfo, DER).toBytes());
+    }
+    else if (cinfo.contentType.isEqualTo(id_signedData)) {
+        const sdata = _decode_SignedData(cinfo.content);
+        const innerCinfo = unencapsulateContentInfo(sdata.encapContentInfo);
+        if (!innerCinfo) {
+            return [];
+        }
+        return parseTrustAnchorListBlob(_encode_ContentInfo(innerCinfo, DER).toBytes());
+    }
+    else if (cinfo.contentType.isEqualTo(id_digestedData)) {
+        const ddata = _decode_DigestedData(cinfo.content);
+        const innerCinfo = unencapsulateContentInfo(ddata.encapContentInfo);
+        if (!innerCinfo) {
+            return [];
+        }
+        return parseTrustAnchorListBlob(_encode_ContentInfo(innerCinfo, DER).toBytes());
+    }
+    else {
+        /**
+         * Any other content type will be ignored, either because it is
+         * unrecognized, or because it contains encrypted data. Maybe in the
+         * future, Meerkat DSA will support some sort of decryption key via an
+         * environment variable, but there is little reason to support this now.
+         */
+        return [];
+    }
+}
+
+const TRUST_ANCHOR_LIST_PEM_LABEL: string = "TRUST ANCHOR LIST";
+
+// FIXME: Unit testing
+function parseTrustAnchorListFile (data: Buffer): TrustAnchorList {
+    const pemEncoded: boolean = (data
+        .indexOf(`-----BEGIN ${TRUST_ANCHOR_LIST_PEM_LABEL}-----`) > -1);
+    if (pemEncoded) {
+        const pems = PEMObject.parse(data.toString("utf8"));
+        const tals = pems
+            .filter((p) => (p.label === TRUST_ANCHOR_LIST_PEM_LABEL))
+            .map((p) => parseTrustAnchorListBlob(p.data));
+        return tals.flat();
+    } else {
+        return parseTrustAnchorListBlob(data);
+    }
+}
+
+function parseCerts (data: string): Certificate[] {
+    return PEMObject.parse(data).map((p) => {
+        const el = new BERElement();
+        el.fromBytes(p.data);
+        return _decode_Certificate(el);
+    });
+}
+
+function parseCRLs (data: string): CertificateList[] {
+    return PEMObject.parse(data).map((p) => {
+        const el = new BERElement();
+        el.fromBytes(p.data);
+        return _decode_CertificateList(el);
+    });
+}
+
+function parseKey (data: Buffer): KeyObject | null {
+    return createPrivateKey({
+        key: Buffer.from(data),
+        format: "pem",
+    });
+}
+
+function parseAuthLevel (
+    levelStr: string | undefined,
+    lqStr: string | undefined,
+    signedStr: string | undefined,
+): AuthenticationLevel_basicLevels {
+    return new AuthenticationLevel_basicLevels(
+        levelStr
+            ? Number.parseInt(levelStr, 10)
+            : AuthenticationLevel_basicLevels_level_none,
+        lqStr
+            ? Number.parseInt(lqStr, 10)
+            : undefined,
+        (signedStr === "1"),
+    );
 }
 
 const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
@@ -158,20 +339,75 @@ if (logToHTTP) {
     winstonTransports.push(new winston.transports.Http(logToHTTP));
 }
 
-const caFileContents: string | undefined = process.env.MEERKAT_TLS_CA_FILE
+const tlsCAFileContents: string | undefined = process.env.MEERKAT_TLS_CA_FILE
     ? fs.readFileSync(process.env.MEERKAT_TLS_CA_FILE, { encoding: "utf-8" })
     : undefined;
 
-const crlFileContents: string | undefined = process.env.MEERKAT_TLS_CRL_FILE
+const tlsCRLFileContents: string | undefined = process.env.MEERKAT_TLS_CRL_FILE
     ? fs.readFileSync(process.env.MEERKAT_TLS_CRL_FILE, { encoding: "utf-8" })
+    : undefined;
+
+const signingCAFileContents: string | undefined = process.env.MEERKAT_SIGNING_CA_FILE
+    ? fs.readFileSync(process.env.MEERKAT_SIGNING_CA_FILE, { encoding: "utf-8" })
+    : undefined;
+
+const signingCRLFileContents: string | undefined = process.env.MEERKAT_SIGNING_CRL_FILE
+    ? fs.readFileSync(process.env.MEERKAT_SIGNING_CRL_FILE, { encoding: "utf-8" })
+    : undefined;
+
+const signingCertFileContents: string | undefined = process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE
+    ? fs.readFileSync(process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE, { encoding: "utf-8" })
+    : undefined;
+
+const signingKeyFileContents: Buffer | undefined = process.env.MEERKAT_SIGNING_KEY_FILE
+    ? fs.readFileSync(process.env.MEERKAT_SIGNING_KEY_FILE)
     : undefined;
 
 const talFileContents: Buffer | undefined = process.env.MEERKAT_TRUST_ANCHORS_FILE
     ? fs.readFileSync(process.env.MEERKAT_TRUST_ANCHORS_FILE)
     : undefined;
 
-const decodedCRLs: CertificateList[] = crlFileContents
-    ? PEMObject.parse(crlFileContents)
+const signingCACerts: Certificate[] = signingCAFileContents
+    ? parseCerts(signingCAFileContents)
+    : [];
+
+const signingCRLs: CertificateList[] = signingCRLFileContents
+    ? parseCRLs(signingCRLFileContents)
+    : [];
+
+const signingCertChain: PkiPath = signingCertFileContents
+    ? decodePkiPathFromPEM(signingCertFileContents)
+    : [];
+
+const signingKey: KeyObject | null = signingKeyFileContents
+    ? parseKey(signingKeyFileContents)
+    : null;
+
+const trustAnchorList: TrustAnchorList = talFileContents
+    ? [
+        ...parseTrustAnchorListFile(talFileContents),
+        ...signingCACerts.map((certificate) => ({ certificate })),
+    ]
+    : signingCACerts.map((certificate) => ({ certificate }));
+
+/**
+ * If the trust anchor list is unpopulated, use the default root certificates.
+ */
+if (trustAnchorList.length === 0) {
+    trustAnchorList.push(...rootCertificates
+        .map((str) => {
+            const pems = PEMObject.parse(str);
+            const pem = pems[0];
+            assert(pem);
+            const el = new BERElement();
+            el.fromBytes(pem.data);
+            const certificate = _decode_Certificate(el);
+            return { certificate };
+        }));
+}
+
+const decodedCRLs: CertificateList[] = tlsCRLFileContents
+    ? PEMObject.parse(tlsCRLFileContents)
         .map((p) => {
             const el = new DERElement();
             el.fromBytes(p.data);
@@ -179,8 +415,84 @@ const decodedCRLs: CertificateList[] = crlFileContents
         })
     : [];
 
+const signingAuthLevel = parseAuthLevel(
+    process.env.MEERKAT_SIGNING_MIN_AUTH_LEVEL,
+    process.env.MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER,
+    process.env.MEERKAT_SIGNING_AUTH_SIGNED,
+);
+
+const signingErrorsAuthLevel = (
+    process.env.MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL
+    || process.env.MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER
+    || process.env.MEERKAT_SIGNING_ERRORS_AUTH_SIGNED
+)
+    ? parseAuthLevel(
+        process.env.MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL,
+        process.env.MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER,
+        process.env.MEERKAT_SIGNING_ERRORS_AUTH_SIGNED,
+    )
+    : signingAuthLevel;
+
+const bindOverrides: SigningInfo["bindOverrides"] = {
+    remoteCRLCheckiness: process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_CHECKINESS
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_CHECKINESS, 10)
+        : undefined,
+    remoteCRLSupportedProtocols: process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_SUPPORTED_PROTOCOLS
+        ? new Set(
+            process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_SUPPORTED_PROTOCOLS
+                .split(",")
+                .map((p) => p.trim()),
+        )
+        : undefined,
+    tolerateUnavailableRemoteCRL: process.env.MEERKAT_SIGNING_BIND_TOLERATE_UNAVAILABLE_REMOTE_CRL
+        ? (process.env.MEERKAT_SIGNING_BIND_TOLERATE_UNAVAILABLE_REMOTE_CRL === "1")
+        : undefined,
+    remoteCRLCacheTimeToLiveInSeconds: process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_CACHE_TTL
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_CACHE_TTL, 10)
+        : undefined,
+    ocspCheckiness: process.env.MEERKAT_SIGNING_BIND_OCSP_CHECKINESS
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_OCSP_CHECKINESS, 10)
+        : undefined, // Do not check OCSP
+    ocspUnknownIsFailure: process.env.MEERKAT_SIGNING_BIND_OCSP_UNKNOWN_IS_FAILURE
+        ? (process.env.MEERKAT_SIGNING_BIND_OCSP_UNKNOWN_IS_FAILURE === "1")
+        : undefined,
+    ocspSignRequests: process.env.MEERKAT_SIGNING_BIND_OCSP_SIGN_REQUESTS
+        ? (process.env.MEERKAT_SIGNING_BIND_OCSP_SIGN_REQUESTS === "1")
+        : undefined,
+    acceptableCertificatePolicies: process.env.MEERKAT_SIGNING_BIND_ACCEPTABLE_CERT_POLICIES
+        ? process.env.MEERKAT_SIGNING_BIND_ACCEPTABLE_CERT_POLICIES
+            .split(",")
+            .map((oid) => ObjectIdentifier.fromString(oid.trim()))
+        : undefined,
+    maxOCSPRequestsPerCertificate: process.env.MEERKAT_SIGNING_BIND_OCSP_MAX_REQUESTS_PER_CERT
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_OCSP_MAX_REQUESTS_PER_CERT, 10)
+        : undefined,
+    ocspTimeout: process.env.MEERKAT_SIGNING_BIND_OCSP_TIMEOUT
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_OCSP_TIMEOUT, 10)
+        : undefined,
+    distributionPointAttemptsPerCertificate: process.env.MEERKAT_SIGNING_BIND_CRL_DP_ATTEMPTS_PER_CERT
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_CRL_DP_ATTEMPTS_PER_CERT)
+        : undefined,
+    endpointsToAttemptPerDistributionPoint: process.env.MEERKAT_SIGNING_BIND_MAX_ENDPOINTS_PER_CRL_DP
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_MAX_ENDPOINTS_PER_CRL_DP, 10)
+        : undefined,
+    remoteCRLTimeout: process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_TIMEOUT
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_TIMEOUT, 10)
+        : undefined,
+    ocspReplayWindow: process.env.MEERKAT_SIGNING_BIND_OCSP_REPLAY_WINDOW
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_OCSP_REPLAY_WINDOW, 10)
+        : undefined,
+    ocspResponseSizeLimit: process.env.MEERKAT_SIGNING_BIND_OCSP_RESPONSE_SIZE_LIMIT
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_OCSP_RESPONSE_SIZE_LIMIT, 10)
+        : undefined,
+    remoteCRLFetchSizeLimit: process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_SIZE_LIMIT
+        ? Number.parseInt(process.env.MEERKAT_SIGNING_BIND_REMOTE_CRL_SIZE_LIMIT, 10)
+        : undefined,
+};
+
 const ctx: MeerkatContext = {
     i18n,
+    // TODO: Refactor out of here.
     config: {
         log: {
             level: logLevel as LogLevel,
@@ -221,14 +533,90 @@ const ctx: MeerkatContext = {
                 ? Number.parseInt(process.env.MEERKAT_MIN_TRANSFER_SPEED_BYTES_PER_MINUTE)
                 : 1000, // A sensible default, since AX.25 radio typically transmits 150 bytes/second.
         },
+        signing: {
+            key: signingKey ?? undefined,
+            certPath: signingCertChain,
+            minAuthRequired: signingAuthLevel,
+            signedErrorsMinAuthRequired: signingErrorsAuthLevel,
+            permittedSignatureAlgorithms: process.env.MEERKAT_SIGNING_PERMITTED_ALGORITHMS
+                ? new Set(
+                    process.env.MEERKAT_SIGNING_PERMITTED_ALGORITHMS
+                        .split(",")
+                        .map((oid) => oid.trim()),
+                )
+                : undefined,
+            trustAnchorList,
+            certificateRevocationLists: signingCRLs,
+            remoteCRLCheckiness: process.env.MEERKAT_SIGNING_REMOTE_CRL_CHECKINESS
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_REMOTE_CRL_CHECKINESS, 10)
+                : RemoteCRLCheckiness.never,
+            remoteCRLSupportedProtocols: process.env.MEERKAT_SIGNING_REMOTE_CRL_SUPPORTED_PROTOCOLS
+                ? new Set(
+                    process.env.MEERKAT_SIGNING_REMOTE_CRL_SUPPORTED_PROTOCOLS
+                        .split(",")
+                        .map((p) => p.trim()),
+                )
+                : undefined,
+            remoteCRLFetchSizeLimit: process.env.MEERKAT_SIGNING_REMOTE_CRL_SIZE_LIMIT
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_REMOTE_CRL_SIZE_LIMIT, 10)
+                : 1_000_000, // 1MB would be a pretty large CRL!
+            tolerateUnavailableRemoteCRL: (process.env.MEERKAT_SIGNING_TOLERATE_UNAVAILABLE_REMOTE_CRL === "1"),
+            remoteCRLCacheTimeToLiveInSeconds: Number.parseInt(
+                process.env.MEERKAT_SIGNING_REMOTE_CRL_CACHE_TTL
+                ?? DEFAULT_REMOTE_CRL_CACHE_TTL.toString(), 10),
+            ocspCheckiness: process.env.MEERKAT_SIGNING_OCSP_CHECKINESS
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_OCSP_CHECKINESS, 10)
+                : -1, // Do not check OCSP
+            ocspUnknownIsFailure: (process.env.MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE === "1"),
+            ocspSignRequests: (process.env.MEERKAT_SIGNING_OCSP_SIGN_REQUESTS === "1"),
+            ocspTimeout: process.env.MEERKAT_SIGNING_OCSP_TIMEOUT
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_OCSP_TIMEOUT, 10)
+                : 5,
+            ocspReplayWindow: process.env.MEERKAT_SIGNING_OCSP_REPLAY_WINDOW
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_OCSP_REPLAY_WINDOW, 10)
+                : 15,
+            ocspResponseSizeLimit: process.env.MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT, 10)
+                : 10_000,
+            maxOCSPRequestsPerCertificate: process.env.MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT, 10)
+                : 3,
+            revokedCertificateSerialNumbers: new Set(
+                signingCRLs
+                    .flatMap((crl) => crl.toBeSigned.revokedCertificates
+                        ?.map((rc) => Buffer.from(rc.serialNumber).toString("base64")) ?? []),
+            ),
+            acceptableCertificatePolicies: process.env.MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES
+                ? process.env.MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES
+                    .split(",")
+                    .map((oid) => ObjectIdentifier.fromString(oid.trim()))
+                : undefined,
+            distributionPointAttemptsPerCertificate: process.env.MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT)
+                : 3,
+            endpointsToAttemptPerDistributionPoint: process.env.MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP, 10)
+                : 3,
+            remoteCRLTimeout: process.env.MEERKAT_SIGNING_REMOTE_CRL_TIMEOUT
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_REMOTE_CRL_TIMEOUT, 10)
+                : 5,
+            bindOverrides,
+        },
         tls: {
+            answerOCSPRequests: (process.env.MEERKAT_TLS_ANSWER_OCSP_REQUESTS === "1"),
+            rejectUnauthorizedClients: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS !== "0"),
+            rejectUnauthorizedServers: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS !== "0"),
             handshakeTimeout: process.env.MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
                 ? Number.parseInt(process.env.MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS) * 1000
                 : 30000,
             sessionTimeout: process.env.MEERKAT_TLS_SESSION_TIMEOUT_IN_SECONDS
                 ? Number.parseInt(process.env.MEERKAT_TLS_SESSION_TIMEOUT_IN_SECONDS) * 1000
                 : undefined,
-            rejectUnauthorized: (process.env.MEERKAT_TLS_CLIENT_CERT_AUTH === "1"),
+            /**
+             * This MUST NOT be set here, because whether to `rejectUnauthorized`
+             * will be based on whether this DSA is acting as a server or client.
+             */
+            // rejectUnauthorized: (process.env.THIS_WAS_A_BUG === "1"),
             requestCert: (process.env.MEERKAT_TLS_CLIENT_CERT_AUTH === "1"),
             cert: process.env.MEERKAT_TLS_CERT_FILE
                 ? fs.readFileSync(process.env.MEERKAT_TLS_CERT_FILE, { encoding: "utf-8" })
@@ -236,8 +624,8 @@ const ctx: MeerkatContext = {
             key: process.env.MEERKAT_TLS_KEY_FILE
                 ? fs.readFileSync(process.env.MEERKAT_TLS_KEY_FILE, { encoding: "utf-8" })
                 : undefined,
-            ca: caFileContents,
-            crl: crlFileContents,
+            ca: tlsCAFileContents,
+            crl: tlsCRLFileContents,
             pfx: process.env.MEERKAT_TLS_PFX_FILE
                 ? fs.readFileSync(process.env.MEERKAT_TLS_PFX_FILE)
                 : undefined,
@@ -256,8 +644,8 @@ const ctx: MeerkatContext = {
             // ticketKeys?: Buffer | undefined;
             // pskCallback?(socket: TLSSocket, identity: string): DataView | NodeJS.TypedArray | null;
             // pskIdentityHint: process.env.MEERKAT_PSK_IDENTITY_HINT
-            certificateRevocationLists: crlFileContents
-                ? PEMObject.parse(crlFileContents)
+            certificateRevocationLists: tlsCRLFileContents
+                ? PEMObject.parse(tlsCRLFileContents)
                     .map((p) => {
                         const el = new DERElement();
                         el.fromBytes(p.data);
@@ -269,14 +657,81 @@ const ctx: MeerkatContext = {
                     .flatMap((crl) => crl.toBeSigned.revokedCertificates
                         ?.map((rc) => rc.serialNumber.toString()) ?? []),
             ),
-            trustAnchorList: talFileContents
+            trustAnchorList: tlsCAFileContents
                 ? (() => {
-                    const el = new BERElement();
-                    el.fromBytes(talFileContents);
-                    return _decode_TrustAnchorList(el);
+                    const pems = PEMObject.parse(tlsCAFileContents);
+                    return pems.map((p) => {
+                        const el = new BERElement();
+                        el.fromBytes(p.data);
+                        return {
+                            certificate: _decode_Certificate(el),
+                        };
+                    });
                 })()
                 : [],
+            ocspCheckiness: process.env.MEERKAT_TLS_OCSP_CHECKINESS
+                ? Number.parseInt(process.env.MEERKAT_TLS_OCSP_CHECKINESS, 10)
+                : 0, // By default, do not check OCSP.
+            ocspSignRequests: (process.env.MEERKAT_TLS_OCSP_SIGN_REQUESTS === "1"),
+            ocspUnknownIsFailure: (process.env.MEERKAT_TLS_OCSP_UNKNOWN_IS_FAILURE === "1"),
+            ocspTimeout: process.env.MEERKAT_TLS_OCSP_TIMEOUT
+                ? Number.parseInt(process.env.MEERKAT_TLS_OCSP_TIMEOUT, 10)
+                : 5,
+            ocspReplayWindow: process.env.MEERKAT_TLS_OCSP_REPLAY_WINDOW
+                ? Number.parseInt(process.env.MEERKAT_TLS_OCSP_REPLAY_WINDOW, 10)
+                : 15,
+            maxOCSPRequestsPerCertificate: process.env.MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT
+                ? Number.parseInt(process.env.MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT, 10)
+                : 3,
+            requestOCSP: (process.env.MEERKAT_TLS_REQUEST_OCSP === "1"),
+            ocspResponseSizeLimit: process.env.MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT
+                ? Number.parseInt(process.env.MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT, 10)
+                : 10_000,
         },
+        scvp: (process.env.MEERKAT_SCVP_URL && process.env.MEERKAT_SCVP_VALIDATION_POLICY_REF_ID)
+            ? {
+                url: new URL(process.env.MEERKAT_SCVP_URL),
+                discloseAETitle: (process.env.MEERKAT_SCVP_DISCLOSE_AE_TITLE === "1"),
+                requestorText: process.env.MEERKAT_SCVP_REQUESTOR_TEXT,
+                publicKeyCertificateChecks: process.env.MEERKAT_SCVP_PUBLIC_KEY_CERT_CHECKS
+                    ? process.env.MEERKAT_SCVP_PUBLIC_KEY_CERT_CHECKS
+                        .split(",")
+                        .map((oid) => ObjectIdentifier.fromString(oid.trim()))
+                    : [id_stc_build_valid_pkc_path], // A sensible default.
+                attributeCertificateChecks: process.env.MEERKAT_SCVP_ATTR_CERT_CHECKS
+                    ? process.env.MEERKAT_SCVP_ATTR_CERT_CHECKS
+                        .split(",")
+                        .map((oid) => ObjectIdentifier.fromString(oid.trim()))
+                    : [id_stc_build_aa_path], // A sensible default.
+                publicKeyCertificateWantBacks: process.env.MEERKAT_SCVP_PUBLIC_KEY_CERT_WANT_BACKS
+                    ? process.env.MEERKAT_SCVP_PUBLIC_KEY_CERT_WANT_BACKS
+                        .split(",")
+                        .map((oid) => ObjectIdentifier.fromString(oid.trim()))
+                    : [],
+                attributeCertificateWantBacks: process.env.MEERKAT_SCVP_ATTR_CERT_WANT_BACKS
+                    ? process.env.MEERKAT_SCVP_ATTR_CERT_WANT_BACKS
+                        .split(",")
+                        .map((oid) => ObjectIdentifier.fromString(oid.trim()))
+                    : [],
+                validationPolicyRefId: ObjectIdentifier.fromString(process.env.MEERKAT_SCVP_VALIDATION_POLICY_REF_ID),
+                validationAlgorithmId: process.env.MEERKAT_SCVP_VALIDATION_ALGORITHM_ID
+                    ? ObjectIdentifier.fromString(process.env.MEERKAT_SCVP_VALIDATION_ALGORITHM_ID)
+                    : undefined,
+                inhibitPolicyMapping: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
+                requireExplicitPolicy: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
+                inhibitAnyPolicy: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
+                fullRequestInResponse: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
+                responseValidationPolicyByRef: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
+                protectResponse: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
+                cachedResponse: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
+                signatureAlgorithm: process.env.MEERKAT_SCVP_SIGNATURE_ALGORITHM
+                    ? ObjectIdentifier.fromString(process.env.MEERKAT_SCVP_SIGNATURE_ALGORITHM.trim())
+                    : undefined,
+                hashAlgorithm: process.env.MEERKAT_SCVP_HASH_ALGORITHM
+                    ? ObjectIdentifier.fromString(process.env.MEERKAT_SCVP_HASH_ALGORITHM.trim())
+                    : undefined,
+            }
+            : undefined,
         idm: {
             port: process.env.MEERKAT_IDM_PORT
                 ? Number.parseInt(process.env.MEERKAT_IDM_PORT, 10)
@@ -291,6 +746,8 @@ const ctx: MeerkatContext = {
                 ? Number.parseInt(process.env.MEERKAT_MAX_IDM_SEGMENTS, 10)
                 : 10,
         },
+        // FIXME: All of the secure protocols should not be enabled if there is no
+        // TLS key or cert.
         idms: {
             port: process.env.MEERKAT_IDMS_PORT
                 ? Number.parseInt(process.env.MEERKAT_IDMS_PORT, 10)
@@ -338,20 +795,22 @@ const ctx: MeerkatContext = {
                 : 0,
         },
         chaining: {
-            minAuthLevel: process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING
-                ? Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING, 10)
-                : AuthenticationLevel_basicLevels_level_simple,
-            minAuthLocalQualifier: process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING
-                ? Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING, 10)
-                : 0,
+            minAuthRequired: parseAuthLevel(
+                process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING ?? "1",
+                process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB,
+                process.env.MEERKAT_SIGNING_REQUIRED_FOR_OB,
+            ),
             tlsOptional: (process.env.MEERKAT_CHAINING_TLS_OPTIONAL === "1"),
             prohibited: process.env.MEERKAT_PROHIBIT_CHAINING
                 ? (process.env.MEERKAT_PROHIBIT_CHAINING === "1")
                 : false,
         },
         ob: {
-            minAuthLevel: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_OB ?? "1"),
-            minAuthLocalQualifier: Number.parseInt(process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB ?? "128"),
+            minAuthRequired: parseAuthLevel(
+                process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_OB ?? "1",
+                process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB ?? "128",
+                process.env.MEERKAT_SIGNING_REQUIRED_FOR_OB,
+            ),
             autoAccept: (process.env.MEERKAT_OB_AUTO_ACCEPT === "1"),
         },
         sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,

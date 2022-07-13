@@ -9,6 +9,7 @@ import {
     BOOLEAN,
     OPTIONAL,
     packBits,
+    TRUE_BIT,
 } from "asn1-ts";
 import { ASN1Encoder, DER } from "asn1-ts/dist/node/functional";
 import type {
@@ -35,6 +36,10 @@ import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractS
 import { RDNSequence } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RDNSequence.ta";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import { INTERNAL_ASSOCIATON_ID } from "../constants";
+import {
+    KeyUsage_digitalSignature,
+} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta";
+import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants";
 
 /**
  * @summary Verify something that is cryptographically signed with X.509 SIGNED{}
@@ -99,7 +104,11 @@ async function verifySIGNED <T> (
             );
         }
     }
-    const vacpResult = await verifyAnyCertPath(ctx, certPath);
+    const vacpResult = await verifyAnyCertPath(
+        ctx,
+        certPath,
+        ctx.config.signing.acceptableCertificatePolicies,
+    );
     if (vacpResult.returnCode !== VCP_RETURN_OK) {
         throw new SecurityError(
             ctx.i18n.t("err:cert_path_invalid", {
@@ -109,6 +118,89 @@ async function verifySIGNED <T> (
                 iid: printInvokeId(invokeId),
                 ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
             }),
+            new SecurityErrorData(
+                SecurityProblem_invalidCredentials,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    if (
+        vacpResult.endEntityKeyUsage
+        && (vacpResult.endEntityKeyUsage[KeyUsage_digitalSignature] !== TRUE_BIT)
+    ) {
+        throw new SecurityError(
+            ctx.i18n.t("err:invalid_key_usage"),
+            new SecurityErrorData(
+                SecurityProblem_invalidCredentials,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    if (
+        vacpResult.endEntityExtKeyUsage
+        && !vacpResult.endEntityExtKeyUsage
+            .some((eku) => (
+                eku.isEqualTo(id_anyExtendedKeyUsage)
+                || eku.isEqualTo(id_kp_clientAuth)
+            ))
+    ) {
+        throw new SecurityError(
+            ctx.i18n.t("err:invalid_key_usage"),
+            new SecurityErrorData(
+                SecurityProblem_invalidCredentials,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    const now = new Date();
+    if (
+        (
+            vacpResult.endEntityPrivateKeyNotBefore
+            && (now < vacpResult.endEntityPrivateKeyNotBefore)
+        )
+        || (
+            vacpResult.endEntityPrivateKeyNotAfter
+            && (now > vacpResult.endEntityPrivateKeyNotAfter)
+        )
+    ) {
+        throw new SecurityError(
+            ctx.i18n.t("err:invalid_pkup"),
             new SecurityErrorData(
                 SecurityProblem_invalidCredentials,
                 undefined,
