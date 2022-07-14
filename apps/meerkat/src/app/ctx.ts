@@ -534,6 +534,7 @@ const ctx: MeerkatContext = {
                 : 1000, // A sensible default, since AX.25 radio typically transmits 150 bytes/second.
         },
         signing: {
+            disableAllSignatureVerification: (process.env.MEERKAT_SIGNING_DISABLE_VERIFICATION === "1"),
             key: signingKey ?? undefined,
             certPath: signingCertChain,
             minAuthRequired: signingAuthLevel,

@@ -77,6 +77,9 @@ async function verifySIGNED <T> (
     argOrResult: "arg" | "result" = "arg",
     ae_title_rdnSequence?: RDNSequence,
 ): Promise<void> {
+    if (ctx.config.signing.disableAllSignatureVerification) {
+        return;
+    }
     const remoteHostIdentifier = assn
         ? `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`
         : "";

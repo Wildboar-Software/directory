@@ -23,6 +23,7 @@ export const VT_RETURN_CODE_INVALID_SIG: number = 2;
 export const VT_RETURN_CODE_MALFORMED: number = 3;
 export const VT_RETURN_CODE_KEY_USAGE: number = 4;
 export const VT_RETURN_CODE_PKUP: number = 5;
+export const VT_RETURN_CODE_VERIFY_DISABLED: number = 6;
 
 /**
  * @summary Verify something that is cryptographically signed with X.509 SIGNED{}
@@ -48,6 +49,9 @@ async function verifyToken (
     certPath: CertificationPath,
     token: Token,
 ): Promise<number> {
+    if (ctx.config.signing.disableAllSignatureVerification) {
+        return VT_RETURN_CODE_VERIFY_DISABLED;
+    }
     for (const pair of certPath.theCACertificates ?? []) {
         if (!pair.issuedToThisCA) {
             return VT_RETURN_CODE_MALFORMED;

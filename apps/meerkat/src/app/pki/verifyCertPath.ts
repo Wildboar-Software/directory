@@ -735,6 +735,9 @@ async function checkRemoteCRLs (
             if (Buffer.compare(rc.serialNumber, serialNumber)) {
                 continue;
             }
+            if (ctx.config.signing.disableAllSignatureVerification) {
+                return VCP_RETURN_CRL_REVOKED;
+            }
             const bytes = crl.originalDER
                 ?? _encode_CertificateList(crl, DER).toBytes();
             const sigValue = packBits(crl.signature);

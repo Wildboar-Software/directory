@@ -805,6 +805,19 @@ The file contents should look like this if you open them up in a text editor:
 -----END X509 CRL-----
 ```
 
+## MEERKAT_SIGNING_DISABLE_VERIFICATION
+
+Whether no digital signatures should be checked at all. If this is set to
+`1`, all digital signatures and certification paths will not be checked at all.
+
+When used for bind operations using strong authentication, the signature
+will always be treated as invalid. The rationale for this is that it
+prevents users from obtaining strong authentication with invalid
+credentials. Users will be forced to use simple or lesser authentication.
+
+For all other operations, signatures will simply be ignored, but requests
+may be treated as signed for the purposes of validation.
+
 ## MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL
 
 This overrides the value of

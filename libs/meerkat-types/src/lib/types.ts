@@ -1355,6 +1355,21 @@ export
 interface SigningInfo extends PublicKeyInfrastructureConfig {
 
     /**
+     * Whether no digital signatures should be checked at all. If this is
+     * `true`, all digital signatures and certification paths will not be
+     * checked at all.
+     *
+     * When used for bind operations using strong authentication, the signature
+     * will always be treated as invalid. The rationale for this is that it
+     * prevents users from obtaining strong authentication with invalid
+     * credentials. Users will be forced to use simple or lesser authentication.
+     *
+     * For all other operations, signatures will simply be ignored, but requests
+     * may be treated as signed for the purposes of validation.
+     */
+    disableAllSignatureVerification: boolean;
+
+    /**
      * The filepath to a private key to use for signing requests and responses
      * from the DSA. This does not affect TLS and may be a totally different key
      * than that used for TLS.
@@ -2650,6 +2665,7 @@ interface Context {
 
     /** An index of substrings matching rules by object identifier strings and names */
     substringsMatchingRules: Map<IndexableOID, MatchingRuleInfo<SubstringsMatcher>>;
+
     /**
      * An index of substrings matching rules by object identifier strings and
      * names.

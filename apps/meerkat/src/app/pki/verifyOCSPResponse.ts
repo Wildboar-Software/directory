@@ -42,7 +42,7 @@ export const VOR_RETURN_UNKNOWN_INTOLERABLE: number = -7;
 export const VOR_RETURN_REPLAY_ATTACK: number = -8;
 export const VOR_RETURN_INVALID_SIG: number = -9;
 export const VOR_RETURN_INVALID_CERT_PATH: number = -10;
-export const VOR_RETURN_INVALID_KEY_USAGE: number = -10;
+export const VOR_RETURN_INVALID_KEY_USAGE: number = -11;
 
 export
 async function verifyOCSPResponse (
@@ -87,6 +87,9 @@ async function verifyOCSPResponse (
     const producedTimeDev = Math.abs(differenceInSeconds(producedAt, now));
     if (producedTimeDev > ctx.config.tls.ocspReplayWindow) {
         return VOR_RETURN_REPLAY_ATTACK;
+    }
+    if (ctx.config.signing.disableAllSignatureVerification) {
+        return VOR_RETURN_OK;
     }
     const signedBytes = _encode_ResponseData(basicRes.tbsResponseData, DER).toBytes();
     const certPath: CertificationPath = new CertificationPath(
