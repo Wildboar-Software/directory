@@ -57,6 +57,7 @@ async function verifyToken (
         ctx,
         certPath,
         ctx.config.signing.bindOverrides?.acceptableCertificatePolicies,
+        ctx.config.signing.bindOverrides,
     );
     if (vacpResult.returnCode !== VCP_RETURN_OK) {
         return VT_RETURN_CODE_UNTRUSTED;

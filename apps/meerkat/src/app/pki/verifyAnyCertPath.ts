@@ -10,6 +10,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
 import { MeerkatContext } from "../ctx";
 import { OBJECT_IDENTIFIER } from "asn1-ts";
+import type { SigningInfo } from "@wildboar/meerkat-types";
 
 /**
  * @description
@@ -28,6 +29,7 @@ function verifyAnyCertPath (
     ctx: MeerkatContext,
     certPath: CertificationPath,
     acceptableCertificatePolicies?: OBJECT_IDENTIFIER[],
+    options?: Partial<SigningInfo>,
 ): ReturnType<typeof verifyCertPath> {
     /**
      * This set of parameters was suggested by ITU Recommendation X.509
@@ -50,5 +52,5 @@ function verifyAnyCertPath (
         initial_required_name_forms: [],
         trustAnchors: ctx.config.signing.trustAnchorList,
     };
-    return verifyCertPath(ctx, vcpArgs);
+    return verifyCertPath(ctx, vcpArgs, options);
 }

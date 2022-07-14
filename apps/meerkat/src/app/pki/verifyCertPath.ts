@@ -1,7 +1,11 @@
 import {
     Context,
+    CRLIndex,
     IndexableOID,
     OCSPOptions,
+    OfflinePKIConfig,
+    RemoteCRLOptions,
+    SigningInfo,
 } from "@wildboar/meerkat-types";
 import { Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
 import {
@@ -206,6 +210,7 @@ import {
     VOR_RETURN_REVOKED,
     VOR_RETURN_UNKNOWN_INTOLERABLE,
 } from "./verifyOCSPResponse";
+import _ from "lodash";
 
 export type VCPReturnCode = number;
 export const VCP_RETURN_OK: VCPReturnCode = 0;
@@ -705,6 +710,7 @@ async function checkRemoteCRLs (
     subjectCert: Certificate,
     issuerCert: Certificate,
     readDispatcher: ReadDispatcherFunction,
+    options: RemoteCRLOptions,
 ): Promise<number> {
     assert(ext.extnId.isEqualTo(cRLDistributionPoints["&id"]!));
     const crlEl = new DERElement();
@@ -712,13 +718,13 @@ async function checkRemoteCRLs (
     const crldpValue = cRLDistributionPoints.decoderFor["&ExtnType"]!(crlEl);
     const crls = (await Promise.all(
         crldpValue
-            .slice(0, ctx.config.signing.distributionPointAttemptsPerCertificate)
+            .slice(0, options.distributionPointAttemptsPerCertificate)
             .map((dp) => crlCurl(
                 ctx,
                 dp,
                 issuerCert.toBeSigned.subject,
                 readDispatcher,
-                ctx.config.signing,
+                options,
             ))
     ))
         .filter((result): result is CertificateList[] => !!result)
@@ -909,14 +915,15 @@ function isRevokedFromConfiguredCRLs (
     ctx: Context,
     cert: Certificate,
     asOf: Date,
+    options: CRLIndex & OfflinePKIConfig,
 ): boolean {
     // If the index of revoked certificate serial numbers has this cert's SN,
     // it is worth scanning the CRLs for which cert revoked it.
-    if (!ctx.config.signing.revokedCertificateSerialNumbers.has(cert.toBeSigned.serialNumber.toString())) {
+    if (!options.revokedCertificateSerialNumbers.has(cert.toBeSigned.serialNumber.toString())) {
         return false;
     }
     const namingMatcher = getNamingMatcherGetter(ctx);
-    return ctx.config.signing.certificateRevocationLists
+    return options.certificateRevocationLists
         .some((crl) => (
             // We only care about CRLs that could have applied at the asserted time.
             (getDateFromTime(crl.toBeSigned.thisUpdate) <= asOf)
@@ -942,6 +949,7 @@ async function verifyBasicPublicKeyCertificateChecks (
     issuerCert: Certificate,
     subjectIndex: number,
     readDispatcher: ReadDispatcherFunction,
+    options: SigningInfo,
 ): Promise<number> {
     if (!certIsValidTime(subjectCert, state.validityTime)) {
         return VCP_RETURN_INVALID_TIME;
@@ -960,7 +968,7 @@ async function verifyBasicPublicKeyCertificateChecks (
     if (!signatureIsValid) {
         return VCP_RETURN_INVALID_SIG;
     }
-    if (isRevokedFromConfiguredCRLs(ctx, subjectCert, state.validityTime)) {
+    if (isRevokedFromConfiguredCRLs(ctx, subjectCert, state.validityTime, options)) {
         return VCP_RETURN_CRL_REVOKED;
     }
     const extsGroupedByOID = groupByOID(subjectCert.toBeSigned.extensions ?? [], (ext) => ext.extnId);
@@ -1238,7 +1246,7 @@ async function verifyBasicPublicKeyCertificateChecks (
 
     const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
     if (aiaExt && !state.validityTime) { // We can't
-        const ocspCheckiness = ctx.config.signing.ocspCheckiness;
+        const ocspCheckiness = options.ocspCheckiness;
         if (ocspCheckiness >= 0) {
             const ocspResult = await checkOCSP(ctx, aiaExt, subjectCert, ctx.config.tls);
             if (ocspResult) {
@@ -1256,6 +1264,7 @@ async function verifyBasicPublicKeyCertificateChecks (
             subjectCert,
             issuerCert,
             readDispatcher,
+            options,
         );
         if (crlResult) {
             return crlResult;
@@ -1593,6 +1602,7 @@ async function verifyEndEntityCertificate (
     subjectCert: Certificate,
     issuerCert: Certificate,
     readDispatcher: ReadDispatcherFunction,
+    options: SigningInfo,
 ): Promise<VerifyCertPathState> {
     const basicChecksResult = await verifyBasicPublicKeyCertificateChecks(
         ctx,
@@ -1601,6 +1611,7 @@ async function verifyEndEntityCertificate (
         issuerCert,
         0,
         readDispatcher,
+        options,
     );
     if (basicChecksResult) {
         return {
@@ -1620,6 +1631,7 @@ async function verifyIntermediateCertificate (
     issuerCert: Certificate,
     subjectIndex: number,
     readDispatcher: ReadDispatcherFunction,
+    options: SigningInfo,
 ): Promise<VerifyCertPathState> {
     const basicChecksResult = await verifyBasicPublicKeyCertificateChecks(
         ctx,
@@ -1628,6 +1640,7 @@ async function verifyIntermediateCertificate (
         issuerCert,
         subjectIndex,
         readDispatcher,
+        options,
     );
     if (basicChecksResult) {
         return {
@@ -1661,6 +1674,7 @@ async function verifyCACertificate (
     trustAnchors: TrustAnchorList,
     asOf: Date,
     readDispatcher: ReadDispatcherFunction,
+    options: SigningInfo,
 ): Promise<number> {
     const trustAnchor = trustAnchors?.find((ta) => {
         if ("certificate" in ta) {
@@ -1740,7 +1754,7 @@ async function verifyCACertificate (
     if (!certIsValidTime(cert, asOf)) {
         return VCP_RETURN_INVALID_TIME;
     }
-    if (isRevokedFromConfiguredCRLs(ctx, cert, asOf)) {
+    if (isRevokedFromConfiguredCRLs(ctx, cert, asOf, options)) {
         return VCP_RETURN_CRL_REVOKED;
     }
 
@@ -1779,6 +1793,7 @@ async function verifyCACertificate (
             cert,
             cert,
             readDispatcher,
+            options,
         );
         if (crlResult) {
             return crlResult;
@@ -1903,16 +1918,15 @@ export
 async function verifyCertPath (
     ctx: MeerkatContext,
     args: VerifyCertPathArgs,
+    config?: Partial<SigningInfo>,
 ): Promise<VerifyCertPathResult> {
     const path = args.certPath;
     const caCert = path[path.length - 1];
+    const options: SigningInfo = _.merge({}, config, ctx.config.signing);
 
-    if (
-        ctx.config.signing.permittedSignatureAlgorithms?.size
-    ) {
-        const permittedAlgs = ctx.config.signing.permittedSignatureAlgorithms;
+    if (options.permittedSignatureAlgorithms?.size) {
         for (const cert of path) {
-            if (!permittedAlgs.has(cert.algorithmIdentifier.algorithm.toString())) {
+            if (!options.permittedSignatureAlgorithms.has(cert.algorithmIdentifier.algorithm.toString())) {
                 return {
                     returnCode: VCP_RETURN_PROHIBITED_SIG_ALG,
                     authorities_constrained_policies: [],
@@ -1978,6 +1992,7 @@ async function verifyCertPath (
         args.trustAnchors,
         args.validityTime,
         readDispatcher,
+        options,
     );
     if (caResult) {
         return verifyCertPathFail(caResult);
@@ -1993,6 +2008,7 @@ async function verifyCertPath (
             issuerCert,
             i,
             readDispatcher,
+            options,
         );
         if (intermediateResult.returnCode) {
             return verifyCertPathFail(intermediateResult.returnCode);
@@ -2022,6 +2038,7 @@ async function verifyCertPath (
         endEntityCertificate,
         endEntityIssuerCert,
         readDispatcher,
+        options,
     );
     state.returnCode = endEntityResult.returnCode ?? 0;
     return finalProcessing(args, state);

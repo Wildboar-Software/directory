@@ -613,11 +613,17 @@ This environment variable overrides the value of
 `MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES`
 for the bind operation for all application contexts / protocols.
 
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
+
 ## MEERKAT_SIGNING_BIND_CRL_DP_ATTEMPTS_PER_CERT
 
 This environment variable overrides the value of
 `MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT`
 for the bind operation for all application contexts / protocols.
+
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
 
 ## MEERKAT_SIGNING_BIND_MAX_ENDPOINTS_PER_CRL_DP
 
@@ -625,11 +631,17 @@ This environment variable overrides the value of
 `MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP`
 for the bind operation for all application contexts / protocols.
 
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
+
 ## MEERKAT_SIGNING_BIND_OCSP_CHECKINESS
 
 This environment variable overrides the value of
 `MEERKAT_SIGNING_OCSP_CHECKINESS`
 for the bind operation for all application contexts / protocols.
+
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
 
 ## MEERKAT_SIGNING_BIND_OCSP_MAX_REQUESTS_PER_CERT
 
@@ -637,11 +649,17 @@ This environment variable overrides the value of
 `MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT`
 for the bind operation for all application contexts / protocols.
 
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
+
 ## MEERKAT_SIGNING_BIND_OCSP_SIGN_REQUESTS
 
 This environment variable overrides the value of
 `MEERKAT_SIGNING_OCSP_SIGN_REQUESTS`
 for the bind operation for all application contexts / protocols.
+
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
 
 ## MEERKAT_SIGNING_BIND_OCSP_TIMEOUT
 
@@ -649,11 +667,17 @@ This environment variable overrides the value of
 `MEERKAT_SIGNING_OCSP_TIMEOUT`
 for the bind operation for all application contexts / protocols.
 
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
+
 ## MEERKAT_SIGNING_BIND_OCSP_UNKNOWN_IS_FAILURE
 
 This environment variable overrides the value of
 `MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE`
 for the bind operation for all application contexts / protocols.
+
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
 
 ## MEERKAT_SIGNING_BIND_REMOTE_CRL_CACHE_TTL
 
@@ -661,11 +685,17 @@ This environment variable overrides the value of
 `MEERKAT_SIGNING_REMOTE_CRL_CACHE_TTL`
 for the bind operation for all application contexts / protocols.
 
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
+
 ## MEERKAT_SIGNING_BIND_REMOTE_CRL_CHECKINESS
 
 This environment variable overrides the value of
 `MEERKAT_SIGNING_REMOTE_CRL_CHECKINESS`
 for the bind operation for all application contexts / protocols.
+
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
 
 ## MEERKAT_SIGNING_BIND_REMOTE_CRL_SUPPORTED_PROTOCOLS
 
@@ -673,17 +703,26 @@ This environment variable overrides the value of
 `MEERKAT_SIGNING_REMOTE_CRL_SUPPORTED_PROTOCOLS`
 for the bind operation for all application contexts / protocols.
 
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
+
 ## MEERKAT_SIGNING_BIND_REMOTE_CRL_TIMEOUT
 
 This environment variable overrides the value of
 `MEERKAT_SIGNING_REMOTE_CRL_TIMEOUT`
 for the bind operation for all application contexts / protocols.
 
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
+
 ## MEERKAT_SIGNING_BIND_TOLERATE_UNAVAILABLE_REMOTE_CRL
 
 This environment variable overrides the value of
 `MEERKAT_SIGNING_TOLERATE_UNAVAILABLE_REMOTE_CRL`
 for the bind operation for all application contexts / protocols.
+
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
 
 ## MEERKAT_SIGNING_CA_FILE
 
