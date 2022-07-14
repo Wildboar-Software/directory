@@ -1,5 +1,6 @@
 import { Vertex, ServiceError } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
+import { unpackBits } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import type {
     AccessPoint,
@@ -18,6 +19,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
 import {
     EstablishOperationalBindingArgumentData,
+    _encode_EstablishOperationalBindingArgumentData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
 import {
     id_op_binding_hierarchical,
@@ -64,6 +66,8 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -305,34 +309,57 @@ async function establishSubordinate (
         getDistinguishedName(immediateSuperior),
     );
 
-    const arg: EstablishOperationalBindingArgument = {
-        unsigned: new EstablishOperationalBindingArgumentData(
-            id_op_binding_hierarchical,
-            undefined, // Let the subordinate DSA determine the ID.
-            ctx.dsa.accessPoint,
-            {
-                roleA_initiates: _encode_SuperiorToSubordinate(sup2sub, DER),
-            },
-            _encode_HierarchicalAgreement(agreement, DER),
-            options?.endTime
-                ? new Validity(
-                    {
-                        now: null,
+    const data = new EstablishOperationalBindingArgumentData(
+        id_op_binding_hierarchical,
+        undefined, // Let the subordinate DSA determine the ID.
+        ctx.dsa.accessPoint,
+        {
+            roleA_initiates: _encode_SuperiorToSubordinate(sup2sub, DER),
+        },
+        _encode_HierarchicalAgreement(agreement, DER),
+        options?.endTime
+            ? new Validity(
+                {
+                    now: null,
+                },
+                {
+                    time: {
+                        generalizedTime: options.endTime,
                     },
-                    {
-                        time: {
-                            generalizedTime: options.endTime,
-                        },
-                    },
-                )
-                : undefined,
-            createSecurityParameters(
-                ctx,
-                targetSystem.ae_title.rdnSequence,
-                establishOperationalBinding["&operationCode"],
-            ),
+                },
+            )
+            : undefined,
+        createSecurityParameters(
+            ctx,
+            targetSystem.ae_title.rdnSequence,
+            establishOperationalBinding["&operationCode"],
         ),
-    };
+    );
+    const tbsBytes = _encode_EstablishOperationalBindingArgumentData(data, DER).toBytes();
+    const arg: EstablishOperationalBindingArgument = (() => {
+        const key = ctx.config.signing?.key;
+        if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+            return {
+                unsigned: data,
+            };
+        }
+        const signingResult = generateSignature(key, tbsBytes);
+        if (!signingResult) {
+            return {
+                unsigned: data,
+            };
+        }
+        const [ sigAlg, sigValue ] = signingResult;
+        return {
+            signed: new SIGNED(
+                data,
+                sigAlg,
+                unpackBits(sigValue),
+                undefined,
+                undefined,
+            ),
+        };
+    })();
     const timeRemainingForOperation: number | undefined = timeoutTime
         ? differenceInMilliseconds(timeoutTime, new Date())
         : undefined;

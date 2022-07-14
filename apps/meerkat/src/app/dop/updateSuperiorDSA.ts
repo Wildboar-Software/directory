@@ -45,6 +45,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
 import {
     ModifyOperationalBindingArgumentData,
+    _encode_ModifyOperationalBindingArgumentData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData.ta";
 import {
     SubordinateToSuperior,
@@ -122,6 +123,7 @@ import type {
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { sleep } from "../utils/sleep";
+import { generateSIGNED } from "../pki/generateSIGNED";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -357,8 +359,8 @@ async function updateSuperiorDSA (
                     uuid: true,
                 },
             });
-            const createArg = (securityParameters: SecurityParameters): ModifyOperationalBindingArgument => ({
-                unsigned: new ModifyOperationalBindingArgumentData(
+            const createArg = (securityParameters: SecurityParameters): ModifyOperationalBindingArgument => {
+                const argData = new ModifyOperationalBindingArgumentData(
                     id_op_binding_hierarchical,
                     new OperationalBindingID(
                         bindingID.identifier,
@@ -375,8 +377,14 @@ async function updateSuperiorDSA (
                     encodedNewAgreement,
                     undefined, // Validity remains the same.
                     securityParameters,
-                ),
-            });
+                );
+                const signArgument: boolean = true; // TODO: Make configurable.
+                return (signArgument
+                    ? generateSIGNED(ctx, argData, _encode_ModifyOperationalBindingArgumentData)
+                    : {
+                        unsigned: argData,
+                    });
+            };
             // A binary exponential backoff loop for retrying failed updates.
             for (const backoff of updateTimingBackoffInSeconds) {
                 const sp = createSecurityParameters(

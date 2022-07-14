@@ -8,7 +8,6 @@ import { DER } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-    _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as _encode_ChainedArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     UpdateErrorData,
@@ -73,6 +72,7 @@ import type {
 import { addMilliseconds } from "date-fns";
 import { randomInt } from "crypto";
 import { printInvokeId } from "../utils/printInvokeId";
+import { signChainedArgument } from "../pki/signChainedArgument";
 
 /**
  * @summary Check if name is already taken among NSSR.
@@ -234,10 +234,14 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 ),
                 _encode_ReadArgument(readArg, DER),
             );
+            const signArguments: boolean = true; // TODO: Make configurable.
+            const payload = signArguments
+                ? signChainedArgument(ctx, { unsigned: chained })
+                : { unsigned: chained };
             try {
                 const response = await client.writeOperation({
                     opCode: chainedRead["&operationCode"]!,
-                    argument: _encode_ChainedArgument(chained, DER),
+                    argument: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
                 });
                 if ("result" in response) {
                     throw new errors.UpdateError(

@@ -106,6 +106,9 @@ import {
 import {
     compareAuthenticationLevel,
 } from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
+import {
+    _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 
 /**
  * @summary The handles a request, but not errors
@@ -522,7 +525,10 @@ class DSPAssociation extends ClientAssociation {
                 const err: typeof directoryBindError["&ParameterType"] = {
                     unsigned: e.data,
                 };
-                const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
+                const payload = signErrors
+                    ? signDirectoryError(ctx, e.data, _encode_DBE_Param)
+                    : err;
+                const error = directoryBindError.encoderFor["&ParameterType"]!(payload, DER);
                 idm.writeBindError(dsp_ip["&id"]!, error);
                 const serviceProblem = ("serviceError" in e.data.error)
                     ? e.data.error.serviceError

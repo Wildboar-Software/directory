@@ -321,6 +321,10 @@ async function mergeSortAndPageSearch(
     const resultSetsToReturn: SearchResult[] = [];
     let resultsToReturn: EntryInformation[] = [];
     const foundDN = getDistinguishedName(state.foundDSE);
+    const signResults: boolean = (
+        (searchArgument.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     // If there is no paging, we just return an arbitrary selection of the results that is less than the sizeLimit.
     if (!searchState.paging?.[1]) {
         const sizeLimit: number = searchArgument.serviceControls?.sizeLimit
@@ -368,6 +372,10 @@ async function mergeSortAndPageSearch(
                 unsigned: {
                     uncorrelatedSearchInfo: [
                         ...resultSetsToReturn,
+                        /**
+                         * This will be unsigned, but that's acceptable, because
+                         * the uncorrelatedSearchInfo as a whole will get signed.
+                         */
                         localResult,
                     ],
                 },
@@ -392,7 +400,7 @@ async function mergeSortAndPageSearch(
         };
 
         // if (signing not requested) return unsigned;
-        if (searchArgument.securityParameters?.target !== ProtectionRequest_signed) {
+        if (!signResults) {
             return unsignedReturnValue;
         }
 
@@ -680,10 +688,6 @@ async function mergeSortAndPageSearch(
         poqStats,
     };
 
-    const signResults: boolean = (
-        (searchArgument.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
-    );
     if (!signResults) {
         return unsignedReturnValue;
     }

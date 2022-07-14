@@ -16,6 +16,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
 import {
     TerminateOperationalBindingArgumentData,
+    _encode_TerminateOperationalBindingArgumentData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgumentData.ta";
 import {
     terminateOperationalBinding,
@@ -31,6 +32,7 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import { generateSIGNED } from "../pki/generateSIGNED";
 
 /**
  * @summary Notifies another DSA about a termination of an operational binding.
@@ -86,9 +88,17 @@ async function terminateByTypeAndBindingID (
         undefined,
         undefined,
     );
-    const arg: TerminateOperationalBindingArgument = {
+    const unsignedArg: TerminateOperationalBindingArgument = {
         unsigned: data,
     };
+    const signArgument: boolean = true; // TODO: Make configurable.
+    if (!signArgument) {
+        return conn.writeOperation({
+            opCode: terminateOperationalBinding["&operationCode"]!,
+            argument: _encode_TerminateOperationalBindingArgument(unsignedArg, DER),
+        });
+    }
+    const arg = generateSIGNED(ctx, data, _encode_TerminateOperationalBindingArgumentData);
     return conn.writeOperation({
         opCode: terminateOperationalBinding["&operationCode"]!,
         argument: _encode_TerminateOperationalBindingArgument(arg, DER),

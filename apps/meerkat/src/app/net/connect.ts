@@ -285,6 +285,10 @@ function getIDMOperationWriter (
  * This is a higher-order function that produces a `writeOperation` function
  * from an underlying LDAP transport connnection.
  *
+ * Note that results are silently converted from LDAP back to their DAP
+ * equivalents. In the process, no digital signatures are produced, since the
+ * operation in question did not really happen within this DSA.
+ *
  * @param ctx The context object
  * @param socket The underlying LDAP socket
  * @returns A `writeOperation` function
@@ -343,7 +347,6 @@ function getLDAPOperationWriter (
                     socket.once("close", closeHandler);
                     // This listener cannot be .once(), because a message ID may be used multiple times
                     // to return results for a search request.
-                    // FIXME: Wrap result in chained result if DSP.
                     socket.on(EVENT_NAME, (message: LDAPMessage) => {
                         assert(req.opCode);
                         // assert(req.argument);

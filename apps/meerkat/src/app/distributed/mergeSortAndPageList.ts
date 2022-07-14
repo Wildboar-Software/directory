@@ -288,6 +288,10 @@ async function mergeSortAndPageList(
     const paging = queryReference
         ? assn.pagedResultsRequests.get(queryReference)
         : undefined;
+    const signResults: boolean = (
+        (listArgument.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     // If there is no paging, we just return an arbitrary selection of the results that is less than the sizeLimit.
     if (!paging) {
         const sizeLimit: number = listArgument.serviceControls?.sizeLimit
@@ -334,6 +338,10 @@ async function mergeSortAndPageList(
                 unsigned: {
                     uncorrelatedListInfo: [
                         ...resultSetsToReturn,
+                        /**
+                         * This will be unsigned, but that's acceptable, because
+                         * the uncorrelatedListInfo as a whole will get signed.
+                         */
                         localResult,
                     ],
                 },
@@ -350,8 +358,7 @@ async function mergeSortAndPageList(
             poqStats,
         };
 
-        // if (signing not requested) return unsigned;
-        if (listArgument.securityParameters?.target !== ProtectionRequest_signed) {
+        if (!signResults) {
             return unsignedReturnValue;
         }
 
@@ -635,10 +642,6 @@ async function mergeSortAndPageList(
         poqStats,
     };
 
-    const signResults: boolean = (
-        (listArgument.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
-    );
     if (!signResults) {
         return unsignedReturnValue;
     }
