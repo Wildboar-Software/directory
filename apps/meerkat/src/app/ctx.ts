@@ -494,6 +494,9 @@ const ctx: MeerkatContext = {
     i18n,
     // TODO: Refactor out of here.
     config: {
+        authn: {
+            lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
+        },
         log: {
             level: logLevel as LogLevel,
             console: !logNoConsole,

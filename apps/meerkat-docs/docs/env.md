@@ -337,6 +337,37 @@ If set to `1`, Meerkat DSA will compress non-current log files.
 
 This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
 
+## MEERKAT_LOOKUP_UNCERT_STRONG_AUTH
+
+If set to `1`, a strong authentication attempt that does not provide
+a certification path, but which _does_ provide a distinguished name in
+the `name` field of the strong credentials, will result in Meerkat DSA
+reading the DSE of having the distinguished name `name` if it is present
+locally, and, if it has object class `pkiCertPath` and has attribute
+values of type `pkiPath`, these values will be used as certification
+paths, and each will be tried until a certification path is found that
+verifies the bind token. If no such vindicating certification path is
+found, Meerkat DSA rejects the authentication attempt. It is strongly
+preferred for clients to supply a certification path in the bind argument
+so that this lookup need not happen.
+
+:::caution
+
+Enabling this opens up your Meerkat DSA instance to denial-of-service attacks.
+A particular lookup can be computationally expensive, and since a given user may
+have an unlimited number of `pkiPath` attribute values, this could result in a
+potentially unlimited number of certification path validations that must be done
+before your DSA accepts or rejects a strong authentication attempt.
+
+It is recommended to keep this disabled, unless the certification path
+itself is highly sensitive and should not be sent over the network, and
+the potential threat of denial-of-service is controlled for.
+
+:::
+
+Enabling this can be useful if your users must not transmit their certification
+path over the network.
+
 ## MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION
 
 The number of maximum concurrent operations per connection. If a connection

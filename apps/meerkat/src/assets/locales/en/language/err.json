@@ -177,6 +177,7 @@
     "ob_type_unrecognized": "Operational binding type {{obtype}} not understood.",
     "ob_binding_id_identifier_changed": "Operation binding identifier cannot be changed for operational binding {{uuid}}.",
     "strong_creds_must_have_name_or_cp": "Strong credentials must contain either a name or a certification-path.",
+    "strong_creds_must_have_cp": "Strong credentials must contain a certification-path.",
     "strong_creds_expired": "Strong credentials token expired at {{time}}.",
     "strong_creds_algorithm_mismatch": "Strong credentials signing algorithm mismatch. Bind token's algorithm identifier must match token content's algorithm.",
     "strong_creds_token_wrong_name": "Strong credentials bind token name did not match the AE-title of this DSA.",

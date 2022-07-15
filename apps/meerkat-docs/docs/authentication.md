@@ -75,8 +75,12 @@ will be available in the paid version).
 
 Meerkat DSA supports strong authentication. If a certification path is supplied,
 this is used to verify the signature and trustworthiness of the bind token
-provided in strong authentication. If a certification path is _not_ supplied in
-the bind argument, Meerkat DSA searches internally for a user by the asserted
+provided in strong authentication.
+
+If a certification path is _not_ supplied in the bind argument, but a name _is_
+supplied (via the `name` parameter), and if the environment variable
+[`MEERKAT_LOOKUP_UNCERT_STRONG_AUTH`](./env.md#meerkatlookupuncertstrongauth) is
+set to `1` (enabled), Meerkat DSA searches internally for a user by the asserted
 distinguished name; if this user is found, and it is of object class
 `pkiCertPath`, and it has an attribute of type `pkiPath`, each value of its
 `pkiPath` attribute is tried until a certification path is found that verifies
@@ -84,6 +88,14 @@ the bind token. If no such vindicating certification path is found, Meerkat DSA
 rejects the authentication attempt. It is strongly preferred for clients to
 supply a certification path in the bind argument so that this lookup need not
 happen.
+
+:::caution
+
+Enabling the above feature is risky, since it can open your DSA up to
+denial-of-service attacks. See more
+[here](./env.md#meerkatlookupuncertstrongauth).
+
+:::
 
 The certification path is verified with the trust anchors configured in
 [`MEERKAT_SIGNING_CA_FILE`](./env.md#meerkatsigningcafile). If this environment

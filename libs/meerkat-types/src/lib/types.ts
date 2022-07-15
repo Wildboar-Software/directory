@@ -1468,6 +1468,35 @@ interface NetworkService {
 }
 
 /**
+ * Configuration options pertaining to authentication.
+ *
+ * @interface
+ */
+export
+interface AuthenticationConfiguration {
+
+    /**
+     * If set to `true`, a strong authentication attempt that does not provide
+     * a certification path, but which _does_ provide a distinguished name in
+     * the `name` field of the strong credentials, will result in Meerkat DSA
+     * reading the DSE of having the distinguished name `name` if it is present
+     * locally, and, if it has object class `pkiCertPath` and has attribute
+     * values of type `pkiPath`, these values will be used as certification
+     * paths, and each will be tried until a certification path is found that
+     * verifies the bind token. If no such vindicating certification path is
+     * found, Meerkat DSA rejects the authentication attempt. It is strongly
+     * preferred for clients to supply a certification path in the bind argument
+     * so that this lookup need not happen.
+     *
+     * It is recommended to keep this disabled, unless the certification path
+     * itself is highly sensitive and should not be sent over the network, and
+     * the potential threat of denial-of-service is controlled for.
+     */
+    lookupPkiPathForUncertifiedStrongAuth: boolean;
+
+}
+
+/**
  * @summary Meerkat DSA configuration
  * @description
  *
@@ -1477,6 +1506,8 @@ interface NetworkService {
  */
 export
 interface Configuration {
+
+    authn: AuthenticationConfiguration;
 
     log: {
         level: LogLevel;

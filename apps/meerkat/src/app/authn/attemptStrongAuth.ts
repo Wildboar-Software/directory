@@ -182,7 +182,7 @@ async function attemptStrongAuth (
                 );
             }
         }
-    } else {
+    } else if (ctx.config.authn.lookupPkiPathForUncertifiedStrongAuth) {
         /**
          * Note: "name === certPath.userCert.name" is not checked in this
          * code path, because the association of the pkiPath with the entry
@@ -240,4 +240,9 @@ async function attemptStrongAuth (
             signErrors,
         );
     }
+    throw new BindErrorClass(
+        ctx.i18n.t("err:strong_creds_must_have_cp", { host: source }),
+        invalidCredentialsData,
+        signErrors,
+    );
 }
