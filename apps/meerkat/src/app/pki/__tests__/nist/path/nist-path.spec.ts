@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: VerifyCertPathArgs = {
 };
 
 // So we don't modify anything by reference.
-function getDefaultResult (result: Partial<VerifyCertPathResult>) {
+function getDefaultResult (result: Partial<VerifyCertPathResult>): VerifyCertPathResult {
     return {
         returnCode: 0,
         authorities_constrained_policies: [],
@@ -68,6 +68,15 @@ function getDefaultResult (result: Partial<VerifyCertPathResult>) {
         policy_mappings_that_occurred: [],
         user_constrained_policies: [],
         warnings: [],
+        endEntityExtKeyUsage: undefined,
+        endEntityKeyUsage: new Uint8ClampedArray([
+            1,
+            1,
+            1,
+            1,
+        ]),
+        endEntityPrivateKeyNotAfter: undefined,
+        endEntityPrivateKeyNotBefore: undefined,
         ...result,
     };
 }
@@ -108,6 +117,9 @@ const ctx: MeerkatContext = {
             revokedCertificateSerialNumbers: new Set(),
             // certificateRevocationLists: [],
             // trustAnchorList: [],
+        },
+        signing: {
+            revokedCertificateSerialNumbers: new Set(),
         },
     },
 } as MeerkatContext;
@@ -196,4 +208,36 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
         },
     ));
+});
+
+describe("NIST PKITS 4.12.2 Cert Path", () => {
+    it("Passes validation subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "inhibitAnyPolicy0CACert.crt",
+            "ValidinhibitAnyPolicyTest2EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+            ],
+        },
+        {
+            returnCode: 0,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            explicit_policy_indicator: true,
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+        },
+    ));
+
 });
