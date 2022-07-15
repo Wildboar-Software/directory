@@ -105,6 +105,7 @@ import { versions } from "../dsp/versions";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
+import { createStrongCredentials } from "../authn/createStrongCredentials";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -669,7 +670,7 @@ function *createBindRequests (
  *
  * @param ctx The context object
  * @param uri The URI of the remote LDAP server
- * @param credentials Array of DSA credentials to attempt, in order of
+ * @param extraCredentials Array of DSA credentials to attempt, in order of
  *  decreasing preference
  * @param timeoutTime The time by which the operation must complete or abort
  * @param tlsRequired Whether TLS shall be required for this connection
@@ -681,7 +682,7 @@ function *createBindRequests (
 async function connectToLDAP (
     ctx: MeerkatContext,
     uri: url.URL,
-    credentials: DSACredentials[],
+    extraCredentials: DSACredentials[],
     timeoutTime: Date,
     tlsRequired: boolean,
     isDSP: boolean,
@@ -793,7 +794,7 @@ async function connectToLDAP (
     }
 
     // By adding `undefined` to the end of this array, we try one time without authentication.
-    for (const cred of [ ...credentials, undefined ]) {
+    for (const cred of [ ...extraCredentials, undefined ]) {
         if (cred && !("simple" in cred)) {
             continue;
         }
@@ -874,7 +875,7 @@ async function connectToLDAP (
  *
  * @param ctx The context object
  * @param uri The URI of the remote LDAP server
- * @param credentials Array of DSA credentials to attempt, in order of
+ * @param extraCredentials Array of DSA credentials to attempt, in order of
  *  decreasing preference
  * @param timeoutTime The time by which the operation must complete or abort
  * @returns A connection, if one could be established, or `null` otherwise
@@ -885,7 +886,7 @@ async function connectToLDAP (
  async function connectToLDAPS (
     ctx: MeerkatContext,
     uri: url.URL,
-    credentials: DSACredentials[],
+    extraCredentials: DSACredentials[],
     timeoutTime: Date,
     isDSP: boolean,
 ): Promise<Connection | null> {
@@ -933,7 +934,7 @@ async function connectToLDAP (
     let connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
 
     // By adding `undefined` to the end of this array, we try one time without authentication.
-    for (const cred of [ ...credentials, undefined ]) {
+    for (const cred of [ ...extraCredentials, undefined ]) {
         if (cred && !("simple" in cred)) {
             continue;
         }
@@ -1018,7 +1019,7 @@ async function connectToLDAP (
  * @param idmGetter A function for getting a new IDM transport
  * @param targetSystem The target DSA's `AccessPoint`
  * @param protocolID The object identifier of the protocol with which to bind
- * @param credentials The set of DSA credentials to attempt, in order of
+ * @param extraCredentials The set of DSA credentials to attempt, in order of
  *  decreasing preference
  * @param timeoutTime The time by which the operation must complete or abort
  * @param tlsRequired Whether TLS shall be required for this connection
@@ -1030,7 +1031,7 @@ async function connectToIdmNaddr (
     idmGetter: () => IDMConnection | null,
     targetSystem: AccessPoint,
     protocolID: OBJECT_IDENTIFIER,
-    credentials: DSACredentials[],
+    extraCredentials: DSACredentials[],
     timeoutTime: Date,
     tlsRequired: boolean,
 ): Promise<Connection | null> {
@@ -1038,8 +1039,21 @@ async function connectToIdmNaddr (
     if (!idm) {
         return null;
     }
-    // By adding `undefined` to the end of this array, we try one time without authentication.
-    for (const cred of [ ...credentials, undefined ]) {
+    const strongCredData = createStrongCredentials(ctx, targetSystem.ae_title.rdnSequence);
+    const otherCreds: (DSACredentials | undefined)[] = [
+        ...extraCredentials,
+        // By adding `undefined` to the end of this array, we try one time without authentication.
+        undefined,
+    ];
+    const credentials: (DSACredentials | undefined)[] = strongCredData
+        ? [
+            {
+                strong: strongCredData,
+            },
+            ...otherCreds,
+        ]
+        : otherCreds;
+    for (const cred of credentials) {
         if (Date.now().valueOf() > timeoutTime.valueOf()) {
             ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
                 uri,
@@ -1177,7 +1191,7 @@ async function connectToIdmNaddr (
  * @param idmGetter A function for getting a new IDM transport
  * @param targetSystem The target DSA's `AccessPoint`
  * @param protocolID The object identifier of the protocol with which to bind
- * @param credentials The set of DSA credentials to attempt, in order of
+ * @param extraCredentials The set of DSA credentials to attempt, in order of
  *  decreasing preference
  * @param timeoutTime The time by which the operation must complete or abort
  * @returns A connection, if one could be established, or `null` otherwise
@@ -1188,15 +1202,28 @@ async function connectToIdmNaddr (
     idmGetter: () => IDMConnection | null,
     targetSystem: AccessPoint,
     protocolID: OBJECT_IDENTIFIER,
-    credentials: DSACredentials[],
+    extraCredentials: DSACredentials[],
     timeoutTime: Date,
 ): Promise<Connection | null> {
     let idm: IDMConnection | null = idmGetter();
     if (!idm) {
         return null;
     }
-    // By adding `undefined` to the end of this array, we try one time without authentication.
-    for (const cred of [ ...credentials, undefined ]) {
+    const strongCredData = createStrongCredentials(ctx, targetSystem.ae_title.rdnSequence);
+    const otherCreds: (DSACredentials | undefined)[] = [
+        ...extraCredentials,
+        // By adding `undefined` to the end of this array, we try one time without authentication.
+        undefined,
+    ];
+    const credentials: (DSACredentials | undefined)[] = strongCredData
+        ? [
+            {
+                strong: strongCredData,
+            },
+            ...otherCreds,
+        ]
+        : otherCreds;
+    for (const cred of credentials) {
         if (Date.now().valueOf() > timeoutTime.valueOf()) {
             ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
                 uri,
@@ -1337,7 +1364,7 @@ async function connect (
             },
         });
         const connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
-        const credentials: DSACredentials[] = await getCredentialsForNSAP(ctx, uri.toString());
+        const extraCredentials: DSACredentials[] = await getCredentialsForNSAP(ctx, uri.toString());
         if (uri.protocol.toLowerCase().startsWith("idm:")) {
             if (!uri.port) {
                 continue;
@@ -1364,7 +1391,7 @@ async function connect (
                 },
                 targetSystem,
                 protocolID,
-                credentials,
+                extraCredentials,
                 timeoutTime,
                 !options?.tlsOptional,
             );
@@ -1399,7 +1426,7 @@ async function connect (
                 },
                 targetSystem,
                 protocolID,
-                credentials,
+                extraCredentials,
                 timeoutTime,
             );
         } else if (uri.protocol.toLowerCase() === "ldap:") {
@@ -1411,7 +1438,7 @@ async function connect (
             return connectToLDAP(
                 ctx,
                 uri,
-                credentials,
+                extraCredentials,
                 timeoutTime,
                 !options?.tlsOptional,
                 isDSP,
@@ -1425,7 +1452,7 @@ async function connect (
             return connectToLDAPS(
                 ctx,
                 uri,
-                credentials,
+                extraCredentials,
                 timeoutTime,
                 isDSP,
             );

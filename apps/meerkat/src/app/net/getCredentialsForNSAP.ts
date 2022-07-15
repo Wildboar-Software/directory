@@ -105,6 +105,10 @@ async function getCredentialsForNSAP (
             }
             if (c.strong_pkcs12) {
                 // TODO: Decode this and use it to produce strong credentials.
+                // Actually, this might not work, because strong credentials
+                // have a timestamp in them, and you might have to spend a few
+                // seconds or minutes chaining to other DSAs, which would
+                // invalidate this timestamp.
             }
             return ret;
         }) ?? [];
