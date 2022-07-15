@@ -56,7 +56,7 @@ import type { MeerkatContext } from "../ctx";
 import {
     ServiceControls,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import { getAttributeSize } from "../x500/getAttributeSize";
+import { getAttributeSize } from "@wildboar/x500";
 
 const CRL_CACHE_TTL_SECONDS: number = 3600;
 const CACHE_SIZE_LIMIT: number = 1000;

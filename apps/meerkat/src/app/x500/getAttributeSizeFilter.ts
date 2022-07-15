@@ -1,7 +1,7 @@
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { getAttributeSize } from "./getAttributeSize";
+import { getAttributeSize } from "@wildboar/x500";
 
 /**
  * @summary Higher-order function that gets a filter predicate that filters attributes by size

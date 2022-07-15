@@ -40,7 +40,7 @@
         "@nestjs/terminus": "^8.0.6",
         "@prisma/client": "^3.12.0",
         "@wildboar/cms": "^1.0.2",
-        "@wildboar/ldap": "^1.2.8",
+        "@wildboar/ldap": "^1.2.10",
         "@wildboar/ocsp": "^1.0.2",
         "@wildboar/pki-stub": "^1.1.2",
         "@wildboar/safecurves-pkix-18": "^1.0.5",
