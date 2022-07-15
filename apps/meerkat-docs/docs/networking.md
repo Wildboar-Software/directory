@@ -55,50 +55,6 @@ not using in-memory caching of the DIT.) It is recommended that you instead use
 the Directory Access Protocol with the `manageDSAIT` flag set to modify
 knowledge attributes rather than altering the database directly.
 
-## TLS Configuration
-
-> Many details in this section will change soon.
-
-TLS can be configured via the following environment variables:
-
-- `MEERKAT_TLS_CERT_FILE`
-- `MEERKAT_TLS_KEY_FILE`
-
-Or by including
-
-- `MEERKAT_TLS_PFX_FILE`
-
-`MEERKAT_TLS_CERT_FILE` contains a file path to the X.509 certificate to be
-used for TLS. `MEERKAT_TLS_KEY_FILE` shall contain the file path to the
-private key to be used for TLS. If both of these are present, TLS will be
-enabled. Otherwise, TLS will silently fail.
-
-If either the key file or PFX file are password-protected, these can be
-decrypted by supplying the passphrase in the `MEERKAT_TLS_KEY_PASSPHRASE`
-environment variable.
-
-## Result Signing
-
-Currently, results may not be digitally-signed by Meerkat DSA, but the keypair
-to be used for digital-signing (eventually) can be configured via these
-environment variables:
-
-- `MEERKAT_SIGNING_CERT_CHAIN`
-- `MEERKAT_SIGNING_KEY`
-
-`MEERKAT_SIGNING_CERT_CHAIN` contains the file path to the PEM-encoded X.509
-certificate chain. `MEERKAT_SIGNING_KEY` shall contain the file path to the
-private key to be used for results signing.
-
-Note that these settings may differ from the keypair used for TLS. This is
-intentional, because DSA administrators may want results to be signed with a
-different keypair that what is used for transport-layer security.
-
-Even if you do not plan to use results signing, you should still configure a
-signing key-pair.
-
-_Meerkat DSA determines it's Application Entity (AE) title from its signing certificate._
-
 ## DNS Configuration
 
 It is not necessary at all, but for the sake of service discovery, it is

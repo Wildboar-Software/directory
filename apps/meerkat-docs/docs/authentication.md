@@ -1,11 +1,8 @@
 # Authentication
 
-Meerkat DSA only supports simple authentication (meaning authentication with a
-password) in DAP, LDAP, DSP, and DOP, though a future version will support
-strong authentication (authentication using X.509 certificate and asymmetric
-cryptography), and SASL and SPKM might be supported. These other authentication
-schemes may only be made available in paid versions; simple authentication will
-always be available with the free edition of Meerkat DSA.
+Meerkat DSA supports simple authentication (meaning authentication with a
+password) and strong authentication (meaning authentication with digital signatures)
+in DAP, DSP, and DOP. LDAP only supports simple authentication.
 
 ## Anonymous Authentication
 
@@ -74,10 +71,28 @@ Policies, though there may only be a subset of these features available for the
 free edition of Meerkat DSA (which is not to imply that _all_ of these features
 will be available in the paid version).
 
-## Request Signatures
+## Strong Authentication
 
-Request signatures are not currently validated, but will be in future versions
-of Meerkat DSA.
+Meerkat DSA supports strong authentication. If a certification path is supplied,
+this is used to verify the signature and trustworthiness of the bind token
+provided in strong authentication. If a certification path is _not_ supplied in
+the bind argument, Meerkat DSA searches internally for a user by the asserted
+distinguished name; if this user is found, and it is of object class
+`pkiCertPath`, and it has an attribute of type `pkiPath`, each value of its
+`pkiPath` attribute is tried until a certification path is found that verifies
+the bind token. If no such vindicating certification path is found, Meerkat DSA
+rejects the authentication attempt. It is strongly preferred for clients to
+supply a certification path in the bind argument so that this lookup need not
+happen.
+
+The certification path is verified with the trust anchors configured in
+[`MEERKAT_SIGNING_CA_FILE`](./env.md#meerkatsigningcafile). If this environment
+variable is not configured, the bundle of certificates that are built in to
+the NodeJS runtime are used by default.
+
+If [`MEERKAT_SIGNING_DISABLE_VERIFICATION`](./env.md#meerkatsigningdisableverification)
+is enabled (meaning that all signature verification is disabled in Meerkat DSA),
+strong authentication will always fail.
 
 ## Architectural Details
 

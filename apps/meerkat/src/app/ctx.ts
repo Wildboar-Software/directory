@@ -605,7 +605,7 @@ const ctx: MeerkatContext = {
         },
         tls: {
             answerOCSPRequests: (process.env.MEERKAT_TLS_ANSWER_OCSP_REQUESTS === "1"),
-            rejectUnauthorizedClients: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS !== "0"),
+            rejectUnauthorizedClients: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS === "1"),
             rejectUnauthorizedServers: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS !== "0"),
             handshakeTimeout: process.env.MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
                 ? Number.parseInt(process.env.MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS) * 1000
@@ -618,7 +618,7 @@ const ctx: MeerkatContext = {
              * will be based on whether this DSA is acting as a server or client.
              */
             // rejectUnauthorized: (process.env.THIS_WAS_A_BUG === "1"),
-            requestCert: (process.env.MEERKAT_TLS_CLIENT_CERT_AUTH === "1"),
+            requestCert: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS === "1"),
             cert: process.env.MEERKAT_TLS_CERT_FILE
                 ? fs.readFileSync(process.env.MEERKAT_TLS_CERT_FILE, { encoding: "utf-8" })
                 : undefined,
@@ -685,8 +685,8 @@ const ctx: MeerkatContext = {
                 ? Number.parseInt(process.env.MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT, 10)
                 : 3,
             requestOCSP: (process.env.MEERKAT_TLS_REQUEST_OCSP === "1"),
-            ocspResponseSizeLimit: process.env.MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT
-                ? Number.parseInt(process.env.MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT, 10)
+            ocspResponseSizeLimit: process.env.MEERKAT_TLS_OCSP_RESPONSE_SIZE_LIMIT
+                ? Number.parseInt(process.env.MEERKAT_TLS_OCSP_RESPONSE_SIZE_LIMIT, 10)
                 : 10_000,
         },
         scvp: (process.env.MEERKAT_SCVP_URL && process.env.MEERKAT_SCVP_VALIDATION_POLICY_REF_ID)
@@ -798,8 +798,8 @@ const ctx: MeerkatContext = {
         chaining: {
             minAuthRequired: parseAuthLevel(
                 process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING ?? "1",
-                process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB,
-                process.env.MEERKAT_SIGNING_REQUIRED_FOR_OB,
+                process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING,
+                process.env.MEERKAT_SIGNING_REQUIRED_FOR_CHAINING,
             ),
             tlsOptional: (process.env.MEERKAT_CHAINING_TLS_OPTIONAL === "1"),
             prohibited: process.env.MEERKAT_PROHIBIT_CHAINING

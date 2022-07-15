@@ -1,9 +1,11 @@
-# Environment Variables
+# Configuration
 
 Meerkat DSA is configured via environment variables. In the future, it will
 also be configurable via command-line arguments. Environment variables that
 are specific to Meerkat DSA are namespaced such that they all start with
 `MEERKAT_`.
+
+## Representation of Values
 
 Meerkat DSA environment variables that represent boolean types will use
 `1` to represent TRUE and `0` to represent FALSE. This is because digits
@@ -11,8 +13,64 @@ are more locale-independent. Most cultures would recognize `1` to mean
 TRUE and `0` to mean FALSE. In general, where boolean environment variables
 are used, anything other than `1` simply gets interpreted as FALSE.
 
+Meerkat DSA environment variables that represent object identifiers only accept
+the dot-delimited, numeric representation of the object identifier, such as
+`2.5.4.3`; human-friendly names for these object identifiers are _not supported_
+by Meerkat DSA (e.g. `id-at-commonName`).
+
 Meerkat DSA does not validate environment variable values. If you supply
 invalid values, you will get unspecified behavior.
+
+## Updating Configuration
+
+Meerkat DSA reads the environment variables one time: at start up. This means
+that, if you want to re-configure your Meerkat DSA instance, **you will have to
+restart Meerkat DSA**--you cannot simply modify the environment variables as it
+runs.
+
+## TLS and Signing Options
+
+You will notice a few options that _seem_ similar: in Meerkat DSA, TLS options
+and signing options (those pertaining to signed arguments, results, or errors)
+both have a suite of similar configuration options. The TLS options start with
+`MEERKAT_TLS_` and the signing options start with `MEERKAT_SIGNING_`.
+
+:::caution
+
+The TLS options do not affect the signing options, and vice versa. That means
+that, if you want to configure, say, a certificate authorities file for
+verifying _both_ TLS peers and the signatures on signed arguments, results, and
+errors, you will have to set both the `MEERKAT_TLS_CA_FILE` and
+`MEERKAT_SIGNING_CA_FILE` environment variables to the same value.
+
+This makes Meerkat really flexible, but it also means that you can inadvertently
+leave certain security-related settings to their default values, which might not
+be what you intend!
+
+:::
+
+To further complicate this, there is another set of similar options for signed
+arguments, results, and errors that only pertains to bind operations. These
+options start with `MEERKAT_SIGNING_BIND_`. These environment variables override
+the values of their equivalent `MEERKAT_SIGNING_` environment variables, hence
+they are referred to as the "bind overrides."
+
+:::info
+
+The rationale for this design is that bind operations are typically (1) more
+security-sensitive, since they determine authorization for all future requests,
+(2) probable targets for brute-force and denial-of-service attacks, and (3) it
+is usually acceptable to have a somewhat high latency (like three seconds) for a
+bind operation, but not for subsequent operations. These three significant
+differences mean that it would be desirable for Meerkat DSA to support a
+different set of signing-related configuration options that pertain only to the
+bind operation for a given protocol.
+
+:::
+
+## Required
+
+
 
 ## DATABASE_URL
 
@@ -944,8 +1002,36 @@ responder is defined for that certificate)
 
 ## MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT
 
-The maximum number of OCSP responders to check with before giving up for a given certificate. This MUST be an unsigned integer, or unset. If unset, this defaults
+The maximum number of OCSP responders to check with before giving up for a given
+certificate. This MUST be an unsigned integer, or unset. If unset, this defaults
 to `3`.
+
+This only applies to OCSP responses obtained in the verification of signed
+arguments, results, and errors--not TLS peers. The equivalent of this
+configuration option for TLS peers is
+[`MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT`](#meerkattlsocspmaxrequestspercert).
+
+## MEERKAT_SIGNING_OCSP_REPLAY_WINDOW
+
+The number of seconds by which the OCSP `producedAt` time and `thisUpdate`
+time may differ from the current time before an OCSP response is
+considered invalid on the grounds of being a possible
+[replay attack](https://en.wikipedia.org/wiki/Replay_attack).
+
+This only affects OCSP verification of signed arguments, results, or errors; the
+equivalent of this configuration option that controls OCSP verification for TLS
+is [`MEERKAT_TLS_OCSP_REPLAY_WINDOW`](#meerkattlsocspreplaywindow).
+
+An attacker's ability to replay an OCSP response is not too dangerous as long as
+this threshold is low (in other words, the window is small). If the replay
+window is large, it means that, if an attacker can intercept your communication
+with the OCSP responder, he can replay the OCSP response to illegitimately make
+it appear as though the certificate is still valid. If the replay window is too
+small, such as 1 second, then a slight variation in the OCSP responder's system
+clock could mean that Meerkat DSA rejects the response as a "replay" (speciously). This is like the `clockskew` configuration option in MIT's
+Kerberos implementation.
+
+It is recommended that you leave this at the **default value of 15 seconds**.
 
 ## MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT
 
@@ -973,7 +1059,10 @@ signing certificate chain to the OCSP responder.
 ## MEERKAT_SIGNING_OCSP_TIMEOUT
 
 The number of seconds for a given OCSP responder to respond before Meerkat DSA
-abandons the request. If set, this MUST be an unsigned decimal integer.
+abandons the request. If set, this MUST be an unsigned decimal integer. This
+setting only applies to the verification of signed arguments, results, and
+errors; the equivalent setting for TLS is
+[`MEERKAT_TLS_OCSP_TIMEOUT`](#meerkattlsocsptimeout).
 
 ## MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE
 
@@ -1061,11 +1150,6 @@ way to prevent hacking attempts via malicious DOP requests.
 If set to `1`, unavailable remote CRLs will not be treated as a failure for the
 purposes of certification path validation.
 
-## MEERKAT_TLS_ANSWER_OCSP_REQUESTS
-
-If set to `1`, Meerkat DSA will answer OCSP requests submitted as a part of the
-TLS handshake.
-
 ## MEERKAT_TCP_NO_DELAY
 
 If set to `1`, Meerkat DSA will disable Nagle's algorithm for TCP connections.
@@ -1076,6 +1160,11 @@ this.
 
 The amount of time (in seconds) after receiving no bytes from the TCP socket
 after which the TCP connection will be reset.
+
+## MEERKAT_TLS_ANSWER_OCSP_REQUESTS
+
+If set to `1`, Meerkat DSA will answer OCSP requests submitted as a part of the
+TLS handshake.
 
 ## MEERKAT_TLS_CA_FILE
 
@@ -1095,6 +1184,10 @@ If this option _is_ specified, it does not _add_ to the default trust anchors
 mentioned above: it _overwrites_ them. That means that, if you want to add your
 own trust anchor, but still trust Mozilla's curated default trust anchors, you
 MUST obtain this bundle of certificates and add it to this file.
+
+This does not affect the verification of signed arguments, results, or errors;
+the equivalent of this environment variable that affects signing is:
+[`MEERKAT_SIGNING_CA_FILE`](#meerkatsigningcafile).
 
 ## MEERKAT_TLS_CERT_FILE
 
@@ -1117,6 +1210,10 @@ The file contents should look like this if you open them up in a text editor:
 <Some base64-encoded data starting with "MII">
 -----END CERTIFICATE-----
 ```
+
+This does not affect the production of signed arguments, results, or errors;
+the equivalent of this environment variable that affects signing is:
+[`MEERKAT_SIGNING_CERT_CHAIN`](#meerkatsigningcertchain).
 
 ## MEERKAT_TLS_CIPHERS
 
@@ -1151,6 +1248,10 @@ The file contents should look like this if you open them up in a text editor:
 -----END X509 CRL-----
 ```
 
+This does not affect the verification of signed arguments, results, or errors;
+the equivalent of this environment variable that affects signing is:
+[`MEERKAT_SIGNING_CRL_FILE`](#meerkatsigningcrlfile).
+
 ## MEERKAT_TLS_DH_PARAM_FILE
 
 The filepath to the Diffie-Hellman parameters to use to enable Perfect Forward
@@ -1179,6 +1280,10 @@ This file is a secret key. Do not give it to anybody unless you are sure that
 they should be able to impersonate / act on behalf of this Meerkat DSA instance.
 
 :::
+
+This does not affect the production of signed arguments, results, or errors;
+the equivalent of this environment variable that affects signing is:
+[`MEERKAT_SIGNING_KEY`](#meerkatsigningkey).
 
 ## MEERKAT_TLS_KEY_PASSPHRASE
 
@@ -1225,11 +1330,82 @@ will check with OCSP responders for the status of an asserted certificate (if an
 OCSP responder is defined for that certificate)
 ~~and cache the result for this value's number of seconds~~.
 
+This does not affect the verification of signed arguments, results, or errors;
+the equivalent of this environment variable that affects signing is:
+[`MEERKAT_SIGNING_OCSP_CHECKINESS`](#meerkatsigningocspcheckiness).
+
+## MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT
+
+The maximum number of OCSP responders to check with before giving up for a given
+certificate. This MUST be an unsigned integer, or unset. If unset, this defaults
+to `3`.
+
+This only applies to OCSP responses obtained in the verification TLS peers--not
+signed arguments, results, or errors. The equivalent of this
+configuration option for signed arguments, results, or errors is
+[`MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT`](#meerkatsigningocspmaxrequestspercert).
+
+## MEERKAT_TLS_OCSP_REPLAY_WINDOW
+
+The number of seconds by which the OCSP `producedAt` time and `thisUpdate`
+time may differ from the current time before an OCSP response is
+considered invalid on the grounds of being a possible
+[replay attack](https://en.wikipedia.org/wiki/Replay_attack).
+
+This only affects OCSP verification for TLS and does not affect OCSP
+verification for signed arguments, results, or errors; that is controlled by
+the [`MEERKAT_SIGNING_OCSP_REPLAY_WINDOW`](#meerkatsigningocspreplaywindow) configuration option.
+
+An attacker's ability to replay an OCSP response is not too dangerous as long as
+this threshold is low (in other words, the window is small). If the replay
+window is large, it means that, if an attacker can intercept your communication
+with the OCSP responder, he can replay the OCSP response to illegitimately make
+it appear as though the certificate is still valid. If the replay window is too
+small, such as 1 second, then a slight variation in the OCSP responder's system
+clock could mean that Meerkat DSA rejects the response as a "replay" (speciously). This is like the `clockskew` configuration option in MIT's
+Kerberos implementation.
+
+It is recommended that you leave this at the **default value of 15 seconds**.
+
+## MEERKAT_TLS_OCSP_RESPONSE_SIZE_LIMIT
+
+The maximum size in bytes of OCSP responses. If an OCSP response is fetched and
+it exceeds this size, Meerkat DSA will cancel fetching it, and/or refuse to
+decode it. This limit should NOT be considered exact.
+
+This only affects OCSP verification for TLS and does not affect OCSP
+verification for signed arguments, results, or errors; that is controlled by
+the [`MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT`](#meerkatsigningocspresponsesizelimit) configuration option.
+
+:::info
+
+This is important because OCSP requests can be configured to be submitted
+automatically by Meerkat DSA to any endpoint listed on an X.509 certificate
+presented by a client / association. This prevents a malicious user from
+presenting Meerkat DSA with a malicious X.509 certificate that defers to a
+maliciously-designed OCSP responder that responds with an exhaustively large
+payload that inundates this Meerkat DSA instance.
+
+:::
+
 ## MEERKAT_TLS_OCSP_SIGN_REQUESTS
 
 If set to `1`, Meerkat DSA will use its signing key to digitally sign OCSP
 requests issued in relation to TLS, and present its
 signing certificate chain to the OCSP responder.
+
+This does not affect the verification of signed arguments, results, or errors;
+the equivalent of this environment variable that affects signing is:
+[`MEERKAT_SIGNING_OCSP_SIGN_REQUESTS`](#meerkatsigningocspsignrequests).
+
+## MEERKAT_TLS_OCSP_TIMEOUT
+
+The number of seconds for a given OCSP responder to respond before Meerkat DSA
+abandons the request. If set, this MUST be an unsigned decimal integer.
+
+This does not affect the verification of signed arguments, results, or errors;
+the equivalent of this environment variable that affects signing is:
+[`MEERKAT_SIGNING_OCSP_TIMEOUT`](#meerkatsigningocsptimeout).
 
 ## MEERKAT_TLS_OCSP_UNKNOWN_IS_FAILURE
 
@@ -1237,6 +1413,10 @@ If set to `1`, Meerkat DSA will treat OCSP responses that indicate that a
 certificate's status is `unknown` as a failure, as though the certificate was
 `revoked`. This only applies to verification OCSP responses received via TLS and
 does not affect the verification of signed arguments, results, or errors.
+
+This does not affect the verification of signed arguments, results, or errors;
+the equivalent of this environment variable that affects signing is:
+[`MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE`](#meerkatsigningocspunknownisfailure).
 
 ## MEERKAT_TLS_PFX_FILE
 
@@ -1252,19 +1432,11 @@ not be able to impersonate / act on behalf of this Meerkat DSA instance.
 
 ## MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS
 
-If set to `0`, Meerkat DSA will NOT refuse to establish a TLS session with a
+If set to `1`, Meerkat DSA will refuse to establish a TLS session with a
 client that does not present a valid X.509 certification path that can be trusted
 according to the trust anchors defined in the `MEERKAT_TLS_CA_FILE` file. This
 is used to enable TLS client certificate authentication, otherwise known as
-Mutual TLS (mTLS). This defaults to `1`, meaning that it will be enabled
-**if and only if** `MEERKAT_TLS_CLIENT_CERT_AUTH` is set to `1` as well.
-
-:::caution
-
-This setting only has an effect if `MEERKAT_TLS_CLIENT_CERT_AUTH` is set to `1`
-as well.
-
-:::
+Mutual TLS (mTLS). This defaults to `0`, meaning that it will be disabled.
 
 ## MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS
 
@@ -1333,6 +1505,8 @@ such that the file looks like this when opened in a text editor:
 <Some base64-encoded data>
 -----END TRUST ANCHOR LIST-----
 ```
+
+This file is NOT used for verifying TLS peers.
 
 ## MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES
 
