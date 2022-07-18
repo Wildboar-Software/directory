@@ -219,6 +219,16 @@ data:
   transcode_values_to_der: {{ .Values.transcode_values_to_der | ternary 1 0 | quote }}
   # trust_anchors_file: use signingTrustAnchorListConfigName
   use_database_when_there_are_x_subordinates: {{ .Values.use_database_when_there_are_x_subordinates | default "1000" | quote }}
+  {{- if .Values.web_admin_auth_username }}
+  web_admin_auth_username: {{ .Values.web_admin_auth_username | quote }}
+  {{- end }}
+  {{- if .Values.web_admin_auth_password }}
+  web_admin_auth_password: {{ .Values.web_admin_auth_password | quote }}
+  {{- end }}
+  {{- if .Values.web_admin_auth_realm }}
+  web_admin_auth_realm: {{ .Values.web_admin_auth_realm | quote }}
+  {{- end }}
+  web_admin_use_tls: {{ .Values.web_admin_use_tls | default true | ternary 1 0 | quote }}
   web_admin_port: {{ .Values.web_admin_port | default "18080" | quote }}
 
   {{- if .Values.init }}

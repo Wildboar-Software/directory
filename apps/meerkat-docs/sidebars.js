@@ -21,6 +21,7 @@ const sidebars = {
             items: [
                 'setup',
                 'env',
+                'webadmin',
                 'database',
                 'authorization',
                 'authentication',

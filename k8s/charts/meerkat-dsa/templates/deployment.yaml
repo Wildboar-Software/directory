@@ -982,11 +982,35 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: use_database_when_there_are_x_subordinates
                   optional: true
+            - name: MEERKAT_WEB_ADMIN_AUTH_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: web_admin_auth_username
+                  optional: true
+            - name: MEERKAT_WEB_ADMIN_AUTH_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: web_admin_auth_password
+                  optional: true
+            - name: MEERKAT_WEB_ADMIN_AUTH_REALM
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: web_admin_auth_realm
+                  optional: true
             - name: MEERKAT_WEB_ADMIN_PORT
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: web_admin_port
+                  optional: true
+            - name: MEERKAT_WEB_ADMIN_USE_TLS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: web_admin_use_tls
                   optional: true
           ports:
             {{- if .Values.dap_enabled }}

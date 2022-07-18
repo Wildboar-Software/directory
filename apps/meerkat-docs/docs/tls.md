@@ -72,3 +72,8 @@ If you disable server authentication, it mitigates the protection afforded by
 TLS; anybody can impersonate the server. If you disable server authentication
 
 :::
+
+## The Web Admin Console
+
+Enabling TLS is also critical for securing your web admin console (if enabled).
+See more information [here](./webadmin.md#tls).

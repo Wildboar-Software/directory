@@ -22,25 +22,6 @@ If no port is set, that service does not listen at all. This means that it is
 possible to run Meerkat DSA as an LDAP-only or X.500-only server by simply
 not configuring ports for those services.
 
-## The Web Console
-
-Meerkat DSA also provides a web-based administrative console, which does not
-listen over TLS and which provides no authentication or security at all. **Users
-are expected to place some sort of proxy in front of this that requires
-authentication, or simply not expose it at all.** It is only necessary for
-accepting or rejecting requested operational bindings; everything else can be
-done using the X.500 protocols. In the future, we will find a way to make even
-this possible without the web console.
-
-Note that listening with the web-based
-administrative console is a **security risk** because there is no
-authentication or access controls required; all entries in memory may be read,
-entries may be deleted, and many more hazards. If you do not expect to need
-this, it is strongly recommended that you do not enable it. Also note that, even
-if authentication is configured for the web console via a proxy, there may be
-other security issues; we suspect it may be vulnerable to CSRF, but this has yet
-to be tested.
-
 ## Distributed Operation
 
 For distributed operations, Meerkat DSA stores the access points obtained from

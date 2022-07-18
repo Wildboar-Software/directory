@@ -1551,10 +1551,125 @@ Even if subordinates are cached in memory, Meerkat DSA will directly query the
 database to find a specific subordinate instead of iterating through the
 in-memory entries when there are more than this many subordinates in memory.
 
+## MEERKAT_WEB_ADMIN_AUTH_USERNAME
+
+If set, this is the username that the web admin console will expect as part of
+HTTP basic authentication.
+
+:::caution
+
+HTTP Basic Authentication will only be enabled if both the
+[`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkatwebadminauthusername) and
+[`MEERKAT_WEB_ADMIN_AUTH_PASSWORD`](#meerkatwebadminauthpassword) environment
+variables are set.
+
+:::
+
+:::caution
+
+HTTP Basic Authentication transmits your username and password in the clear
+(without encryption). This means that you should secure your communication with
+the web admin console by ensuring that
+[`MEERKAT_WEB_ADMIN_USE_TLS`](#meerkatwebadminusetls) is set to `1` and that
+[TLS is configured](./tls.md) (otherwise, the former environment variable will
+have no effect). Otherwise, intermediaries may be able to sniff your password.
+
+Since this password is not well-protected, it is highly recommended that you
+also ensure that this password is not used for any other services. This password
+should be unique to Meerkat DSA's web admin console, and not used as the
+password for any entry in your DSA.
+
+:::
+
+:::caution
+
+Using passwords in general is vastly inferior to TLS client certificate
+authentication. HTTP Basic Authentication was implemented in Meerkat DSA so that
+admininstrators could have a modicum of security with little upfront setup, but
+it is **highly recommended** that administrators configure a secure reverse
+proxy, such as Nginx, Caddy, or Apache, to use TLS client certificate
+authentication, rather than relying on the security of a password. Even better
+yet, the web admin console should only be accessible behind a VPN, or have some
+kind of network access controls to prevent users from accessing it entirely.
+
+:::
+
+## MEERKAT_WEB_ADMIN_AUTH_PASSWORD
+
+If set, this is the password that the web admin console will expect as part of
+HTTP basic authentication.
+
+:::caution
+
+HTTP Basic Authentication will only be enabled if both the
+[`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkatwebadminauthusername) and
+[`MEERKAT_WEB_ADMIN_AUTH_PASSWORD`](#meerkatwebadminauthpassword) environment
+variables are set.
+
+:::
+
+:::caution
+
+HTTP Basic Authentication transmits your username and password in the clear
+(without encryption). This means that you should secure your communication with
+the web admin console by ensuring that
+[`MEERKAT_WEB_ADMIN_USE_TLS`](#meerkatwebadminusetls) is set to `1` and that
+[TLS is configured](./tls.md) (otherwise, the former environment variable will
+have no effect). Otherwise, intermediaries may be able to sniff your password.
+
+Since this password is not well-protected, it is highly recommended that you
+also ensure that this password is not used for any other services. This password
+should be unique to Meerkat DSA's web admin console, and not used as the
+password for any entry in your DSA.
+
+:::
+
+:::caution
+
+Using passwords in general is vastly inferior to TLS client certificate
+authentication. HTTP Basic Authentication was implemented in Meerkat DSA so that
+admininstrators could have a modicum of security with little upfront setup, but
+it is **highly recommended** that administrators configure a secure reverse
+proxy, such as Nginx, Caddy, or Apache, to use TLS client certificate
+authentication, rather than relying on the security of a password. Even better
+yet, the web admin console should only be accessible behind a VPN, or have some
+kind of network access controls to prevent users from accessing it entirely.
+
+:::
+
+## MEERKAT_WEB_ADMIN_AUTH_REALM
+
+If set, this is the realm that the web admin console will expect as part of
+HTTP basic authentication.
+
+This has no effect other than controlling the realm displayed to the end user.
+(If it is displayed at all.)
+
 ## MEERKAT_WEB_ADMIN_PORT
 
 If set, this names a TCP port on which Meerkat DSA listens locally for the
 web admin console.
+
+## MEERKAT_WEB_ADMIN_USE_TLS
+
+If set to `0`, the web admin console will _not_ use HTTPS and use HTTP instead.
+
+:::caution
+
+This will have no effect if TLS is not configured in Meerkat DSA in the first
+place.
+
+:::
+
+If TLS is enabled, the web admin console will use the same TLS configuration
+that the directory services are configured to use.
+
+:::caution
+
+You should only disable TLS on the web admin console if you are using a reverse
+proxy that provides TLS.
+
+:::
 
 ## NODE_ENV
 
