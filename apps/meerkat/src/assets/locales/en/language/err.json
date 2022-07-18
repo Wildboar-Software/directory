@@ -181,5 +181,6 @@
     "strong_creds_expired": "Strong credentials token expired at {{time}}.",
     "strong_creds_algorithm_mismatch": "Strong credentials signing algorithm mismatch. Bind token's algorithm identifier must match token content's algorithm.",
     "strong_creds_token_wrong_name": "Strong credentials bind token name did not match the AE-title of this DSA.",
-    "strong_creds_name_cert_mismatch": "Strong credentials name does not match subject name in certification path."
+    "strong_creds_name_cert_mismatch": "Strong credentials name does not match subject name in certification path.",
+    "bulk_insert_mode_no_read": "No non-modification operations permitted while DSA is in bulk insert mode. This is a security feature. Disable bulk insert mode to re-enable all operations."
 }
