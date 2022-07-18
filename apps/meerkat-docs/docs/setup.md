@@ -107,7 +107,7 @@ variables and their effects are documented [here](./env.md).
 At minimum, you MUST define `DATABASE_URL`. Besides that, you SHOULD define the
 following other environment variables:
 
-- `MEERKAT_SIGNING_CERT_CHAIN`, which is documented [here](./env.md#meerkatsigningcertchain).
+- `MEERKAT_SIGNING_CERTS_CHAIN_FILE`, which is documented [here](./env.md#meerkatsigningcertschainfile).
 - `MEERKAT_SIGNING_KEY`, which is documented [here](./env.md#meerkatsigningkey).
 - `MEERKAT_TLS_CERT_FILE`, which is documented [here](./env.md#meerkattlscertfile).
 - `MEERKAT_TLS_KEY_FILE`, which is documented [here](./env.md#meerkattlskeyfile).

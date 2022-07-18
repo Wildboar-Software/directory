@@ -819,7 +819,7 @@ The filepath of the certificate authority certificates file to use for
 verifying signed arguments, results, and errors. This is NOT used for TLS; the
 TLS equivalent of this variable is [`MEERKAT_TLS_CA_FILE`](#meerkattlscafile).
 
-The format of this file is the same as `MEERKAT_SIGNING_CERT_CHAIN`, but there
+The format of this file is the same as `MEERKAT_SIGNING_CERTS_CHAIN_FILE`, but there
 is no meaning imputed to the ordering of certificates in this file.
 
 If this is unspecified, a default bundle of trust anchors that are built into
@@ -842,7 +842,7 @@ Trust Anchor List format can be used, if that is desired.
 
 :::
 
-## MEERKAT_SIGNING_CERT_CHAIN
+## MEERKAT_SIGNING_CERTS_CHAIN_FILE
 
 The filepath to a certificate chain to use for signing requests and responses
 from the DSA. This does not affect TLS and may be a totally different chain
@@ -1244,7 +1244,7 @@ The file contents should look like this if you open them up in a text editor:
 
 This does not affect the production of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_CERT_CHAIN`](#meerkatsigningcertchain).
+[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](#meerkatsigningcertschainfile).
 
 ## MEERKAT_TLS_CIPHERS
 

@@ -26,7 +26,7 @@ start with `MEERKAT_SIGNING_`. You will notice some that start with
 overrides," which are discussed [here](./env.md#tls-and-signing-options).
 
 At minimum, you MUST define a
-[`MEERKAT_SIGNING_CERT_CHAIN`](./env.md#meerkatsigningcertchain) and
+[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](./env.md#meerkatsigningcertschainfile) and
 [`MEERKAT_SIGNING_KEY`](./env.md#meerkatsigningkey) to enable signing. Notably,
 Meerkat DSA determines its Application Entity Title (AE-Title) from the signing
 certificate. (NOT the TLS certificate.)
