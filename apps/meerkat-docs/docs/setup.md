@@ -108,7 +108,7 @@ At minimum, you MUST define `DATABASE_URL`. Besides that, you SHOULD define the
 following other environment variables:
 
 - `MEERKAT_SIGNING_CERTS_CHAIN_FILE`, which is documented [here](./env.md#meerkatsigningcertschainfile).
-- `MEERKAT_SIGNING_KEY`, which is documented [here](./env.md#meerkatsigningkey).
+- `MEERKAT_SIGNING_KEY_FILE`, which is documented [here](./env.md#meerkatsigningkeyfile).
 - `MEERKAT_TLS_CERT_FILE`, which is documented [here](./env.md#meerkattlscertfile).
 - `MEERKAT_TLS_KEY_FILE`, which is documented [here](./env.md#meerkattlskeyfile).
 - `NODE_ENV`, which should always be set to `production` unless you are

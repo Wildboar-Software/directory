@@ -1465,6 +1465,18 @@ interface NetworkService {
 }
 
 /**
+ * The credentials for a basic authentication scheme.
+ *
+ * @interface
+ */
+export
+interface BasicAuthCredentials {
+    username: string;
+    password: string;
+    realm?: string;
+}
+
+/**
  * Configuration options pertaining to authentication.
  *
  * @interface
@@ -1673,7 +1685,10 @@ interface Configuration {
     /**
      * Options for the HTTPS-based web administration console.
      */
-    webAdmin: NetworkService;
+    webAdmin: NetworkService & {
+        auth?: BasicAuthCredentials;
+        useTLS: boolean;
+    };
 
     /**
      * Options pertaining to the "points" added to a user's

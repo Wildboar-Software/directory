@@ -619,6 +619,12 @@ will have no effect. This is merely reserved for later use.
 is not currently supported in Meerkat DSA, so setting this environment variable
 will have no effect. This is merely reserved for later use.
 
+## MEERKAT_SCVP_PROTECT_RESPONSE
+
+[Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
+is not currently supported in Meerkat DSA, so setting this environment variable
+will have no effect. This is merely reserved for later use.
+
 ## MEERKAT_SCVP_PUBLIC_KEY_CERT_CHECKS
 
 [Server-based Certificate Validation Protocol](https://en.wikipedia.org/wiki/SCVP)
@@ -925,7 +931,7 @@ This overrides the value of
 [`MEERKAT_SIGNING_MIN_AUTH_SIGNED`](#meerkatsigningminauthsigned),
 but only for signed errors.
 
-## MEERKAT_SIGNING_KEY
+## MEERKAT_SIGNING_KEY_FILE
 
 The filepath to the PEM-encoded PKCS #8-formatted private key to use for signing
 arguments, results, and errors from this DSA. This does not affect TLS and may

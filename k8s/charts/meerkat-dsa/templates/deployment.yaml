@@ -78,7 +78,7 @@ spec:
             # These are created by the Helm chart if you do not provide a signing secret
             - name: MEERKAT_SIGNING_CERTS_CHAIN_FILE
               value: /data/pki/signing/tls.crt
-            - name: MEERKAT_SIGNING_KEY
+            - name: MEERKAT_SIGNING_KEY_FILE
               value: /data/pki/signing/tls.key
             {{- if .Values.tlsSecretName }}
             - name: MEERKAT_TLS_CERT_FILE
@@ -675,12 +675,6 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: signing_errors_min_auth_signed
-                  optional: true
-            - name: MEERKAT_SIGNING_KEY
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: signing_key
                   optional: true
             - name: MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP
               valueFrom:

@@ -27,9 +27,9 @@ overrides," which are discussed [here](./env.md#tls-and-signing-options).
 
 At minimum, you MUST define a
 [`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](./env.md#meerkatsigningcertschainfile) and
-[`MEERKAT_SIGNING_KEY`](./env.md#meerkatsigningkey) to enable signing. Notably,
-Meerkat DSA determines its Application Entity Title (AE-Title) from the signing
-certificate. (NOT the TLS certificate.)
+[`MEERKAT_SIGNING_KEY_FILE`](./env.md#meerkatsigningkeyfile) to enable signing.
+Notably, Meerkat DSA determines its Application Entity Title (AE-Title) from the
+signing certificate. (NOT the TLS certificate.)
 
 By default, Meerkat DSA will check neither remote CRLs (given in an X.509
 certificate's `cRLDistributionPoints` extension) nor OCSP responders for the
