@@ -722,12 +722,12 @@ const ctx: MeerkatContext = {
                     ? ObjectIdentifier.fromString(process.env.MEERKAT_SCVP_VALIDATION_ALGORITHM_ID)
                     : undefined,
                 inhibitPolicyMapping: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
-                requireExplicitPolicy: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
-                inhibitAnyPolicy: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
-                fullRequestInResponse: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
-                responseValidationPolicyByRef: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
-                protectResponse: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
-                cachedResponse: (process.env.MEERKAT_SCVP_INHIBIT_POLICY_MAPPING === "1"),
+                requireExplicitPolicy: (process.env.MEERKAT_SCVP_REQUIRE_EXPLICIT_POLICY === "1"),
+                inhibitAnyPolicy: (process.env.MEERKAT_SCVP_INHIBIT_ANY_POLICY === "1"),
+                fullRequestInResponse: (process.env.MEERKAT_SCVP_FULL_REQUEST_IN_RESPONSE === "1"),
+                responseValidationPolicyByRef: (process.env.MEERKAT_SCVP_RESPONSE_VALIDATION_POLICY_BY_REF === "1"),
+                protectResponse: (process.env.MEERKAT_SCVP_PROTECT_RESPONSE === "1"),
+                cachedResponse: (process.env.MEERKAT_SCVP_CACHED_RESPONSE === "1"),
                 signatureAlgorithm: process.env.MEERKAT_SCVP_SIGNATURE_ALGORITHM
                     ? ObjectIdentifier.fromString(process.env.MEERKAT_SCVP_SIGNATURE_ALGORITHM.trim())
                     : undefined,
