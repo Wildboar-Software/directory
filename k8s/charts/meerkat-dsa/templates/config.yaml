@@ -5,125 +5,222 @@ metadata:
   labels:
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 data:
-  # The structure of this is based on the `Context.config` interface defined in
-  # `@wildboar/meerkat-types` and instantiated in `apps/meerkat/src/app/ctx.ts`.
-  {{- if .Values.log }}
-  log.level: {{ .Values.log.level | default "debug" }}
-  log.noConsole: {{ .Values.log.console | ternary 0 1 | quote }}
-  log.noColor: {{ .Values.log.color | ternary 0 1 | quote }}
-  log.noTimestamp: {{ .Values.log.timestamp | ternary 0 1 | quote }}
-  log.json: {{ .Values.log.json | ternary 1 0 | quote }}
-  {{- if .Values.log.file }}
-  log.file.path: {{ .Values.log.file.path }}
-  log.file.maxSize: {{ .Values.log.file.maxSize | default 1000000 | quote }}
-  log.file.maxFiles: {{ .Values.log.file.maxFiles | default 100 | quote }}
-  log.file.zip: {{ .Values.log.file.zip | ternary 1 0 | quote }}
-  log.file.tailable: {{ .Values.log.file.tailable | ternary 1 0 | quote }}
+  {{- if .Values.administrator_email }}
+  administrator_email: {{ .Values.administrator_email }}
   {{- end }}
-  {{- if .Values.log.http }}
-  {{- if .Values.log.http.url }}
-  log.http.url: {{ .Values.log.http.url }}
+  bind_min_sleep_ms: {{ .Values.bind_min_sleep_ms | default 1000 | quote }}
+  bind_sleep_range_ms: {{ .Values.bind_sleep_range_ms | default 3000 | quote }}
+  bulk_insert_mode: {{ .Values.bulk_insert_mode | ternary 1 0 | quote }}
+  {{- if .Values.client_cert_engine }}
+  client_cert_engine: {{ .Values.client_cert_engine }}
   {{- end }}
+  chaining_tls_optional: {{ .Values.chaining_tls_optional | ternary 1 0 | quote }}
+  dangerously_enable_dop: {{ .Values.dangerously_enable_dop | ternary 1 0 | quote }}
+  dangerously_enable_dsp: {{ .Values.dangerously_enable_dsp | ternary 1 0 | quote }}
+  {{- if .Values.ecdh_curves }}
+  ecdh_curves: {{ .Values.ecdh_curves | quote }}
   {{- end }}
+  enable_dap: {{ .Values.enable_dap | ternary 1 0 | quote }}
+  entries_per_subordinates_page: {{ .Values.entries_per_subordinates_page | default 100 | quote }}
+  forbid_anonymous_bind: {{ .Values.forbid_anonymous_bind | ternary 1 0 | quote }}
+  honor_cipher_order: {{ .Values.honor_cipher_order | ternary 1 0 | quote }}
+  idm_buffer_size: {{ .Values.idm_buffer_size | default "1000000" | quote }}
+  idm_port: {{ .Values.idm_port | default 4632 | quote }}
+  idms_port: {{ .Values.idms_port | default 44632 | quote }}
+  # init_js: use initJsConfigName
+  ldap_buffer_size: {{ .Values.ldap_buffer_size | default "1000000" | quote }}
+  ldap_port: {{ .Values.ldap_port | default 389 | quote }}
+  ldaps_port: {{ .Values.ldaps_port | default 636 | quote }}
+  local_qualifier_points_for_using_ssl3: {{ .Values.local_qualifier_points_for_using_starttls | default 8 | quote }}
+  local_qualifier_points_for_using_starttls: {{ .Values.local_qualifier_points_for_using_starttls | default 16 | quote }}
+  local_qualifier_points_for_using_tls: {{ .Values.local_qualifier_points_for_using_starttls | default 32 | quote }}
+  local_qualifier_points_for_using_tls_1_0: {{ .Values.local_qualifier_points_for_using_starttls | default 16 | quote }}
+  local_qualifier_points_for_using_tls_1_1: {{ .Values.local_qualifier_points_for_using_starttls | default 32 | quote }}
+  local_qualifier_points_for_using_tls_1_2: {{ .Values.local_qualifier_points_for_using_starttls | default 64 | quote }}
+  local_qualifier_points_for_using_tls_1_3: {{ .Values.local_qualifier_points_for_using_starttls | default 128 | quote }}
+  {{- if .Values.log_file }}
+  log_file: {{ .Values.log_file | quote }}
+  log_file_max_size: {{ .Values.log_file_max_size | default 1000000 | quote }}
+  log_file_max_files: {{ .Values.log_file_max_files | default 100 | quote }}
+  log_zip: {{ .Values.log_zip | ternary 1 0 | quote }}
+  log_tailable: {{ .Values.log_tailable | ternary 1 0 | quote }}
   {{- end }}
-  maxConnections: {{ .Values.maxConnections | default 250 | quote }}
-  maxConnectionsPerAddress: {{ .Values.maxConnectionsPerAddress | default 10 | quote }}
-  maxConcurrentOperationsPerConnection: {{ .Values.maxConcurrentOperationsPerConnection | default 20 | quote }}
-  tcp.noDelay: {{ .Values.tcp.noDelay | ternary 1 0 | quote }}
-  tcp.timeoutInSeconds: {{ .Values.tcp.timeoutInSeconds | default 120 | quote }} # 0 means "do not timeout."
-  # This is a sensible default, since AX.25 radio--one of the slowest media
-  # available--transmits at about 150 bytes per second.
-  tcp.minimumTransferSpeedInBytesPerMinute: {{ .Values.tcp.minimumTransferSpeedInBytesPerMinute | default 1000 | quote }}
-  tls.handshakeTimeout: {{ .Values.tls.handshakeTimeout | default 30000 | div 1000 | int | quote }}
-  tls.sessionTimeout: {{ .Values.tls.sessionTimeout | default 3600 | quote }}
-  # This is a deviation from the `Context` interface.
-  tls.clientCertAuth: {{ .Values.tls.clientCertAuth | ternary 1 0 | quote }}
-  {{- if .Values.tls.cert }}
-  tls.cert: {{ .Values.tls.cert }}
-  {{- end }}
-  {{- if .Values.tls.key }}
-  tls.key: {{ .Values.tls.key }}
-  {{- end }}
-  {{- if .Values.tls.pfx }}
-  tls.pfx: {{ .Values.tls.pfx }}
-  {{- end }}
-  {{- if .Values.tls.sigalgs }}
-  tls.sigalgs: {{ .Values.tls.sigalgs }}
-  {{- end }}
-  {{- if .Values.tls.ciphers }}
-  tls.ciphers: {{ .Values.tls.ciphers }}
-  {{- end }}
-  {{- if .Values.tls.clientCertEngine }}
-  tls.clientCertEngine: {{ .Values.tls.clientCertEngine }}
-  {{- end }}
-  {{- if .Values.tls.ecdhCurve }}
-  tls.ecdhCurve: {{ .Values.tls.ecdhCurve }}
-  {{- end }}
-  tls.honorCipherOrder: {{ .Values.tls.honorCipherOrder | ternary 1 0 | quote }}
-  {{- if .Values.tls.minVersion }}
-  tls.minVersion: {{ .Values.tls.minVersion }}
-  {{- end }}
-  {{- if .Values.tls.maxVersion }}
-  tls.maxVersion: {{ .Values.tls.maxVersion }}
-  {{- end }}
-  {{- if .Values.tls.passphrase }}
-  tls.passphrase: {{ .Values.tls.passphrase }}
-  {{- end }}
-  {{- if .Values.tls.privateKeyEngine }}
-  tls.privateKeyEngine: {{ .Values.tls.privateKeyEngine }}
-  {{- end }}
-  # tls.ticketKeys: ???
-  # tls.pskIdentityHint: ???
-  idm.port: {{ .Values.idm.port | default 4632 | quote }}
-  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
-  idm.bufferSize: {{ .Values.idm.bufferSize | default "1000000" | quote }}
-  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
-  idm.maxPDUSize: {{ .Values.idm.maxPDUSize | default "1000000" | quote }}
-  idm.maxSegments: {{ .Values.idm.maxSegments | default 100 | quote }}
-  idms.port: {{ .Values.idms.port | default 44632 | quote }}
-  ldap.port: {{ .Values.ldap.port | default 389 | quote }}
-  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
-  ldap.bufferSize: {{ .Values.ldap.bufferSize | default "1000000" | quote }}
-  ldaps.port: {{ .Values.ldaps.port | default 636 | quote }}
-  webAdmin.port: {{ .Values.webAdmin.port | default 18080 | quote }}
-  localQualifierPointsFor.usingStartTLS: {{ .Values.localQualifierPointsFor.usingStartTLS | default 32 | quote }}
-  localQualifierPointsFor.usingTLS: {{ .Values.localQualifierPointsFor.usingTLS | default 64 | quote }}
-  localQualifierPointsFor.usingSSLv3: {{ .Values.localQualifierPointsFor.usingSSLv3 | default 0 | quote }}
-  localQualifierPointsFor.usingTLSv1_0: {{ .Values.localQualifierPointsFor.usingTLSv1_0 | default 16 | quote }}
-  localQualifierPointsFor.usingTLSv1_1: {{ .Values.localQualifierPointsFor.usingTLSv1_1 | default 32 | quote }}
-  localQualifierPointsFor.usingTLSv1_2: {{ .Values.localQualifierPointsFor.usingTLSv1_2 | default 64 | quote }}
-  localQualifierPointsFor.usingTLSv1_3: {{ .Values.localQualifierPointsFor.usingTLSv1_3 | default 128 | quote }}
-  chaining.minAuthLevel: {{ .Values.chaining.minAuthLevel | quote }}
-  chaining.minAuthLocalQualifier: {{ .Values.chaining.minAuthLocalQualifier | quote }}
-  chaining.prohibited: {{ .Values.chaining.prohibited | ternary 1 0 | quote }}
-  chaining.tlsOptional: {{ .Values.chaining.tlsOptional | ternary 1 0 | quote }}
-  {{- if .Values.sentinelDomain }}
-  sentinelDomain: {{ .Values.sentinelDomain }}
-  {{- end }}
-  {{- if .Values.administratorEmail }}
-  administratorEmail: {{ .Values.administratorEmail }}
-  {{- end }}
-  bulkInsertMode: {{ .Values.bulkInsertMode | ternary 1 0 | quote }}
-  bindMinSleepInMilliseconds: {{ .Values.bindMinSleepInMilliseconds | default 1000 | quote }}
-  bindSleepRangeInMilliseconds: {{ .Values.bindSleepRangeInMilliseconds | default 3000 | quote }}
-  ob.minAuthLevel: {{ .Values.ob.minAuthLevel | quote }}
-  ob.minAuthLocalQualifier: {{ .Values.ob.minAuthLocalQualifier | quote }}
-  ob.autoAccept: {{ .Values.ob.autoAccept | ternary 1 0 | quote }}
-  {{- if .Values.myAccessPointNSAPs }}
+  log_http: {{ .Values.log_http | ternary 1 0 | quote }}
+  log_json: {{ .Values.log_json | ternary 1 0 | quote }}
+  log_level: {{ .Values.log_level | default "debug" }}
+  lookup_uncert_strong_auth: {{ .Values.lookup_uncert_strong_auth | ternary 1 0 | quote }}
+  max_concurrent_operations_per_connection: {{ .Values.max_concurrent_operations_per_connection | default 20 | quote }}
+  max_connections: {{ .Values.max_connections | default 250 | quote }}
+  max_connections_per_address: {{ .Values.max_connections_per_address | default 100 | quote }}
+  max_idm_pdu_size: {{ .Values.max_idm_pdu_size | default "1000000" | quote }}
+  max_idm_segments: {{ .Values.max_idm_segments | default 10 | quote }}
+  max_pre_bind_requests: {{ .Values.max_pre_bind_requests | default 2 | quote }}
+  min_auth_level_for_chaining: {{ .Values.min_auth_level_for_chaining | default 1 | quote }}
+  min_auth_level_for_ob: {{ .Values.min_auth_level_for_ob | default 1 | quote }}
+  min_auth_local_qualifier_for_chaining: {{ .Values.min_auth_local_qualifier_for_chaining | default 0 | quote }}
+  min_auth_local_qualifier_for_ob: {{ .Values.min_auth_local_qualifier_for_ob | default 0 | quote }}
+  min_transfer_speed_bytes_per_minute: {{ .Values.min_transfer_speed_bytes_per_minute | default 1000 | quote }}
+  {{- if .Values.my_access_point_nsaps }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
-  myAccessPointNSAPs: {{ join " " .Values.myAccessPointNSAPs }}
+  my_access_point_nsaps: {{ join " " .Values.my_access_point_nsaps }}
   {{- end }}
-  useDatabaseWhenThereAreXSubordinates: {{ .Values.useDatabaseWhenThereAreXSubordinates | default 1000 | quote }}
-  entriesPerSubordinatesPage: {{ .Values.entriesPerSubordinatesPage | default 100 | quote }}
-  transcodeValuesToDER: {{ .Values.transcodeValuesToDER | ternary 1 0 | quote }}
-  transcodeDistinguishedValuesToDER: {{ .Values.transcodeDistinguishedValuesToDER | ternary 1 0 | quote }}
-  openTopLevel: {{ .Values.openTopLevel | ternary 1 0 | quote }}
-  forbidAnonymousBind: {{ .Values.forbidAnonymousBind | ternary 1 0 | quote }}
-  maxPreBindRequests: {{ .Values.maxPreBindRequests | default 2 | quote }}
-  dap.enabled: {{ .Values.dap.enabled | ternary 1 0 | quote }}
-  dsp.enabled: {{ .Values.dsp.enabled | ternary 1 0 | quote }}
-  dop.enabled: {{ .Values.dop.enabled | ternary 1 0 | quote }}
+  no_color: {{ .Values.no_color | ternary 1 0 | quote }}
+  no_console: {{ .Values.no_console | ternary 1 0 | quote }}
+  no_timestamp: {{ .Values.no_timestamp | ternary 1 0 | quote }}
+  ob_auto_accept: {{ .Values.ob_auto_accept | ternary 1 0 | quote }}
+  open_top_level: {{ .Values.open_top_level | ternary 1 0 | quote }}
+  {{- if .Values.private_key_engine }}
+  private_key_engine: {{ .Values.private_key_engine }}
+  {{- end }}
+  prohibit_chaining: {{ .Values.prohibit_chaining | ternary 1 0 | quote }}
+  {{- if .Values.scvp_attr_cert_checks }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  scvp_attr_cert_checks: {{ join ", " .Values.scvp_attr_cert_checks }}
+  {{- end }}
+  {{- if .Values.scvp_attr_cert_want_backs }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  scvp_attr_cert_want_backs: {{ join ", " .Values.scvp_attr_cert_want_backs }}
+  {{- end }}
+  scvp_cached_response: {{ .Values.scvp_cached_response | ternary 1 0 | quote }}
+  scvp_disclose_ae_title: {{ .Values.scvp_disclose_ae_title | ternary 1 0 | quote }}
+  scvp_full_request_in_response: {{ .Values.scvp_full_request_in_response | ternary 1 0 | quote }}
+  # scvp_hash_algorithm: "2.5.4.3"
+  scvp_inhibit_any_policy: {{ .Values.scvp_inhibit_any_policy | ternary 1 0 | quote }}
+  scvp_inhibit_policy_mapping: {{ .Values.scvp_inhibit_policy_mapping | ternary 1 0 | quote }}
+  {{- if .Values.scvp_public_key_cert_checks }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  scvp_public_key_cert_checks: {{ join ", " .Values.scvp_public_key_cert_checks }}
+  {{- end }}
+  {{- if .Values.scvp_public_key_cert_want_backs }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  scvp_public_key_cert_want_backs: {{ join ", " .Values.scvp_public_key_cert_want_backs }}
+  {{- end }}
+  scvp_requestor_text: {{ .Values.scvp_requestor_text | quote }}
+  scvp_require_explicit_policy: {{ .Values.scvp_require_explicit_policy | ternary 1 0 | quote }}
+  scvp_response_validation_policy_by_ref: {{ .Values.scvp_response_validation_policy_by_ref | ternary 1 0 | quote }}
+  {{- if .Values.scvp_signature_algorithm }}
+  scvp_signature_algorithm: {{ .Values.scvp_signature_algorithm | quote }}
+  {{- end }}
+  {{- if .Values.scvp_url }}
+  scvp_url: {{ .Values.scvp_url | quote }}
+  {{- end }}
+  {{- if .Values.scvp_validation_algorithm_id }}
+  scvp_validation_algorithm_id: {{ .Values.scvp_validation_algorithm_id | quote }}
+  {{- end }}
+  {{- if .Values.scvp_validation_policy_ref_id }}
+  scvp_validation_policy_ref_id: {{ .Values.scvp_validation_policy_ref_id | quote }}
+  {{- end }}
+  sentinel_domain: sentinel.meerkat.wildboar.software
+  {{- if .Values.signing_acceptable_cert_policies }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  signing_acceptable_cert_policies: {{ join ", " .Values.signing_acceptable_cert_policies }}
+  {{- end }}
+  {{- if .Values.signing_bind_acceptable_cert_policies }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  signing_bind_acceptable_cert_policies: {{ join ", " .Values.signing_bind_acceptable_cert_policies }}
+  {{- end }}
+  signing_bind_crl_dp_attempts_per_cert: {{ .Values.signing_bind_crl_dp_attempts_per_cert | default 3 | quote }}
+  signing_bind_max_endpoints_per_crl_dp: {{ .Values.signing_bind_max_endpoints_per_crl_dp | default 3 | quote }}
+  signing_bind_ocsp_checkiness: {{ .Values.signing_bind_ocsp_checkiness | default -1 | quote }}
+  signing_bind_ocsp_max_requests_per_cert: {{ .Values.signing_bind_ocsp_max_requests_per_cert | default 3 | quote }}
+  signing_bind_ocsp_sign_requests: {{ .Values.signing_bind_ocsp_sign_requests | ternary 1 0 | quote }}
+  signing_bind_ocsp_timeout: {{ .Values.signing_bind_ocsp_timeout | default 5 | quote }}
+  signing_bind_ocsp_unknown_is_failure: {{ .Values.signing_bind_ocsp_unknown_is_failure | ternary 1 0 | quote }}
+  signing_bind_remote_crl_cache_ttl: {{ .Values.signing_bind_remote_crl_cache_ttl | default 3600 | quote }}
+  signing_bind_remote_crl_checkiness: {{ .Values.signing_bind_remote_crl_checkiness | default 0 | quote }}
+  {{- if .Values.signing_bind_remote_crl_supported_protocols }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  signing_bind_remote_crl_supported_protocols: {{ join ", " .Values.signing_bind_remote_crl_supported_protocols }}
+  {{- end }}
+  signing_bind_remote_crl_timeout: {{ .Values.signing_bind_remote_crl_timeout | default 5 | quote }}
+  signing_bind_tolerate_unavailable_remote_crl: {{ .Values.signing_bind_tolerate_unavailable_remote_crl | ternary 1 0 | quote }}
+  # signing_ca_file: use signingCaConfigName
+  # signing_cert_chain: use signingSecretName
+  signing_crl_dp_attempts_per_cert: {{ .Values.signing_crl_dp_attempts_per_cert | default 3 | quote }}
+  # signing_crl_file: use signingCrlConfigName
+  signing_disable_verification: {{ .Values.signing_disable_verification | ternary 1 0 | quote }}
+  signing_errors_min_auth_level: {{ .Values.signing_errors_min_auth_level | default 1 | quote }}
+  signing_errors_min_auth_local_qualifier: {{ .Values.signing_errors_min_auth_local_qualifier | default 0 | quote }}
+  signing_errors_min_auth_signed: {{ .Values.signing_errors_min_auth_signed | ternary 1 0 | quote }}
+  # signing_key: signingSecretName
+  signing_max_endpoints_per_crl_dp: {{ .Values.signing_errors_min_auth_level | default 3 | quote }}
+  signing_min_auth_level: {{ .Values.signing_min_auth_level | default 1 | quote }}
+  signing_min_auth_local_qualifier: {{ .Values.signing_min_auth_local_qualifier | default 0 | quote }}
+  signing_min_auth_signed: {{ .Values.signing_min_auth_signed | ternary 1 0 | quote }}
+  signing_ocsp_checkiness: {{ .Values.signing_ocsp_checkiness | default -1 | quote }}
+  signing_ocsp_max_requests_per_cert: {{ .Values.signing_ocsp_max_requests_per_cert | default 3 | quote }}
+  signing_ocsp_replay_window: {{ .Values.signing_ocsp_replay_window | default 15 | quote }}
+  signing_ocsp_response_size_limit: {{ .Values.signing_ocsp_response_size_limit | default 10000 | quote }}
+  signing_ocsp_sign_requests: {{ .Values.signing_min_auth_signed | ternary 1 0 | quote }}
+  signing_ocsp_timeout: {{ .Values.signing_ocsp_timeout | default 5 | quote }}
+  signing_ocsp_unknown_is_failure: {{ .Values.signing_ocsp_unknown_is_failure | ternary 1 0 | quote }}
+  {{- if .Values.signing_permitted_algorithms }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  signing_permitted_algorithms: {{ join ", " .Values.signing_permitted_algorithms }}
+  {{- end }}
+  signing_remote_crl_cache_ttl: {{ .Values.signing_remote_crl_cache_ttl | default 3600 | quote }}
+  signing_remote_crl_checkiness: {{ .Values.signing_remote_crl_checkiness | default 0 | quote }}
+  # FIXME: Bind equivalent not defined
+  signing_remote_crl_size_limit: {{ .Values.signing_remote_crl_size_limit | default "1000000" | quote }}
+  {{- if .Values.signing_remote_crl_supported_protocols }}
+  # NOTE: The `join` function is not documented currently.
+  # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
+  signing_remote_crl_supported_protocols: {{ join ", " .Values.signing_remote_crl_supported_protocols }}
+  {{- end }}
+  signing_remote_crl_timeout: {{ .Values.signing_remote_crl_timeout | default 5 | quote }}
+  signing_required_for_chaining: {{ .Values.signing_required_for_chaining | ternary 1 0 | quote }}
+  signing_required_for_ob: {{ .Values.signing_required_for_ob | ternary 1 0 | quote }}
+  signing_tolerate_unavailable_remote_crl: {{ .Values.signing_tolerate_unavailable_remote_crl | ternary 1 0 | quote }}
+  tcp_no_delay: {{ .Values.tcp_no_delay | ternary 1 0 | quote }}
+  tcp_timeout_in_seconds: {{ .Values.tcp_timeout_in_seconds | default 60 | quote }}
+  tls_answer_ocsp_requests: {{ .Values.tls_answer_ocsp_requests | ternary 1 0 | quote }}
+  # tls_ca_file: tlsCaConfigName
+  # tls_cert_file: use tlsSecretName
+  {{- if .Values.tls_ciphers }}
+  tls_ciphers: {{ .Values.tls_ciphers }}
+  {{- end }}
+  tls_client_cert_auth: {{ .Values.tls_client_cert_auth | ternary 1 0 | quote }}
+  # tls_crl_file: use tlsCrlConfigName
+  # tls_dh_param_file: use dhParamSecretName
+  tls_handshake_timeout_in_seconds: {{ .Values.tls_handshake_timeout_in_seconds | default 10 | quote }}
+  # tls_key_file: use tlsSecretName
+  # tls_key_passphrase: "himom42"
+  {{- if .Values.tls_min_version }}
+  tls_min_version: {{ .Values.tls_min_version }}
+  {{- end }}
+  {{- if .Values.tls_max_version }}
+  tls_max_version: {{ .Values.tls_max_version }}
+  {{- end }}
+  tls_ocsp_checkiness: {{ .Values.tls_ocsp_checkiness | default -1 | quote }}
+  tls_ocsp_max_requests_per_cert: {{ .Values.tls_ocsp_max_requests_per_cert | default 3 | quote }}
+  tls_ocsp_replay_window: {{ .Values.tls_ocsp_replay_window | default 15 | quote }}
+  tls_ocsp_response_size_limit: {{ .Values.tls_ocsp_response_size_limit | default "10000" | quote }}
+  tls_ocsp_sign_requests: {{ .Values.tls_ocsp_sign_requests | ternary 1 0 | quote }}
+  tls_ocsp_timeout: {{ .Values.tls_ocsp_timeout | default 5 | quote }}
+  tls_ocsp_unknown_is_failure: {{ .Values.tls_ocsp_unknown_is_failure | ternary 1 0 | quote }}
+  # TODO: tls_pfx_file: not supported by this Helm chart. Use tls_key_file and tls_cert_file instead.
+  tls_reject_unauthorized_clients: {{ .Values.tls_reject_unauthorized_clients | ternary 1 0 | quote }}
+  tls_reject_unauthorized_servers: {{ .Values.tls_reject_unauthorized_servers | ternary 1 0 | quote }}
+  tls_request_ocsp: {{ .Values.tls_request_ocsp | ternary 1 0 | quote }}
+  tls_session_timeout_in_seconds: {{ .Values.tls_session_timeout_in_seconds | default 600 | quote }}
+  {{- if .Values.tls_sig_algs }}
+  tls_sig_algs: {{ .Values.tls_sig_algs | quote }}
+  {{- end }}
+  transcode_distinguished_values_to_der: {{ .Values.transcode_distinguished_values_to_der | ternary 1 0 | quote }}
+  transcode_values_to_der: {{ .Values.transcode_values_to_der | ternary 1 0 | quote }}
+  # trust_anchors_file: use signingTrustAnchorListConfigName
+  use_database_when_there_are_x_subordinates: {{ .Values.use_database_when_there_are_x_subordinates | default "1000" | quote }}
+  web_admin_port: {{ .Values.web_admin_port | default "18080" | quote }}
+
   {{- if .Values.init }}
   init: |-
 {{ toYaml .Values.init | indent 4 }}

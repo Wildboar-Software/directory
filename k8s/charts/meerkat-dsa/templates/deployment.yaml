@@ -26,29 +26,27 @@ spec:
             # that the user specified. These are internal ports. The ports
             # specified in `values.yaml` control the ports on which the
             # service will listen.
-            {{- if .Values.webAdmin.port }}
+            {{- if .Values.web_admin_port }}
             - name: MEERKAT_WEB_ADMIN_PORT
               value: "18080"
             {{- end }}
-            {{- if .Values.idm.port }}
+            {{- if .Values.idm_port }}
             - name: MEERKAT_IDM_PORT
               value: "4632"
             {{- end }}
-            {{- if .Values.idms.port }}
+            {{- if .Values.idms_port }}
             - name: MEERKAT_IDMS_PORT
               value: "44632"
             {{- end }}
-            {{- if .Values.ldap.port }}
+            {{- if .Values.ldap_port }}
             - name: MEERKAT_LDAP_PORT
               value: "1389"
             {{- end }}
-            {{- if .Values.ldaps.port }}
+            {{- if .Values.ldaps_port }}
             - name: MEERKAT_LDAPS_PORT
               value: "1636"
             {{- end }}
             # These environment variables came from the `env.md` documentation,
-            # and are listed in roughly the same order in which they appear in
-            # that documentation.
             - name: NODE_ENV
               value: production
             - name: LC_ALL
@@ -69,90 +67,6 @@ spec:
                   name: {{ .Values.databaseSecretName }}
                   key: databaseUrl
                   optional: false
-            - name: MEERKAT_ADMINISTRATOR_EMAIL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: administratorEmail
-                  optional: true
-            - name: MEERKAT_BIND_MIN_SLEEP_MS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: bindMinSleepInMilliseconds
-                  optional: true
-            - name: MEERKAT_BIND_SLEEP_RANGE_MS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: bindSleepRangeInMilliseconds
-                  optional: true
-            - name: MEERKAT_BULK_INSERT_MODE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: bulkInsertMode
-                  optional: true
-            - name: MEERKAT_CLIENT_CERT_ENGINE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.clientCertEngine
-                  optional: true
-            - name: MEERKAT_CHAINING_TLS_OPTIONAL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: chaining.tlsOptional
-                  optional: true
-            - name: MEERKAT_DANGEROUSLY_ENABLE_DOP
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: dop.enabled
-                  optional: true
-            - name: MEERKAT_DANGEROUSLY_ENABLE_DSP
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: dsp.enabled
-                  optional: true
-            - name: MEERKAT_ECDH_CURVES
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.ecdhCurve
-                  optional: true
-            - name: MEERKAT_ENABLE_DAP
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: dap.enabled
-                  optional: true
-            - name: MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: entriesPerSubordinatesPage
-                  optional: true
-            - name: MEERKAT_FORBID_ANONYMOUS_BIND
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: forbidAnonymousBind
-                  optional: true
-            - name: MEERKAT_HONOR_CIPHER_ORDER
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.honorCipherOrder
-                  optional: true
-            - name: MEERKAT_IDM_BUFFER_SIZE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: idm.bufferSize
-                  optional: true
             {{- if .Values.init }}
             - name: MEERKAT_INIT_JS
               valueFrom:
@@ -161,260 +75,15 @@ spec:
                   key: /data/init/init.mjs
                   optional: true
             {{- end }}
-            - name: MEERKAT_LDAP_BUFFER_SIZE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: ldap.bufferSize
-                  optional: true
-            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: localQualifierPointsFor.usingSSLv3
-                  optional: true
-            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: localQualifierPointsFor.usingStartTLS
-                  optional: true
-            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: localQualifierPointsFor.usingTLS
-                  optional: true
-            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: localQualifierPointsFor.usingTLSv1_0
-                  optional: true
-            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: localQualifierPointsFor.usingTLSv1_1
-                  optional: true
-            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: localQualifierPointsFor.usingTLSv1_2
-                  optional: true
-            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: localQualifierPointsFor.usingTLSv1_3
-                  optional: true
-            - name: MEERKAT_LOG_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.file.path
-                  optional: true
-            - name: MEERKAT_LOG_FILE_MAX_FILES
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.file.maxFiles
-                  optional: true
-            - name: MEERKAT_LOG_FILE_MAX_SIZE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.file.maxSize
-                  optional: true
-            - name: MEERKAT_LOG_HTTP
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.http.url
-                  optional: true
-            - name: MEERKAT_LOG_JSON
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.json
-                  optional: true
-            - name: MEERKAT_LOG_LEVEL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.level
-                  optional: true
-            - name: MEERKAT_LOG_TAILABLE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.file.tailable
-                  optional: true
-            - name: MEERKAT_LOG_ZIP
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.file.zip
-                  optional: true
-            - name: MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: maxConcurrentOperationsPerConnection
-                  optional: true
-            - name: MEERKAT_MAX_CONNECTIONS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: maxConnections
-                  optional: true
-            - name: MEERKAT_MAX_CONNECTIONS_PER_ADDRESS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: maxConnectionsPerAddress
-                  optional: true
-            - name: MEERKAT_MAX_IDM_PDU_SIZE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: idm.maxPDUSize
-                  optional: true
-            - name: MEERKAT_MAX_IDM_SEGMENTS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: idm.maxSegments
-                  optional: true
-            - name: MEERKAT_MAX_PRE_BIND_REQUESTS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: maxPreBindRequests
-                  optional: true
-            - name: MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: chaining.minAuthLevel
-                  optional: true
-            - name: MEERKAT_MIN_AUTH_LEVEL_FOR_OB
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: ob.minAuthLevel
-                  optional: true
-            - name: MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: chaining.minAuthLocalQualifier
-                  optional: true
-            - name: MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: ob.minAuthLocalQualifier
-                  optional: true
-            - name: MEERKAT_MIN_TRANSFER_SPEED_BYTES_PER_MINUTE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tcp.minimumTransferSpeedInBytesPerMinute
-                  optional: true
-            - name: MEERKAT_MY_ACCESS_POINT_NSAPS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: myAccessPointNSAPs
-                  optional: true
-            - name: MEERKAT_NO_COLOR
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.noColor
-                  optional: true
-            - name: MEERKAT_NO_CONSOLE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.noConsole
-                  optional: true
-            - name: MEERKAT_NO_TIMESTAMP
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log.noTimestamp
-                  optional: true
-            - name: MEERKAT_OB_AUTO_ACCEPT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: ob.autoAccept
-                  optional: true
-            - name: MEERKAT_OPEN_TOP_LEVEL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: openTopLevel
-                  optional: true
-            - name: MEERKAT_PRIVATE_KEY_ENGINE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.privateKeyEngine
-                  optional: true
-            - name: MEERKAT_PROHIBIT_CHAINING
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: chaining.prohibited
-                  optional: true
-            - name: MEERKAT_SENTINEL_DOMAIN
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: sentinelDomain
-                  optional: true
-            - name: MEERKAT_SIGNING_CERT_CHAIN
+            # These are created by the Helm chart if you do not provide a signing secret
+            - name: MEERKAT_SIGNING_CERTS_CHAIN_FILE
               value: /data/pki/signing/tls.crt
             - name: MEERKAT_SIGNING_KEY
               value: /data/pki/signing/tls.key
-            - name: MEERKAT_TCP_NO_DELAY
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tcp.noDelay
-                  optional: true
-            - name: MEERKAT_TCP_TIMEOUT_IN_SECONDS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tcp.timeoutInSeconds
-                  optional: true
             {{- if .Values.tlsSecretName }}
             - name: MEERKAT_TLS_CERT_FILE
               value: /data/pki/tls/tls.crt
             {{- end }}
-            - name: MEERKAT_TLS_CIPHERS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.ciphers
-                  optional: true
-            - name: MEERKAT_TLS_CLIENT_CERT_AUTH
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.clientCertAuth
-                  optional: true
-            - name: MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.handshakeTimeout
-                  optional: true
             {{- if .Values.tlsSecretName }}
             - name: MEERKAT_TLS_KEY_FILE
               value: /data/pki/tls/tls.key
@@ -431,62 +100,902 @@ spec:
             - name: MEERKAT_TLS_CRL_FILE
               value: /data/crl/crl.pem
             {{- end }}
+            - name: MEERKAT_ADMINISTRATOR_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: administrator_email
+                  optional: true
+            - name: MEERKAT_BIND_MIN_SLEEP_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: bind_min_sleep_ms
+                  optional: true
+            - name: MEERKAT_BIND_SLEEP_RANGE_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: bind_sleep_range_ms
+                  optional: true
+            - name: MEERKAT_BULK_INSERT_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: bulk_insert_mode
+                  optional: true
+            - name: MEERKAT_CLIENT_CERT_ENGINE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: client_cert_engine
+                  optional: true
+            - name: MEERKAT_CHAINING_TLS_OPTIONAL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: chaining_tls_optional
+                  optional: true
+            - name: MEERKAT_DANGEROUSLY_ENABLE_DOP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: dangerously_enable_dop
+                  optional: true
+            - name: MEERKAT_DANGEROUSLY_ENABLE_DSP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: dangerously_enable_dsp
+                  optional: true
+            - name: MEERKAT_ECDH_CURVES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: ecdh_curves
+                  optional: true
+            - name: MEERKAT_ENABLE_DAP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: enable_dap
+                  optional: true
+            - name: MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: entries_per_subordinates_page
+                  optional: true
+            - name: MEERKAT_FORBID_ANONYMOUS_BIND
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: forbid_anonymous_bind
+                  optional: true
+            - name: MEERKAT_HONOR_CIPHER_ORDER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: honor_cipher_order
+                  optional: true
+            - name: MEERKAT_IDM_BUFFER_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: idm_buffer_size
+                  optional: true
+            - name: MEERKAT_IDM_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: idm_port
+                  optional: true
+            - name: MEERKAT_IDMS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: idms_port
+                  optional: true
+            - name: MEERKAT_INIT_JS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: init_js
+                  optional: true
+            - name: MEERKAT_LDAP_BUFFER_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: ldap_buffer_size
+                  optional: true
+            - name: MEERKAT_LDAP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: ldap_port
+                  optional: true
+            - name: MEERKAT_LDAPS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: ldaps_port
+                  optional: true
+            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: local_qualifier_points_for_using_ssl3
+                  optional: true
+            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: local_qualifier_points_for_using_starttls
+                  optional: true
+            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: local_qualifier_points_for_using_tls
+                  optional: true
+            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: local_qualifier_points_for_using_tls_1_0
+                  optional: true
+            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: local_qualifier_points_for_using_tls_1_1
+                  optional: true
+            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: local_qualifier_points_for_using_tls_1_2
+                  optional: true
+            - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: local_qualifier_points_for_using_tls_1_3
+                  optional: true
+            - name: MEERKAT_LOG_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_file
+                  optional: true
+            - name: MEERKAT_LOG_FILE_MAX_FILES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_file_max_files
+                  optional: true
+            - name: MEERKAT_LOG_FILE_MAX_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_file_max_size
+                  optional: true
+            - name: MEERKAT_LOG_HTTP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_http
+                  optional: true
+            - name: MEERKAT_LOG_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_json
+                  optional: true
+            - name: MEERKAT_LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_level
+                  optional: true
+            - name: MEERKAT_LOG_TAILABLE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_tailable
+                  optional: true
+            - name: MEERKAT_LOG_ZIP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_zip
+                  optional: true
+            - name: MEERKAT_LOOKUP_UNCERT_STRONG_AUTH
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: lookup_uncert_strong_auth
+                  optional: true
+            - name: MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: max_concurrent_operations_per_connection
+                  optional: true
+            - name: MEERKAT_MAX_CONNECTIONS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: max_connections
+                  optional: true
+            - name: MEERKAT_MAX_CONNECTIONS_PER_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: max_connections_per_address
+                  optional: true
+            - name: MEERKAT_MAX_IDM_PDU_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: max_idm_pdu_size
+                  optional: true
+            - name: MEERKAT_MAX_IDM_SEGMENTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: max_idm_segments
+                  optional: true
+            - name: MEERKAT_MAX_PRE_BIND_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: max_pre_bind_requests
+                  optional: true
+            - name: MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: min_auth_level_for_chaining
+                  optional: true
+            - name: MEERKAT_MIN_AUTH_LEVEL_FOR_OB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: min_auth_level_for_ob
+                  optional: true
+            - name: MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: min_auth_local_qualifier_for_chaining
+                  optional: true
+            - name: MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: min_auth_local_qualifier_for_ob
+                  optional: true
+            - name: MEERKAT_MIN_TRANSFER_SPEED_BYTES_PER_MINUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: min_transfer_speed_bytes_per_minute
+                  optional: true
+            - name: MEERKAT_MY_ACCESS_POINT_NSAPS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: my_access_point_nsaps
+                  optional: true
+            - name: MEERKAT_NO_COLOR
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: no_color
+                  optional: true
+            - name: MEERKAT_NO_CONSOLE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: no_console
+                  optional: true
+            - name: MEERKAT_NO_TIMESTAMP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: no_timestamp
+                  optional: true
+            - name: MEERKAT_OB_AUTO_ACCEPT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: ob_auto_accept
+                  optional: true
+            - name: MEERKAT_OPEN_TOP_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: open_top_level
+                  optional: true
+            - name: MEERKAT_PRIVATE_KEY_ENGINE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: private_key_engine
+                  optional: true
+            - name: MEERKAT_PROHIBIT_CHAINING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: prohibit_chaining
+                  optional: true
+            - name: MEERKAT_SCVP_ATTR_CERT_CHECKS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_attr_cert_checks
+                  optional: true
+            - name: MEERKAT_SCVP_ATTR_CERT_WANT_BACKS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_attr_cert_want_backs
+                  optional: true
+            - name: MEERKAT_SCVP_CACHED_RESPONSE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_cached_response
+                  optional: true
+            - name: MEERKAT_SCVP_DISCLOSE_AE_TITLE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_disclose_ae_title
+                  optional: true
+            - name: MEERKAT_SCVP_FULL_REQUEST_IN_RESPONSE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_full_request_in_response
+                  optional: true
+            - name: MEERKAT_SCVP_HASH_ALGORITHM
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_hash_algorithm
+                  optional: true
+            - name: MEERKAT_SCVP_INHIBIT_ANY_POLICY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_inhibit_any_policy
+                  optional: true
+            - name: MEERKAT_SCVP_INHIBIT_POLICY_MAPPING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_inhibit_policy_mapping
+                  optional: true
+            - name: MEERKAT_SCVP_PUBLIC_KEY_CERT_CHECKS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_public_key_cert_checks
+                  optional: true
+            - name: MEERKAT_SCVP_PUBLIC_KEY_CERT_WANT_BACKS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_public_key_cert_want_backs
+                  optional: true
+            - name: MEERKAT_SCVP_REQUESTOR_TEXT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_requestor_text
+                  optional: true
+            - name: MEERKAT_SCVP_REQUIRE_EXPLICIT_POLICY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_require_explicit_policy
+                  optional: true
+            - name: MEERKAT_SCVP_RESPONSE_VALIDATION_POLICY_BY_REF
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_response_validation_policy_by_ref
+                  optional: true
+            - name: MEERKAT_SCVP_SIGNATURE_ALGORITHM
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_signature_algorithm
+                  optional: true
+            - name: MEERKAT_SCVP_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_url
+                  optional: true
+            - name: MEERKAT_SCVP_VALIDATION_ALGORITHM_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_validation_algorithm_id
+                  optional: true
+            - name: MEERKAT_SCVP_VALIDATION_POLICY_REF_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scvp_validation_policy_ref_id
+                  optional: true
+            - name: MEERKAT_SENTINEL_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: sentinel_domain
+                  optional: true
+            - name: MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_acceptable_cert_policies
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_ACCEPTABLE_CERT_POLICIES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_acceptable_cert_policies
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_CRL_DP_ATTEMPTS_PER_CERT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_crl_dp_attempts_per_cert
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_MAX_ENDPOINTS_PER_CRL_DP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_max_endpoints_per_crl_dp
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_OCSP_CHECKINESS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_ocsp_checkiness
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_OCSP_MAX_REQUESTS_PER_CERT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_ocsp_max_requests_per_cert
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_OCSP_SIGN_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_ocsp_sign_requests
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_OCSP_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_ocsp_timeout
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_OCSP_UNKNOWN_IS_FAILURE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_ocsp_unknown_is_failure
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_REMOTE_CRL_CACHE_TTL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_remote_crl_cache_ttl
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_REMOTE_CRL_CHECKINESS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_remote_crl_checkiness
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_REMOTE_CRL_SUPPORTED_PROTOCOLS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_remote_crl_supported_protocols
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_REMOTE_CRL_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_remote_crl_timeout
+                  optional: true
+            - name: MEERKAT_SIGNING_BIND_TOLERATE_UNAVAILABLE_REMOTE_CRL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_tolerate_unavailable_remote_crl
+                  optional: true
+            {{- if .Values.signingCaConfigName }}
+            - name: MEERKAT_SIGNING_CA_FILE
+              value: "/data/pki/signing/ca"
+            {{- end }}
+            {{- if .Values.signingTrustAnchorListConfigName }}
+            - name: MEERKAT_TRUST_ANCHORS_FILE
+              value: "/data/pki/signing/tal"
+            {{- end }}
+            {{- if .Values.signingCrlConfigName }}
+            - name: MEERKAT_SIGNING_CRL_FILE
+              value: "/data/pki/signing/crl"
+            {{- end }}
+            - name: MEERKAT_SIGNING_CERTS_CHAIN_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_cert_chain
+                  optional: true
+            - name: MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_crl_dp_attempts_per_cert
+                  optional: true
+            - name: MEERKAT_SIGNING_CRL_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_crl_file
+                  optional: true
+            - name: MEERKAT_SIGNING_DISABLE_VERIFICATION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_disable_verification
+                  optional: true
+            - name: MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_errors_min_auth_level
+                  optional: true
+            - name: MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_errors_min_auth_local_qualifier
+                  optional: true
+            - name: MEERKAT_SIGNING_ERRORS_MIN_AUTH_SIGNED
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_errors_min_auth_signed
+                  optional: true
+            - name: MEERKAT_SIGNING_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_key
+                  optional: true
+            - name: MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_max_endpoints_per_crl_dp
+                  optional: true
+            - name: MEERKAT_SIGNING_MIN_AUTH_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_min_auth_level
+                  optional: true
+            - name: MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_min_auth_local_qualifier
+                  optional: true
+            - name: MEERKAT_SIGNING_MIN_AUTH_SIGNED
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_min_auth_signed
+                  optional: true
+            - name: MEERKAT_SIGNING_OCSP_CHECKINESS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_ocsp_checkiness
+                  optional: true
+            - name: MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_ocsp_max_requests_per_cert
+                  optional: true
+            - name: MEERKAT_SIGNING_OCSP_REPLAY_WINDOW
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_ocsp_replay_window
+                  optional: true
+            - name: MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_ocsp_response_size_limit
+                  optional: true
+            - name: MEERKAT_SIGNING_OCSP_SIGN_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_ocsp_sign_requests
+                  optional: true
+            - name: MEERKAT_SIGNING_OCSP_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_ocsp_timeout
+                  optional: true
+            - name: MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_ocsp_unknown_is_failure
+                  optional: true
+            - name: MEERKAT_SIGNING_PERMITTED_ALGORITHMS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_permitted_algorithms
+                  optional: true
+            - name: MEERKAT_SIGNING_REMOTE_CRL_CACHE_TTL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_remote_crl_cache_ttl
+                  optional: true
+            - name: MEERKAT_SIGNING_REMOTE_CRL_CHECKINESS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_remote_crl_checkiness
+                  optional: true
+            - name: MEERKAT_SIGNING_REMOTE_CRL_SIZE_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_remote_crl_size_limit
+                  optional: true
+            - name: MEERKAT_SIGNING_REMOTE_CRL_SUPPORTED_PROTOCOLS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_remote_crl_supported_protocols
+                  optional: true
+            - name: MEERKAT_SIGNING_REMOTE_CRL_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_remote_crl_timeout
+                  optional: true
+            - name: MEERKAT_SIGNING_REQUIRED_FOR_CHAINING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_required_for_chaining
+                  optional: true
+            - name: MEERKAT_SIGNING_REQUIRED_FOR_OB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_required_for_ob
+                  optional: true
+            - name: MEERKAT_SIGNING_TOLERATE_UNAVAILABLE_REMOTE_CRL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_tolerate_unavailable_remote_crl
+                  optional: true
+            - name: MEERKAT_TCP_NO_DELAY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tcp_no_delay
+                  optional: true
+            - name: MEERKAT_TCP_TIMEOUT_IN_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tcp_timeout_in_seconds
+                  optional: true
+            - name: MEERKAT_TLS_ANSWER_OCSP_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_answer_ocsp_requests
+                  optional: true
+            - name: MEERKAT_TLS_CA_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ca_file
+                  optional: true
+            - name: MEERKAT_TLS_CERT_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_cert_file
+                  optional: true
+            - name: MEERKAT_TLS_CIPHERS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ciphers
+                  optional: true
+            - name: MEERKAT_TLS_CLIENT_CERT_AUTH
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_client_cert_auth
+                  optional: true
+            - name: MEERKAT_TLS_CRL_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_crl_file
+                  optional: true
+            - name: MEERKAT_TLS_DH_PARAM_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_dh_param_file
+                  optional: true
+            - name: MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_handshake_timeout_in_seconds
+                  optional: true
+            - name: MEERKAT_TLS_KEY_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_key_file
+                  optional: true
             - name: MEERKAT_TLS_KEY_PASSPHRASE
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.passphrase
+                  key: tls_key_passphrase
                   optional: true
             - name: MEERKAT_TLS_MAX_VERSION
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.maxVersion
+                  key: tls_max_version
                   optional: true
             - name: MEERKAT_TLS_MIN_VERSION
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.minVersion
+                  key: tls_min_version
+                  optional: true
+            - name: MEERKAT_TLS_OCSP_CHECKINESS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ocsp_checkiness
+                  optional: true
+            - name: MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ocsp_max_requests_per_cert
+                  optional: true
+            - name: MEERKAT_TLS_OCSP_REPLAY_WINDOW
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ocsp_replay_window
+                  optional: true
+            - name: MEERKAT_TLS_OCSP_RESPONSE_SIZE_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ocsp_response_size_limit
+                  optional: true
+            - name: MEERKAT_TLS_OCSP_SIGN_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ocsp_sign_requests
+                  optional: true
+            - name: MEERKAT_TLS_OCSP_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ocsp_timeout
+                  optional: true
+            - name: MEERKAT_TLS_OCSP_UNKNOWN_IS_FAILURE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_ocsp_unknown_is_failure
                   optional: true
             - name: MEERKAT_TLS_PFX_FILE
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.pfx
+                  key: tls_pfx_file
+                  optional: true
+            - name: MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_reject_unauthorized_clients
+                  optional: true
+            - name: MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_reject_unauthorized_servers
+                  optional: true
+            - name: MEERKAT_TLS_REQUEST_OCSP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_request_ocsp
                   optional: true
             - name: MEERKAT_TLS_SESSION_TIMEOUT_IN_SECONDS
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.sessionTimeout
+                  key: tls_session_timeout_in_seconds
                   optional: true
             - name: MEERKAT_TLS_SIG_ALGS
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls.sigalgs
+                  key: tls_sig_algs
                   optional: true
             - name: MEERKAT_TRANSCODE_DISTINGUISHED_VALUES_TO_DER
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: transcodeDistinguishedValuesToDER
+                  key: transcode_distinguished_values_to_der
                   optional: true
             - name: MEERKAT_TRANSCODE_VALUES_TO_DER
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: transcodeValuesToDER
+                  key: transcode_values_to_der
+                  optional: true
+            - name: MEERKAT_TRUST_ANCHORS_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: trust_anchors_file
                   optional: true
             - name: MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: useDatabaseWhenThereAreXSubordinates
+                  key: use_database_when_there_are_x_subordinates
+                  optional: true
+            - name: MEERKAT_WEB_ADMIN_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: web_admin_port
                   optional: true
           ports:
-            {{- if .Values.dap.enabled }}
+            {{- if .Values.dap_enabled }}
             - name: idm
               containerPort: 4632
               protocol: TCP
@@ -494,7 +1003,7 @@ spec:
               containerPort: 44632
               protocol: TCP
             {{- end }}
-            {{- if .Values.ldap.port }}
+            {{- if .Values.ldap_port }}
             - name: ldap
               containerPort: 1389
               protocol: TCP
@@ -502,7 +1011,7 @@ spec:
               containerPort: 1636
               protocol: TCP
             {{- end }}
-            {{- if .Values.webAdmin.enabled }}
+            {{- if .Values.web_admin_port }}
             - name: admin
               containerPort: 18080
               protocol: TCP
@@ -513,6 +1022,21 @@ spec:
             - name: signing-volume
               mountPath: "/data/pki/signing"
               readOnly: true
+            {{- if .Values.signingCaConfigName }}
+            - name: signing-ca-volume
+              mountPath: "/data/pki/signing/ca"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.signingTrustAnchorListConfigName }}
+            - name: signing-tal-volume
+              mountPath: "/data/pki/signing/tal"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.signingCrlConfigName }}
+            - name: signing-crl-volume
+              mountPath: "/data/pki/signing/crl"
+              readOnly: true
+            {{- end }}
             {{- if .Values.tlsSecretName }}
             - name: tls-secret-volume
               mountPath: "/data/pki/tls"
@@ -539,6 +1063,21 @@ spec:
               readOnly: true
             {{- end }}
       volumes:
+        {{- if .Values.signingCaConfigName }}
+        - name: signing-ca-volume
+          configMap:
+            name: {{ .Values.signingCaConfigName | quote }}
+        {{- end }}
+        {{- if .Values.signingTrustAnchorListConfigName }}
+        - name: signing-tal-volume
+          configMap:
+            name: {{ .Values.signingTrustAnchorListConfigName | quote }}
+        {{- end }}
+        {{- if .Values.signingCrlConfigName }}
+        - name: signing-crl-volume
+          configMap:
+            name: {{ .Values.signingCrlConfigName | quote }}
+        {{- end }}
         {{- if .Values.signingSecretName }}
         - name: signing-volume
           secret:
@@ -568,10 +1107,10 @@ spec:
           configMap:
             name: {{ .Values.tlsCrlConfigName | quote }}
         {{- end }}
-        {{- if .Values.init }}
+        {{- if .Values.initJsConfigName }}
         - name: init-volume
           configMap:
-            name: {{ include "meerkat-dsa.fullname" . }}-config
+            name: {{ .Values.initJsConfigName | quote }}
             items:
               - key: init
                 path: init.mjs

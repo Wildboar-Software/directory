@@ -9,27 +9,27 @@ spec:
   selector:
     {{- include "meerkat-dsa.selectorLabels" . | nindent 4 }}
   ports:
-    {{- if .Values.idm.port }}
+    {{- if .Values.idm_port }}
     - name: idm
       protocol: TCP
-      port: {{ .Values.idm.port | default 4632 | int }}
+      port: {{ .Values.idm_port | default 4632 | int }}
       targetPort: 4632
     {{- if .Values.tlsSecretName }}
     - name: idms
       protocol: TCP
-      port: {{ .Values.idms.port | default 44632 | int }}
+      port: {{ .Values.idms_port | default 44632 | int }}
       targetPort: 44632
     {{- end }}
     {{- end }}
-    {{- if .Values.ldap.port }}
+    {{- if .Values.ldap_port }}
     - name: ldap
       protocol: TCP
-      port: {{ .Values.ldap.port | default 389 | int }}
+      port: {{ .Values.ldap_port | default 389 | int }}
       targetPort: 1389 # We use 1389 instead of 389 because ports under 1000 are privileged.
     {{- if .Values.tlsSecretName }}
     - name: ldaps
       protocol: TCP
-      port: {{ .Values.ldaps.port | default 636 | int }}
+      port: {{ .Values.ldaps_port | default 636 | int }}
       targetPort: 1636 # We use 1636 instead of 389 because ports under 1000 are privileged.
     {{- end }}
     {{- end }}
