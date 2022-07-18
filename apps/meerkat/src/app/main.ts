@@ -925,6 +925,20 @@ async function main (): Promise<void> {
         // See: https://github.com/nestjs/nest/issues/671
         const app = await NestFactory.create<NestExpressApplication>(AppModule, {
             logger: isDebugging ? undefined : false,
+            httpsOptions: ctx.config.webAdmin.useTLS
+                ? {
+                    ca: ctx.config.tls.ca,
+                    cert: ctx.config.tls.cert,
+                    key: ctx.config.tls.key,
+                    pfx: ctx.config.tls.pfx,
+                    ciphers: ctx.config.tls.ciphers,
+                    honorCipherOrder: ctx.config.tls.honorCipherOrder,
+                    crl: ctx.config.tls.crl,
+                    passphrase: ctx.config.tls.passphrase,
+                    rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
+                    requestCert: ctx.config.tls.requestCert,
+                }
+                : undefined,
         });
         app.useStaticAssets(path.join(__dirname, "assets", "static"));
         app.setBaseViewsDir(path.join(__dirname, "assets", "views"));
@@ -936,7 +950,7 @@ async function main (): Promise<void> {
         }));
         await app.listen(ctx.config.webAdmin.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
-                protocol: "HTTP",
+                protocol: "HTTP", // TODO: "HTTPS" if TLS enabled.
                 port: ctx.config.webAdmin.port,
             }));
         });

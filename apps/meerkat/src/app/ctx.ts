@@ -774,6 +774,23 @@ const ctx: MeerkatContext = {
             port: process.env.MEERKAT_WEB_ADMIN_PORT
                 ? Number.parseInt(process.env.MEERKAT_WEB_ADMIN_PORT, 10)
                 : undefined,
+            auth: (
+                process.env.MEERKAT_WEB_ADMIN_AUTH_USERNAME
+                && process.env.MEERKAT_WEB_ADMIN_AUTH_PASSWORD
+            )
+                ? {
+                    username: process.env.MEERKAT_WEB_ADMIN_AUTH_USERNAME,
+                    password: process.env.MEERKAT_WEB_ADMIN_AUTH_PASSWORD,
+                    realm: process.env.MEERKAT_WEB_ADMIN_AUTH_REALM
+                        ?.replaceAll(/[\t\v\f\\"]/g, "")
+                        .replaceAll(/\r?\n/g, ""),
+                }
+                : undefined,
+            useTLS: !!(
+                (process.env.MEERKAT_WEB_ADMIN_USE_TLS !== "0")
+                && process.env.MEERKAT_TLS_CERT_FILE
+                && process.env.MEERKAT_TLS_KEY_FILE
+            ),
         },
         localQualifierPointsFor: {
             usingStartTLS: process.env.MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS
