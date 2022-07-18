@@ -114,9 +114,6 @@ import type {
 import type {
     TrustAnchorList,
 } from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
-import type {
-    AuthenticationLevel_basicLevels_level,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 
 
 type EventReceiver<T> = (params: T) => void;
