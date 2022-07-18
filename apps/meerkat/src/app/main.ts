@@ -784,9 +784,9 @@ async function main (): Promise<void> {
 
     const signingCertPath = ctx.config.signing.certPath;
 
-    if (signingCertPath?.length === 0) {
+    if (signingCertPath && signingCertPath.length === 0) {
         ctx.log.warn(ctx.i18n.t("log:cert_chain_no_certificates", {
-            envvar: process.env.MEERKAT_SIGNING_CERT_CHAIN,
+            envvar: process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE,
         }));
         process.exit(1);
     }
