@@ -994,6 +994,8 @@ async function main (): Promise<void> {
         }, 300000);
     }
 
+    ctx.log.info(ctx.i18n.t("log:docs"));
+
     if (versionSlug) {
         checkForUpdates(ctx, versionSlug).catch();
     }
