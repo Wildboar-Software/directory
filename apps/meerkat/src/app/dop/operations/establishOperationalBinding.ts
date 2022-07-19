@@ -335,7 +335,7 @@ async function establishOperationalBinding (
                 governingStructureRule = gsr;
             } catch (e) {
                 throw new errors.OperationalBindingError(
-                    ctx.i18n.t("err:hob_invalid_entryInfo"),
+                    ctx.i18n.t("err:hob_invalid_entryInfo", { e }),
                     new OpBindingErrorParam(
                         OpBindingErrorParam_problem_invalidAgreement,
                         data.bindingType,

@@ -377,6 +377,15 @@ model AccessPoint {
   // entry to which this access point belongs.
   nsk_group BigInt?
 
+  // Whether to trust this DSA for Identity-Based Requester Authentication, as
+  // described in ITU Recommendation X.518 (2019), Section 22.1.1, meaning that
+  // the originator and authenticationLevel fields of the chaining arguments
+  // sent by this DSA via chaining will be trusted by fiat.
+  trust_ibra Boolean @default(false)
+
+  // Whether this DSA may receive cross references, if requested.
+  disclose_cross_refs Boolean @default(false)
+
   active      Boolean                  @default(true)
   created_at  DateTime                 @default(now())
   credentials AccessPointCredentials[]
