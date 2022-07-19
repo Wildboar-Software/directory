@@ -25,7 +25,7 @@ export class SecurityMiddleware implements NestMiddleware {
         res.setHeader("Referrer-Policy", "no-referrer");
         res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("Cache-Control", "no-store");
-        res.setHeader("Clear-Site-Data", "*");
+        // res.setHeader("Clear-Site-Data", "*");
         // Uncomment if this is ever supported: https://github.com/w3c/webappsec-permissions-policy/issues/189
         // res.setHeader("Feature-Policy", PERMISSIONS_POLICY);
         // res.setHeader("Permissions-Policy", PERMISSIONS_POLICY);

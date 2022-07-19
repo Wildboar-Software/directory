@@ -3,7 +3,8 @@
     <head>
         <meta charset="utf-8" />
         <title>Op. Binding {{uuid}} - Meerkat DSA</title>
-        <meta name="referrer" content="noreferrer">
+        <meta name="referrer" content="no-referrer">
+        <meta name="csrf-token" content="{{csrfToken}}">
         <style>
             body {
                 background-color: black;
@@ -38,12 +39,15 @@
         <h2>Actions</h2>
         <div>
             <form action="/ob/{{uuid}}/accept" method="POST" >
+                <input type="hidden" name="_csrf" value="{{csrfToken}}">
                 <button type="submit">Accept</button>
             </form>
             <form action="/ob/{{uuid}}/reject" method="POST" >
+                <input type="hidden" name="_csrf" value="{{csrfToken}}">
                 <button type="submit">Reject</button>
             </form>
             <form action="/ob/{{uuid}}/cancel" method="POST" >
+                <input type="hidden" name="_csrf" value="{{csrfToken}}">
                 <button type="submit">Cancel</button>
             </form>
         </div>

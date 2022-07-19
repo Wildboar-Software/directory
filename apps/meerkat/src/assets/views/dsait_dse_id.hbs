@@ -3,7 +3,8 @@
     <head>
         <meta charset="utf-8" />
         <title>DSE Details - Meerkat DSA</title>
-        <meta name="referrer" content="noreferrer">
+        <meta name="csrf-token" content="{{csrfToken}}">
+        <meta name="referrer" content="no-referrer">
         <style>
             body {
                 background-color: black;
@@ -44,6 +45,7 @@
         <hr />
         <h2>Actions</h2>
         <form action="/dsait/dse/{{uuid}}/delete" method="POST" >
+            <input type="hidden" name="_csrf" value="{{csrfToken}}">
             <button type="submit">Delete</button>
         </form>
         <hr />

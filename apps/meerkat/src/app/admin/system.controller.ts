@@ -1,6 +1,6 @@
 import type { MeerkatContext } from "../ctx";
 import { CONTEXT } from "../constants";
-import { Controller, Get, Post, Render, Inject, Res } from "@nestjs/common";
+import { Controller, Get, Post, Render, Inject, Res, Req } from "@nestjs/common";
 import type { Response } from "express";
 import * as os from "os";
 import { flatten } from "flat";
@@ -23,20 +23,31 @@ export class SystemController {
 
     @Get("/updates")
     @Render('updates')
-    updates () {
-        return {};
+    public updates (
+        @Req() req: { csrfToken: () => string },
+    ) {
+        return {
+            csrfToken: req.csrfToken(),
+        };
     }
 
     @Get("/help")
     @Render('help')
-    help () {
-        return {};
+    public help (
+        @Req() req: { csrfToken: () => string },
+    ) {
+        return {
+            csrfToken: req.csrfToken(),
+        };
     }
 
     @Get("/about")
     @Render('about')
-    about () {
+    public about (
+        @Req() req: { csrfToken: () => string },
+    ) {
         return {
+            csrfToken: req.csrfToken(),
             version: "1.0.0",
             hash: "", // TODO:
             license: "", // TODO:
@@ -57,8 +68,11 @@ export class SystemController {
 
     @Get("/hibernate")
     @Render("hibernate")
-    hibernate () {
+    public hibernate (
+        @Req() req: { csrfToken: () => string },
+    ) {
         return {
+            csrfToken: req.csrfToken(),
             hibernatingSince: this.ctx.dsa.hibernatingSince
                 ? this.ctx.dsa.hibernatingSince.toISOString()
                 : undefined,

@@ -1,6 +1,16 @@
 import type { MeerkatContext } from "../ctx";
 import { CONTEXT } from "../constants";
-import { Controller, Get, Post, Render, Inject, Param, Res, NotFoundException } from "@nestjs/common";
+import {
+    Controller,
+    Get,
+    Post,
+    Render,
+    Inject,
+    Param,
+    Req,
+    Res,
+    NotFoundException,
+} from "@nestjs/common";
 import type { Response } from "express";
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -30,16 +40,22 @@ export class HomeController {
     @Get("/index")
     @Get("/home")
     @Render('index')
-    index () {
+    public index (
+        @Req() req: { csrfToken: () => string },
+    ) {
         return {
+            csrfToken: req.csrfToken(),
             rootuuid: this.ctx.dit.root.dse.uuid,
         };
     }
 
     @Get("/conformance")
     @Render("markdown")
-    public async conformance () {
+    public async conformance (
+        @Req() req: { csrfToken: () => string },
+    ) {
         return {
+            csrfToken: req.csrfToken(),
             title: "Conformance",
             content: await fs.readFile(conformancePath, { encoding: "utf-8" }),
         };
@@ -47,8 +63,11 @@ export class HomeController {
 
     @Get("/ob")
     @Render('ob')
-    async ob () {
+    async ob (
+        @Req() req: { csrfToken: () => string },
+    ) {
         const templateVariables = {
+            csrfToken: req.csrfToken(),
             obs: (await this.ctx.db.operationalBinding.findMany({
                 select: {
                     uuid: true,
@@ -101,6 +120,7 @@ export class HomeController {
     @Get("/ob/:id")
     @Render("ob_id")
     async obDetails (
+        @Req() req: { csrfToken: () => string },
         @Param("id") id: string,
     ) {
         const ob = await this.ctx.db.operationalBinding.findUnique({
@@ -115,6 +135,7 @@ export class HomeController {
             ? "WAITING DECISION"
             : (ob.accepted ? "ACCEPTED" : "REJECTED");
         const templateVariables = {
+            csrfToken: req.csrfToken(),
             ...ob,
             status,
             binding_type: ob.binding_type,

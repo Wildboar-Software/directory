@@ -3,7 +3,8 @@
     <head>
         <meta charset="utf-8" />
         <title>Hibernate - Meerkat DSA</title>
-        <meta name="referrer" content="noreferrer">
+        <meta name="referrer" content="no-referrer">
+        <meta name="csrf-token" content="{{csrfToken}}">
         <style>
             body {
                 background-color: black;
@@ -47,11 +48,13 @@
             {{#if hibernatingSince}}
                 <span style="color: grey;">HIBERNATING SINCE {{hibernatingSince}}</span>
                 <form action="/hibernate/end" method="POST">
+                    <input type="hidden" name="_csrf" value="{{csrfToken}}">
                     <button type="submit">End Hibernation</button>
                 </form>
             {{else}}
                 <span style="color: green;">ACTIVE</span>
-                <form action="/hibernate/end" method="POST">
+                <form action="/hibernate/start" method="POST">
+                    <input type="hidden" name="_csrf" value="{{csrfToken}}">
                     <button type="submit">Begin Hibernation</button>
                 </form>
             {{/if}}

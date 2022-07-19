@@ -49,6 +49,10 @@ import { flatten } from "flat";
 import { getServerStatistics } from "./telemetry/getServerStatistics";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback";
+import csurf from "csurf";
+import cookieParser from "cookie-parser";
+import { parseFormData } from "./admin/parseFormData";
+import { applyXSRFCookie } from "./admin/applyXSRFCookie";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -948,6 +952,15 @@ async function main (): Promise<void> {
             skipMissingProperties: false,
             forbidNonWhitelisted: true,
         }));
+        app.use(cookieParser()); // Needed by csurf.
+        app.use(parseFormData);
+        app.use(csurf({
+            cookie: {
+                sameSite: "strict",
+                httpOnly: true,
+            },
+        }));
+        app.use(applyXSRFCookie);
         await app.listen(ctx.config.webAdmin.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "HTTP", // TODO: "HTTPS" if TLS enabled.

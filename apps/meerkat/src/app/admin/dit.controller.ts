@@ -1,7 +1,17 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import { CONTEXT } from "../constants";
 import type { Entry } from "@prisma/client";
-import { Controller, Get, Post, Render, Inject, Param, NotFoundException, Res } from "@nestjs/common";
+import {
+    Controller,
+    Get,
+    Post,
+    Render,
+    Inject,
+    Param,
+    NotFoundException,
+    Req,
+    Res,
+} from "@nestjs/common";
 import type { Response } from "express";
 import rdnToString from "@wildboar/ldap/src/lib/stringifiers/RelativeDistinguishedName";
 import type StringEncoderGetter from "@wildboar/ldap/src/lib/types/StringEncoderGetter";
@@ -283,6 +293,7 @@ export class DitController {
     @Get("/dsait/dse/:id")
     @Render("dsait_dse_id")
     async dse_id (
+        @Req() req: { csrfToken: () => string },
         @Param("id") id: string,
     ) {
         const entry = await this.ctx.db.entry.findUnique({
@@ -350,6 +361,7 @@ export class DitController {
             .map((sub) => convertDSEToHTML(this.ctx, sub));
 
         return {
+            csrfToken: req.csrfToken(),
             ...entry,
             uuid: entry.dseUUID,
             superiorUUID,
