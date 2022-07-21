@@ -121,5 +121,6 @@
     "strong_cred_error@malformed": "COULD_BAN={{host}}; Strong credentials malformed.",
     "strong_cred_error@untrusted": "COULD_BAN={{host}}; Strong credentials certification-path was not trusted.",
     "strong_cred_error@invalid_sig": "COULD_BAN={{host}}; Strong credentials had an invalid cryptographic signature.",
-    "docs": "Documentation on Meerkat DSA can be found here: https://wildboar-software.github.io/directory/"
+    "docs": "Documentation on Meerkat DSA can be found here: https://wildboar-software.github.io/directory/",
+    "loaded_dsa_relationships": "Loaded DSA relationships."
 }

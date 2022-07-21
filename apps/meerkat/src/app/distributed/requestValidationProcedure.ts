@@ -1,9 +1,9 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
+import { Context, ClientAssociation, MistypedArgumentError, UnknownOperationError, MistypedPDUError } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import * as errors from "@wildboar/meerkat-types";
-import { addSeconds } from "date-fns";
+import { addSeconds, differenceInSeconds } from "date-fns";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+import { OPTIONALLY_PROTECTED, SIGNED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
@@ -21,12 +21,12 @@ import {
     OPTIONAL,
     TRUE_BIT,
     FALSE,
-    ASN1TagClass,
     BERElement,
 } from "asn1-ts";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
+    SecurityProblem_invalidSignature,
     SecurityProblem_noInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
@@ -36,10 +36,7 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
-import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
@@ -49,8 +46,15 @@ import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSer
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
-import { AuthenticationLevel, AuthenticationLevel_basicLevels } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import {
+    AuthenticationLevel,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import {
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import {
+    SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import { DomainInfo } from "@wildboar/x500/src/lib/modules/DistributedOperations/DomainInfo.ta";
 import { Exclusions } from "@wildboar/x500/src/lib/modules/DistributedOperations/Exclusions.ta";
 import { OperationProgress } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
@@ -68,67 +72,53 @@ import { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import { strict as assert } from "assert";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { printInvokeId } from "../utils/printInvokeId";
 import {
-    _decode_ErrorProtectionRequest,
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import { isArgumentSigned } from "../x500/isArgumentSigned";
+import DSPAssociation from "../dsp/DSPConnection";
+import {
+    _decode_AlgorithmIdentifier,
+} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import { compareDistinguishedName, getDateFromTime, isModificationOperation } from "@wildboar/x500";
+import {
+    CommonArguments,
+    _decode_CommonArguments,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import DAPAssociation from "../dap/DAPConnection";
+import {
+    AuthenticationLevel_basicLevels_level_none,
+    AuthenticationLevel_basicLevels_level_strong,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import cloneChainingArgs from "../x500/cloneChainingArguments";
+import { isTrustedForIBRA } from "./isTrustedForIBRA";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
-// TODO: Unit testing
-/**
- * @summary Determine whether error signing was requested without decoding the
- *  entire argument.
- * @description
- *
- * This is a performance hack to avoid decoding the whole DAP argument just to
- * determine if signing was requested. Note that this ONLY works for DAP
- * requests--not DSP.
- *
- * @param opCode The operation code
- * @param arg The ASN.1 value of the non-chained argument
- * @returns Whether signing was requested, or `undefined` if it cannot be
- *  determined.
- *
- * @function
- */
-function errorSigningRequestedInDAPArgument (
+function getCommonArguments (
     opCode: Code,
     arg: ASN1Element,
-): boolean | undefined {
+): OPTIONAL<CommonArguments> {
     if (!("local" in opCode)) {
         return undefined;
     }
     const signed: boolean | undefined = isArgumentSigned(opCode, arg);
-    const argElements = signed
+    const unsignedElement = signed
         ? (() => {
             const firstElement = new BERElement()
             firstElement.fromBytes(arg.value);
-            return firstElement.set;
+            return firstElement;
         })()
-        : arg.set; // NOTE: This path will be taken for _unrecognized_ operations, too.
-    const securityParameters = argElements
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 29)
-        ))?.inner;
-    const errorProtectionElement = securityParameters?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 8)
-        ))?.inner;
-    const errorProtection = errorProtectionElement
-        ? _decode_ErrorProtectionRequest(errorProtectionElement)
-        : undefined;
-    return (errorProtection === ErrorProtectionRequest_signed);
+        : arg;
+    return _decode_CommonArguments(unsignedElement);
 }
 
 // ChainingArguments ::= SET {
@@ -180,8 +170,8 @@ function createChainingArgumentsFromDUA (
     assn: ClientAssociation,
     operationCode: Code,
     operationArgument: ASN1Element,
-    authenticationLevel: AuthenticationLevel,
-    uniqueIdentifier?: UniqueIdentifier,
+    authenticationLevel: AuthenticationLevel, // TODO: Unnecessary argument.
+    uniqueIdentifier?: UniqueIdentifier, // TODO: Unnecessary argument.
 ): ChainingArguments {
     let originator: OPTIONAL<DistinguishedName> = assn.boundNameAndUID?.dn;
     let targetObject: OPTIONAL<DistinguishedName>;
@@ -211,30 +201,20 @@ function createChainingArgumentsFromDUA (
     let excludeWriteableCopies: OPTIONAL<BOOLEAN>;
 
     /**
-     * Whether the request was signed or not really needs to be determined here,
-     * because it influences the authentication level used for making access
-     * control decisions in the Find DSE operation and other non-operation
-     * evaluation procedures.
-     */
-    let signed: boolean = false;
-
-    /**
      * Abandon procedures are supposed to start here, but we do them within the
      * connection classes instead.
      */
-    if (compareCode(operationCode, abandon["&operationCode"]!)) {
-        // Hack for avoiding unnecessary decoding.
-        signed = (operationArgument.tagNumber === 0);
-    }
-    else if (compareCode(operationCode, administerPassword["&operationCode"]!)) {
-        // Hack for avoiding unnecessary decoding.
-        signed = (operationArgument.tagNumber === 0);
-    }
-    else if (compareCode(operationCode, addEntry["&operationCode"]!)) {
+    // if (compareCode(operationCode, abandon["&operationCode"]!)) {
+    //     // Hack for avoiding unnecessary decoding.
+    //     signed = (operationArgument.tagNumber === 0);
+    // }
+    // else if (compareCode(operationCode, administerPassword["&operationCode"]!)) {
+    //     // Hack for avoiding unnecessary decoding.
+    //     signed = (operationArgument.tagNumber === 0);
+    // }
+    // else
+    if (compareCode(operationCode, addEntry["&operationCode"]!)) {
         const arg = addEntry.decoderFor["&ArgumentType"]!(operationArgument);
-        if ("signed" in arg) {
-            signed = true;
-        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -270,15 +250,12 @@ function createChainingArgumentsFromDUA (
             operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
-    else if (compareCode(operationCode, changePassword["&operationCode"]!)) {
-        // Hack for avoiding unnecessary decoding.
-        signed = (operationArgument.tagNumber === 0);
-    }
+    // else if (compareCode(operationCode, changePassword["&operationCode"]!)) {
+    //     // Hack for avoiding unnecessary decoding.
+    //     signed = (operationArgument.tagNumber === 0);
+    // }
     else if (compareCode(operationCode, compare["&operationCode"]!)) {
         const arg = compare.decoderFor["&ArgumentType"]!(operationArgument);
-        if ("signed" in arg) {
-            signed = true;
-        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -313,9 +290,6 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, modifyDN["&operationCode"]!)) {
         const arg = modifyDN.decoderFor["&ArgumentType"]!(operationArgument);
-        if ("signed" in arg) {
-            signed = true;
-        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -350,9 +324,6 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, modifyEntry["&operationCode"]!)) {
         const arg = modifyEntry.decoderFor["&ArgumentType"]!(operationArgument);
-        if ("signed" in arg) {
-            signed = true;
-        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -387,9 +358,6 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, list["&operationCode"]!)) {
         const arg = list.decoderFor["&ArgumentType"]!(operationArgument);
-        if ("signed" in arg) {
-            signed = true;
-        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -424,9 +392,6 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, read["&operationCode"]!)) {
         const arg = read.decoderFor["&ArgumentType"]!(operationArgument);
-        if ("signed" in arg) {
-            signed = true;
-        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -461,9 +426,6 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, removeEntry["&operationCode"]!)) {
         const arg = removeEntry.decoderFor["&ArgumentType"]!(operationArgument);
-        if ("signed" in arg) {
-            signed = true;
-        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -498,9 +460,6 @@ function createChainingArgumentsFromDUA (
     }
     else if (compareCode(operationCode, search["&operationCode"]!)) {
         const arg = search.decoderFor["&ArgumentType"]!(operationArgument);
-        if ("signed" in arg) {
-            signed = true;
-        }
         const data = getOptionallyProtectedValue(arg);
         originator = originator ?? data.requestor;
         operationProgress = data.operationProgress;
@@ -547,15 +506,7 @@ function createChainingArgumentsFromDUA (
         securityParameters,
         entryOnly,
         uniqueIdentifier,
-        ("basicLevels" in authenticationLevel)
-            ? {
-                basicLevels: new AuthenticationLevel_basicLevels(
-                    authenticationLevel.basicLevels.level,
-                    authenticationLevel.basicLevels.localQualifier,
-                    signed,
-                ),
-            }
-            : authenticationLevel,
+        authenticationLevel,
         exclusions,
         excludeShadows,
         nameResolveOnMaster,
@@ -567,6 +518,110 @@ function createChainingArgumentsFromDUA (
         excludeWriteableCopies,
         [],
     );
+}
+
+function getEffectiveRequester (
+    trustClientDSAForIBRA: boolean,
+    dapSignatureValid: boolean,
+    chainingArgsRequester?: DistinguishedName,
+    dapSignatureEECertSubject?: DistinguishedName,
+): DistinguishedName | undefined {
+    if (dapSignatureValid && dapSignatureEECertSubject) {
+        return dapSignatureEECertSubject;
+    }
+    if (trustClientDSAForIBRA) {
+        return chainingArgsRequester;
+    }
+    return undefined;
+}
+
+function getEffectiveAuthLevel (
+    assn: ClientAssociation,
+    dapSecurityParameters: OPTIONAL<SecurityParameters>,
+    chainingArgsAuthLevel: AuthenticationLevel,
+    trustClientDSAForIBRA: boolean,
+    dapSignatureValid: boolean,
+): AuthenticationLevel {
+    if (assn instanceof DAPAssociation) {
+        if (!("basicLevels" in assn.authLevel)) {
+            return assn.authLevel;
+        }
+        return {
+            basicLevels: new AuthenticationLevel_basicLevels(
+                assn.authLevel.basicLevels.level,
+                assn.authLevel.basicLevels.localQualifier,
+                dapSignatureValid,
+            ),
+        };
+    }
+    // Otherwise, the association must be a DSP association.
+    if (trustClientDSAForIBRA) {
+        // Return the lowest auth level and local qualifier from the DSA's
+        // asserted requester auth level and the DSA's actual auth level.
+        /**
+         * The rationale for this behavior is that, if access control depends
+         * upon strong authentication, but the operation is chained via a DSA
+         * that is only using a password to authenticate, the "chain of
+         * authentication" is only as veritable as its weakest link.
+         */
+        if (
+            ("basicLevels" in assn.authLevel)
+            && ("basicLevels" in chainingArgsAuthLevel)
+            && (assn.authLevel.basicLevels.level < chainingArgsAuthLevel.basicLevels.level)
+        ) {
+            return {
+                basicLevels: new AuthenticationLevel_basicLevels(
+                    Math.min(
+                        assn.authLevel.basicLevels.level,
+                        chainingArgsAuthLevel.basicLevels.level,
+                    ),
+                    Math.min(
+                        assn.authLevel.basicLevels.level,
+                        chainingArgsAuthLevel.basicLevels.level,
+                    ),
+                    chainingArgsAuthLevel.basicLevels.signed,
+                ),
+            };
+        }
+        return chainingArgsAuthLevel;
+    }
+    // Otherwise, we rely on signature-based requestor authentication.
+    const signedArgumentEquivalentToStrongAuth: boolean = !!(
+        dapSignatureValid
+        && dapSecurityParameters?.time
+        && dapSecurityParameters.random
+    );
+    let localQualifier: number | undefined;
+    if ("basicLevels" in assn.authLevel) {
+        if ("basicLevels" in chainingArgsAuthLevel) {
+            localQualifier = Math.min(
+                Number(assn.authLevel.basicLevels.localQualifier ?? 0),
+                Number(chainingArgsAuthLevel.basicLevels.localQualifier),
+            );
+        } else {
+            localQualifier = assn.authLevel.basicLevels.localQualifier
+                ? Number(assn.authLevel.basicLevels.localQualifier)
+                : undefined;
+        }
+    } else if ("basicLevels" in chainingArgsAuthLevel) { // ... but not in assn.authLevel.
+        localQualifier = 0;
+    } else { // Otherwise basicLevels is not used anywhere.
+        return chainingArgsAuthLevel;
+    }
+    return {
+        basicLevels: new AuthenticationLevel_basicLevels(
+            signedArgumentEquivalentToStrongAuth
+                ? (("basicLevels" in chainingArgsAuthLevel)
+                    ? Math.min(
+                        AuthenticationLevel_basicLevels_level_strong,
+                        Math.max(chainingArgsAuthLevel.basicLevels.level, 0),
+                    )
+                    : AuthenticationLevel_basicLevels_level_strong)
+                : AuthenticationLevel_basicLevels_level_none,
+            localQualifier,
+            dapSignatureValid,
+        ),
+    };
 }
 
 /**
@@ -600,11 +655,19 @@ async function requestValidationProcedure (
     assn: ClientAssociation,
     req: Request,
     alreadyChained: boolean,
-    authenticationLevel: AuthenticationLevel,
-    uniqueIdentifier?: UniqueIdentifier,
+    authenticationLevel: AuthenticationLevel, // TODO: Unnecessary argument.
+    uniqueIdentifier?: UniqueIdentifier, // TODO: Unnecessary argument.
 ): Promise<Chain> {
-    assert(req.opCode);
-    assert(req.argument);
+    if (!req.opCode) {
+        throw new UnknownOperationError();
+    }
+    // All DAP and DSP operations are defined with the "local" alternative.
+    if (!("local" in req.opCode)) {
+        throw new UnknownOperationError();
+    }
+    if (!req.argument) {
+        throw new MistypedPDUError();
+    }
     if (ctx.dsa.hibernatingSince || ctx.dsa.sentinelTriggeredHibernation) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:hibernating"),
@@ -613,6 +676,25 @@ async function requestValidationProcedure (
                 [],
                 undefined, // Intentionally not including more information.
                 undefined,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+    if (!isModificationOperation(req.opCode) && ctx.config.bulkInsertMode) {
+        ctx.log.error(ctx.i18n.t("err:bulk_insert_mode_no_read"));
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:bulk_insert_mode_no_read"),
+            new ServiceErrorData(
+                ServiceProblem_busy,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -639,9 +721,196 @@ async function requestValidationProcedure (
     const unsigned = getOptionallyProtectedValue(hydratedArgument);
     const {
         chainedArgument,
-        argument,
+        argument, // TODO: rename "dapArgument"
     } = unsigned;
-    const signErrors: boolean = errorSigningRequestedInDAPArgument(req.opCode, argument) ?? false;
+
+    const commonArgs = getCommonArguments(req.opCode, argument);
+    if ((commonArgs?.aliasedRDNs ?? 0) < 0) {
+        throw new MistypedArgumentError(ctx.i18n.t("err:aliased_rdns_lt0"));
+    }
+    const securityParams = commonArgs?.securityParameters;
+    const signErrors: boolean = (
+        assn.authorizedForSignedErrors
+        && (securityParams?.errorProtection === ErrorProtectionRequest_signed)
+    );
+    const namingMatcher = getNamingMatcherGetter(ctx);
+    /**
+     * If the requestor does not match the bound DN, throw an error, per ITU
+     * Recommendation X.511 (2019), Section 7.3.
+     */
+    if (
+        (assn instanceof DAPAssociation)
+        && commonArgs?.requestor
+        && assn.boundNameAndUID?.dn
+        && !compareDistinguishedName(
+            assn.boundNameAndUID.dn,
+            commonArgs.requestor,
+            namingMatcher,
+        )
+    ) { // If requestor does not match the bound DN...
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_requestor_and_bound_dn"));
+    }
+    if (
+        // This only needs to be checked for DSP associations
+        (assn instanceof DSPAssociation)
+        && chainedArgument.originator
+        && commonArgs?.requestor
+        && !compareDistinguishedName(
+            chainedArgument.originator,
+            commonArgs.requestor,
+            namingMatcher,
+        )
+    ) { // If the originator does not match the requestor...
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_requestor_and_originator"));
+    }
+    if (
+        // This only needs to be checked for DSP associations
+        (assn instanceof DSPAssociation)
+        && chainedArgument.originator
+        && commonArgs?.securityParameters?.certification_path
+        && !compareDistinguishedName(
+            chainedArgument.originator,
+            commonArgs
+                .securityParameters
+                .certification_path
+                .userCertificate
+                .toBeSigned
+                .subject
+                .rdnSequence,
+            namingMatcher,
+        )
+    ) {
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_originator_and_sec_params_cert_subject"));
+    }
+    if (
+        commonArgs?.requestor
+        && commonArgs?.securityParameters?.certification_path
+        && !compareDistinguishedName(
+            commonArgs.requestor,
+            commonArgs
+                .securityParameters
+                .certification_path
+                .userCertificate
+                .toBeSigned
+                .subject
+                .rdnSequence,
+            namingMatcher,
+        )
+    ) {
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_requestor_and_sec_params_cert_subject"));
+    }
+    if (
+        // This only needs to be checked for DSP associations
+        (assn instanceof DSPAssociation)
+        // ...and only if this DSA's AE-title has been configured.
+        && (ctx.dsa.accessPoint.ae_title.rdnSequence.length > 0)
+        && chainedArgument.securityParameters?.name
+        && !compareDistinguishedName(
+            chainedArgument.securityParameters.name,
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            namingMatcher,
+        )
+    ) { // If securityParameters.name does not match this DSA's name...
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_sec_params_name_and_this_dsa"));
+    }
+    if (
+        commonArgs?.securityParameters?.operationCode
+        && (
+            !("local" in commonArgs.securityParameters.operationCode)
+            || (
+                Number(commonArgs.securityParameters.operationCode.local)
+                !== Number(req.opCode.local)
+            )
+        )
+    ) {
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_sec_params_opcode_common_args"));
+    }
+    if (
+        chainedArgument?.securityParameters?.operationCode
+        && (
+            !("local" in chainedArgument.securityParameters.operationCode)
+            || (
+                Number(chainedArgument.securityParameters.operationCode.local)
+                !== Number(req.opCode.local)
+            )
+        )
+    ) {
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_sec_params_opcode_chaining_args"));
+    }
+    const secureTime = chainedArgument.securityParameters?.time
+        ? getDateFromTime(chainedArgument.securityParameters.time)
+        : undefined;
+    const now = new Date();
+    const replayWindow = 60; // TODO: Make configurable.
+    if (
+        secureTime
+        && (Math.abs(differenceInSeconds(secureTime, now)) > replayWindow)
+    ) {
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:replay"),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+            ),
+            signErrors,
+        );
+    }
+    let authLevelSigned: boolean = false;
+    if (isArgumentSigned(req.opCode, argument)) {
+        const signedArgElements = argument.sequence;
+        const tbsElement = signedArgElements[0];
+        const sigAlgElement = signedArgElements[1];
+        const sigValueElement = signedArgElements[2];
+        if (
+            !tbsElement
+            || !sigAlgElement
+            || !sigValueElement
+            || !securityParams?.certification_path
+        ) {
+            throw new MistypedArgumentError();
+        }
+        const certPath = securityParams.certification_path;
+        const sigAlg = _decode_AlgorithmIdentifier(sigAlgElement);
+        try {
+            await verifySIGNED(
+                ctx,
+                assn,
+                certPath,
+                req.invokeId,
+                false,
+                new SIGNED(
+                    tbsElement,
+                    sigAlg,
+                    sigValueElement.bitString,
+                    undefined,
+                    undefined,
+                ),
+                () => tbsElement,
+                // tbsElement,
+                signErrors,
+            );
+            authLevelSigned = true;
+        } catch (e) {
+            // TODO: Log the error, but don't throw it yet.
+        }
+    }
+
     if (
         chainedArgument.targetObject
         && (chainedArgument.operationProgress?.nextRDNToBeResolved !== undefined)
@@ -732,7 +1001,102 @@ async function requestValidationProcedure (
             invokeID: printInvokeId(req.invokeId),
         });
     }
-    return hydratedArgument;
+    if (assn instanceof DAPAssociation) {
+        if (
+            chainedArgument.authenticationLevel
+            && ("basicLevels" in chainedArgument.authenticationLevel)
+            && authLevelSigned
+        ) {
+            return {
+                unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                    cloneChainingArgs(chainedArgument, {
+                        authenticationLevel: {
+                            basicLevels: new AuthenticationLevel_basicLevels(
+                                chainedArgument.authenticationLevel.basicLevels.level,
+                                chainedArgument.authenticationLevel.basicLevels.localQualifier,
+                                authLevelSigned,
+                            ),
+                        },
+                    }),
+                    argument,
+                ),
+            };
+        }
+        return hydratedArgument;
+    }
+    // Everything beyond this point is determining the "effective" authentication
+    // level, requester, and unique identifier, for the purposes of access control,
+    // using either Identity-Based Requester Authentication (IBRA), or
+    // Signature-Based Requester Authentication (SBRA), as defined in ITU
+    // Recommendation X.518 (2019), Section 22.1.
+    if (
+        (assn instanceof DSPAssociation)
+        && ("basicLevels" in assn.authLevel)
+        && (assn.authLevel.basicLevels.level <= AuthenticationLevel_basicLevels_level_none)
+    ) {
+        /**
+         * If the client DSA itself is not authenticated, we can't trust it for
+         * Identity-Based Requester Authentication (IBRA), so we just blank out
+         * the access-control-sensitive fields and set the auth level to none.
+         */
+        const effectiveChainingArguments: ChainingArguments = cloneChainingArgs(chainedArgument, {
+            originator: undefined,
+            authenticationLevel: UNTRUSTED_REQ_AUTH_LEVEL,
+            uniqueIdentifier: undefined,
+        });
+        return {
+            unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                effectiveChainingArguments,
+                argument,
+            ),
+        };
+    }
+    const trustClientDSAForIBRA: boolean = assn.boundNameAndUID
+        ? isTrustedForIBRA(ctx, assn.boundNameAndUID.dn)
+        : false;
+    const effectiveAuthLevel = getEffectiveAuthLevel(
+        assn,
+        commonArgs?.securityParameters,
+        /**
+         * ITU Recommendation X.518 (2019), Section 10.3 states that, if the
+         * `authenticationLevel` component is not present, anonymous auth should
+         * be assumed.
+         */
+        chainedArgument.authenticationLevel
+            ?? UNTRUSTED_REQ_AUTH_LEVEL,
+        trustClientDSAForIBRA,
+        authLevelSigned,
+    );
+    const effectiveOriginator = getEffectiveRequester(
+        trustClientDSAForIBRA,
+        authLevelSigned,
+        chainedArgument.originator,
+        commonArgs
+            ?.securityParameters
+            ?.certification_path
+            ?.userCertificate
+            .toBeSigned
+            .subject
+            .rdnSequence,
+    );
+    /**
+     * The "effective" uniqueIdentifier must be determined, because it is
+     * relevant for access control purposes.
+     */
+    const effectiveUniqueIdentifier = trustClientDSAForIBRA
+        ? chainedArgument?.uniqueIdentifier
+        : undefined;
+    const effectiveChainingArguments: ChainingArguments = cloneChainingArgs(chainedArgument, {
+        originator: effectiveOriginator,
+        authenticationLevel: effectiveAuthLevel,
+        uniqueIdentifier: effectiveUniqueIdentifier,
+    });
+    return {
+        unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+            effectiveChainingArguments,
+            argument,
+        ),
+    };
 }
 
 export default requestValidationProcedure;

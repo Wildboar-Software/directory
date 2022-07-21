@@ -141,6 +141,9 @@ type ANY = ASN1Element;
 export
 type DateString = string;
 
+export
+type IndexableDN = string;
+
 /**
  * @summary The log levels used by Meerkat DSA logging
  * @description
@@ -2616,6 +2619,16 @@ extends UniquelyIdentifiedByObjectIdentifier, Partial<MultiNamed>, Partial<Descr
 
 }
 
+interface DSARelationship {
+    trustForIBRA: boolean;
+    discloseCrossReferences: boolean;
+}
+
+interface DSARelationships {
+    byStringDN: Map<IndexableDN, DSARelationship>;
+}
+
+
 /**
  * @summary Type definition for the context object
  * @description
@@ -2638,6 +2651,9 @@ interface Context {
 
     /** Information on this DSA */
     dsa: DSAInfo;
+
+    /** Information on other DSAs */
+    otherDSAs: DSARelationships;
 
     /** A map of TLS sockets by reference to application associations, or `null` if no association exists yet */
     associations: Map<Socket, ClientAssociation | null>, // null = the socket exists, but has not bound yet.

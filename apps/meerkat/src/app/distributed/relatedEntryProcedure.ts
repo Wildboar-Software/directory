@@ -50,6 +50,9 @@ import {
 import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa";
 import type { INTEGER } from "asn1-ts";
 import { randomInt } from "crypto";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 /**
  * @summary The Related Entry Procedure, defined in ITU Recommendation X.518.
@@ -106,6 +109,16 @@ async function relatedEntryProcedure (
         }
     };
     const data = getOptionallyProtectedValue(argument);
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
     if (!data.joinArguments || chaining?.relatedEntry) { // Yes, relatedEntry is supposed to be ABSENT.
         return;
     }
@@ -142,7 +155,7 @@ async function relatedEntryProcedure (
         //     association_id: assn.id,
         // });
         const newChaining = new ChainingArguments(
-            chaining?.originator,
+            requestor,
             undefined,
             undefined,
             [],

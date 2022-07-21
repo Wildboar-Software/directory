@@ -47,6 +47,9 @@ import {
 import {
     AccessPointInformation,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 /**
  * @summary The Search Aliases Procedure, as defined in ITU Recommendation X.518.
@@ -94,6 +97,16 @@ async function searchAliases (
             return;
         }
     }
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? chaining.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
 
     // TODO: Step 4; pending service-specific administrative area implementation.
     const invokeId: InvokeId = {
@@ -101,7 +114,7 @@ async function searchAliases (
     };
     const entryOnly: BOOLEAN = (subset === SearchArgumentData_subset_oneLevel);
     const newChaining: ChainingArguments = new ChainingArguments(
-        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        requestor,
         target.dse.alias.aliasedEntryName,
         undefined,
         [],

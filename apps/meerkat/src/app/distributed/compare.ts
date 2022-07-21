@@ -7,7 +7,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
 import {
     CompareArgumentData,
-    _encode_CompareArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
 import {
     CompareResult,
@@ -45,6 +44,7 @@ import {
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     SecurityProblem_insufficientAccessRights,
+    SecurityProblem_invalidSignature,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
@@ -113,7 +113,6 @@ import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
-import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
@@ -122,6 +121,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { generateSignature } from "../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { stringifyDN } from "../x500/stringifyDN";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { printInvokeId } from "../utils/printInvokeId";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 
 /**
  * @summary The compare operation, as specified in ITU Recommendation X.511.
@@ -151,23 +156,62 @@ async function compare (
         (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
         && (assn.authorizedForSignedErrors)
     );
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
+
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
      * not before. Because the operation could get chained to a DSA that has a
      * different configuration of trust anchors. To be clear, this is not a
      * requirement of the X.500 specifications--just my personal assessment.
+     *
+     * Meerkat DSA allows operations with invalid signatures to progress
+     * through all pre-operation-evaluation procedures leading up to operation
+     * evaluation, but with `AuthenticationLevel.basicLevels.signed` set to
+     * `FALSE` so that access controls are still respected. Therefore, if we get
+     * to this point in the code, and the argument is signed, but the
+     * authentication level has the `signed` field set to `FALSE`, we throw an
+     * `invalidSignature` error.
      */
-     if ("signed" in argument) {
-        const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
-        await verifySIGNED(
-            ctx,
-            assn,
-            certPath,
-            state.invokeId,
-            state.chainingArguments.aliasDereferenced,
-            argument.signed,
-            _encode_CompareArgumentData,
+    if (
+        ("signed" in argument)
+        && state.chainingArguments.authenticationLevel
+        && ("basicLevels" in state.chainingArguments.authenticationLevel)
+        && !state.chainingArguments.authenticationLevel.basicLevels.signed
+    ) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:invalid_signature", {
+                context: "arg",
+                host: remoteHostIdentifier,
+                aid: assn.id,
+                iid: printInvokeId(state.invokeId),
+                ap: stringifyDN(ctx, requestor ?? []),
+            }),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
             signErrors,
         );
     }
@@ -184,9 +228,9 @@ async function compare (
             ...getAttributeSubtypes(ctx, data.purported.type_),
         ];
     const targetDN = getDistinguishedName(target);
-    const user = state.chainingArguments.originator
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -212,7 +256,7 @@ async function compare (
         accessControlScheme,
         acdfTuples,
         user,
-        state.chainingArguments.authenticationLevel ?? assn.authLevel,
+        state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
         targetDN,
         isMemberOfGroup,
         NAMING_MATCHER,

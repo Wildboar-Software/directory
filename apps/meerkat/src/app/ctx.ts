@@ -886,6 +886,9 @@ const ctx: MeerkatContext = {
         ),
         hibernatingSince: undefined,
     },
+    otherDSAs: {
+        byStringDN: new Map(),
+    },
     associations: new Map(),
     dit: {
         root,

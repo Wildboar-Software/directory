@@ -64,6 +64,10 @@ import preprocessTuples from "../authz/preprocessTuples";
 import { printInvokeId } from "../utils/printInvokeId";
 import { generateSignature } from "../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -143,9 +147,11 @@ async function changePassword (
     // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
-    const user = state.chainingArguments.originator
+    const requestor: DistinguishedName | undefined = state.chainingArguments.originator
+        ?? assn.boundNameAndUID?.dn;
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -174,7 +180,7 @@ async function changePassword (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? assn.authLevel,
+            state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,

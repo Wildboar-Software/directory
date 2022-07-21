@@ -7,9 +7,6 @@ import {
     _decode_ModifyDNArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
 import {
-    _encode_ModifyDNArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
-import {
     ModifyDNResult,
     _encode_ModifyDNResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResult.ta";
@@ -44,6 +41,7 @@ import removeValues from "../database/entry/removeValues";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     SecurityProblem_insufficientAccessRights,
+    SecurityProblem_invalidSignature,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
@@ -168,8 +166,6 @@ import {
 import isPrefix from "../x500/isPrefix";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
-import { printInvokeId } from "../utils/printInvokeId";
-import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
@@ -178,6 +174,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { generateSignature } from "../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { stringifyDN } from "../x500/stringifyDN";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { printInvokeId } from "../utils/printInvokeId";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -332,23 +334,62 @@ async function modifyDN (
             signErrors,
         );
     }
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
+
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
      * not before. Because the operation could get chained to a DSA that has a
      * different configuration of trust anchors. To be clear, this is not a
      * requirement of the X.500 specifications--just my personal assessment.
+     *
+     * Meerkat DSA allows operations with invalid signatures to progress
+     * through all pre-operation-evaluation procedures leading up to operation
+     * evaluation, but with `AuthenticationLevel.basicLevels.signed` set to
+     * `FALSE` so that access controls are still respected. Therefore, if we get
+     * to this point in the code, and the argument is signed, but the
+     * authentication level has the `signed` field set to `FALSE`, we throw an
+     * `invalidSignature` error.
      */
-     if ("signed" in argument) {
-        const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
-        await verifySIGNED(
-            ctx,
-            assn,
-            certPath,
-            state.invokeId,
-            state.chainingArguments.aliasDereferenced,
-            argument.signed,
-            _encode_ModifyDNArgumentData,
+    if (
+        ("signed" in argument)
+        && state.chainingArguments.authenticationLevel
+        && ("basicLevels" in state.chainingArguments.authenticationLevel)
+        && !state.chainingArguments.authenticationLevel.basicLevels.signed
+    ) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:invalid_signature", {
+                context: "arg",
+                host: remoteHostIdentifier,
+                aid: assn.id,
+                iid: printInvokeId(state.invokeId),
+                ap: stringifyDN(ctx, requestor ?? []),
+            }),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
             signErrors,
         );
     }
@@ -430,9 +471,9 @@ async function modifyDN (
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const user = state.chainingArguments.originator
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -440,7 +481,7 @@ async function modifyDN (
         accessControlScheme,
         acdfTuples,
         user,
-        state.chainingArguments.authenticationLevel ?? assn.authLevel,
+        state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
         targetDN,
         isMemberOfGroup,
         NAMING_MATCHER,
@@ -670,7 +711,7 @@ async function modifyDN (
                 accessControlScheme,
                 acdfTuples,
                 user,
-                state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
                 targetDN,
                 isMemberOfGroup,
                 NAMING_MATCHER,
@@ -769,7 +810,7 @@ async function modifyDN (
         ctx.dit.root,
         [ ...superiorDN, newRDN ],
         user,
-        state.chainingArguments.authenticationLevel ?? assn.authLevel,
+        state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
     );
     if (permittedToFindResult.exists) {
         if (permittedToFindResult.discloseOnError) {
@@ -849,7 +890,7 @@ async function modifyDN (
                 accessControlScheme,
                 acdfTuplesForSuperior,
                 user,
-                state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
                 targetDN.slice(0, -1),
                 isMemberOfGroup,
                 NAMING_MATCHER,

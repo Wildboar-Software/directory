@@ -104,7 +104,6 @@ async function checkIfNameIsAlreadyTakenInNSSR (
     timeLimitInMilliseconds?: INTEGER,
     signErrors: boolean = false,
 ): Promise<void> {
-    // TODO: support signed errors.
     const op = ("present" in invokeId)
         ? assn.invocations.get(Number(invokeId.present))
         : undefined;
@@ -202,7 +201,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
             });
             const chained: ChainedArgument = new ChainedArgument(
                 new ChainingArguments(
-                    assn.boundNameAndUID?.dn,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     destinationDN,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_proceeding,

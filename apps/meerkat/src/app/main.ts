@@ -33,6 +33,7 @@ import loadMatchingRules from "./init/loadMatchingRules";
 import loadContextTypes from "./init/loadContextTypes";
 import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
 import loadNameForms from "./init/loadNameForms";
+import { loadDSARelationships } from "./init/loadDSARelationships";
 import ctx, { MeerkatContext } from "./ctx";
 import terminate from "./dop/terminateByID";
 import { differenceInMilliseconds, differenceInMinutes } from "date-fns";
@@ -822,6 +823,8 @@ async function main (): Promise<void> {
     ctx.log.debug(ctx.i18n.t("log:loaded_name_forms"));
     await loadObjectIdentifierNames(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_oid_names"));
+    await loadDSARelationships(ctx);
+    ctx.log.debug(ctx.i18n.t("log:loaded_dsa_relationships"));
 
     if (process.env.MEERKAT_INIT_JS) {
         const importPath = (os.platform() === "win32")

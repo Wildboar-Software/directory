@@ -8,7 +8,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import {
     SearchArgumentData,
-    _encode_SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import {
     SearchArgumentData_subset_oneLevel,
@@ -52,6 +51,9 @@ import {
     AbandonedProblem_pagingAbandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
 import {
+    SecurityProblem_invalidSignature,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import {
@@ -60,8 +62,17 @@ import {
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import { stringifyDN } from "../x500/stringifyDN";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
-import { verifySIGNED } from "../pki/verifySIGNED";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -109,23 +120,63 @@ async function search_ii (
         (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
         && (assn.authorizedForSignedErrors)
     );
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
+
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
      * not before. Because the operation could get chained to a DSA that has a
      * different configuration of trust anchors. To be clear, this is not a
      * requirement of the X.500 specifications--just my personal assessment.
+     *
+     * Meerkat DSA allows operations with invalid signatures to progress
+     * through all pre-operation-evaluation procedures leading up to operation
+     * evaluation, but with `AuthenticationLevel.basicLevels.signed` set to
+     * `FALSE` so that access controls are still respected. Therefore, if we get
+     * to this point in the code, and the argument is signed, but the
+     * authentication level has the `signed` field set to `FALSE`, we throw an
+     * `invalidSignature` error.
      */
-     if (("signed" in argument) && (searchState.depth === 0)) {
-        const certPath = argument.signed.toBeSigned.securityParameters?.certification_path;
-        await verifySIGNED(
-            ctx,
-            assn,
-            certPath,
-            state.invokeId,
-            state.chainingArguments.aliasDereferenced,
-            argument.signed,
-            _encode_SearchArgumentData,
+    if (
+        (searchState.depth === 0)
+        && ("signed" in argument)
+        && state.chainingArguments.authenticationLevel
+        && ("basicLevels" in state.chainingArguments.authenticationLevel)
+        && !state.chainingArguments.authenticationLevel.basicLevels.signed
+    ) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:invalid_signature", {
+                context: "arg",
+                host: remoteHostIdentifier,
+                aid: assn.id,
+                iid: printInvokeId(state.invokeId),
+                ap: stringifyDN(ctx, requestor ?? []),
+            }),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
             signErrors,
         );
     }

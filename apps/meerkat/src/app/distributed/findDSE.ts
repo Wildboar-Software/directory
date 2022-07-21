@@ -355,9 +355,11 @@ async function findDSE (
 
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const user = state.chainingArguments.originator
+    const requestor: DistinguishedName | undefined = state.chainingArguments.originator
+        ?? assn?.boundNameAndUID?.dn;
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -1532,7 +1534,7 @@ async function findDSE (
                     ...needleDN.slice(i), // RDNs N(i + 1) to N(m)
                 ];
                 const newChaining: ChainingArguments = new ChainingArguments(
-                    state.chainingArguments.originator,
+                    requestor,
                     newN,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_notStarted,
