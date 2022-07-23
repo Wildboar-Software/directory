@@ -40,7 +40,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement } from "asn1-ts";
+import { TRUE_BIT, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     ServiceProblem_timeLimitExceeded,
@@ -120,12 +120,12 @@ import {
 import getVertexById from "../database/getVertexById";
 import { printInvokeId } from "../utils/printInvokeId";
 import {
-    _decode_ProtectionRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
-import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import {
+    CommonArguments,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -243,6 +243,7 @@ function makeContinuationRefFromSupplierKnowledge (
  * @param haystackVertex The root of the DIT
  * @param needleDN The distinguished name of the sought-after DSE
  * @param state The operation dispatcher state
+ * @param common The common arguments, if applicable
  *
  * @function
  * @async
@@ -254,6 +255,7 @@ async function findDSE (
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
     state: OperationDispatcherState,
+    common?: CommonArguments,
 ): Promise<void> {
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -299,41 +301,10 @@ async function findDSE (
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
-    const opArgElements = state.operationArgument.set;
-    const criticalExtensions = opArgElements
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 25)
-        ))?.inner.bitString;
-    const securityParameters = opArgElements
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 29)
-        ))?.inner;
-    const serviceControls = opArgElements
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 30)
-        ))?.inner;
-    const serviceControlOptions = serviceControls?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 0)
-        ))?.inner;
-    // You don't even need to decode this. Just determining that it exists is sufficient.
-    const manageDSAITPlaneRefElement = serviceControls?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 6)
-        ));
-    const errorProtectionElement = securityParameters?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 8)
-        ))?.inner;
-    const errorProtection = errorProtectionElement
-        ? _decode_ProtectionRequest(errorProtectionElement)
-        : undefined;
+    const criticalExtensions = common?.criticalExtensions;
+    const serviceControlOptions = common?.serviceControls?.options;
+    const manageDSAITPlaneRefElement = common?.serviceControls?.manageDSAITPlaneRef;
+    const errorProtection = common?.securityParameters?.errorProtection;
     const signErrors: boolean = (
         (errorProtection === ErrorProtectionRequest_signed)
         && (!assn || (assn.authorizedForSignedErrors))
@@ -341,15 +312,15 @@ async function findDSE (
 
     // Service controls
     const manageDSAIT: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const dontDereferenceAliases: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
     const partialNameResolution: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_partialNameResolution] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_partialNameResolution] === TRUE_BIT);
     const dontUseCopy: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
     // const subentries: boolean = (
     //     serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 

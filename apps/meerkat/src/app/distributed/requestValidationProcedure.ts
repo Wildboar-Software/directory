@@ -657,7 +657,7 @@ async function requestValidationProcedure (
     alreadyChained: boolean,
     authenticationLevel: AuthenticationLevel, // TODO: Unnecessary argument.
     uniqueIdentifier?: UniqueIdentifier, // TODO: Unnecessary argument.
-): Promise<Chain> {
+): Promise<[ Chain, CommonArguments? ]> {
     if (!req.opCode) {
         throw new UnknownOperationError();
     }
@@ -1007,22 +1007,25 @@ async function requestValidationProcedure (
             && ("basicLevels" in chainedArgument.authenticationLevel)
             && authLevelSigned
         ) {
-            return {
-                unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
-                    cloneChainingArgs(chainedArgument, {
-                        authenticationLevel: {
-                            basicLevels: new AuthenticationLevel_basicLevels(
-                                chainedArgument.authenticationLevel.basicLevels.level,
-                                chainedArgument.authenticationLevel.basicLevels.localQualifier,
-                                authLevelSigned,
-                            ),
-                        },
-                    }),
-                    argument,
-                ),
-            };
+            return [
+                {
+                    unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                        cloneChainingArgs(chainedArgument, {
+                            authenticationLevel: {
+                                basicLevels: new AuthenticationLevel_basicLevels(
+                                    chainedArgument.authenticationLevel.basicLevels.level,
+                                    chainedArgument.authenticationLevel.basicLevels.localQualifier,
+                                    authLevelSigned,
+                                ),
+                            },
+                        }),
+                        argument,
+                    ),
+                },
+                commonArgs,
+            ];
         }
-        return hydratedArgument;
+        return [ hydratedArgument, commonArgs ];
     }
     // Everything beyond this point is determining the "effective" authentication
     // level, requester, and unique identifier, for the purposes of access control,
@@ -1044,12 +1047,12 @@ async function requestValidationProcedure (
             authenticationLevel: UNTRUSTED_REQ_AUTH_LEVEL,
             uniqueIdentifier: undefined,
         });
-        return {
+        return [ {
             unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 effectiveChainingArguments,
                 argument,
             ),
-        };
+        }, commonArgs ];
     }
     const trustClientDSAForIBRA: boolean = assn.boundNameAndUID
         ? isTrustedForIBRA(ctx, assn.boundNameAndUID.dn)
@@ -1091,12 +1094,15 @@ async function requestValidationProcedure (
         authenticationLevel: effectiveAuthLevel,
         uniqueIdentifier: effectiveUniqueIdentifier,
     });
-    return {
-        unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
-            effectiveChainingArguments,
-            argument,
-        ),
-    };
+    return [
+        {
+            unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                effectiveChainingArguments,
+                argument,
+            ),
+        },
+        commonArgs,
+    ];
 }
 
 export default requestValidationProcedure;
