@@ -34,17 +34,29 @@
         <div>
             <p>
                 Meerkat DSA is an X.500 Directory Server / LDAP Server written
-                in TypeScript by Wildboar Software.
+                in TypeScript by
+                <a href="https://wildboarsoftware.com/">Wildboar Software</a>.
+                Documentation can be found
+                <a href="https://wildboar-software.github.io/directory/">here</a>.
+            </p>
+        </div>
+        <hr />
+        <div>
+            <p>
+                Your DSA's Application Entity (AE) Title, as taken from it's
+                signing certificate, if configured:
+            </p>
+            <p>
+                <pre>{{dsa}}</pre>
             </p>
         </div>
         <hr />
         <div>
             <p style="color: yellow;">
                 <b>WARNING:</b>&nbsp;
-                It is dangerous to enable the web admin console, because there
-                is no authentication, and users of the web admin console have
-                full read-and-write access to the directory. Consider disabling
-                the web admin console when you do not need it anymore.
+                Users of the web admin console have full read-and-write access
+                to the directory. Consider disabling the web admin console when
+                you do not need it anymore.
             </p>
         </div>
         <hr />
@@ -67,6 +79,21 @@
                 </li> --}}
                 <li>
                     <a href="/ob">Operational Bindings</a>
+                </li>
+                <li>
+                    <span>Public Key Infrastructure</span>
+                    <ul>
+                        <li><a href="/signing-certs">Signing Certification Chain</a></li>
+                        <li><a href="/signing-crls">Signing Certificate Revocation Lists</a></li>
+                        <li><a href="/signing-anchors">Signing Trust Anchors</a></li>
+                        <li><a href="/tls-certs">TLS Certification Chain</a></li>
+                        <li><a href="/tls-crls">TLS Certificate Revocation Lists</a></li>
+                        <li><a href="/tls-anchors">TLS Trust Anchors</a></li>
+                        <li><a href="/remote-crl-cache">Remote CRLs Cache</a></li>
+                        <li><a href="/ocsp-cache">OCSP Response Cache</a></li>
+                        <li><a href="/crl-checker">Certificate Revocation List Checker</a></li>
+                        <li><a href="/ocsp-checker">Online Certificate Status Checker</a></li>
+                    </ul>
                 </li>
                 <li>
                     <span>System</span>

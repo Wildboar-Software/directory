@@ -4,6 +4,7 @@ import { TerminusModule } from '@nestjs/terminus';
 import { DitController } from "./admin/dit.controller";
 import { HomeController } from "./admin/home.controller";
 import { SystemController } from "./admin/system.controller";
+import { PkiController } from "./admin/pki.controller";
 import { BasicAuthMiddleware } from "./admin/basic-auth.middleware";
 import { SecurityMiddleware } from "./admin/security.middleware";
 import ctx from "./ctx";
@@ -23,6 +24,7 @@ import { CONTEXT } from "./constants";
         DitController,
         HomeController,
         SystemController,
+        PkiController,
     ],
     imports: [
         ConfigModule,

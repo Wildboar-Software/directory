@@ -17,6 +17,7 @@ import * as path from "path";
 import { flatten } from "flat";
 import { getServerStatistics } from "../telemetry/getServerStatistics";
 import sleep from "../utils/sleep";
+import stringifyDN from "../x500/stringifyDN";
 
 const conformancePath = path.join(__dirname, "assets", "static", "conformance.md");
 const ROBOTS: string = `User-agent: *\r\nDisallow: /\r\n`;
@@ -51,6 +52,9 @@ export class HomeController {
         @Req() req: { csrfToken: () => string },
     ) {
         return {
+            dsa: this.ctx.dsa.accessPoint.ae_title.rdnSequence.length
+                ? stringifyDN(this.ctx, this.ctx.dsa.accessPoint.ae_title.rdnSequence)
+                : "<UNSET>",
             csrfToken: req.csrfToken(),
             rootuuid: this.ctx.dit.root.dse.uuid,
         };
@@ -335,7 +339,7 @@ export class HomeController {
     public robots (
         @Res() res: Response,
     ) {
-        res.contentType("text/plain");
+        res.contentType("text/plain; charset=utf-8");
         res.send(ROBOTS);
     }
 
@@ -343,7 +347,7 @@ export class HomeController {
     public wellKnownSecurityTxt (
         @Res() res: Response,
     ) {
-        res.contentType("text/plain");
+        res.contentType("text/plain; charset=utf-8");
         res.send(SECURITY_TXT);
     }
 
@@ -351,7 +355,7 @@ export class HomeController {
     public securityTxt (
         @Res() res: Response,
     ) {
-        res.contentType("text/plain");
+        res.contentType("text/plain; charset=utf-8");
         res.send(SECURITY_TXT);
     }
 
