@@ -40,7 +40,7 @@ import {
     TraceItem,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import nrcrProcedure from "./nrcrProcedure";
-import { ASN1TagClass, TRUE_BIT, ASN1Element, BERElement } from "asn1-ts";
+import { TRUE_BIT, ASN1Element } from "asn1-ts";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
@@ -122,7 +122,7 @@ import {
 import { signChainedResult } from "../pki/signChainedResult";
 import { addSeconds } from "date-fns";
 import { randomInt } from "crypto";
-import { isArgumentSigned } from "../x500/isArgumentSigned";
+import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 
 export
 type SearchResultOrError = {
@@ -167,60 +167,6 @@ extends
     opCode: Code;
     foundDSE?: Vertex;
     result: OPCR;
-}
-
-
-// TODO: Unit testing
-/**
- * @summary Extract some service control options without decoding the entire argument.
- * @description
- *
- * This is a performance hack to avoid decoding the whole DAP argument just to
- * extract a few service controls needed before operation evaluation. Note that
- * this ONLY works for DAP requests--not DSP.
- *
- * @param opCode The operation code
- * @param arg The ASN.1 value of the non-chained argument
- * @returns Whether signing was requested, or `undefined` if it cannot be
- *  determined.
- *
- * @function
- */
- function getInterestingServiceControlOptions (
-    opCode: Code,
-    arg: ASN1Element,
-): [ boolean, boolean ] {
-    if (!("local" in opCode)) {
-        return [ false, false ];
-    }
-    const signed: boolean | undefined = isArgumentSigned(opCode, arg);
-    const argElements = signed
-        ? (() => {
-            const firstElement = new BERElement()
-            firstElement.fromBytes(arg.value);
-            return firstElement.set;
-        })()
-        : arg.set; // NOTE: This path will be taken for _unrecognized_ operations, too.
-    const serviceControls = argElements
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 30)
-        ))?.inner;
-    const serviceControlOptions = serviceControls?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 0)
-        ))?.inner;
-    const scoBitField = serviceControlOptions?.bitString;
-    const chainingProhibited = (
-        (scoBitField?.[chainingProhibitedBit] === TRUE_BIT)
-        || (scoBitField?.[manageDSAITBit] === TRUE_BIT)
-    );
-    const partialNameResolution = (scoBitField?.[partialNameResolutionBit] === TRUE_BIT);
-    return [
-        chainingProhibited,
-        partialNameResolution,
-    ];
 }
 
 /**
@@ -662,6 +608,7 @@ class OperationDispatcher {
      * @param local Whether this request was generated internally by Meerkat DSA
      * @param signDSPResult Whether the DSP result should be signed
      * @param signErrors Whether to cryptographically sign errors
+     * @param commonArgs CommonArguments, if applicable to the DAP operation.
      *
      * @public
      * @static
@@ -677,6 +624,7 @@ class OperationDispatcher {
         local: boolean,
         signDSPResult: boolean,
         signErrors: boolean,
+        commonArgs?: CommonArguments,
     ): Promise<OperationDispatcherReturn> {
         assert(req.opCode);
         assert(req.argument);
@@ -752,12 +700,15 @@ class OperationDispatcher {
             ctx.dit.root,
             targetObject,
             state,
+            commonArgs,
         );
         if (!state.entrySuitable) {
-            const [
-                chainingProhibited,
-                partialNameResolution,
-            ] = getInterestingServiceControlOptions(req.opCode!, reqData.argument);
+            const scoBitField = commonArgs?.serviceControls?.options;
+            const chainingProhibited = (
+                (scoBitField?.[chainingProhibitedBit] === TRUE_BIT)
+                || (scoBitField?.[manageDSAITBit] === TRUE_BIT)
+            );
+            const partialNameResolution = (scoBitField?.[partialNameResolutionBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
                 assn,
@@ -817,7 +768,7 @@ class OperationDispatcher {
         assn: ClientAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
-        const preparedRequest = await requestValidationProcedure(
+        const [ preparedRequest, commonArgs ] = await requestValidationProcedure(
             ctx,
             assn,
             req,
@@ -841,6 +792,7 @@ class OperationDispatcher {
             false,
             signDSPResult,
             signErrors,
+            commonArgs,
         );
     }
 
@@ -876,7 +828,7 @@ class OperationDispatcher {
          * parameters.
          */
         const alreadyChained: boolean = (req.opCode.local !== abandon["&operationCode"].local);
-        const preparedRequest = await requestValidationProcedure(
+        const [ preparedRequest, commonArgs ] = await requestValidationProcedure(
             ctx,
             assn,
             req,
@@ -901,6 +853,7 @@ class OperationDispatcher {
             false,
             signDSPResult,
             signErrors,
+            commonArgs,
         );
     }
 
@@ -1085,6 +1038,7 @@ class OperationDispatcher {
             ctx.dit.root,
             targetObject,
             state,
+            data,
         );
         if (!state.entrySuitable) {
             const serviceControlOptions = data.serviceControls?.options;
@@ -1202,6 +1156,7 @@ class OperationDispatcher {
             ctx.dit.root,
             targetObject,
             state,
+            data,
         );
         if (!state.entrySuitable) {
             const serviceControlOptions = data.serviceControls?.options;
