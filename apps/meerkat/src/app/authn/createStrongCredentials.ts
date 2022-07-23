@@ -70,7 +70,7 @@ function createStrongCredentials (
         certPath,
         op.signed,
         ctx.dsa.accessPoint.ae_title.rdnSequence,
-        undefined,
+        ctx.config.authn.attributeCertificationPath,
     );
 }
 

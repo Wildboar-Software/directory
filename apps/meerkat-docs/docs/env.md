@@ -94,6 +94,82 @@ This will help Meerkat network administrators reach out to you to offer support,
 inform you of security vulnerabilities or active attacks, or contact you for
 other Meerkat DSA-related things.
 
+## MEERKAT_ATTR_CERT_CHAIN_FILE
+
+The filepath of the chain of attribute certificates and
+public key certificates path to use for
+outbound strong authentication (when your Meerkat DSA instance binds to
+another DSA). The attribute certificate path supplied here will populate the
+`attributeCertificationPath` field of the strong credentials. Meerkat DSA does
+not currently use this in any way other than that.
+
+This file MUST contain only attribute certificates and public key certificates,
+which MUST have the PEM labels `ATTRIBUTE CERTIFICATE` and `CERTIFICATE`,
+respectively. The first and last PEM-encoded objects MUST be attribute
+certificates, not public key certificates. Any public key certificate is
+associated with the attribute certificate that follows it. There MUST NOT be
+multiple public key certificates adjacent to each other, but there MAY be two or
+more attribute certificates adjacent to each other.
+
+Using `A` to represent an attribute certificate and `P` to represent a public
+key certificate, the following sequences are valid: `AAA`, `APAPA`, `APAA`. The
+following sequences are _invalid_: `PAA`, `AAP`, `APPA`, `APAPPA`.
+
+:::info
+
+If this strictness seems bizarre, it is because this file is used to populate
+this data structure (represented in ASN.1):
+
+```asn1
+
+AttributeCertificationPath ::= SEQUENCE {
+  attributeCertificate  AttributeCertificate,
+  acPath                SEQUENCE OF ACPathData OPTIONAL,
+  ... }
+
+ACPathData ::= SEQUENCE {
+  certificate           [0]  Certificate OPTIONAL,
+  attributeCertificate  [1]  AttributeCertificate OPTIONAL,
+  ... }
+
+```
+
+Perhaps you can see how a file, constructed as described above, can be used to
+populate the above data structure. Since this is used for access controls or
+authentication in some cases (not by Meerkat DSA, but perhaps by another DSA),
+it is important for there to be no ambiguity as to how a given certificate in
+the path is to be used.
+
+:::
+
+The certs should be ordered by ascending authority: in other words, the Start Of
+Authority (SOA) attribute certificate should be closest to the _bottom_ of the
+file and the end-entity attribute certificate (used directly by Meerkat DSA)
+should be closest to the _top_ of the file.
+
+The file contents should look like this if you open them up in a text editor:
+
+```
+-----BEGIN ATTRIBUTE CERTIFICATE-----
+<Some base64-encoded data starting with "MII">
+-----END ATTRIBUTE CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+<Some base64-encoded data starting with "MII">
+-----END CERTIFICATE-----
+-----BEGIN ATTRIBUTE CERTIFICATE-----
+<Some base64-encoded data starting with "MII">
+-----END ATTRIBUTE CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+<Some base64-encoded data starting with "MII">
+-----END CERTIFICATE-----
+-----BEGIN ATTRIBUTE CERTIFICATE-----
+<Some base64-encoded data starting with "MII">
+-----END ATTRIBUTE CERTIFICATE-----
+```
+
+This does not affect the production of signed arguments, results, or errors, nor
+does it affect TLS.
+
 ## MEERKAT_BIND_MIN_SLEEP_MS
 
 This is the amount of time in milliseconds (at minimum) that Meerkat DSA will
@@ -702,6 +778,7 @@ commas is tolerated.
 If not set, any policy or no explicit policy will be considered acceptable for
 the purposes of X.509 certification path processing.
 
+
 ## MEERKAT_SIGNING_BIND_ACCEPTABLE_CERT_POLICIES
 
 This environment variable overrides the value of
@@ -825,7 +902,8 @@ The filepath of the certificate authority certificates file to use for
 verifying signed arguments, results, and errors. This is NOT used for TLS; the
 TLS equivalent of this variable is [`MEERKAT_TLS_CA_FILE`](#meerkattlscafile).
 
-The format of this file is the same as `MEERKAT_SIGNING_CERTS_CHAIN_FILE`, but there
+The format of this file is the same as
+[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](#meerkatsigningcertschainfile), but there
 is no meaning imputed to the ordering of certificates in this file.
 
 If this is unspecified, a default bundle of trust anchors that are built into
@@ -853,6 +931,9 @@ Trust Anchor List format can be used, if that is desired.
 The filepath to a certificate chain to use for signing requests and responses
 from the DSA. This does not affect TLS and may be a totally different chain
 than that used for TLS.
+
+This file should have the same exact formatting as
+[`MEERKAT_TLS_CERT_FILE`](#meerkattlscertfile).
 
 ## MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT
 

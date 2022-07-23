@@ -86,6 +86,15 @@ import {
     Certificate,
     _decode_Certificate,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+import {
+    _decode_AttributeCertificate,
+} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificate.ta";
+import {
+    AttributeCertificationPath,
+} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+import {
+    ACPathData,
+} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/ACPathData.ta";
 import { KeyObject, createPrivateKey } from "crypto";
 import {
     AuthenticationLevel_basicLevels,
@@ -209,6 +218,43 @@ function parseCRLs (data: string): CertificateList[] {
         el.fromBytes(p.data);
         return _decode_CertificateList(el);
     });
+}
+
+function parseAttrCertPath (data: string): AttributeCertificationPath {
+    const pems = PEMObject.parse(data);
+    if (pems[0].label !== "ATTRIBUTE CERTIFICATE") {
+        throw new Error(); // FIXME:
+    }
+    const userCert = (() => {
+        const el = new BERElement();
+        el.fromBytes(pems[0].data);
+        return _decode_AttributeCertificate(el);
+    })();
+    const path: ACPathData[] = [];
+    let pkc: Certificate | undefined;
+    for (const pem of pems) {
+        const el = new BERElement();
+        el.fromBytes(pem.data); // TODO: Check for extra bytes, just to make sure everything is valid.
+        if (pem.label === "ATTRIBUTE CERTIFICATE") {
+            const acert = _decode_AttributeCertificate(el);
+            path.push(new ACPathData(
+                pkc,
+                acert,
+            ));
+            pkc = undefined;
+        } else if (pem.label === "CERTIFICATE") {
+            pkc = _decode_Certificate(el);
+        } else {
+            throw new Error();
+        }
+    }
+    if (pkc) {
+        throw new Error();
+    }
+    return new AttributeCertificationPath(
+        userCert,
+        path,
+    );
 }
 
 function parseKey (data: Buffer): KeyObject | null {
@@ -367,6 +413,10 @@ const talFileContents: Buffer | undefined = process.env.MEERKAT_TRUST_ANCHORS_FI
     ? fs.readFileSync(process.env.MEERKAT_TRUST_ANCHORS_FILE)
     : undefined;
 
+const attrCertPathFileContents: string | undefined = process.env.MEERKAT_ATTR_CERT_CHAIN_FILE
+    ? fs.readFileSync(process.env.MEERKAT_ATTR_CERT_CHAIN_FILE, { encoding: "utf-8" })
+    : undefined;
+
 const signingCACerts: Certificate[] = signingCAFileContents
     ? parseCerts(signingCAFileContents)
     : [];
@@ -414,6 +464,10 @@ const decodedCRLs: CertificateList[] = tlsCRLFileContents
             return _decode_CertificateList(el);
         })
     : [];
+
+const attributeCertificationPath = attrCertPathFileContents
+    ? parseAttrCertPath(attrCertPathFileContents)
+    : undefined;
 
 const signingAuthLevel = parseAuthLevel(
     process.env.MEERKAT_SIGNING_MIN_AUTH_LEVEL,
@@ -496,6 +550,7 @@ const ctx: MeerkatContext = {
     config: {
         authn: {
             lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
+            attributeCertificationPath,
         },
         log: {
             level: logLevel as LogLevel,

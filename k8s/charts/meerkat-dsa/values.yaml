@@ -86,6 +86,11 @@ databaseSecretName: meerkat-database-secret
 # signingCrlConfigName: meerkat-crl-config
 
 # This MUST contain the following keys:
+# - `acert.pem`: The attribute certification path, as described in:
+# https://wildboar-software.github.io/directory/docs/env#meerkatattrcertchainfile
+# attributeCertificationPathConfigName: meerkat-attcert-config
+
+# This MUST contain the following keys:
 # - `init`: The init script to run at startup to customize your Meerkat DSA instance.
 # initJsConfigName: meerkat-init-js
 

@@ -100,6 +100,10 @@ spec:
             - name: MEERKAT_TLS_CRL_FILE
               value: /data/crl/crl.pem
             {{- end }}
+            {{- if .Values.attributeCertificationPathConfigName }}
+            - name: MEERKAT_ATTR_CERT_CHAIN_FILE
+              value: /data/acert/acert.pem
+            {{- end }}
             - name: MEERKAT_ADMINISTRATOR_EMAIL
               valueFrom:
                 configMapKeyRef:
@@ -1075,6 +1079,11 @@ spec:
               mountPath: "/data/crl"
               readOnly: true
             {{- end }}
+            {{- if .Values.attributeCertificationPathConfigName }}
+            - name: acert-volume
+              mountPath: "/data/acert"
+              readOnly: true
+            {{- end }}
             {{- if .Values.init }}
             - name: init-volume
               mountPath: "/data/init"
@@ -1124,6 +1133,11 @@ spec:
         - name: crl-volume
           configMap:
             name: {{ .Values.tlsCrlConfigName | quote }}
+        {{- end }}
+        {{-if .Values.attributeCertificationPathConfigName }}
+        - name: att-cert-volume
+          configMap:
+            name: {{ .Values.attributeCertificationPathConfigName | quote }}
         {{- end }}
         {{- if .Values.initJsConfigName }}
         - name: init-volume

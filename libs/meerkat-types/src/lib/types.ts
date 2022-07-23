@@ -114,7 +114,9 @@ import type {
 import type {
     TrustAnchorList,
 } from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
-
+import type {
+    AttributeCertificationPath,
+} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -1230,6 +1232,14 @@ extends OfflinePKIConfig, OnlinePKIConfig, CRLIndex, CertificatePolicyConfig {
 };
 
 /**
+ * Generic information that pertains to Privilege Management Infrastructure (PMI).
+ */
+export
+interface PrivilegeManagementInfrastructureConfig {
+    attributeCertificationPath?: AttributeCertificationPath;
+}
+
+/**
  * Configuration options for usage of a Server-Based Certificate Validation
  * Protocol (SCVP) server for validation certification paths.
  *
@@ -1485,7 +1495,7 @@ interface BasicAuthCredentials {
  * @interface
  */
 export
-interface AuthenticationConfiguration {
+interface AuthenticationConfiguration extends PrivilegeManagementInfrastructureConfig {
 
     /**
      * If set to `true`, a strong authentication attempt that does not provide
