@@ -918,10 +918,16 @@ const ctx: MeerkatContext = {
             enabled: (process.env.MEERKAT_ENABLE_DAP !== "0"),
         },
         dsp: {
-            enabled: (process.env.MEERKAT_DANGEROUSLY_ENABLE_DSP === "1"),
+            enabled: (
+                (process.env.MEERKAT_ENABLE_DSP === "1")
+                || (process.env.MEERKAT_DANGEROUSLY_ENABLE_DSP === "1")
+            ),
         },
         dop: {
-            enabled: (process.env.MEERKAT_DANGEROUSLY_ENABLE_DOP === "1"),
+            enabled: (
+                (process.env.MEERKAT_ENABLE_DOP === "1")
+                || (process.env.MEERKAT_DANGEROUSLY_ENABLE_DOP === "1")
+            ),
         },
     },
     dsa: {

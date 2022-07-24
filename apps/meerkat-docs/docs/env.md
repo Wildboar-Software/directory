@@ -240,16 +240,6 @@ credentials, etc. are susceptible to inspection by intermediaries, which is a
 security problem. These operations may not be susceptible to tampering (other
 than by omission) if cryptographic signing is used.
 
-## MEERKAT_DANGEROUSLY_ENABLE_DOP
-
-If set to `1`, this enables Directory Operational Binding Management Protocol
-(DOP). This is dangerous and should not be enabled unless you need it.
-
-## MEERKAT_DANGEROUSLY_ENABLE_DSP
-
-If set to `1`, this enables Directory System Protocol (DSP).
-This is dangerous and should not be enabled unless you need it.
-
 ## MEERKAT_ECDH_CURVES
 
 A colon-separated list of ECDH curves to use in ECDH key agreement. Each curve
@@ -258,6 +248,15 @@ can be an NID or name.
 ## MEERKAT_ENABLE_DAP
 
 If set to `0`, this disables Directory Access Protocol (DAP).
+
+## MEERKAT_ENABLE_DOP
+
+If set to `1`, this enables Directory Operational Binding Management Protocol
+(DOP).
+
+## MEERKAT_ENABLE_DSP
+
+If set to `1`, this enables Directory System Protocol (DSP).
 
 ## MEERKAT_ENTRIES_PER_SUBORDINATES_PAGE
 

@@ -140,17 +140,17 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: chaining_tls_optional
                   optional: true
-            - name: MEERKAT_DANGEROUSLY_ENABLE_DOP
+            - name: MEERKAT_ENABLE_DOP
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: dangerously_enable_dop
+                  key: enable_dop
                   optional: true
-            - name: MEERKAT_DANGEROUSLY_ENABLE_DSP
+            - name: MEERKAT_ENABLE_DSP
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: dangerously_enable_dsp
+                  key: enable_dsp
                   optional: true
             - name: MEERKAT_ECDH_CURVES
               valueFrom:

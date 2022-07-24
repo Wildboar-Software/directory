@@ -106,10 +106,10 @@ bind_sleep_range_ms: 3000
 bulk_insert_mode: false
 # client_cert_engine: pkcs11
 chaining_tls_optional: false
-dangerously_enable_dop: false
-dangerously_enable_dsp: false
 # ecdh_curves: P-521:P-384:P-256
 enable_dap: true
+enable_dop: false
+enable_dsp: false
 entries_per_subordinates_page: 100
 forbid_anonymous_bind: false
 honor_cipher_order: false
