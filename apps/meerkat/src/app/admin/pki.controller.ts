@@ -6,16 +6,19 @@ import {
     Get,
     Render,
     Inject,
+    Req,
     Res,
     NotFoundException,
+    InternalServerErrorException,
 } from "@nestjs/common";
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { BIT_STRING, DERElement, packBits } from "asn1-ts";
-import { DER, _encodeObjectIdentifier, _encodeOctetString } from "asn1-ts/dist/node/functional";
+import { DER } from "asn1-ts/dist/node/functional";
 import { stringifyDN } from "../x500/stringifyDN";
 import { getDateFromTime } from "@wildboar/x500";
 import {
     Certificate,
+    _decode_Certificate,
     _encode_Certificate,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
 import { groupByOID } from "../utils/groupByOID";
@@ -101,7 +104,7 @@ import {
 import type {
     CertificateList,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
-import { createHash, createSign } from "node:crypto";
+import { createHash, KeyObject, createPrivateKey } from "node:crypto";
 import * as path from "node:path";
 import {
     cRLNumber,
@@ -157,48 +160,27 @@ import {
     _encode_ContentInfo,
 } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/ContentInfo.ta";
 import {
-    id_signedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-signedData.va";
-import {
-    SignedData,
-    _encode_SignedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/SignedData.ta";
-import {
     EncapsulatedContentInfo,
 } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/EncapsulatedContentInfo.ta";
-// import {
-//     AlgorithmIdentifier,
-// } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/DigestAlgorithmIdentifier.ta";
-import {
-    SignerInfo,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/SignerInfo.ta";
-import {
-    IssuerAndSerialNumber,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/IssuerAndSerialNumber.ta";
-import {
-    AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
-// import {
-//     DigestAlgorithmIdentifier,
-// } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/DigestAlgorithmIdentifier.ta";
-import {
-    Attribute,
-    _encode_Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import {
-    id_messageDigest,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-messageDigest.va";
-import {
-    id_contentType,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-contentType.va";
-import {
-    CMSVersion_v1,
-    CMSVersion_v3,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/CMSVersion.ta";
-import { sigAlgToHashAlg } from "../pki/sigAlgToHashAlg";
-import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID";
-import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
 import { PEMObject } from "pem-ts";
+import { createCMSSignedData } from "../pki/createCMSSignedData";
+import { PkiPath } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
+import { id_data } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-data.va";
+import {
+    CertificationRequest,
+    _encode_CertificationRequest,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-10/CertificationRequest.ta";
+import {
+    CertificationRequestInfo,
+    _encode_CertificationRequestInfo,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-10/CertificationRequestInfo.ta";
+import {
+    CertificationRequestInfo_version_v1,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-10/CertificationRequestInfo-version.ta";
+import { generateSIGNED } from "../pki/generateSIGNED";
+import {
+    _encode_PkiPath,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
 
 interface TableValue {
     key: string;
@@ -1064,17 +1046,16 @@ function renderTrustAnchor (ctx: Context, ta: TrustAnchorChoice): KeyValueTable 
     };
 }
 
-function createTrustAnchorInfoFile (tal: TrustAnchorList): string {
+function createTrustAnchorInfoFile (tal: TrustAnchorList): Uint8Array {
     const cinfo = new ContentInfo(
         id_ct_trustAnchorList,
         _encode_TrustAnchorList(tal, DER),
     );
     const cinfoBytes = _encode_ContentInfo(cinfo, DER).toBytes();
-    const pem = new PEMObject("TRUST ANCHOR LIST", cinfoBytes);
-    return pem.encoded;
+    return cinfoBytes;
 }
 
-function createSignedTrustAnchorInfoFile (ctx: Context, tal: TrustAnchorList): string | null {
+function createSignedTrustAnchorInfoFile (ctx: Context, tal: TrustAnchorList): Uint8Array | null {
     if (
         !ctx.config.signing.key
         || !ctx.config.signing.certPath
@@ -1084,96 +1065,98 @@ function createSignedTrustAnchorInfoFile (ctx: Context, tal: TrustAnchorList): s
     }
     const key = ctx.config.signing.key;
     const certPath = ctx.config.signing.certPath;
-    const sigOID = keyTypeToAlgOID.get(key.asymmetricKeyType!);
-    if (!sigOID) {
-        return null;
-    }
-    const digestOID = sigAlgToHashAlg.get(sigOID.toString());
-    if (!digestOID) {
-        return null;
-    }
-    const nodeHashStr = digestOIDToNodeHash.get(digestOID.toString());
-    if (!nodeHashStr) {
-        return null;
-    }
     const ecinfo = new EncapsulatedContentInfo(
         id_ct_trustAnchorList,
         _encode_TrustAnchorList(tal, DER).toBytes(),
     );
-    const eeCert = certPath[certPath.length - 1];
-    if (!eeCert) {
+    const sdata = createCMSSignedData(key, certPath, ecinfo, undefined);
+    if (!sdata) {
         return null;
     }
-    const messageDigester = createHash(nodeHashStr);
-    const signer = createSign(nodeHashStr);
-    messageDigester.update(ecinfo.eContent!);
+    const cinfoBytes = _encode_ContentInfo(sdata, DER).toBytes();
+    return cinfoBytes;
+}
 
-    const signedAttrs: Attribute[] = [
-        new Attribute(
-            id_contentType,
-            [_encodeObjectIdentifier(id_ct_trustAnchorList, DER)],
-        ),
-        new Attribute(
-            id_messageDigest,
-            [_encodeOctetString(messageDigester.digest(), DER)],
-        ),
-    ];
-
-    /*
-        From IETF RFC 5652:
-
-        A separate encoding of the signedAttrs field is performed for message
-        digest calculation. The IMPLICIT [0] tag in the signedAttrs is not used
-        for the DER encoding, rather an EXPLICIT SET OF tag is used.  That is,
-        the DER encoding of the EXPLICIT SET OF tag, rather than of the
-        IMPLICIT [0] tag, MUST be included in the message digest calculation
-        along with the length and content octets of the SignedAttributes value.
-     */
-    const signedAttrBytes = DERElement
-        .fromSet(signedAttrs.map((attr) => _encode_Attribute(attr, DER)))
-        .toBytes();
-    signer.update(signedAttrBytes);
-
-    const signedData = new SignedData(
-        CMSVersion_v3, // v3 because eContentInfo is not of type id-data.
-        [
-            new AlgorithmIdentifier(
-                digestOID,
-                undefined,
-            ) as any, // FIXME: Dedupe asn1-ts versions.
-        ],
-        ecinfo,
-        certPath.map((certificate: any) => ({ certificate })),
-        undefined, // crls
-        [
-            new SignerInfo(
-                CMSVersion_v1, // Must be 1 because we used `issuerAndSerialNumber`.
-                {
-                    issuerAndSerialNumber: new IssuerAndSerialNumber(
-                        eeCert.toBeSigned.issuer as any, // FIXME: Dedupe asn1-ts versions.
-                        eeCert.toBeSigned.serialNumber,
-                    ),
-                },
-                new AlgorithmIdentifier(
-                    sigOID,
-                    undefined,
-                ) as any, // FIXME: Dedupe asn1-ts versions.
-                signedAttrs as any, // FIXME: Dedupe asn1-ts versions.
-                new AlgorithmIdentifier(
-                    digestOID,
-                    undefined,
-                ) as any, // FIXME: Dedupe asn1-ts versions.
-                signer.sign(key),
-                undefined,
-            ),
-        ],
+function createP7BFile (
+    key: KeyObject,
+    certPath: PkiPath,
+): Uint8Array | null {
+    if (!key.asymmetricKeyType) {
+        return null;
+    }
+    const ecinfo = new EncapsulatedContentInfo(
+        id_data,
+        undefined,
     );
-    const cinfo = new ContentInfo(
-        id_signedData,
-        _encode_SignedData(signedData, DER),
+    const sdata = createCMSSignedData(key, certPath, ecinfo, undefined);
+    if (!sdata) {
+        return null;
+    }
+    const cinfoBytes = _encode_ContentInfo(sdata, DER).toBytes();
+    return cinfoBytes;
+}
+
+function createSigningP7B (ctx: Context): Uint8Array | null {
+    const key = ctx.config.signing?.key;
+    const certPath = ctx.config.signing.certPath;
+    if (!key || !certPath) {
+        return null;
+    }
+    return createP7BFile(key, certPath);
+}
+
+function createTLSP7B (ctx: Context): Uint8Array | null {
+    const keyFile = ctx.config.tls?.key;
+    const certsFile = ctx.config.tls.cert as string;
+    if (!keyFile || !certsFile) {
+        return null;
+    }
+    const certPath = PEMObject.parse(certsFile)
+        .map((p) => {
+            const el = new DERElement();
+            el.fromBytes(p.data);
+            return _decode_Certificate(el);
+        })
+        .reverse();
+
+    const key = createPrivateKey({
+        format: "pem",
+        type: "pkcs8",
+        key: keyFile as string,
+        passphrase: ctx.config.tls.passphrase,
+    });
+
+    return createP7BFile(key, certPath);
+}
+
+function createCSR (
+    ctx: Context,
+    key: KeyObject,
+    cert: Certificate,
+): Uint8Array | null {
+    const subjectPublicKeyInfo = cert.toBeSigned.subjectPublicKeyInfo;
+    const csrInfo = new CertificationRequestInfo(
+        CertificationRequestInfo_version_v1,
+        cert.toBeSigned.subject,
+        subjectPublicKeyInfo as any, // FIXME: update asn1-ts.
+        [],
     );
-    const cinfoBytes = _encode_ContentInfo(cinfo, DER).toBytes();
-    const pem = new PEMObject("TRUST ANCHOR LIST", cinfoBytes);
+    const opCSR = generateSIGNED(ctx, csrInfo, _encode_CertificationRequestInfo, key);
+    if (!("signed" in opCSR)) {
+        return null;
+    }
+    const signedCSRInfo = opCSR.signed;
+    const csr = new CertificationRequest(
+        csrInfo,
+        signedCSRInfo.algorithmIdentifier as any, // FIXME: update asn1-ts.
+        signedCSRInfo.signature,
+    );
+    return _encode_CertificationRequest(csr, DER).toBytes();
+}
+
+function createPublicKeyFile (cert: Certificate): string {
+    const der = _encode_SubjectPublicKeyInfo(cert.toBeSigned.subjectPublicKeyInfo, DER).toBytes();
+    const pem = new PEMObject("PUBLIC KEY", der);
     return pem.encoded;
 }
 
@@ -1197,28 +1180,6 @@ export class PkiController {
         };
     }
 
-    @Get("/signing-certs/pem")
-    public signingCertsPem (
-        @Res() res: Response,
-    ) {
-        if (!process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE) {
-            throw new NotFoundException();
-        }
-        res.contentType("text/plain; charset=utf-8");
-        res.sendFile(path.resolve(process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE));
-    }
-
-    @Get("/signing-certs/download/signing-certs.pem")
-    public signingCertsPemDownload (
-        @Res() res: Response,
-    ) {
-        if (!process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE) {
-            throw new NotFoundException();
-        }
-        res.contentType("application/pem-certificate-chain");
-        res.sendFile(path.resolve(process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE));
-    }
-
     @Get("/signing-crls")
     @Render("crls")
     public signingCRLs () {
@@ -1230,28 +1191,6 @@ export class PkiController {
                 position: index + 1,
             })),
         };
-    }
-
-    @Get("/signing-crls/pem")
-    public signingCRLsPem (
-        @Res() res: Response,
-    ) {
-        if (!process.env.MEERKAT_SIGNING_CRL_FILE) {
-            throw new NotFoundException();
-        }
-        res.contentType("text/plain; charset=utf-8");
-        res.sendFile(path.resolve(process.env.MEERKAT_SIGNING_CRL_FILE));
-    }
-
-    @Get("/signing-crls/download/signing-crls.pem")
-    public signingCRLsPemDownload (
-        @Res() res: Response,
-    ) {
-        if (!process.env.MEERKAT_SIGNING_CRL_FILE) {
-            throw new NotFoundException();
-        }
-        res.contentType("application/pem-crl"); // Not a registered MIME type.
-        res.sendFile(path.resolve(process.env.MEERKAT_SIGNING_CRL_FILE));
     }
 
     @Get("/signing-anchors")
@@ -1267,38 +1206,515 @@ export class PkiController {
         };
     }
 
-    @Get("/signing-anchors/pem")
+    @Get("/pki/signing/certs.pem")
+    public signingCertsPem (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        if (!process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE) {
+            throw new NotFoundException();
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/pem-certificate-chain");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        res.sendFile(path.resolve(process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE));
+    }
+
+    @Get("/pki/signing/crls.pem")
+    public signingCRLsPem (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        if (!process.env.MEERKAT_SIGNING_CRL_FILE) {
+            throw new NotFoundException();
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        res.sendFile(path.resolve(process.env.MEERKAT_SIGNING_CRL_FILE));
+    }
+
+    @Get("/pki/signing/trust-anchor-list.pem")
     public signingAnchorsPem (
+        @Req() req: Request,
         @Res() res: Response,
     ) {
-        res.contentType("text/plain; charset=utf-8");
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        const der = createTrustAnchorInfoFile(this.ctx.config.signing.trustAnchorList);
+        const pem = new PEMObject("TRUST ANCHOR LIST", der);
+        res.send(pem.encoded);
+    }
+
+    @Get("/pki/signing/trust-anchor-list.cmsc")
+    public signingAnchorsDer (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        res.setHeader("Content-Disposition", "attachment");
+        res.contentType("application/cms");
         res.send(createTrustAnchorInfoFile(this.ctx.config.signing.trustAnchorList));
     }
 
-    @Get("/signing-anchors/download/signing-anchors.pem")
-    public signingAnchorsPemDownload (
-        @Res() res: Response,
-    ) {
-        // This type CANNOT be application/cms, because it is not binary.
-        res.contentType("application/trust-anchor-list");
-        res.send(createTrustAnchorInfoFile(this.ctx.config.signing.trustAnchorList));
-    }
-
-    @Get("/signing-anchors/signed/pem")
+    @Get("/pki/signing/trust-anchor-list-signed.pem")
     public signingAnchorsSignedPem (
+        @Req() req: Request,
         @Res() res: Response,
     ) {
-        res.contentType("text/plain; charset=utf-8");
-        res.send(createSignedTrustAnchorInfoFile(this.ctx, this.ctx.config.signing.trustAnchorList));
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        const der = createSignedTrustAnchorInfoFile(this.ctx, this.ctx.config.signing.trustAnchorList);
+        if (!der) {
+            throw new InternalServerErrorException();
+        }
+        const pem = new PEMObject("TRUST ANCHOR LIST", der);
+        res.send(pem.encoded);
     }
 
-    @Get("/signing-anchors/signed/download/signing-anchors.pem")
-    public signingAnchorsSignedPemDownload (
+    @Get("/pki/signing/trust-anchor-list-signed.cmsc")
+    public signingAnchorsSignedDer (
+        @Req() req: Request,
         @Res() res: Response,
     ) {
-        // This type CANNOT be application/cms, because it is not binary.
-        res.contentType("application/trust-anchor-list");
-        res.send(createSignedTrustAnchorInfoFile(this.ctx, this.ctx.config.signing.trustAnchorList));
+        res.setHeader("Content-Disposition", "attachment");
+        res.contentType("application/cms");
+        const der = createSignedTrustAnchorInfoFile(this.ctx, this.ctx.config.signing.trustAnchorList);
+        if (!der) {
+            throw new InternalServerErrorException();
+        }
+        res.send(der);
     }
 
+    @Get("/pki/signing/certs.p7b")
+    public signingChainP7b (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const download: boolean = (req.query["download"] === "1");
+        const asPem: boolean = (req.query["pem"] === "1");
+        if (asPem && !download) {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        } else {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pkcs7-certificates");
+        }
+        const der = createSigningP7B(this.ctx);
+        if (!der) {
+            throw new InternalServerErrorException();
+        }
+        if (asPem) {
+            const pem = new PEMObject("PKCS7", der);
+            res.send(pem.encoded);
+        } else {
+            res.send(der);
+        }
+    }
+
+    @Get("/pki/attribute-certs.pem")
+    public attributeCertsPem (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        if (!process.env.MEERKAT_ATTR_CERT_CHAIN_FILE) {
+            throw new InternalServerErrorException();
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        res.sendFile(path.resolve(process.env.MEERKAT_ATTR_CERT_CHAIN_FILE));
+    }
+
+    @Get("/pki/signing/signing.csr")
+    public getCSR (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const key = this.ctx.config.signing.key;
+        const certPath = this.ctx.config.signing.certPath;
+        const cert = certPath && certPath[certPath?.length - 1];
+        if (!cert || !key) {
+            throw new InternalServerErrorException("No configured certificate or key.");
+        }
+        const der = createCSR(this.ctx, key, cert);
+        if (!der) {
+            throw new InternalServerErrorException("Failed to generate.");
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/pkcs10");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        const pem = new PEMObject("CERTIFICATE REQUEST", der);
+        res.send(pem.encoded);
+    }
+
+    @Get("/pki/signing/public-key.pem")
+    public getPublicKey (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const certPath = this.ctx.config.signing.certPath;
+        const cert = certPath && certPath[certPath?.length - 1];
+        if (!cert) {
+            throw new InternalServerErrorException();
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        res.send(createPublicKeyFile(cert));
+    }
+
+    @Get("/pki/signing/certs.pkipath")
+    public getPkiPath (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const certPath = this.ctx.config.signing.certPath;
+        if (!certPath) {
+            throw new InternalServerErrorException();
+        }
+        res.setHeader("Content-Disposition", "attachment");
+        res.contentType("application/pkix-pkipath");
+        const der = _encode_PkiPath(certPath, DER).toBytes();
+        res.send(der);
+    }
+
+    // TLS Endpoints
+
+    @Get("/tls-certs")
+    @Render("certs")
+    public tlsCerts () {
+        const certsFile = this.ctx.config.tls.cert as string;
+        if (!certsFile) {
+            throw new InternalServerErrorException();
+        }
+        const certs = PEMObject.parse(certsFile)
+            .map((p) => {
+                const el = new DERElement();
+                el.fromBytes(p.data);
+                return _decode_Certificate(el);
+            });
+        return {
+            type: "tls",
+            certs: certs.map((cert, index) => ({
+                ...renderCert(this.ctx, cert),
+                position: index + 1,
+            })),
+        };
+    }
+
+    @Get("/tls-crls")
+    @Render("crls")
+    public tlsCRLs () {
+        const crls = this.ctx.config.tls.certificateRevocationLists ?? [];
+        return {
+            type: "tls",
+            crls: crls.map((crl, index) => ({
+                ...renderCRL(this.ctx, crl),
+                position: index + 1,
+            })),
+        };
+    }
+
+    @Get("/tls-anchors")
+    @Render("anchors")
+    public tlsAnchors () {
+        const trustAnchors = this.ctx.config.tls.trustAnchorList ?? [];
+        return {
+            type: "tls",
+            anchors: trustAnchors.map((ta, index) => ({
+                ...renderTrustAnchor(this.ctx, ta),
+                position: index + 1,
+            })),
+        };
+    }
+
+    @Get("/pki/tls/certs.pem")
+    public tlsCertsPem (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        if (!process.env.MEERKAT_TLS_CERT_FILE) {
+            throw new NotFoundException();
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/pem-certificate-chain");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        res.sendFile(path.resolve(process.env.MEERKAT_TLS_CERT_FILE));
+    }
+
+    @Get("/pki/tls/crls.pem")
+    public tlsCRLsPem (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        if (!process.env.MEERKAT_TLS_CRL_FILE) {
+            throw new NotFoundException();
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        res.sendFile(path.resolve(process.env.MEERKAT_TLS_CRL_FILE));
+    }
+
+    @Get("/pki/tls/trust-anchor-list.pem")
+    public tlsAnchorsPem (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        const der = createTrustAnchorInfoFile(this.ctx.config.tls.trustAnchorList);
+        const pem = new PEMObject("TRUST ANCHOR LIST", der);
+        res.send(pem.encoded);
+    }
+
+    @Get("/pki/tls/trust-anchor-list.cmsc")
+    public tlsAnchorsDer (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        res.setHeader("Content-Disposition", "attachment");
+        res.contentType("application/cms");
+        res.send(createTrustAnchorInfoFile(this.ctx.config.tls.trustAnchorList));
+    }
+
+    @Get("/pki/tls/trust-anchor-list-signed.pem")
+    public tlsAnchorsSignedPem (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        const der = createSignedTrustAnchorInfoFile(this.ctx, this.ctx.config.tls.trustAnchorList);
+        if (!der) {
+            throw new InternalServerErrorException();
+        }
+        const pem = new PEMObject("TRUST ANCHOR LIST", der);
+        res.send(pem.encoded);
+    }
+
+    @Get("/pki/tls/trust-anchor-list-signed.cmsc")
+    public tlsAnchorsSignedDer (
+        @Res() res: Response,
+    ) {
+        res.setHeader("Content-Disposition", "attachment");
+        res.contentType("application/cms");
+        const der = createSignedTrustAnchorInfoFile(this.ctx, this.ctx.config.tls.trustAnchorList);
+        if (!der) {
+            throw new InternalServerErrorException();
+        }
+        res.send(der);
+    }
+
+    @Get("/pki/tls/certs.p7b")
+    public tlsChainP7b (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const download: boolean = (req.query["download"] === "1");
+        const asPem: boolean = (req.query["pem"] === "1");
+        if (asPem && !download) {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        } else {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pkcs7-certificates");
+        }
+        const der = createTLSP7B(this.ctx);
+        if (!der) {
+            throw new InternalServerErrorException();
+        }
+        if (asPem) {
+            const pem = new PEMObject("PKCS7", der);
+            res.send(pem.encoded);
+        } else {
+            res.send(der);
+        }
+    }
+
+    @Get("/pki/tls/tls.csr")
+    public getTlsCsr (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const keyFile = this.ctx.config.tls?.key;
+        const certsFile = this.ctx.config.tls.cert as string;
+        if (!keyFile || !certsFile) {
+            throw new InternalServerErrorException();
+        }
+        const certPath = PEMObject.parse(certsFile)
+            .map((p) => {
+                const el = new DERElement();
+                el.fromBytes(p.data);
+                return _decode_Certificate(el);
+            });
+
+        const key = createPrivateKey({
+            format: "pem",
+            type: "pkcs8",
+            key: keyFile as string,
+            passphrase: this.ctx.config.tls.passphrase,
+        });
+        const der = createCSR(this.ctx, key, certPath[0]);
+        if (!der) {
+            throw new InternalServerErrorException("Failed to generate.");
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/pkcs10");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        const pem = new PEMObject("CERTIFICATE REQUEST", der);
+        res.send(pem.encoded);
+    }
+
+    @Get("/pki/tls/public-key.pem")
+    public getTlsPublicKey (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const certsFile = this.ctx.config.tls.cert as string;
+        if (!certsFile) {
+            throw new InternalServerErrorException();
+        }
+        const certPath = PEMObject.parse(certsFile)
+            .map((p) => {
+                const el = new DERElement();
+                el.fromBytes(p.data);
+                return _decode_Certificate(el);
+            });
+        const cert = certPath && certPath[certPath?.length - 1];
+        if (!cert) {
+            throw new InternalServerErrorException();
+        }
+        const download: boolean = (req.query["download"] === "1");
+        if (download) {
+            res.setHeader("Content-Disposition", "attachment");
+            res.contentType("application/x-pem-file");
+        } else {
+            res.setHeader("Content-Disposition", "inline");
+            res.contentType("text/plain; charset=utf-8");
+        }
+        res.send(createPublicKeyFile(cert));
+    }
+
+    @Get("/pki/tls/certs.pkipath")
+    public getTlsPkiPath (
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const certsFile = this.ctx.config.tls.cert as string;
+        if (!certsFile) {
+            throw new InternalServerErrorException();
+        }
+        const certPath = PEMObject.parse(certsFile)
+            .map((p) => {
+                const el = new DERElement();
+                el.fromBytes(p.data);
+                return _decode_Certificate(el);
+            });
+        res.setHeader("Content-Disposition", "attachment");
+        res.contentType("application/pkix-pkipath");
+        const der = _encode_PkiPath(certPath, DER).toBytes();
+        res.send(der);
+    }
+
+/*
+https://localhost:18080/pki/attribute-certs.pem
+https://localhost:18080/pki/attribute-certs.pem?download=1
+https://localhost:18080/pki/signing/certs.pem
+https://localhost:18080/pki/signing/crls.pem
+https://localhost:18080/pki/signing/trust-anchor-list.pem
+https://localhost:18080/pki/signing/trust-anchor-list.cmsc
+https://localhost:18080/pki/signing/trust-anchor-list-signed.pem
+https://localhost:18080/pki/signing/trust-anchor-list-signed.cmsc
+https://localhost:18080/pki/signing/certs.p7b
+https://localhost:18080/pki/signing/signing.csr
+https://localhost:18080/pki/signing/public-key.pem
+https://localhost:18080/pki/signing/certs.pkipath
+https://localhost:18080/pki/signing/certs.pem?download=1
+https://localhost:18080/pki/signing/crls.pem?download=1
+https://localhost:18080/pki/signing/trust-anchor-list.pem?download=1
+https://localhost:18080/pki/signing/trust-anchor-list.cmsc?download=1
+https://localhost:18080/pki/signing/trust-anchor-list-signed.pem?download=1
+https://localhost:18080/pki/signing/trust-anchor-list-signed.cmsc?download=1
+https://localhost:18080/pki/signing/certs.p7b?download=1
+https://localhost:18080/pki/signing/certs.p7b?asPem=1
+https://localhost:18080/pki/signing/certs.p7b?download=1&asPem=1
+https://localhost:18080/pki/signing/signing.csr?download=1
+https://localhost:18080/pki/signing/public-key.pem?download=1
+
+https://localhost:18080/pki/tls/certs.pem
+https://localhost:18080/pki/tls/crls.pem
+https://localhost:18080/pki/tls/trust-anchor-list.pem
+https://localhost:18080/pki/tls/trust-anchor-list.cmsc
+https://localhost:18080/pki/tls/trust-anchor-list-signed.pem
+https://localhost:18080/pki/tls/trust-anchor-list-signed.cmsc
+https://localhost:18080/pki/tls/certs.p7b
+https://localhost:18080/pki/tls/signing.csr
+https://localhost:18080/pki/tls/public-key.pem
+https://localhost:18080/pki/tls/certs.pkipath
+*/
 }

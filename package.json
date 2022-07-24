@@ -42,6 +42,7 @@
         "@wildboar/cms": "^1.0.2",
         "@wildboar/ldap": "^1.2.10",
         "@wildboar/ocsp": "^1.0.2",
+        "@wildboar/pkcs": "^1.0.2",
         "@wildboar/pki-stub": "^1.1.2",
         "@wildboar/safecurves-pkix-18": "^1.0.5",
         "@wildboar/scrypt-0": "^1.0.3",

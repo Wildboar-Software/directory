@@ -8,15 +8,17 @@ import type {
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
 import { unpackBits } from "asn1-ts";
+import type { KeyObject } from "node:crypto";
 
 export
 function generateSIGNED <T> (
     ctx: Context,
     data: T,
     encoder: ASN1Encoder<T>,
+    otherKey?: KeyObject,
 ): OPTIONALLY_PROTECTED<T> {
     const tbsBytes = encoder(data, DER).toBytes();
-    const key = ctx.config.signing?.key;
+    const key = otherKey ?? ctx.config.signing?.key;
     if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
         return {
             unsigned: data,
