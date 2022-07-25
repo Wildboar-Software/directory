@@ -188,6 +188,7 @@ function namingViolationErrorData (
     ctx: Context,
     assn: ClientAssociation,
     attributeTypes: AttributeType[],
+    signErrors: boolean,
     aliasDereferenced?: boolean,
 ): UpdateErrorData {
     return new UpdateErrorData(
@@ -198,6 +199,7 @@ function namingViolationErrorData (
         [],
         createSecurityParameters(
             ctx,
+            signErrors,
             assn.boundNameAndUID?.dn,
             undefined,
             updateError["&errorCode"],
@@ -283,6 +285,7 @@ async function addEntry (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -300,7 +303,7 @@ async function addEntry (
     if (!rdn) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:root_dse_may_not_be_added"),
-            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
+            namingViolationErrorData(ctx, assn, [], signErrors, state.chainingArguments.aliasDereferenced),
             signErrors,
         );
     }
@@ -421,6 +424,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -494,6 +498,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -615,6 +620,7 @@ async function addEntry (
                 ctx,
                 assn,
                 [],
+                signErrors,
                 state.chainingArguments.aliasDereferenced,
             ),
             signErrors,
@@ -655,6 +661,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -687,6 +694,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -713,6 +721,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -770,6 +779,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -802,6 +812,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -837,6 +848,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -895,6 +907,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -939,6 +952,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -981,6 +995,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -1003,6 +1018,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -1024,6 +1040,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -1146,6 +1163,10 @@ async function addEntry (
                 entry_id: createdSubrId,
             },
         });
+        const signDSPResult: boolean = (
+            (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+            && assn.authorizedForSignedResults
+        );
         return {
             result: {
                 unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
@@ -1154,6 +1175,7 @@ async function addEntry (
                         undefined,
                         createSecurityParameters(
                             ctx,
+                            signDSPResult,
                             assn.boundNameAndUID?.dn,
                             id_opcode_addEntry,
                         ),
@@ -1189,6 +1211,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -1210,6 +1233,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
@@ -1326,20 +1350,21 @@ async function addEntry (
     }
 
     // TODO: Update shadows
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     const resultData: AddEntryResultData = new AddEntryResultData(
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             id_opcode_addEntry,
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
         undefined,
-    );
-    const signResults: boolean = (
-        (data.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
     );
     const result: AddEntryResult = signResults
         ? {
@@ -1374,6 +1399,10 @@ async function addEntry (
                 unsigned: resultData,
             },
         };
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -1382,6 +1411,7 @@ async function addEntry (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_addEntry,
                     ),

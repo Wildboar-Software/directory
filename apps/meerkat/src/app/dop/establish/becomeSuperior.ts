@@ -118,6 +118,7 @@ async function becomeSuperior (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     securityError["&errorCode"],
@@ -141,6 +142,7 @@ async function becomeSuperior (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         operationalBindingError["&errorCode"],
@@ -159,6 +161,7 @@ async function becomeSuperior (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -183,6 +186,7 @@ async function becomeSuperior (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],

@@ -224,6 +224,7 @@ async function updateSuperiorDSA (
             const assn: Connection | null = await connect(ctx, accessPoint, dop_ip["&id"]!, {
                 timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
                 tlsOptional: ctx.config.chaining.tlsOptional,
+                signErrors,
             });
             if (!assn) {
                 throw new ServiceError(
@@ -233,6 +234,7 @@ async function updateSuperiorDSA (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             undefined,
                             undefined,
                             serviceError["&errorCode"]
@@ -359,7 +361,7 @@ async function updateSuperiorDSA (
                     uuid: true,
                 },
             });
-            const createArg = (securityParameters: SecurityParameters): ModifyOperationalBindingArgument => {
+            const createArg = (securityParameters?: SecurityParameters): ModifyOperationalBindingArgument => {
                 const argData = new ModifyOperationalBindingArgumentData(
                     id_op_binding_hierarchical,
                     new OperationalBindingID(
@@ -389,6 +391,7 @@ async function updateSuperiorDSA (
             for (const backoff of updateTimingBackoffInSeconds) {
                 const sp = createSecurityParameters(
                     ctx,
+                    true,
                     accessPoint.ae_title.rdnSequence,
                     modifyOperationalBinding["&operationCode"]!,
                 );
@@ -493,6 +496,7 @@ async function updateSuperiorDSA (
             [],
             createSecurityParameters(
                 ctx,
+                signErrors,
                 undefined,
                 undefined,
                 updateError["&errorCode"],

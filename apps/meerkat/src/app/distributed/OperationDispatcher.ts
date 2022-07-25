@@ -515,6 +515,7 @@ class OperationDispatcher {
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signDSPResult,
                     assn.boundNameAndUID?.dn,
                     search["&operationCode"],
                 ),
@@ -665,6 +666,7 @@ class OperationDispatcher {
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_securityError,
@@ -934,6 +936,7 @@ class OperationDispatcher {
                                     [],
                                     createSecurityParameters(
                                         ctx,
+                                        false,
                                         assn.boundNameAndUID?.dn,
                                         search["&operationCode"],
                                     ),
@@ -1003,6 +1006,7 @@ class OperationDispatcher {
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_securityError,

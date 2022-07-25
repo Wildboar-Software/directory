@@ -111,6 +111,7 @@ async function nrcrProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -163,6 +164,7 @@ async function nrcrProcedure (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     referral["&errorCode"],
@@ -190,6 +192,7 @@ async function nrcrProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -233,6 +236,7 @@ async function nrcrProcedure (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn?.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -301,6 +305,7 @@ async function nrcrProcedure (
                                 [],
                                 createSecurityParameters(
                                     ctx,
+                                    signErrors,
                                     assn?.boundNameAndUID?.dn,
                                     undefined,
                                     serviceError["&errorCode"],
@@ -353,6 +358,7 @@ async function nrcrProcedure (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn?.boundNameAndUID?.dn,
                             undefined,
                             nameError["&errorCode"],
@@ -373,6 +379,7 @@ async function nrcrProcedure (
             [],
             createSecurityParameters(
                 ctx,
+                signErrors,
                 assn?.boundNameAndUID?.dn,
                 undefined,
                 serviceError["&errorCode"],

@@ -78,6 +78,7 @@ async function validateValues(
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             undefined,
                             undefined,
                             attributeError["&errorCode"],
@@ -119,6 +120,7 @@ async function validateValues(
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 undefined,
                                 undefined,
                                 attributeError["&errorCode"],
@@ -189,6 +191,7 @@ async function validateValues(
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             undefined,
                             undefined,
                             attributeError["&errorCode"],
@@ -227,6 +230,7 @@ async function validateValues(
                                 [],
                                 createSecurityParameters(
                                     ctx,
+                                    signErrors,
                                     undefined,
                                     undefined,
                                     attributeError["&errorCode"],

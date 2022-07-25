@@ -25,9 +25,6 @@ import getRDNFromEntryId from "../getRDNFromEntryId";
 import sleep from "../../utils/sleep";
 import { randomInt } from "crypto";
 import {
-    updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
-import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
@@ -37,7 +34,6 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
-import createSecurityParameters from "../../x500/createSecurityParameters";
 import rdnFromJson from "../../x500/rdnFromJson";
 import dnToVertex from "../../dit/dnToVertex";
 
@@ -78,6 +74,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     }
     const dn = hierarchyParent.decoderFor["&Type"]!(value.value);
     const parent = await dnToVertex(ctx, ctx.dit.root, dn);
+    const signErrors: boolean = false;
     if (!parent) {
         // Hierarchical groups are required to be within a single DSA.
         throw new UpdateError(
@@ -90,16 +87,12 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                     },
                 ],
                 [],
-                createSecurityParameters(
-                    ctx,
-                    undefined,
-                    undefined,
-                    updateError["&errorCode"],
-                ),
+                undefined,
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (parent.dse.objectClass.has(CHILD)) {
@@ -113,12 +106,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                     },
                 ],
                 [],
-                createSecurityParameters(
-                    ctx,
-                    undefined,
-                    undefined,
-                    updateError["&errorCode"],
-                ),
+                undefined,
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,

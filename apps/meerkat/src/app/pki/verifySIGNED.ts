@@ -128,6 +128,7 @@ async function verifySIGNED <T> (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -152,6 +153,7 @@ async function verifySIGNED <T> (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -180,6 +182,7 @@ async function verifySIGNED <T> (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -211,6 +214,7 @@ async function verifySIGNED <T> (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -254,6 +258,7 @@ async function verifySIGNED <T> (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],

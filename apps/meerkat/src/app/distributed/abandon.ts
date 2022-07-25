@@ -81,6 +81,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
@@ -105,6 +106,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
@@ -127,6 +129,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
@@ -162,6 +165,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
@@ -180,6 +184,7 @@ async function abandon (
      * want the results to be signed. Since abandon results are generally not
      * sensitive, Meerkat DSA chooses to avoid signing these results.
      */
+    const signResult: boolean = false;
     const result: AbandonResult = {
         null_: null,
     };
@@ -189,6 +194,7 @@ async function abandon (
             undefined,
             createSecurityParameters(
                 ctx,
+                signResult,
                 assn.boundNameAndUID?.dn,
                 id_opcode_abandon,
             ),

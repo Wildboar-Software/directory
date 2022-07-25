@@ -275,6 +275,7 @@ async function handleRequestAndErrors (
                     [],
                     createSecurityParameters(
                         ctx,
+                        true,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],

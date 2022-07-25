@@ -303,6 +303,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -323,6 +324,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -382,6 +384,7 @@ async function modifyDN (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -409,6 +412,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -444,6 +448,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -526,6 +531,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -587,6 +593,7 @@ async function modifyDN (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
@@ -619,6 +626,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -648,6 +656,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -671,6 +680,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -746,6 +756,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -769,6 +780,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -790,6 +802,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -822,6 +835,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -842,6 +856,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -915,6 +930,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -1038,6 +1054,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -1059,6 +1076,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -1105,6 +1123,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -1135,6 +1154,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -1177,6 +1197,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1247,6 +1268,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1326,6 +1348,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1373,6 +1396,7 @@ async function modifyDN (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
@@ -1422,6 +1446,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -1467,6 +1492,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -1509,6 +1535,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1537,6 +1564,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1564,6 +1592,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1610,6 +1639,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1641,6 +1671,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -1668,6 +1699,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             nameError["&errorCode"],
@@ -1716,6 +1748,7 @@ async function modifyDN (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1759,6 +1792,7 @@ async function modifyDN (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
@@ -1818,6 +1852,7 @@ async function modifyDN (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -1841,6 +1876,7 @@ async function modifyDN (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
@@ -1980,21 +2016,22 @@ async function modifyDN (
     }
 
     // TODO: Update shadows
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     const resultData: ModifyDNResultData = new ModifyDNResultData(
         data.newRDN,
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             id_opcode_modifyDN,
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
         undefined,
-    );
-    const signResults: boolean = (
-        (data.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
     );
     const result: ModifyDNResult = signResults
         ? {
@@ -2029,7 +2066,10 @@ async function modifyDN (
                 unsigned: resultData,
             },
         };
-
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -2038,6 +2078,7 @@ async function modifyDN (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_modifyDN,
                     ),

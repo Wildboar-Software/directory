@@ -148,6 +148,7 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import DSPAssociation from "../dsp/DSPConnection";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -242,6 +243,7 @@ async function list_i (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -272,6 +274,7 @@ async function list_i (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -313,11 +316,17 @@ async function list_i (
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
     let queryReference: string | undefined;
     let cursorId: number | undefined;
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn instanceof DSPAssociation)
+        && assn.authorizedForSignedResults
+    );
     const chainingResults = new ChainingResults(
         undefined,
         undefined,
         createSecurityParameters(
             ctx,
+            signDSPResult,
             assn.boundNameAndUID?.dn,
             id_opcode_list,
         ),
@@ -344,6 +353,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -366,6 +376,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -389,6 +400,7 @@ async function list_i (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -438,6 +450,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -462,6 +475,7 @@ async function list_i (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -480,6 +494,7 @@ async function list_i (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -520,6 +535,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],

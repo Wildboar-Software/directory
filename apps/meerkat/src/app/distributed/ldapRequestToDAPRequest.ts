@@ -252,6 +252,7 @@ function createAttributeErrorData (ctx: Context, descriptor: string): [ string, 
             [],
             createSecurityParameters(
                 ctx,
+                signErrors,
                 undefined,
                 undefined,
                 id_errcode_attributeError,
@@ -766,6 +767,8 @@ function ldapRequestToDAPRequest (
     const invokeId: InvokeId = {
         present: generateUnusedInvokeID(ctx),
     };
+    // LDAP cannot use signed results or errors.
+    const signErrors: boolean = false;
     let subentriesControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc3672.html
     let managedDSAITControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc3296.html
     let dontUseCopyControl: Control | undefined; // See: https://www.rfc-editor.org/rfc/rfc6171.html
@@ -810,6 +813,7 @@ function ldapRequestToDAPRequest (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -818,6 +822,7 @@ function ldapRequestToDAPRequest (
                             false,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -902,6 +907,7 @@ function ldapRequestToDAPRequest (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -910,6 +916,7 @@ function ldapRequestToDAPRequest (
                             false,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }

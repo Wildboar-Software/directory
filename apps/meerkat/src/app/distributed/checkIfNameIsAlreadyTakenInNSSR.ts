@@ -119,6 +119,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -133,6 +134,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
             const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, {
                 timeLimitInMilliseconds: 15000, // FIXME:
                 tlsOptional: ctx.config.chaining.tlsOptional,
+                signErrors,
             });
             if (!client) {
                 continue;
@@ -171,6 +173,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     ),
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         accessPoint.ae_title.rdnSequence,
                         chainedRead["&operationCode"],
                     ),
@@ -220,6 +223,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         : undefined,
                     createSecurityParameters(
                         ctx,
+                        true,
                         accessPoint.ae_title.rdnSequence,
                         chainedRead["&operationCode"],
                     ),
@@ -251,6 +255,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 accessPoint.ae_title.rdnSequence,
                                 undefined,
                                 updateError["&errorCode"],

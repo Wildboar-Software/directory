@@ -355,6 +355,7 @@ async function mergeSortAndPageSearch(
                     [],
                     createSecurityParameters(
                         ctx,
+                        signResults,
                         assn.boundNameAndUID?.dn,
                         search["&operationCode"],
                     ),
@@ -444,6 +445,7 @@ async function mergeSortAndPageSearch(
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             search["&operationCode"],
         ),
@@ -566,6 +568,7 @@ async function mergeSortAndPageSearch(
         );
     const sp = createSecurityParameters(
         ctx,
+        signResults,
         assn.boundNameAndUID?.dn,
         search["&operationCode"],
     );
@@ -591,10 +594,12 @@ async function mergeSortAndPageSearch(
     const altMatchingBuffer = (mergedResult.altMatching !== undefined)
         ? Buffer.from([ 0xA3, 0x03, 0x01, 0x01, 0xFF ]) // [3] TRUE
         : Buffer.allocUnsafe(0);
-    const spBuffer = Buffer.from(
-        $._encode_explicit(ASN1TagClass.context, 30, () => _encode_SecurityParameters, DER)(sp, DER)
-            .toBytes().buffer
-    );
+    const spBuffer = sp
+        ? Buffer.from(
+            $._encode_explicit(ASN1TagClass.context, 30, () => _encode_SecurityParameters, DER)(sp, DER)
+                .toBytes().buffer
+        )
+        : Buffer.allocUnsafe(0);
     const performerBuffer = Buffer.from(
         $._encode_explicit(ASN1TagClass.context, 29, () => _encode_DistinguishedName, DER)
         (ctx.dsa.accessPoint.ae_title.rdnSequence, DER).toBytes().buffer);

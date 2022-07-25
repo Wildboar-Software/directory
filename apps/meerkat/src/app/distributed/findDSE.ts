@@ -269,6 +269,7 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -429,6 +430,7 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         nameError["&errorCode"],
@@ -530,6 +532,7 @@ async function findDSE (
                                 [],
                                 createSecurityParameters(
                                     ctx,
+                                    signErrors,
                                     assn?.boundNameAndUID?.dn,
                                     undefined,
                                     nameError["&errorCode"],
@@ -620,6 +623,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn?.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -638,6 +642,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn?.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -672,6 +677,7 @@ async function findDSE (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn?.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -969,6 +975,7 @@ async function findDSE (
                                     [],
                                     createSecurityParameters(
                                         ctx,
+                                        signErrors,
                                         assn?.boundNameAndUID?.dn,
                                         undefined,
                                         securityError["&errorCode"],
@@ -1024,6 +1031,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn?.boundNameAndUID?.dn,
                                 undefined,
                                 abandoned["&errorCode"],
@@ -1128,6 +1136,7 @@ async function findDSE (
                                         [],
                                         createSecurityParameters(
                                             ctx,
+                                            signErrors,
                                             assn?.boundNameAndUID?.dn,
                                             undefined,
                                             securityError["&errorCode"],
@@ -1149,6 +1158,7 @@ async function findDSE (
                                     [],
                                     createSecurityParameters(
                                         ctx,
+                                        signErrors,
                                         assn?.boundNameAndUID?.dn,
                                         undefined,
                                         nameError["&errorCode"],
@@ -1244,6 +1254,7 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -1389,6 +1400,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn?.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -1423,6 +1435,7 @@ async function findDSE (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn?.boundNameAndUID?.dn,
                             undefined,
                             nameError["&errorCode"],
@@ -1455,6 +1468,7 @@ async function findDSE (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             undefined,
                             undefined,
                             serviceError["&errorCode"],
@@ -1488,6 +1502,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn?.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
@@ -1565,6 +1580,7 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn?.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
@@ -1588,6 +1604,7 @@ async function findDSE (
             [],
             createSecurityParameters(
                 ctx,
+                signErrors,
                 assn?.boundNameAndUID?.dn,
                 undefined,
                 serviceError["&errorCode"],

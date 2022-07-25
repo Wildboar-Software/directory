@@ -71,7 +71,7 @@ function hierarchySelectionProcedure (
         new ServiceErrorData(
             ServiceProblem_requestedServiceNotAvailable,
             [],
-            createSecurityParameters(ctx),
+            createSecurityParameters(ctx, signErrors),
             ctx.dsa.accessPoint.ae_title.rdnSequence,
             undefined,
             notificationAttributes,

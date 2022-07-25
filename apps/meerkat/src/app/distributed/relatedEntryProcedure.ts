@@ -47,7 +47,6 @@ import type { SearchState } from "./search_i";
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
-import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa";
 import type { INTEGER } from "asn1-ts";
 import { randomInt } from "crypto";
 import type {
@@ -96,6 +95,7 @@ async function relatedEntryProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -132,6 +132,7 @@ async function relatedEntryProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -169,11 +170,7 @@ async function relatedEntryProcedure (
                     generalizedTime: timeLimitEndTime,
                 }
                 : undefined,
-            createSecurityParameters(
-                ctx,
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                chainedSearch["&operationCode"],
-            ),
+            undefined,
             undefined,
             assn.boundNameAndUID?.uid,
             assn.authLevel,

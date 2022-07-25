@@ -855,6 +855,7 @@ async function search_i (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -904,6 +905,7 @@ async function search_i (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_serviceError,
@@ -1001,6 +1003,7 @@ async function search_i (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_serviceError,
@@ -1025,6 +1028,7 @@ async function search_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
@@ -1047,6 +1051,7 @@ async function search_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
@@ -1070,6 +1075,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 id_errcode_serviceError,
@@ -1117,6 +1123,7 @@ async function search_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             id_errcode_serviceError,
@@ -1141,6 +1148,7 @@ async function search_i (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -1159,6 +1167,7 @@ async function search_i (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_serviceError,
@@ -1238,6 +1247,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
@@ -1259,6 +1269,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
@@ -1589,6 +1600,7 @@ async function search_i (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_serviceError,
@@ -1676,6 +1688,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 id_errcode_serviceError,
@@ -1949,6 +1962,7 @@ async function search_i (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 id_errcode_serviceError,
@@ -2253,6 +2267,7 @@ async function search_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],

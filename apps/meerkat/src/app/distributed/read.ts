@@ -203,6 +203,7 @@ async function read (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -277,6 +278,7 @@ async function read (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -299,6 +301,7 @@ async function read (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
@@ -427,6 +430,7 @@ async function read (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -461,6 +465,7 @@ async function read (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -521,6 +526,10 @@ async function read (
         }
     }
 
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && (!assn || assn.authorizedForSignedResults)
+    );
     const resultData: ReadResultData = new ReadResultData(
         new EntryInformation(
             {
@@ -544,16 +553,13 @@ async function read (
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn?.boundNameAndUID?.dn,
             id_opcode_read,
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
         undefined,
-    );
-    const signResults: boolean = (
-        (data.securityParameters?.target === ProtectionRequest_signed)
-        && (!assn || assn.authorizedForSignedResults)
     );
     const result: ReadResult = signResults
         ? (() => {
@@ -585,6 +591,10 @@ async function read (
             unsigned: resultData,
         };
 
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && (!assn || assn.authorizedForSignedResults)
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -593,6 +603,7 @@ async function read (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn?.boundNameAndUID?.dn,
                         id_opcode_read,
                     ),

@@ -1,4 +1,4 @@
-import { ServiceError } from "@wildboar/meerkat-types";
+import { ServiceError, ClientAssociation } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
@@ -42,6 +42,7 @@ import { generateSIGNED } from "../pki/generateSIGNED";
  * binding.
  *
  * @param ctx The context object
+ * @param assn The client association
  * @param targetSystem The access point of the other affected DSA
  * @param bindingType The object identifier of the binding type
  * @param bindingID The operational binding ID
@@ -54,6 +55,7 @@ import { generateSIGNED } from "../pki/generateSIGNED";
 export
 async function terminateByTypeAndBindingID (
     ctx: MeerkatContext,
+    assn: ClientAssociation,
     targetSystem: AccessPoint,
     bindingType: OBJECT_IDENTIFIER,
     bindingID: OperationalBindingID,
@@ -62,6 +64,7 @@ async function terminateByTypeAndBindingID (
 ): Promise<ResultOrError> {
     const conn = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         tlsOptional: ctx.config.chaining.tlsOptional,
+        signErrors,
     });
     if (!conn) {
         throw new ServiceError(
@@ -71,7 +74,8 @@ async function terminateByTypeAndBindingID (
                 [],
                 createSecurityParameters(
                     ctx,
-                    undefined,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"]
                 ),

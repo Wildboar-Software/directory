@@ -87,6 +87,7 @@ async function updateLocalSubr (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     securityError["&errorCode"],
@@ -109,6 +110,7 @@ async function updateLocalSubr (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     operationalBindingError["&errorCode"],
@@ -150,6 +152,7 @@ async function updateLocalSubr (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             id_err_operationalBindingError,

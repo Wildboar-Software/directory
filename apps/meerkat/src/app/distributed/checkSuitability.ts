@@ -144,6 +144,7 @@ async function checkSuitabilityProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -175,6 +176,7 @@ async function checkSuitabilityProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],

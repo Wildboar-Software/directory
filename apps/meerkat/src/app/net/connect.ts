@@ -116,6 +116,7 @@ interface ConnectOptions {
     timeLimitInMilliseconds?: number;
     credentials?: DSACredentials,
     tlsOptional?: boolean;
+    signErrors?: boolean;
 }
 
 /**
@@ -163,6 +164,7 @@ const networkAddressPreference = (a: url.URL, b: url.URL): number => {
 function getIDMOperationWriter (
     ctx: MeerkatContext,
     idm: IDMConnection,
+    signErrors: boolean,
 ): Connection["writeOperation"] {
     return async function (req, options): Promise<ResultOrError> {
         const opstat: OperationStatistics = {
@@ -234,6 +236,7 @@ function getIDMOperationWriter (
                                 [],
                                 createSecurityParameters(
                                     ctx,
+                                    signErrors,
                                     undefined,
                                     undefined,
                                     serviceError["&errorCode"],
@@ -299,7 +302,8 @@ function getIDMOperationWriter (
 function getLDAPOperationWriter (
     ctx: MeerkatContext,
     socket: LDAPSocket,
-    isDSP: boolean = false,
+    signErrors: boolean,
+    isDSP: boolean,
 ): Connection["writeOperation"] {
     return async (req, options): Promise<ResultOrError> => {
         assert(req.opCode);
@@ -328,7 +332,7 @@ function getLDAPOperationWriter (
         const ldapRequest = dapRequestToLDAPRequest(ctx, {
             ...req,
             invokeId,
-        }, isDSP);
+        }, isDSP, signErrors);
         const EVENT_NAME: string = ldapRequest.messageID.toString();
         // These references exist outside of the scope of the Promise so we can
         // remove all event listeners once the request is done.
@@ -555,13 +559,14 @@ function getLDAPOperationWriter (
                 }),
                 new Promise<never>((_, reject) => setTimeout(
                     () => {
-                        const err = new errors.ServiceError(
+                        const err = new errors.ServiceError( // FIXME: i18n
                             `DSA-initiated LDAP request ${EVENT_NAME} timed out.`,
                             new ServiceErrorData(
                                 ServiceProblem_timeLimitExceeded,
                                 [],
                                 createSecurityParameters(
                                     ctx,
+                                    signErrors,
                                     undefined,
                                     undefined,
                                     serviceError["&errorCode"],
@@ -570,6 +575,7 @@ function getLDAPOperationWriter (
                                 undefined,
                                 undefined,
                             ),
+                            signErrors,
                         );
                         reject(err);
                     },
@@ -685,6 +691,7 @@ async function connectToLDAP (
     extraCredentials: DSACredentials[],
     timeoutTime: Date,
     tlsRequired: boolean,
+    signErrors: boolean,
     isDSP: boolean,
 ): Promise<Connection | null> {
     const port: number = uri.port?.length
@@ -854,7 +861,7 @@ async function connectToLDAP (
 
             // If we made it here, one of our authentication attempts worked.
             const ret: Connection = {
-                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, isDSP),
+                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, signErrors, isDSP),
                 close: async (): Promise<void> => {
                     ldapSocket.close();
                 },
@@ -888,6 +895,7 @@ async function connectToLDAP (
     uri: url.URL,
     extraCredentials: DSACredentials[],
     timeoutTime: Date,
+    signErrors: boolean,
     isDSP: boolean,
 ): Promise<Connection | null> {
     const port: number = uri.port?.length
@@ -995,7 +1003,7 @@ async function connectToLDAP (
 
             // If we made it here, one of our authentication attempts worked.
             const ret: Connection = {
-                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, isDSP),
+                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, signErrors, isDSP),
                 close: async (): Promise<void> => {
                     ldapSocket?.close();
                 },
@@ -1034,6 +1042,7 @@ async function connectToIdmNaddr (
     extraCredentials: DSACredentials[],
     timeoutTime: Date,
     tlsRequired: boolean,
+    signErrors: boolean,
 ): Promise<Connection | null> {
     let idm: IDMConnection | null = idmGetter();
     if (!idm) {
@@ -1170,7 +1179,7 @@ async function connectToIdmNaddr (
     }
 
     const ret: Connection = {
-        writeOperation: getIDMOperationWriter(ctx, idm),
+        writeOperation: getIDMOperationWriter(ctx, idm, signErrors),
         close: async (): Promise<void> => {
             idm?.close();
         },
@@ -1204,6 +1213,7 @@ async function connectToIdmNaddr (
     protocolID: OBJECT_IDENTIFIER,
     extraCredentials: DSACredentials[],
     timeoutTime: Date,
+    signErrors: boolean,
 ): Promise<Connection | null> {
     let idm: IDMConnection | null = idmGetter();
     if (!idm) {
@@ -1294,7 +1304,7 @@ async function connectToIdmNaddr (
     }
 
     const ret: Connection = {
-        writeOperation: getIDMOperationWriter(ctx, idm),
+        writeOperation: getIDMOperationWriter(ctx, idm, signErrors),
         close: async (): Promise<void> => {
             idm?.close();
         },
@@ -1394,6 +1404,7 @@ async function connect (
                 extraCredentials,
                 timeoutTime,
                 !options?.tlsOptional,
+                !!options?.signErrors,
             );
         } else if (uri.protocol.toLowerCase().startsWith("idms:")) {
             if (!uri.port) {
@@ -1428,6 +1439,7 @@ async function connect (
                 protocolID,
                 extraCredentials,
                 timeoutTime,
+                !!options?.signErrors,
             );
         } else if (uri.protocol.toLowerCase() === "ldap:") {
             const isDAP: boolean = protocolID.isEqualTo(dap_ip["&id"]!);
@@ -1441,6 +1453,7 @@ async function connect (
                 extraCredentials,
                 timeoutTime,
                 !options?.tlsOptional,
+                !!options?.signErrors,
                 isDSP,
             );
         } if (uri.protocol.toLowerCase() === "ldaps:") {
@@ -1454,6 +1467,7 @@ async function connect (
                 uri,
                 extraCredentials,
                 timeoutTime,
+                !!options?.signErrors,
                 isDSP,
             );
         }

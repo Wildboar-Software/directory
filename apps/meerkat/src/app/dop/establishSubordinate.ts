@@ -217,6 +217,7 @@ async function establishSubordinate (
     const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
         tlsOptional: ctx.config.chaining.tlsOptional,
+        signErrors,
     });
     if (!assn) {
         throw new ServiceError(
@@ -226,6 +227,7 @@ async function establishSubordinate (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     serviceError["&errorCode"]
@@ -331,6 +333,7 @@ async function establishSubordinate (
             : undefined,
         createSecurityParameters(
             ctx,
+            true,
             targetSystem.ae_title.rdnSequence,
             establishOperationalBinding["&operationCode"],
         ),
@@ -387,6 +390,7 @@ async function establishSubordinate (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     serviceError["&errorCode"]

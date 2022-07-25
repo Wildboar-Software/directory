@@ -40,6 +40,11 @@ const ctx: MeerkatContext = {
             // certificateRevocationLists: [],
             // trustAnchorList: [],
         },
+        signing: {
+            revokedCertificateSerialNumbers: new Set(),
+            // certificateRevocationLists: [],
+            // trustAnchorList: [],
+        },
     },
     // TODO:
 } as MeerkatContext;

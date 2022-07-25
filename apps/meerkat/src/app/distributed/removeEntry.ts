@@ -208,6 +208,7 @@ async function removeEntry (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -235,6 +236,7 @@ async function removeEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -304,6 +306,7 @@ async function removeEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -340,6 +343,7 @@ async function removeEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -364,6 +368,7 @@ async function removeEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -465,6 +470,7 @@ async function removeEntry (
                 // of returning from this operation.
                 terminateByTypeAndBindingID(
                     ctx,
+                    assn,
                     accessPoint,
                     id_op_binding_hierarchical,
                     bindingID,
@@ -534,6 +540,7 @@ async function removeEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
@@ -565,20 +572,21 @@ async function removeEntry (
         updateAffectedSubordinateDSAs(ctx, targetDN.slice(0, -1)); // INTENTIONAL_NO_AWAIT
     }
 
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     const resultData: RemoveEntryResultData = new RemoveEntryResultData(
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             id_opcode_removeEntry,
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
         undefined,
-    );
-    const signResults: boolean = (
-        (data.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
     );
     const result: RemoveEntryResult = signResults
         ? {
@@ -614,6 +622,10 @@ async function removeEntry (
             },
         };
 
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -622,6 +634,7 @@ async function removeEntry (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_removeEntry,
                     ),

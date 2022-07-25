@@ -273,7 +273,8 @@ const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const notPermittedData =  (
     ctx: Context,
     assn: ClientAssociation,
-    aliasDereferenced?: boolean,
+    aliasDereferenced: boolean | undefined,
+    signErrors: boolean,
 ) => new SecurityErrorData(
     SecurityProblem_insufficientAccessRights,
     undefined,
@@ -281,6 +282,7 @@ const notPermittedData =  (
     [],
     createSecurityParameters(
         ctx,
+        signErrors,
         assn.boundNameAndUID?.dn,
         undefined,
         securityError["&errorCode"],
@@ -356,6 +358,7 @@ function getValueAlterer (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     attributeError["&errorCode"],
@@ -449,6 +452,7 @@ function checkAttributeArity (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -561,7 +565,7 @@ function checkPermissionToAddValues (
                 mod: modificationType,
                 type: attribute.type_.toString(),
             }),
-            notPermittedData(ctx, assn, aliasDereferenced),
+            notPermittedData(ctx, assn, aliasDereferenced, signErrors),
             signErrors,
         );
     }
@@ -591,7 +595,7 @@ function checkPermissionToAddValues (
                     mod: modificationType,
                     type: attribute.type_.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                 signErrors,
             );
         }
@@ -652,6 +656,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -675,6 +680,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -705,6 +711,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -735,6 +742,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -765,6 +773,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -957,6 +966,7 @@ async function executeAddAttribute (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -1030,6 +1040,7 @@ async function executeRemoveAttribute (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -1066,7 +1077,7 @@ async function executeRemoveAttribute (
                     mod: "removeAttribute",
                     type: mod.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                 signErrors,
             );
         }
@@ -1091,6 +1102,7 @@ async function executeRemoveAttribute (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -1173,6 +1185,7 @@ async function executeAddValues (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -1265,6 +1278,7 @@ async function executeRemoveValues (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -1300,6 +1314,7 @@ async function executeRemoveValues (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -1334,7 +1349,7 @@ async function executeRemoveValues (
                     mod: "removeValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                 signErrors,
             );
         }
@@ -1361,7 +1376,7 @@ async function executeRemoveValues (
                         mod: "removeValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                     signErrors,
                 );
             }
@@ -1435,6 +1450,7 @@ async function executeAlterValues (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     attributeError["&errorCode"],
@@ -1470,7 +1486,7 @@ async function executeAlterValues (
                     mod: "alterValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                 signErrors,
             );
         }
@@ -1516,7 +1532,7 @@ async function executeAlterValues (
                         mod: "alterValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                     signErrors,
                 );
             }
@@ -1556,7 +1572,7 @@ async function executeAlterValues (
                         mod: "alterValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                     signErrors,
                 );
             }
@@ -1664,7 +1680,7 @@ async function executeResetValue (
                         mod: "resetValue",
                         type: mod.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                     signErrors,
                 );
             }
@@ -1760,7 +1776,7 @@ async function executeReplaceValues (
                     mod: "replaceValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                 signErrors,
             );
         }
@@ -1786,7 +1802,7 @@ async function executeReplaceValues (
                         mod: "replaceValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
                     signErrors,
                 );
             }
@@ -1859,6 +1875,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -1902,6 +1919,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -1945,6 +1963,7 @@ function handleContextRule (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             attributeError["&errorCode"],
@@ -1978,6 +1997,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -2179,6 +2199,7 @@ async function executeEntryModification (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2238,6 +2259,7 @@ async function executeEntryModification (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -2338,6 +2360,7 @@ async function modifyEntry (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -2365,6 +2388,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -2477,6 +2501,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -2537,6 +2562,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -2597,6 +2623,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -2633,7 +2660,7 @@ async function modifyEntry (
                         mod: "*",
                         type: type_,
                     }),
-                    notPermittedData(ctx, assn, state.chainingArguments.aliasDereferenced),
+                    notPermittedData(ctx, assn, state.chainingArguments.aliasDereferenced, signErrors),
                     signErrors,
                 );
             }
@@ -2717,6 +2744,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2750,6 +2778,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -2783,6 +2812,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -2822,6 +2852,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2854,6 +2885,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2897,6 +2929,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2933,6 +2966,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -3013,6 +3047,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -3056,6 +3091,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -3083,6 +3119,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -3124,6 +3161,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -3163,6 +3201,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -3200,6 +3239,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -3232,6 +3272,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -3270,6 +3311,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -3292,6 +3334,7 @@ async function modifyEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
@@ -3456,11 +3499,16 @@ async function modifyEntry (
 
     // TODO: Update Shadows
 
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     let resultData: ModifyEntryResultData = new ModifyEntryResultData(
         undefined,
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             id_opcode_modifyEntry,
         ),
@@ -3555,10 +3603,6 @@ async function modifyEntry (
         );
     }
 
-    const signResults: boolean = (
-        (data.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
-    );
     const result: ModifyEntryResult = signResults
         ? {
             information: (() => {
@@ -3593,6 +3637,10 @@ async function modifyEntry (
             },
         };
 
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -3601,6 +3649,7 @@ async function modifyEntry (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_modifyEntry,
                     ),

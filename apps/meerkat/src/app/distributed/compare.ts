@@ -204,6 +204,7 @@ async function compare (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -287,6 +288,7 @@ async function compare (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -308,6 +310,7 @@ async function compare (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -357,6 +360,7 @@ async function compare (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
@@ -385,6 +389,7 @@ async function compare (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -409,6 +414,7 @@ async function compare (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -435,6 +441,7 @@ async function compare (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -496,6 +503,7 @@ async function compare (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -631,6 +639,10 @@ async function compare (
         op.pointOfNoReturnTime = new Date();
     }
 
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     const resultData: CompareResultData = new CompareResultData(
         {
             rdnSequence: targetDN,
@@ -641,16 +653,13 @@ async function compare (
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             id_opcode_compare,
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
         undefined,
-    );
-    const signResults: boolean = (
-        (data.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
     );
     const result: CompareResult = signResults
         ? (() => {
@@ -681,7 +690,10 @@ async function compare (
         : {
             unsigned: resultData,
         };
-
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -690,6 +702,7 @@ async function compare (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_compare,
                     ),

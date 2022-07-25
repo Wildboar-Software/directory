@@ -138,6 +138,7 @@ async function apinfoProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn?.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -171,6 +172,7 @@ async function apinfoProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         undefined,
                         undefined,
                         serviceError["&errorCode"],
@@ -196,6 +198,7 @@ async function apinfoProcedure (
         try {
             const connection = await connect(ctx, ap, dsp_ip["&id"]!, {
                 tlsOptional: ctx.config.chaining.tlsOptional,
+                signErrors,
             });
             if (!connection) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {

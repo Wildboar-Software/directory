@@ -184,7 +184,8 @@ async function establishOperationalBinding (
             [],
             createSecurityParameters(
                 ctx,
-                undefined,
+                signErrors,
+                assn.boundNameAndUID?.dn,
                 undefined,
                 id_err_operationalBindingError,
             ),
@@ -206,7 +207,8 @@ async function establishOperationalBinding (
                 [],
                 createSecurityParameters(
                     ctx,
-                    undefined,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_err_operationalBindingError,
                 ),
@@ -228,7 +230,8 @@ async function establishOperationalBinding (
                 [],
                 createSecurityParameters(
                     ctx,
-                    undefined,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_err_operationalBindingError,
                 ),
@@ -272,7 +275,8 @@ async function establishOperationalBinding (
                         [],
                         createSecurityParameters(
                             ctx,
-                            undefined,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_err_operationalBindingError,
                         ),
@@ -298,7 +302,8 @@ async function establishOperationalBinding (
                         [],
                         createSecurityParameters(
                             ctx,
-                            undefined,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_err_operationalBindingError,
                         ),
@@ -344,7 +349,8 @@ async function establishOperationalBinding (
                         [],
                         createSecurityParameters(
                             ctx,
-                            undefined,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_err_operationalBindingError,
                         ),
@@ -407,6 +413,7 @@ async function establishOperationalBinding (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 id_err_operationalBindingError,
@@ -546,7 +553,8 @@ async function establishOperationalBinding (
                         [],
                         createSecurityParameters(
                             ctx,
-                            undefined,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_err_operationalBindingError,
                         ),
@@ -569,7 +577,8 @@ async function establishOperationalBinding (
                         [],
                         createSecurityParameters(
                             ctx,
-                            undefined,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
                             id_err_operationalBindingError,
                         ),
@@ -612,7 +621,8 @@ async function establishOperationalBinding (
                     [],
                     createSecurityParameters(
                         ctx,
-                        undefined,
+                        signResult,
+                        assn.boundNameAndUID?.dn,
                         id_op_establishOperationalBinding,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -705,7 +715,8 @@ async function establishOperationalBinding (
                     [],
                     createSecurityParameters(
                         ctx,
-                        undefined,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
                         undefined,
                         id_err_operationalBindingError,
                     ),

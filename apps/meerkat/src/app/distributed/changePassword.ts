@@ -68,6 +68,9 @@ import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -118,6 +121,7 @@ async function changePassword (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -241,6 +245,7 @@ async function changePassword (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -276,6 +281,7 @@ async function changePassword (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -296,16 +302,12 @@ async function changePassword (
     /**
      * There are no security parameters in the request data, so a user cannot
      * specify that they want the results to be signed. In the face of this
-     * ambiguity, Meerkat DSA opts to sign all `administerPassword` and
-     * `changePassword` results, since they are security-sensitive.
+     * ambiguity, Meerkat DSA will not sign any `administerPassword` and
+     * `changePassword` results.
      */
     const resultData: ChangePasswordResultData = new ChangePasswordResultData(
         [],
-        createSecurityParameters(
-            ctx,
-            assn.boundNameAndUID?.dn,
-            id_opcode_changePassword,
-        ),
+        undefined,
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
         undefined,
@@ -337,6 +339,10 @@ async function changePassword (
             };
         })(),
     };
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -345,6 +351,7 @@ async function changePassword (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_changePassword,
                     ),

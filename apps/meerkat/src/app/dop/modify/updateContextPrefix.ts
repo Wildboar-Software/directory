@@ -124,6 +124,7 @@ async function updateContextPrefix (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     operationalBindingError["&errorCode"],
@@ -149,6 +150,7 @@ async function updateContextPrefix (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     operationalBindingError["&errorCode"],

@@ -243,6 +243,7 @@ async function updateSubordinateDSA (
     const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
         tlsOptional: ctx.config.chaining.tlsOptional,
+        signErrors,
     });
     if (!assn) {
         throw new ServiceError(
@@ -252,6 +253,7 @@ async function updateSubordinateDSA (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     serviceError["&errorCode"]
@@ -352,6 +354,7 @@ async function updateSubordinateDSA (
         undefined, // Validity remains the same.
         createSecurityParameters(
             ctx,
+            true,
             targetSystem.ae_title.rdnSequence,
             modifyOperationalBinding["&operationCode"],
         ),

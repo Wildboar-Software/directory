@@ -321,6 +321,7 @@ async function mergeSortAndPageList(
                     [],
                     createSecurityParameters(
                         ctx,
+                        signResults,
                         assn.boundNameAndUID?.dn,
                         list["&operationCode"],
                     ),
@@ -405,6 +406,7 @@ async function mergeSortAndPageList(
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             list["&operationCode"],
         ),
@@ -523,6 +525,7 @@ async function mergeSortAndPageList(
         );
     const sp = createSecurityParameters(
         ctx,
+        signResults,
         assn.boundNameAndUID?.dn,
         list["&operationCode"],
     );
@@ -544,10 +547,12 @@ async function mergeSortAndPageList(
             $._encode_explicit(ASN1TagClass.context, 2, () => _encode_PartialOutcomeQualifier, DER)(poq, DER)
             .toBytes().buffer)
         : Buffer.allocUnsafe(0);
-    const spBuffer = Buffer.from(
-        $._encode_explicit(ASN1TagClass.context, 30, () => _encode_SecurityParameters, DER)(sp, DER)
-            .toBytes().buffer
-    );
+    const spBuffer = sp
+        ? Buffer.from(
+            $._encode_explicit(ASN1TagClass.context, 30, () => _encode_SecurityParameters, DER)(sp, DER)
+                .toBytes().buffer
+        )
+        : Buffer.allocUnsafe(0);
     const performerBuffer = Buffer.from(
         $._encode_explicit(ASN1TagClass.context, 29, () => _encode_DistinguishedName, DER)
         (ctx.dsa.accessPoint.ae_title.rdnSequence, DER).toBytes().buffer);

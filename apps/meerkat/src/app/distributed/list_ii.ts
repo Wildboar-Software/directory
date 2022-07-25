@@ -1,6 +1,6 @@
 import { Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { ObjectIdentifier, TRUE_BIT, FALSE } from "asn1-ts";
+import { ObjectIdentifier, TRUE_BIT, FALSE, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
@@ -25,6 +25,10 @@ import {
     ListResult,
     _encode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+import {
+    ListResultData,
+    _encode_ListResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
 import {
     ListResultData_listInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
@@ -145,6 +149,9 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import DSPAssociation from "../dsp/DSPConnection";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -231,6 +238,7 @@ async function list_ii (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn?.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -260,6 +268,7 @@ async function list_ii (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -317,6 +326,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -339,6 +349,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -362,6 +373,7 @@ async function list_ii (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -400,6 +412,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -423,6 +436,7 @@ async function list_ii (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -441,6 +455,7 @@ async function list_ii (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -484,6 +499,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -641,6 +657,7 @@ async function list_ii (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -652,37 +669,75 @@ async function list_ii (
             signErrors,
         );
     }
-    const result: ListResult = {
-        unsigned: {
-            listInfo: new ListResultData_listInfo(
-                state.chainingArguments.aliasDereferenced
-                    ? {
-                        rdnSequence: targetDN,
-                    }
-                    : undefined,
-                listItems,
-                // The POQ shall only be present if the results are incomplete.
-                (queryReference && (limitExceeded !== undefined))
-                    ? new PartialOutcomeQualifier(
-                        limitExceeded,
-                        undefined,
-                        undefined,
-                        undefined,
-                        Buffer.from(queryReference, "base64"),
-                    )
-                    : undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    assn.boundNameAndUID?.dn,
-                    id_opcode_list,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
+
+    const signResults: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+    );
+    const resultDataInfo = new ListResultData_listInfo(
+        state.chainingArguments.aliasDereferenced
+            ? {
+                rdnSequence: targetDN,
+            }
+            : undefined,
+        listItems,
+        // The POQ shall only be present if the results are incomplete.
+        (queryReference && (limitExceeded !== undefined))
+            ? new PartialOutcomeQualifier(
+                limitExceeded,
                 undefined,
                 undefined,
-            ),
-        },
+                undefined,
+                Buffer.from(queryReference, "base64"),
+            )
+            : undefined,
+        [],
+        createSecurityParameters(
+            ctx,
+            signResults,
+            assn.boundNameAndUID?.dn,
+            id_opcode_list,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        undefined,
+        undefined,
+    );
+    const resultData: ListResultData = {
+        listInfo: resultDataInfo,
     };
+    const result: ListResult = signResults
+        ? (() => {
+            const resultDataBytes = _encode_ListResultData(resultData, DER).toBytes();
+            const key = ctx.config.signing?.key;
+            if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const signingResult = generateSignature(key, resultDataBytes);
+            if (!signingResult) {
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const [ sigAlg, sigValue ] = signingResult;
+            return {
+                signed: new SIGNED(
+                    resultData,
+                    sigAlg,
+                    unpackBits(sigValue),
+                    undefined,
+                    undefined,
+                ),
+            };
+        })()
+        : {
+            unsigned: resultData,
+        };
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn instanceof DSPAssociation)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -691,6 +746,7 @@ async function list_ii (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_list,
                     ),
@@ -712,8 +768,8 @@ async function list_ii (
             outcome: failover(() => ({
                 result: {
                     list: getListResultStatistics(result),
-                    poq: (("listInfo" in result.unsigned) && result.unsigned.listInfo.partialOutcomeQualifier)
-                        ? getPartialOutcomeQualifierStatistics(result.unsigned.listInfo.partialOutcomeQualifier)
+                    poq: resultDataInfo.partialOutcomeQualifier
+                        ? getPartialOutcomeQualifierStatistics(resultDataInfo.partialOutcomeQualifier)
                         : undefined,
                 },
             }), undefined),
