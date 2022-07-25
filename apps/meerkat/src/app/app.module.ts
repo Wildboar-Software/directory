@@ -7,6 +7,7 @@ import { SystemController } from "./admin/system.controller";
 import { PkiController } from "./admin/pki.controller";
 import { BasicAuthMiddleware } from "./admin/basic-auth.middleware";
 import { SecurityMiddleware } from "./admin/security.middleware";
+import { LoggingMiddleware } from "./admin/logging.middleware";
 import ctx from "./ctx";
 import { CONTEXT } from "./constants";
 
@@ -48,6 +49,12 @@ export class AppModule {
             });
         consumer
             .apply(BasicAuthMiddleware)
+            .forRoutes({
+                path: "*",
+                method: RequestMethod.ALL,
+            });
+        consumer
+            .apply(LoggingMiddleware)
             .forRoutes({
                 path: "*",
                 method: RequestMethod.ALL,

@@ -122,5 +122,9 @@
     "strong_cred_error@untrusted": "COULD_BAN={{host}}; Strong credentials certification-path was not trusted.",
     "strong_cred_error@invalid_sig": "COULD_BAN={{host}}; Strong credentials had an invalid cryptographic signature.",
     "docs": "Documentation on Meerkat DSA can be found here: https://wildboar-software.github.io/directory/",
-    "loaded_dsa_relationships": "Loaded DSA relationships."
+    "loaded_dsa_relationships": "Loaded DSA relationships.",
+    "auth_failure_web_admin": "COULD_BAN={{host}}; Failed authentication in web admin portal.",
+    "auth_success_web_admin": "Successful authentication to web admin portal from {{host}}.",
+    "no_auth_web_admin": "Remote host {{host}} logged into the web admin portal without authentication, since authentication was not configured.",
+    "web_admin_http": "Web admin console: {{method}} {{path}} from {{host}}"
 }

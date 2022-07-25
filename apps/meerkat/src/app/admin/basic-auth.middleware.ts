@@ -6,7 +6,21 @@ import { CONTEXT } from "../constants";
 import { timingSafeEqual, randomInt } from "crypto";
 import { sleep } from "../utils/sleep";
 
-async function unauthorized (ctx: Context, res: Response): Promise<void> {
+async function unauthorized (
+    ctx: Context,
+    req: Request,
+    res: Response,
+    invalidCredentials: boolean = false,
+): Promise<void> {
+    if (res.socket && invalidCredentials) {
+        const host = `${res.socket.remoteFamily}://${res.socket.remoteAddress}/${res.socket.remotePort}`;
+        const logInfo = {
+            host,
+            method: req.method,
+            path: req.path,
+        };
+        ctx.log.warn(ctx.i18n.t("log:auth_failure_web_admin", logInfo), logInfo);
+    }
     /**
      * Wait 1 - 3 seconds before responding to mitigate timing attacks.
      */
@@ -35,14 +49,14 @@ export class BasicAuthMiddleware implements NestMiddleware {
         }
         const authzHeader = req.headers["authorization"];
         if (!authzHeader || !authzHeader.startsWith("Basic ")) {
-            await unauthorized(this.ctx, res);
+            await unauthorized(this.ctx, req, res);
             return;
         }
         const base64Creds: string = authzHeader.slice("Basic ".length).trim();
         const decoded = Buffer.from(base64Creds, "base64").toString("utf-8");
         const indexOfFirstColon: number = decoded.indexOf(":");
         if (indexOfFirstColon < 0) {
-            await unauthorized(this.ctx, res);
+            await unauthorized(this.ctx, req, res);
             return;
         }
         const suppliedUsername = decoded.slice(0, indexOfFirstColon);
@@ -71,7 +85,7 @@ export class BasicAuthMiddleware implements NestMiddleware {
             && timingSafeEqual(passwordBuf, expectedPasswordBuf)
         );
         if (!validCredentials) {
-            await unauthorized(this.ctx, res);
+            await unauthorized(this.ctx, req, res, true);
             return;
         }
         next();
