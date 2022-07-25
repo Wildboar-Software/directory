@@ -4,42 +4,62 @@
 version: '3.7'
 
 services:
-  meerkat:
-    build:
-      context: .
-      dockerfile: meerkat.dockerfile
-    env_file:
-      - .env
-    environment:
-      # What appears in this section overrides anything in .env.
-      DATABASE_URL: mysql://root:example@db:3306/directory
-      MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
-      MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
-      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
-      MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
-      MEERKAT_INIT_JS: /data/init.mjs
-    depends_on:
-      - db
-    hostname: 'meerkat'
-    labels:
-      author: Wildboar Software
-      app: meerkat
-      version: "1.0.4"
-    ports:
-      - '1389:389/tcp' # LDAP TCP Port
-      - '4632:4632/tcp' # IDM Socket
-      - '18080:18080/tcp' # Web administration console
-    volumes:
-      - type: bind
-        source: ./data
-        target: /data
-        read_only: true
+  # meerkat:
+  #   build:
+  #     context: .
+  #     dockerfile: meerkat.dockerfile
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     # What appears in this section overrides anything in .env.
+  #     DATABASE_URL: mysql://root:example@db:3306/directory
+  #     MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
+  #     MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
+  #     MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
+  #     MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
+  #     MEERKAT_INIT_JS: /data/init.mjs
+  #   depends_on:
+  #     - db
+  #   hostname: 'meerkat'
+  #   labels:
+  #     author: Wildboar Software
+  #     app: meerkat
+  #     version: "1.0.4"
+  #   ports:
+  #     - '1389:389/tcp' # LDAP TCP Port
+  #     - '4632:4632/tcp' # IDM Socket
+  #     - '18080:18080/tcp' # Web administration console
+  #   volumes:
+  #     - type: bind
+  #       source: ./data
+  #       target: /data
+  #       read_only: true
 
   db:
+
+    # Some have suggested that this may be the cause of the
+    # "Error starting userland proxy: listen tcp 0.0.0.0:3306: bind: address
+    # already in use" problem I've suffered through for years and years.
+    #
+    # See: https://github.com/moby/moby/issues/25981#issuecomment-448668142
+    #
+    # This makes sense, given the explanation here:
+    # https://github.com/moby/moby/issues/25981#issuecomment-254663996
+    #
+    # Purging docker using `sudo snap remove docker --purge` did not even work.
+    # These were the only steps that worked:
+    #
+    # 1. Stop docker: `sudo systemctl stop docker`.
+    # 2. Delete the networking database: `sudo rm /var/lib/docker/network/files/local-kv.db`.
+    # 3. Start docker: `sudo systemctl start docker`.
+    #
+    # For this reason, this will _stay_ commented out.
+    #
+    # restart: always
+
     image: mysql
     command: --default-authentication-plugin=mysql_native_password
     # command: --default-authentication-plugin=mysql_native_password --slow-query-log=ON --slow-query-log-file=/var/lib/mysqllog/slow.log --long-query-time=2
-    restart: always
     # This gets rid of the "mbind: Operation not permitted" error message in the MySQL logs.
     # See: https://thegeekbin.com/mbind-operation-not-permitted-docker-mysql/
     security_opt:
