@@ -54,9 +54,10 @@ export class HomeController {
         return {
             dsa: this.ctx.dsa.accessPoint.ae_title.rdnSequence.length
                 ? stringifyDN(this.ctx, this.ctx.dsa.accessPoint.ae_title.rdnSequence)
-                : "<UNSET>",
+                : "<UNSET> (Consider configuring signing PKI)",
             csrfToken: req.csrfToken(),
             rootuuid: this.ctx.dit.root.dse.uuid,
+            dhparams: !!process.env.MEERKAT_TLS_DH_PARAM_FILE,
         };
     }
 

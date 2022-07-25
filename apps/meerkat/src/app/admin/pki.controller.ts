@@ -213,6 +213,7 @@ import {
     CertificationPath,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
 import { crlCache } from "../pki/crlCurl";
+import { AttributeCertificate } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeCertificate.ta";
 
 interface TableValue {
     key: string;
@@ -1103,6 +1104,176 @@ function renderTrustAnchor (ctx: Context, ta: TrustAnchorChoice): KeyValueTable 
     };
 }
 
+function renderAttributeCert (
+    ctx: Context,
+    cert: AttributeCertificate,
+): KeyValueTable {
+    const values: TableValue[] = [];
+    const tbs = cert.toBeSigned;
+    values.push({
+        key: "Version",
+        value: (tbs.version !== undefined)
+            ? (Number(tbs.version) + 1).toString()
+            : "1",
+    });
+
+    if (tbs.holder.baseCertificateID) {
+        for (const issuerName of tbs.holder.baseCertificateID.issuer) {
+            values.push({
+                key: "Holder's Issuer's Name",
+                value: generalNameToString(issuerName),
+            });
+        }
+        values.push({
+            key: "Holder's Serial Number",
+            value: Buffer.from(tbs.holder.baseCertificateID.serial).toString("hex"),
+        });
+        if (tbs.holder.baseCertificateID.issuerUID) {
+            values.push({
+                key: "Holder's Issuer's UID",
+                value: printBitString(tbs.holder.baseCertificateID.issuerUID),
+            });
+        }
+    }
+    if (tbs.holder.entityName) {
+        for (const holderName of tbs.holder.entityName) {
+            values.push({
+                key: "Holder's Name",
+                value: generalNameToString(holderName),
+            });
+        }
+    }
+    if (tbs.holder.objectDigestInfo) {
+        values.push({
+            key: "Holder's Object Digest Type",
+            value: tbs.holder.objectDigestInfo.digestedObjectType.toString(),
+        });
+        if (tbs.holder.objectDigestInfo.otherObjectTypeID) {
+            values.push({
+                key: "Holder's Object Digest Type (Other)",
+                value: tbs.holder.objectDigestInfo.otherObjectTypeID.toString(),
+            });
+        }
+        values.push({
+            key: "Holder's Object Digest Algorithm Identifier",
+            value: tbs.holder.objectDigestInfo.digestAlgorithm.algorithm.toString(),
+        });
+        if (tbs.holder.objectDigestInfo.digestAlgorithm.parameters) {
+            values.push({
+                key: "Holder's Object Digest Algorithm Parameter",
+                value: tbs.holder.objectDigestInfo.digestAlgorithm.parameters.toString(),
+            });
+        }
+        values.push({
+            key: "Holder's Object Digest Value",
+            value: printBitString(tbs.holder.objectDigestInfo.objectDigest),
+        });
+    }
+
+    if (tbs.issuer.issuerName) {
+        for (const issuerName of tbs.issuer.issuerName) {
+            values.push({
+                key: "Issuer's Name",
+                value: generalNameToString(issuerName),
+            });
+        }
+    }
+    if (tbs.issuer.baseCertificateID) {
+        for (const issuerName of tbs.issuer.baseCertificateID.issuer) {
+            values.push({
+                key: "Issuer's Issuer Name",
+                value: generalNameToString(issuerName),
+            });
+        }
+        values.push({
+            key: "Issuer's Serial Number",
+            value: Buffer.from(tbs.issuer.baseCertificateID.serial).toString("hex"),
+        });
+        if (tbs.issuer.baseCertificateID.issuerUID) {
+            values.push({
+                key: "Issuer's Issuer's UID",
+                value: printBitString(tbs.issuer.baseCertificateID.issuerUID),
+            });
+        }
+    }
+    if (tbs.issuer.objectDigestInfo) {
+        values.push({
+            key: "Issuer's Object Digest Type",
+            value: tbs.issuer.objectDigestInfo.digestedObjectType.toString(),
+        });
+        if (tbs.issuer.objectDigestInfo.otherObjectTypeID) {
+            values.push({
+                key: "Issuer's Object Digest Type (Other)",
+                value: tbs.issuer.objectDigestInfo.otherObjectTypeID.toString(),
+            });
+        }
+        values.push({
+            key: "Issuer's Object Digest Algorithm Identifier",
+            value: tbs.issuer.objectDigestInfo.digestAlgorithm.algorithm.toString(),
+        });
+        if (tbs.issuer.objectDigestInfo.digestAlgorithm.parameters) {
+            values.push({
+                key: "Issuer's Object Digest Algorithm Parameter",
+                value: tbs.issuer.objectDigestInfo.digestAlgorithm.parameters.toString(),
+            });
+        }
+        values.push({
+            key: "Issuer's Object Digest Value",
+            value: printBitString(tbs.issuer.objectDigestInfo.objectDigest),
+        });
+    }
+
+    values.push({
+        key: "Signature Algorithm Identifier (Signed)",
+        value: tbs.signature.algorithm.toString(),
+    });
+
+    if (tbs.signature.parameters) {
+        values.push({
+            key: "Signature Algorithm Parameter (Signed)",
+            value: tbs.signature.parameters.toString(),
+        });
+    }
+    values.push({
+        key: "Serial Number",
+        value: Buffer.from(tbs.serialNumber).toString("hex"),
+    });
+    // values.push({
+    //     key: "Issuer Name",
+    //     value: stringifyDN(ctx, tbs.issuer.rdnSequence),
+    // });
+    values.push({
+        key: "Validity Start",
+        value: tbs.attrCertValidityPeriod.notBeforeTime.toISOString(),
+    });
+    values.push({
+        key: "Validity End",
+        value: tbs.attrCertValidityPeriod.notAfterTime.toISOString(),
+    });
+
+    values.push(...printAttributes(tbs.attributes, "Subject"));
+
+    if (tbs.issuerUniqueID) {
+        values.push({
+            key: "Issuer Unique ID",
+            value: printBitString(tbs.issuerUniqueID),
+        });
+    }
+
+    values.push({
+        key: "Number of Extensions",
+        value: (tbs.extensions?.length ?? 0).toString(),
+    });
+
+    // TODO: extensions
+    return {
+        values: values.map((v, i) => ({
+            ...v,
+            odd: !!(i % 2),
+        })),
+    };
+}
+
 function createTrustAnchorInfoFile (tal: TrustAnchorList): Uint8Array {
     const cinfo = new ContentInfo(
         id_ct_trustAnchorList,
@@ -1223,6 +1394,26 @@ export class PkiController {
     constructor (
         @Inject(CONTEXT) readonly ctx: MeerkatContext,
     ) {}
+
+    @Get("/attribute-certs")
+    @Render("attr-certs")
+    public attributeCerts () {
+        const certPath = this.ctx.config.authn.attributeCertificationPath;
+        if (!certPath) {
+            throw new InternalServerErrorException();
+        }
+        const certs = [
+            certPath.attributeCertificate,
+            ...(certPath.acPath?.flatMap((acp) => acp.attributeCertificate ?? []) ?? []),
+        ];
+        return {
+            type: "signing",
+            certs: [ ...certs ].reverse().map((cert, index) => ({
+                ...renderAttributeCert(this.ctx, cert),
+                position: index + 1,
+            })),
+        };
+    }
 
     @Get("/signing-certs")
     @Render("certs")
@@ -1736,6 +1927,15 @@ export class PkiController {
         res.contentType("application/pkix-pkipath");
         const der = _encode_PkiPath(certPath, DER).toBytes();
         res.send(der);
+    }
+
+    @Get("/pki/tls/dhparam.pem")
+    public getTlsDHParam (@Res() res: Response) {
+        if (!process.env.MEERKAT_TLS_DH_PARAM_FILE) {
+            throw new InternalServerErrorException();
+        }
+        res.contentType("application/dhparams");
+        res.sendFile(path.resolve(process.env.MEERKAT_TLS_DH_PARAM_FILE));
     }
 
     @Get("/pki-selfcheck")

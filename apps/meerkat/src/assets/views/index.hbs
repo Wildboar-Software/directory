@@ -91,7 +91,12 @@
                         <li><a href="/tls-anchors">TLS Trust Anchors</a></li>
                         <li><a href="/pki-selfcheck">PKI Self-Check</a></li>
                         <li><a href="/remote-crl-cache">Remote CRLs Cache</a></li>
-                        {{!-- <li><a href="/ocsp-cache">OCSP Response Cache</a></li> --}}
+                        <li><a href="/attribute-certs">Attribute Certificates</a></li>
+                        {{#if dhparams }}
+                        <li><a href="/pki/dhparams.pem">Download Diffie-Hellman Parameters</a></li>
+                        {{/if}}
+
+
                     </ul>
                 </li>
                 <li>
