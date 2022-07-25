@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>PKI Self-Check - Meerkat DSA</title>
+        <meta name="referrer" content="no-referrer">
+        <meta name="csrf-token" content="{{csrfToken}}">
+        <meta name="robots" content="noindex">
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            a {
+                color: #F44336;
+            }
+            a:hover {
+                color: #EF9A9A;
+            }
+            a:visited {
+                color: #7B1FA2;
+            }
+            @media screen and (prefers-color-scheme: light) {
+                body {
+                    background-color: white;
+                    color: black;
+                }
+            }
+            td {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>PKI Self-Check</h1>
+        <hr />
+        <nav><a href="/">Back to Home</a></nav>
+        <hr />
+        <div>
+            <p>
+                When requested, this page checks your configured TLS and
+                signing PKI. OCSP responders and remote CRLs will be checked in
+                the process.
+            </p>
+        </div>
+        <hr />
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div>TLS PKI Status:
+                {{#if tlsSuccess }}
+                    <span style="color: #00CC00">VALID</span>
+                {{else}}
+                    <span style="color: #CC0000">INVALID</span>
+                {{/if}}
+            </div>
+            <div>Signing PKI Status:
+                {{#if signingSuccess }}
+                    <span style="color: #00CC00">VALID</span>
+                {{else}}
+                    <span style="color: #CC0000">INVALID</span>
+                {{/if}}
+            </div>
+            <div>TLS PKI Diagnostic: {{tlsMessage}}</div>
+            <div>Signing PKI Diagnostic: {{signingMessage}}</div>
+        </div>
+    </body>
+</html>

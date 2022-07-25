@@ -1,5 +1,5 @@
 import type { MeerkatContext } from "../ctx";
-import type { Context } from "@wildboar/meerkat-types";
+import { Context, RemoteCRLCheckiness } from "@wildboar/meerkat-types";
 import { CONTEXT } from "../constants";
 import {
     Controller,
@@ -181,6 +181,38 @@ import { generateSIGNED } from "../pki/generateSIGNED";
 import {
     _encode_PkiPath,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
+import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
+import {
+    VerifyCertPathResult,
+    VCPReturnCode,
+    VCP_RETURN_OK,
+    VCP_RETURN_INVALID_SIG,
+    VCP_RETURN_OCSP_REVOKED,
+    VCP_RETURN_OCSP_OTHER,
+    VCP_RETURN_CRL_REVOKED,
+    VCP_RETURN_CRL_UNREACHABLE,
+    VCP_RETURN_MALFORMED,
+    VCP_RETURN_BAD_KEY_USAGE,
+    VCP_RETURN_BAD_EXT_KEY_USAGE,
+    VCP_RETURN_UNKNOWN_CRIT_EXT,
+    VCP_RETURN_DUPLICATE_EXT,
+    VCP_RETURN_AKI_SKI_MISMATCH,
+    VCP_RETURN_PKU_PERIOD,
+    VCP_RETURN_BASIC_CONSTRAINTS_CA,
+    VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+    VCP_RETURN_INVALID_EXT_CRIT,
+    VCP_RETURN_UNTRUSTED_ANCHOR,
+    VCP_RETURN_INVALID_TIME,
+    VCP_RETURN_ISSUER_SUBJECT_MISMATCH,
+    VCP_RETURN_NAME_NOT_PERMITTED,
+    VCP_RETURN_NAME_EXCLUDED,
+    VCP_RETURN_PROHIBITED_SIG_ALG,
+} from "../pki/verifyCertPath";
+import {
+    CertificatePair,
+    CertificationPath,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+import { crlCache } from "../pki/crlCurl";
 
 interface TableValue {
     key: string;
@@ -194,6 +226,31 @@ interface TableValueWithOdd extends TableValue {
 interface KeyValueTable {
     values: TableValueWithOdd[];
 }
+
+const vcpReturnCodeToString: Map<VCPReturnCode, string> = new Map([
+    [ VCP_RETURN_OK, "Valid" ],
+    [ VCP_RETURN_INVALID_SIG, "Invalid signature" ],
+    [ VCP_RETURN_OCSP_REVOKED, "Revoked, according to OCSP" ],
+    [ VCP_RETURN_OCSP_OTHER, "Could not obtain OCSP status" ],
+    [ VCP_RETURN_CRL_REVOKED, "Revoked, according to a CRL" ],
+    [ VCP_RETURN_CRL_UNREACHABLE, "Could not obtain remote CRL" ],
+    [ VCP_RETURN_MALFORMED, "Invalid certificate syntax" ],
+    [ VCP_RETURN_BAD_KEY_USAGE, "Key usage not permitted" ],
+    [ VCP_RETURN_BAD_EXT_KEY_USAGE, "Key usage not permitted" ],
+    [ VCP_RETURN_UNKNOWN_CRIT_EXT, "Unrecognized critical extension (Meerkat DSA cannot validate this certificate chain.)" ],
+    [ VCP_RETURN_DUPLICATE_EXT, "Duplicate extension" ],
+    [ VCP_RETURN_AKI_SKI_MISMATCH, "Mismatch between Authority Key Identifier and Subject Key Identifier" ],
+    [ VCP_RETURN_PKU_PERIOD, "Invalid, according to the Private Key Usage Period extension" ],
+    [ VCP_RETURN_BASIC_CONSTRAINTS_CA, "A certificate was signed by a non-authority." ],
+    [ VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN, "A certificate violated path length constraints." ],
+    [ VCP_RETURN_INVALID_EXT_CRIT, "An extension was critical when it should never be, or non-critical when it should always be" ],
+    [ VCP_RETURN_UNTRUSTED_ANCHOR, "The trust anchor in the certification path is untrusted by Meerkat DSA (check your configuration)" ],
+    [ VCP_RETURN_INVALID_TIME, "A certificate has either expired or has yet to become valid" ],
+    [ VCP_RETURN_ISSUER_SUBJECT_MISMATCH, "The issuer of one certificate does not match the subject of another it supposedly signed" ],
+    [ VCP_RETURN_NAME_NOT_PERMITTED, "A certificate was signed by an authority that did not have explicit permission to sign for subjects within that namespace (a name constraints violation)" ],
+    [ VCP_RETURN_NAME_EXCLUDED, "A certificate was signed by an authority that was expressly forbidden to sign for subjects within that namespace (a name constraints violation)" ],
+    [ VCP_RETURN_PROHIBITED_SIG_ALG, "Use of a prohibited signature algorithm" ],
+]);
 
 function printBitString (bits: BIT_STRING) {
     let str: string = "";
@@ -1679,6 +1736,82 @@ export class PkiController {
         res.contentType("application/pkix-pkipath");
         const der = _encode_PkiPath(certPath, DER).toBytes();
         res.send(der);
+    }
+
+    @Get("/pki-selfcheck")
+    @Render("selfcheck")
+    public async selfCheck () {
+        let tlsResult: VerifyCertPathResult | undefined;
+        if (typeof this.ctx.config.tls.cert === "string") {
+            const tlsPkiPath = PEMObject.parse(this.ctx.config.tls.cert)
+                .map((p) => {
+                    const el = new DERElement();
+                    el.fromBytes(p.data);
+                    return _decode_Certificate(el);
+                });
+            const userCert = tlsPkiPath[0];
+            const tlsCertPath = new CertificationPath(
+                userCert,
+                tlsPkiPath.map((cert) => new CertificatePair(
+                    cert,
+                    undefined,
+                )),
+            );
+            tlsResult = await verifyAnyCertPath(this.ctx, tlsCertPath, undefined, {
+                trustAnchorList: this.ctx.config.tls.trustAnchorList,
+                certificateRevocationLists: this.ctx.config.tls.certificateRevocationLists,
+                revokedCertificateSerialNumbers: this.ctx.config.tls.revokedCertificateSerialNumbers,
+                ocspCheckiness: 1,
+                remoteCRLCheckiness: RemoteCRLCheckiness.always,
+                tolerateUnavailableRemoteCRL: false,
+            });
+        }
+        let signingResult: VerifyCertPathResult | undefined;
+        if (this.ctx.config.signing.certPath) {
+            const pkiPath = this.ctx.config.signing.certPath;
+            const userCert = pkiPath[pkiPath.length - 1];
+            const certPath = new CertificationPath(
+                userCert,
+                pkiPath.reverse().map((cert) => new CertificatePair(
+                    cert,
+                    undefined,
+                )),
+            );
+            signingResult = await verifyAnyCertPath(this.ctx, certPath, undefined, {
+                trustAnchorList: this.ctx.config.signing.trustAnchorList,
+                certificateRevocationLists: this.ctx.config.signing.certificateRevocationLists,
+                revokedCertificateSerialNumbers: this.ctx.config.signing.revokedCertificateSerialNumbers,
+                ocspCheckiness: 1,
+                remoteCRLCheckiness: RemoteCRLCheckiness.always,
+                tolerateUnavailableRemoteCRL: false,
+                permittedSignatureAlgorithms: this.ctx.config.signing.permittedSignatureAlgorithms,
+            });
+        }
+        const signingMessage = vcpReturnCodeToString.get(signingResult?.returnCode ?? -999)
+            ?? "UNRECOGNIZED RETURN CODE";
+        const tlsMessage = vcpReturnCodeToString.get(tlsResult?.returnCode ?? -999)
+            ?? "UNRECOGNIZED RETURN CODE";
+        const signingSuccess: boolean = (signingResult?.returnCode === VCP_RETURN_OK);
+        const tlsSuccess: boolean = (signingResult?.returnCode === VCP_RETURN_OK);
+        return {
+            signingSuccess,
+            tlsSuccess,
+            signingMessage,
+            tlsMessage,
+        };
+    }
+
+    @Get("/remote-crl-cache")
+    @Render("crl-cache")
+    public crlCache () {
+        return {
+            crls: Array.from(crlCache.entries())
+                .map(([ url, [ date, crls ]]) => ({
+                    date,
+                    url,
+                    crls: crls.length,
+                })),
+        };
     }
 
 /*

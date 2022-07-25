@@ -61,6 +61,7 @@ import { getAttributeSize } from "@wildboar/x500";
 const CRL_CACHE_TTL_SECONDS: number = 3600;
 const CACHE_SIZE_LIMIT: number = 1000;
 
+export
 const crlCache: Map<string, [ Date, CertificateList[] ]> = new Map();
 
 export type ReadDispatcherFunction = (readArg: ReadArgument) => Promise<ReadResult>;
