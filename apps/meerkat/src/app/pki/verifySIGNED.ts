@@ -83,27 +83,29 @@ async function verifySIGNED <T> (
     const remoteHostIdentifier = assn
         ? `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`
         : "";
+    const logInfo = {
+        context: argOrResult,
+        host: remoteHostIdentifier,
+        aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
+        iid: printInvokeId(invokeId),
+        ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
+        remoteFamily: assn?.socket.remoteFamily,
+        remoteAddress: assn?.socket.remoteAddress,
+        remotePort: assn?.socket.remotePort,
+        association_id: assn?.id,
+        invokeID: printInvokeId(invokeId),
+    };
     if (!certPath) {
+        ctx.log.warn(ctx.i18n.t("log:cert_path_required_signed", logInfo), logInfo);
         throw new MistypedArgumentError(
-            ctx.i18n.t("err:cert_path_required_signed", {
-                context: argOrResult,
-                host: remoteHostIdentifier,
-                aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
-                iid: printInvokeId(invokeId),
-                ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
-            }),
+            ctx.i18n.t("err:cert_path_required_signed", logInfo),
         );
     }
     for (const pair of certPath.theCACertificates ?? []) {
         if (!pair.issuedToThisCA) {
+            ctx.log.warn(ctx.i18n.t("log:cert_path_issuedToThisCA", logInfo), logInfo);
             throw new MistypedArgumentError(
-                ctx.i18n.t("err:cert_path_issuedToThisCA", {
-                    context: argOrResult,
-                    host: remoteHostIdentifier,
-                    aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
-                    iid: printInvokeId(invokeId),
-                    ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
-                }),
+                ctx.i18n.t("err:cert_path_issuedToThisCA", logInfo),
             );
         }
     }
@@ -113,14 +115,9 @@ async function verifySIGNED <T> (
         ctx.config.signing.acceptableCertificatePolicies,
     );
     if (vacpResult.returnCode !== VCP_RETURN_OK) {
+        ctx.log.warn(ctx.i18n.t("log:cert_path_invalid", logInfo), logInfo);
         throw new SecurityError(
-            ctx.i18n.t("err:cert_path_invalid", {
-                context: argOrResult,
-                host: remoteHostIdentifier,
-                aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
-                iid: printInvokeId(invokeId),
-                ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
-            }),
+            ctx.i18n.t("err:cert_path_invalid", logInfo),
             new SecurityErrorData(
                 SecurityProblem_invalidCredentials,
                 undefined,
@@ -243,14 +240,9 @@ async function verifySIGNED <T> (
         certPath.userCertificate.toBeSigned.subjectPublicKeyInfo,
     );
     if (!signatureIsValid) {
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
         throw new SecurityError(
-            ctx.i18n.t("err:invalid_signature", {
-                context: argOrResult,
-                host: remoteHostIdentifier,
-                aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
-                iid: printInvokeId(invokeId),
-                ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
-            }),
+            ctx.i18n.t("err:invalid_signature", logInfo),
             new SecurityErrorData(
                 SecurityProblem_invalidSignature,
                 undefined,

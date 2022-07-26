@@ -647,6 +647,12 @@ class LDAPAssociation extends ClientAssociation {
                 const startBindTime = new Date();
                 bind(ctx, this.socket, req)
                     .then(async (outcome) => {
+                        const logInfo = {
+                            host: source,
+                            remoteFamily: this.socket.remoteFamily,
+                            remoteAddress: this.socket.remoteAddress,
+                            remotePort: this.socket.remotePort,
+                        };
                         const endBindTime = new Date();
                         const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                         const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
@@ -681,7 +687,7 @@ class LDAPAssociation extends ClientAssociation {
                             }
                         } else {
                             if (outcome.result.resultCode === LDAPResult_resultCode_invalidCredentials) {
-                                ctx.log.warn(ctx.i18n.t("err:invalid_credentials", { host: source }));
+                                ctx.log.warn(ctx.i18n.t("err:invalid_credentials", logInfo), logInfo);
                             }
                             this.status = Status.UNBOUND;
                         }

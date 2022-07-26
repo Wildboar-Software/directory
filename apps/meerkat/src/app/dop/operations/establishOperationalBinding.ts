@@ -131,18 +131,19 @@ async function establishOperationalBinding (
     // DOP associations are ALWAYS authorized to receive signed responses.
     const signResult: boolean = (data.securityParameters?.target === ProtectionRequest_signed);
     const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
-    ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
-        context: "started",
-        type: data.bindingType.toString(),
-        bid: data.bindingID?.identifier.toString(),
-        aid: assn.id,
-    }), {
+    const logInfo = {
         remoteFamily: assn.socket.remoteFamily,
         remoteAddress: assn.socket.remoteAddress,
         remotePort: assn.socket.remotePort,
         association_id: assn.id,
         invokeID: printInvokeId({ present: invokeId }),
-    });
+    };
+    ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
+        context: "started",
+        type: data.bindingType.toString(),
+        bid: data.bindingID?.identifier.toString(),
+        aid: assn.id,
+    }), logInfo);
     /**
      * @summary Wait for approval of a proposed operational binding
      * @description
@@ -339,6 +340,7 @@ async function establishOperationalBinding (
                 structuralObjectClass = soc;
                 governingStructureRule = gsr;
             } catch (e) {
+                ctx.log.warn(ctx.i18n.t("log:hob_invalid_entryInfo", { e }), logInfo);
                 throw new errors.OperationalBindingError(
                     ctx.i18n.t("err:hob_invalid_entryInfo", { e }),
                     new OpBindingErrorParam(

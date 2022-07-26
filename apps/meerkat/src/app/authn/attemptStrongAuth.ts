@@ -48,6 +48,8 @@ import { strict as assert } from "assert";
 import type {
     StrongCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
+import type { Socket } from "node:net";
+import type { TLSSocket } from "node:tls";
 
 const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
 
@@ -60,6 +62,7 @@ async function attemptStrongAuth (
     signErrors: boolean,
     localQualifierPoints: number,
     source: string,
+    socket: Socket | TLSSocket,
 ): Promise<BindReturn> {
     // NOTE: This was copied from `apps/meerkat/src/app/dap/bind.ts`
     const {
@@ -67,6 +70,12 @@ async function attemptStrongAuth (
         bind_token,
         certification_path,
     } = credentials;
+    const logInfo = {
+        host: source,
+        remoteFamily: socket.remoteFamily,
+        remoteAddress: socket.remoteAddress,
+        remotePort: socket.remotePort,
+    };
 
     const invalidCredentialsData = new DirectoryBindErrorData(
         versions,
@@ -175,8 +184,9 @@ async function attemptStrongAuth (
              * we just return a vague "invalid credentials"
              */
             default: {
+                ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
                 throw new BindErrorClass(
-                    ctx.i18n.t("err:invalid_credentials", { host: source }),
+                    ctx.i18n.t("err:invalid_credentials"),
                     invalidCredentialsData,
                     signErrors,
                 );
@@ -193,8 +203,9 @@ async function attemptStrongAuth (
         assert(name);
         const attemptedVertex = await dnToVertex(ctx, ctx.dit.root, name);
         if (!attemptedVertex || !attemptedVertex.dse.objectClass.has(ID_OC_PKI_CERT_PATH)) {
+            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             throw new BindErrorClass(
-                ctx.i18n.t("err:invalid_credentials", { host: source }),
+                ctx.i18n.t("err:invalid_credentials"),
                 invalidCredentialsData,
                 signErrors,
             );
@@ -234,8 +245,9 @@ async function attemptStrongAuth (
                 };
             }
         }
+        ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
         throw new BindErrorClass(
-            ctx.i18n.t("err:invalid_credentials", { host: source }),
+            ctx.i18n.t("err:invalid_credentials"),
             invalidCredentialsData,
             signErrors,
         );

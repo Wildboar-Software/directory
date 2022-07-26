@@ -189,14 +189,16 @@ async function compare (
         && !state.chainingArguments.authenticationLevel.basicLevels.signed
     ) {
         const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const logInfo = {
+            context: "arg",
+            host: remoteHostIdentifier,
+            aid: assn.id,
+            iid: printInvokeId(state.invokeId),
+            ap: stringifyDN(ctx, requestor ?? []),
+        };
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
         throw new errors.SecurityError(
-            ctx.i18n.t("err:invalid_signature", {
-                context: "arg",
-                host: remoteHostIdentifier,
-                aid: assn.id,
-                iid: printInvokeId(state.invokeId),
-                ap: stringifyDN(ctx, requestor ?? []),
-            }),
+            ctx.i18n.t("err:invalid_signature", logInfo),
             new SecurityErrorData(
                 SecurityProblem_invalidSignature,
                 undefined,

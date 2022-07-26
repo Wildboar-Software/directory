@@ -70,6 +70,12 @@ async function bind (
     );
 
     const source: string = `${socket.remoteFamily}:${socket.remoteAddress}:${socket.remotePort}`;
+    const logInfo = {
+        host: source,
+        remoteFamily: socket.remoteFamily,
+        remoteAddress: socket.remoteAddress,
+        remotePort: socket.remotePort,
+    };
     const anonymousBindErrorData = new DirectoryBindErrorData(
         versions,
         {
@@ -79,8 +85,9 @@ async function bind (
     );
     if (!arg.credentials) {
         if (ctx.config.forbidAnonymousBind) {
+            ctx.log.warn(ctx.i18n.t("log:anon_bind_disabled", logInfo), logInfo);
             throw new DSABindError(
-                ctx.i18n.t("err:anon_bind_disabled", { host: source }),
+                ctx.i18n.t("err:anon_bind_disabled"),
                 anonymousBindErrorData,
                 signErrors,
             );
@@ -107,8 +114,9 @@ async function bind (
         const foundEntry = await dnToVertex(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {
             if (ctx.config.forbidAnonymousBind) {
+                ctx.log.warn(ctx.i18n.t("log:anon_bind_disabled", logInfo), logInfo);
                 throw new DSABindError(
-                    ctx.i18n.t("err:anon_bind_disabled", { host: source }),
+                    ctx.i18n.t("err:anon_bind_disabled"),
                     anonymousBindErrorData,
                     signErrors,
                 );
@@ -129,8 +137,9 @@ async function bind (
             };
         }
         if (!foundEntry) {
+            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             throw new DSABindError(
-                ctx.i18n.t("err:invalid_credentials", { host: source }),
+                ctx.i18n.t("err:invalid_credentials"),
                 invalidCredentialsData,
                 signErrors,
             );
@@ -148,15 +157,17 @@ async function bind (
                     : arg.credentials.simple.validity.time2.gt
                 : undefined;
             if (minimumTime && (minimumTime.valueOf() > (now.valueOf() + 5000))) { // 5 seconds of tolerance.
+                ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
                 throw new DSABindError(
-                    ctx.i18n.t("err:invalid_credentials", { host: source }),
+                    ctx.i18n.t("err:invalid_credentials"),
                     invalidCredentialsData,
                     signErrors,
                 );
             }
             if (maximumTime && (maximumTime.valueOf() < (now.valueOf() - 5000))) { // 5 seconds of tolerance.
+                ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
                 throw new DSABindError(
-                    ctx.i18n.t("err:invalid_credentials", { host: source }),
+                    ctx.i18n.t("err:invalid_credentials"),
                     invalidCredentialsData,
                     signErrors,
                 );
@@ -165,8 +176,9 @@ async function bind (
         // NOTE: Validity has no well-established meaning.
         const passwordIsCorrect: boolean | undefined = await attemptPassword(ctx, foundEntry, arg.credentials.simple.password);
         if (!passwordIsCorrect) {
+            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             throw new DSABindError(
-                ctx.i18n.t("err:invalid_credentials", { host: source }),
+                ctx.i18n.t("err:invalid_credentials"),
                 invalidCredentialsData,
                 signErrors,
             );
@@ -193,6 +205,7 @@ async function bind (
             signErrors,
             localQualifierPoints,
             source,
+            socket,
         );
     } else {
         throw new DSABindError(

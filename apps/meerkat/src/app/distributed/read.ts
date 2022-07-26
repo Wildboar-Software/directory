@@ -188,14 +188,16 @@ async function read (
         const remoteHostIdentifier = assn
             ? `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`
             : "INTERNAL://127.0.0.1/1"; // TODO: Make this a constant.
+        const logInfo = {
+            context: "arg",
+            host: remoteHostIdentifier,
+            aid: assn?.id,
+            iid: printInvokeId(state.invokeId),
+            ap: stringifyDN(ctx, requestor ?? []),
+        };
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
         throw new errors.SecurityError(
-            ctx.i18n.t("err:invalid_signature", {
-                context: "arg",
-                host: remoteHostIdentifier,
-                aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
-                iid: printInvokeId(state.invokeId),
-                ap: stringifyDN(ctx, requestor ?? []),
-            }),
+            ctx.i18n.t("err:invalid_signature", logInfo),
             new SecurityErrorData(
                 SecurityProblem_invalidSignature,
                 undefined,
