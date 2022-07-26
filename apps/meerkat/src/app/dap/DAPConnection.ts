@@ -173,16 +173,18 @@ async function handleRequestAndErrors (
     assn: DAPAssociation,
     request: Request,
 ): Promise<void> {
+    const logInfo = {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+        invokeID: printInvokeId({ present: request.invokeID }),
+    };
     if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
             host: assn.socket.remoteAddress,
             cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-        });
+        }), logInfo);
         assn.idm.writeAbort(Abort_invalidPDU);
         return;
     }
@@ -191,13 +193,7 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             iid: request.invokeID.toString(),
             cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId({ present: request.invokeID }),
-        });
+        }), logInfo);
         assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
     }
@@ -206,13 +202,7 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             cid: assn.id,
             iid: request.invokeID.toString(),
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId({ present: request.invokeID }),
-        });
+        }), logInfo);
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
@@ -221,13 +211,7 @@ async function handleRequestAndErrors (
         iid: request.invokeID.toString(),
         op: printCode(request.opcode),
         cid: assn.id,
-    }), {
-        remoteFamily: assn.socket.remoteFamily,
-        remoteAddress: assn.socket.remoteAddress,
-        remotePort: assn.socket.remotePort,
-        association_id: assn.id,
-        invokeID: printInvokeId({ present: request.invokeID }),
-    });
+    }), logInfo);
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
@@ -292,15 +276,9 @@ async function handleRequestAndErrors (
                 idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
+        ctx.log.info(`${assn.id}#${request.invokeID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
-        } else {
-            ctx.log.error(e.message, {
-                remoteFamily: assn.socket.remoteFamily,
-                remoteAddress: assn.socket.remoteAddress,
-                remotePort: assn.socket.remotePort,
-                association_id: assn.id,
-            });
         }
         if (!stats.outcome) {
             stats.outcome = {};
@@ -536,8 +514,14 @@ class DAPAssociation extends ClientAssociation {
         try {
             outcome = await doBind(ctx, this.idm.socket, arg_, signErrors);
         } catch (e) {
+            const logInfo = {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            };
             if (e instanceof DirectoryBindError) {
-                ctx.log.warn(e.message);
+                ctx.log.warn(e.message, logInfo);
                 const endBindTime = new Date();
                 const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                 const totalTimeInMilliseconds: number = this.ctx.config.bindMinSleepInMilliseconds
@@ -575,7 +559,10 @@ class DAPAssociation extends ClientAssociation {
                     },
                 });
             } else {
-                ctx.log.warn(e?.message);
+                ctx.log.warn(`${this.id}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
+                if (isDebugging) {
+                    console.error(e);
+                }
                 idm.writeAbort(Abort_reasonNotSpecified);
                 ctx.telemetry.trackException({
                     exception: e,

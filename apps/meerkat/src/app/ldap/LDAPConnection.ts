@@ -265,10 +265,16 @@ async function handleRequestAndErrors (
                 bytesWritten: assn.socket.bytesWritten,
             },
         });
+        const logInfo = {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+            messageID: message.messageID.toString(),
+        };
+        ctx.log.info(`${assn.id}#${message.messageID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
-        } else {
-            ctx.log.error(e.message);
         }
         if (!stats.outcome) {
             stats.outcome = {};
@@ -652,6 +658,7 @@ class LDAPAssociation extends ClientAssociation {
                             remoteFamily: this.socket.remoteFamily,
                             remoteAddress: this.socket.remoteAddress,
                             remotePort: this.socket.remotePort,
+                            association_id: this.id,
                         };
                         const endBindTime = new Date();
                         const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
@@ -702,8 +709,8 @@ class LDAPAssociation extends ClientAssociation {
                     })
                     .catch((e) => {
                         ctx.log.error(e.message, extraLogData);
-                        if ("stack" in e) {
-                            ctx.log.error(e.stack);
+                        if (isDebugging) {
+                            console.error(e);
                         }
                         ctx.telemetry.trackException({
                             exception: e,
