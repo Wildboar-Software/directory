@@ -2,7 +2,6 @@ import type { Connection, Context } from "./types";
 import {
     TRUE,
     FALSE,
-    TRUE_BIT,
     FALSE_BIT,
     unpackBits,
     OBJECT_IDENTIFIER,
@@ -53,7 +52,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
 import {
     ServiceControlOptions,
-    ServiceControlOptions_manageDSAIT,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import {
@@ -121,6 +119,8 @@ import {
     UpdateProblem_entryAlreadyExists,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { createMockPersonAttributes } from "./mock-entries";
+import { idempotentAddEntry } from "./utils";
 
 const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
     oc.integrityInfo["&id"],
@@ -803,36 +803,6 @@ function addPasswordAdminSubentryArgument (
     };
 }
 
-async function idempotentAddEntry (
-    ctx: Context,
-    conn: Connection,
-    dnStr: string,
-    arg: AddEntryArgument,
-): Promise<void> {
-    const outcome = await conn.writeOperation({
-        opCode: addEntry["&operationCode"],
-        argument: _encode_AddEntryArgument(arg, DER),
-    });
-    if ("error" in outcome) {
-        if (outcome.errcode) {
-            if (compareCode(outcome.errcode, updateError["&errorCode"]!)) {
-                const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
-                const data = getOptionallyProtectedValue(param);
-                if (data.problem === UpdateProblem_entryAlreadyExists) {
-                    ctx.log.warn(`Entry ${dnStr} already exists.`);
-                    return;
-                }
-            }
-            ctx.log.error(print(outcome.errcode));
-            process.exit(1);
-        } else {
-            ctx.log.error("Uncoded error.");
-            process.exit(1);
-        }
-    }
-    ctx.log.info(`Added entry ${dnStr}.`);
-}
-
 const baseObject: DistinguishedName = [
     [
         new AttributeTypeAndValue(
@@ -1144,6 +1114,63 @@ async function seedGB (
             ),
         ]);
         await idempotentAddEntry(ctx, conn, "C=GB,L=London,CN=Sadiq Khan", arg);
+    }
+
+    { // subentry C=GB,L=Yorkshire and the Humber,CN=Collective Attributes Subentry
+        const cn: string = "Collective Attributes Subentry";
+        const loc: string = "Yorkshire and the Humber";
+        const arg = createAddEntryArgument([
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.localityName["&id"]!,
+                    _encodeUTF8String(loc, DER),
+                ),
+            ],
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String(cn, DER),
+                ),
+            ],
+        ], [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.subentry["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.collectiveAttributeSubentry["&id"]!, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                selat.commonName["&id"]!,
+                [_encodeUTF8String(cn, DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.collectiveLocalityName["&id"]!,
+                [_encodeUTF8String(loc, DER)],
+                undefined,
+            ),
+        ]);
+        await idempotentAddEntry(ctx, conn, "C=GB,L=Yorkshire and the Humber,CN=Collective Attributes Subentry", arg);
+    }
+
+    // Create random people
+    for (let i = 0; i < 10000; i++) {
+        const [ rdn, attributes, cn ] = createMockPersonAttributes();
+        const dn: DistinguishedName = [
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.localityName["&id"]!,
+                    _encodeUTF8String("Yorkshire and the Humber", DER),
+                ),
+            ],
+            rdn,
+        ];
+        const arg = createAddEntryArgument(dn, attributes);
+        await idempotentAddEntry(ctx, conn, `C=GB,L=London,CN=${cn}`, arg);
     }
 }
 
