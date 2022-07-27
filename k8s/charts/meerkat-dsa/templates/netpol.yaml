@@ -8,25 +8,18 @@ spec:
   podSelector:
     matchLabels:
       {{- include "meerkat-dsa.selectorLabels" . | nindent 6 }}
-  {{- if .Values.networkPolicyIngressOverride }}
   ingress:
-  # Ensure that everything within this chart can still reach everything else.
-  - from:
-    podSelector:
-      matchLabels:
-        {{- include "meerkat-dsa.selectorLabels" . | nindent 10 }}
+  {{- if .Values.networkPolicyIngressOverride }}
   {{- .Values.networkPolicyIngressOverride | toYaml | nindent 2 }}
   {{- else }}
-  ingress:
   - {}
   {{- end }}
-  {{- if .Values.networkPolicyEgressOverride }}
   egress:
+  {{- if .Values.networkPolicyEgressOverride }}
   {{- .Values.networkPolicyEgressOverride | toYaml | nindent 2 }}
   {{- else }}
   # Allows all egress, which might be necessary for accessing the DBMS, OCSP,
   # remote CRLs, and chaining to other DSAs.
-  egress:
   - {}
   {{- end }}
 {{- end }}
