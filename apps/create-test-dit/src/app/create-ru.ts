@@ -199,10 +199,10 @@ const MOSCOW_ACCESS_POINT = new AccessPoint(
              * Even if you plan on using LDAP to read this entry, you MUST
              * specify an X.500 URL, because DOP cannot be translated into LDAP.
              */
-            uriToNSAP("idms://dsa01.ru-moscow.mkdemo.wildboar.software:44632", false),
-            uriToNSAP("idm://dsa01.ru-moscow.mkdemo.wildboar.software:4632", false),
-            uriToNSAP("ldaps://dsa01.ru-moscow.mkdemo.wildboar.software:636", false),
-            uriToNSAP("ldap://dsa01.ru-moscow.mkdemo.wildboar.software:389", false),
+            uriToNSAP("idms://dsa01.moscow.mkdemo.wildboar.software:44632", false),
+            uriToNSAP("idm://dsa01.moscow.mkdemo.wildboar.software:4632", false),
+            uriToNSAP("ldaps://dsa01.moscow.mkdemo.wildboar.software:636", false),
+            uriToNSAP("ldap://dsa01.moscow.mkdemo.wildboar.software:389", false),
         ],
     ),
     undefined,

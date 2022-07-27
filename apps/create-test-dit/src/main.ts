@@ -76,7 +76,7 @@ async function main () {
             await connection.close();
             break;
         }
-        case ("ru-moscow"): {
+        case ("moscow"): {
             const bindDN: DistinguishedName = [
                 [
                     new AttributeTypeAndValue(
