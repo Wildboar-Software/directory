@@ -24,7 +24,7 @@ dangerouslyExposeWebAdmin: false
 networkPolicyEnabled: false
 networkPolicyIngressOverride:
   - from:
-      podSelector:
+    - podSelector:
         matchLabels:
           app: whatever
     ports:
