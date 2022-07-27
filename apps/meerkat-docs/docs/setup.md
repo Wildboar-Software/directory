@@ -286,22 +286,8 @@ and in GitHub Actions YAML configuration
 
 ## DSA Initialization
 
-When your DSA comes online, if there are no DITs, it creates a new default DIT.
-If there are no entries within this DIT, your DSA will create a single root DSE.
-
-You can create first-level entries of your choice using a Directory User Agent
-of your choice. However, note that, when
-
-:::caution
-
-If you do not define an autonomous administrative point that is superior to
-every naming context your DSAs serve, you will implicitly allow superior
-naming contexts (potentially operated by other people / organizations) to
-control security policies of your DSA. Allowing somebody else to control your
-DSA like that is probably not what you intend! This could result in outages or
-unwanted information disclosures!
-
-:::
+When your DSA comes online, if there is not root DSE, your DSA will create it.
+Otherwise, there are no entries in existence.
 
 ## Access Control
 
