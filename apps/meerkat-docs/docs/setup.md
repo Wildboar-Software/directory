@@ -245,12 +245,39 @@ run these commands to deploy Meerkat DSA:
    instance to be publicly accessible, add `--set service.type=LoadBalancer` to
    that command.
 
+:::tip
+
+You should configure Kubernetes
+[inter-pod affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity)
+so that your Meerkat DSA runs on the same node as your database to minimize
+latency. It does not seem like there is an easy way to do this using the Helm
+CLI alone: you might have to define a values override file. See
+`.github/workflows/main.yml` within this repository for an example
+(specifically, the `deploy_demo` job).
+
+:::
+
 If you want access to the web admin console, add
-`--set dangerouslyExposeWebAdmin=true`
-to the command above, but beware that the admin console does not provide any
-authentication or security, and grants full administrative access. You will
-almost certainly want to put the admin console behind a reverse HTTP proxy that
-requires authentication and TLS.
+`--set dangerouslyExposeWebAdmin=true` to the command above, but be sure to
+configure authentication for it or put it behind a secure reverse HTTP proxy
+that requires authentication and TLS. Client TLS authentication would be even
+better than basic authentication.
+
+:::caution
+
+Access to the web administration console means full permission to do anything.
+It is highly recommended that you not only configure
+[authentication](./webadmin.md#authentication) for it, but also use Kubernetes
+[Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+to ensure that other pods cannot even reach it.
+
+As an even more secure measure, you may simply not expose a service for that pod
+at all, requiring that you use
+[`kubectl port-forward`](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/#forward-a-local-port-to-a-port-on-the-pod)
+to access it. This means that only your Kubernetes cluster administrators would
+be able to reach the web admin console, but this might work for your use case.
+
+:::
 
 You can see example deployments to Kubernetes clusters in Bash scripts
 [here](https://github.com/Wildboar-Software/directory/blob/master/scripts/publish.sh)
