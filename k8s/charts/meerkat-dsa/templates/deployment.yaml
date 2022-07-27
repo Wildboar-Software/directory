@@ -1134,7 +1134,7 @@ spec:
           configMap:
             name: {{ .Values.tlsCrlConfigName | quote }}
         {{- end }}
-        {{-if .Values.attributeCertificationPathConfigName }}
+        {{- if .Values.attributeCertificationPathConfigName }}
         - name: att-cert-volume
           configMap:
             name: {{ .Values.attributeCertificationPathConfigName | quote }}
