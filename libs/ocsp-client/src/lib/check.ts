@@ -66,14 +66,39 @@ function getReceivedDataSize (chunks: Buffer[]) {
     return sum;
 }
 
+/**
+ * @summary A function that digitally signs arbitrary data
+ * @description
+ *
+ * This is a function that takes a `Uint8Array` representing arbitrary data to
+ * be signed and returns `null` if it cannot be signed, or a tuple of the
+ * certification path, the algorithm identifier, and the signature value
+ * respectively otherwise.
+ */
 export
 type SignFunction = (data: Uint8Array) => [ PkiPath, AlgorithmIdentifier, Buffer ] | null;
 
+/**
+ * The MIME types that are acceptable responses to an OCSP request.
+ */
 const ACCEPTABLE_RESPONSE_MIME_TYPES: string[] = [
     "application/ocsp-response",
     "application/octet-stream",
 ];
 
+/**
+ * @summary Generates an OCSP request from a certificate
+ * @description
+ *
+ * Generates an OCSP request from a certificate that requests the status on that
+ * certificate.
+ *
+ * @param cert The certificate whose status is to be checked
+ * @param sign A function that can be used to digitally sign OCSP requests
+ * @returns An OCSP request
+ *
+ * @function
+ */
 export
 function convertCertToOCSPRequest (
     cert: Certificate,
@@ -132,6 +157,22 @@ function convertCertToOCSPRequest (
     return signedResult;
 }
 
+/**
+ * @summary Submits an OCSP request to an OCSP responder using HTTPS
+ * @description
+ *
+ * This function submits an Online Certificate Status Protocol (OCSP) request to
+ * an OCSP responder using HTTPS.
+ *
+ * @param url The URL against which to `POST` the OCSP request
+ * @param ocspReq The OCSP request that is to be `POST`ed
+ * @param tlsOptions Options relating to TLS, if it is used
+ * @param timeoutInMilliseconds The timeout in milliseconds, after which, this operation is abandoned
+ * @param sizeLimit The maximum size tolerated for an OCSP response
+ * @returns A promise that resolves to an OCSP response
+ *
+ * @function
+ */
 export
 function postHTTPS (
     url: URL,
@@ -201,13 +242,49 @@ function postHTTPS (
     });
 }
 
+/**
+ * The return type of the `check()` function. This conveniently extracts the
+ * deeply-embedded status of the single certificate for which the status was
+ * requested.
+ */
 export
 interface CheckResponse {
+    /**
+     * The actual OCSP response
+     */
     res: OCSPResponse;
+
+    /**
+     * The embedded Basic OCSP response, if used
+     */
     basicRes?: BasicOCSPResponse;
+
+    /**
+     * The embedded single certificate status embedded within the basic OCSP
+     * response, which is embedded within the overall OCSP response, if
+     * returned.
+     */
     singleRes?: SingleResponse;
 }
 
+/**
+ * @summary Submit an OCSP request and get an OCSP response
+ * @description
+ *
+ * This function submits an Online Certificate Status Protocol (OCSP) request
+ * to an OCSP responder to obtain an OCSP result.
+ *
+ * @param url The URL of the OCSP responder to query
+ * @param req The OCSP request to send, or a certificate that will be used to generate it
+ * @param tlsOptions Options relating to TLS, if it is used
+ * @param timeoutInMilliseconds The timeout in milliseconds before this operation is abandoned
+ * @param sign A function that can be used to digitally sign outbound OCSP requests
+ * @param sizeLimit The maximum tolerated size (in bytes) of an OCSP response
+ * @returns A promise that resolves to information about the OCSP response
+ *
+ * @async
+ * @function
+ */
 export
 async function getOCSPResponse (
     url: URL,
