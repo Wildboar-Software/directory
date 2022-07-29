@@ -1,5 +1,4 @@
 import type { IndexableOID } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     id_sha1,
 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
@@ -34,6 +33,18 @@ import {
     id_shake256,
 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-shake256.va";
 
+/**
+ * @summary A mapping of algorithm object identifiers to their equivalent NodeJS hash name strings
+ * @description
+ *
+ * This is a mapping between dot-delimited numeric object identifiers and their
+ * equivalent algorithm identifiers as used by NodeJS's `crypto.createHash()`
+ * function.
+ *
+ * @see {@link nodeHashAlgStringToOID}, which is the reverse of this.
+ * @see {@link https://nodejs.org/api/crypto.html#cryptocreatehashalgorithm-options}
+ * @see {@link https://nodejs.org/api/crypto.html#cryptogethashes}
+ */
 export
 const digestOIDToNodeHash: Map<IndexableOID, string> = new Map([
     [ id_sha1.toString(), "sha1" ], // NOTE: This one differs from the others by requiring a NULL parameter.

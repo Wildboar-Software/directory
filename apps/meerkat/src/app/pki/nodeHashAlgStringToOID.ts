@@ -33,6 +33,21 @@ import {
     id_shake256,
 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-shake256.va";
 
+/**
+ * @summary A mapping of NodeJS hash name strings to their equivalent algorithm object identifiers
+ * @description
+ *
+ * This is a mapping between NodeJS's algorithm identifiers, as used by the
+ * `crypto.createHash()` function and their equivalent algorithm object
+ * identifiers.
+ *
+ * You can run `crypto.getHashes()` to see which hash identifiers are defined
+ * for a given NodeJS runtime.
+ *
+ * @see {@link digestOIDToNodeHash}, which is the reverse of this.
+ * @see {@link https://nodejs.org/api/crypto.html#cryptocreatehashalgorithm-options}
+ * @see {@link https://nodejs.org/api/crypto.html#cryptogethashes}
+ */
 export
 const nodeHashAlgStringToOID: Map<string, OBJECT_IDENTIFIER> = new Map([
     [ "sha1", id_sha1 ], // NOTE: This one differs from the others by requiring a NULL parameter.

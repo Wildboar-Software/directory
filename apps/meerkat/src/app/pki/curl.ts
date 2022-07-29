@@ -42,6 +42,21 @@ function getReceivedDataSize (chunks: Buffer[]) {
     return sum;
 }
 
+/**
+ * @summary Fetch a blob using HTTP
+ * @description
+ *
+ * Fetches a blob using the HyperText Transport Protocol (HTTP).
+ *
+ * @param url The URL of the thing to be fetched using a GET request
+ * @param tlsOptions Options pertaining to TLS, if it is used
+ * @param timeoutInMilliseconds The number of milliseconds before the fetch times out
+ * @param sizeLimit The maximum size of the body, beyond which this fetch will be abandoned.
+ * @returns A buffer representing the fetched blob, or `null` if it could not be obtained.
+ *
+ * @async
+ * @function
+ */
 export
 async function curlHTTP (
     url: URL,
@@ -62,6 +77,13 @@ async function curlHTTP (
             ...(tlsOptions ?? {}),
             timeout: timeoutInMilliseconds,
         }, (res) => {
+            if (
+                res.headers["content-length"]
+                && (Number.parseInt(res.headers["content-length"]) > sizeLimit)
+            ) {
+                onFail();
+                return;
+            }
             const chunks: Buffer[] = [];
             res.on("data", (chunk: Buffer) => {
                 chunks.push(chunk);
@@ -84,16 +106,32 @@ async function curlHTTP (
     });
 }
 
+/**
+ * @summary Fetch a blob using HTTP/2
+ * @description
+ *
+ * Fetches a blob using the HyperText Transport Protocol, version 2 (HTTP/2).
+ * HTTP/2 is desirable primarily because it is faster.
+ *
+ * @param url The URL of the thing to be fetched using a GET request
+ * @param tlsOptions Options pertaining to TLS, if it is used
+ * @param timeoutInMilliseconds The number of milliseconds before the fetch times out
+ * @param sizeLimit The maximum size of the body, beyond which this fetch will be abandoned.
+ * @returns A buffer representing the fetched blob, or `null` if it could not be obtained.
+ *
+ * @async
+ * @function
+ */
 export
 function curlHTTP2 (
     url: URL,
-    tlsOptional?: TlsOptions,
+    tlsOptions?: TlsOptions,
     timeoutInMilliseconds: number = 5000,
     sizeLimit: number = 1_000_000,
 ): Promise<Buffer | null> {
     const authority: string = `https://${url.hostname}:${url.port ?? 443}`;
     const client = http2.connect(authority, {
-        ...(tlsOptional ? { ...tlsOptional, pskCallback: undefined } : {}),
+        ...(tlsOptions ? { ...tlsOptions, pskCallback: undefined } : {}),
         timeout: timeoutInMilliseconds,
     });
     const chunks: Buffer[] = [];
@@ -123,6 +161,22 @@ function curlHTTP2 (
     });
 }
 
+/**
+ * @summary Fetch a blob using LDAP
+ * @description
+ *
+ * Fetches a blob using the Lightweight Directory Access Protocol (LDAP).
+ *
+ * @param url The URL of the thing to be fetched using a `search` operation with scope of `baseObject`
+ * @param attributes The attributes to be fetched
+ * @param tlsOptions Options pertaining to TLS, if it is used
+ * @param timeoutInMilliseconds The number of milliseconds before the fetch times out
+ * @param sizeLimit The maximum size of the body, beyond which this fetch will be abandoned.
+ * @returns A buffer representing the fetched blob, or `null` if it could not be obtained.
+ *
+ * @async
+ * @function
+ */
 export
 function curlLDAP (
     url: URL,
@@ -271,13 +325,24 @@ function curlLDAP (
 }
 
 /**
+ * @summary Fetch a blob using LDAP
+ * @description
+ *
+ * Fetches a blob using the File Transfer Protocol (FTP).
  *
  * Unfortunately, it does not seem like the `basic-ftp` NPM package supports
  * downloads into an in-memory buffer, so this implementation saves the download
  * to a temporary location on disk, then immediately reads it into memory.
  *
- * @param url
- * @returns
+ * @param url The URL of the thing to be fetched using a `search` operation with scope of `baseObject`
+ * @param tlsOptions Options pertaining to TLS, if it is used
+ * @param timeoutInMilliseconds The number of milliseconds before the fetch times out
+ * @param sizeLimit The maximum size of the body, beyond which this fetch will be abandoned.
+ * @param debugLog A function that logs debug-level log messages
+ * @returns A buffer representing the fetched blob, or `null` if it could not be obtained.
+ *
+ * @async
+ * @function
  */
 export
 async function curlFTP (

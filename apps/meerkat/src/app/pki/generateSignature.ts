@@ -18,6 +18,21 @@ import { nodeHashAlgStringToOID } from "./nodeHashAlgStringToOID";
 import { id_sha1 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
 import { keyTypeToAlgOID } from "./keyTypeToAlgOID";
 
+/**
+ * @summary Generate a digital signature
+ * @description
+ *
+ * This function generates a digital signature and returns both the signature
+ * and the `AlgorithmIdentifier` of the signature algorithm used, or `null` if
+ * no signature could be generated.
+ *
+ * @param key The private key to use for generating the signature
+ * @param data The bytes or arrays of bytes to be signed.
+ * @returns An `AlgorithmIdentifier` and a buffer representing the signature value,
+ *  or `null` if a signature could not be generated.
+ *
+ * @function
+ */
 export
 function generateSignature (
     key: KeyObject,

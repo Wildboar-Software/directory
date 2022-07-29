@@ -13,15 +13,20 @@ import { OBJECT_IDENTIFIER } from "asn1-ts";
 import type { SigningInfo } from "@wildboar/meerkat-types";
 
 /**
+ * @summary Verify a certification path using common-sense defaults.
  * @description
  *
- * A function to cut down on boilerplate initialization of the arguments.
+ * This is a function to cut down on boilerplate initialization of the
+ * arguments, since `verifyCertPath` takes a pretty complicated argument.
  *
- * @param ctx
- * @param certPath
- * @returns
+ * @param ctx The context object
+ * @param certPath The certification path to be verified
+ * @param acceptableCertificatePolicies An array of object identifiers of
+ *  certificate policies that are acceptable. If none are specified, no policy
+ *  requirements are imposed upon the certification path validation.
+ * @param options Options related to signing and signature verification.
+ * @returns A promise that resolves to a certification path validation result
  *
- * @async
  * @function
  */
 export

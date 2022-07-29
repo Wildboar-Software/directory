@@ -52,6 +52,22 @@ import {
     id_sha512,
 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha512.va";
 
+/**
+ * @summary A mapping of signature algorithm object identifiers and their hash algorithm object identifiers.
+ * @description
+ *
+ * This is a mapping of dot-delimited numeric object identifiers that each
+ * represent a different signature algorithm and the object identifiers of their
+ * implied hash algorithms.
+ *
+ * Note that not all signature algorithms use a hash.
+ *
+ * Most of these algorithm object identifiers are defined in
+ * [ITU Recommendation X.509 (2019)](https://www.itu.int/rec/T-REC-X.509/en),
+ * in the `AlgorithmObjectIdentifiers` ASN.1 module. Some are defined in
+ * IETF RFCs.
+ *
+ */
 export
 const sigAlgToHashAlg: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
     [ sha1WithRSAEncryption.toString(), id_sha1 ],

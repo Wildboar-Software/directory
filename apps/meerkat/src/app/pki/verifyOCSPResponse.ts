@@ -44,6 +44,22 @@ export const VOR_RETURN_INVALID_SIG: number = -9;
 export const VOR_RETURN_INVALID_CERT_PATH: number = -10;
 export const VOR_RETURN_INVALID_KEY_USAGE: number = -11;
 
+/**
+ * @summary Verify an OCSP response
+ * @description
+ *
+ * This function verifies an Online Certificate Status Protocol (OCSP) response,
+ * which includes checking its certification path, key usage, digital
+ * signature and timestamp.
+ *
+ * @param ctx The context object
+ * @param resp An OCSP response to be verified
+ * @returns A promise that resolves to a return code, which is `0` if the OCSP
+ *  response passed validation.
+ *
+ * @async
+ * @function
+ */
 export
 async function verifyOCSPResponse (
     ctx: MeerkatContext,

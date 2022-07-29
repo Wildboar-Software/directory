@@ -49,15 +49,21 @@ import type {
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
 
 /**
+ * @summary Create a Cryptographic Message Syntax `SignedData` object
+ * @description
+ *
  * This can be used to produce P7B files, which contain a public key
  * certification path, which is signed by the private key it corresponds to.
  *
- * @param key
- * @param certPath
- * @param ecinfo
- * @param crls
- * @param signingTime
- * @returns
+ * @param key The private key to use for signing.
+ * @param certPath The certification path
+ * @param ecinfo The `EncapsulatedContentInfo` of the thing to be signed.
+ * @param crls A list of CRLs to include
+ * @param signingTime If supplied, the `signingTime` attribute will be populated
+ *  with its value.
+ * @returns The CMS `ContentInfo` object.
+ *
+ * @function
  */
 export
 function createCMSSignedData (

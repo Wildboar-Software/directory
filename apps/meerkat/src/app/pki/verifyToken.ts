@@ -29,9 +29,10 @@ export const VT_RETURN_CODE_VERIFY_DISABLED: number = 6;
  * @summary Verify something that is cryptographically signed with X.509 SIGNED{}
  * @description
  *
- * Verify the digital signatures on `param`, and validate the certification path
+ * Verify the digital signatures on `token`, and validate the certification path
  * that asserts the trustworthiness of the signer according to the procedures
- * defined in ITU Recommendation X.509 (2019).
+ * defined in
+ * [ITU Recommendation X.509 (2019)](https://www.itu.int/rec/T-REC-X.509/en).
  *
  * @param ctx The context object
  * @param certPath The `CertificationPath` of the argument or result

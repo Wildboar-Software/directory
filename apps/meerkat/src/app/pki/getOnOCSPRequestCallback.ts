@@ -23,6 +23,15 @@ import {
     OCSPResponseStatus_successful,
 } from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponseStatus.ta";
 
+/**
+ * @summary The type of NodeJS's callback executed from a `TLSSocket`'s `OCSPRequest` event.
+ * @description
+ *
+ * For some reason the `@types/node` package does not have a type specified for
+ * the `OCSPRequest` event callback, which is executed from a `TLSSocket` when
+ * an OCSP staple is requested.
+ *
+ */
 export type NodeOCSPRequestCallback = (
     certificate: Buffer,
     issuer: Buffer,
@@ -32,11 +41,19 @@ export type NodeOCSPRequestCallback = (
 let cachedServerCert: Certificate | undefined;
 
 /**
+ * @summary Get a callback for use by NodeJS's `TLSSocket`'s `OCSPRequest` event.
+ * @description
  *
- * @param ctx
- * @returns
+ * This function is a higher-order function that simply returns a
+ * callback that can be used by NodeJS's `TLSSocket`'s `OCSPRequest` event.
  *
- * @link https://nodejs.org/api/tls.html#event-ocsprequest
+ * @param ctx The context object
+ * @param options Options
+ * @returns A callback that can be used by NodeJS's `TLSSocket`'s `OCSPRequest` event.
+ *
+ * @see {@link https://nodejs.org/api/tls.html#event-ocsprequest}
+ *
+ * @function
  */
 export
 function getOnOCSPRequestCallback (

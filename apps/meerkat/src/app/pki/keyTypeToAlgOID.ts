@@ -14,6 +14,15 @@ import {
     id_dsa_with_sha256,
 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha256.va";
 
+/**
+ * @summary A mapping from a NodeJS private key and an algorithm object identifier to use for digital signature
+ * @description
+ *
+ * A mapping from a NodeJS `crypto.KeyObject.asymmetricKeyType` and an algorithm
+ * object identifier to use for digital signature.
+ *
+ * @see {@link https://nodejs.org/api/crypto.html#keyobjectasymmetrickeytype}
+ */
 export
 const keyTypeToAlgOID: Map<KeyType, OBJECT_IDENTIFIER> = new Map([
     [ "rsa", sha512WithRSAEncryption ],

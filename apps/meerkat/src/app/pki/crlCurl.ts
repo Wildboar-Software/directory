@@ -61,9 +61,26 @@ import { getAttributeSize } from "@wildboar/x500";
 const CRL_CACHE_TTL_SECONDS: number = 3600;
 const CACHE_SIZE_LIMIT: number = 1000;
 
+/**
+ * @summary The internal cache of fetched remote CRLs by URL.
+ * @description
+ *
+ * Fetching remote CRLs can be time-consuming, and it may be costly to decode
+ * large ones. This cache stores recently fetched remote CRLs by their URL.
+ * This URL MUST NOT be lowercased to normalize it, because some URLs are
+ * case-sensitive.
+ *
+ * @const
+ */
 export
 const crlCache: Map<string, [ Date, CertificateList[] ]> = new Map();
 
+/**
+ * @summary A function that will perform a local `read` operation.
+ *
+ * A function that will perform a local `read` operation using the supplied
+ * read argument, and return a promise that resolves to a read result.
+ */
 export type ReadDispatcherFunction = (readArg: ReadArgument) => Promise<ReadResult>;
 
 const crlAttributeTypes: OBJECT_IDENTIFIER[] = [
@@ -73,6 +90,22 @@ const crlAttributeTypes: OBJECT_IDENTIFIER[] = [
     eepkCertificateRevocationList["&id"],
 ];
 
+/**
+ * @summary Fetches CRLs using the Directory Access Protocol (DAP)
+ * @description
+ *
+ * This function uses the X.500 Directory Access Protocol (DAP) `read` operation
+ * to query the certificate revocation lists (CRLs) for a given entry.
+ *
+ * @param dn The distinguished name to query
+ * @param readDispatcher The read dispatcher function
+ * @param timeoutInMilliseconds A timeout in milliseconds for the operation to complete
+ * @param sizeLimit The maximum size of the CRL attribute (not individual values of it)
+ * @returns An array of decoded CRLs, or `null` if they could not be obtained.
+ *
+ * @async
+ * @function
+ */
 export
 async function crlCurlDAP (
     dn: DistinguishedName,
@@ -135,6 +168,28 @@ async function crlCurlDAP (
     }
 }
 
+/**
+ * @summary Fetchs remote CRLs for a given distribution point
+ * @description
+ *
+ * Fetches retmote certificate revocation lists (CRLs) from a given distribution
+ * point, with configurable support for these protocols:
+ *
+ * - HyperText Transport Protocol (HTTP)
+ * - Directory Access Protocol (DAP)
+ * - Lightweight Directory Access Protocol (LDAP)
+ * - File Transfer Protocol (FTP)
+ *
+ * @param ctx The context object
+ * @param dp The CRL distribution point
+ * @param issuerName The issuer's directory name
+ * @param readDispatcher The read dispatcher function
+ * @param options Options
+ * @returns An array of decoded CRLs, or `null` if they could not be obtained.
+ *
+ * @async
+ * @function
+ */
 export
 async function crlCurl (
     ctx: MeerkatContext,

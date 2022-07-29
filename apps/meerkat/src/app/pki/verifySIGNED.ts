@@ -47,7 +47,8 @@ import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants";
  *
  * Verify the digital signatures on `param`, and validate the certification path
  * that asserts the trustworthiness of the signer according to the procedures
- * defined in ITU Recommendation X.509 (2019).
+ * defined in
+ * [ITU Recommendation X.509 (2019)](https://www.itu.int/rec/T-REC-X.509/en).
  *
  * @param ctx The context object
  * @param assn The client association, if there is one.
