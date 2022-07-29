@@ -5,7 +5,25 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
-// TODO: Replace instances of encodeLDAPDN with this instead.
+/**
+ * @summary Convert a distinguished name to a string
+ * @description
+ *
+ * This function converts a distinguished name to a string according to the
+ * procedures defined for the Lightweight Directory Access Protocol (LDAP), as
+ * described in [IETF RFC 4514](https://datatracker.ietf.org/doc/html/rfc4514),
+ * EXCEPT that it does not reverse the ordering of RDNs in the distinguished
+ * name. (LDAP, for some reason, reverses the ordering of RDNs from that used by
+ * X.500 directory systems, so this implementation does not do that.)
+ *
+ * @param ctx The context object
+ * @param dn The distinguished name to be converted to a string
+ * @returns The string representation of the distinguished name
+ *
+ * @function
+ *
+ * @see {@link https://datatracker.ietf.org/doc/html/rfc4514}
+ */
 export
 function stringifyDN (
     ctx: Context,

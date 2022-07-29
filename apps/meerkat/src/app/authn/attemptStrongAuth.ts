@@ -53,7 +53,26 @@ import type { TLSSocket } from "node:tls";
 
 const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
 
-
+/**
+ * @summary Attempts strong authentication
+ * @description
+ *
+ * This function attempts strong authentication, as defined in
+ * [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+ * Section 9.1.2.
+ *
+ * @param ctx The context object
+ * @param BindErrorClass The class constructor for the error of the given bind operation
+ * @param credentials The strong credentials asserted
+ * @param signErrors Whether to cryptographically sign errors
+ * @param localQualifierPoints The local qualifier points associated with the authenticating association
+ * @param source A string identifying the source of the request
+ * @param socket The underlying socket from whence the request originated
+ * @returns Information regarding the bind result
+ *
+ * @async
+ * @function
+ */
 export
 async function attemptStrongAuth (
     ctx: MeerkatContext,
