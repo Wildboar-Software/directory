@@ -552,7 +552,7 @@ describe("NIST PKITS 4.10.14 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.1 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.1 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -577,7 +577,7 @@ describe("NIST PKITS 4.11.1 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.2 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.2 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -606,7 +606,7 @@ describe("NIST PKITS 4.11.2 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.3 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.3 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -629,7 +629,7 @@ describe("NIST PKITS 4.11.3 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.4 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.4 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -657,7 +657,7 @@ describe("NIST PKITS 4.11.4 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.5 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.5 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -681,7 +681,7 @@ describe("NIST PKITS 4.11.5 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.6 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.6 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -704,7 +704,7 @@ describe("NIST PKITS 4.11.6 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.7 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.7 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -732,7 +732,7 @@ describe("NIST PKITS 4.11.7 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.8 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.8 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -756,7 +756,7 @@ describe("NIST PKITS 4.11.8 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.9 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.9 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -780,7 +780,7 @@ describe("NIST PKITS 4.11.9 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.10 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.10 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -804,7 +804,7 @@ describe("NIST PKITS 4.11.10 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.11.11 Cert Path", () => {
+describe.skip("NIST PKITS 4.11.11 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -828,7 +828,7 @@ describe("NIST PKITS 4.11.11 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.12.1 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.1 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -849,7 +849,7 @@ describe("NIST PKITS 4.12.1 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.12.2 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.2 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -881,7 +881,7 @@ describe("NIST PKITS 4.12.2 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.12.3 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.3 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -904,7 +904,7 @@ describe("NIST PKITS 4.12.3 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.12.4 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.4 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -926,7 +926,7 @@ describe("NIST PKITS 4.12.4 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.21.5 Cert Path", () => {
+describe("NIST PKITS 4.12.5 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -938,18 +938,15 @@ describe("NIST PKITS 4.21.5 Cert Path", () => {
         {
         },
         {
-            user_constrained_policies: [
-            ],
-            returnCode: VCP_RETURN_OK,
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
             explicit_policy_indicator: true,
-            authorities_constrained_policies: [
-            ],
-            endEntityExtKeyUsage: undefined,
+            authorities_constrained_policies: [],
             endEntityKeyUsage: new Uint8ClampedArray([TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT]),
         },
     ));
 });
-describe("NIST PKITS 4.12.6 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.6 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -971,7 +968,7 @@ describe("NIST PKITS 4.12.6 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.12.7 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.7 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1001,7 +998,7 @@ describe("NIST PKITS 4.12.7 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.12.8 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.8 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1024,7 +1021,7 @@ describe("NIST PKITS 4.12.8 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.12.9 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.9 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1059,7 +1056,7 @@ describe("NIST PKITS 4.12.9 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.12.10 Cert Path", () => {
+describe.skip("NIST PKITS 4.12.10 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1082,7 +1079,7 @@ describe("NIST PKITS 4.12.10 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.1 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.1 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1098,7 +1095,7 @@ describe("NIST PKITS 4.13.1 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.2 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.2 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1114,7 +1111,7 @@ describe("NIST PKITS 4.13.2 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.3 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.3 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1130,7 +1127,7 @@ describe("NIST PKITS 4.13.3 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.4 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.4 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1146,7 +1143,7 @@ describe("NIST PKITS 4.13.4 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.5 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.5 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1162,7 +1159,7 @@ describe("NIST PKITS 4.13.5 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.6 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.6 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1178,7 +1175,7 @@ describe("NIST PKITS 4.13.6 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.7 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.7 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1194,7 +1191,7 @@ describe("NIST PKITS 4.13.7 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.8 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.8 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1210,7 +1207,7 @@ describe("NIST PKITS 4.13.8 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.9 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.9 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1226,7 +1223,7 @@ describe("NIST PKITS 4.13.9 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.10 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.10 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1242,7 +1239,7 @@ describe("NIST PKITS 4.13.10 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.11 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.11 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1258,7 +1255,7 @@ describe("NIST PKITS 4.13.11 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.12 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.12 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1275,7 +1272,7 @@ describe("NIST PKITS 4.13.12 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.13 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.13 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1292,7 +1289,7 @@ describe("NIST PKITS 4.13.13 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.14 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.14 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1309,7 +1306,7 @@ describe("NIST PKITS 4.13.14 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.15 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.15 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1326,7 +1323,7 @@ describe("NIST PKITS 4.13.15 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.16 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.16 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1343,7 +1340,7 @@ describe("NIST PKITS 4.13.16 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.17 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.17 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1360,7 +1357,7 @@ describe("NIST PKITS 4.13.17 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.18 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.18 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1377,7 +1374,7 @@ describe("NIST PKITS 4.13.18 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.19 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.19 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1394,7 +1391,7 @@ describe("NIST PKITS 4.13.19 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.20 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.20 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1410,7 +1407,7 @@ describe("NIST PKITS 4.13.20 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.21 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.21 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1426,7 +1423,7 @@ describe("NIST PKITS 4.13.21 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.22 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.22 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1442,7 +1439,7 @@ describe("NIST PKITS 4.13.22 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.23 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.23 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1458,7 +1455,7 @@ describe("NIST PKITS 4.13.23 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.24 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.24 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1474,7 +1471,7 @@ describe("NIST PKITS 4.13.24 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.25 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.25 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1490,7 +1487,7 @@ describe("NIST PKITS 4.13.25 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.26 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.26 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1506,7 +1503,7 @@ describe("NIST PKITS 4.13.26 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.27 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.27 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1523,7 +1520,7 @@ describe("NIST PKITS 4.13.27 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.28 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.28 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1540,7 +1537,7 @@ describe("NIST PKITS 4.13.28 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.29 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.29 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1557,7 +1554,7 @@ describe("NIST PKITS 4.13.29 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.30 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.30 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1573,7 +1570,7 @@ describe("NIST PKITS 4.13.30 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.31 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.31 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1589,7 +1586,7 @@ describe("NIST PKITS 4.13.31 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.32 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.32 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1605,7 +1602,7 @@ describe("NIST PKITS 4.13.32 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.33 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.33 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1621,7 +1618,7 @@ describe("NIST PKITS 4.13.33 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.34 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.34 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1637,7 +1634,7 @@ describe("NIST PKITS 4.13.34 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.35 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.35 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1653,7 +1650,7 @@ describe("NIST PKITS 4.13.35 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.36 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.36 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1669,7 +1666,7 @@ describe("NIST PKITS 4.13.36 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.37 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.37 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1685,7 +1682,7 @@ describe("NIST PKITS 4.13.37 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.13.38 Cert Path", () => {
+describe.skip("NIST PKITS 4.13.38 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1701,7 +1698,7 @@ describe("NIST PKITS 4.13.38 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.1 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.1 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1717,7 +1714,7 @@ describe("NIST PKITS 4.14.1 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.2 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.2 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1733,7 +1730,7 @@ describe("NIST PKITS 4.14.2 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.3 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.3 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1749,7 +1746,7 @@ describe("NIST PKITS 4.14.3 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.4 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.4 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1765,7 +1762,7 @@ describe("NIST PKITS 4.14.4 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.5 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.5 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1781,7 +1778,7 @@ describe("NIST PKITS 4.14.5 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.6 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.6 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1797,7 +1794,7 @@ describe("NIST PKITS 4.14.6 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.7 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.7 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1813,7 +1810,7 @@ describe("NIST PKITS 4.14.7 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.8 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.8 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1829,7 +1826,7 @@ describe("NIST PKITS 4.14.8 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.9 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.9 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1845,7 +1842,7 @@ describe("NIST PKITS 4.14.9 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.10 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.10 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1861,7 +1858,7 @@ describe("NIST PKITS 4.14.10 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.11 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.11 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1877,7 +1874,7 @@ describe("NIST PKITS 4.14.11 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.12 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.12 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1893,7 +1890,7 @@ describe("NIST PKITS 4.14.12 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.13 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.13 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1909,7 +1906,7 @@ describe("NIST PKITS 4.14.13 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.14 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.14 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1925,7 +1922,7 @@ describe("NIST PKITS 4.14.14 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.15 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.15 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1941,7 +1938,7 @@ describe("NIST PKITS 4.14.15 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.16 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.16 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1957,7 +1954,7 @@ describe("NIST PKITS 4.14.16 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.17 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.17 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1973,7 +1970,7 @@ describe("NIST PKITS 4.14.17 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.18 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.18 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1989,7 +1986,7 @@ describe("NIST PKITS 4.14.18 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.19 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.19 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2005,7 +2002,7 @@ describe("NIST PKITS 4.14.19 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.20 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.20 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2021,7 +2018,7 @@ describe("NIST PKITS 4.14.20 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.21 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.21 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2037,7 +2034,7 @@ describe("NIST PKITS 4.14.21 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.22 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.22 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2053,7 +2050,7 @@ describe("NIST PKITS 4.14.22 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.23 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.23 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2069,7 +2066,7 @@ describe("NIST PKITS 4.14.23 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.24 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.24 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2086,7 +2083,7 @@ describe("NIST PKITS 4.14.24 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.25 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.25 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2103,7 +2100,7 @@ describe("NIST PKITS 4.14.25 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.26 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.26 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2120,7 +2117,7 @@ describe("NIST PKITS 4.14.26 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.27 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.27 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2137,7 +2134,7 @@ describe("NIST PKITS 4.14.27 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.28 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.28 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2154,7 +2151,7 @@ describe("NIST PKITS 4.14.28 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.29 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.29 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2171,7 +2168,7 @@ describe("NIST PKITS 4.14.29 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.30 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.30 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2188,7 +2185,7 @@ describe("NIST PKITS 4.14.30 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.31 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.31 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2205,7 +2202,7 @@ describe("NIST PKITS 4.14.31 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.32 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.32 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2222,7 +2219,7 @@ describe("NIST PKITS 4.14.32 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.33 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.33 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2239,7 +2236,7 @@ describe("NIST PKITS 4.14.33 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.34 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.34 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2255,7 +2252,7 @@ describe("NIST PKITS 4.14.34 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.14.35 Cert Path", () => {
+describe.skip("NIST PKITS 4.14.35 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2271,7 +2268,7 @@ describe("NIST PKITS 4.14.35 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.1 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.1 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2287,7 +2284,7 @@ describe("NIST PKITS 4.15.1 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.2 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.2 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2303,7 +2300,7 @@ describe("NIST PKITS 4.15.2 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.3 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.3 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2319,7 +2316,7 @@ describe("NIST PKITS 4.15.3 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.4 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.4 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2335,7 +2332,7 @@ describe("NIST PKITS 4.15.4 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.5 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.5 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2351,7 +2348,7 @@ describe("NIST PKITS 4.15.5 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.6 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.6 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2367,7 +2364,7 @@ describe("NIST PKITS 4.15.6 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.7 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.7 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2383,7 +2380,7 @@ describe("NIST PKITS 4.15.7 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.8 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.8 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2399,7 +2396,7 @@ describe("NIST PKITS 4.15.8 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.9 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.9 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2415,7 +2412,7 @@ describe("NIST PKITS 4.15.9 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.15.10 Cert Path", () => {
+describe.skip("NIST PKITS 4.15.10 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2443,6 +2440,18 @@ describe("NIST PKITS 4.16.1 Cert Path", () => {
             returnCode: VCP_RETURN_OK,
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT]),
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
         },
     ));
 });
@@ -2455,9 +2464,9 @@ describe("NIST PKITS 4.16.2 Cert Path", () => {
         {
         },
         {
-            returnCode: VCP_RETURN_OK,
-            endEntityExtKeyUsage: undefined,
-            endEntityKeyUsage: new Uint8ClampedArray([TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT]),
+            returnCode: VCP_RETURN_UNKNOWN_CRIT_EXT,
+            authorities_constrained_policies: [],
+            user_constrained_policies: [],
         },
     ));
 });
