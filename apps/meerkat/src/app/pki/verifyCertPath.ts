@@ -235,6 +235,8 @@ export const VCP_RETURN_ISSUER_SUBJECT_MISMATCH: VCPReturnCode = -18;
 export const VCP_RETURN_NAME_NOT_PERMITTED: VCPReturnCode = -19;
 export const VCP_RETURN_NAME_EXCLUDED: VCPReturnCode = -20;
 export const VCP_RETURN_PROHIBITED_SIG_ALG: VCPReturnCode = -21;
+export const VCP_RETURN_POLICY_NOT_ACCEPTABLE: VCPReturnCode = -22;
+export const VCP_RETURN_NO_AUTHORIZED_POLICIES: VCPReturnCode = -23;
 
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
@@ -449,8 +451,10 @@ function verifyCertPathFail (returnCode: number): VerifyCertPathResult {
         policy_mappings_that_occurred: [],
         user_constrained_policies: [],
         warnings: [],
-        endEntityKeyUsage: new Uint8ClampedArray(),
-        endEntityExtKeyUsage: [],
+        endEntityExtKeyUsage: undefined,
+        endEntityKeyUsage: undefined,
+        endEntityPrivateKeyNotAfter: undefined,
+        endEntityPrivateKeyNotBefore: undefined,
     };
 }
 
@@ -1390,6 +1394,7 @@ function processIntermediateCertificates (
                 returnCode: VCP_RETURN_MALFORMED,
             };
         }
+        // It also says in ITU Recommendation X.509 (2019), Section 9.2.2.7 that this should never be done...
         // IETF RFC 5280, Section 6.1.4.a
         if (pm.some((p) => p.issuerDomainPolicy.isEqualTo(anyPolicy) || p.subjectDomainPolicy.isEqualTo(anyPolicy))) {
             return {
@@ -1420,18 +1425,19 @@ function processIntermediateCertificates (
             }
 
             // ...Paragraph 2
+            const any_pol_in_level_N_minus_1 = levelNMinus1.nodes.find((n) => n.valid_policy.isEqualTo(anyPolicy));
             const any_pol_in_level_N = levelN.nodes.find((n) => n.valid_policy.isEqualTo(anyPolicy));
             if (!mapped_policies.size && any_pol_in_level_N) {
                 for (const [ idp, sdps ] of Object.entries(policyMappingsMap)) {
                     const oid = ObjectIdentifier.fromString(idp);
                     // If no node of depth i has a valid_policy of ID-P...
                     if (!mapped_policies.has(idp)) {
-                        assert(any_pol_in_level_N); // ...but there is a node of depth i with a valid_policy of anyPolicy...
-                        levelN.nodes.push({
+                        assert(any_pol_in_level_N_minus_1); // ...but there is a node of depth i with a valid_policy of anyPolicy...
+                        levelNMinus1.nodes.push({
                             valid_policy: oid,
-                            qualifier_set: any_pol_in_level_N.qualifier_set ?? [],
+                            qualifier_set: any_pol_in_level_N_minus_1.qualifier_set ?? [],
                             expected_policy_set: new Set(sdps.map((s) => s.subjectDomainPolicy.toString())),
-                            parent: any_pol_in_level_N,
+                            parent: any_pol_in_level_N_minus_1,
                             nchild: 0,
                         });
                     }
@@ -1830,6 +1836,13 @@ function tree_calculate_authority_set (tree: ValidPolicyTree): ValidPolicyNode[]
         curr = tree.levels[curr_i];
         for (let j = 0; j < curr.nodes.length; j++) {
             const node = curr.nodes[j];
+            /**
+             * This was not in the original OpenSSL implementation, but I think
+             * it is correct.
+             */
+            if (node.valid_policy.isEqualTo(anyPolicy)) {
+                continue;
+            }
             if (node.parent === anyptr) {
                 addnodes.push(node);
             }
@@ -1845,15 +1858,24 @@ function finalProcessing (
     state: VerifyCertPathState,
 ): VerifyCertPathResult {
     const authority_set_policies: Map<IndexableOID, ValidPolicyNode> = new Map();
+    const initialPolicyIsAny: boolean = args.initial_policy_set.some((p) => p.isEqualTo(anyPolicy));
 
     if (state.valid_policy_tree) {
-        if (args.initial_policy_set.some((p) => p.isEqualTo(anyPolicy))) {
-            authority_set_policies.set(anyPolicy.toString(), {
-                valid_policy: anyPolicy,
-                expected_policy_set: new Set(),
-                nchild: 0,
-                qualifier_set: [],
-            });
+        if (initialPolicyIsAny) {
+            // ... the intersection should be the entire policy tree... 6.1.5.g.ii
+            for (const level of state.valid_policy_tree.levels) {
+                for (const node of level.nodes) {
+                    /** REVIEW:
+                     * It is not clear to me that this should be done, but it
+                     * seems that the NIST PKITS does not expect anyPolicy to be
+                     * in the user-constrained-policy-set.
+                     */
+                    if (node.valid_policy.isEqualTo(anyPolicy)) {
+                        continue;
+                    }
+                    authority_set_policies.set(node.valid_policy.toString(), node);
+                }
+            }
         } else {
             for (const node of tree_calculate_authority_set(state.valid_policy_tree)) {
                 authority_set_policies.set(node.valid_policy.toString(), node);
@@ -1863,26 +1885,27 @@ function finalProcessing (
         // Do nothing. Allow authority_set_policies to remain empty.
     }
 
-    const user_constrained_policies: PolicyInformation[] = args.initial_policy_set
-        .map((userPolicy) => authority_set_policies.get(userPolicy.toString()))
-        .filter((asp): asp is ValidPolicyNode => !!asp)
-        .map((asp) => new PolicyInformation(
-            asp.valid_policy,
-            asp.qualifier_set?.length // There is a SIZE constraint of (1..MAX)
-                ? asp.qualifier_set
-                : undefined,
-        ));
+    const user_constrained_policies: PolicyInformation[] = initialPolicyIsAny
+        ? Array
+            .from(authority_set_policies.values())
+            .map((node) => new PolicyInformation(
+                node.valid_policy,
+                node.qualifier_set?.length // There is a SIZE constraint of (1..MAX)
+                    ? node.qualifier_set
+                    : undefined,
+            ))
+        : args.initial_policy_set
+            .map((userPolicy) => authority_set_policies.get(userPolicy.toString()))
+            .filter((asp): asp is ValidPolicyNode => !!asp)
+            .map((asp) => new PolicyInformation(
+                asp.valid_policy,
+                asp.qualifier_set?.length // There is a SIZE constraint of (1..MAX)
+                    ? asp.qualifier_set
+                    : undefined,
+            ));
 
-    return {
-        returnCode: ( // Section 12.5.4, bullet point 3.
-            state.explicit_policy_indicator
-            && (
-                (authority_set_policies.size === 0)
-                || (user_constrained_policies.length === 0)
-            )
-        )
-            ? -200
-            : (state.returnCode ?? 0),
+    const ret: VerifyCertPathResult = {
+        returnCode: state.returnCode ?? 0,
         authorities_constrained_policies: Array
             .from(authority_set_policies.values())
             .map((node) => new PolicyInformation(
@@ -1900,9 +1923,24 @@ function finalProcessing (
         endEntityPrivateKeyNotBefore: state.endEntityPrivateKeyNotBefore,
         endEntityPrivateKeyNotAfter: state.endEntityPrivateKeyNotAfter,
     };
+
+    if (state.explicit_policy_indicator) {
+        if (authority_set_policies.size === 0) {
+            return {
+                ...ret,
+                returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            };
+        }
+        if (user_constrained_policies.length === 0) {
+            return {
+                ...ret,
+                returnCode: VCP_RETURN_POLICY_NOT_ACCEPTABLE,
+            };
+        }
+    }
+    return ret;
 }
 
-// TODO: Refactor so you can pass in ctx.config.tls so OCSP responses can be verified.
 /**
  * @summary Verify an X.509 certification path
  * @description
@@ -1937,6 +1975,10 @@ async function verifyCertPath (
                     policy_mappings_that_occurred: [],
                     user_constrained_policies: [],
                     warnings: [],
+                    endEntityExtKeyUsage: undefined,
+                    endEntityKeyUsage: undefined,
+                    endEntityPrivateKeyNotAfter: undefined,
+                    endEntityPrivateKeyNotBefore: undefined,
                 };
             }
         }
@@ -1976,7 +2018,10 @@ async function verifyCertPath (
             },
             inhibit_any_policy: {
                 pending: false,
-                skipCertificates: 0,
+                // IETF RFC 5280, Section 6.1.2.e
+                skipCertificates: args.initial_inhibit_any_policy
+                    ? 0
+                    : args.certPath.length + 1,
             },
             policy_mapping_inhibit: {
                 pending: false,

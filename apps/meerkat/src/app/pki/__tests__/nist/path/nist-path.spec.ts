@@ -269,7 +269,7 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
             ],
         },
         {
-            returnCode: -200,
+            returnCode: VCP_RETURN_POLICY_NOT_ACCEPTABLE,
             explicit_policy_indicator: true,
             authorities_constrained_policies: [
                 new PolicyInformation(
@@ -332,8 +332,6 @@ describe("NIST PKITS 4.10.7 Cert Path", () => {
             returnCode: VCP_RETURN_MALFORMED,
             explicit_policy_indicator: false,
             authorities_constrained_policies: [],
-            endEntityExtKeyUsage: [],
-            endEntityKeyUsage: new Uint8ClampedArray(),
         },
     ));
 });
@@ -354,8 +352,6 @@ describe("NIST PKITS 4.10.8 Cert Path", () => {
             returnCode: VCP_RETURN_MALFORMED,
             explicit_policy_indicator: false,
             authorities_constrained_policies: [],
-            endEntityExtKeyUsage: [],
-            endEntityKeyUsage: new Uint8ClampedArray(),
         },
     ));
 });
@@ -535,16 +531,12 @@ describe("NIST PKITS 4.10.14 Cert Path", () => {
             "P1anyPolicyMapping1to2CACert.crt",
             "ValidPolicyMappingTest14EE.crt",
         ],
-        {
-            // initial_policy_set: [
-            //     NIST_TEST_POLICY_1,
-            // ],
-        },
+        {},
         {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined, // FIXME: There should be a qualifier here!
+                    undefined,
                 ),
             ],
             returnCode: VCP_RETURN_OK,
