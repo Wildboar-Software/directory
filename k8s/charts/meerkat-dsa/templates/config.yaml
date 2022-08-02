@@ -45,7 +45,9 @@ data:
   log_zip: {{ .Values.log_zip | ternary 1 0 | quote }}
   log_tailable: {{ .Values.log_tailable | ternary 1 0 | quote }}
   {{- end }}
+  {{- if .Values.log_http }}
   log_http: {{ .Values.log_http | ternary 1 0 | quote }}
+  {{- end }}
   log_json: {{ .Values.log_json | ternary 1 0 | quote }}
   log_level: {{ .Values.log_level | default "debug" }}
   lookup_uncert_strong_auth: {{ .Values.lookup_uncert_strong_auth | ternary 1 0 | quote }}

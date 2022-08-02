@@ -311,7 +311,7 @@ const logNoConsole: boolean = (process.env.MEERKAT_NO_CONSOLE === "1");
 // const logToWindows: boolean = (process.env.MEERKAT_LOG_WINDOWS === "1");
 // const logToSyslog: boolean = (process.env.MEERKAT_LOG_SYSLOG === "1");
 const logToFile: string | undefined = (() => {
-    if (!process.env.MEERKAT_LOG_FILE) {
+    if (!process.env.MEERKAT_LOG_FILE?.length) {
         return undefined;
     }
     try {
@@ -327,7 +327,7 @@ const logFileMaxFiles: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX
 const logFileZip: boolean = (process.env.MEERKAT_LOG_ZIP === "1");
 const logFilesTailable: boolean = (process.env.MEERKAT_LOG_TAILABLE === "1");
 const logToHTTP: winston.transports.HttpTransportOptions | undefined = (() => {
-    if (!process.env.MEERKAT_LOG_HTTP) {
+    if (!process.env.MEERKAT_LOG_HTTP?.length) {
         return undefined;
     }
     try {
