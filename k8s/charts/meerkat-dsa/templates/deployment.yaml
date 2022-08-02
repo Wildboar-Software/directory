@@ -83,8 +83,6 @@ spec:
             {{- if .Values.tlsSecretName }}
             - name: MEERKAT_TLS_CERT_FILE
               value: /data/pki/tls/tls.crt
-            {{- end }}
-            {{- if .Values.tlsSecretName }}
             - name: MEERKAT_TLS_KEY_FILE
               value: /data/pki/tls/tls.key
             {{- end }}
@@ -188,41 +186,11 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: idm_buffer_size
                   optional: true
-            - name: MEERKAT_IDM_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: idm_port
-                  optional: true
-            - name: MEERKAT_IDMS_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: idms_port
-                  optional: true
-            - name: MEERKAT_INIT_JS
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: init_js
-                  optional: true
             - name: MEERKAT_LDAP_BUFFER_SIZE
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: ldap_buffer_size
-                  optional: true
-            - name: MEERKAT_LDAP_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: ldap_port
-                  optional: true
-            - name: MEERKAT_LDAPS_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: ldaps_port
                   optional: true
             - name: MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3
               valueFrom:
@@ -638,12 +606,6 @@ spec:
             - name: MEERKAT_SIGNING_CRL_FILE
               value: "/data/pki/signing/crl"
             {{- end }}
-            - name: MEERKAT_SIGNING_CERTS_CHAIN_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: signing_cert_chain
-                  optional: true
             - name: MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT
               valueFrom:
                 configMapKeyRef:
@@ -818,18 +780,6 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: tls_answer_ocsp_requests
                   optional: true
-            - name: MEERKAT_TLS_CA_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls_ca_file
-                  optional: true
-            - name: MEERKAT_TLS_CERT_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls_cert_file
-                  optional: true
             - name: MEERKAT_TLS_CIPHERS
               valueFrom:
                 configMapKeyRef:
@@ -842,29 +792,11 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: tls_client_cert_auth
                   optional: true
-            - name: MEERKAT_TLS_CRL_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls_crl_file
-                  optional: true
-            - name: MEERKAT_TLS_DH_PARAM_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls_dh_param_file
-                  optional: true
             - name: MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: tls_handshake_timeout_in_seconds
-                  optional: true
-            - name: MEERKAT_TLS_KEY_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: tls_key_file
                   optional: true
             - name: MEERKAT_TLS_KEY_PASSPHRASE
               valueFrom:
@@ -1003,12 +935,6 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: web_admin_auth_realm
-                  optional: true
-            - name: MEERKAT_WEB_ADMIN_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: web_admin_port
                   optional: true
             - name: MEERKAT_WEB_ADMIN_USE_TLS
               valueFrom:
