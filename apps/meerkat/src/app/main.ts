@@ -868,7 +868,7 @@ async function main (): Promise<void> {
         idmServer.on("error", (err) => {
             ctx.log.error(ctx.i18n.t("log:server_error", {
                 protocol: "IDM",
-                e: err.message,
+                e: err?.message,
             }));
         });
         idmServer.listen(ctx.config.idm.port, () => {
@@ -889,7 +889,7 @@ async function main (): Promise<void> {
         idmsServer.on("error", (err) => {
             ctx.log.error(ctx.i18n.t("log:server_error", {
                 protocol: "IDMS",
-                e: err.message,
+                e: err?.message,
             }));
         });
         idmsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));

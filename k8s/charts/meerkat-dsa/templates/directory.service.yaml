@@ -30,7 +30,7 @@ spec:
     - name: ldaps
       protocol: TCP
       port: {{ .Values.ldaps_port | default 636 | int }}
-      targetPort: 1636 # We use 1636 instead of 389 because ports under 1000 are privileged.
+      targetPort: 1636 # We use 1636 instead of 636 because ports under 1000 are privileged.
     {{- end }}
     {{- end }}
   {{- if eq (.Values.service.type | lower) "loadbalancer" }}
