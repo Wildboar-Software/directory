@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8" />
         <title>Op. Binding {{uuid}} - Meerkat DSA</title>
+        <meta name="referrer" content="no-referrer">
+        <meta name="csrf-token" content="{{csrfToken}}">
+        <meta name="robots" content="noindex">
         <style>
             body {
                 background-color: black;
@@ -35,16 +38,44 @@
         <hr />
         {{#if actionable}}
         <h2>Actions</h2>
-        <div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {{#if outbound}}
+            <form action="/ob/{{uuid}}/cancel" method="POST" >
+                <input type="hidden" name="_csrf" value="{{csrfToken}}">
+                <button style="width: 200px" type="submit">Cancel</button>
+            </form>
+            {{else}}
             <form action="/ob/{{uuid}}/accept" method="POST" >
-                <button type="submit">Accept</button>
+                <input type="hidden" name="_csrf" value="{{csrfToken}}">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <fieldset>
+                        <p>
+                            These options will only have an effect if you accept
+                            this requested operational binding.
+                        </p>
+                        <div style="margin: 10px">
+                            <input type="checkbox" name="ibra" id="ibra">
+                            <label for="ibra">
+                                Trust this DSA to always report the requester's name and
+                                authentication level truthfully? (Identity-Based Requester
+                                Authentication)
+                            </label>
+                        </div>
+                        <div style="margin: 10px">
+                            <input type="checkbox" name="xr" id="xr">
+                            <label for="xr">
+                                Disclose cross-references to this DSA, if requested?
+                            </label>
+                        </div>
+                    </fieldset>
+                    <button style="width: 200px" type="submit">Accept</button>
+                </div>
             </form>
             <form action="/ob/{{uuid}}/reject" method="POST" >
-                <button type="submit">Reject</button>
+                <input type="hidden" name="_csrf" value="{{csrfToken}}">
+                <button style="width: 200px" type="submit">Reject</button>
             </form>
-            <form action="/ob/{{uuid}}/cancel" method="POST" >
-                <button type="submit">Cancel</button>
-            </form>
+            {{/if}}
         </div>
         <hr />
         {{/if}}

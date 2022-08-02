@@ -35,6 +35,9 @@ import {
     operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import {
+    _encode_OpBindingErrorParam,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+import {
     IdmReject_reason_duplicateInvokeIDRequest,
     IdmReject_reason_unsupportedOperationRequest,
     IdmReject_reason_unknownOperationRequest,
@@ -96,9 +99,17 @@ import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { printInvokeId } from "../utils/printInvokeId";
-import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters";
+import {
+    getStatisticsFromSecurityParameters,
+} from "../telemetry/getStatisticsFromSecurityParameters";
+import { signDirectoryError } from "../pki/signDirectoryError";
+import {
+    compareAuthenticationLevel,
+} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
+import {
+    _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 
 /**
  * @summary The handles a request, but not errors
@@ -183,16 +194,18 @@ async function handleRequestAndErrors (
     assn: DOPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
+    const logInfo = {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+        invokeID: printInvokeId({ present: request.invokeID }),
+    };
     if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
             host: assn.socket.remoteAddress,
             cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-        });
+        }), logInfo);
         assn.idm.writeAbort(Abort_invalidPDU);
         return;
     }
@@ -201,13 +214,7 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             iid: request.invokeID.toString(),
             cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId({ present: request.invokeID }),
-        });
+        }), logInfo);
         assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
     }
@@ -216,13 +223,7 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             cid: assn.id,
             iid: request.invokeID.toString(),
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId({ present: request.invokeID }),
-        });
+        }), logInfo);
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
@@ -250,8 +251,10 @@ async function handleRequestAndErrors (
          */
         if (
             !("basicLevels" in assn.authLevel)
-            || (assn.authLevel.basicLevels.level < ctx.config.ob.minAuthLevel)
-            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.ob.minAuthLocalQualifier)
+            || compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.ob.minAuthRequired,
+                assn.authLevel.basicLevels,
+            )
         ) {
             throw new SecurityError(
                 ctx.i18n.t("err:not_authorized_ob"),
@@ -262,6 +265,7 @@ async function handleRequestAndErrors (
                     [],
                     createSecurityParameters(
                         ctx,
+                        true,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -270,6 +274,12 @@ async function handleRequestAndErrors (
                     false,
                     undefined,
                 ),
+                /**
+                 * It is difficult to extract the errorProtection from DOP
+                 * arguments, because security parameters has a different tag
+                 * based on the arguments.
+                 */
+                false,
             );
         }
         await handleRequest(ctx, assn, request);
@@ -310,16 +320,9 @@ async function handleRequestAndErrors (
                 idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
+        ctx.log.info(`${assn.id}#${request.invokeID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
-        } else {
-            ctx.log.error(e.message, {
-                remoteFamily: assn.socket.remoteFamily,
-                remoteAddress: assn.socket.remoteAddress,
-                remotePort: assn.socket.remotePort,
-                association_id: assn.id,
-                invokeID: printInvokeId({ present: request.invokeID }),
-            });
         }
         if (!stats.outcome) {
             stats.outcome = {};
@@ -332,17 +335,31 @@ async function handleRequestAndErrors (
         }
         if (e instanceof errors.OperationalBindingError) {
             const code = _encode_Code(SecurityError.errcode, DER);
-            const param = operationalBindingError.encoderFor["&ParameterType"]!(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, param);
-            const data = getOptionallyProtectedValue(e.data);
-            stats.outcome.error.problem = data.problem;
-            stats.outcome.error.bindingType = data.bindingType?.toString();
-            stats.outcome.error.retryAt = data.retryAt?.toString();
-            stats.outcome.error.newAgreementProposed = Boolean(data.agreementProposal);
+            // DOP associations are ALWAYS authorized to receive signed responses.
+            const signError: boolean = e.shouldBeSigned;
+            const param: typeof operationalBindingError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_OpBindingErrorParam)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = operationalBindingError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
+            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.bindingType = e.data.bindingType?.toString();
+            stats.outcome.error.retryAt = e.data.retryAt?.toString();
+            stats.outcome.error.newAgreementProposed = Boolean(e.data.agreementProposal);
         } else if (e instanceof SecurityError) {
-            const code = _encode_Code(SecurityError.errcode, DER);
-            const data = _encode_SecurityErrorData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const code = _encode_Code(errors.SecurityError.errcode, DER);
+            // DOP associations are ALWAYS authorized to receive signed responses.
+            const signError: boolean = e.shouldBeSigned;
+            const param: typeof securityError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_SecurityErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = securityError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof UnknownOperationError) {
             assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.DuplicateInvokeIdError) {
@@ -433,13 +450,34 @@ class DOPAssociation extends ClientAssociation {
             remotePort: this.socket.remotePort,
             association_id: this.id,
         };
+        /**
+         * ITU Recommendation X.518 (2019), Section 11.1.4 states that:
+         *
+         * > If the Bind request was using strong authentication or if SPKM
+         * > credentials were supplied, then the Bind responder may sign the
+         * > error parameters.
+         */
+        const signErrors: boolean = !!(
+            this.authorizedForSignedErrors
+            && arg_.credentials
+            && (
+                ("strong" in arg_.credentials)
+                || ("spkm" in arg_.credentials)
+            )
+        );
         const startBindTime = new Date();
         let outcome!: BindReturn;
         try {
-            outcome = await doBind(ctx, this.idm.socket, arg_);
+            outcome = await doBind(ctx, this.idm.socket, arg_, signErrors);
         } catch (e) {
+            const logInfo = {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            };
             if (e instanceof DSABindError) {
-                ctx.log.warn(e.message);
+                ctx.log.warn(e.message, logInfo);
                 const endBindTime = new Date();
                 const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                 const totalTimeInMilliseconds: number = this.ctx.config.bindMinSleepInMilliseconds
@@ -449,7 +487,10 @@ class DOPAssociation extends ClientAssociation {
                 const err: typeof directoryBindError["&ParameterType"] = {
                     unsigned: e.data,
                 };
-                const error = directoryBindError.encoderFor["&ParameterType"]!(err, DER);
+                const payload = signErrors
+                    ? signDirectoryError(ctx, e.data, _encode_DBE_Param)
+                    : err;
+                const error = directoryBindError.encoderFor["&ParameterType"]!(payload, DER);
                 idm.writeBindError(dop_ip["&id"]!, error);
                 const serviceProblem = ("serviceError" in e.data.error)
                     ? e.data.error.serviceError
@@ -474,7 +515,10 @@ class DOPAssociation extends ClientAssociation {
                     },
                 });
             } else {
-                ctx.log.warn(e?.message);
+                ctx.log.warn(`${this.id}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
+                if (isDebugging) {
+                    console.error(e);
+                }
                 idm.writeAbort(Abort_reasonNotSpecified);
                 ctx.telemetry.trackException({
                     exception: e,
@@ -512,6 +556,24 @@ class DOPAssociation extends ClientAssociation {
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",
             }), extraLogData);
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.minAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedResults = true;
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
         }
         const bindResult = new DSABindArgument(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
@@ -635,5 +697,14 @@ class DOPAssociation extends ClientAssociation {
             }
             this.prebindRequests.push(request);
         });
+        if ( // This allows bind errors to be signed.
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
+        }
     }
 }

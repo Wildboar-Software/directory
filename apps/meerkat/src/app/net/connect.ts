@@ -104,6 +104,8 @@ import type { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecif
 import { versions } from "../dsp/versions";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
+import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
+import { createStrongCredentials } from "../authn/createStrongCredentials";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS: number = 15 * 1000;
 const DEFAULT_OPERATION_TIMEOUT_IN_SECONDS: number = 3600 * 1000;
@@ -114,6 +116,7 @@ interface ConnectOptions {
     timeLimitInMilliseconds?: number;
     credentials?: DSACredentials,
     tlsOptional?: boolean;
+    signErrors?: boolean;
 }
 
 /**
@@ -161,6 +164,7 @@ const networkAddressPreference = (a: url.URL, b: url.URL): number => {
 function getIDMOperationWriter (
     ctx: MeerkatContext,
     idm: IDMConnection,
+    signErrors: boolean,
 ): Connection["writeOperation"] {
     return async function (req, options): Promise<ResultOrError> {
         const opstat: OperationStatistics = {
@@ -232,6 +236,7 @@ function getIDMOperationWriter (
                                 [],
                                 createSecurityParameters(
                                     ctx,
+                                    signErrors,
                                     undefined,
                                     undefined,
                                     serviceError["&errorCode"],
@@ -284,6 +289,10 @@ function getIDMOperationWriter (
  * This is a higher-order function that produces a `writeOperation` function
  * from an underlying LDAP transport connnection.
  *
+ * Note that results are silently converted from LDAP back to their DAP
+ * equivalents. In the process, no digital signatures are produced, since the
+ * operation in question did not really happen within this DSA.
+ *
  * @param ctx The context object
  * @param socket The underlying LDAP socket
  * @returns A `writeOperation` function
@@ -293,7 +302,8 @@ function getIDMOperationWriter (
 function getLDAPOperationWriter (
     ctx: MeerkatContext,
     socket: LDAPSocket,
-    isDSP: boolean = false,
+    signErrors: boolean,
+    isDSP: boolean,
 ): Connection["writeOperation"] {
     return async (req, options): Promise<ResultOrError> => {
         assert(req.opCode);
@@ -322,7 +332,7 @@ function getLDAPOperationWriter (
         const ldapRequest = dapRequestToLDAPRequest(ctx, {
             ...req,
             invokeId,
-        }, isDSP);
+        }, isDSP, signErrors);
         const EVENT_NAME: string = ldapRequest.messageID.toString();
         // These references exist outside of the scope of the Promise so we can
         // remove all event listeners once the request is done.
@@ -342,7 +352,6 @@ function getLDAPOperationWriter (
                     socket.once("close", closeHandler);
                     // This listener cannot be .once(), because a message ID may be used multiple times
                     // to return results for a search request.
-                    // FIXME: Wrap result in chained result if DSP.
                     socket.on(EVENT_NAME, (message: LDAPMessage) => {
                         assert(req.opCode);
                         // assert(req.argument);
@@ -550,13 +559,14 @@ function getLDAPOperationWriter (
                 }),
                 new Promise<never>((_, reject) => setTimeout(
                     () => {
-                        const err = new errors.ServiceError(
+                        const err = new errors.ServiceError( // FIXME: i18n
                             `DSA-initiated LDAP request ${EVENT_NAME} timed out.`,
                             new ServiceErrorData(
                                 ServiceProblem_timeLimitExceeded,
                                 [],
                                 createSecurityParameters(
                                     ctx,
+                                    signErrors,
                                     undefined,
                                     undefined,
                                     serviceError["&errorCode"],
@@ -565,6 +575,7 @@ function getLDAPOperationWriter (
                                 undefined,
                                 undefined,
                             ),
+                            signErrors,
                         );
                         reject(err);
                     },
@@ -665,7 +676,7 @@ function *createBindRequests (
  *
  * @param ctx The context object
  * @param uri The URI of the remote LDAP server
- * @param credentials Array of DSA credentials to attempt, in order of
+ * @param extraCredentials Array of DSA credentials to attempt, in order of
  *  decreasing preference
  * @param timeoutTime The time by which the operation must complete or abort
  * @param tlsRequired Whether TLS shall be required for this connection
@@ -677,9 +688,10 @@ function *createBindRequests (
 async function connectToLDAP (
     ctx: MeerkatContext,
     uri: url.URL,
-    credentials: DSACredentials[],
+    extraCredentials: DSACredentials[],
     timeoutTime: Date,
     tlsRequired: boolean,
+    signErrors: boolean,
     isDSP: boolean,
 ): Promise<Connection | null> {
     const port: number = uri.port?.length
@@ -696,7 +708,7 @@ async function connectToLDAP (
             port,
             timeout: differenceInMilliseconds(timeoutTime, new Date()),
         });
-        const ldapSocket = new LDAPSocket(socket);
+        const ldapSocket = new LDAPSocket(socket, ctx.config.tls);
         await Promise.race<void>([
             new Promise<void>((resolve, reject) => {
                 ldapSocket.once("connect", resolve);
@@ -741,9 +753,23 @@ async function connectToLDAP (
                         reject();
                         return;
                     } else {
-                        const tlsSocket = new tls.TLSSocket(ldapSocket.socket, ctx.config.tls);
+                        const tlsSocket = new tls.TLSSocket(ldapSocket.socket, {
+                            ...ctx.config.tls,
+                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+                        });
                         ldapSocket.startTLS(tlsSocket);
-                        tlsSocket.on("secureConnect", resolve);
+                        tlsSocket.on("secureConnect", () => {
+                            if (tlsSocket.authorized) {
+                                resolve();
+                            } else {
+                                reject();
+                            }
+                        });
+                        tlsSocket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid: boolean) => {
+                            if (!valid) {
+                                reject();
+                            }
+                        }));
                     }
                 });
                 ldapSocket.writeMessage(req);
@@ -775,7 +801,7 @@ async function connectToLDAP (
     }
 
     // By adding `undefined` to the end of this array, we try one time without authentication.
-    for (const cred of [ ...credentials, undefined ]) {
+    for (const cred of [ ...extraCredentials, undefined ]) {
         if (cred && !("simple" in cred)) {
             continue;
         }
@@ -835,7 +861,7 @@ async function connectToLDAP (
 
             // If we made it here, one of our authentication attempts worked.
             const ret: Connection = {
-                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, isDSP),
+                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, signErrors, isDSP),
                 close: async (): Promise<void> => {
                     ldapSocket.close();
                 },
@@ -856,7 +882,7 @@ async function connectToLDAP (
  *
  * @param ctx The context object
  * @param uri The URI of the remote LDAP server
- * @param credentials Array of DSA credentials to attempt, in order of
+ * @param extraCredentials Array of DSA credentials to attempt, in order of
  *  decreasing preference
  * @param timeoutTime The time by which the operation must complete or abort
  * @returns A connection, if one could be established, or `null` otherwise
@@ -867,8 +893,9 @@ async function connectToLDAP (
  async function connectToLDAPS (
     ctx: MeerkatContext,
     uri: url.URL,
-    credentials: DSACredentials[],
+    extraCredentials: DSACredentials[],
     timeoutTime: Date,
+    signErrors: boolean,
     isDSP: boolean,
 ): Promise<Connection | null> {
     const port: number = uri.port?.length
@@ -882,6 +909,7 @@ async function connectToLDAP (
     const getLDAPSocket = async (): Promise<LDAPSocket> => {
         const socket = tls.connect({
             ...ctx.config.tls,
+            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
             pskCallback: undefined, // This was the only type error for some reason.
             host: uri.hostname,
             port,
@@ -889,9 +917,15 @@ async function connectToLDAP (
         });
         // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
         socket.once("connect", () => socket.setTimeout(0));
-        const ldapSocket = new LDAPSocket(socket);
+        socket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid) => {
+            if (!valid) {
+                socket.end();
+            }
+        }));
+        const ldapSocket = new LDAPSocket(socket, ctx.config.tls);
         await Promise.race<void>([
             new Promise<void>((resolve, reject) => {
+                // REVIEW: Shouldn't these close the socket, too?
                 ldapSocket.once("connect", resolve);
                 ldapSocket.once("error", reject);
                 ldapSocket.once("timeout", reject);
@@ -908,7 +942,7 @@ async function connectToLDAP (
     let connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
 
     // By adding `undefined` to the end of this array, we try one time without authentication.
-    for (const cred of [ ...credentials, undefined ]) {
+    for (const cred of [ ...extraCredentials, undefined ]) {
         if (cred && !("simple" in cred)) {
             continue;
         }
@@ -969,7 +1003,7 @@ async function connectToLDAP (
 
             // If we made it here, one of our authentication attempts worked.
             const ret: Connection = {
-                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, isDSP),
+                writeOperation: getLDAPOperationWriter(ctx, ldapSocket, signErrors, isDSP),
                 close: async (): Promise<void> => {
                     ldapSocket?.close();
                 },
@@ -993,7 +1027,7 @@ async function connectToLDAP (
  * @param idmGetter A function for getting a new IDM transport
  * @param targetSystem The target DSA's `AccessPoint`
  * @param protocolID The object identifier of the protocol with which to bind
- * @param credentials The set of DSA credentials to attempt, in order of
+ * @param extraCredentials The set of DSA credentials to attempt, in order of
  *  decreasing preference
  * @param timeoutTime The time by which the operation must complete or abort
  * @param tlsRequired Whether TLS shall be required for this connection
@@ -1005,16 +1039,30 @@ async function connectToIdmNaddr (
     idmGetter: () => IDMConnection | null,
     targetSystem: AccessPoint,
     protocolID: OBJECT_IDENTIFIER,
-    credentials: DSACredentials[],
+    extraCredentials: DSACredentials[],
     timeoutTime: Date,
     tlsRequired: boolean,
+    signErrors: boolean,
 ): Promise<Connection | null> {
     let idm: IDMConnection | null = idmGetter();
     if (!idm) {
         return null;
     }
-    // By adding `undefined` to the end of this array, we try one time without authentication.
-    for (const cred of [ ...credentials, undefined ]) {
+    const strongCredData = createStrongCredentials(ctx, targetSystem.ae_title.rdnSequence);
+    const otherCreds: (DSACredentials | undefined)[] = [
+        ...extraCredentials,
+        // By adding `undefined` to the end of this array, we try one time without authentication.
+        undefined,
+    ];
+    const credentials: (DSACredentials | undefined)[] = strongCredData
+        ? [
+            {
+                strong: strongCredData,
+            },
+            ...otherCreds,
+        ]
+        : otherCreds;
+    for (const cred of credentials) {
         if (Date.now().valueOf() > timeoutTime.valueOf()) {
             ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
                 uri,
@@ -1131,7 +1179,7 @@ async function connectToIdmNaddr (
     }
 
     const ret: Connection = {
-        writeOperation: getIDMOperationWriter(ctx, idm),
+        writeOperation: getIDMOperationWriter(ctx, idm, signErrors),
         close: async (): Promise<void> => {
             idm?.close();
         },
@@ -1152,7 +1200,7 @@ async function connectToIdmNaddr (
  * @param idmGetter A function for getting a new IDM transport
  * @param targetSystem The target DSA's `AccessPoint`
  * @param protocolID The object identifier of the protocol with which to bind
- * @param credentials The set of DSA credentials to attempt, in order of
+ * @param extraCredentials The set of DSA credentials to attempt, in order of
  *  decreasing preference
  * @param timeoutTime The time by which the operation must complete or abort
  * @returns A connection, if one could be established, or `null` otherwise
@@ -1163,15 +1211,29 @@ async function connectToIdmNaddr (
     idmGetter: () => IDMConnection | null,
     targetSystem: AccessPoint,
     protocolID: OBJECT_IDENTIFIER,
-    credentials: DSACredentials[],
+    extraCredentials: DSACredentials[],
     timeoutTime: Date,
+    signErrors: boolean,
 ): Promise<Connection | null> {
     let idm: IDMConnection | null = idmGetter();
     if (!idm) {
         return null;
     }
-    // By adding `undefined` to the end of this array, we try one time without authentication.
-    for (const cred of [ ...credentials, undefined ]) {
+    const strongCredData = createStrongCredentials(ctx, targetSystem.ae_title.rdnSequence);
+    const otherCreds: (DSACredentials | undefined)[] = [
+        ...extraCredentials,
+        // By adding `undefined` to the end of this array, we try one time without authentication.
+        undefined,
+    ];
+    const credentials: (DSACredentials | undefined)[] = strongCredData
+        ? [
+            {
+                strong: strongCredData,
+            },
+            ...otherCreds,
+        ]
+        : otherCreds;
+    for (const cred of credentials) {
         if (Date.now().valueOf() > timeoutTime.valueOf()) {
             ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
                 uri,
@@ -1242,7 +1304,7 @@ async function connectToIdmNaddr (
     }
 
     const ret: Connection = {
-        writeOperation: getIDMOperationWriter(ctx, idm),
+        writeOperation: getIDMOperationWriter(ctx, idm, signErrors),
         close: async (): Promise<void> => {
             idm?.close();
         },
@@ -1312,7 +1374,7 @@ async function connect (
             },
         });
         const connectionTimeRemaining = differenceInMilliseconds(timeoutTime, new Date());
-        const credentials: DSACredentials[] = await getCredentialsForNSAP(ctx, uri.toString());
+        const extraCredentials: DSACredentials[] = await getCredentialsForNSAP(ctx, uri.toString());
         if (uri.protocol.toLowerCase().startsWith("idm:")) {
             if (!uri.port) {
                 continue;
@@ -1329,16 +1391,20 @@ async function connect (
                         });
                         // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
                         socket.once("connect", () => socket.setTimeout(0));
-                        return new IDMConnection(socket, ctx.config.tls);
+                        return new IDMConnection(socket, {
+                            ...ctx.config.tls,
+                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+                        });
                     } catch {
                         return null;
                     }
                 },
                 targetSystem,
                 protocolID,
-                credentials,
+                extraCredentials,
                 timeoutTime,
                 !options?.tlsOptional,
+                !!options?.signErrors,
             );
         } else if (uri.protocol.toLowerCase().startsWith("idms:")) {
             if (!uri.port) {
@@ -1351,6 +1417,7 @@ async function connect (
                     try {
                         const socket = tls.connect({
                             ...ctx.config.tls,
+                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
                             pskCallback: undefined, // This was the only type error for some reason.
                             host: uri.hostname,
                             port: Number.parseInt(uri.port),
@@ -1358,6 +1425,11 @@ async function connect (
                         });
                         // Credit to: https://github.com/nodejs/node/issues/5757#issuecomment-305969057
                         socket.once("connect", () => socket.setTimeout(0));
+                        socket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid) => {
+                            if (!valid) {
+                                socket.end();
+                            }
+                        }));
                         return new IDMConnection(socket);
                     } catch {
                         return null;
@@ -1365,8 +1437,9 @@ async function connect (
                 },
                 targetSystem,
                 protocolID,
-                credentials,
+                extraCredentials,
                 timeoutTime,
+                !!options?.signErrors,
             );
         } else if (uri.protocol.toLowerCase() === "ldap:") {
             const isDAP: boolean = protocolID.isEqualTo(dap_ip["&id"]!);
@@ -1377,9 +1450,10 @@ async function connect (
             return connectToLDAP(
                 ctx,
                 uri,
-                credentials,
+                extraCredentials,
                 timeoutTime,
                 !options?.tlsOptional,
+                !!options?.signErrors,
                 isDSP,
             );
         } if (uri.protocol.toLowerCase() === "ldaps:") {
@@ -1391,8 +1465,9 @@ async function connect (
             return connectToLDAPS(
                 ctx,
                 uri,
-                credentials,
+                extraCredentials,
                 timeoutTime,
+                !!options?.signErrors,
                 isDSP,
             );
         }

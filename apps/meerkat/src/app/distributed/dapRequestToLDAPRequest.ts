@@ -122,7 +122,7 @@ const DEFAULT_LDAP_FILTER: LDAPFilter = {
     present: encodeLDAPOID(objectClass["&id"]),
 };
 
-function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string, AttributeErrorData ] {
+function createAttributeErrorData (ctx: Context, type_: AttributeType, signErrors: boolean): [ string, AttributeErrorData, boolean ] {
     return [
         ctx.i18n.t("err:attribute_type_cannot_be_encoded_to_ldap", {
             oid: type_.toString(),
@@ -141,6 +141,7 @@ function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string
             [],
             createSecurityParameters(
                 ctx,
+                signErrors,
                 undefined,
                 undefined,
                 id_errcode_attributeError,
@@ -149,6 +150,7 @@ function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string
             undefined,
             undefined,
         ),
+        signErrors,
     ];
 }
 
@@ -167,11 +169,12 @@ function createAttributeErrorData (ctx: Context, type_: AttributeType): [ string
 function convert_dap_mod_to_ldap_mod (
     ctx: Context,
     mod: EntryModification,
+    signErrors: boolean,
 ): LDAPEntryModification {
     if ("addAttribute" in mod) {
         const encoder = getLDAPEncoder(ctx, mod.addAttribute.type_);
         if (!encoder) {
-            throw new errors.AttributeError(...createAttributeErrorData(ctx, mod.addAttribute.type_));
+            throw new errors.AttributeError(...createAttributeErrorData(ctx, mod.addAttribute.type_, signErrors));
         }
         const values = mod.addAttribute.values.map(encoder);
         if (mod.addAttribute.valuesWithContext?.length) {
@@ -197,7 +200,7 @@ function convert_dap_mod_to_ldap_mod (
     else if ("addValues" in mod) {
         const encoder = getLDAPEncoder(ctx, mod.addValues.type_);
         if (!encoder) {
-            throw new errors.AttributeError(...createAttributeErrorData(ctx, mod.addValues.type_));
+            throw new errors.AttributeError(...createAttributeErrorData(ctx, mod.addValues.type_, signErrors));
         }
         const values = mod.addValues.values.map(encoder);
         if (mod.addValues.valuesWithContext?.length) {
@@ -214,7 +217,7 @@ function convert_dap_mod_to_ldap_mod (
     else if ("removeValues" in mod) {
         const encoder = getLDAPEncoder(ctx, mod.removeValues.type_);
         if (!encoder) {
-            throw new errors.AttributeError(...createAttributeErrorData(ctx, mod.removeValues.type_));
+            throw new errors.AttributeError(...createAttributeErrorData(ctx, mod.removeValues.type_, signErrors));
         }
         const values = mod.removeValues.values.map(encoder);
         if (mod.removeValues.valuesWithContext?.length) {
@@ -238,6 +241,7 @@ function convert_dap_mod_to_ldap_mod (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     id_errcode_serviceError,
@@ -246,6 +250,7 @@ function convert_dap_mod_to_ldap_mod (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     else if ("resetValue" in mod) {
@@ -258,6 +263,7 @@ function convert_dap_mod_to_ldap_mod (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     id_errcode_serviceError,
@@ -266,12 +272,13 @@ function convert_dap_mod_to_ldap_mod (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     else if ("replaceValues" in mod) {
         const encoder = getLDAPEncoder(ctx, mod.replaceValues.type_);
         if (!encoder) {
-            throw new errors.AttributeError(...createAttributeErrorData(ctx, mod.replaceValues.type_));
+            throw new errors.AttributeError(...createAttributeErrorData(ctx, mod.replaceValues.type_, signErrors));
         }
         const values = mod.replaceValues.values.map(encoder);
         if (mod.replaceValues.valuesWithContext?.length) {
@@ -488,6 +495,7 @@ function dapRequestToLDAPRequest (
     ctx: Context,
     req: Request,
     isDSP: boolean,
+    signErrors: boolean,
 ): LDAPMessage {
     assert(req.opCode);
     const messageId: number = generateUnusedInvokeID(ctx);
@@ -499,6 +507,7 @@ function dapRequestToLDAPRequest (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     id_errcode_serviceError,
@@ -507,6 +516,7 @@ function dapRequestToLDAPRequest (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     else if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
@@ -529,6 +539,7 @@ function dapRequestToLDAPRequest (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         undefined,
                         undefined,
                         id_errcode_serviceError,
@@ -537,6 +548,7 @@ function dapRequestToLDAPRequest (
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         }
         return new LDAPMessage(
@@ -554,6 +566,7 @@ function dapRequestToLDAPRequest (
                                     [],
                                     createSecurityParameters(
                                         ctx,
+                                        signErrors,
                                         undefined,
                                         undefined,
                                         id_errcode_serviceError,
@@ -562,6 +575,7 @@ function dapRequestToLDAPRequest (
                                     undefined,
                                     undefined,
                                 ),
+                                signErrors,
                             );
                         }
                         const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
@@ -573,6 +587,7 @@ function dapRequestToLDAPRequest (
                                     [],
                                     createSecurityParameters(
                                         ctx,
+                                        signErrors,
                                         undefined,
                                         undefined,
                                         id_errcode_serviceError,
@@ -581,6 +596,7 @@ function dapRequestToLDAPRequest (
                                     undefined,
                                     undefined,
                                 ),
+                                signErrors,
                             );
                         }
                         const encoder = ldapSyntax.encoder;
@@ -606,6 +622,7 @@ function dapRequestToLDAPRequest (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     id_errcode_serviceError,
@@ -614,6 +631,7 @@ function dapRequestToLDAPRequest (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     else if (compareCode(req.opCode, compare["&operationCode"]!)) {
@@ -637,6 +655,7 @@ function dapRequestToLDAPRequest (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         undefined,
                         undefined,
                         id_errcode_serviceError,
@@ -645,6 +664,7 @@ function dapRequestToLDAPRequest (
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
@@ -656,6 +676,7 @@ function dapRequestToLDAPRequest (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         undefined,
                         undefined,
                         id_errcode_serviceError,
@@ -664,6 +685,7 @@ function dapRequestToLDAPRequest (
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const encoder = ldapSyntax.encoder;
@@ -763,7 +785,7 @@ function dapRequestToLDAPRequest (
             {
                 modifyRequest: new ModifyRequest(
                     encodeLDAPDN(ctx, carg?.targetObject ?? data.object.rdnSequence),
-                    data.changes.map((c) => convert_dap_mod_to_ldap_mod(ctx, c)),
+                    data.changes.map((c) => convert_dap_mod_to_ldap_mod(ctx, c, signErrors)),
                 ),
             },
             undefined,

@@ -1,5 +1,6 @@
-import { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, TRUE_BIT, FALSE } from "asn1-ts";
+import { Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
+import { ObjectIdentifier, TRUE_BIT, FALSE, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
@@ -24,6 +25,10 @@ import {
     ListResult,
     _encode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+import {
+    ListResultData,
+    _encode_ListResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
 import {
     ListResultData_listInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
@@ -89,7 +94,7 @@ import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcome
 import failover from "../utils/failover";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
-import { MAX_RESULTS } from "../constants";
+import { MAX_RESULTS, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import type { Prisma } from "@prisma/client";
 import {
     child,
@@ -100,6 +105,9 @@ import {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import bacSettings from "../authz/bacSettings";
 import {
@@ -127,7 +135,23 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import { stringifyDN } from "../x500/stringifyDN";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
+import {
+    SecurityProblem_invalidSignature,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import DSPAssociation from "../dsp/DSPConnection";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -154,14 +178,81 @@ const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
  */
 export
 async function list_ii (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
     fromDAP: boolean,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
-    const arg: ListArgument = _decode_ListArgument(state.operationArgument);
-    const data = getOptionallyProtectedValue(arg);
+    const argument: ListArgument = _decode_ListArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
+
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     *
+     * Meerkat DSA allows operations with invalid signatures to progress
+     * through all pre-operation-evaluation procedures leading up to operation
+     * evaluation, but with `AuthenticationLevel.basicLevels.signed` set to
+     * `FALSE` so that access controls are still respected. Therefore, if we get
+     * to this point in the code, and the argument is signed, but the
+     * authentication level has the `signed` field set to `FALSE`, we throw an
+     * `invalidSignature` error.
+     */
+    if (
+        ("signed" in argument)
+        && state.chainingArguments.authenticationLevel
+        && ("basicLevels" in state.chainingArguments.authenticationLevel)
+        && !state.chainingArguments.authenticationLevel.basicLevels.signed
+    ) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const logInfo = {
+            context: "arg",
+            host: remoteHostIdentifier,
+            aid: assn.id,
+            iid: printInvokeId(state.invokeId),
+            ap: stringifyDN(ctx, requestor ?? []),
+        };
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:invalid_signature", logInfo),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    // #endregion Signature validation
     const chainingProhibited = (
         (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
         || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
@@ -179,6 +270,7 @@ async function list_ii (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -187,6 +279,7 @@ async function list_ii (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const op = ("present" in state.invokeId)
@@ -198,9 +291,9 @@ async function list_ii (
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
-    const user = state.chainingArguments.originator
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -235,6 +328,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -243,6 +337,7 @@ async function list_ii (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
@@ -256,6 +351,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -264,6 +360,7 @@ async function list_ii (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (nr.sortKeys?.length) {
@@ -278,6 +375,7 @@ async function list_ii (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -286,6 +384,7 @@ async function list_ii (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 if (nr.sortKeys.length > 3) {
@@ -315,6 +414,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -323,6 +423,7 @@ async function list_ii (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             pagingRequest = paging.request;
@@ -337,6 +438,7 @@ async function list_ii (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -345,6 +447,7 @@ async function list_ii (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             throw new errors.ServiceError(
@@ -354,6 +457,7 @@ async function list_ii (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -362,6 +466,7 @@ async function list_ii (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -396,6 +501,7 @@ async function list_ii (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -404,6 +510,7 @@ async function list_ii (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
@@ -464,7 +571,7 @@ async function list_ii (
                     effectiveAccessControlScheme,
                     subordinateACDFTuples,
                     user,
-                    state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                    state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
                     subordinateDN,
                     isMemberOfGroup,
                     NAMING_MATCHER,
@@ -552,6 +659,7 @@ async function list_ii (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -560,39 +668,78 @@ async function list_ii (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
-    const result: ListResult = {
-        unsigned: {
-            listInfo: new ListResultData_listInfo(
-                state.chainingArguments.aliasDereferenced
-                    ? {
-                        rdnSequence: targetDN,
-                    }
-                    : undefined,
-                listItems,
-                // The POQ shall only be present if the results are incomplete.
-                (queryReference && (limitExceeded !== undefined))
-                    ? new PartialOutcomeQualifier(
-                        limitExceeded,
-                        undefined,
-                        undefined,
-                        undefined,
-                        Buffer.from(queryReference, "base64"),
-                    )
-                    : undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    assn.boundNameAndUID?.dn,
-                    id_opcode_list,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
+
+    const signResults: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+    );
+    const resultDataInfo = new ListResultData_listInfo(
+        state.chainingArguments.aliasDereferenced
+            ? {
+                rdnSequence: targetDN,
+            }
+            : undefined,
+        listItems,
+        // The POQ shall only be present if the results are incomplete.
+        (queryReference && (limitExceeded !== undefined))
+            ? new PartialOutcomeQualifier(
+                limitExceeded,
                 undefined,
                 undefined,
-            ),
-        },
+                undefined,
+                Buffer.from(queryReference, "base64"),
+            )
+            : undefined,
+        [],
+        createSecurityParameters(
+            ctx,
+            signResults,
+            assn.boundNameAndUID?.dn,
+            id_opcode_list,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        undefined,
+        undefined,
+    );
+    const resultData: ListResultData = {
+        listInfo: resultDataInfo,
     };
+    const result: ListResult = signResults
+        ? (() => {
+            const resultDataBytes = _encode_ListResultData(resultData, DER).toBytes();
+            const key = ctx.config.signing?.key;
+            if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const signingResult = generateSignature(key, resultDataBytes);
+            if (!signingResult) {
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const [ sigAlg, sigValue ] = signingResult;
+            return {
+                signed: new SIGNED(
+                    resultData,
+                    sigAlg,
+                    unpackBits(sigValue),
+                    undefined,
+                    undefined,
+                ),
+            };
+        })()
+        : {
+            unsigned: resultData,
+        };
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn instanceof DSPAssociation)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -601,6 +748,7 @@ async function list_ii (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_list,
                     ),
@@ -622,8 +770,8 @@ async function list_ii (
             outcome: failover(() => ({
                 result: {
                     list: getListResultStatistics(result),
-                    poq: (("listInfo" in result.unsigned) && result.unsigned.listInfo.partialOutcomeQualifier)
-                        ? getPartialOutcomeQualifierStatistics(result.unsigned.listInfo.partialOutcomeQualifier)
+                    poq: resultDataInfo.partialOutcomeQualifier
+                        ? getPartialOutcomeQualifierStatistics(resultDataInfo.partialOutcomeQualifier)
                         : undefined,
                 },
             }), undefined),

@@ -8,7 +8,7 @@ Internet Directly-Mapped (IDM) transport:
 - `idm://dsa01.root.mkdemo.wildboar.software:4632`
 - `idm://dsa01.gb.mkdemo.wildboar.software:4632`
 - `idm://dsa01.ru.mkdemo.wildboar.software:4632`
-- `idm://dsa01.ru-moscow.mkdemo.wildboar.software:4632`
+- `idm://dsa01.moscow.mkdemo.wildboar.software:4632`
 
 Note that the above host names do not mean that these instances are hosted in
 the countries indicated by their names. Rather, these merely identify the
@@ -19,7 +19,7 @@ expose LDAP endpoints at the following URLs respectively:
 - `ldap://dsa01.root.mkdemo.wildboar.software:389`
 - `ldap://dsa01.gb.mkdemo.wildboar.software:389`
 - `ldap://dsa01.ru.mkdemo.wildboar.software:389`
-- `ldap://dsa01.ru-moscow.mkdemo.wildboar.software:389`
+- `ldap://dsa01.moscow.mkdemo.wildboar.software:389`
 
 Finally, you can connect to the web administration console, which will only
 show you the DSEs residing in any given DSA. These sits can be accessed via
@@ -28,7 +28,7 @@ web browser:
 - `http://webadm01.root.mkdemo.wildboar.software:18080`
 - `http://webadm01.gb.mkdemo.wildboar.software:18080`
 - `http://webadm01.ru.mkdemo.wildboar.software:18080`
-- `http://webadm01.ru-moscow.mkdemo.wildboar.software:18080`
+- `http://webadm01.moscow.mkdemo.wildboar.software:18080`
 
 ## Credentials
 

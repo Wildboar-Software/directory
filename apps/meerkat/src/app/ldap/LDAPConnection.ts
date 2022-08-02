@@ -265,10 +265,16 @@ async function handleRequestAndErrors (
                 bytesWritten: assn.socket.bytesWritten,
             },
         });
+        const logInfo = {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+            messageID: message.messageID.toString(),
+        };
+        ctx.log.info(`${assn.id}#${message.messageID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
-        } else {
-            ctx.log.error(e.message);
         }
         if (!stats.outcome) {
             stats.outcome = {};
@@ -647,6 +653,13 @@ class LDAPAssociation extends ClientAssociation {
                 const startBindTime = new Date();
                 bind(ctx, this.socket, req)
                     .then(async (outcome) => {
+                        const logInfo = {
+                            host: source,
+                            remoteFamily: this.socket.remoteFamily,
+                            remoteAddress: this.socket.remoteAddress,
+                            remotePort: this.socket.remotePort,
+                            association_id: this.id,
+                        };
                         const endBindTime = new Date();
                         const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                         const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
@@ -681,7 +694,7 @@ class LDAPAssociation extends ClientAssociation {
                             }
                         } else {
                             if (outcome.result.resultCode === LDAPResult_resultCode_invalidCredentials) {
-                                ctx.log.warn(ctx.i18n.t("err:invalid_credentials", { host: source }));
+                                ctx.log.warn(ctx.i18n.t("err:invalid_credentials", logInfo), logInfo);
                             }
                             this.status = Status.UNBOUND;
                         }
@@ -696,8 +709,8 @@ class LDAPAssociation extends ClientAssociation {
                     })
                     .catch((e) => {
                         ctx.log.error(e.message, extraLogData);
-                        if ("stack" in e) {
-                            ctx.log.error(e.stack);
+                        if (isDebugging) {
+                            console.error(e);
                         }
                         ctx.telemetry.trackException({
                             exception: e,

@@ -91,6 +91,7 @@ import {
  *  operational binding
  * @param agreement The hierarchical agreement
  * @param sub2sup The `SubordinateToSuperior` argument of the HOB
+ * @param signErrors Whether to cryptographically sign errors
  * @returns A `SuperiorToSubordinate` that can be returned to the superior DSA
  *  in a Directory Operational Binding Management Protocol (DOP) result
  *
@@ -104,6 +105,7 @@ async function becomeSuperior (
     invokeId: InvokeId,
     agreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
+    signErrors: boolean,
 ): Promise<SuperiorToSubordinate> {
     const superior = await dnToVertex(ctx, ctx.dit.root, agreement.immediateSuperior);
     if (!superior) {
@@ -116,6 +118,7 @@ async function becomeSuperior (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     securityError["&errorCode"],
@@ -124,30 +127,31 @@ async function becomeSuperior (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (superior.dse.shadow || superior.dse.subentry || superior.dse.alias) {
         if (assn instanceof DOPAssociation) {
             throw new errors.OperationalBindingError(
                 ctx.i18n.t("err:parent_dse_not_permissible"),
-                {
-                    unsigned: new OpBindingErrorParam(
-                        OpBindingErrorParam_problem_roleAssignment,
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_roleAssignment,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
                         undefined,
-                        undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            assn.boundNameAndUID?.dn,
-                            undefined,
-                            operationalBindingError["&errorCode"],
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
+                        operationalBindingError["&errorCode"],
                     ),
-                },
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
             );
         } else {
             throw new errors.ServiceError(
@@ -157,6 +161,7 @@ async function becomeSuperior (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -165,6 +170,7 @@ async function becomeSuperior (
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         }
 
@@ -180,6 +186,7 @@ async function becomeSuperior (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -188,6 +195,7 @@ async function becomeSuperior (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 

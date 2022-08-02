@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>CRLs - Meerkat DSA</title>
+        <meta name="csrf-token" content="{{csrfToken}}">
+        <meta name="referrer" content="no-referrer">
+        <meta name="robots" content="noindex">
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            a {
+                color: #F44336;
+            }
+            a:hover {
+                color: #EF9A9A;
+            }
+            a:visited {
+                color: #7B1FA2;
+            }
+            @media screen and (prefers-color-scheme: light) {
+                body {
+                    background-color: white;
+                    color: black;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Certificate Revocation Lists</h1>
+        <hr />
+        <nav><a href="/">Back to Home</a></nav>
+        <hr />
+        <p>
+            Below are the certificate revocation lists you have configured for
+            this DSA. There is no meaning imputed to the ordering of CRLs here.
+        </p>
+        <p>
+            You can view the PEM-encoded certificate revocation lists
+            <a href="/pki/{{type}}/crls.pem">here</a> or download them
+            <a href="/pki/{{type}}/crls.pem?download=1">here</a>.
+        </p>
+        <p>
+            If you have these CRLs on your local computer, you can use
+            the OpenSSL to view the following information using
+            <pre>openssl crl -in &lt;crl name&gt; -noout -text</pre>
+        </p>
+        <hr />
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {{#each crls}}
+                <h2>CRL {{position}}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Key</th>
+                            <th scope="col">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each values}}
+                            {{#if odd}}
+                            <tr style="background-color: #111111">
+                                <td><pre>{{key}}</pre></td>
+                                <td><pre>{{value}}</pre></td>
+                            </tr>
+                            {{else}}
+                            <tr>
+                                <td><pre>{{key}}</pre></td>
+                                <td><pre>{{value}}</pre></td>
+                            </tr>
+                            {{/if}}
+                        {{/each}}
+                    </tbody>
+                    <tfoot></tfoot>
+                </table>
+            {{/each}}
+        </div>
+    </body>
+</html>

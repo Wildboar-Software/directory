@@ -116,7 +116,7 @@ async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promis
 export
 async function checkSuitabilityProcedure (
     ctx: Context,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     vertex: Vertex,
     operationType: Code,
     aliasDereferenced: boolean,
@@ -126,6 +126,7 @@ async function checkSuitabilityProcedure (
     excludeShadows: boolean,
     encodedArgument?: ASN1Element,
     searchArgument?: SearchArgument,
+    signErrors: boolean = false,
 ): Promise<boolean> {
     // DEVIATION: This is not required by the specification.
     if (vertex.dse.root && isModificationOperation(operationType)) {
@@ -143,14 +144,16 @@ async function checkSuitabilityProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     aliasDereferenced,
                     undefined,
-                )
+                ),
+                signErrors,
             );
         }
         return true;
@@ -173,14 +176,16 @@ async function checkSuitabilityProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     aliasDereferenced,
                     undefined,
-                )
+                ),
+                signErrors,
             );
         }
         return true;

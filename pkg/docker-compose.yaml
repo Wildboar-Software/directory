@@ -13,8 +13,8 @@ services:
       DATABASE_URL: mysql://root:example@db:3306/directory
       # MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
       # MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
-      # MEERKAT_SIGNING_CERT_CHAIN: /data/keypair/cert.pem
-      # MEERKAT_SIGNING_KEY: /data/keypair/key.pem
+      # MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
+      # MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
       # MEERKAT_INIT_JS: /data/init.mjs
     hostname: 'meerkat'
     labels:

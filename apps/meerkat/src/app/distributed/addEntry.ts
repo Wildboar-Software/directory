@@ -5,6 +5,14 @@ import {
     _decode_AddEntryArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
 import {
+    AddEntryResult,
+    _encode_AddEntryResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
+import {
+    AddEntryResultData,
+    _encode_AddEntryResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResultData.ta";
+import {
     id_at_objectClass,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
 import {
@@ -27,16 +35,19 @@ import {
 import {
     ServiceControlOptions_manageDSAIT,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { ASN1Element, ObjectIdentifier, OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
+import {
+    ASN1Element,
+    ObjectIdentifier,
+    OBJECT_IDENTIFIER,
+    TRUE_BIT,
+    unpackBits,
+} from "asn1-ts";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import {
-    _encode_AddEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
@@ -53,6 +64,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     SecurityProblem_insufficientAccessRights,
+    SecurityProblem_invalidSignature,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
@@ -156,6 +168,16 @@ import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOpe
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { stringifyDN } from "../x500/stringifyDN";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -166,6 +188,7 @@ function namingViolationErrorData (
     ctx: Context,
     assn: ClientAssociation,
     attributeTypes: AttributeType[],
+    signErrors: boolean,
     aliasDereferenced?: boolean,
 ): UpdateErrorData {
     return new UpdateErrorData(
@@ -176,6 +199,7 @@ function namingViolationErrorData (
         [],
         createSecurityParameters(
             ctx,
+            signErrors,
             assn.boundNameAndUID?.dn,
             undefined,
             updateError["&errorCode"],
@@ -209,17 +233,85 @@ async function addEntry (
 ): Promise<OperationReturn> {
     const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
+
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     *
+     * Meerkat DSA allows operations with invalid signatures to progress
+     * through all pre-operation-evaluation procedures leading up to operation
+     * evaluation, but with `AuthenticationLevel.basicLevels.signed` set to
+     * `FALSE` so that access controls are still respected. Therefore, if we get
+     * to this point in the code, and the argument is signed, but the
+     * authentication level has the `signed` field set to `FALSE`, we throw an
+     * `invalidSignature` error.
+     */
+    if (
+        ("signed" in argument)
+        && state.chainingArguments.authenticationLevel
+        && ("basicLevels" in state.chainingArguments.authenticationLevel)
+        && !state.chainingArguments.authenticationLevel.basicLevels.signed
+    ) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const logInfo = {
+            context: "arg",
+            host: remoteHostIdentifier,
+            aid: assn.id,
+            iid: printInvokeId(state.invokeId),
+            ap: stringifyDN(ctx, requestor ?? []),
+        };
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:invalid_signature", logInfo),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    // #endregion Signature validation
     const targetDN = data.object.rdnSequence;
     const rdn = getRDN(targetDN);
     if (!rdn) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:root_dse_may_not_be_added"),
-            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
+            namingViolationErrorData(ctx, assn, [], signErrors, state.chainingArguments.aliasDereferenced),
+            signErrors,
         );
     }
-    const user = state.chainingArguments.originator
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -253,6 +345,7 @@ async function addEntry (
         // If this entry is going to wind up in another DSA, it is up to that
         // DSA to determine if any schema is unrecognized.
         Boolean(data.targetSystem),
+        signErrors,
     );
 
     /**
@@ -266,8 +359,8 @@ async function addEntry (
      * subentry by checking that the `subentry` object class is present.
      */
     const isSubentry: boolean = objectClassesIndex.has(id_sc_subentry.toString());
-    const isSubschemaSubentry: boolean = isSubentry && objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
 
+    const isSubschemaSubentry: boolean = isSubentry && objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
         ? []
         : (await Promise.all(
@@ -293,7 +386,7 @@ async function addEntry (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? assn.authLevel,
+            state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,
@@ -333,6 +426,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -341,6 +435,7 @@ async function addEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -380,7 +475,7 @@ async function addEntry (
                 accessControlScheme,
                 acdfTuplesForSuperior,
                 user,
-                state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
                 targetDN.slice(0, -1),
                 isMemberOfGroup,
                 NAMING_MATCHER,
@@ -405,6 +500,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -420,6 +516,7 @@ async function addEntry (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
 
@@ -489,6 +586,7 @@ async function addEntry (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
 
@@ -511,6 +609,7 @@ async function addEntry (
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_to_add_entry"),
                     notAuthData,
+                    signErrors,
                 );
             }
         }
@@ -519,7 +618,14 @@ async function addEntry (
         // just return the true error: namingViolation.
         throw new errors.UpdateError(
             ctx.i18n.t("err:not_authz_to_add_entry"),
-            namingViolationErrorData(ctx, assn, [], state.chainingArguments.aliasDereferenced),
+            namingViolationErrorData(
+                ctx,
+                assn,
+                [],
+                signErrors,
+                state.chainingArguments.aliasDereferenced,
+            ),
+            signErrors,
         );
     }
     // This check has been removed because there might be times when you want to
@@ -557,6 +663,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -565,6 +672,7 @@ async function addEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -588,6 +696,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -596,6 +705,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const existing = await vertexFromDatabaseEntry(ctx, immediateSuperior, existing_dbe);
@@ -613,6 +723,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -621,6 +732,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const effectiveRelevantSubentries = existing.dse.admPoint?.administrativeRole.has(ID_AUTONOMOUS)
@@ -645,7 +757,7 @@ async function addEntry (
                 effectiveAccessControlScheme,
                 subordinateACDFTuples,
                 user,
-                state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
                 targetDN,
                 isMemberOfGroup,
                 NAMING_MATCHER,
@@ -669,6 +781,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -677,6 +790,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             } else {
                 /**
@@ -700,6 +814,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -708,6 +823,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -734,6 +850,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -742,6 +859,7 @@ async function addEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -791,6 +909,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -799,6 +918,7 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -834,6 +954,7 @@ async function addEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             securityError["&errorCode"],
@@ -842,12 +963,13 @@ async function addEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
     }
 
-        // NOTE: This does not actually check if targetSystem is the current DSA.
+    // NOTE: This does not actually check if targetSystem is the current DSA.
     // We also do not check if manageDSAIT is set. Even though that would seem
     // to contradict the use of targetSystem, but there's not really any problem
     // here using both.
@@ -859,6 +981,7 @@ async function addEntry (
             rdn,
             data.entry,
             data.targetSystem,
+            signErrors,
             state.chainingArguments.aliasDereferenced,
             {
                 timeLimitInMilliseconds: timeRemainingInMilliseconds,
@@ -874,6 +997,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -882,6 +1006,7 @@ async function addEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const result = establishOperationalBinding.decoderFor["&ResultType"]!(obResponse.result);
@@ -895,6 +1020,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -903,6 +1029,7 @@ async function addEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const sub2sup = hierarchicalOperationalBinding["&roleB"]!
@@ -915,6 +1042,7 @@ async function addEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -923,6 +1051,7 @@ async function addEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const obArgData = getOptionallyProtectedValue(obArg);
@@ -987,6 +1116,7 @@ async function addEntry (
                 obResponse.invokeId,
                 agreement,
                 sub2sup,
+                signErrors,
             );
         } catch (e) {
             ctx.db.operationalBinding.update({
@@ -1035,6 +1165,10 @@ async function addEntry (
                 entry_id: createdSubrId,
             },
         });
+        const signDSPResult: boolean = (
+            (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+            && assn.authorizedForSignedResults
+        );
         return {
             result: {
                 unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
@@ -1043,6 +1177,7 @@ async function addEntry (
                         undefined,
                         createSecurityParameters(
                             ctx,
+                            signDSPResult,
                             assn.boundNameAndUID?.dn,
                             id_opcode_addEntry,
                         ),
@@ -1078,6 +1213,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -1086,6 +1222,7 @@ async function addEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -1098,6 +1235,7 @@ async function addEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
@@ -1106,6 +1244,7 @@ async function addEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op) {
@@ -1188,6 +1327,8 @@ async function addEntry (
                 targetDN.slice(0, -1),
                 immediateSuperior,
                 state.chainingArguments.aliasDereferenced ?? false,
+                undefined,
+                signErrors,
             ) // INTENTIONAL_NO_AWAIT
                 .then(() => {
                     ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {
@@ -1211,6 +1352,59 @@ async function addEntry (
     }
 
     // TODO: Update shadows
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
+    const resultData: AddEntryResultData = new AddEntryResultData(
+        [],
+        createSecurityParameters(
+            ctx,
+            signResults,
+            assn.boundNameAndUID?.dn,
+            id_opcode_addEntry,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
+    const result: AddEntryResult = signResults
+        ? {
+            information: (() => {
+                const resultDataBytes = _encode_AddEntryResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            })(),
+        }
+        : {
+            information: {
+                unsigned: resultData,
+            },
+        };
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -1219,14 +1413,13 @@ async function addEntry (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_addEntry,
                     ),
                     undefined,
                 ),
-                _encode_AddEntryResult({
-                    null_: null,
-                }, DER),
+                _encode_AddEntryResult(result, DER),
             ),
         },
         stats: {

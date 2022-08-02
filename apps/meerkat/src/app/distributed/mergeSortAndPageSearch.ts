@@ -1,9 +1,25 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
-import { LDAPAssociation } from "../ldap/LDAPConnection";
-import { ASN1Element, DERElement, TRUE, FALSE, TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
 import type {
+    Context,
+    ClientAssociation,
+    SearchResultStatistics,
+    PartialOutcomeQualifierStatistics,
+} from "@wildboar/meerkat-types";
+import { LDAPAssociation } from "../ldap/LDAPConnection";
+import {
+    ASN1TagClass,
+    ASN1Element,
+    DERElement,
+    TRUE,
+    FALSE,
+    TRUE_BIT,
+    encodeUnsignedBigEndianInteger,
+    unpackBits,
+} from "asn1-ts";
+import { DER } from "asn1-ts/dist/node/functional";
+import * as $ from "asn1-ts/dist/node/functional";
+import {
     SearchResult,
+    _encode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import {
     SearchResultData_searchInfo,
@@ -23,7 +39,6 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import {
     EntryInformation,
-    _decode_EntryInformation,
     _encode_EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 import type {
@@ -40,6 +55,34 @@ import {
 import {
     SearchControlOptions_entryCount as entryCountBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import {
+    _encode_Name,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+import {
+    _encode_PartialOutcomeQualifier,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+import {
+    _encode_SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import {
+    _encode_DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    _encode_AlgorithmIdentifier,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
+
+export
+interface MergeSearchResultsReturn {
+    readonly encodedSearchResult: ASN1Element;
+    readonly resultStats: SearchResultStatistics;
+    readonly poqStats?: PartialOutcomeQualifierStatistics;
+}
 
 type ISearchInfo = { -readonly [K in keyof SearchResultData_searchInfo]: SearchResultData_searchInfo[K] };
 
@@ -248,12 +291,21 @@ function compareEntries (
  * from chaining, and merges them, sorts them, and paginates over them as the
  * user requests.
  *
+ * ### Implementation
+ *
+ * When pagination is used, results get encoded and stored in the database as
+ * BER encodings of `EntryInformation`. Since there could potentially be
+ * millions of entries in a page, it could be catastrophic on performance if
+ * every one were to be decoded just to be re-encoded to send to the user. To
+ * avoid this, this implementation _manually_ crafts a `SearchResult` from raw
+ * BER encodings concatenated together, including the BER-encoded entries.
+ *
  * @param ctx The context object
  * @param assn The client association
  * @param state The operation dispatcher state
  * @param searchState The search operation state
  * @param searchArgument The search argument data
- * @returns A SearchResult
+ * @returns An encoded SearchResult and related statistics.
  *
  * @function
  * @async
@@ -265,10 +317,14 @@ async function mergeSortAndPageSearch(
     state: OperationDispatcherState,
     searchState: SearchState,
     searchArgument: SearchArgumentData,
-): Promise<SearchResult> {
+): Promise<MergeSearchResultsReturn> {
     const resultSetsToReturn: SearchResult[] = [];
     let resultsToReturn: EntryInformation[] = [];
     const foundDN = getDistinguishedName(state.foundDSE);
+    const signResults: boolean = (
+        (searchArgument.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     // If there is no paging, we just return an arbitrary selection of the results that is less than the sizeLimit.
     if (!searchState.paging?.[1]) {
         const sizeLimit: number = searchArgument.serviceControls?.sizeLimit
@@ -299,6 +355,7 @@ async function mergeSortAndPageSearch(
                     [],
                     createSecurityParameters(
                         ctx,
+                        signResults,
                         assn.boundNameAndUID?.dn,
                         search["&operationCode"],
                     ),
@@ -308,17 +365,70 @@ async function mergeSortAndPageSearch(
                 ),
             },
         };
+        const poqStats = searchState.poq
+            ? getPartialOutcomeQualifierStatistics(searchState.poq)
+            : undefined;
         const totalResult: SearchResult = resultSetsToReturn.length
             ? {
                 unsigned: {
                     uncorrelatedSearchInfo: [
                         ...resultSetsToReturn,
+                        /**
+                         * This will be unsigned, but that's acceptable, because
+                         * the uncorrelatedSearchInfo as a whole will get signed.
+                         */
                         localResult,
                     ],
                 },
             }
             : localResult;
-        return totalResult;
+        const resultStats: SearchResultStatistics = {
+            altMatching: undefined,
+            numberOfResults: getEntryCount(totalResult),
+            uncorrelatedSearchInfo: [],
+        };
+
+        /**
+         * Using DER encoding will NOT actually recursively DER-encode this element.
+         * This is a bug in my ASN.1 compiler, where the selected codec does not
+         * recurse completely. Fortunately, this is actually good, because it means
+         * that the entries will not get re-ordered.
+         */
+        const unsignedReturnValue: MergeSearchResultsReturn = {
+            encodedSearchResult: _encode_SearchResult(totalResult, DER),
+            resultStats,
+            poqStats,
+        };
+
+        // if (signing not requested) return unsigned;
+        if (!signResults) {
+            return unsignedReturnValue;
+        }
+
+        const signableBytes = Buffer.from(_encode_SearchResult(totalResult, DER).toBytes().buffer);
+        const key = ctx.config.signing?.key;
+        if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+            return unsignedReturnValue;
+        }
+        const signingResult = generateSignature(key, signableBytes);
+        if (!signingResult) {
+            return unsignedReturnValue;
+        }
+        const [ sigAlg, sigValue ] = signingResult;
+        const unsigned = getOptionallyProtectedValue(totalResult);
+        return {
+            encodedSearchResult: _encode_SearchResult({
+                signed: new SIGNED(
+                    unsigned,
+                    sigAlg,
+                    unpackBits(sigValue),
+                    undefined,
+                    undefined,
+                ),
+            }, DER),
+            resultStats,
+            poqStats,
+        };
     }
     assert(searchState.paging);
     const entryCount: boolean = (searchArgument.searchControlOptions?.[entryCountBit] === TRUE_BIT);
@@ -335,6 +445,7 @@ async function mergeSortAndPageSearch(
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             search["&operationCode"],
         ),
@@ -433,63 +544,220 @@ async function mergeSortAndPageSearch(
             },
         });
     }
-    /* TODO: Because this could potentially decode thousands of entries just to
-     * eventually re-encode this result, you should manually encode a
-     * searchInfo and just concatenate all BER-encoded EntryInformation's as
-     * the `entries` field. This could potentially save a lot of computing
-     * power.
+
+    const poq = done
+        ? mergedResult.partialOutcomeQualifier
+        : new PartialOutcomeQualifier(
+            LimitProblem_sizeLimitExceeded,
+            mergedResult.partialOutcomeQualifier?.unexplored,
+            mergedResult.partialOutcomeQualifier?.unavailableCriticalExtensions,
+            mergedResult.partialOutcomeQualifier?.unknownErrors,
+            Buffer.from(searchState.paging[0], "base64"),
+            mergedResult.partialOutcomeQualifier?.overspecFilter,
+            mergedResult.partialOutcomeQualifier?.notification,
+            entryCount
+                ? {
+                    exact: await ctx.db.enqueuedSearchResult.count({
+                        where: {
+                            connection_uuid: assn.id,
+                            query_ref: searchState.paging![0],
+                        },
+                    }),
+                }
+                : undefined,
+        );
+    const sp = createSecurityParameters(
+        ctx,
+        signResults,
+        assn.boundNameAndUID?.dn,
+        search["&operationCode"],
+    );
+
+    // #region Less-decoding optimization.
+    /*
+        When you perform a search that is paginated, a page could be several
+        megabytes in size and/or contain millions of results. Repeatedly
+        encoding and decoding these results could be catastrophic to DSA
+        performance. Fortunately, we can manually construct a SearchResult
+        from concatenated buffers to avoid decoding the `entries` just to
+        re-encode them. This is pretty complicated, though.
+    */
+
+    const nameBuffer = (state.chainingArguments.aliasDereferenced && mergedResult.name)
+        ? Buffer.from(_encode_Name(mergedResult.name, DER).toBytes().buffer)
+        : Buffer.allocUnsafe(0);
+    const poqBuffer = poq
+        ? Buffer.from(
+            $._encode_explicit(ASN1TagClass.context, 2, () => _encode_PartialOutcomeQualifier, DER)(poq, DER)
+            .toBytes().buffer)
+        : Buffer.allocUnsafe(0);
+    const altMatchingBuffer = (mergedResult.altMatching !== undefined)
+        ? Buffer.from([ 0xA3, 0x03, 0x01, 0x01, 0xFF ]) // [3] TRUE
+        : Buffer.allocUnsafe(0);
+    const spBuffer = sp
+        ? Buffer.from(
+            $._encode_explicit(ASN1TagClass.context, 30, () => _encode_SecurityParameters, DER)(sp, DER)
+                .toBytes().buffer
+        )
+        : Buffer.allocUnsafe(0);
+    const performerBuffer = Buffer.from(
+        $._encode_explicit(ASN1TagClass.context, 29, () => _encode_DistinguishedName, DER)
+        (ctx.dsa.accessPoint.ae_title.rdnSequence, DER).toBytes().buffer);
+    const adBuffer = state.chainingArguments.aliasDereferenced
+        ? Buffer.from([ 0xBD, 0x03, 0x01, 0x01, 0xFF ]) // [29] TRUE
+        : Buffer.allocUnsafe(0);
+    let searchInfoLength: number = (
+        nameBuffer.length
+        + poqBuffer.length
+        + altMatchingBuffer.length
+        + spBuffer.length
+        + performerBuffer.length
+        + adBuffer.length
+    );
+    let resultsByteLength = 0;
+    for (const r of results) {
+        resultsByteLength += r.entry_info.length;
+    }
+    searchInfoLength += resultsByteLength;
+
+    const resultsInnerTagAndLengthBytes = (resultsByteLength >= 128)
+        ? (() => {
+            const lengthBytes = encodeUnsignedBigEndianInteger(resultsByteLength);
+            return Buffer.from([
+                0x31, // SET
+                0b1000_0000 | lengthBytes.length, // Definite long-form length
+                ...lengthBytes, // length
+            ]);
+        })()
+        : Buffer.from([ 0x31, resultsByteLength ]); // SET + Length;
+    const resultsInnerLength = (resultsByteLength + resultsInnerTagAndLengthBytes.length);
+    const resultsOuterTagAndLengthBytes = (resultsInnerLength >= 128)
+        ? (() => {
+            const lengthBytes = encodeUnsignedBigEndianInteger(resultsInnerLength);
+            return Buffer.from([
+                0xA0, // [0]
+                0b1000_0000 | lengthBytes.length, // Definite long-form length
+                ...lengthBytes, // length
+            ]);
+        })()
+        : Buffer.from([ 0xA0, resultsInnerLength ]); // [0] + Length;
+
+    searchInfoLength += resultsInnerTagAndLengthBytes.length;
+    searchInfoLength += resultsOuterTagAndLengthBytes.length;
+
+    // This is a SET type, so the components MUST be re-ordered for DER-encoding.
+
+    const searchInfoTLBytes = (searchInfoLength >= 128)
+        ? (() => {
+            const lengthBytes = encodeUnsignedBigEndianInteger(searchInfoLength);
+            return Buffer.from([
+                0x31, // SET
+                0b1000_0000 | lengthBytes.length, // Definite long-form length
+                ...lengthBytes, // length
+            ]);
+        })()
+        : Buffer.from([ 0x31, searchInfoLength ]); // SET + Length
+
+    const searchInfoBuffer = Buffer.concat([
+        searchInfoTLBytes,
+        nameBuffer,
+        resultsOuterTagAndLengthBytes,
+        resultsInnerTagAndLengthBytes,
+        ...results.map((r) => r.entry_info),
+        poqBuffer,
+        altMatchingBuffer,
+        adBuffer,
+        performerBuffer,
+        spBuffer,
+    ]);
+
+    // #endregion Less-decoding optimization.
+
+    const resultStats: SearchResultStatistics = {
+        altMatching: mergedResult.altMatching,
+        numberOfResults: results.length,
+        uncorrelatedSearchInfo: [],
+    };
+
+    const poqStats = poq
+        ? getPartialOutcomeQualifierStatistics(poq)
+        : undefined;
+
+    const unsignedReturnValue: MergeSearchResultsReturn = {
+        encodedSearchResult: (() => {
+            const el = new DERElement();
+            el.fromBytes(searchInfoBuffer);
+            return el;
+        })(),
+        resultStats,
+        poqStats,
+    };
+
+    if (!signResults) {
+        return unsignedReturnValue;
+    }
+
+    const key = ctx.config.signing?.key;
+    if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+        return unsignedReturnValue;
+    }
+    const signingResult = generateSignature(key, searchInfoBuffer);
+    if (!signingResult) {
+        return unsignedReturnValue;
+    }
+    const [ sigAlg, sigValue ] = signingResult;
+    const algIdBuffer = Buffer.from(_encode_AlgorithmIdentifier(sigAlg, DER).toBytes().buffer);
+    const sigValueTagAndLengthBytes = (sigValue.length + 1) >= 128
+        ? (() => {
+            const lengthBytes = encodeUnsignedBigEndianInteger(sigValue.length + 1);
+            return Buffer.from([
+                0x03, // BIT STRING
+                0b1000_0000 | lengthBytes.length, // Definite long-form length
+                ...lengthBytes, // length
+                0x00, // trailing bits determinant
+            ]);
+        })()
+        : Buffer.from([ 0x03, sigValue.length + 1, 0x00 ]); // BIT STRING + length + trailing bits determinant
+
+    searchInfoLength += (
+        searchInfoTLBytes.length
+        + algIdBuffer.length
+        + sigValueTagAndLengthBytes.length
+        + sigValue.length
+    );
+
+    const signedBuffer = Buffer.concat([
+        (searchInfoLength >= 128)
+            ? (() => {
+                const lengthBytes = encodeUnsignedBigEndianInteger(searchInfoLength);
+                return Buffer.from([
+                    0x30, // SEQUENCE
+                    0b1000_0000 | lengthBytes.length, // Definite long-form length
+                    ...lengthBytes, // length
+                ]);
+            })()
+            : Buffer.from([ 0x30, searchInfoLength ]), // SEQUENCE + length
+        searchInfoBuffer,
+        algIdBuffer,
+        sigValueTagAndLengthBytes, // ... and trailing bits determinant.
+        sigValue,
+    ]);
+    /**
+     * Getting to this code path with the CLI is possible like so:
+     *
+     * x500 dap search '' one --pageSize=10 --chainingProhibited
+     *
+     * ^Except you'll have to request target === signed, which currently means
+     * modifying the X.500 CLI.
      */
     return {
-        unsigned: {
-            searchInfo: new SearchResultData_searchInfo(
-                state.chainingArguments.aliasDereferenced
-                    ? mergedResult.name
-                    : undefined,
-                results.map((result) => {
-                    const el = new DERElement();
-                    el.fromBytes(result.entry_info);
-                    return _decode_EntryInformation(el);
-                }),
-                done
-                    ? mergedResult.partialOutcomeQualifier
-                    : new PartialOutcomeQualifier(
-                        LimitProblem_sizeLimitExceeded,
-                        mergedResult.partialOutcomeQualifier?.unexplored,
-                        mergedResult.partialOutcomeQualifier?.unavailableCriticalExtensions,
-                        mergedResult.partialOutcomeQualifier?.unknownErrors,
-                        Buffer.from(searchState.paging[0], "base64"),
-                        mergedResult.partialOutcomeQualifier?.overspecFilter,
-                        mergedResult.partialOutcomeQualifier?.notification,
-                        entryCount
-                            /**
-                             * TODO: Use `.count()` instead once this bug is
-                             * fixed: https://github.com/prisma/prisma/issues/11645
-                             */
-                            ? {
-                                exact: (await ctx.db.enqueuedSearchResult.findMany({
-                                    where: {
-                                        connection_uuid: assn.id,
-                                        query_ref: searchState.paging![0],
-                                    },
-                                    select: {
-                                        id: true,
-                                    },
-                                })).length,
-                            }
-                            : undefined,
-                    ),
-                mergedResult.altMatching,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    assn.boundNameAndUID?.dn,
-                    search["&operationCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        },
+        encodedSearchResult: (() => {
+            const el = new DERElement();
+            el.fromBytes(signedBuffer);
+            return el;
+        })(),
+        resultStats,
+        poqStats,
     };
 }
 

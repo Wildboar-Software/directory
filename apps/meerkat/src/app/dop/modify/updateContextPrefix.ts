@@ -91,6 +91,7 @@ import { strict as assert } from "assert";
  * @param uuid The UUID of the operational binding
  * @param oldAgreement The old hierarchical agreement
  * @param mod The update to the context prefix
+ * @param signErrors Whether to cryptographically sign errors
  *
  * @function
  * @async
@@ -101,6 +102,7 @@ async function updateContextPrefix (
     uuid: string,
     oldAgreement: HierarchicalAgreement,
     mod: SuperiorToSubordinateModification,
+    signErrors: boolean,
 ): Promise<void> {
 
     // Because we use the agreement's RDN to find the entry, it's critical that
@@ -114,24 +116,24 @@ async function updateContextPrefix (
     if (!oldCP) {
         throw new OperationalBindingError(
             ctx.i18n.t("err:could_not_find_cp", { uuid }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidBindingType,
-                    id_op_binding_hierarchical,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidBindingType,
+                id_op_binding_hierarchical,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
                     undefined,
                     undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
-                        undefined,
-                        operationalBindingError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    false,
-                    undefined,
+                    operationalBindingError["&errorCode"],
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                false,
+                undefined,
+            ),
+            signErrors,
         );
     }
 
@@ -140,24 +142,23 @@ async function updateContextPrefix (
     if (!currentOld) {
         throw new OperationalBindingError(
             ctx.i18n.t("err:could_not_find_supr", { uuid }),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidBindingType,
-                    id_op_binding_hierarchical,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidBindingType,
+                id_op_binding_hierarchical,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
                     undefined,
                     undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
-                        undefined,
-                        operationalBindingError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    false,
-                    undefined,
+                    operationalBindingError["&errorCode"],
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                false,
+                undefined,
+            ),
         );
     }
     while (

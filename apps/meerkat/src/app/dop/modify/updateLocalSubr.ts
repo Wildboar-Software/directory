@@ -60,6 +60,7 @@ import saveAccessPoint from "../../database/saveAccessPoint";
  * @param oldAgreement The old hierarchical agreement
  * @param newAgreement The new hierarchical agreement
  * @param sub2sup The `SubordinateToSuperior` argument
+ * @param signErrors Whether to cryptographically sign errors
  *
  * @function
  * @async
@@ -72,6 +73,7 @@ async function updateLocalSubr (
     oldAgreement: HierarchicalAgreement,
     newAgreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
+    signErrors: boolean,
 ): Promise<void> {
     // oldAgreement.immediateSuperior === newAgreement.immediateSuperior
     const superior = await dnToVertex(ctx, ctx.dit.root, newAgreement.immediateSuperior);
@@ -85,6 +87,7 @@ async function updateLocalSubr (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     securityError["&errorCode"],
@@ -93,29 +96,30 @@ async function updateLocalSubr (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (superior.dse.shadow || superior.dse.subentry || superior.dse.alias) {
         throw new errors.OperationalBindingError(
             ctx.i18n.t("err:parent_dse_not_permissible"),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_roleAssignment,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_roleAssignment,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
                     undefined,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        operationalBindingError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
+                    operationalBindingError["&errorCode"],
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
         );
     }
     // const oldDN = [ ...oldAgreement.immediateSuperior, oldAgreement.rdn ];
@@ -140,24 +144,24 @@ async function updateLocalSubr (
             } catch (e) {
                 throw new OperationalBindingError(
                     ctx.i18n.t("err:entry_already_exists_in_nssr"),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_invalidAgreement,
-                            id_op_binding_non_specific_hierarchical,
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        id_op_binding_non_specific_hierarchical,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                assn.boundNameAndUID?.dn,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            false,
-                            undefined,
+                            id_err_operationalBindingError,
                         ),
-                    },
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        false,
+                        undefined,
+                    ),
+                    signErrors,
                 );
             }
         }

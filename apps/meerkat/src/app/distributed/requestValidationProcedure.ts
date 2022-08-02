@@ -1,10 +1,12 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
+import { Context, ClientAssociation, MistypedArgumentError, UnknownOperationError, MistypedPDUError } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import * as errors from "@wildboar/meerkat-types";
-import { addSeconds } from "date-fns";
+import { addSeconds, differenceInSeconds } from "date-fns";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import { OPTIONALLY_PROTECTED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+import { OPTIONALLY_PROTECTED, SIGNED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+    _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import type {
     Code,
@@ -12,10 +14,19 @@ import type {
 import {
     ServiceControlOptions_manageDSAIT,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { ASN1Element, BOOLEAN, INTEGER, OPTIONAL, TRUE_BIT, FALSE } from "asn1-ts";
+import {
+    ASN1Element,
+    BOOLEAN,
+    INTEGER,
+    OPTIONAL,
+    TRUE_BIT,
+    FALSE,
+    BERElement,
+} from "asn1-ts";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
+    SecurityProblem_invalidSignature,
     SecurityProblem_noInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
@@ -25,10 +36,7 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-// import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
-// import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-// import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
@@ -38,8 +46,15 @@ import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSer
 import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
-import { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import {
+    AuthenticationLevel,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import {
+    AuthenticationLevel_basicLevels,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import {
+    SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import { DomainInfo } from "@wildboar/x500/src/lib/modules/DistributedOperations/DomainInfo.ta";
 import { Exclusions } from "@wildboar/x500/src/lib/modules/DistributedOperations/Exclusions.ta";
 import { OperationProgress } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
@@ -57,14 +72,54 @@ import { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import { strict as assert } from "assert";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { printInvokeId } from "../utils/printInvokeId";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+import { verifySIGNED } from "../pki/verifySIGNED";
+import { isArgumentSigned } from "../x500/isArgumentSigned";
+import DSPAssociation from "../dsp/DSPConnection";
+import {
+    _decode_AlgorithmIdentifier,
+} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import { compareDistinguishedName, getDateFromTime, isModificationOperation } from "@wildboar/x500";
+import {
+    CommonArguments,
+    _decode_CommonArguments,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import DAPAssociation from "../dap/DAPConnection";
+import {
+    AuthenticationLevel_basicLevels_level_none,
+    AuthenticationLevel_basicLevels_level_strong,
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import cloneChainingArgs from "../x500/cloneChainingArguments";
+import { isTrustedForIBRA } from "./isTrustedForIBRA";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
+
+function getCommonArguments (
+    opCode: Code,
+    arg: ASN1Element,
+): OPTIONAL<CommonArguments> {
+    if (!("local" in opCode)) {
+        return undefined;
+    }
+    const signed: boolean | undefined = isArgumentSigned(opCode, arg);
+    const unsignedElement = signed
+        ? (() => {
+            const firstElement = new BERElement()
+            firstElement.fromBytes(arg.value);
+            return firstElement;
+        })()
+        : arg;
+    return _decode_CommonArguments(unsignedElement);
+}
 
 // ChainingArguments ::= SET {
 //     originator                 [0]  DistinguishedName OPTIONAL,
@@ -115,8 +170,8 @@ function createChainingArgumentsFromDUA (
     assn: ClientAssociation,
     operationCode: Code,
     operationArgument: ASN1Element,
-    authenticationLevel: AuthenticationLevel,
-    uniqueIdentifier?: UniqueIdentifier,
+    authenticationLevel: AuthenticationLevel, // TODO: Unnecessary argument.
+    uniqueIdentifier?: UniqueIdentifier, // TODO: Unnecessary argument.
 ): ChainingArguments {
     let originator: OPTIONAL<DistinguishedName> = assn.boundNameAndUID?.dn;
     let targetObject: OPTIONAL<DistinguishedName>;
@@ -128,6 +183,11 @@ function createChainingArgumentsFromDUA (
     let referenceType: OPTIONAL<ReferenceType>;
     let info: OPTIONAL<DomainInfo>;
     let timeLimit: OPTIONAL<Time>;
+    /**
+     * Technically, the specification only says to copy the `target` and
+     * `errorProtection` parameters from the DAP argument's `securityParameters`.
+     * But I don't see any problem with just copying the whole thing.
+     */
     let securityParameters: OPTIONAL<SecurityParameters>;
     let entryOnly: OPTIONAL<BOOLEAN>;
     let exclusions: OPTIONAL<Exclusions>;
@@ -145,8 +205,12 @@ function createChainingArgumentsFromDUA (
      * connection classes instead.
      */
     // if (compareCode(operationCode, abandon["&operationCode"]!)) {
+    //     // Hack for avoiding unnecessary decoding.
+    //     signed = (operationArgument.tagNumber === 0);
     // }
     // else if (compareCode(operationCode, administerPassword["&operationCode"]!)) {
+    //     // Hack for avoiding unnecessary decoding.
+    //     signed = (operationArgument.tagNumber === 0);
     // }
     // else
     if (compareCode(operationCode, addEntry["&operationCode"]!)) {
@@ -163,6 +227,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -186,6 +251,8 @@ function createChainingArgumentsFromDUA (
         ));
     }
     // else if (compareCode(operationCode, changePassword["&operationCode"]!)) {
+    //     // Hack for avoiding unnecessary decoding.
+    //     signed = (operationArgument.tagNumber === 0);
     // }
     else if (compareCode(operationCode, compare["&operationCode"]!)) {
         const arg = compare.decoderFor["&ArgumentType"]!(operationArgument);
@@ -201,6 +268,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -234,6 +302,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -267,6 +336,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -300,6 +370,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -333,6 +404,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -366,6 +438,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -399,6 +472,7 @@ function createChainingArgumentsFromDUA (
         exclusions = data.exclusions;
         entryOnly = data.entryOnly;
         referenceType = data.referenceType;
+        securityParameters = data.securityParameters;
         const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
         if (manageDSAIT) {
             operationProgress = new OperationProgress(
@@ -446,6 +520,110 @@ function createChainingArgumentsFromDUA (
     );
 }
 
+function getEffectiveRequester (
+    trustClientDSAForIBRA: boolean,
+    dapSignatureValid: boolean,
+    chainingArgsRequester?: DistinguishedName,
+    dapSignatureEECertSubject?: DistinguishedName,
+): DistinguishedName | undefined {
+    if (dapSignatureValid && dapSignatureEECertSubject) {
+        return dapSignatureEECertSubject;
+    }
+    if (trustClientDSAForIBRA) {
+        return chainingArgsRequester;
+    }
+    return undefined;
+}
+
+function getEffectiveAuthLevel (
+    assn: ClientAssociation,
+    dapSecurityParameters: OPTIONAL<SecurityParameters>,
+    chainingArgsAuthLevel: AuthenticationLevel,
+    trustClientDSAForIBRA: boolean,
+    dapSignatureValid: boolean,
+): AuthenticationLevel {
+    if (assn instanceof DAPAssociation) {
+        if (!("basicLevels" in assn.authLevel)) {
+            return assn.authLevel;
+        }
+        return {
+            basicLevels: new AuthenticationLevel_basicLevels(
+                assn.authLevel.basicLevels.level,
+                assn.authLevel.basicLevels.localQualifier,
+                dapSignatureValid,
+            ),
+        };
+    }
+    // Otherwise, the association must be a DSP association.
+    if (trustClientDSAForIBRA) {
+        // Return the lowest auth level and local qualifier from the DSA's
+        // asserted requester auth level and the DSA's actual auth level.
+        /**
+         * The rationale for this behavior is that, if access control depends
+         * upon strong authentication, but the operation is chained via a DSA
+         * that is only using a password to authenticate, the "chain of
+         * authentication" is only as veritable as its weakest link.
+         */
+        if (
+            ("basicLevels" in assn.authLevel)
+            && ("basicLevels" in chainingArgsAuthLevel)
+            && (assn.authLevel.basicLevels.level < chainingArgsAuthLevel.basicLevels.level)
+        ) {
+            return {
+                basicLevels: new AuthenticationLevel_basicLevels(
+                    Math.min(
+                        assn.authLevel.basicLevels.level,
+                        chainingArgsAuthLevel.basicLevels.level,
+                    ),
+                    Math.min(
+                        assn.authLevel.basicLevels.level,
+                        chainingArgsAuthLevel.basicLevels.level,
+                    ),
+                    chainingArgsAuthLevel.basicLevels.signed,
+                ),
+            };
+        }
+        return chainingArgsAuthLevel;
+    }
+    // Otherwise, we rely on signature-based requestor authentication.
+    const signedArgumentEquivalentToStrongAuth: boolean = !!(
+        dapSignatureValid
+        && dapSecurityParameters?.time
+        && dapSecurityParameters.random
+    );
+    let localQualifier: number | undefined;
+    if ("basicLevels" in assn.authLevel) {
+        if ("basicLevels" in chainingArgsAuthLevel) {
+            localQualifier = Math.min(
+                Number(assn.authLevel.basicLevels.localQualifier ?? 0),
+                Number(chainingArgsAuthLevel.basicLevels.localQualifier),
+            );
+        } else {
+            localQualifier = assn.authLevel.basicLevels.localQualifier
+                ? Number(assn.authLevel.basicLevels.localQualifier)
+                : undefined;
+        }
+    } else if ("basicLevels" in chainingArgsAuthLevel) { // ... but not in assn.authLevel.
+        localQualifier = 0;
+    } else { // Otherwise basicLevels is not used anywhere.
+        return chainingArgsAuthLevel;
+    }
+    return {
+        basicLevels: new AuthenticationLevel_basicLevels(
+            signedArgumentEquivalentToStrongAuth
+                ? (("basicLevels" in chainingArgsAuthLevel)
+                    ? Math.min(
+                        AuthenticationLevel_basicLevels_level_strong,
+                        Math.max(chainingArgsAuthLevel.basicLevels.level, 0),
+                    )
+                    : AuthenticationLevel_basicLevels_level_strong)
+                : AuthenticationLevel_basicLevels_level_none,
+            localQualifier,
+            dapSignatureValid,
+        ),
+    };
+}
+
 /**
  * @summary The Request Validation Procedure, defined in ITU Recommendation X.518.
  * @description
@@ -455,6 +633,10 @@ function createChainingArgumentsFromDUA (
  *
  * Note: this is only used for DAP, LDAP, and DSP requests. DOP and DISP bypass
  * this procedure.
+ *
+ * NOTE: That the authenticationLevel provided by the bound DSA is trusted by
+ * fiat. There is no way for this DSA to verify that, say, strong authentication
+ * was used in the original DAP association.
  *
  * @param ctx The context object
  * @param assn The client association
@@ -469,15 +651,23 @@ function createChainingArgumentsFromDUA (
  */
 export
 async function requestValidationProcedure (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     req: Request,
     alreadyChained: boolean,
-    authenticationLevel: AuthenticationLevel,
-    uniqueIdentifier?: UniqueIdentifier,
-): Promise<Chain> {
-    assert(req.opCode);
-    assert(req.argument);
+    authenticationLevel: AuthenticationLevel, // TODO: Unnecessary argument.
+    uniqueIdentifier?: UniqueIdentifier, // TODO: Unnecessary argument.
+): Promise<[ Chain, CommonArguments? ]> {
+    if (!req.opCode) {
+        throw new UnknownOperationError();
+    }
+    // All DAP and DSP operations are defined with the "local" alternative.
+    if (!("local" in req.opCode)) {
+        throw new UnknownOperationError();
+    }
+    if (!req.argument) {
+        throw new MistypedPDUError();
+    }
     if (ctx.dsa.hibernatingSince || ctx.dsa.sentinelTriggeredHibernation) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:hibernating"),
@@ -486,6 +676,26 @@ async function requestValidationProcedure (
                 [],
                 undefined, // Intentionally not including more information.
                 undefined,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+    if (!isModificationOperation(req.opCode) && ctx.config.bulkInsertMode) {
+        ctx.log.error(ctx.i18n.t("err:bulk_insert_mode_no_read"));
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:bulk_insert_mode_no_read"),
+            new ServiceErrorData(
+                ServiceProblem_busy,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    false,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
                 undefined,
                 undefined,
             ),
@@ -502,7 +712,7 @@ async function requestValidationProcedure (
                 authenticationLevel,
                 uniqueIdentifier,
             );
-            return {
+            return { // NOTE: This MUST be unsigned. See a0ada54c-95ad-41f0-9676-4427426e897a.
                 unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                     chainingArguments,
                     req.argument!,
@@ -512,8 +722,197 @@ async function requestValidationProcedure (
     const unsigned = getOptionallyProtectedValue(hydratedArgument);
     const {
         chainedArgument,
-        // argument,
+        argument, // TODO: rename "dapArgument"
     } = unsigned;
+
+    const commonArgs = getCommonArguments(req.opCode, argument);
+    if ((commonArgs?.aliasedRDNs ?? 0) < 0) {
+        throw new MistypedArgumentError(ctx.i18n.t("err:aliased_rdns_lt0"));
+    }
+    const securityParams = commonArgs?.securityParameters;
+    const signErrors: boolean = (
+        assn.authorizedForSignedErrors
+        && (securityParams?.errorProtection === ErrorProtectionRequest_signed)
+    );
+    const namingMatcher = getNamingMatcherGetter(ctx);
+    /**
+     * If the requestor does not match the bound DN, throw an error, per ITU
+     * Recommendation X.511 (2019), Section 7.3.
+     */
+    if (
+        (assn instanceof DAPAssociation)
+        && commonArgs?.requestor
+        && assn.boundNameAndUID?.dn
+        && !compareDistinguishedName(
+            assn.boundNameAndUID.dn,
+            commonArgs.requestor,
+            namingMatcher,
+        )
+    ) { // If requestor does not match the bound DN...
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_requestor_and_bound_dn"));
+    }
+    if (
+        // This only needs to be checked for DSP associations
+        (assn instanceof DSPAssociation)
+        && chainedArgument.originator
+        && commonArgs?.requestor
+        && !compareDistinguishedName(
+            chainedArgument.originator,
+            commonArgs.requestor,
+            namingMatcher,
+        )
+    ) { // If the originator does not match the requestor...
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_requestor_and_originator"));
+    }
+    if (
+        // This only needs to be checked for DSP associations
+        (assn instanceof DSPAssociation)
+        && chainedArgument.originator
+        && commonArgs?.securityParameters?.certification_path
+        && !compareDistinguishedName(
+            chainedArgument.originator,
+            commonArgs
+                .securityParameters
+                .certification_path
+                .userCertificate
+                .toBeSigned
+                .subject
+                .rdnSequence,
+            namingMatcher,
+        )
+    ) {
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_originator_and_sec_params_cert_subject"));
+    }
+    if (
+        commonArgs?.requestor
+        && commonArgs?.securityParameters?.certification_path
+        && !compareDistinguishedName(
+            commonArgs.requestor,
+            commonArgs
+                .securityParameters
+                .certification_path
+                .userCertificate
+                .toBeSigned
+                .subject
+                .rdnSequence,
+            namingMatcher,
+        )
+    ) {
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_requestor_and_sec_params_cert_subject"));
+    }
+    if (
+        // This only needs to be checked for DSP associations
+        (assn instanceof DSPAssociation)
+        // ...and only if this DSA's AE-title has been configured.
+        && (ctx.dsa.accessPoint.ae_title.rdnSequence.length > 0)
+        && chainedArgument.securityParameters?.name
+        && !compareDistinguishedName(
+            chainedArgument.securityParameters.name,
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            namingMatcher,
+        )
+    ) { // If securityParameters.name does not match this DSA's name...
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_sec_params_name_and_this_dsa"));
+    }
+    if (
+        commonArgs?.securityParameters?.operationCode
+        && (
+            !("local" in commonArgs.securityParameters.operationCode)
+            || (
+                Number(commonArgs.securityParameters.operationCode.local)
+                !== Number(req.opCode.local)
+            )
+        )
+    ) {
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_sec_params_opcode_common_args"));
+    }
+    if (
+        chainedArgument?.securityParameters?.operationCode
+        && (
+            !("local" in chainedArgument.securityParameters.operationCode)
+            || (
+                Number(chainedArgument.securityParameters.operationCode.local)
+                !== Number(req.opCode.local)
+            )
+        )
+    ) {
+        throw new MistypedArgumentError(
+            ctx.i18n.t("err:mismatch_sec_params_opcode_chaining_args"));
+    }
+    const secureTime = chainedArgument.securityParameters?.time
+        ? getDateFromTime(chainedArgument.securityParameters.time)
+        : undefined;
+    const now = new Date();
+    const replayWindow = 60; // TODO: Make configurable.
+    if (
+        secureTime
+        && (Math.abs(differenceInSeconds(secureTime, now)) > replayWindow)
+    ) {
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:replay"),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+            ),
+            signErrors,
+        );
+    }
+    let authLevelSigned: boolean = false;
+    if (isArgumentSigned(req.opCode, argument)) {
+        const signedArgElements = argument.sequence;
+        const tbsElement = signedArgElements[0];
+        const sigAlgElement = signedArgElements[1];
+        const sigValueElement = signedArgElements[2];
+        if (
+            !tbsElement
+            || !sigAlgElement
+            || !sigValueElement
+            || !securityParams?.certification_path
+        ) {
+            throw new MistypedArgumentError();
+        }
+        const certPath = securityParams.certification_path;
+        const sigAlg = _decode_AlgorithmIdentifier(sigAlgElement);
+        try {
+            await verifySIGNED(
+                ctx,
+                assn,
+                certPath,
+                req.invokeId,
+                false,
+                new SIGNED(
+                    tbsElement,
+                    sigAlg,
+                    sigValueElement.bitString,
+                    undefined,
+                    undefined,
+                ),
+                () => tbsElement,
+                // tbsElement,
+                signErrors,
+            );
+            authLevelSigned = true;
+        } catch (e) {
+            // TODO: Log the error, but don't throw it yet.
+        }
+    }
+
     if (
         chainedArgument.targetObject
         && (chainedArgument.operationProgress?.nextRDNToBeResolved !== undefined)
@@ -530,6 +929,7 @@ async function requestValidationProcedure (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -538,10 +938,29 @@ async function requestValidationProcedure (
                 chainedArgument.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
+    // This code path will only be taken via DSP, since converting the DAP
+    // request to its chained equivalent will not produce a signed DSP request.
+    // a0ada54c-95ad-41f0-9676-4427426e897a
     if ("signed" in hydratedArgument) {
-        // TODO: Validate signature.
+        const certPath = hydratedArgument
+            .signed
+            .toBeSigned
+            .chainedArgument
+            .securityParameters
+            ?.certification_path;
+        await verifySIGNED(
+            ctx,
+            assn,
+            certPath,
+            req.invokeId,
+            false,
+            hydratedArgument.signed,
+            _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+            signErrors,
+        );
     }
     if (alreadyChained) { // Satisfies all requirements of X.518 (2016), Section 17.3.3.3.
         chainedArgument.traceInformation.push(new TraceItem(
@@ -562,6 +981,7 @@ async function requestValidationProcedure (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -570,6 +990,7 @@ async function requestValidationProcedure (
                 chainedArgument.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (chainedArgument.operationIdentifier) {
@@ -584,7 +1005,108 @@ async function requestValidationProcedure (
             invokeID: printInvokeId(req.invokeId),
         });
     }
-    return hydratedArgument;
+    if (assn instanceof DAPAssociation) {
+        if (
+            chainedArgument.authenticationLevel
+            && ("basicLevels" in chainedArgument.authenticationLevel)
+            && authLevelSigned
+        ) {
+            return [
+                {
+                    unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                        cloneChainingArgs(chainedArgument, {
+                            authenticationLevel: {
+                                basicLevels: new AuthenticationLevel_basicLevels(
+                                    chainedArgument.authenticationLevel.basicLevels.level,
+                                    chainedArgument.authenticationLevel.basicLevels.localQualifier,
+                                    authLevelSigned,
+                                ),
+                            },
+                        }),
+                        argument,
+                    ),
+                },
+                commonArgs,
+            ];
+        }
+        return [ hydratedArgument, commonArgs ];
+    }
+    // Everything beyond this point is determining the "effective" authentication
+    // level, requester, and unique identifier, for the purposes of access control,
+    // using either Identity-Based Requester Authentication (IBRA), or
+    // Signature-Based Requester Authentication (SBRA), as defined in ITU
+    // Recommendation X.518 (2019), Section 22.1.
+    if (
+        (assn instanceof DSPAssociation)
+        && ("basicLevels" in assn.authLevel)
+        && (assn.authLevel.basicLevels.level <= AuthenticationLevel_basicLevels_level_none)
+    ) {
+        /**
+         * If the client DSA itself is not authenticated, we can't trust it for
+         * Identity-Based Requester Authentication (IBRA), so we just blank out
+         * the access-control-sensitive fields and set the auth level to none.
+         */
+        const effectiveChainingArguments: ChainingArguments = cloneChainingArgs(chainedArgument, {
+            originator: undefined,
+            authenticationLevel: UNTRUSTED_REQ_AUTH_LEVEL,
+            uniqueIdentifier: undefined,
+        });
+        return [ {
+            unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                effectiveChainingArguments,
+                argument,
+            ),
+        }, commonArgs ];
+    }
+    const trustClientDSAForIBRA: boolean = assn.boundNameAndUID
+        ? isTrustedForIBRA(ctx, assn.boundNameAndUID.dn)
+        : false;
+    const effectiveAuthLevel = getEffectiveAuthLevel(
+        assn,
+        commonArgs?.securityParameters,
+        /**
+         * ITU Recommendation X.518 (2019), Section 10.3 states that, if the
+         * `authenticationLevel` component is not present, anonymous auth should
+         * be assumed.
+         */
+        chainedArgument.authenticationLevel
+            ?? UNTRUSTED_REQ_AUTH_LEVEL,
+        trustClientDSAForIBRA,
+        authLevelSigned,
+    );
+    const effectiveOriginator = getEffectiveRequester(
+        trustClientDSAForIBRA,
+        authLevelSigned,
+        chainedArgument.originator,
+        commonArgs
+            ?.securityParameters
+            ?.certification_path
+            ?.userCertificate
+            .toBeSigned
+            .subject
+            .rdnSequence,
+    );
+    /**
+     * The "effective" uniqueIdentifier must be determined, because it is
+     * relevant for access control purposes.
+     */
+    const effectiveUniqueIdentifier = trustClientDSAForIBRA
+        ? chainedArgument?.uniqueIdentifier
+        : undefined;
+    const effectiveChainingArguments: ChainingArguments = cloneChainingArgs(chainedArgument, {
+        originator: effectiveOriginator,
+        authenticationLevel: effectiveAuthLevel,
+        uniqueIdentifier: effectiveUniqueIdentifier,
+    });
+    return [
+        {
+            unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                effectiveChainingArguments,
+                argument,
+            ),
+        },
+        commonArgs,
+    ];
 }
 
 export default requestValidationProcedure;

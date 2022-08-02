@@ -1,4 +1,4 @@
-import { ServiceError } from "@wildboar/meerkat-types";
+import { ServiceError, ClientAssociation } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import type { OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
@@ -16,6 +16,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
 import {
     TerminateOperationalBindingArgumentData,
+    _encode_TerminateOperationalBindingArgumentData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgumentData.ta";
 import {
     terminateOperationalBinding,
@@ -31,6 +32,7 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import { generateSIGNED } from "../pki/generateSIGNED";
 
 /**
  * @summary Notifies another DSA about a termination of an operational binding.
@@ -40,6 +42,7 @@ import {
  * binding.
  *
  * @param ctx The context object
+ * @param assn The client association
  * @param targetSystem The access point of the other affected DSA
  * @param bindingType The object identifier of the binding type
  * @param bindingID The operational binding ID
@@ -52,13 +55,16 @@ import {
 export
 async function terminateByTypeAndBindingID (
     ctx: MeerkatContext,
+    assn: ClientAssociation,
     targetSystem: AccessPoint,
     bindingType: OBJECT_IDENTIFIER,
     bindingID: OperationalBindingID,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<ResultOrError> {
     const conn = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         tlsOptional: ctx.config.chaining.tlsOptional,
+        signErrors,
     });
     if (!conn) {
         throw new ServiceError(
@@ -68,13 +74,15 @@ async function terminateByTypeAndBindingID (
                 [],
                 createSecurityParameters(
                     ctx,
-                    undefined,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"]
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
             ),
+            signErrors,
         );
     }
     const data = new TerminateOperationalBindingArgumentData(
@@ -84,9 +92,17 @@ async function terminateByTypeAndBindingID (
         undefined,
         undefined,
     );
-    const arg: TerminateOperationalBindingArgument = {
+    const unsignedArg: TerminateOperationalBindingArgument = {
         unsigned: data,
     };
+    const signArgument: boolean = true; // TODO: Make configurable.
+    if (!signArgument) {
+        return conn.writeOperation({
+            opCode: terminateOperationalBinding["&operationCode"]!,
+            argument: _encode_TerminateOperationalBindingArgument(unsignedArg, DER),
+        });
+    }
+    const arg = generateSIGNED(ctx, data, _encode_TerminateOperationalBindingArgumentData);
     return conn.writeOperation({
         opCode: terminateOperationalBinding["&operationCode"]!,
         argument: _encode_TerminateOperationalBindingArgument(arg, DER),

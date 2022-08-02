@@ -1,0 +1,25 @@
+{{- if eq (.Values.networkPolicyEnabled | toString) "true" }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: "{{ include "meerkat-dsa.fullname" . }}-directory-netpol"
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "meerkat-dsa.selectorLabels" . | nindent 6 }}
+  ingress:
+  {{- if .Values.networkPolicyIngressOverride }}
+  {{- .Values.networkPolicyIngressOverride | toYaml | nindent 2 }}
+  {{- else }}
+  - {}
+  {{- end }}
+  egress:
+  {{- if .Values.networkPolicyEgressOverride }}
+  {{- .Values.networkPolicyEgressOverride | toYaml | nindent 2 }}
+  {{- else }}
+  # Allows all egress, which might be necessary for accessing the DBMS, OCSP,
+  # remote CRLs, and chaining to other DSAs.
+  - {}
+  {{- end }}
+{{- end }}

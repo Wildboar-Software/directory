@@ -5,7 +5,6 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as net from "net";
 import * as tls from "tls";
-import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
@@ -34,6 +33,7 @@ import loadMatchingRules from "./init/loadMatchingRules";
 import loadContextTypes from "./init/loadContextTypes";
 import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
 import loadNameForms from "./init/loadNameForms";
+import { loadDSARelationships } from "./init/loadDSARelationships";
 import ctx, { MeerkatContext } from "./ctx";
 import terminate from "./dop/terminateByID";
 import { differenceInMilliseconds, differenceInMinutes } from "date-fns";
@@ -43,14 +43,17 @@ import {
 } from "./constants";
 import createDatabaseReport from "./telemetry/createDatabaseReport";
 import semver from "semver";
-import { createPrivateKey } from "crypto";
-import decodePkiPathFromPEM from "./utils/decodePkiPathFromPEM";
 import isDebugging from "is-debugging";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 import { randomUUID } from "crypto";
 import { flatten } from "flat";
 import { getServerStatistics } from "./telemetry/getServerStatistics";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback";
+import csurf from "csurf";
+import cookieParser from "cookie-parser";
+import { parseFormData } from "./admin/parseFormData";
+import { applyXSRFCookie } from "./admin/applyXSRFCookie";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -569,7 +572,10 @@ function handleIDM (
         });
 
         try {
-            const idm = new IDMConnection(c, ctx.config.tls);
+            const idm = new IDMConnection(c, {
+                ...ctx.config.tls,
+                rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
+            });
             attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, startTimes);
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
@@ -781,30 +787,23 @@ async function main (): Promise<void> {
     ctx.db.enqueuedListResult.deleteMany().then().catch();
     ctx.db.enqueuedSearchResult.deleteMany().then().catch();
 
-    if (
-        process.env.MEERKAT_SIGNING_CERT_CHAIN
-        && process.env.MEERKAT_SIGNING_KEY
-    ) {
-        const chainFile = await fs.readFile(process.env.MEERKAT_SIGNING_CERT_CHAIN, { encoding: "utf-8" });
-        const keyFile = await fs.readFile(process.env.MEERKAT_SIGNING_KEY, { encoding: "utf-8" });
-        const pkiPath = decodePkiPathFromPEM(chainFile);
-        const dsaCert = pkiPath[pkiPath.length - 1];
-        if (!dsaCert) {
-            ctx.log.warn(ctx.i18n.t("log:cert_chain_no_certificates", {
-                envvar: process.env.MEERKAT_SIGNING_CERT_CHAIN,
-            }));
-            process.exit(1);
-        }
-        ctx.config.signing = {
-            key: createPrivateKey({
-                key: keyFile,
-                format: "pem",
-            }),
-            certPath: pkiPath,
-        };
-        ctx.dsa.accessPoint.ae_title.rdnSequence.push(...dsaCert.toBeSigned.subject.rdnSequence);
-    } else {
+    const signingCertPath = ctx.config.signing.certPath;
+
+    if (signingCertPath && signingCertPath.length === 0) {
+        ctx.log.warn(ctx.i18n.t("log:cert_chain_no_certificates", {
+            envvar: process.env.MEERKAT_SIGNING_CERTS_CHAIN_FILE,
+        }));
+        process.exit(1);
+    }
+
+    if (!signingCertPath || !ctx.config.signing?.key) {
         ctx.log.warn(ctx.i18n.t("log:no_dsa_keypair"));
+    } else {
+        const dsaCert = signingCertPath[signingCertPath.length - 1];
+        // Yes, this is where the DSA's AE-Title is set.
+        ctx.dsa.accessPoint.ae_title.rdnSequence = [
+            ...dsaCert.toBeSigned.subject.rdnSequence,
+        ];
     }
 
     await loadDIT(ctx);
@@ -824,6 +823,8 @@ async function main (): Promise<void> {
     ctx.log.debug(ctx.i18n.t("log:loaded_name_forms"));
     await loadObjectIdentifierNames(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_oid_names"));
+    await loadDSARelationships(ctx);
+    ctx.log.debug(ctx.i18n.t("log:loaded_dsa_relationships"));
 
     if (process.env.MEERKAT_INIT_JS) {
         const importPath = (os.platform() === "win32")
@@ -856,6 +857,7 @@ async function main (): Promise<void> {
 
     const tlsOptions: tls.TlsOptions = {
         ...ctx.config.tls,
+        rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
         enableTrace: isDebugging,
     };
 
@@ -890,6 +892,7 @@ async function main (): Promise<void> {
                 e: err.message,
             }));
         });
+        idmsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));
         idmsServer.listen(ctx.config.idms.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "IDMS",
@@ -914,6 +917,7 @@ async function main (): Promise<void> {
         )
     ) {
         const ldapsServer = tls.createServer(tlsOptions, handleLDAP(ctx, startTimes));
+        ldapsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));
         ldapsServer.listen(ctx.config.ldaps.port, async () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "LDAPS",
@@ -928,6 +932,20 @@ async function main (): Promise<void> {
         // See: https://github.com/nestjs/nest/issues/671
         const app = await NestFactory.create<NestExpressApplication>(AppModule, {
             logger: isDebugging ? undefined : false,
+            httpsOptions: ctx.config.webAdmin.useTLS
+                ? {
+                    ca: ctx.config.tls.ca,
+                    cert: ctx.config.tls.cert,
+                    key: ctx.config.tls.key,
+                    pfx: ctx.config.tls.pfx,
+                    ciphers: ctx.config.tls.ciphers,
+                    honorCipherOrder: ctx.config.tls.honorCipherOrder,
+                    crl: ctx.config.tls.crl,
+                    passphrase: ctx.config.tls.passphrase,
+                    rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
+                    requestCert: ctx.config.tls.requestCert,
+                }
+                : undefined,
         });
         app.useStaticAssets(path.join(__dirname, "assets", "static"));
         app.setBaseViewsDir(path.join(__dirname, "assets", "views"));
@@ -937,9 +955,18 @@ async function main (): Promise<void> {
             skipMissingProperties: false,
             forbidNonWhitelisted: true,
         }));
+        app.use(cookieParser()); // Needed by csurf.
+        app.use(parseFormData);
+        app.use(csurf({
+            cookie: {
+                sameSite: "strict",
+                httpOnly: true,
+            },
+        }));
+        app.use(applyXSRFCookie);
         await app.listen(ctx.config.webAdmin.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
-                protocol: "HTTP",
+                protocol: "HTTP", // TODO: "HTTPS" if TLS enabled.
                 port: ctx.config.webAdmin.port,
             }));
         });
@@ -969,6 +996,8 @@ async function main (): Promise<void> {
             }
         }, 300000);
     }
+
+    ctx.log.info(ctx.i18n.t("log:docs"));
 
     if (versionSlug) {
         checkForUpdates(ctx, versionSlug).catch();
@@ -1017,8 +1046,6 @@ async function main (): Promise<void> {
             time: ob.terminated_time.toISOString(),
         }));
     });
-
-    ctx.log.warn(ctx.i18n.t("log:beta"));
 
     // This is done here to handle concurrency.
     setInterval(async () => {

@@ -1,13 +1,14 @@
-import type {
+import {
     ClientAssociation,
     Vertex,
     WithRequestStatistics,
     WithOutcomeStatistics,
     RequestStatistics,
     OPCR,
+    UnknownOperationError,
 } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import type DSPAssociation from "../dsp/DSPConnection";
+import DSPAssociation from "../dsp/DSPConnection";
 import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import {
     ChainingArguments,
@@ -21,9 +22,11 @@ import {
     _encode_SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import {
+    ReadArgument, _encode_ReadArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+import {
     SearchResult,
     _decode_SearchResult,
-    _encode_SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import * as errors from "@wildboar/meerkat-types";
 import requestValidationProcedure from "./requestValidationProcedure";
@@ -37,7 +40,7 @@ import {
     TraceItem,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import nrcrProcedure from "./nrcrProcedure";
-import { ASN1TagClass, TRUE_BIT, ASN1Element } from "asn1-ts";
+import { TRUE_BIT, ASN1Element } from "asn1-ts";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
@@ -76,9 +79,6 @@ import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import {
-    _encode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { SearchState } from "./search_i";
 import { ChainingResults } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
@@ -104,9 +104,6 @@ import getFilterStatistics from "../telemetry/getFilterStatistics";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
 import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
-import getSearchResultStatistics from "../telemetry/getSearchResultStatistics";
-import getListResultStatistics from "../telemetry/getListResultStatistics";
-import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
 import { BER } from "asn1-ts/dist/node/functional";
@@ -116,6 +113,16 @@ import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
 import mergeSortAndPageList from "./mergeSortAndPageList";
 import { SearchResultData_searchInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+import { signChainedResult } from "../pki/signChainedResult";
+import { addSeconds } from "date-fns";
+import { randomInt } from "crypto";
+import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 
 export
 type SearchResultOrError = {
@@ -204,12 +211,19 @@ class OperationDispatcher {
     ): Promise<OperationDispatcherReturn> {
         assert(req.opCode);
         assert(req.argument);
+        const signDSPResult: boolean = (
+            (assn instanceof DSPAssociation) // The outer signature will only be used for DSP, not DAP.
+            && (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+            && assn.authorizedForSignedResults
+        );
         if (compareCode(req.opCode, addEntry["&operationCode"]!)) {
             const outcome = await doAddEntry(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result,
+                result: signDSPResult
+                    ? signChainedResult(ctx, outcome.result)
+                    : outcome.result,
                 request: ctx.config.bulkInsertMode
                     ? undefined
                     : {
@@ -229,7 +243,9 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result,
+                result: signDSPResult
+                    ? signChainedResult(ctx, outcome.result)
+                    : outcome.result,
                 request: {
                     // ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -245,7 +261,9 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result,
+                result: signDSPResult
+                    ? signChainedResult(ctx, outcome.result)
+                    : outcome.result,
                 request: {
                     // ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -261,7 +279,9 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result,
+                result: signDSPResult
+                    ? signChainedResult(ctx, outcome.result)
+                    : outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -277,7 +297,9 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result,
+                result: signDSPResult
+                    ? signChainedResult(ctx, outcome.result)
+                    : outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -293,7 +315,9 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result,
+                result: signDSPResult
+                    ? signChainedResult(ctx, outcome.result)
+                    : outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -322,9 +346,14 @@ class OperationDispatcher {
             );
         }
         else if (compareCode(req.opCode, linkedLDAP["&operationCode"]!)) {
-            // Automatically returns NULL no matter what, because Meerkat DSA
-            // will not issue ldapTransport requests. It will just make LDAP
-            // requests or the equivalent DAP requests.
+            /**
+             * Automatically returns NULL no matter what, because Meerkat DSA
+             * will not issue ldapTransport requests. It will just make LDAP
+             * requests for the equivalent DAP requests.
+             *
+             * We also will not sign this response since it is not important and
+             * its simplicity might lend itself to key oracle attacks.
+             */
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
@@ -346,7 +375,9 @@ class OperationDispatcher {
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
-                    result: outcome.result,
+                    result: signDSPResult
+                        ? signChainedResult(ctx, outcome.result)
+                        : outcome.result,
                     request: {
                         ...outcome.stats.request,
                         operationCode: codeToString(req.opCode),
@@ -368,16 +399,18 @@ class OperationDispatcher {
                     state.SRcontinuationList,
                 );
                 const result = await mergeSortAndPageList(ctx, assn, state, data, postMergeState);
-                const unprotectedResult = getOptionallyProtectedValue(result);
+                const opcr: OPCR = {
+                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                        emptyChainingResults(),
+                        result.encodedListResult,
+                    ),
+                };
                 return {
                     invokeId: req.invokeId,
                     opCode: req.opCode,
-                    result: {
-                        unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                            emptyChainingResults(),
-                            _encode_ListResult(result, DER),
-                        ),
-                    },
+                    result: signDSPResult
+                        ? signChainedResult(ctx, opcr)
+                        : opcr,
                     request: failover(() => ({
                         operationCode: codeToString(req.opCode!),
                         ...getStatisticsFromCommonArguments(data),
@@ -387,14 +420,12 @@ class OperationDispatcher {
                             ? getStatisticsFromPagedResultsRequest(data.pagedResults)
                             : undefined,
                     }), undefined),
-                    outcome: failover(() => ({
+                    outcome: {
                         result: {
-                            list: getListResultStatistics(result),
-                            poq: (("listInfo" in unprotectedResult) && unprotectedResult.listInfo.partialOutcomeQualifier)
-                                ? getPartialOutcomeQualifierStatistics(unprotectedResult.listInfo.partialOutcomeQualifier)
-                                : undefined,
+                            list: result.resultStats,
+                            poq: result.poqStats,
                         },
-                    }), undefined),
+                    },
                     foundDSE: state.foundDSE,
                 };
             }
@@ -404,7 +435,9 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result,
+                result: signDSPResult
+                    ? signChainedResult(ctx, outcome.result)
+                    : outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -420,7 +453,9 @@ class OperationDispatcher {
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: outcome.result,
+                result: signDSPResult
+                    ? signChainedResult(ctx, outcome.result)
+                    : outcome.result,
                 request: {
                     ...outcome.stats.request,
                     operationCode: codeToString(req.opCode),
@@ -434,6 +469,10 @@ class OperationDispatcher {
         else if (compareCode(req.opCode, search["&operationCode"]!)) {
             const argument = _decode_SearchArgument(reqData.argument);
             const data = getOptionallyProtectedValue(argument);
+            const signErrors: boolean = (
+                (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+                && (assn.authorizedForSignedErrors)
+            );
             const requestStats: RequestStatistics | undefined = failover(() => ({
                 operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
@@ -476,6 +515,7 @@ class OperationDispatcher {
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signDSPResult,
                     assn.boundNameAndUID?.dn,
                     search["&operationCode"],
                 ),
@@ -495,6 +535,7 @@ class OperationDispatcher {
                 searchResponse,
                 argument,
                 reqData.chainedArgument,
+                signErrors,
             );
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
@@ -523,27 +564,24 @@ class OperationDispatcher {
                 state.SRcontinuationList,
             );
             const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
-            const unprotectedResult = getOptionallyProtectedValue(result);
+            const opcr: OPCR = {
+                unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                    emptyChainingResults(),
+                    result.encodedSearchResult,
+                ),
+            };
             return {
                 invokeId: req.invokeId,
                 opCode: search["&operationCode"]!,
-                result: {
-                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                        emptyChainingResults(),
-                        _encode_SearchResult(result, DER),
-                    ),
-                },
+                result: signDSPResult
+                    ? signChainedResult(ctx, opcr)
+                    : opcr,
                 request: requestStats,
                 outcome: {
-                    result: failover(() => ({
-                        search: getSearchResultStatistics(result),
-                        poq: (
-                            ("searchInfo" in unprotectedResult)
-                            && unprotectedResult.searchInfo.partialOutcomeQualifier
-                        )
-                            ? getPartialOutcomeQualifierStatistics(unprotectedResult.searchInfo.partialOutcomeQualifier)
-                            : undefined,
-                    }), undefined),
+                    result: {
+                        search: result.resultStats,
+                        poq: result.poqStats
+                    },
                 },
                 foundDSE: state.foundDSE,
             };
@@ -565,11 +603,13 @@ class OperationDispatcher {
      * If the target object cannot be found, an error is thrown accordingly.
      *
      * @param ctx The context object
-     * @param state The operation dispatcher state
      * @param assn The client association
      * @param req The request
-     * @param reqData The chaining arguments and original argument
+     * @param preparedRequest The chaining arguments and original argument
      * @param local Whether this request was generated internally by Meerkat DSA
+     * @param signDSPResult Whether the DSP result should be signed
+     * @param signErrors Whether to cryptographically sign errors
+     * @param commonArgs CommonArguments, if applicable to the DAP operation.
      *
      * @public
      * @static
@@ -583,21 +623,27 @@ class OperationDispatcher {
         req: Request,
         preparedRequest: OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>,
         local: boolean,
+        signDSPResult: boolean,
+        signErrors: boolean,
+        commonArgs?: CommonArguments,
     ): Promise<OperationDispatcherReturn> {
         assert(req.opCode);
         assert(req.argument);
         const reqData = getOptionallyProtectedValue(preparedRequest);
         if (compareCode(req.opCode, abandon["&operationCode"]!)) {
             const result = await doAbandon(ctx, assn, reqData);
+            const opcr: OPCR = {
+                unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                    emptyChainingResults(),
+                    result.result,
+                ),
+            };
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
-                result: {
-                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                        emptyChainingResults(),
-                        result.result,
-                    ),
-                },
+                result: signDSPResult
+                    ? signChainedResult(ctx, opcr)
+                    : opcr,
                 request: {
                     operationCode: codeToString(req.opCode),
                 },
@@ -620,6 +666,7 @@ class OperationDispatcher {
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_securityError,
@@ -628,6 +675,7 @@ class OperationDispatcher {
                     reqData.chainedArgument.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const chainingResults = emptyChainingResults();
@@ -654,19 +702,10 @@ class OperationDispatcher {
             ctx.dit.root,
             targetObject,
             state,
+            commonArgs,
         );
         if (!state.entrySuitable) {
-            const serviceControls = reqData.argument.set
-                .find((el) => (
-                    (el.tagClass === ASN1TagClass.context)
-                    && (el.tagNumber === 30)
-                ))?.inner;
-            const serviceControlOptions = serviceControls?.set
-                .find((el) => (
-                    (el.tagClass === ASN1TagClass.context)
-                    && (el.tagNumber === 0)
-                ))?.inner;
-            const scoBitField = serviceControlOptions?.bitString;
+            const scoBitField = commonArgs?.serviceControls?.options;
             const chainingProhibited = (
                 (scoBitField?.[chainingProhibitedBit] === TRUE_BIT)
                 || (scoBitField?.[manageDSAITBit] === TRUE_BIT)
@@ -679,17 +718,8 @@ class OperationDispatcher {
                 state,
                 chainingProhibited,
                 partialNameResolution,
+                signErrors,
             );
-            if (!nrcrResult) {
-                return OperationDispatcher.operationEvaluation(
-                    ctx,
-                    state,
-                    assn,
-                    req,
-                    reqData,
-                    local,
-                );
-            }
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
@@ -740,7 +770,7 @@ class OperationDispatcher {
         assn: ClientAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
-        const preparedRequest = await requestValidationProcedure(
+        const [ preparedRequest, commonArgs ] = await requestValidationProcedure(
             ctx,
             assn,
             req,
@@ -748,12 +778,23 @@ class OperationDispatcher {
             assn.authLevel,
             assn.boundNameAndUID?.uid,
         );
+        const reqData = getOptionallyProtectedValue(preparedRequest);
+        /**
+         * The DSP result should not be signed because only the contained DAP
+         * result will be used by the DAP association handler; the signature
+         * would not be useful.
+         */
+        const signDSPResult: boolean = false;
+        const signErrors: boolean = (reqData.chainedArgument.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
         return this.dispatchPreparedDSPRequest(
             ctx,
             assn,
             req,
             preparedRequest,
             false,
+            signDSPResult,
+            signErrors,
+            commonArgs,
         );
     }
 
@@ -779,13 +820,32 @@ class OperationDispatcher {
         assn: DSPAssociation,
         req: Request,
     ): Promise<OperationDispatcherReturn> {
-        const preparedRequest = await requestValidationProcedure(
+        assert(req.opCode);
+        if (!("local" in req.opCode)) {
+            throw new UnknownOperationError();
+        }
+        assert("local" in abandon["&operationCode"]!);
+        /**
+         * `chainedAbandon` is the one DSP operation that is not wrapped in DSP
+         * parameters.
+         */
+        const alreadyChained: boolean = (req.opCode.local !== abandon["&operationCode"].local);
+        const [ preparedRequest, commonArgs ] = await requestValidationProcedure(
             ctx,
             assn,
             req,
-            true,
+            alreadyChained,
             assn.authLevel,
             assn.boundNameAndUID?.uid,
+        );
+        const reqData = getOptionallyProtectedValue(preparedRequest);
+        const signDSPResult: boolean = (
+            (reqData.chainedArgument.securityParameters?.target === ProtectionRequest_signed)
+            && assn.authorizedForSignedResults
+        );
+        const signErrors: boolean = (
+            (reqData.chainedArgument.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+            && assn.authorizedForSignedErrors
         );
         return this.dispatchPreparedDSPRequest(
             ctx,
@@ -793,6 +853,9 @@ class OperationDispatcher {
             req,
             preparedRequest,
             false,
+            signDSPResult,
+            signErrors,
+            commonArgs,
         );
     }
 
@@ -810,6 +873,7 @@ class OperationDispatcher {
      * @param invokeId The invoke ID of the operation
      * @param argument The search operation argument
      * @param chaining The chaining arguments
+     * @param signErrors Whether to cryptographically sign errors
      *
      * @private
      * @static
@@ -823,6 +887,7 @@ class OperationDispatcher {
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,
+        signErrors: boolean,
     ): Promise<SearchResultOrError> {
         const data = getOptionallyProtectedValue(argument);
         const searchResponse: SearchState = {
@@ -839,6 +904,7 @@ class OperationDispatcher {
             searchResponse,
             argument,
             chaining,
+            signErrors,
         );
         const nameResolutionPhase = chaining.operationProgress?.nameResolutionPhase
             ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
@@ -870,6 +936,7 @@ class OperationDispatcher {
                                     [],
                                     createSecurityParameters(
                                         ctx,
+                                        false,
                                         assn.boundNameAndUID?.dn,
                                         search["&operationCode"],
                                     ),
@@ -883,7 +950,8 @@ class OperationDispatcher {
                     ],
                 },
             }
-            : await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
+            : _decode_SearchResult(
+                (await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data)).encodedSearchResult);
         return {
             invokeId,
             opCode: search["&operationCode"]!,
@@ -917,11 +985,13 @@ class OperationDispatcher {
         invokeId: InvokeId,
         argument: SearchArgument,
         chaining: ChainingArguments,
-        // authLevel: AuthenticationLevel,
-        // uniqueIdentifier?: UniqueIdentifier,
     ): Promise<SearchResultOrError> {
         // Request validation not needed.
         const data = getOptionallyProtectedValue(argument);
+        const signErrors: boolean = (
+            (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+            && (assn.authorizedForSignedErrors)
+        );
         const encodedArgument = _encode_SearchArgument(argument, DER);
         const targetObject = chaining.relatedEntry // The specification is not clear of what to do for targetObject.
             ? data.joinArguments?.[Number(chaining.relatedEntry)]?.joinBaseObject.rdnSequence
@@ -936,6 +1006,7 @@ class OperationDispatcher {
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         id_errcode_securityError,
@@ -944,6 +1015,7 @@ class OperationDispatcher {
                     chaining.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const chainingResults = emptyChainingResults();
@@ -970,6 +1042,7 @@ class OperationDispatcher {
             ctx.dit.root,
             targetObject,
             state,
+            data,
         );
         if (!state.entrySuitable) {
             const serviceControlOptions = data.serviceControls?.options;
@@ -988,17 +1061,9 @@ class OperationDispatcher {
                 state,
                 chainingProhibited,
                 partialNameResolution,
+                signErrors,
             );
-            if (!nrcrResult) {
-                return OperationDispatcher.localSearchOperationEvaluation(
-                    ctx,
-                    state,
-                    assn,
-                    invokeId,
-                    argument,
-                    chaining,
-                );
-            } else if ("error" in nrcrResult) {
+            if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
                     nrcrResult.error,
@@ -1022,7 +1087,114 @@ class OperationDispatcher {
             invokeId,
             argument,
             chaining,
+            signErrors,
         );
+    }
+
+    /**
+     * @summary Dispatch a local read operation
+     * @description
+     *
+     * This function exists for the DSA to universally find an entry--when
+     * merely searching for a local DSE would be insufficient.
+     *
+     * @param ctx The context object
+     * @param argument The read argument
+     * @param timeLimit The number of seconds the request is permitted to take.
+     *
+     * @public
+     * @static
+     * @function
+     * @async
+     */
+     public static async dispatchLocalReadRequest (
+        ctx: MeerkatContext,
+        argument: ReadArgument,
+    ): ReturnType<typeof doRead> {
+        const invokeId: InvokeId = { // TODO: Refactor.
+            present: randomInt(1, 10_000_000),
+        };
+        // Request validation not needed.
+        const data = getOptionallyProtectedValue(argument);
+        const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+        const encodedArgument = _encode_ReadArgument(argument, BER);
+        const targetObject = data.object.rdnSequence;
+        const timeLimitDate = addSeconds(new Date(), data.serviceControls?.timeLimit
+            ? Number(data.serviceControls.timeLimit)
+            : 5000);
+        // TODO: Log iid, target, timeLimit
+        const chainingResults = emptyChainingResults();
+        const state: OperationDispatcherState = {
+            NRcontinuationList: [],
+            SRcontinuationList: [],
+            admPoints: [],
+            referralRequests: [],
+            emptyHierarchySelect: false,
+            invokeId: invokeId,
+            operationCode: read["&operationCode"]!,
+            operationArgument: encodedArgument, // Why is this needed?
+            chainingArguments: new ChainingArguments(
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                data.object.rdnSequence,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                {
+                    generalizedTime: timeLimitDate,
+                },
+            ),
+            chainingResults,
+            foundDSE: ctx.dit.root,
+            entrySuitable: false,
+            partialName: false,
+            rdnsResolved: 0,
+            aliasesEncounteredById: new Set(),
+        };
+        await findDSE(
+            ctx,
+            undefined,
+            ctx.dit.root,
+            targetObject,
+            state,
+            data,
+        );
+        if (!state.entrySuitable) {
+            const serviceControlOptions = data.serviceControls?.options;
+            const chainingProhibited = (
+                (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT)
+                || (serviceControlOptions?.[manageDSAITBit] === TRUE_BIT)
+            );
+            const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
+            const nrcrResult = await nrcrProcedure(
+                ctx,
+                undefined,
+                new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                    state.chainingArguments,
+                    encodedArgument,
+                ),
+                state,
+                chainingProhibited,
+                partialNameResolution,
+                signErrors,
+            );
+            if ("error" in nrcrResult) {
+                throw new errors.ChainedError(
+                    ctx.i18n.t("err:chained_error"),
+                    nrcrResult.error,
+                    nrcrResult.errcode,
+                );
+            } else {
+                return {
+                    result: nrcrResult,
+                    stats: {},
+                };
+            }
+        }
+        return doRead(ctx, undefined, state);
     }
 
 }

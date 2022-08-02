@@ -21,6 +21,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
 import {
     ModifyOperationalBindingArgumentData,
+    _encode_ModifyOperationalBindingArgumentData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData.ta";
 import {
     id_op_binding_hierarchical,
@@ -64,6 +65,7 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import { generateSIGNED } from "../pki/generateSIGNED";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -231,6 +233,7 @@ async function updateSubordinateDSA (
     targetSystem: AccessPoint,
     aliasDereferenced?: boolean,
     options?: UpdateSubordinateOptions,
+    signErrors: boolean = false,
 ): Promise<ResultOrError> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
@@ -240,6 +243,7 @@ async function updateSubordinateDSA (
     const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
         timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
         tlsOptional: ctx.config.chaining.tlsOptional,
+        signErrors,
     });
     if (!assn) {
         throw new ServiceError(
@@ -249,6 +253,7 @@ async function updateSubordinateDSA (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     serviceError["&errorCode"]
@@ -256,6 +261,7 @@ async function updateSubordinateDSA (
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
             ),
+            signErrors,
         );
     }
     const ditContext: X500Vertex[] = []; // To be reversed.
@@ -336,27 +342,39 @@ async function updateSubordinateDSA (
         Number(currentBindingID.version) + 1,
     );
 
-    const arg: ModifyOperationalBindingArgument = {
-        unsigned: new ModifyOperationalBindingArgumentData(
-            id_op_binding_hierarchical,
-            currentBindingID,
-            ctx.dsa.accessPoint,
-            {
-                roleA_initiates: _encode_SuperiorToSubordinateModification(sup2sub, DER),
-            },
-            newBindingID,
-            _encode_HierarchicalAgreement(agreement, DER),
-            undefined, // Validity remains the same.
-            createSecurityParameters(
-                ctx,
-                targetSystem.ae_title.rdnSequence,
-                modifyOperationalBinding["&operationCode"],
-            ),
+    const argData = new ModifyOperationalBindingArgumentData(
+        id_op_binding_hierarchical,
+        currentBindingID,
+        ctx.dsa.accessPoint,
+        {
+            roleA_initiates: _encode_SuperiorToSubordinateModification(sup2sub, DER),
+        },
+        newBindingID,
+        _encode_HierarchicalAgreement(agreement, DER),
+        undefined, // Validity remains the same.
+        createSecurityParameters(
+            ctx,
+            true,
+            targetSystem.ae_title.rdnSequence,
+            modifyOperationalBinding["&operationCode"],
         ),
+    );
+    const unsignedArg: ModifyOperationalBindingArgument = {
+        unsigned: argData,
     };
+    const signArgument: boolean = true; // TODO: Make configurable.
     const timeRemainingForOperation: number | undefined = timeoutTime
         ? differenceInMilliseconds(timeoutTime, new Date())
         : undefined;
+    if (!signArgument) {
+        return assn.writeOperation({
+            opCode: modifyOperationalBinding["&operationCode"]!,
+            argument: _encode_ModifyOperationalBindingArgument(unsignedArg, DER),
+        }, {
+            timeLimitInMilliseconds: timeRemainingForOperation,
+        });
+    }
+    const arg = generateSIGNED(ctx, argData, _encode_ModifyOperationalBindingArgumentData);
     return assn.writeOperation({
         opCode: modifyOperationalBinding["&operationCode"]!,
         argument: _encode_ModifyOperationalBindingArgument(arg, DER),

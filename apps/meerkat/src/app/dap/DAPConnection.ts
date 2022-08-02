@@ -22,7 +22,7 @@ import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { BER } from "asn1-ts/dist/node/functional";
+import { BER, DER } from "asn1-ts/dist/node/functional";
 import { _encode_AbandonedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
 import { _encode_AbandonFailedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonFailedData.ta";
 import { _encode_AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
@@ -83,6 +83,37 @@ import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 import { printInvokeId } from "../utils/printInvokeId";
 import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters";
+import { signDirectoryError } from "../pki/signDirectoryError";
+import {
+    abandoned,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+import {
+    abandonFailed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandonFailed.oa";
+import {
+    attributeError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    nameError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+import {
+    referral,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import {
+    serviceError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import {
+    updateError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    compareAuthenticationLevel,
+} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
+import {
+    _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 
 /**
  * @summary The handles a request, but not errors
@@ -142,16 +173,18 @@ async function handleRequestAndErrors (
     assn: DAPAssociation,
     request: Request,
 ): Promise<void> {
+    const logInfo = {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+        invokeID: printInvokeId({ present: request.invokeID }),
+    };
     if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
             host: assn.socket.remoteAddress,
             cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-        });
+        }), logInfo);
         assn.idm.writeAbort(Abort_invalidPDU);
         return;
     }
@@ -160,13 +193,7 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             iid: request.invokeID.toString(),
             cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId({ present: request.invokeID }),
-        });
+        }), logInfo);
         assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
     }
@@ -175,13 +202,7 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             cid: assn.id,
             iid: request.invokeID.toString(),
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId({ present: request.invokeID }),
-        });
+        }), logInfo);
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
@@ -190,13 +211,7 @@ async function handleRequestAndErrors (
         iid: request.invokeID.toString(),
         op: printCode(request.opcode),
         cid: assn.id,
-    }), {
-        remoteFamily: assn.socket.remoteFamily,
-        remoteAddress: assn.socket.remoteAddress,
-        remotePort: assn.socket.remotePort,
-        association_id: assn.id,
-        invokeID: printInvokeId({ present: request.invokeID }),
-    });
+    }), logInfo);
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
@@ -261,15 +276,9 @@ async function handleRequestAndErrors (
                 idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
+        ctx.log.info(`${assn.id}#${request.invokeID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
-        } else {
-            ctx.log.error(e.message, {
-                remoteFamily: assn.socket.remoteFamily,
-                remoteAddress: assn.socket.remoteAddress,
-                remotePort: assn.socket.remotePort,
-                association_id: assn.id,
-            });
         }
         if (!stats.outcome) {
             stats.outcome = {};
@@ -296,46 +305,94 @@ async function handleRequestAndErrors (
             }
         } else if (e instanceof errors.AbandonError) {
             const code = _encode_Code(errors.AbandonError.errcode, BER);
-            const data = _encode_AbandonedData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof abandoned["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_AbandonedData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = abandoned.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.pagingAbandoned = (e.data.problem === 0);
         } else if (e instanceof errors.AbandonFailedError) {
             const code = _encode_Code(errors.AbandonFailedError.errcode, BER);
-            const data = _encode_AbandonFailedData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof abandonFailed["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_AbandonFailedData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = abandonFailed.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.AttributeError) {
             const code = _encode_Code(errors.AttributeError.errcode, BER);
-            const data = _encode_AttributeErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof attributeError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_AttributeErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = attributeError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.attributeProblems = e.data.problems.map((ap) => ({
                 type: ap.type_.toString(),
                 problem: Number(ap.problem),
             }));
         } else if (e instanceof errors.NameError) {
             const code = _encode_Code(errors.NameError.errcode, BER);
-            const data = _encode_NameErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof nameError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_NameErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = nameError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
         } else if (e instanceof errors.ReferralError) {
             const code = _encode_Code(errors.ReferralError.errcode, BER);
-            const data = _encode_ReferralData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof referral["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_ReferralData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = referral.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.candidate = getContinuationReferenceStatistics(e.data.candidate);
         } else if (e instanceof errors.SecurityError) {
             const code = _encode_Code(errors.SecurityError.errcode, BER);
-            const data = _encode_SecurityErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof securityError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_SecurityErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = securityError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
-            const data = _encode_ServiceErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof serviceError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_ServiceErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = serviceError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof errors.UpdateError) {
             const code = _encode_Code(errors.UpdateError.errcode, BER);
-            const data = _encode_UpdateErrorData(e.data, BER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+            const param: typeof updateError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_UpdateErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = updateError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
             stats.outcome.error.problem = Number(e.data.problem);
             stats.outcome.error.attributeInfo = e.data.attributeInfo?.map((ai) => {
                 if ("attributeType" in ai) {
@@ -437,13 +494,34 @@ class DAPAssociation extends ClientAssociation {
             remotePort: this.socket.remotePort,
             association_id: this.id,
         };
+        /**
+         * ITU Recommendation X.511 (2019), Section 9.1.4 states that:
+         *
+         * > If the Bind request was using strong authentication or if SPKM
+         * > credentials were supplied, then the Bind responder may sign the
+         * > error parameters.
+         */
+        const signErrors: boolean = !!(
+            this.authorizedForSignedErrors
+            && arg_.credentials
+            && (
+                ("strong" in arg_.credentials)
+                || ("spkm" in arg_.credentials)
+            )
+        );
         const startBindTime = new Date();
         let outcome!: BindReturn;
         try {
-            outcome = await doBind(ctx, this.idm.socket, arg_);
+            outcome = await doBind(ctx, this.idm.socket, arg_, signErrors);
         } catch (e) {
+            const logInfo = {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            };
             if (e instanceof DirectoryBindError) {
-                ctx.log.warn(e.message);
+                ctx.log.warn(e.message, logInfo);
                 const endBindTime = new Date();
                 const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                 const totalTimeInMilliseconds: number = this.ctx.config.bindMinSleepInMilliseconds
@@ -453,7 +531,10 @@ class DAPAssociation extends ClientAssociation {
                 const err: typeof directoryBindError["&ParameterType"] = {
                     unsigned: e.data,
                 };
-                const error = directoryBindError.encoderFor["&ParameterType"]!(err, BER);
+                const payload = signErrors
+                    ? signDirectoryError(ctx, e.data, _encode_DBE_Param)
+                    : err;
+                const error = directoryBindError.encoderFor["&ParameterType"]!(payload, DER);
                 idm.writeBindError(dap_ip["&id"]!, error);
                 const serviceProblem = ("serviceError" in e.data.error)
                     ? e.data.error.serviceError
@@ -478,7 +559,10 @@ class DAPAssociation extends ClientAssociation {
                     },
                 });
             } else {
-                ctx.log.warn(e?.message);
+                ctx.log.warn(`${this.id}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
+                if (isDebugging) {
+                    console.error(e);
+                }
                 idm.writeAbort(Abort_reasonNotSpecified);
                 ctx.telemetry.trackException({
                     exception: e,
@@ -515,6 +599,24 @@ class DAPAssociation extends ClientAssociation {
                     ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
                     : "",
             }), extraLogData);
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.minAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedResults = true;
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
         }
         const bindResult = new DirectoryBindResult(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
@@ -654,5 +756,14 @@ class DAPAssociation extends ClientAssociation {
             }
             this.prebindRequests.push(request);
         });
+        if ( // This allows bind errors to be signed.
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
+        }
     }
 }

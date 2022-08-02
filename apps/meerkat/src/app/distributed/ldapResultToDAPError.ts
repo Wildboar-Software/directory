@@ -224,16 +224,23 @@ function ldapResultToDAPError (res: LDAPResult): void {
     if (successfulResultCode(res.resultCode)) {
         return;
     }
+    /**
+     * These errors should not be signed because they were not really given by
+     * this DSA.
+     */
+    const signErrors: boolean = false;
     switch (res.resultCode) {
         case (LDAPResult_resultCode_timeLimitExceeded):
             throw new errors.ServiceError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 serviceErrorData(ServiceProblem_timeLimitExceeded),
+                signErrors,
             );
         case (LDAPResult_resultCode_authMethodNotSupported):
             throw new errors.SecurityError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 securityErrorData(SecurityProblem_unsupportedAuthenticationMethod),
+                signErrors,
             );
         case (LDAPResult_resultCode_referral):
             if (!res.referral) {
@@ -250,141 +257,169 @@ function ldapResultToDAPError (res: LDAPResult): void {
                     undefined,
                     undefined,
                 ),
+                signErrors,
             );
         case (LDAPResult_resultCode_adminLimitExceeded):
             throw new errors.ServiceError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 serviceErrorData(ServiceProblem_administrativeLimitExceeded),
+                signErrors,
             );
         case (LDAPResult_resultCode_unavailableCriticalExtension):
             throw new errors.ServiceError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 serviceErrorData(ServiceProblem_unavailableCriticalExtension),
+                signErrors,
             );
         case (LDAPResult_resultCode_confidentialityRequired):
             throw new errors.SecurityError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 securityErrorData(SecurityProblem_protectionRequired),
+                signErrors,
             );
         case (LDAPResult_resultCode_saslBindInProgress):
             throw new errors.ServiceError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 serviceErrorData(ServiceProblem_saslBindInProgress),
+                signErrors,
             );
         case (LDAPResult_resultCode_noSuchAttribute):
             throw new errors.AttributeError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 attributeErrorData(),
+                signErrors,
             );
         case (LDAPResult_resultCode_undefinedAttributeType):
             throw new errors.AttributeError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 attributeErrorData(),
+                signErrors,
             );
         case (LDAPResult_resultCode_inappropriateMatching):
             throw new errors.AttributeError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 attributeErrorData(),
+                signErrors,
             );
         case (LDAPResult_resultCode_constraintViolation):
             throw new errors.AttributeError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 attributeErrorData(),
+                signErrors,
             );
         case (LDAPResult_resultCode_attributeOrValueExists):
             throw new errors.AttributeError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 attributeErrorData(),
+                signErrors,
             );
         case (LDAPResult_resultCode_invalidAttributeSyntax):
             throw new errors.AttributeError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 attributeErrorData(),
+                signErrors,
             );
         case (LDAPResult_resultCode_noSuchObject):
             throw new errors.NameError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 nameErrorData(NameProblem_noSuchObject),
+                signErrors,
             );
         case (LDAPResult_resultCode_aliasProblem):
             throw new errors.NameError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 nameErrorData(NameProblem_aliasProblem),
+                signErrors,
             );
         case (LDAPResult_resultCode_aliasDereferencingProblem):
             throw new errors.NameError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 nameErrorData(NameProblem_aliasDereferencingProblem),
+                signErrors,
             );
         case (LDAPResult_resultCode_inappropriateAuthentication):
             throw new errors.SecurityError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 securityErrorData(SecurityProblem_inappropriateAuthentication),
+                signErrors,
             );
         case (LDAPResult_resultCode_invalidCredentials):
             throw new errors.SecurityError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 securityErrorData(SecurityProblem_invalidCredentials),
+                signErrors,
             );
         case (LDAPResult_resultCode_insufficientAccessRights):
             throw new errors.SecurityError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 securityErrorData(SecurityProblem_insufficientAccessRights),
+                signErrors,
             );
         case (LDAPResult_resultCode_busy):
             throw new errors.ServiceError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 serviceErrorData(ServiceProblem_busy),
+                signErrors,
             );
         case (LDAPResult_resultCode_unavailable):
             throw new errors.ServiceError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 serviceErrorData(ServiceProblem_unavailable),
+                signErrors,
             );
         case (LDAPResult_resultCode_unwillingToPerform):
             throw new errors.ServiceError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 serviceErrorData(ServiceProblem_unwillingToPerform),
+                signErrors,
             );
         case (LDAPResult_resultCode_loopDetect):
             throw new errors.ServiceError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 serviceErrorData(ServiceProblem_loopDetected),
+                signErrors,
             );
         case (LDAPResult_resultCode_namingViolation):
             throw new errors.UpdateError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 updateErrorData(UpdateProblem_namingViolation),
+                signErrors,
             );
         case (LDAPResult_resultCode_objectClassViolation):
             throw new errors.UpdateError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 updateErrorData(UpdateProblem_objectClassViolation),
+                signErrors,
             );
         case (LDAPResult_resultCode_notAllowedOnNonLeaf):
             throw new errors.UpdateError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 updateErrorData(UpdateProblem_notAllowedOnNonLeaf),
+                signErrors,
             );
         case (LDAPResult_resultCode_notAllowedOnRDN):
             throw new errors.UpdateError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 updateErrorData(UpdateProblem_notAllowedOnRDN),
+                signErrors,
             );
         case (LDAPResult_resultCode_entryAlreadyExists):
             throw new errors.UpdateError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 updateErrorData(UpdateProblem_entryAlreadyExists),
+                signErrors,
             );
         case (LDAPResult_resultCode_objectClassModsProhibited):
             throw new errors.UpdateError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 updateErrorData(UpdateProblem_objectClassModificationProhibited),
+                signErrors,
             );
         case (LDAPResult_resultCode_affectsMultipleDSAs):
             throw new errors.UpdateError(
                 Buffer.from(res.diagnosticMessage).toString("utf-8"),
                 updateErrorData(UpdateProblem_affectsMultipleDSAs),
+                signErrors,
             );
         default:
             throw new Error("948540e3-6b8f-4da7-921d-c7a20d1ea0a9");

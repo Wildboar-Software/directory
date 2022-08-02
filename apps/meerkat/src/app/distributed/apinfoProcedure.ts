@@ -1,7 +1,7 @@
 import type { ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { BOOLEAN, ASN1TagClass, TRUE_BIT } from "asn1-ts";
+import { BOOLEAN } from "asn1-ts";
 import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
 import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import type {
@@ -9,6 +9,9 @@ import type {
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import connect from "../net/connect";
 import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
+import {
+    chainedAbandon,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAbandon.oa";
 import {
     referral,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
@@ -27,7 +30,12 @@ import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import {
+    _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -36,10 +44,6 @@ import {
 import {
     MasterOrShadowAccessPoint_category_shadow,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
-import {
-    ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
-    ServiceControlOptions_manageDSAIT as manageDSAITBit,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
 import {
     OperationProgress_nameResolutionPhase_proceeding as proceeding,
@@ -65,6 +69,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import { printInvokeId } from "../utils/printInvokeId";
+import { signChainedArgument } from "../pki/signChainedArgument";
+import { strict as assert } from "assert";
+import { verifySIGNED } from "../pki/verifySIGNED";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -78,6 +85,8 @@ import { printInvokeId } from "../utils/printInvokeId";
  * @param req The chained request
  * @param assn The client association
  * @param state The operation dispatcher state
+ * @param signErrors Whether to cryptographically sign errors
+ * @param chainingProhibited Whether chaining was prohibited
  * @returns A result or error
  *
  * @function
@@ -88,28 +97,14 @@ async function apinfoProcedure (
     ctx: MeerkatContext,
     api: AccessPointInformation,
     req: ChainedRequest,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     state: OperationDispatcherState,
+    signErrors: boolean,
+    chainingProhibited: boolean,
 ): Promise<ResultOrError | null> {
     const op = ("present" in state.invokeId)
-        ? assn.invocations.get(Number(state.invokeId.present))
+        ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
-    // Loop avoidance is handled below.
-    const serviceControls = req.argument?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 30)
-        ))?.inner;
-    const serviceControlOptions = serviceControls?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 0)
-        ))?.inner;
-    const scoBitField = serviceControlOptions?.bitString;
-    const chainingProhibited = (
-        (scoBitField?.[chainingProhibitedBit] === TRUE_BIT)
-        || (scoBitField?.[manageDSAITBit] === TRUE_BIT)
-    );
     if (chainingProhibited) {
         return null;
     }
@@ -143,7 +138,8 @@ async function apinfoProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -151,6 +147,7 @@ async function apinfoProcedure (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const tenativeTrace: TraceItem[] = [
@@ -175,6 +172,7 @@ async function apinfoProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         undefined,
                         undefined,
                         serviceError["&errorCode"],
@@ -183,6 +181,7 @@ async function apinfoProcedure (
                     req.chaining.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         // TODO: Check if localScope.
@@ -199,6 +198,7 @@ async function apinfoProcedure (
         try {
             const connection = await connect(ctx, ap, dsp_ip["&id"]!, {
                 tlsOptional: ctx.config.chaining.tlsOptional,
+                signErrors,
             });
             if (!connection) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
@@ -216,9 +216,13 @@ async function apinfoProcedure (
                     req.argument!,
                 ),
             };
+            const signArguments: boolean = true; // TODO: Make configurable.
+            const payload: Chained = signArguments
+                ? signChainedArgument(ctx, argument)
+                : argument;
             const result = await connection.writeOperation({
                 opCode: req.opCode,
-                argument: chainedRead.encoderFor["&ArgumentType"]!(argument, DER),
+                argument: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
             });
             if ("error" in result) {
                 const errcode: Code = result.errcode ?? { local: -1 };
@@ -258,13 +262,39 @@ async function apinfoProcedure (
                     ctx.log.warn(ctx.i18n.t("log:dsa_returned_no_opcode", {
                         ae: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
                     }), {
-                        remoteFamily: assn.socket.remoteFamily,
-                        remoteAddress: assn.socket.remoteAddress,
-                        remotePort: assn.socket.remotePort,
-                        association_id: assn.id,
+                        remoteFamily: assn?.socket.remoteFamily,
+                        remoteAddress: assn?.socket.remoteAddress,
+                        remotePort: assn?.socket.remotePort,
+                        association_id: assn?.id,
                         invokeID: printInvokeId(state.invokeId),
                     });
                     continue;
+                }
+                const checkChainedResultSignature: boolean = true; // TODO: Make configurable.
+                assert(chainedAbandon["&operationCode"]);
+                assert("local" in chainedAbandon["&operationCode"]);
+                if (
+                    checkChainedResultSignature
+                    && ("local" in result.opCode)
+                    && (result.opCode.local !== chainedAbandon["&operationCode"]!.local)
+                    && result.result
+                ) {
+                    const decoded = chainedRead.decoderFor["&ResultType"]!(result.result);
+                    const resultData = getOptionallyProtectedValue(decoded);
+                    if ("signed" in decoded) {
+                        const certPath = resultData.chainedResult.securityParameters?.certification_path;
+                        await verifySIGNED(
+                            ctx,
+                            assn,
+                            certPath,
+                            state.invokeId,
+                            state.chainingArguments.aliasDereferenced,
+                            decoded.signed,
+                            _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+                            signErrors,
+                            "result",
+                        );
+                    }
                 }
                 return {
                     invokeId: result.invokeId,
@@ -287,10 +317,10 @@ async function apinfoProcedure (
                     ae: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
                     e,
                 }), {
-                    remoteFamily: assn.socket.remoteFamily,
-                    remoteAddress: assn.socket.remoteAddress,
-                    remotePort: assn.socket.remotePort,
-                    association_id: assn.id,
+                    remoteFamily: assn?.socket.remoteFamily,
+                    remoteAddress: assn?.socket.remoteAddress,
+                    remotePort: assn?.socket.remotePort,
+                    association_id: assn?.id,
                     invokeID: printInvokeId(state.invokeId),
                 });
             }

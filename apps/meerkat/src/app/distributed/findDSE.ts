@@ -40,7 +40,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { TRUE_BIT, ASN1TagClass, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement } from "asn1-ts";
+import { TRUE_BIT, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     ServiceProblem_timeLimitExceeded,
@@ -119,6 +119,13 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import getVertexById from "../database/getVertexById";
 import { printInvokeId } from "../utils/printInvokeId";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import {
+    CommonArguments,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -236,6 +243,7 @@ function makeContinuationRefFromSupplierKnowledge (
  * @param haystackVertex The root of the DIT
  * @param needleDN The distinguished name of the sought-after DSE
  * @param state The operation dispatcher state
+ * @param common The common arguments, if applicable
  *
  * @function
  * @async
@@ -243,10 +251,11 @@ function makeContinuationRefFromSupplierKnowledge (
 export
 async function findDSE (
     ctx: Context,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     haystackVertex: DIT,
     needleDN: DistinguishedName, // N
     state: OperationDispatcherState,
+    common?: CommonArguments,
 ): Promise<void> {
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -260,7 +269,8 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -268,6 +278,7 @@ async function findDSE (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -289,50 +300,38 @@ async function findDSE (
     let lastCP: Vertex | undefined;
     const candidateRefs: ContinuationReference[] = [];
     const op = ("present" in state.invokeId)
-        ? assn.invocations.get(Number(state.invokeId.present))
+        ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
-    const opArgElements = state.operationArgument.set;
-    const criticalExtensions = opArgElements
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 25)
-        ))?.inner.bitString;
-    const serviceControls = opArgElements
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 30)
-        ))?.inner;
-    const serviceControlOptions = serviceControls?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 0)
-        ))?.inner;
-    // You don't even need to decode this. Just determining that it exists is sufficient.
-    const manageDSAITPlaneRefElement = serviceControls?.set
-        .find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 6)
-        ));
+    const criticalExtensions = common?.criticalExtensions;
+    const serviceControlOptions = common?.serviceControls?.options;
+    const manageDSAITPlaneRefElement = common?.serviceControls?.manageDSAITPlaneRef;
+    const errorProtection = common?.securityParameters?.errorProtection;
+    const signErrors: boolean = (
+        (errorProtection === ErrorProtectionRequest_signed)
+        && (!assn || (assn.authorizedForSignedErrors))
+    );
 
     // Service controls
     const manageDSAIT: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const dontDereferenceAliases: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_dontDereferenceAliases] === TRUE_BIT);
     const partialNameResolution: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_partialNameResolution] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_partialNameResolution] === TRUE_BIT);
     const dontUseCopy: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
-        serviceControlOptions?.bitString?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
+        serviceControlOptions?.[ServiceControlOptions_copyShallDo] === TRUE_BIT);
     // const subentries: boolean = (
     //     serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const user = state.chainingArguments.originator
+    const requestor: DistinguishedName | undefined = state.chainingArguments.originator
+        ?? assn?.boundNameAndUID?.dn;
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -353,10 +352,10 @@ async function findDSE (
                 ctx.log.warn(ctx.i18n.t("log:shadow_not_under_cp", {
                     id: dse_i.dse.uuid,
                 }), {
-                    remoteFamily: assn.socket.remoteFamily,
-                    remoteAddress: assn.socket.remoteAddress,
-                    remotePort: assn.socket.remotePort,
-                    association_id: assn.id,
+                    remoteFamily: assn?.socket.remoteFamily,
+                    remoteAddress: assn?.socket.remoteAddress,
+                    remotePort: assn?.socket.remotePort,
+                    association_id: assn?.id,
                     invokeID: printInvokeId(state.invokeId),
                 });
                 return undefined;
@@ -431,7 +430,8 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         nameError["&errorCode"],
                     ),
@@ -439,6 +439,7 @@ async function findDSE (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             state.entrySuitable = true;
@@ -531,7 +532,8 @@ async function findDSE (
                                 [],
                                 createSecurityParameters(
                                     ctx,
-                                    assn.boundNameAndUID?.dn,
+                                    signErrors,
+                                    assn?.boundNameAndUID?.dn,
                                     undefined,
                                     nameError["&errorCode"],
                                 ),
@@ -539,6 +541,7 @@ async function findDSE (
                                 state.chainingArguments.aliasDereferenced,
                                 undefined,
                             ),
+                            signErrors,
                         );
                     }
                 } else { // m !== 0
@@ -620,7 +623,8 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                assn.boundNameAndUID?.dn,
+                                signErrors,
+                                assn?.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
                             ),
@@ -628,6 +632,7 @@ async function findDSE (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     throw new errors.ServiceError(
@@ -637,7 +642,8 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                assn.boundNameAndUID?.dn,
+                                signErrors,
+                                assn?.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
                             ),
@@ -645,6 +651,7 @@ async function findDSE (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -670,7 +677,8 @@ async function findDSE (
                         [],
                         createSecurityParameters(
                             ctx,
-                            assn.boundNameAndUID?.dn,
+                            signErrors,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
                         ),
@@ -678,17 +686,18 @@ async function findDSE (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             default: {
                 ctx.log.error(ctx.i18n.t("log:operation_progress_not_understood", {
                     value: nameResolutionPhase,
-                    cid: assn.id,
+                    cid: assn?.id ?? "INTERNAL",
                 }), {
-                    remoteFamily: assn.socket.remoteFamily,
-                    remoteAddress: assn.socket.remoteAddress,
-                    remotePort: assn.socket.remotePort,
-                    association_id: assn.id,
+                    remoteFamily: assn?.socket.remoteFamily,
+                    remoteAddress: assn?.socket.remoteAddress,
+                    remotePort: assn?.socket.remotePort,
+                    association_id: assn?.id,
                     invokeID: printInvokeId(state.invokeId),
                 });
                 throw new MistypedArgumentError();
@@ -708,6 +717,8 @@ async function findDSE (
             copyShallDo,
             state.chainingArguments.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows,
             state.operationArgument,
+            undefined,
+            signErrors,
         );
         if (suitable) {
             state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
@@ -924,7 +935,9 @@ async function findDSE (
                         accessControlScheme,
                         acdfTuples,
                         user,
-                        state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                        state.chainingArguments.authenticationLevel
+                            ?? assn?.authLevel
+                            ?? UNTRUSTED_REQ_AUTH_LEVEL,
                         childDN,
                         isMemberOfGroup,
                         NAMING_MATCHER,
@@ -962,7 +975,8 @@ async function findDSE (
                                     [],
                                     createSecurityParameters(
                                         ctx,
-                                        assn.boundNameAndUID?.dn,
+                                        signErrors,
+                                        assn?.boundNameAndUID?.dn,
                                         undefined,
                                         securityError["&errorCode"],
                                     ),
@@ -970,6 +984,7 @@ async function findDSE (
                                     state.chainingArguments.aliasDereferenced,
                                     undefined,
                                 ),
+                                signErrors,
                             );
                         }
                         await targetNotFoundSubprocedure();
@@ -1016,7 +1031,8 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                assn.boundNameAndUID?.dn,
+                                signErrors,
+                                assn?.boundNameAndUID?.dn,
                                 undefined,
                                 abandoned["&errorCode"],
                             ),
@@ -1024,6 +1040,7 @@ async function findDSE (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 checkTimeLimit();
@@ -1074,7 +1091,9 @@ async function findDSE (
                             accessControlScheme,
                             acdfTuples,
                             user,
-                            state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                            state.chainingArguments.authenticationLevel
+                                ?? assn?.authLevel
+                                ?? UNTRUSTED_REQ_AUTH_LEVEL,
                             childDN,
                             isMemberOfGroup,
                             NAMING_MATCHER,
@@ -1117,7 +1136,8 @@ async function findDSE (
                                         [],
                                         createSecurityParameters(
                                             ctx,
-                                            assn.boundNameAndUID?.dn,
+                                            signErrors,
+                                            assn?.boundNameAndUID?.dn,
                                             undefined,
                                             securityError["&errorCode"],
                                         ),
@@ -1125,6 +1145,7 @@ async function findDSE (
                                         state.chainingArguments.aliasDereferenced,
                                         undefined,
                                     ),
+                                    signErrors,
                                 );
                             }
                             throw new errors.NameError(
@@ -1137,7 +1158,8 @@ async function findDSE (
                                     [],
                                     createSecurityParameters(
                                         ctx,
-                                        assn.boundNameAndUID?.dn,
+                                        signErrors,
+                                        assn?.boundNameAndUID?.dn,
                                         undefined,
                                         nameError["&errorCode"],
                                     ),
@@ -1145,6 +1167,7 @@ async function findDSE (
                                     state.chainingArguments.aliasDereferenced,
                                     undefined,
                                 ),
+                                signErrors,
                             );
                         }
                     }
@@ -1187,7 +1210,9 @@ async function findDSE (
                 accessControlScheme,
                 acdfTuples,
                 user,
-                state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                state.chainingArguments.authenticationLevel
+                    ?? assn?.authLevel
+                    ?? UNTRUSTED_REQ_AUTH_LEVEL,
                 currentDN,
                 isMemberOfGroup,
                 NAMING_MATCHER,
@@ -1229,7 +1254,8 @@ async function findDSE (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -1237,6 +1263,7 @@ async function findDSE (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         /**
@@ -1373,7 +1400,8 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                assn.boundNameAndUID?.dn,
+                                signErrors,
+                                assn?.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
                             ),
@@ -1381,6 +1409,7 @@ async function findDSE (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 state.foundDSE = dse_i;
@@ -1406,7 +1435,8 @@ async function findDSE (
                         [],
                         createSecurityParameters(
                             ctx,
-                            assn.boundNameAndUID?.dn,
+                            signErrors,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             nameError["&errorCode"],
                         ),
@@ -1414,6 +1444,7 @@ async function findDSE (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1437,6 +1468,7 @@ async function findDSE (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             undefined,
                             undefined,
                             serviceError["&errorCode"],
@@ -1445,6 +1477,7 @@ async function findDSE (
                         TRUE,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             state.aliasesEncounteredById.add(dse_i.dse.id);
@@ -1469,7 +1502,8 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                assn.boundNameAndUID?.dn,
+                                signErrors,
+                                assn?.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
                             ),
@@ -1477,6 +1511,7 @@ async function findDSE (
                             false,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             } else {
@@ -1485,7 +1520,7 @@ async function findDSE (
                     ...needleDN.slice(i), // RDNs N(i + 1) to N(m)
                 ];
                 const newChaining: ChainingArguments = new ChainingArguments(
-                    state.chainingArguments.originator,
+                    requestor,
                     newN,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_notStarted,
@@ -1545,7 +1580,8 @@ async function findDSE (
                             [],
                             createSecurityParameters(
                                 ctx,
-                                assn.boundNameAndUID?.dn,
+                                signErrors,
+                                assn?.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
                             ),
@@ -1553,6 +1589,7 @@ async function findDSE (
                             false,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 Object.assign(state, newState);
@@ -1567,7 +1604,8 @@ async function findDSE (
             [],
             createSecurityParameters(
                 ctx,
-                assn.boundNameAndUID?.dn,
+                signErrors,
+                assn?.boundNameAndUID?.dn,
                 undefined,
                 serviceError["&errorCode"],
             ),
@@ -1575,6 +1613,7 @@ async function findDSE (
             state.chainingArguments.aliasDereferenced,
             undefined,
         ),
+        signErrors,
     );
 }
 

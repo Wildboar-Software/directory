@@ -21,6 +21,28 @@ tolerations: []
 affinity: {}
 resetDatabase: false
 dangerouslyExposeWebAdmin: false
+networkPolicyEnabled: false
+networkPolicyIngressOverride:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: whatever
+    ports:
+    - port: 1234
+      protocol: TCP
+networkPolicyEgressOverride:
+  - to:
+    - ipBlock:
+        cidr: x.x.x.x/32
+    ports:
+    - port: 1234
+      protocol: TCP
+# Necessary for configuring:
+# 1. Pod affinity to put your Meerkat DSA instance near your DBMS, and
+# 2. Network policy, permitting Meerkat DSA to connect to your DBMS.
+# databaseLabelSelector:
+#   matchLabels:
+#     app: mysql
 
 # This should be a secret of type "tls".
 # See: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
@@ -51,109 +73,205 @@ databaseSecretName: meerkat-database-secret
 # - `dhparam.pem`: The PEM-encoded Diffie-Hellman Parameters
 # dhParamSecretName: meerkat-dhparam-secret
 
-# The structure of what follows is based on the `Context.config` interface defined in
-# `@wildboar/meerkat-types` and instantiated in `apps/meerkat/src/app/ctx.ts`.
+# This MUST contain the following keys:
+# - `ca.pem`: The certificate authority bundle as a concatenation of PEM-encoded X.509 certificates.
+# signingCaConfigName: meerkat-ca-config
 
-log:
-  level: debug
-  console: true
-  color: true
-  timestamp: true
-  json: false
-  # file:
-  #   path: /example/file.log
-  #   maxSize: 1000000
-  #   maxFiles: 100
-  #   zip: true
-  #   tailable: true
-  # http:
-  #   url: https://username:password@example.com/log/endpoint
-maxConnections: 250
-maxConnectionsPerAddress: 10
-maxConcurrentOperationsPerConnection: 20
-tcp:
-  noDelay: false
-  timeoutInSeconds: 120 # 0 means "do not timeout."
-  # This is a sensible default, since AX.25 radio--one of the slowest media
-  # available--transmits at about 150 bytes per second.
-  minimumTransferSpeedInBytesPerMinute: 1000
-tls:
-  handshakeTimeout: 30000
-  sessionTimeout: 3600
-  # This is a deviation from the `Context` interface.
-  clientCertAuth: false
-  # cert: /cert.pem
-  # key: /key.pem
-  # ca: /ca.pem
-  # crl: /crl.pem
-  # pfx: /example.pfx
-  # sigalgs: ""
-  # ciphers: ""
-  # clientCertEngine: ""
-  # dhparam: /dhparam.pem
-  # ecdhCurve: ""
-  honorCipherOrder: false
-  # minVersion: TLSv1.1
-  maxVersion: TLSv1.3
-  # passphrase: banana123
-  # privateKeyEngine: ""
-  # ticketKeys: ???
-  # pskIdentityHint: ???
-idm:
-  port: 4632
-  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
-  bufferSize: "1000000"
-  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
-  maxPDUSize: "1000000"
-  maxSegments: 100
-idms:
-  port: 44632
-ldap:
-  port: 389
-  # These MUST be quoted. See this bullshit: https://github.com/helm/helm/issues/3001
-  bufferSize: "1000000"
-ldaps:
-  port: 636
-webAdmin:
-  port: 18080
-localQualifierPointsFor:
-  usingStartTLS: 32
-  usingTLS: 64
-  usingSSLv3: 0
-  usingTLSv1_0: 16
-  usingTLSv1_1: 32
-  usingTLSv1_2: 64
-  usingTLSv1_3: 128
-chaining:
-  minAuthLevel: 1
-  minAuthLocalQualifier: 32
-  tlsOptional: false
-  prohibited: true
-ob:
-  minAuthLevel: 1
-  minAuthLocalQualifier: 32
-  autoAccept: false
-sentinelDomain: sentinel.meerkat.wildboar.software
-# administratorEmail: example@example.com
-bulkInsertMode: false
-bindMinSleepInMilliseconds: 100
-bindSleepRangeInMilliseconds: 500
-myAccessPointNSAPs: []
-  # Example values:
-  # - idm://dsa01.demo.meerkat.wildboar.software:4632
-  # - idms://dsa01.demo.meerkat.wildboar.software:44632
-  # - ldap://dsa01.demo.meerkat.wildboar.software:389
-  # - ldaps://dsa01.demo.meerkat.wildboar.software:636
-useDatabaseWhenThereAreXSubordinates: 1000
-entriesPerSubordinatesPage: 100
-transcodeValuesToDER: true
-transcodeDistinguishedValuesToDER: true
-openTopLevel: false
-forbidAnonymousBind: false
-maxPreBindRequests: 2
-dap:
-  enabled: true
-dsp:
-  enabled: true
-dop:
-  enabled: true
+# This MUST contain the following keys:
+# - `tal.cmsc`: The IETF RFC 5914 Trust Anchor List as a binary CMS message (not DER-encoded)
+# signingTrustAnchorListConfigName: meerkat-tal-config
+
+# This MUST contain the following keys:
+# - `crl.pem`: All certificate revocation lists as a concatenation of PEM-encoded CRLs.
+# signingCrlConfigName: meerkat-crl-config
+
+# This MUST contain the following keys:
+# - `acert.pem`: The attribute certification path, as described in:
+# https://wildboar-software.github.io/directory/docs/env#meerkatattrcertchainfile
+# attributeCertificationPathConfigName: meerkat-attcert-config
+
+# This MUST contain the following keys:
+# - `init`: The init script to run at startup to customize your Meerkat DSA instance.
+# initJsConfigName: meerkat-init-js
+
+# This should be a secret of type "tls".
+# See: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+# A secret is needed for this because the URL typically has a username and
+# password in it.
+# webAdminProxySecretName: web-admin-proxy-secret
+
+# administrator_email: jonathan@wilbur.space
+bind_min_sleep_ms: 1000
+bind_sleep_range_ms: 3000
+bulk_insert_mode: false
+# client_cert_engine: pkcs11
+chaining_tls_optional: false
+# ecdh_curves: P-521:P-384:P-256
+enable_dap: true
+enable_dop: false
+enable_dsp: false
+entries_per_subordinates_page: 100
+forbid_anonymous_bind: false
+honor_cipher_order: false
+idm_buffer_size: "1000000"
+idm_port: 4632
+idms_port: 44632
+# init_js: use initJsConfigName
+ldap_buffer_size: "1000000"
+ldap_port: 389
+ldaps_port: 636
+local_qualifier_points_for_using_ssl3: 8
+local_qualifier_points_for_using_starttls: 8
+local_qualifier_points_for_using_tls: 32
+local_qualifier_points_for_using_tls_1_0: 32
+local_qualifier_points_for_using_tls_1_1: 64
+local_qualifier_points_for_using_tls_1_2: 128
+local_qualifier_points_for_using_tls_1_3: 256
+# log_file: /var/log/meerkat.log
+# log_file_max_files: 100
+# log_file_max_size: "1000000"
+log_http: false
+log_json: false
+log_level: info
+log_tailable: false
+log_zip: true
+lookup_uncert_strong_auth: false
+max_concurrent_operations_per_connection: 100
+max_connections: 250
+max_connections_per_address: 100
+max_idm_pdu_size: "1000000"
+max_idm_segments: 10
+max_pre_bind_requests: 0
+min_auth_level_for_chaining: 1
+min_auth_level_for_ob: 1
+min_auth_local_qualifier_for_chaining: 0
+min_auth_local_qualifier_for_ob: 0
+min_transfer_speed_bytes_per_minute: 1000
+# my_access_point_nsaps:
+#   - "itot://example.com:1707"
+no_color: false
+no_console: false
+no_timestamp: false
+ob_auto_accept: false
+open_top_level: false
+# private_key_engine: pkcs11
+prohibit_chaining: false
+# scvp_attr_cert_checks:
+#   - "2.5.4.3"
+# scvp_attr_cert_want_backs:
+#   - "2.5.4.3"
+scvp_cached_response: false
+scvp_disclose_ae_title: false
+scvp_full_request_in_response: false
+# scvp_hash_algorithm: "2.5.4.3"
+scvp_inhibit_any_policy: false
+scvp_inhibit_policy_mapping: false
+# scvp_public_key_cert_checks:
+#   - "2.5.4.3"
+# scvp_public_key_cert_want_backs:
+#   - "2.5.4.3"
+# scvp_requestor_text: "Hi Mom"
+scvp_require_explicit_policy: false
+scvp_response_validation_policy_by_ref: false
+# scvp_signature_algorithm: "2.5.4.3"
+# scvp_url: https://example.com/scvp
+# scvp_validation_algorithm_id: "2.5.4.3"
+# scvp_validation_policy_ref_id: "2.5.4.3"
+sentinel_domain: sentinel.meerkat.wildboar.software
+signing_acceptable_cert_policies:
+  - "2.5.4.3"
+signing_bind_acceptable_cert_policies:
+  - "2.5.4.3"
+signing_bind_crl_dp_attempts_per_cert: 3
+signing_bind_max_endpoints_per_crl_dp: 3
+signing_bind_ocsp_checkiness: -1
+signing_bind_ocsp_max_requests_per_cert: 3
+signing_bind_ocsp_sign_requests: false
+signing_bind_ocsp_timeout: 5
+signing_bind_ocsp_unknown_is_failure: true
+signing_bind_remote_crl_cache_ttl: 3600
+signing_bind_remote_crl_checkiness: 0
+signing_bind_remote_crl_supported_protocols:
+  - "http"
+  - "https"
+  - "ftp"
+  - "ftps"
+  - "ldap"
+  - "ldaps"
+  - "http2"
+signing_bind_remote_crl_timeout: 5
+signing_bind_tolerate_unavailable_remote_crl: true
+# signing_ca_file: use signingCaConfigName
+# signing_cert_chain: use signingSecretName
+signing_crl_dp_attempts_per_cert: 3
+# signing_crl_file: use signingCrlConfigName
+signing_disable_verification: false
+signing_errors_min_auth_level: 1
+signing_errors_min_auth_local_qualifier: 0
+signing_errors_min_auth_signed: true
+# signing_key: signingSecretName
+signing_max_endpoints_per_crl_dp: 3
+signing_min_auth_level: 1
+signing_min_auth_local_qualifier: 0
+signing_min_auth_signed: true
+signing_ocsp_checkiness: -1
+signing_ocsp_max_requests_per_cert: 3
+signing_ocsp_replay_window: 15
+signing_ocsp_response_size_limit: 10000
+signing_ocsp_sign_requests: false
+signing_ocsp_timeout: 5
+signing_ocsp_unknown_is_failure: true
+# signing_permitted_algorithms:
+#   - "2.5.4.3"
+signing_remote_crl_cache_ttl: 3600
+signing_remote_crl_checkiness: 0
+# FIXME: Bind equivalent not defined
+signing_remote_crl_size_limit: "1000000"
+signing_remote_crl_supported_protocols:
+  - "http"
+  - "https"
+  - "ftp"
+  - "ftps"
+  - "ldap"
+  - "ldaps"
+  - "http2"
+signing_remote_crl_timeout: 5
+signing_required_for_chaining: true
+signing_required_for_ob: true
+signing_tolerate_unavailable_remote_crl: true
+tcp_no_delay: false
+tcp_timeout_in_seconds: 60
+tls_answer_ocsp_requests: false
+# tls_ca_file: tlsCaConfigName
+# tls_cert_file: use tlsSecretName
+tls_ciphers: RSA-PSK-AES256-GCM-SHA384:!RC4
+tls_client_cert_auth: false
+# tls_crl_file: use tlsCrlConfigName
+# tls_dh_param_file: use dhParamSecretName
+tls_handshake_timeout_in_seconds: 10
+# tls_key_file: use tlsSecretName
+# TODO: tls_key_passphrase: not supported by this Helm chart.
+tls_max_version: "TLSv1.3"
+tls_min_version: "TLSv1.2"
+tls_ocsp_checkiness: -1
+tls_ocsp_max_requests_per_cert: 3
+tls_ocsp_replay_window: 15
+tls_ocsp_response_size_limit: 10000
+tls_ocsp_sign_requests: false
+tls_ocsp_timeout: 5
+tls_ocsp_unknown_is_failure: true
+# TODO: tls_pfx_file: not supported by this Helm chart. Use tls_key_file and tls_cert_file instead.
+tls_reject_unauthorized_clients: false
+tls_reject_unauthorized_servers: true
+tls_request_ocsp: false
+# tls_session_timeout_in_seconds: 300
+# tls_sig_algs: rsa_pss_pss_sha512
+transcode_distinguished_values_to_der: true
+transcode_values_to_der: true
+# trust_anchors_file: signingTrustAnchorListConfigName
+use_database_when_there_are_x_subordinates: 1000
+# web_admin_auth_username: admin
+# web_admin_auth_password: "USJ6TrD3GLOAsHN7F7GgkEq/VsQe33wwaPuMm3Ormf8="
+# web_admin_auth_realm: "Bigboi's Playhouse"
+web_admin_use_tls: true
+web_admin_port: 18080

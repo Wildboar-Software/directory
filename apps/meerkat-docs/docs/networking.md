@@ -22,25 +22,6 @@ If no port is set, that service does not listen at all. This means that it is
 possible to run Meerkat DSA as an LDAP-only or X.500-only server by simply
 not configuring ports for those services.
 
-## The Web Console
-
-Meerkat DSA also provides a web-based administrative console, which does not
-listen over TLS and which provides no authentication or security at all. **Users
-are expected to place some sort of proxy in front of this that requires
-authentication, or simply not expose it at all.** It is only necessary for
-accepting or rejecting requested operational bindings; everything else can be
-done using the X.500 protocols. In the future, we will find a way to make even
-this possible without the web console.
-
-Note that listening with the web-based
-administrative console is a **security risk** because there is no
-authentication or access controls required; all entries in memory may be read,
-entries may be deleted, and many more hazards. If you do not expect to need
-this, it is strongly recommended that you do not enable it. Also note that, even
-if authentication is configured for the web console via a proxy, there may be
-other security issues; we suspect it may be vulnerable to CSRF, but this has yet
-to be tested.
-
 ## Distributed Operation
 
 For distributed operations, Meerkat DSA stores the access points obtained from
@@ -54,50 +35,6 @@ take effect. (We say "may" literally: it might not require a restart if you are
 not using in-memory caching of the DIT.) It is recommended that you instead use
 the Directory Access Protocol with the `manageDSAIT` flag set to modify
 knowledge attributes rather than altering the database directly.
-
-## TLS Configuration
-
-> Many details in this section will change soon.
-
-TLS can be configured via the following environment variables:
-
-- `MEERKAT_TLS_CERT_FILE`
-- `MEERKAT_TLS_KEY_FILE`
-
-Or by including
-
-- `MEERKAT_TLS_PFX_FILE`
-
-`MEERKAT_TLS_CERT_FILE` contains a file path to the X.509 certificate to be
-used for TLS. `MEERKAT_TLS_KEY_FILE` shall contain the file path to the
-private key to be used for TLS. If both of these are present, TLS will be
-enabled. Otherwise, TLS will silently fail.
-
-If either the key file or PFX file are password-protected, these can be
-decrypted by supplying the passphrase in the `MEERKAT_TLS_KEY_PASSPHRASE`
-environment variable.
-
-## Result Signing
-
-Currently, results may not be digitally-signed by Meerkat DSA, but the keypair
-to be used for digital-signing (eventually) can be configured via these
-environment variables:
-
-- `MEERKAT_SIGNING_CERT_CHAIN`
-- `MEERKAT_SIGNING_KEY`
-
-`MEERKAT_SIGNING_CERT_CHAIN` contains the file path to the PEM-encoded X.509
-certificate chain. `MEERKAT_SIGNING_KEY` shall contain the file path to the
-private key to be used for results signing.
-
-Note that these settings may differ from the keypair used for TLS. This is
-intentional, because DSA administrators may want results to be signed with a
-different keypair that what is used for transport-layer security.
-
-Even if you do not plan to use results signing, you should still configure a
-signing key-pair.
-
-_Meerkat DSA determines it's Application Entity (AE) title from its signing certificate._
 
 ## DNS Configuration
 

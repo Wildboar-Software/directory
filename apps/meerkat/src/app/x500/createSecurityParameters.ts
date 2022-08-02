@@ -23,35 +23,46 @@ import type {
 import { unpackBits } from "asn1-ts";
 import { randomBytes } from "crypto";
 
+// TODO: Convert to native function?
 export
 function createSecurityParameters (
     ctx: Context,
+    signed: boolean,
     recipient?: DistinguishedName,
     operationCode?: Code,
     errorCode?: Code,
-): SecurityParameters {
+): SecurityParameters | undefined {
+    const signingCertPath = ctx.config.signing.certPath;
+    const signable: boolean = !!(signingCertPath && signed && !ctx.config.bulkInsertMode);
+    if (!signable && errorCode) {
+        return undefined;
+    }
     return new SecurityParameters(
-        (ctx.config.signing && !ctx.config.bulkInsertMode)
+        signable
             ? new CertificationPath(
-                ctx.config.signing.certPath[ctx.config.signing.certPath.length - 1],
-                (ctx.config.signing.certPath.length > 1)
-                    ? ctx.config.signing.certPath
+                signingCertPath![signingCertPath!.length - 1],
+                (signingCertPath!.length > 1)
+                    ? signingCertPath!
                         .slice(0, -1) // The last certificate is the end-entity (the DSA.)
                         .reverse() // The certificates are in order of descending authority.
                         .map((cert) => new CertificatePair(
-                            undefined,
                             cert,
+                            undefined,
                         ))
                     : undefined,
             )
             : undefined,
-        recipient,
-        {
-            generalizedTime: new Date((new Date()).valueOf() + 60000),
-        },
-        ctx.config.bulkInsertMode
-            ? undefined
-            : unpackBits(randomBytes(16)),
+        signable
+            ? recipient
+            : undefined,
+        signable
+            ? {
+                generalizedTime: new Date((new Date()).valueOf() + 60000),
+            }
+            : undefined,
+        signable
+            ? unpackBits(randomBytes(4))
+            : undefined,
         ProtectionRequest_signed,
         operationCode,
         ErrorProtectionRequest_signed,

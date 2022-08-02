@@ -1,5 +1,17 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
-import { ASN1Element, DERElement } from "asn1-ts";
+import type {
+    Context,
+    ClientAssociation,
+    ListResultStatistics,
+    PartialOutcomeQualifierStatistics,
+} from "@wildboar/meerkat-types";
+import {
+    ASN1Element,
+    DERElement,
+    ASN1TagClass,
+    encodeUnsignedBigEndianInteger,
+    unpackBits,
+} from "asn1-ts";
+import * as $ from "asn1-ts/dist/node/functional";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { strict as assert } from "assert";
@@ -7,8 +19,8 @@ import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptiona
 import {
     ListArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
-import type {
-    ListResult,
+import {
+    ListResult, _encode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
@@ -27,10 +39,39 @@ import {
 import type { ListState } from "./list_i";
 import {
     ListResultData_listInfo_subordinates_Item as ListItem,
-    _decode_ListResultData_listInfo_subordinates_Item,
     _encode_ListResultData_listInfo_subordinates_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
-import { ListResultData_listInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
+import {
+    ListResultData_listInfo,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import {
+    _encode_Name,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+import {
+    _encode_PartialOutcomeQualifier,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+import {
+    _encode_SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import {
+    _encode_DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    _encode_AlgorithmIdentifier,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
+
+export
+interface MergeListResultsReturn {
+    readonly encodedListResult: ASN1Element;
+    readonly resultStats: ListResultStatistics;
+    readonly poqStats?: PartialOutcomeQualifierStatistics;
+}
 
 type IListInfo = { -readonly [K in keyof ListResultData_listInfo]: ListResultData_listInfo[K] };
 
@@ -234,7 +275,7 @@ async function mergeSortAndPageList(
     state: OperationDispatcherState,
     listArgument: ListArgumentData,
     listState: ListState,
-): Promise<ListResult> {
+): Promise<MergeListResultsReturn> {
     const resultSetsToReturn: ListResult[] = [];
     let resultsToReturn: ListItem[] = [];
     const foundDN = getDistinguishedName(state.foundDSE);
@@ -247,6 +288,10 @@ async function mergeSortAndPageList(
     const paging = queryReference
         ? assn.pagedResultsRequests.get(queryReference)
         : undefined;
+    const signResults: boolean = (
+        (listArgument.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     // If there is no paging, we just return an arbitrary selection of the results that is less than the sizeLimit.
     if (!paging) {
         const sizeLimit: number = listArgument.serviceControls?.sizeLimit
@@ -276,6 +321,7 @@ async function mergeSortAndPageList(
                     [],
                     createSecurityParameters(
                         ctx,
+                        signResults,
                         assn.boundNameAndUID?.dn,
                         list["&operationCode"],
                     ),
@@ -285,17 +331,62 @@ async function mergeSortAndPageList(
                 ),
             },
         };
+        const poqStats = listState.poq
+            ? getPartialOutcomeQualifierStatistics(listState.poq)
+            : undefined;
         const totalResult: ListResult = resultSetsToReturn.length
             ? {
                 unsigned: {
                     uncorrelatedListInfo: [
                         ...resultSetsToReturn,
+                        /**
+                         * This will be unsigned, but that's acceptable, because
+                         * the uncorrelatedListInfo as a whole will get signed.
+                         */
                         localResult,
                     ],
                 },
             }
             : localResult;
-        return totalResult;
+
+        const resultStats: ListResultStatistics = {
+            numberOfSubordinates: getEntryCount(totalResult),
+        };
+
+        const unsignedReturnValue: MergeListResultsReturn = {
+            encodedListResult: _encode_ListResult(totalResult, DER),
+            resultStats,
+            poqStats,
+        };
+
+        if (!signResults) {
+            return unsignedReturnValue;
+        }
+
+        const signableBytes = Buffer.from(_encode_ListResult(totalResult, DER).toBytes().buffer);
+        const key = ctx.config.signing?.key;
+        if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+            return unsignedReturnValue;
+        }
+        const signingResult = generateSignature(key, signableBytes);
+        if (!signingResult) {
+            return unsignedReturnValue;
+        }
+        const [ sigAlg, sigValue ] = signingResult;
+        const unsigned = getOptionallyProtectedValue(totalResult);
+        return {
+            encodedListResult: _encode_ListResult({
+                signed: new SIGNED(
+                    unsigned,
+                    sigAlg,
+                    unpackBits(sigValue),
+                    undefined,
+                    undefined,
+                ),
+            }, DER),
+            resultStats,
+            poqStats,
+        };
     }
     assert(paging);
     // Otherwise, assume every result from here on came from within this DSA.
@@ -315,6 +406,7 @@ async function mergeSortAndPageList(
         [],
         createSecurityParameters(
             ctx,
+            signResults,
             assn.boundNameAndUID?.dn,
             list["&operationCode"],
         ),
@@ -417,47 +509,209 @@ async function mergeSortAndPageList(
             },
         });
     }
-    /* TODO: Because this could potentially decode thousands of results just to
-     * eventually re-encode this result, you should manually encode a
-     * listInfo and just concatenate all BER-encoded ListItem's as
-     * the `subordinates` field. This could potentially save a lot of computing
-     * power.
+
+    const poq = done
+        ? mergedResult.partialOutcomeQualifier
+        : new PartialOutcomeQualifier(
+            LimitProblem_sizeLimitExceeded,
+            mergedResult.partialOutcomeQualifier?.unexplored,
+            mergedResult.partialOutcomeQualifier?.unavailableCriticalExtensions,
+            mergedResult.partialOutcomeQualifier?.unknownErrors,
+            Buffer.from(queryReference!, "base64"),
+            mergedResult.partialOutcomeQualifier?.overspecFilter,
+            mergedResult.partialOutcomeQualifier?.notification,
+            // NOTE: entryCount is only for the `search` operation.
+            undefined,
+        );
+    const sp = createSecurityParameters(
+        ctx,
+        signResults,
+        assn.boundNameAndUID?.dn,
+        list["&operationCode"],
+    );
+
+    // #region Less-decoding optimization.
+    /*
+        When you perform a list that is paginated, a page could be several
+        megabytes in size and/or contain millions of results. Repeatedly
+        encoding and decoding these results could be catastrophic to DSA
+        performance. Fortunately, we can manually construct a ListResult
+        from concatenated buffers to avoid decoding the `subordinates` just to
+        re-encode them. This is pretty complicated, though.
+    */
+    const nameBuffer = (state.chainingArguments.aliasDereferenced && mergedResult.name)
+        ? Buffer.from(_encode_Name(mergedResult.name, DER).toBytes().buffer)
+        : Buffer.allocUnsafe(0);
+    const poqBuffer = poq
+        ? Buffer.from(
+            $._encode_explicit(ASN1TagClass.context, 2, () => _encode_PartialOutcomeQualifier, DER)(poq, DER)
+            .toBytes().buffer)
+        : Buffer.allocUnsafe(0);
+    const spBuffer = sp
+        ? Buffer.from(
+            $._encode_explicit(ASN1TagClass.context, 30, () => _encode_SecurityParameters, DER)(sp, DER)
+                .toBytes().buffer
+        )
+        : Buffer.allocUnsafe(0);
+    const performerBuffer = Buffer.from(
+        $._encode_explicit(ASN1TagClass.context, 29, () => _encode_DistinguishedName, DER)
+        (ctx.dsa.accessPoint.ae_title.rdnSequence, DER).toBytes().buffer);
+    const adBuffer = state.chainingArguments.aliasDereferenced
+        ? Buffer.from([ 0xBD, 0x03, 0x01, 0x01, 0xFF ]) // [29] TRUE
+        : Buffer.allocUnsafe(0);
+    let listInfoLength: number = (
+        nameBuffer.length
+        + poqBuffer.length
+        + spBuffer.length
+        + performerBuffer.length
+        + adBuffer.length
+    );
+    let resultsByteLength = 0;
+    for (const r of results) {
+        resultsByteLength += r.subordinate_info.length;
+    }
+    listInfoLength += resultsByteLength;
+
+    const resultsInnerTagAndLengthBytes = (resultsByteLength >= 128)
+        ? (() => {
+            const lengthBytes = encodeUnsignedBigEndianInteger(resultsByteLength);
+            return Buffer.from([
+                0x31, // SET
+                0b1000_0000 | lengthBytes.length, // Definite long-form length
+                ...lengthBytes, // length
+            ]);
+        })()
+        : Buffer.from([ 0x31, resultsByteLength ]); // SET + Length;
+    const resultsInnerLength = (resultsByteLength + resultsInnerTagAndLengthBytes.length);
+    const resultsOuterTagAndLengthBytes = (resultsInnerLength >= 128)
+        ? (() => {
+            const lengthBytes = encodeUnsignedBigEndianInteger(resultsInnerLength);
+            return Buffer.from([
+                0xA1, // [1]
+                0b1000_0000 | lengthBytes.length, // Definite long-form length
+                ...lengthBytes, // length
+            ]);
+        })()
+        : Buffer.from([ 0xA1, resultsInnerLength ]); // [1] + Length;
+
+    listInfoLength += resultsInnerTagAndLengthBytes.length;
+    listInfoLength += resultsOuterTagAndLengthBytes.length;
+
+    // This is a SET type, so the components MUST be re-ordered for DER-encoding.
+
+    const listInfoTLBytes = (listInfoLength >= 128)
+        ? (() => {
+            const lengthBytes = encodeUnsignedBigEndianInteger(listInfoLength);
+            return Buffer.from([
+                0x31, // SET
+                0b1000_0000 | lengthBytes.length, // Definite long-form length
+                ...lengthBytes, // length
+            ]);
+        })()
+        : Buffer.from([ 0x31, listInfoLength ]); // SET + Length
+
+    const listInfoBuffer = Buffer.concat([
+        listInfoTLBytes,
+        nameBuffer,
+        resultsOuterTagAndLengthBytes,
+        resultsInnerTagAndLengthBytes,
+        ...results.map((r) => r.subordinate_info),
+        poqBuffer,
+        adBuffer,
+        performerBuffer,
+        spBuffer,
+    ]);
+    // #endregion Less-decoding optimization.
+
+    const resultStats: ListResultStatistics = {
+        numberOfSubordinates: results.length,
+    };
+
+    const poqStats = poq
+        ? getPartialOutcomeQualifierStatistics(poq)
+        : undefined;
+
+    /**
+     * Using DER encoding will NOT actually recursively DER-encode this element.
+     * This is a bug in my ASN.1 compiler, where the selected codec does not
+     * recurse completely. Fortunately, this is actually good, because it means
+     * that the entries will not get re-ordered.
+     */
+    const unsignedReturnValue: MergeListResultsReturn = {
+        encodedListResult: (() => {
+            const el = new DERElement();
+            el.fromBytes(listInfoBuffer);
+            return el;
+        })(),
+        resultStats,
+        poqStats,
+    };
+
+    if (!signResults) {
+        return unsignedReturnValue;
+    }
+
+    const key = ctx.config.signing?.key;
+    if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+        return unsignedReturnValue;
+    }
+    const signingResult = generateSignature(key, listInfoBuffer);
+    if (!signingResult) {
+        return unsignedReturnValue;
+    }
+    const [ sigAlg, sigValue ] = signingResult;
+    const algIdBuffer = Buffer.from(_encode_AlgorithmIdentifier(sigAlg, DER).toBytes().buffer);
+    const sigValueTagAndLengthBytes = (sigValue.length + 1) >= 128
+        ? (() => {
+            const lengthBytes = encodeUnsignedBigEndianInteger(sigValue.length + 1);
+            return Buffer.from([
+                0x03, // BIT STRING
+                0b1000_0000 | lengthBytes.length, // Definite long-form length
+                ...lengthBytes, // length
+                0x00, // trailing bits determinant
+            ]);
+        })()
+        : Buffer.from([ 0x03, sigValue.length + 1, 0x00 ]); // BIT STRING + length + trailing bits determinant
+
+    listInfoLength += (
+        listInfoTLBytes.length
+        + algIdBuffer.length
+        + sigValueTagAndLengthBytes.length
+        + sigValue.length
+    );
+
+    const signedBuffer = Buffer.concat([
+        (listInfoLength >= 128)
+            ? (() => {
+                const lengthBytes = encodeUnsignedBigEndianInteger(listInfoLength);
+                return Buffer.from([
+                    0x30, // SEQUENCE
+                    0b1000_0000 | lengthBytes.length, // Definite long-form length
+                    ...lengthBytes, // length
+                ]);
+            })()
+            : Buffer.from([ 0x30, listInfoLength ]), // SEQUENCE + length
+        listInfoBuffer,
+        algIdBuffer,
+        sigValueTagAndLengthBytes, // ... and trailing bits determinant.
+        sigValue,
+    ]);
+    /**
+     * Getting to this code path with the CLI is possible like so:
+     *
+     * x500 dap list '' --pageSize=10 --chainingProhibited
+     *
+     * ^Except you'll have to request target === signed, which currently means
+     * modifying the X.500 CLI.
      */
     return {
-        unsigned: {
-            listInfo: new ListResultData_listInfo(
-                state.chainingArguments.aliasDereferenced
-                    ? mergedResult.name
-                    : undefined,
-                results.map((result) => {
-                    const el = new DERElement();
-                    el.fromBytes(result.subordinate_info);
-                    return _decode_ListResultData_listInfo_subordinates_Item(el);
-                }),
-                done
-                    ? mergedResult.partialOutcomeQualifier
-                    : new PartialOutcomeQualifier(
-                        LimitProblem_sizeLimitExceeded,
-                        mergedResult.partialOutcomeQualifier?.unexplored,
-                        mergedResult.partialOutcomeQualifier?.unavailableCriticalExtensions,
-                        mergedResult.partialOutcomeQualifier?.unknownErrors,
-                        Buffer.from(queryReference!, "base64"),
-                        mergedResult.partialOutcomeQualifier?.overspecFilter,
-                        mergedResult.partialOutcomeQualifier?.notification,
-                        // NOTE: entryCount is only for the `search` operation.
-                        undefined,
-                    ),
-                [],
-                createSecurityParameters(
-                    ctx,
-                    assn.boundNameAndUID?.dn,
-                    list["&operationCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                state.chainingArguments.aliasDereferenced,
-                undefined,
-            ),
-        },
+        encodedListResult: (() => {
+            const el = new DERElement();
+            el.fromBytes(signedBuffer);
+            return el;
+        })(),
+        resultStats,
+        poqStats,
     };
 }
 

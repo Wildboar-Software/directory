@@ -25,7 +25,8 @@ import groupByOID from "../utils/groupByOID";
 export
 function attributesFromValues (values: Value[]): Attribute[] {
     const valuesByType: Record<IndexableOID, Value[]> = groupByOID<Value>(values, (value) => value.type);
-    return Object.values(valuesByType).map((atavs) => {
+    const attrs: Attribute[] = [];
+    for (const atavs of Object.values(valuesByType)) {
         const valuesWithoutContexts: Value[] = [];
         const valuesWithContexts: Value[] = [];
         for (const atav of atavs) {
@@ -35,7 +36,7 @@ function attributesFromValues (values: Value[]): Attribute[] {
                 valuesWithoutContexts.push(atav);
             }
         }
-        return new Attribute(
+        attrs.push(new Attribute(
             atavs[0].type,
             valuesWithoutContexts
                 .map((atav) => atav.value),
@@ -48,8 +49,9 @@ function attributesFromValues (values: Value[]): Attribute[] {
                         context.fallback,
                     )),
                 )),
-        );
-    });
+        ));
+    }
+    return attrs;
 }
 
 export default attributesFromValues;

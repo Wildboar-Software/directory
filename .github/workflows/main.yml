@@ -16,6 +16,15 @@ env:
   CHART_REPO: wildboar
   CHART_NAME: meerkat-dsa
   DEMO_TRUST_ANCHOR_CONFIG_NAME: demo-trust-anchor
+  VALUES_OVERRIDE: |
+    affinity:
+      podAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: mysql
+              app.kubernetes.io/instance: meerkat-db
+          topologyKey: "kubernetes.io/hostname"
   CA_CERT: |
     -----BEGIN CERTIFICATE-----
     MIIDbTCCAlWgAwIBAgIULVexlqqnsQ1/ezE1u8+lQW3iC/8wDQYJKoZIhvcNAQEL
@@ -122,7 +131,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  build:
+  build_meerkat_dsa:
     name: Build Meerkat DSA
     runs-on: ubuntu-latest
     needs:
@@ -162,6 +171,31 @@ jobs:
           context: ./
           file: ./meerkat.dockerfile
 
+  build_x500_cli:
+    name: Build the X.500 CLI
+    runs-on: ubuntu-latest
+    needs:
+      - publish_libs
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Compile the X.500 CLI
+        run: npx nx run x500-cli:build:production --skip-nx-cache
+      - name: Publish NPM Package
+        run: npm publish || true
+        working-directory: ./dist/apps/x500-cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   # HOW DOES THIS EVEN WORK?
   # There is no point in this job where it installs Helm, but yet, somehow, this
   # job runs the `helm` command successfully!
@@ -197,12 +231,215 @@ jobs:
           extra_args: '--pattern index.yaml'
           overwrite: 'true'
 
+  ensure_k8s_namespaces:
+    name: Create Kubernetes Namespaces
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        ns:
+          - 'test'
+          - 'demo'
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Kubernetes Namespace
+        run: kubectl create ns ${{ matrix.ns }}
+        continue-on-error: true
+
+  reset_demo:
+    name: Reset the Demo Environment
+    runs-on: ubuntu-latest
+    needs:
+      - ensure_k8s_namespaces
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        # 'test' is not included in here because we might want to keep it between deployments.
+        dmd:
+          - 'root'
+          - 'gb'
+          - 'ru'
+          - 'moscow'
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Delete Migration Job
+        run: kubectl delete job meerkat-dsa-${{ matrix.dmd }}-migrate -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Uninstall Previous Meerkat DSA Release
+        run: helm uninstall meerkat-dsa-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Uninstall Previous MySQL Database
+        run: helm uninstall meerkat-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete MySQL Secret
+        run: kubectl delete secret mysql-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat Database Secret
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-db -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat Signing Secret
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-signing -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat TLS Secret
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-tls -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete MySQL Database Data
+        run: kubectl delete pvc data-meerkat-db-${{ matrix.dmd }}-mysql-0 -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete DSA DNS Record
+        run: |
+          az network dns record-set a delete \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --name dsa01.${{ matrix.dmd }} \
+            --yes
+        continue-on-error: true
+      - name: Delete Web Admin DNS Record
+        run: |
+          az network dns record-set a delete \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --name webadm01.${{ matrix.dmd }} \
+            --yes
+        continue-on-error: true
+
+  deploy_db:
+    name: Deploy the Demo Database
+    runs-on: ubuntu-latest
+    needs:
+      - reset_demo
+    environment: production
+    strategy:
+      fail-fast: false
+    env:
+      INIT_DB_CONFIG: |
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: database-init
+          namespace: ${{ env.NAMESPACE }}
+        data:
+          init.sql: |
+            CREATE DATABASE directory_root;
+            CREATE DATABASE directory_gb;
+            CREATE DATABASE directory_ru;
+            CREATE DATABASE directory_moscow;
+            CREATE DATABASE directory_test;
+            CREATE USER 'root_user' IDENTIFIED BY 'asdf_root';
+            CREATE USER 'gb_user' IDENTIFIED BY 'asdf_gb';
+            CREATE USER 'ru_user' IDENTIFIED BY 'asdf_ru';
+            CREATE USER 'moscow_user' IDENTIFIED BY 'asdf_moscow';
+            CREATE USER 'test_user' IDENTIFIED BY 'asdf_test';
+            GRANT ALL PRIVILEGES ON directory_root.* TO 'root_user';
+            GRANT ALL PRIVILEGES ON directory_gb.* TO 'gb_user';
+            GRANT ALL PRIVILEGES ON directory_ru.* TO 'ru_user';
+            GRANT ALL PRIVILEGES ON directory_moscow.* TO 'moscow_user';
+            GRANT ALL PRIVILEGES ON directory_test.* TO 'test_user';
+      PASSWORD: y7HocD1hloSb15xx
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Database Initialization Configmap
+        run: echo "${{ env.INIT_DB_CONFIG }}" > initdb.cm.yaml
+      - name: Apply Database Initialization Configmap
+        run: kubectl apply -f initdb.cm.yaml
+        # I was having an issue getting a new instance to start. I think the issue
+        # is that the password settings for a given chart are only applied the first
+        # time it is deployed. When you delete a bitnami/mysql release, it does NOT
+        # delete the PVCs it created, which means that the OLD password will
+        # persist. Since this script deletes and re-installs under the same name
+        # every time, it must necessarily have a deterministic password.
+        # See this GitHub issue: https://github.com/bitnami/charts/issues/9083
+      - name: Create MySQL Secret for the Root DSA
+        run: |
+          kubectl create secret generic mysql-db-root \
+            --from-literal=mysql-root-password=${{ env.PASSWORD }} \
+            --from-literal=mysql-replication-password=${{ env.PASSWORD }} \
+            --from-literal=mysql-password=${{ env.PASSWORD }} \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for Root DSA
+        run: |
+          kubectl create secret generic meerkat-root-db \
+            --from-literal=databaseUrl=mysql://root_user:asdf_root@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_root \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for C=GB DSA
+        run: |
+          kubectl create secret generic meerkat-gb-db \
+            --from-literal=databaseUrl=mysql://gb_user:asdf_gb@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_gb \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for C=RU DSA
+        run: |
+          kubectl create secret generic meerkat-ru-db \
+            --from-literal=databaseUrl=mysql://ru_user:asdf_ru@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_ru \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for C=RU,L=Moscow DSA
+        run: |
+          kubectl create secret generic meerkat-moscow-db \
+            --from-literal=databaseUrl=mysql://moscow_user:asdf_moscow@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_moscow \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for the Test DSA
+        run: |
+          kubectl create secret generic meerkat-test-db \
+            --from-literal=databaseUrl=mysql://test_user:asdf_test@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_test \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Add Bitnami Helm Repo
+        run: helm repo add bitnami https://charts.bitnami.com/bitnami
+      - name: Update Helm Repo Index
+        run: helm repo update
+      - name: Install MySQL
+        run: |
+          helm install meerkat-db bitnami/mysql \
+            --set auth.existingSecret=mysql-db-test \
+            --set auth.database=directory \
+            --set initdbScriptsConfigMap=database-init \
+            --atomic \
+            --namespace=${{ env.NAMESPACE }}
+
   deploy_test:
     name: Deploy Test Environment
     runs-on: ubuntu-latest
     needs:
-      - build
+      - build_meerkat_dsa
       - helm
+      - deploy_db
     environment: production
     strategy:
       fail-fast: false
@@ -226,68 +463,6 @@ jobs:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
-      - name: Create Kubernetes Namespace
-        run: kubectl create ns ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete Migration Job
-        run: kubectl delete job meerkat-dsa-test-migrate -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Uninstall Previous Meerkat DSA Release
-        run: helm uninstall meerkat-dsa-test -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Uninstall Previous MySQL Database
-        run: helm uninstall meerkat-db-test -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete MySQL Secret
-        run: kubectl delete secret mysql-db-test -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete Meerkat Database Secret
-        run: kubectl delete secret meerkat-test-db -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete Meerkat Signing Secret
-        run: kubectl delete secret meerkat-test-signing -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete Meerkat TLS Secret
-        run: kubectl delete secret meerkat-test-tls -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete MySQL Database Data
-        run: kubectl delete pvc data-meerkat-db-test-mysql-0 -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete DSA DNS Record
-        run: |
-          az network dns record-set a delete \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --zone-name ${{ env.ZONE }} \
-            --name dsa01.test \
-            --yes
-        continue-on-error: true
-      - name: Delete Web Admin DNS Record
-        run: |
-          az network dns record-set a delete \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --zone-name ${{ env.ZONE }} \
-            --name webadm01.test \
-            --yes
-        continue-on-error: true
-        # I was having an issue getting a new instance to start. I think the issue
-        # is that the password settings for a given chart are only applied the first
-        # time it is deployed. When you delete a bitnami/mysql release, it does NOT
-        # delete the PVCs it created, which means that the OLD password will
-        # persist. Since this script deletes and re-installs under the same name
-        # every time, it must necessarily have a deterministic password.
-        # See this GitHub issue: https://github.com/bitnami/charts/issues/9083
-      - name: Create MySQL Secret
-        run: |
-          kubectl create secret generic mysql-db-test \
-            --from-literal=mysql-root-password=asdf_test \
-            --from-literal=mysql-replication-password=asdf_test \
-            --from-literal=mysql-password=asdf_test \
-            --namespace=${{ env.NAMESPACE }}
-      - name: Create Meerkat Database Secret
-        run: |
-          kubectl create secret generic meerkat-test-db \
-            --from-literal=databaseUrl=mysql://root:asdf_test@meerkat-db-test-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory \
-            --namespace=${{ env.NAMESPACE }}
       - name: Create Temp Folder
         run: mkdir -p ./tmp
       - name: Create OpenSSL Keypair
@@ -309,22 +484,16 @@ jobs:
             --cert=./tmp/test.crt \
             --key=./tmp/test.key \
             --namespace=${{ env.NAMESPACE }}
-      - name: Add Bitnami Helm Repo
-        run: helm repo add bitnami https://charts.bitnami.com/bitnami
       - name: Add Wildboar Helm Repo
         run: helm repo add ${{ env.CHART_REPO }} https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
       - name: Update Helm Repo Index
         run: helm repo update
-      - name: Install MySQL
-        run: |
-          helm install meerkat-db-test bitnami/mysql \
-            --set auth.existingSecret=mysql-db-test \
-            --set auth.database=directory \
-            --atomic \
-            --namespace=${{ env.NAMESPACE }}
+      - name: Create Values Override File
+        run: echo "${{ env.VALUES_OVERRIDE }}" > values_override.yaml
       - name: Deploy Meerkat DSA via Helm
         run: |
           helm install meerkat-dsa-test ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+            -f values_override.yaml \
             --set fullnameOverride=meerkat-test \
             --set service.type=LoadBalancer \
             --set adminService.type=LoadBalancer \
@@ -392,9 +561,6 @@ jobs:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
-      - name: Create Kubernetes Namespace
-        run: kubectl create ns ${{ env.NAMESPACE }}
-        continue-on-error: true
       - name: Create Temp Folder
         run: mkdir -p ./tmp
       - name: Create Certificate Authority Certificate
@@ -412,9 +578,10 @@ jobs:
     name: Deploy Demo Environment
     runs-on: ubuntu-latest
     needs:
-      - build
+      - build_meerkat_dsa
       - helm
       - create_demo_pki
+      - deploy_db
     environment: production
     env:
       # Credits: https://blogg.bekk.no/how-to-sign-a-certificate-request-with-openssl-e046c933d3ae
@@ -453,86 +620,8 @@ jobs:
           - 'root'
           - 'gb'
           - 'ru'
-          - 'ru-moscow'
+          - 'moscow'
     steps:
-      # - name: Checkout
-      #   uses: actions/checkout@v2
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Setup Kubectl
-        uses: azure/setup-kubectl@v2.0
-      - name: Setup Helm
-        uses: azure/setup-helm@v1
-      - name: Set Kubernetes Context
-        uses: azure/aks-set-context@v1
-        with:
-          creds: '${{ secrets.AZURE_CREDENTIALS }}'
-          cluster-name: ${{ env.CLUSTER_NAME }}
-          resource-group: ${{ env.RESOURCE_GROUP }}
-      - name: Create Kubernetes Namespace
-        run: kubectl create ns ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete Migration Job
-        run: kubectl delete job meerkat-dsa-${{ matrix.dmd }}-migrate -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Uninstall Previous Meerkat DSA Release
-        run: helm uninstall meerkat-dsa-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Uninstall Previous MySQL Database
-        run: helm uninstall meerkat-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete MySQL Secret
-        run: kubectl delete secret mysql-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete Meerkat Database Secret
-        run: kubectl delete secret meerkat-${{ matrix.dmd }}-db -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete Meerkat Signing Secret
-        run: kubectl delete secret meerkat-${{ matrix.dmd }}-signing -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete Meerkat TLS Secret
-        run: kubectl delete secret meerkat-${{ matrix.dmd }}-tls -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete MySQL Database Data
-        run: kubectl delete pvc data-meerkat-db-${{ matrix.dmd }}-mysql-0 -n ${{ env.NAMESPACE }}
-        continue-on-error: true
-      - name: Delete DSA DNS Record
-        run: |
-          az network dns record-set a delete \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --zone-name ${{ env.ZONE }} \
-            --name dsa01.${{ matrix.dmd }} \
-            --yes
-        continue-on-error: true
-      - name: Delete Web Admin DNS Record
-        run: |
-          az network dns record-set a delete \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --zone-name ${{ env.ZONE }} \
-            --name webadm01.${{ matrix.dmd }} \
-            --yes
-        continue-on-error: true
-        # I was having an issue getting a new instance to start. I think the issue
-        # is that the password settings for a given chart are only applied the first
-        # time it is deployed. When you delete a bitnami/mysql release, it does NOT
-        # delete the PVCs it created, which means that the OLD password will
-        # persist. Since this script deletes and re-installs under the same name
-        # every time, it must necessarily have a deterministic password.
-        # See this GitHub issue: https://github.com/bitnami/charts/issues/9083
-      - name: Create MySQL Secret
-        run: |
-          kubectl create secret generic mysql-db-${{ matrix.dmd }} \
-            --from-literal=mysql-root-password=asdf_${{ matrix.dmd }} \
-            --from-literal=mysql-replication-password=asdf_${{ matrix.dmd }} \
-            --from-literal=mysql-password=asdf_${{ matrix.dmd }} \
-            --namespace=${{ env.NAMESPACE }}
-      - name: Create Meerkat Database Secret
-        run: |
-          kubectl create secret generic meerkat-${{ matrix.dmd }}-db \
-            --from-literal=databaseUrl=mysql://root:asdf_${{ matrix.dmd }}@meerkat-db-${{ matrix.dmd }}-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory \
-            --namespace=${{ env.NAMESPACE }}
       - name: Create Temp Folder
         run: mkdir -p ./tmp
       - name: Create Certificate Authority Config
@@ -577,22 +666,16 @@ jobs:
             --cert=./tmp/${{ matrix.dmd }}.crt \
             --key=./tmp/${{ matrix.dmd }}.key \
             --namespace=${{ env.NAMESPACE }}
-      - name: Add Bitnami Helm Repo
-        run: helm repo add bitnami https://charts.bitnami.com/bitnami
       - name: Add Wildboar Helm Repo
         run: helm repo add ${{ env.CHART_REPO }} https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
       - name: Update Helm Repo Index
         run: helm repo update
-      - name: Install MySQL
-        run: |
-          helm install meerkat-db-${{ matrix.dmd }} bitnami/mysql \
-            --set auth.existingSecret=mysql-db-${{ matrix.dmd }} \
-            --set auth.database=directory \
-            --atomic \
-            --namespace=${{ env.NAMESPACE }}
+      - name: Create Values Override File
+        run: echo "${{ env.VALUES_OVERRIDE }}" > values_override.yaml
       - name: Deploy Meerkat DSA via Helm
         run: |
           helm install meerkat-dsa-${{ matrix.dmd }} ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+            -f values_override.yaml \
             --set fullnameOverride=meerkat-${{ matrix.dmd }} \
             --set service.type=LoadBalancer \
             --set adminService.type=LoadBalancer \
@@ -678,8 +761,8 @@ jobs:
       - name: Seed the C=RU,L=Moscow DSA
         run: |
           node ./dist/apps/create-test-dit/main.js \
-            --accessPoint="idm://dsa01.ru-moscow.${{ env.ZONE }}:4632" \
-            --profile=ru-moscow \
+            --accessPoint="idm://dsa01.moscow.${{ env.ZONE }}:4632" \
+            --profile=moscow \
             -t
 
   functional_testing:
@@ -738,8 +821,6 @@ jobs:
           user_email: 41898282+github-actions[bot]@users.noreply.github.com
 
 # TODO: Publish GitHub Release
-# TODO: Publish X.500 CLI
-# TODO: Send Email to Subscribers?
 # TODO: Publish message to Matrix chat? (Looks unclear how to do this.)
 # TODO: Create a Debian Package
 # TODO: Upload artifacts
