@@ -149,7 +149,7 @@ async function validateValues(
                         tag_class: value.value.tagClass,
                         constructed: (value.value.construction === ASN1Construction.constructed),
                         tag_number: value.value.tagNumber,
-                        ber: Buffer.from(value.value.toBytes()),
+                        ber: Buffer.from(value.value.toBytes().buffer),
                     },
                     select: {
                         id: true,
@@ -319,7 +319,7 @@ async function addValues(
                 tag_class: attr.value.tagClass,
                 constructed: (attr.value.construction === ASN1Construction.constructed),
                 tag_number: attr.value.tagNumber,
-                ber: Buffer.from(attr.value.toBytes()),
+                ber: Buffer.from(attr.value.toBytes().buffer),
                 jer: attr.value.toJSON() as Prisma.InputJsonValue,
             })),
         }),
@@ -332,7 +332,7 @@ async function addValues(
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
-                    ber: Buffer.from(attr.value.toBytes()),
+                    ber: Buffer.from(attr.value.toBytes().buffer),
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {
@@ -342,7 +342,7 @@ async function addValues(
                                     tag_class: cv.tagClass,
                                     constructed: (cv.construction === ASN1Construction.constructed),
                                     tag_number: cv.tagNumber,
-                                    ber: Buffer.from(cv.toBytes()),
+                                    ber: Buffer.from(cv.toBytes().buffer),
                                     fallback: context.fallback ?? false,
                                 }))),
                         },

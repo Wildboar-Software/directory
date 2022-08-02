@@ -85,11 +85,11 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 createMany: {
                     data: decoded.securityCategories?.map((sc) => ({
                         type: sc.type_.toString(),
-                        value: Buffer.from(sc.value.toBytes()),
+                        value: Buffer.from(sc.value.toBytes().buffer),
                     })) ?? [],
                 },
             },
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
             active: true,
         },
     }));
@@ -105,7 +105,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.clearance.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
         },
     }));
 };
@@ -158,7 +158,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return !!(await ctx.db.clearance.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
             active: true,
         },
     }));

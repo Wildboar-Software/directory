@@ -24,7 +24,7 @@ import type {
 export
 function rdnToJson (rdn: RDN): Record<string, string> {
     return Object.fromEntries(
-        rdn.map((atav) => [ atav.type_.toString(), "#" + Buffer.from(atav.value.toBytes()).toString("hex") ]),
+        rdn.map((atav) => [ atav.type_.toString(), "#" + Buffer.from(atav.value.toBytes().buffer).toString("hex") ]),
     );
 }
 

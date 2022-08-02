@@ -129,7 +129,7 @@ function getOnOCSPRequestCallback (
                 if (res.responseStatus !== OCSPResponseStatus_successful) {
                     continue;
                 }
-                const responseBytes = Buffer.from(_encode_OCSPResponse(res, DER).toBytes());
+                const responseBytes = Buffer.from(_encode_OCSPResponse(res, DER).toBytes().buffer);
                 callback(null, responseBytes);
                 return;
             } catch {

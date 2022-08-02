@@ -341,14 +341,14 @@ async function updateSuperiorDSA (
                     binding_type: id_op_binding_hierarchical.toString(),
                     binding_identifier: Number(bindingID.identifier),
                     binding_version: Number(bindingID.version) + 1,
-                    agreement_ber: Buffer.from(encodedNewAgreement.toBytes()),
+                    agreement_ber: Buffer.from(encodedNewAgreement.toBytes().buffer),
                     access_point: {
                         connect: {
                             id: hob.access_point.id,
                         },
                     },
                     initiator: OperationalBindingInitiator.ROLE_B,
-                    initiator_ber: Buffer.from(encodedSub2Sup.toBytes()),
+                    initiator_ber: Buffer.from(encodedSub2Sup.toBytes().buffer),
                     validity_start: hob.validity_start,
                     validity_end: hob.validity_end,
                     new_context_prefix_rdn: rdnToJson(newCP.dse.rdn),
@@ -424,14 +424,14 @@ async function updateSuperiorDSA (
                                 },
                             },
                             security_certification_path: sp?.certification_path
-                                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes())
+                                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
                                 : undefined,
                             security_name: accessPoint.ae_title.rdnSequence.map(rdnToJson),
                             security_time: sp?.time
                                 ? getDateFromTime(sp.time)
                                 : undefined,
                             security_random: sp?.random
-                                ? Buffer.from(packBits(sp.random))
+                                ? Buffer.from(packBits(sp.random).buffer)
                                 : undefined,
                             security_target: (sp?.target !== undefined)
                                 ? Number(sp.target)

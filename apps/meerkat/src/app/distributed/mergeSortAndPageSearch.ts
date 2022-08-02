@@ -481,7 +481,7 @@ async function mergeSortAndPageSearch(
                 connection_uuid: assn.id,
                 query_ref: searchState.paging![0],
                 result_index: i,
-                entry_info: Buffer.from(_encode_EntryInformation(entry, DER).toBytes()),
+                entry_info: Buffer.from(_encode_EntryInformation(entry, DER).toBytes().buffer),
                 // TODO: Supply entry ID too.
             })),
         });

@@ -365,7 +365,7 @@ async function updateContextPrefix (
             mosap.protocolInformation,
         ))
         .forEach(async (ap) => { // NOTE: All of these can run in parallel.
-            const ber = Buffer.from(_encode_AccessPoint(ap, DER).toBytes());
+            const ber = Buffer.from(_encode_AccessPoint(ap, DER).toBytes().buffer);
             const alreadySavedAccessPoint = await ctx.db.accessPoint.findFirst({
                 where: {
                     ber,

@@ -1725,7 +1725,7 @@ async function modifyDN (
                 where: {
                     entry_id: target.dse.id,
                     type: atav.type_.toString(),
-                    ber: Buffer.from(atav.value.toBytes()),
+                    ber: Buffer.from(atav.value.toBytes().buffer),
                 },
             }));
             if (!hasValue) {
@@ -1941,7 +1941,7 @@ async function modifyDN (
                 data: newRDN.map((atav, i) => ({
                     entry_id: target.dse.id,
                     type: atav.type_.toString(),
-                    value: Buffer.from(atav.value.toBytes()),
+                    value: Buffer.from(atav.value.toBytes().buffer),
                     order_index: i,
                 })),
             }),

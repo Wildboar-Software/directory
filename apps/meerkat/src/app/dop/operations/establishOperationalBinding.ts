@@ -445,7 +445,7 @@ async function establishOperationalBinding (
                     binding_type: data.bindingType.toString(),
                     binding_identifier: Number(bindingID.identifier),
                     binding_version: Number(bindingID.version),
-                    agreement_ber: Buffer.from(data.agreement.toBytes()),
+                    agreement_ber: Buffer.from(data.agreement.toBytes().buffer),
                     access_point: {
                         connect: {
                             id: access_point_id,
@@ -456,14 +456,14 @@ async function establishOperationalBinding (
                     validity_start: validFrom,
                     validity_end: validUntil,
                     security_certification_path: sp?.certification_path
-                        ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes())
+                        ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
                         : undefined,
                     security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
                     security_time: sp?.time
                         ? getDateFromTime(sp.time)
                         : undefined,
                     security_random: sp?.random
-                        ? Buffer.from(packBits(sp.random))
+                        ? Buffer.from(packBits(sp.random).buffer)
                         : undefined,
                     security_target: (sp?.target !== undefined)
                         ? Number(sp.target)
@@ -503,20 +503,20 @@ async function establishOperationalBinding (
                         && ("strong" in assn.bind.credentials)
                         && assn.bind.credentials.strong.certification_path
                     )
-                        ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes())
+                        ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes().buffer)
                         : undefined,
                     source_attr_cert_path: (
                         assn.bind?.credentials
                         && ("strong" in assn.bind.credentials)
                         && assn.bind.credentials.strong.attributeCertificationPath
                     )
-                        ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes())
+                        ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes().buffer)
                         : undefined,
                     source_bind_token: (
                         assn.bind?.credentials
                         && ("strong" in assn.bind.credentials)
                     )
-                        ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes())
+                        ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes().buffer)
                         : undefined,
                     source_strong_name: (
                         assn.bind?.credentials

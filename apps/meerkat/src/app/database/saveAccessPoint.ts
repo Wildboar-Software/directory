@@ -83,15 +83,15 @@ async function saveAccessPoint (
 ): Promise<number> {
     const ber: Buffer = ((): Buffer => {
         if (ap instanceof AccessPoint) {
-            return Buffer.from(_encode_AccessPoint(ap, DER).toBytes());
+            return Buffer.from(_encode_AccessPoint(ap, DER).toBytes().buffer);
         } else if (ap instanceof MasterOrShadowAccessPoint) {
-            return Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes());
+            return Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes().buffer);
         } else if (ap instanceof SupplierOrConsumer) {
-            return Buffer.from(_encode_SupplierOrConsumer(ap, DER).toBytes());
+            return Buffer.from(_encode_SupplierOrConsumer(ap, DER).toBytes().buffer);
         } else if (ap instanceof SupplierInformation) {
-            return Buffer.from(_encode_SupplierInformation(ap, DER).toBytes());
+            return Buffer.from(_encode_SupplierInformation(ap, DER).toBytes().buffer);
         } else {
-            return Buffer.from(_encode_SupplierAndConsumers(ap, DER).toBytes());
+            return Buffer.from(_encode_SupplierAndConsumers(ap, DER).toBytes().buffer);
         }
     })();
     const non_supplying_master_id = (("non_supplying_master" in ap) && ap.non_supplying_master)
@@ -122,13 +122,13 @@ async function saveAccessPoint (
                         const uri = naddrToURI(nsap);
                         if (!uri) {
                             return {
-                                bytes: Buffer.from(nsap),
+                                bytes: Buffer.from(nsap.buffer),
                             };
                         }
                         const url = new URL(uri);
                         return {
                             url: url.toString(),
-                            bytes: Buffer.from(nsap),
+                            bytes: Buffer.from(nsap.buffer),
                             hostname: url.hostname,
                         };
                     }),

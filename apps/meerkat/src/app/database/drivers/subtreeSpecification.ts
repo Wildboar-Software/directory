@@ -91,7 +91,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             maximum: (subtree.maximum !== undefined)
                 ? Number(subtree.maximum)
                 : undefined,
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
             specification_filter: subtree.specificationFilter
                 ? refinementToJSON(subtree.specificationFilter)
                 : undefined,
@@ -116,7 +116,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
             maximum: (subtree.maximum !== undefined)
                 ? Number(subtree.maximum)
                 : undefined,
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
         },
     }));
 };
@@ -176,7 +176,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return !!(await ctx.db.subtreeSpecification.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
         },
     }));
 };

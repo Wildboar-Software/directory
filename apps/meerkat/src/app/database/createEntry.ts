@@ -85,7 +85,7 @@ async function createEntry (
                     data: rdn.map((atav, i) => ({
                         // entry_id: createdEntry.id,
                         type: atav.type_.toString(),
-                        value: Buffer.from(atav.value.toBytes()),
+                        value: Buffer.from(atav.value.toBytes().buffer),
                         str: atav.value.toString(),
                         order_index: i,
                     })),

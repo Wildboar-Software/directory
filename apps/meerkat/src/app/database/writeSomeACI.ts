@@ -49,7 +49,7 @@ const writeSomeACI: (scope: ACIScope) => SpecialAttributeDatabaseEditor = (scope
                 auth_level_basic_signed: ("basicLevels" in aci.authenticationLevel)
                     ? aci.authenticationLevel.basicLevels.signed
                     : undefined,
-                ber: Buffer.from(attribute.value.toBytes()),
+                ber: Buffer.from(attribute.value.toBytes().buffer),
                 scope,
                 active: true,
             },

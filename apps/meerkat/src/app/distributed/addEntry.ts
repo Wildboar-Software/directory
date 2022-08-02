@@ -1090,7 +1090,7 @@ async function addEntry (
                     ? Number(resultData.bindingID.version)
                     : 0,
                 agreement_ber: Buffer.from(
-                    hierarchicalOperationalBinding.encoderFor["&Agreement"]!(agreement, DER).toBytes(),
+                    hierarchicalOperationalBinding.encoderFor["&Agreement"]!(agreement, DER).toBytes().buffer,
                 ),
                 access_point: {
                     connect: {
@@ -1098,7 +1098,7 @@ async function addEntry (
                     },
                 },
                 initiator: OperationalBindingInitiator.ROLE_A,
-                initiator_ber: Buffer.from(obArgData.initiator.roleA_initiates.toBytes()),
+                initiator_ber: Buffer.from(obArgData.initiator.roleA_initiates.toBytes().buffer),
                 validity_start: validFrom,
                 validity_end: validUntil,
                 new_context_prefix_rdn: rdnToJson(agreement.rdn),

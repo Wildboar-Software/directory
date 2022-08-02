@@ -175,7 +175,7 @@ async function updateLocalSubr (
                 data: newAgreement.rdn.map((atav, i) => ({
                     entry_id: oldSubordinate.dse.id,
                     type: atav.type_.toString(),
-                    value: Buffer.from(atav.value.toBytes()),
+                    value: Buffer.from(atav.value.toBytes().buffer),
                     order_index: i,
                 })),
             }),

@@ -441,7 +441,7 @@ async function mergeSortAndPageList(
                 connection_uuid: assn.id,
                 query_ref: queryReference!,
                 result_index: i,
-                subordinate_info: Buffer.from(_encode_ListResultData_listInfo_subordinates_Item(sub, DER).toBytes()),
+                subordinate_info: Buffer.from(_encode_ListResultData_listInfo_subordinates_Item(sub, DER).toBytes().buffer),
                 // TODO: Supply entry ID too.
             })),
         });

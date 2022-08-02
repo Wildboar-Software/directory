@@ -42,7 +42,7 @@ async function rdnToID (
                 RDN: {
                     some: {
                         type: atav.type_.toString(),
-                        value: Buffer.from(atav.value.toBytes()),
+                        value: Buffer.from(atav.value.toBytes().buffer),
                     },
                 },
             })),

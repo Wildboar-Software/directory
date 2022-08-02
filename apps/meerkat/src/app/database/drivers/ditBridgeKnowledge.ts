@@ -58,7 +58,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             domain_local_id: dbk.domainLocalID
                 ? directoryStringToString(dbk.domainLocalID)
                 : undefined,
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
         },
     }));
 };
@@ -75,7 +75,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     }
     pendingUpdates.otherWrites.push(ctx.db.ditBridgeKnowledge.deleteMany({
         where: {
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
         },
     }));
 };
@@ -116,7 +116,7 @@ const hasValue: SpecialAttributeValueDetector = async (
 ): Promise<boolean> => {
     return !!(await ctx.db.ditBridgeKnowledge.findFirst({
         where: {
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
         },
     }));
 };
