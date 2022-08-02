@@ -112,7 +112,7 @@ enable_dop: false
 enable_dsp: false
 entries_per_subordinates_page: 100
 forbid_anonymous_bind: false
-honor_cipher_order: false
+honor_cipher_order: true
 idm_buffer_size: "1000000"
 idm_port: 4632
 idms_port: 44632
@@ -244,15 +244,15 @@ tcp_timeout_in_seconds: 60
 tls_answer_ocsp_requests: false
 # tls_ca_file: tlsCaConfigName
 # tls_cert_file: use tlsSecretName
-tls_ciphers: RSA-PSK-AES256-GCM-SHA384:!RC4
+# tls_ciphers: RSA-PSK-AES256-GCM-SHA384:!RC4
 tls_client_cert_auth: false
 # tls_crl_file: use tlsCrlConfigName
 # tls_dh_param_file: use dhParamSecretName
 tls_handshake_timeout_in_seconds: 10
 # tls_key_file: use tlsSecretName
 # TODO: tls_key_passphrase: not supported by this Helm chart.
-# tls_max_version: "TLSv1.3"
-# tls_min_version: "TLSv1.2"
+tls_max_version: "TLSv1.3"
+tls_min_version: "TLSv1.2"
 tls_ocsp_checkiness: -1
 tls_ocsp_max_requests_per_cert: 3
 tls_ocsp_replay_window: 15
