@@ -251,8 +251,8 @@ tls_client_cert_auth: false
 tls_handshake_timeout_in_seconds: 10
 # tls_key_file: use tlsSecretName
 # TODO: tls_key_passphrase: not supported by this Helm chart.
-tls_max_version: "TLSv1.3"
-tls_min_version: "TLSv1.2"
+# tls_max_version: "TLSv1.3"
+# tls_min_version: "TLSv1.2"
 tls_ocsp_checkiness: -1
 tls_ocsp_max_requests_per_cert: 3
 tls_ocsp_replay_window: 15
