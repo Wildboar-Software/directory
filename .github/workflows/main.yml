@@ -282,7 +282,7 @@ jobs:
         run: kubectl create ns ${{ matrix.ns }}
         continue-on-error: true
 
-  reset_demo:
+  reset_environments:
     name: Reset the Demo Environment
     runs-on: ubuntu-latest
     needs:
@@ -297,6 +297,7 @@ jobs:
           - 'gb'
           - 'ru'
           - 'moscow'
+          - 'test'
     steps:
       - name: Login to Azure
         uses: azure/login@v1
@@ -354,10 +355,10 @@ jobs:
         continue-on-error: true
 
   deploy_db:
-    name: Deploy the Demo Database
+    name: Deploy the Database
     runs-on: ubuntu-latest
     needs:
-      - reset_demo
+      - reset_environments
     environment: production
     strategy:
       fail-fast: false
@@ -428,7 +429,7 @@ jobs:
       - name: Install MySQL
         run: |
           helm install meerkat-db bitnami/mysql \
-            --set auth.existingSecret=mysql-db-test \
+            --set auth.existingSecret=mysql-db-root \
             --set auth.database=directory \
             --set initdbScriptsConfigMap=database-init \
             --atomic \

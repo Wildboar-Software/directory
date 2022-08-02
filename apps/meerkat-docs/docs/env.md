@@ -598,8 +598,6 @@ strongly recommended that you do not enable this option.
 ## MEERKAT_OB_AUTO_ACCEPT
 
 If set to `1`, Meerkat DSA shall accept ALL requested operational bindings.
- <!-- This should ONLY be enabled
-for testing purposes. -->
 
 :::caution
 
