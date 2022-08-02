@@ -3521,9 +3521,13 @@ async function modifyEntry (
 
     if (
         data.selection
-        && accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        && !authorizedToEntry([ PERMISSION_CATEGORY_READ ])
+        && (
+            !accessControlScheme
+            || (
+                accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+                && !authorizedToEntry([ PERMISSION_CATEGORY_READ ])
+            )
+        )
     ) {
         const permittedEntryInfo = await readPermittedEntryInformation(
             ctx,
