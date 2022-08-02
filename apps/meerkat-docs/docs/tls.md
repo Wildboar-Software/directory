@@ -63,7 +63,7 @@ to `1` (enabled).
 Yes, it is possible to disable server authentication. You can do this by setting
 the environment variable
 [`MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS`](./env.md#meerkattlsrejectunauthorizedclients)
-to `0` (disabled). This will cause Meerkat DSA to ignore invalid an invalid
+to `0` (disabled). This will cause Meerkat DSA to ignore an invalid
 certification path presented by a server to which it connects.
 
 :::caution
