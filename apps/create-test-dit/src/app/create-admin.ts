@@ -192,10 +192,10 @@ async function createAdmin (
     ctx: Context,
     conn: Connection,
 ): Promise<{ password: string }> {
-    const createCountry = addAdminArgument([], TEMPORARY_PASSWORD);
+    const createAdminArg = addAdminArgument([], TEMPORARY_PASSWORD);
     const outcome = await conn.writeOperation({
         opCode: addEntry["&operationCode"],
-        argument: _encode_AddEntryArgument(createCountry, DER),
+        argument: _encode_AddEntryArgument(createAdminArg, DER),
     });
     if ("error" in outcome) {
         if (outcome.errcode) {
