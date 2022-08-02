@@ -320,7 +320,7 @@ jobs:
         run: helm uninstall meerkat-dsa-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
         continue-on-error: true
       - name: Uninstall Previous MySQL Database
-        run: helm uninstall meerkat-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        run: helm uninstall meerkat-db -n ${{ env.NAMESPACE }}
         continue-on-error: true
       - name: Delete MySQL Secret
         run: kubectl delete secret mysql-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
