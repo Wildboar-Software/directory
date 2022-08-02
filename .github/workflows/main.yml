@@ -9,6 +9,7 @@ on:
 env:
   CLUSTER_NAME: production
   RESOURCE_GROUP: production
+  # NOTE: If you change the NAMESPACE, you need to change INIT_DB_CONFIG as well.
   NAMESPACE: demo
   ZONE: mkdemo.wildboar.software
   STORAGE_ACCOUNT_NAME: wildboarprod
@@ -47,6 +48,29 @@ env:
     lfpmMNCkvSpqT3Z2DXoYk38sH8SWfJfcX3ao6InIMq6v12mpnQwhvgTGuAmwDHLz
     4omJCGN3ohmP9kr2tp3Cf6o=
     -----END CERTIFICATE-----
+  INIT_DB_CONFIG: |
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: database-init
+      namespace: demo
+    data:
+      init.sql: |
+        CREATE DATABASE directory_root;
+        CREATE DATABASE directory_gb;
+        CREATE DATABASE directory_ru;
+        CREATE DATABASE directory_moscow;
+        CREATE DATABASE directory_test;
+        CREATE USER 'root_user' IDENTIFIED BY 'asdf_root';
+        CREATE USER 'gb_user' IDENTIFIED BY 'asdf_gb';
+        CREATE USER 'ru_user' IDENTIFIED BY 'asdf_ru';
+        CREATE USER 'moscow_user' IDENTIFIED BY 'asdf_moscow';
+        CREATE USER 'test_user' IDENTIFIED BY 'asdf_test';
+        GRANT ALL PRIVILEGES ON directory_root.* TO 'root_user';
+        GRANT ALL PRIVILEGES ON directory_gb.* TO 'gb_user';
+        GRANT ALL PRIVILEGES ON directory_ru.* TO 'ru_user';
+        GRANT ALL PRIVILEGES ON directory_moscow.* TO 'moscow_user';
+        GRANT ALL PRIVILEGES ON directory_test.* TO 'test_user';
 
 jobs:
 
@@ -338,29 +362,6 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      INIT_DB_CONFIG: |
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: database-init
-          namespace: ${{ env.NAMESPACE }}
-        data:
-          init.sql: |
-            CREATE DATABASE directory_root;
-            CREATE DATABASE directory_gb;
-            CREATE DATABASE directory_ru;
-            CREATE DATABASE directory_moscow;
-            CREATE DATABASE directory_test;
-            CREATE USER 'root_user' IDENTIFIED BY 'asdf_root';
-            CREATE USER 'gb_user' IDENTIFIED BY 'asdf_gb';
-            CREATE USER 'ru_user' IDENTIFIED BY 'asdf_ru';
-            CREATE USER 'moscow_user' IDENTIFIED BY 'asdf_moscow';
-            CREATE USER 'test_user' IDENTIFIED BY 'asdf_test';
-            GRANT ALL PRIVILEGES ON directory_root.* TO 'root_user';
-            GRANT ALL PRIVILEGES ON directory_gb.* TO 'gb_user';
-            GRANT ALL PRIVILEGES ON directory_ru.* TO 'ru_user';
-            GRANT ALL PRIVILEGES ON directory_moscow.* TO 'moscow_user';
-            GRANT ALL PRIVILEGES ON directory_test.* TO 'test_user';
       PASSWORD: y7HocD1hloSb15xx
     steps:
       - name: Login to Azure
