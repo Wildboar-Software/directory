@@ -624,6 +624,20 @@ jobs:
           - 'ru'
           - 'moscow'
     steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
       - name: Create Temp Folder
         run: mkdir -p ./tmp
       - name: Create Certificate Authority Config
